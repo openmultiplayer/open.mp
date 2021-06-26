@@ -16,7 +16,7 @@ struct ICore {
 	virtual int getVersion() = 0;
 	virtual void printLn(const char* fmt, ...) = 0;
 	virtual INetwork& getNetworkInterface() = 0;
-	virtual IEventDispatcherPool<IPlayer, MAX_PLAYERS, PlayerEventHandler>& getPlayers() = 0;
-	virtual IEventDispatcherPool<IVehicle, MAX_VEHICLES, VehicleEventHandler>& getVehicles() = 0;
+	virtual IPlayerPool& getPlayers() = 0;
+	virtual IVehiclePool& getVehicles() = 0;
 	virtual IEventDispatcher<CoreEventHandler>& getEventDispatcher() = 0;
 };
