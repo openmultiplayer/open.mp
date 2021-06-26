@@ -122,33 +122,44 @@ struct NetworkBitStreamValue {
 #pragma clang diagnostic pop
 #undef NBSVCONS
 
-typedef std::vector<NetworkBitStreamValue> NetworkBitStreamValueList;
+struct NetworkBitStreamValueList {
+	NetworkBitStreamValue* data;
+	size_t len;
+};
 
 struct INetworkBitStream {
 	virtual bool write(const NetworkBitStreamValue& value) = 0;
 	virtual void read(NetworkBitStreamValue& input) = 0;
-	virtual bool read(NetworkBitStreamValueList& input) = 0;
+	virtual bool read(NetworkBitStreamValueList input) = 0;
 	virtual NetworkBitStreamValue read(const NetworkBitStreamValue& input) = 0;
-	virtual void free(NetworkBitStreamValueList& input) = 0;
+	virtual void free(NetworkBitStreamValueList input) = 0;
 };
 
+template <size_t Size>
 struct NetworkBitStreamValueReadRAII {
 	INetworkBitStream& bs;
-	NetworkBitStreamValueList data;
+	std::array<NetworkBitStreamValue, Size> data;
+
+	NetworkBitStreamValueList get() {
+		return { data.data(), data.size() };
+	}
 
 	~NetworkBitStreamValueReadRAII() {
-		bs.free(data);
+		bs.free(get());
 	}
 };
 
-struct GlobalNetworkEventHandler {
-	virtual bool receivedPacket(IPlayer& peer, int id, INetworkBitStream& bs) {}
-	virtual bool receivedRPC(IPlayer& peer, int id, INetworkBitStream& bs) {}
-	virtual bool incomingConnection(int id, uint64_t address, uint16_t port) {}
+struct NetworkEventHandler {
+	virtual bool incomingConnection(int id, uint64_t address, uint16_t port) { return true; }
 };
 
-struct SingleNetworkEventHandler {
-	virtual bool received(IPlayer& peer, INetworkBitStream& bs) {}
+struct NetworkInOutEventHandler {
+	virtual bool receivedPacket(IPlayer& peer, int id, INetworkBitStream& bs) { return true; }
+	virtual bool receivedRPC(IPlayer& peer, int id, INetworkBitStream& bs) { return true; }
+};
+
+struct SingleNetworkInOutEventHandler {
+	virtual bool received(IPlayer& peer, INetworkBitStream& bs) { return true; }
 };
 
 enum class ENetworkType {
@@ -158,10 +169,26 @@ enum class ENetworkType {
 
 struct INetwork {
 	virtual ENetworkType getNetworkType() = 0;
-	virtual IEventDispatcher<GlobalNetworkEventHandler>& getGlobalEventDispatcher() = 0;
-	virtual IIndexedEventDispatcher<SingleNetworkEventHandler, 256>& getPerRPCEventDispatcher() = 0;
-	virtual IIndexedEventDispatcher<SingleNetworkEventHandler, 256>& getPerPacketEventDispatcher() = 0;
-	virtual bool sendPacket(IPlayer& peer, int id, const NetworkBitStreamValueList& params) = 0;
-	virtual bool sendRPC(IPlayer& peer, int id, const NetworkBitStreamValueList& params) = 0;
-	virtual bool sendRPC(int id, const NetworkBitStreamValueList& params) = 0;
+	virtual IEventDispatcher<NetworkEventHandler>& getEventDispatcher() = 0;
+	virtual IEventDispatcher<NetworkInOutEventHandler>& getInOutEventDispatcher() = 0;
+	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerRPCInOutEventDispatcher() = 0;
+	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() = 0;
+	virtual bool sendPacket(IPlayer& peer, int id, NetworkBitStreamValueList params) = 0;
+	virtual bool sendRPC(IPlayer& peer, int id, NetworkBitStreamValueList params) = 0;
+	virtual bool sendRPC(int id, NetworkBitStreamValueList params) = 0;
+
+	template <size_t Size>
+	inline bool sendPacket(IPlayer& peer, int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return sendPacket(peer, id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
+
+	template <size_t Size>
+	inline bool sendRPC(IPlayer& peer, int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return sendRPC(peer, id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
+
+	template <size_t Size>
+	inline bool sendRPC(int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return sendRPC(id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
 };

@@ -20,7 +20,7 @@ struct IPlayer : public IEntity {
 };
 
 struct PlayerEventHandler {
-	virtual void onConnect(IPlayer& player, INetworkBitStream& bs) {}
+	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
 };
 
