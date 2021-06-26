@@ -36,7 +36,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork(Core& core) :
     RPCHOOK(22);
     RPCHOOK(23);
     RPCHOOK(24);
-    rakNetServer.RegisterAsRemoteProcedureCall(25, &RakNetLegacyNetwork::OnPlayerConnect, this);
+    rakNetServer.RegisterAsRemoteProcedureCall(RakNetLegacy::Incoming::RPC::PlayerJoin, &RakNetLegacyNetwork::OnPlayerConnect, this);
     RPCHOOK(26);
     RPCHOOK(27);
     RPCHOOK(28);
@@ -335,12 +335,12 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         [&rpcParams, &player](NetworkInOutEventHandler* handler) {
             RakNet::BitStream bs = GetBitStream(*rpcParams);
             RakNetLegacyBitStream lbs(bs);
-            handler->receivedRPC(player, 25, lbs);
+            handler->receivedRPC(player, RakNetLegacy::Incoming::RPC::PlayerJoin, lbs);
         }
     );
 
     network->rpcInOutEventDispatcher.all(
-        25,
+        RakNetLegacy::Incoming::RPC::PlayerJoin,
         [&rpcParams, &player](SingleNetworkInOutEventHandler* handler) {
             RakNet::BitStream bs = GetBitStream(*rpcParams);
             RakNetLegacyBitStream lbs(bs);

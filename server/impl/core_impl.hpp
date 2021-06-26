@@ -24,13 +24,13 @@ struct Core final : public ICore, public PlayerEventHandler {
         if (ifs.good()) {
             props = json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
         }
-        network.getPerRPCInOutEventDispatcher().addEventHandler(&players, 25);
+        network.getPerRPCInOutEventDispatcher().addEventHandler(&players, RakNetLegacy::Incoming::RPC::PlayerJoin);
         players.getEventDispatcher().addEventHandler(this);
     }
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
-        network.getPerRPCInOutEventDispatcher().removeEventHandler(&players, 25);
+        network.getPerRPCInOutEventDispatcher().removeEventHandler(&players, RakNetLegacy::Incoming::RPC::PlayerJoin);
     }
 
     int getVersion() override {
@@ -97,7 +97,7 @@ struct Core final : public ICore, public PlayerEventHandler {
             NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(serverName)) /* ServerName */,
             NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(NetworkBitStreamValue::Array<uint8_t>::FromStdArray(vehicles.models())) /* VehicleModels */
         };
-        player.getNetwork().sendRPC(139, PlayerConnectOutgoing);
+        player.getNetwork().sendRPC(RakNetLegacy::Outgoing::RPC::PlayerInit, PlayerConnectOutgoing);
     }
 
     void run(uint32_t tickUS) {
