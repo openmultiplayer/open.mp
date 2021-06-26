@@ -370,7 +370,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
 }
 
 template <size_t ID>
-static void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra) {
+void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra) {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
     std::map<RakNet::PlayerID, int>::iterator pos = network->pidFromRID.find(rpcParams->sender);
     if (pos == network->pidFromRID.end()) {

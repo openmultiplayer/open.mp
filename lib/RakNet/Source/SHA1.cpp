@@ -250,32 +250,32 @@ void CSHA1::Final()
 		finalcount[ i ] = (unsigned char) ( ( m_count[ ( i >= 4 ? 0 : 1 ) ]
 		>> ( ( 3 - ( i & 3 ) ) * 8 ) ) & 255 ); // Endian independent
 
-		Update( ( unsigned char * ) "\200", 1 );
+	Update( ( unsigned char * ) "\200", 1 );
 
-		while ( ( m_count[ 0 ] & 504 ) != 448 )
-			Update( ( unsigned char * ) "\0", 1 );
+	while ( ( m_count[ 0 ] & 504 ) != 448 )
+		Update( ( unsigned char * ) "\0", 1 );
 
-		Update( finalcount, 8 ); // Cause a SHA1Transform()
+	Update( finalcount, 8 ); // Cause a SHA1Transform()
 
-		for ( i = 0; i < 20; i++ )
-		{
-			m_digest[ i ] = (unsigned char) ( ( m_state[ i >> 2 ] >> ( ( 3 - ( i & 3 ) ) * 8 ) ) & 255 );
-		}
+	for ( i = 0; i < 20; i++ )
+	{
+		m_digest[ i ] = (unsigned char) ( ( m_state[ i >> 2 ] >> ( ( 3 - ( i & 3 ) ) * 8 ) ) & 255 );
+	}
 
-		// Wipe variables for security reasons
-		i = 0;
+	// Wipe variables for security reasons
+	i = 0;
 
-		j = 0;
+	j = 0;
 
-		memset( m_buffer, 0, 64 );
+	memset( m_buffer, 0, 64 );
 
-		memset( m_state, 0, 20 );
+	memset( m_state, 0, 20 );
 
-		memset( m_count, 0, 8 );
+	memset( m_count, 0, 8 );
 
-		memset( finalcount, 0, 8 );
+	memset( finalcount, 0, 8 );
 
-		Transform( m_state, m_buffer );
+	Transform( m_state, m_buffer );
 }
 
 // Get the final hash as a pre-formatted string

@@ -435,7 +435,6 @@ namespace RakNet
 		unsigned int nextSeed;
 		RakNetTime nextSeedUpdate;
 		PlayerIndex localPlayerIndex;
-		PlayerID externalPlayerID;
 	};
 }
 
