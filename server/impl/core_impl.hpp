@@ -2,6 +2,7 @@
 
 #include <mutex>
 #include <cstdarg>
+#include <fstream>
 #include "events_impl.hpp"
 #include "entity_impl.hpp"
 #include "legacy_network_impl.hpp"
@@ -13,11 +14,16 @@ struct Core final : public ICore, public PlayerEventHandler {
     RakNetLegacyNetwork network;
     PlayerPool players;
     VehiclePool vehicles;
+    json props;
 
     Core() :
         network(*this),
         players(*this)
     {
+        std::ifstream ifs("config.json");
+        if (ifs.good()) {
+            props = json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+        }
         network.getPerRPCInOutEventDispatcher().addEventHandler(&players, 25);
         players.getEventDispatcher().addEventHandler(this);
     }
@@ -53,6 +59,10 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     IEventDispatcher<CoreEventHandler>& getEventDispatcher() override {
         return eventDispatcher;
+    }
+
+    const json& getProperties() override {
+        return props;
     }
 
     void onConnect(IPlayer& player) override {

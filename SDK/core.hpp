@@ -19,4 +19,5 @@ struct ICore {
 	virtual IPlayerPool& getPlayers() = 0;
 	virtual IVehiclePool& getVehicles() = 0;
 	virtual IEventDispatcher<CoreEventHandler>& getEventDispatcher() = 0;
+	virtual const json& getProperties() = 0;
 };
