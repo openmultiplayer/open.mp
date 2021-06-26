@@ -73,7 +73,7 @@ RPCIndex RPCMap::GetIndexFromFunctionName(RPCID uniqueIdentifier)
 }
 
 // Called from the user thread for the local system
-void RPCMap::AddIdentifierWithFunction(RPCID uniqueIdentifier, void *functionPointer, bool isPointerToMember)
+void RPCMap::AddIdentifierWithFunction(RPCID uniqueIdentifier, void *functionPointer, bool isPointerToMember, void* extraPointer)
 {
 #ifdef _DEBUG
 	RakAssert(rpcSet.Size()+1 < MAX_RPC_MAP_SIZE); // If this hits change the typedef of RPCIndex to use an unsigned short
@@ -107,6 +107,7 @@ void RPCMap::AddIdentifierWithFunction(RPCID uniqueIdentifier, void *functionPoi
 #endif
 	node->functionPointer=functionPointer;
 	node->isPointerToMember=isPointerToMember;
+	node->extraPointer=extraPointer;
 
 	// Insert into an empty spot if possible
 	for (index=0; index < rpcSet.Size(); index++)

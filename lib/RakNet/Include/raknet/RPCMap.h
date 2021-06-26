@@ -39,7 +39,7 @@ namespace RakNet
 		RPCNode *GetNodeFromIndex(RPCIndex index);
 		RPCNode *GetNodeFromFunctionName(RPCID uniqueIdentifier);
 		RPCIndex GetIndexFromFunctionName(RPCID uniqueIdentifier);
-		void AddIdentifierWithFunction(RPCID uniqueIdentifier, void *functionPointer, bool isPointerToMember);
+		void AddIdentifierWithFunction(RPCID uniqueIdentifier, void *functionPointer, bool isPointerToMember, void *extraPointer);
 		void AddIdentifierAtIndex(RPCID uniqueIdentifier, RPCIndex insertionIndex);
 		void RemoveNode(RPCID uniqueIdentifier);
 	protected:

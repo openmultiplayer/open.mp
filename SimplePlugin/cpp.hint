@@ -1,0 +1,2 @@
+#define SIMPLEPLUGIN_API __declspec(dllexport)
+#define SIMPLEPLUGIN_API __declspec(dllimport)
