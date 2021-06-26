@@ -51,7 +51,9 @@ struct Pool final : public IPool<Interface, Count> {
     }
 
     bool valid(int index) override {
-        assert(index < Count);
+        if (index >= Count) {
+            return false;
+        }
         return m_taken.test(index);
     }
 

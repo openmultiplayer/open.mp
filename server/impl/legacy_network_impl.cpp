@@ -347,14 +347,6 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             handler->received(player, lbs);
         }
     );
-
-    network->core.players.eventDispatcher.all(
-        [&rpcParams, &player](PlayerEventHandler* handler) {
-            RakNet::BitStream bs = GetBitStream(*rpcParams);
-            RakNetLegacyBitStream lbs(bs);
-            handler->onConnect(player, lbs);
-        }
-    );
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
@@ -413,5 +405,34 @@ static void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void*
 
     if (!processed) {
         network->core.printLn("Received unprocessed RPC %i", ID);
+    }
+}
+
+void RakNetLegacyNetwork::onTick(uint64_t tick) {
+    for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
+        auto pos = pidFromRID.find(pkt->playerId);
+        if (pos != pidFromRID.end()) {
+            int pid = pos->second;
+            auto& pool = core.getPlayers().getPool();
+            if (pool.valid(pid)) {
+                IPlayer& player = pool.get(pid);
+                RakNet::BitStream bs(pkt->data, pkt->length, false);
+                uint8_t type;
+                if (bs.Read(type)) {
+                    networkEventDispatcher.all([&player, type, &pkt](GlobalNetworkEventHandler* handler) {
+                        RakNet::BitStream bs(pkt->data, pkt->length, false);
+                        RakNetLegacyBitStream lbs(bs);
+                        handler->receivedPacket(player, type, lbs);
+                        });
+
+                    packetEventDispatcher.all(type, [&player, &pkt](SingleNetworkEventHandler* handler) {
+                        RakNet::BitStream bs(pkt->data, pkt->length, false);
+                        RakNetLegacyBitStream lbs(bs);
+                        handler->received(player, lbs);
+                        });
+                }
+            }
+        }
+        rakNetServer.DeallocatePacket(pkt);
     }
 }

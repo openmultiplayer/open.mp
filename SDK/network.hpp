@@ -144,7 +144,7 @@ struct GlobalNetworkEventHandler {
 };
 
 struct SingleNetworkEventHandler {
-	virtual bool received(IPlayer& peer, INetworkBitStream& bs) {}
+	virtual bool received(IPlayer& peer, INetworkBitStream& bs) { return true; }
 };
 
 enum class ENetworkType {
