@@ -8,13 +8,12 @@
 #include "events_impl.hpp"
 #include "entity_impl.hpp"
 
-struct Vehicle final : public IVehicle {
-    size_t id;
+struct Vehicle final : public IVehicle, public EntityIDProvider {
     vector3 pos;
     vector4 rot;
     std::array<IPlayer*, MAX_SEATS> passengers;
 
-    size_t getID() override {
+    int getID() override {
         return id;
     }
 

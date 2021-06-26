@@ -26,7 +26,7 @@ struct IEventDispatcherPool {
 };
 
 struct IEntity {
-	virtual size_t getID() = 0;
+	virtual int getID() = 0;
 	virtual vector3 getPosition() = 0;
 	virtual void setPosition(vector3 position) = 0;
 	virtual vector4 getRotation() = 0;
