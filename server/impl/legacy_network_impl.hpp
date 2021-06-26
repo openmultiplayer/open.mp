@@ -235,12 +235,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 
-    void onTick(uint64_t tick) override {
-        for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
-            // todo process packet
-            rakNetServer.DeallocatePacket(pkt);
-        }
-    }
+    void onTick(uint64_t tick) override;
 
     void onInit() override {
         ridFromPID.fill(RakNet::UNASSIGNED_PLAYER_ID);
