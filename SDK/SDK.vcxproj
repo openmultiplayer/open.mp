@@ -158,7 +158,15 @@
     <None Include="cpp.hint" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="core.hpp" />
+    <ClInclude Include="entity.hpp" />
+    <ClInclude Include="events.hpp" />
+    <ClInclude Include="network.hpp" />
+    <ClInclude Include="player.hpp" />
     <ClInclude Include="sdk.hpp" />
+    <ClInclude Include="types.hpp" />
+    <ClInclude Include="values.hpp" />
+    <ClInclude Include="vehicle.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
