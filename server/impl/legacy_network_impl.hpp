@@ -47,7 +47,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::VEC4:
             bs.Write(input.v4); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            writeConstString(input.s); break;
+            writeFixedString(input.s); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
             writeDynamicString<uint8_t>(input.s); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
@@ -55,7 +55,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
             writeDynamicString<uint32_t>(input.s); break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
-            writeConstArray<uint8_t>(input.au8); break;
+            writeFixedArray<uint8_t>(input.au8); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
@@ -104,12 +104,12 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 
     template <typename T>
-    void writeConstArray(const NetworkBitStreamValue::Array<T>& input) {
+    void writeFixedArray(const NetworkBitStreamValue::Array<T>& input) {
         bs.Write(reinterpret_cast<const char*>(input.data), input.len * sizeof(T));
     }
 
     template <typename T>
-    bool readConstArray(NetworkBitStreamValue::Array<T>& input) {
+    bool readFixedArray(NetworkBitStreamValue::Array<T>& input) {
         if (input.len * sizeof(T) > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
             return false;
         }
@@ -118,11 +118,11 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         return bs.Read(reinterpret_cast<char*>(input.data), input.len * sizeof(T));
     }
 
-    void writeConstString(const NetworkBitStreamValue::String& input) {
+    void writeFixedString(const NetworkBitStreamValue::String& input) {
         bs.Write(input.str, input.len);
     }
 
-    bool readConstString(NetworkBitStreamValue::String& input) {
+    bool readFixedString(NetworkBitStreamValue::String& input) {
         if (input.len > (unsigned int)(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
             return false;
         }
@@ -163,7 +163,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::VEC4:
             success = bs.Read(input.v4); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            success = readConstString(input.s); break;
+            success = readFixedString(input.s); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
             success = readDynamicString<uint8_t>(input.s); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
@@ -171,7 +171,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
             success = readDynamicString<uint32_t>(input.s); break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
-            success = readConstArray<uint8_t>(input.au8); break;
+            success = readFixedArray<uint8_t>(input.au8); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }

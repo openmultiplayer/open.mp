@@ -43,74 +43,75 @@ endfunction()
 
 # PAWN runtime
 # ------------
-set(PAWN_RUNTIME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pawn/source/amx")
-add_library(pawn-runtime STATIC
-	${PAWN_RUNTIME_SRC_DIR}/amx.c
-	${PAWN_RUNTIME_SRC_DIR}/amxargs.c
-	${PAWN_RUNTIME_SRC_DIR}/amxaux.c
-	${PAWN_RUNTIME_SRC_DIR}/amxcons.c
-	${PAWN_RUNTIME_SRC_DIR}/amxcore.c
-	${PAWN_RUNTIME_SRC_DIR}/amxfile.c
-	${PAWN_RUNTIME_SRC_DIR}/amxstring.c
-	${PAWN_RUNTIME_SRC_DIR}/amxtime.c
-	${PAWN_RUNTIME_SRC_DIR}/amxfloat.c
-)
-target_include_directories(pawn-runtime 
-	PRIVATE ${PAWN_RUNTIME_SRC_DIR}
-	INTERFACE "${PAWN_RUNTIME_SRC_DIR}/.."
-)
-
-include(CheckIncludeFile)
-check_include_file("unistd.h" HAVE_UNISTD_H)
-if(HAVE_UNISTD_H)
-	target_compile_definitions(pawn-runtime PUBLIC -DHAVE_UNISTD_H)
-endif()
-check_include_file("inttypes.h" HAVE_INTTYPES_H)
-if(HAVE_INTTYPES_H)
-	target_compile_definitions(pawn-runtime PUBLIC -DHAVE_INTTYPES_H)
-endif()
-check_include_file("stdint.h" HAVE_STDINT_H)
-if(HAVE_STDINT_H)
-	target_compile_definitions(pawn-runtime PUBLIC -DHAVE_STDINT_H)
-endif()
-check_include_file("alloca.h" HAVE_ALLOCA_H)
-if(HAVE_ALLOCA_H)
-	target_compile_definitions(pawn-runtime PUBLIC -DHAVE_ALLOCA_H)
-endif()
-
-if (MSVC)
-	target_compile_definitions(pawn-runtime
-		PRIVATE
-			-D_CRT_SECURE_NO_WARNINGS
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+	set(PAWN_RUNTIME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pawn/source/amx")
+	add_library(pawn-runtime STATIC
+		${PAWN_RUNTIME_SRC_DIR}/amx.c
+		${PAWN_RUNTIME_SRC_DIR}/amxargs.c
+		${PAWN_RUNTIME_SRC_DIR}/amxaux.c
+		${PAWN_RUNTIME_SRC_DIR}/amxcons.c
+		${PAWN_RUNTIME_SRC_DIR}/amxcore.c
+		${PAWN_RUNTIME_SRC_DIR}/amxfile.c
+		${PAWN_RUNTIME_SRC_DIR}/amxstring.c
+		${PAWN_RUNTIME_SRC_DIR}/amxtime.c
+		${PAWN_RUNTIME_SRC_DIR}/amxfloat.c
 	)
-endif()
-
-target_compile_definitions(pawn-runtime
-	PRIVATE
-		-DFLOATPOINT
-)
-
-if(UNIX)
-	# TODO: set fvisibility for gcc/clang
-	target_compile_definitions(pawn-runtime PUBLIC -DLINUX)
-	check_include_file("ffi.h" HAVE_FFI_H)
-	target_include_directories(pawn-runtime PUBLIC "${PAWN_RUNTIME_SRC_DIR}/../linux")
-	target_sources(pawn-runtime PRIVATE "${PAWN_RUNTIME_SRC_DIR}/../linux/getch.c")
-endif()
-
-if(WIN32)
-	target_compile_definitions(pawn-runtime
-		PRIVATE
-			-D_CRT_SECURE_NO_WARNINGS
-			-D_CRT_NONSTDC_NO_DEPRECATE
+	target_include_directories(pawn-runtime 
+		PRIVATE ${PAWN_RUNTIME_SRC_DIR}
+		INTERFACE "${PAWN_RUNTIME_SRC_DIR}/.."
 	)
-	if(NOT BORLAND)
-		target_link_libraries(pawn-runtime PRIVATE winmm)
+
+	include(CheckIncludeFile)
+	check_include_file("unistd.h" HAVE_UNISTD_H)
+	if(HAVE_UNISTD_H)
+		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_UNISTD_H)
 	endif()
+	check_include_file("inttypes.h" HAVE_INTTYPES_H)
+	if(HAVE_INTTYPES_H)
+		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_INTTYPES_H)
+	endif()
+	check_include_file("stdint.h" HAVE_STDINT_H)
+	if(HAVE_STDINT_H)
+		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_STDINT_H)
+	endif()
+	check_include_file("alloca.h" HAVE_ALLOCA_H)
+	if(HAVE_ALLOCA_H)
+		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_ALLOCA_H)
+	endif()
+
+	if (MSVC)
+		target_compile_definitions(pawn-runtime
+			PRIVATE
+				-D_CRT_SECURE_NO_WARNINGS
+		)
+	endif()
+
+	target_compile_definitions(pawn-runtime
+		PRIVATE
+			-DFLOATPOINT
+	)
+
+	if(UNIX)
+		# TODO: set fvisibility for gcc/clang
+		target_compile_definitions(pawn-runtime PUBLIC -DLINUX)
+		check_include_file("ffi.h" HAVE_FFI_H)
+		target_include_directories(pawn-runtime PUBLIC "${PAWN_RUNTIME_SRC_DIR}/../linux")
+		target_sources(pawn-runtime PRIVATE "${PAWN_RUNTIME_SRC_DIR}/../linux/getch.c")
+	endif()
+
+	if(WIN32)
+		target_compile_definitions(pawn-runtime
+			PRIVATE
+				-D_CRT_SECURE_NO_WARNINGS
+				-D_CRT_NONSTDC_NO_DEPRECATE
+		)
+		if(NOT BORLAND)
+			target_link_libraries(pawn-runtime PRIVATE winmm)
+		endif()
+	endif()
+
+	set_property(TARGET pawn-runtime PROPERTY FOLDER "lib")
 endif()
-
-set_property(TARGET pawn-runtime PROPERTY FOLDER "lib")
-
 
 # RakNet
 # ------
