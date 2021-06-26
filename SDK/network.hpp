@@ -118,10 +118,10 @@ struct NetworkBitStreamValue {
 
 #undef NBSVCONS
 
-typedef struct {
+struct NetworkBitStreamValueList {
 	NetworkBitStreamValue* data;
 	size_t len;
-} NetworkBitStreamValueList;
+};
 
 struct INetworkBitStream {
 	virtual bool write(const NetworkBitStreamValue& value) = 0;
@@ -169,7 +169,22 @@ struct INetwork {
 	virtual IEventDispatcher<NetworkInOutEventHandler>& getInOutEventDispatcher() = 0;
 	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerRPCInOutEventDispatcher() = 0;
 	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() = 0;
-	virtual bool sendPacket(IPlayer& peer, int id, const NetworkBitStreamValueList& params) = 0;
-	virtual bool sendRPC(IPlayer& peer, int id, const NetworkBitStreamValueList& params) = 0;
-	virtual bool sendRPC(int id, const NetworkBitStreamValueList& params) = 0;
+	virtual bool sendPacket(IPlayer& peer, int id, NetworkBitStreamValueList params) = 0;
+	virtual bool sendRPC(IPlayer& peer, int id, NetworkBitStreamValueList params) = 0;
+	virtual bool sendRPC(int id, NetworkBitStreamValueList params) = 0;
+
+	template <size_t Size>
+	inline bool sendPacket(IPlayer& peer, int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return sendPacket(peer, id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
+
+	template <size_t Size>
+	inline bool sendRPC(IPlayer& peer, int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return sendRPC(peer, id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
+
+	template <size_t Size>
+	inline bool sendRPC(int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return sendRPC(id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
 };

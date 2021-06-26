@@ -200,7 +200,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
         return ENetworkType::RakNetLegacy;
     }
 
-    bool sendPacket(IPlayer& player, int id, const NetworkBitStreamValueList& params) override {
+    bool sendPacket(IPlayer& player, int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
         lbs.write(NetworkBitStreamValue::INT16(id));
@@ -211,7 +211,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
         return rakNetServer.Send(&bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, ridFromPID[player.getID()], false);
     }
 
-    bool sendRPC(int id, const NetworkBitStreamValueList& params) override {
+    bool sendRPC(int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
         for (size_t i = 0; i < params.len; ++i) {
@@ -221,7 +221,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
         return rakNetServer.RPC(id, &bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(IPlayer& player, int id, const NetworkBitStreamValueList& params) override {
+    bool sendRPC(IPlayer& player, int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
         for (size_t i = 0; i < params.len; ++i) {
