@@ -49,7 +49,7 @@ struct NetworkBitStreamValue {
 
 		static String FromStdString(const std::string& str) {
 			String res;
-			res.len = str.length();
+			res.len = unsigned(str.length());
 			res.str = const_cast<char*>(str.data());
 			return res;
 		}
@@ -67,7 +67,7 @@ struct NetworkBitStreamValue {
 		template <size_t Size>
 		static Array<T> FromStdArray(const std::array<T, Size>& array) {
 			Array<T> res;
-			res.len = array.size();
+			res.len = unsigned(array.size());
 			res.data = const_cast<T*>(array.data());
 			return res;
 		}

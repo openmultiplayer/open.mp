@@ -38,7 +38,7 @@ struct Player final : public IPlayer, public EntityIDProvider {
         return *network;
     }
 
-    size_t getID() override {
+    int getID() override {
         return id;
     }
 
