@@ -78,18 +78,18 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
 
     // RPC 25 (OnPlayerConnect)
     bool received(IPlayer& peer, INetworkBitStream& bs) override {
-        auto PlayerJoinIncoming = NetworkBitStreamValueReadRAII{
+        NetworkBitStreamValueReadRAII<6> PlayerJoinIncoming{
             bs,
-            {
+            {{
                 { NetworkBitStreamValueType::UINT32 /* VersionNumber */},
                 { NetworkBitStreamValueType::UINT8 /* Modded */ },
                 { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* Name */ },
                 { NetworkBitStreamValueType::UINT32 /* ChallengeResponse */ },
                 { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* Key */ },
                 { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* VersionString */ }
-            }
+            }}
         };
-        if (bs.read(PlayerJoinIncoming.data)) {
+        if (bs.read(PlayerJoinIncoming.get())) {
             peer.versionNumber() = PlayerJoinIncoming.data[0].u32;
             peer.modded() = PlayerJoinIncoming.data[1].u8;
             peer.name() = PlayerJoinIncoming.data[2].s;
@@ -97,8 +97,11 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
             peer.key() = PlayerJoinIncoming.data[4].s;
             peer.versionString() = PlayerJoinIncoming.data[5].s;
         }
+        else {
+            return false;
+        }
 
-        auto PlayerJoinOutgoing = std::vector<NetworkBitStreamValue>{
+        std::array<NetworkBitStreamValue, 4> PlayerJoinOutgoing {
             NetworkBitStreamValue::UINT16(uint16_t(peer.getID())), /* PlayerID */
             NetworkBitStreamValue::INT32(0xFF0000FF), /* Colour */
             NetworkBitStreamValue::UINT8(false), /* IsNPC */
@@ -106,22 +109,21 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         };
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
             if (target != &peer) {
-                target->getNetwork().sendRPC(137, PlayerJoinOutgoing);
+                target->getNetwork().sendRPC(137, { PlayerJoinOutgoing.data(), PlayerJoinOutgoing.size() });
             }
         }
 
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
-
         return true;
     }
 
     void onDisconnect(IPlayer& player, int reason) override {
-        auto data = std::vector<NetworkBitStreamValue>{
+        std::array<NetworkBitStreamValue, 2> data {
             NetworkBitStreamValue::UINT16(uint16_t(player.getID())), /* PlayerID */
             NetworkBitStreamValue::UINT8(reason)
         };
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
-            target->getNetwork().sendRPC(138, data);
+            target->getNetwork().sendRPC(138, { data.data(), data.size() });
         }
     }
 };

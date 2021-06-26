@@ -58,7 +58,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     void onConnect(IPlayer& player) override {
         std::string serverName("heh lol");
 
-        auto PlayerConnectOutgoing = std::vector<NetworkBitStreamValue>{
+        std::array<NetworkBitStreamValue, 27> PlayerConnectOutgoing = {
             NetworkBitStreamValue::BIT(true) /* EnableZoneNames */,
             NetworkBitStreamValue::BIT(true) /* UsePlayerPedAnims */,
             NetworkBitStreamValue::BIT(true) /* AllowInteriorWeapons */,
@@ -87,7 +87,7 @@ struct Core final : public ICore, public PlayerEventHandler {
             NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(serverName)) /* ServerName */,
             NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(NetworkBitStreamValue::Array<uint8_t>::FromStdArray(vehicles.models())) /* VehicleModels */
         };
-        player.getNetwork().sendRPC(139, PlayerConnectOutgoing);
+        player.getNetwork().sendRPC(139, { PlayerConnectOutgoing.data(), PlayerConnectOutgoing.size() });
     }
 
     void run(uint32_t tickUS) {
