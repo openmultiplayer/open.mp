@@ -87,7 +87,7 @@ SocketLayer::SocketLayer()
 				NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 				( LPTSTR ) & messageBuffer, 0, NULL );
 			// something has gone wrong here...
-			printf( "WSAStartup failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+			printf( "WSAStartup failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 			//Free the buffer.
 			LocalFree( messageBuffer );
 #endif
@@ -128,7 +128,7 @@ SOCKET SocketLayer::Connect( SOCKET writeSocket, unsigned int binaryAddress, uns
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) &messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "WSAConnect failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "WSAConnect failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 		//Free the buffer.
 		LocalFree( messageBuffer );
 #endif
@@ -164,7 +164,7 @@ SOCKET SocketLayer::CreateBoundSocket( unsigned short port, bool blockingSocket,
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "socket(...) failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "socket(...) failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 		//Free the buffer.
 		LocalFree( messageBuffer );
 #endif
@@ -183,7 +183,7 @@ SOCKET SocketLayer::CreateBoundSocket( unsigned short port, bool blockingSocket,
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "setsockopt(SO_REUSEADDR) failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "setsockopt(SO_REUSEADDR) failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 		//Free the buffer.
 		LocalFree( messageBuffer );
 #endif
@@ -250,7 +250,7 @@ SOCKET SocketLayer::CreateBoundSocket( unsigned short port, bool blockingSocket,
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "setsockopt(SO_BROADCAST) failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "setsockopt(SO_BROADCAST) failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 		//Free the buffer.
 		LocalFree( messageBuffer );
 #endif
@@ -284,7 +284,7 @@ SOCKET SocketLayer::CreateBoundSocket( unsigned short port, bool blockingSocket,
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "bind(...) failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "bind(...) failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 		//Free the buffer.
 		LocalFree( messageBuffer );
 #endif
@@ -416,7 +416,7 @@ int SocketLayer::RecvFrom( const SOCKET s, RakPeer *rakPeer, int *errorCode )
 					NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 					( LPTSTR ) & messageBuffer, 0, NULL );
 				// something has gone wrong here...
-				printf( "recvfrom failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+				printf( "recvfrom failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 
 				//Free the buffer.
 				LocalFree( messageBuffer );
@@ -474,7 +474,7 @@ int SocketLayer::SendTo( SOCKET s, const char *data, int length, unsigned int bi
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "sendto failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "sendto failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 
 		//Free the buffer.
 		LocalFree( messageBuffer );
@@ -509,7 +509,7 @@ void SocketLayer::GetMyIP( char ipList[ 10 ][ 16 ] )
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "gethostname failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "gethostname failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 		//Free the buffer.
 		LocalFree( messageBuffer );
 	#endif
@@ -528,7 +528,7 @@ void SocketLayer::GetMyIP( char ipList[ 10 ][ 16 ] )
 			NULL, dwIOError, MAKELANGID( LANG_NEUTRAL, SUBLANG_DEFAULT ),  // Default language
 			( LPTSTR ) & messageBuffer, 0, NULL );
 		// something has gone wrong here...
-		printf( "gethostbyname failed:Error code - %d\n%s", dwIOError, (char *)messageBuffer );
+		printf( "gethostbyname failed:Error code - %lu\n%s", dwIOError, (char *)messageBuffer );
 
 		//Free the buffer.
 		LocalFree( messageBuffer );
