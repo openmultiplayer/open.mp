@@ -318,7 +318,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     player.setNetworkData(network, cIP, cPort);
 
     if (!network->networkEventDispatcher.stopAtFalse(
-        [&player, &rid](GlobalNetworkEventHandler* handler) {
+        [&player, &rid](NetworkEventHandler* handler) {
             return handler->incomingConnection(player.getID(), rid.binaryAddress, rid.port);
         }
     )) {
@@ -331,28 +331,20 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     network->pidFromRID.emplace(rid, pid);
     network->ridFromPID[pid] = rid;
 
-    network->networkEventDispatcher.all(
-        [&rpcParams, &player](GlobalNetworkEventHandler* handler) {
+    network->inOutEventDispatcher.all(
+        [&rpcParams, &player](NetworkInOutEventHandler* handler) {
             RakNet::BitStream bs = GetBitStream(*rpcParams);
             RakNetLegacyBitStream lbs(bs);
             handler->receivedRPC(player, 25, lbs);
         }
     );
 
-    network->rpcEventDispatcher.all(
+    network->rpcInOutEventDispatcher.all(
         25,
-        [&rpcParams, &player](SingleNetworkEventHandler* handler) {
+        [&rpcParams, &player](SingleNetworkInOutEventHandler* handler) {
             RakNet::BitStream bs = GetBitStream(*rpcParams);
             RakNetLegacyBitStream lbs(bs);
             handler->received(player, lbs);
-        }
-    );
-
-    network->core.players.eventDispatcher.all(
-        [&rpcParams, &player](PlayerEventHandler* handler) {
-            RakNet::BitStream bs = GetBitStream(*rpcParams);
-            RakNetLegacyBitStream lbs(bs);
-            handler->onConnect(player, lbs);
         }
     );
 }
@@ -394,17 +386,17 @@ static void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void*
     IPlayer& player = pool.get(pid);
 
     bool processed = false;
-    network->networkEventDispatcher.all(
-        [&rpcParams, &player, &processed](GlobalNetworkEventHandler* handler) {
+    network->inOutEventDispatcher.all(
+        [&rpcParams, &player, &processed](NetworkInOutEventHandler* handler) {
             RakNet::BitStream bs = GetBitStream(*rpcParams);
             RakNetLegacyBitStream lbs(bs);
             processed |= handler->receivedRPC(player, ID, lbs);
         }
     );
 
-    network->rpcEventDispatcher.all(
+    network->rpcInOutEventDispatcher.all(
         ID,
-        [&rpcParams, &player, &processed](SingleNetworkEventHandler* handler) {
+        [&rpcParams, &player, &processed](SingleNetworkInOutEventHandler* handler) {
             RakNet::BitStream bs = GetBitStream(*rpcParams);
             RakNetLegacyBitStream lbs(bs);
             processed |= handler->received(player, lbs);
@@ -413,5 +405,34 @@ static void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void*
 
     if (!processed) {
         network->core.printLn("Received unprocessed RPC %i", ID);
+    }
+}
+
+void RakNetLegacyNetwork::onTick(uint64_t tick) {
+    for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
+        auto pos = pidFromRID.find(pkt->playerId);
+        if (pos != pidFromRID.end()) {
+            int pid = pos->second;
+            auto& pool = core.getPlayers().getPool();
+            if (pool.valid(pid)) {
+                IPlayer& player = pool.get(pid);
+                RakNet::BitStream bs(pkt->data, pkt->length, false);
+                uint8_t type;
+                if (bs.Read(type)) {
+                    inOutEventDispatcher.all([&player, type, &pkt](NetworkInOutEventHandler* handler) {
+                        RakNet::BitStream bs(pkt->data, pkt->length, false);
+                        RakNetLegacyBitStream lbs(bs);
+                        handler->receivedPacket(player, type, lbs);
+                        });
+
+                    packetInOutEventDispatcher.all(type, [&player, &pkt](SingleNetworkInOutEventHandler* handler) {
+                        RakNet::BitStream bs(pkt->data, pkt->length, false);
+                        RakNetLegacyBitStream lbs(bs);
+                        handler->received(player, lbs);
+                        });
+                }
+            }
+        }
+        rakNetServer.DeallocatePacket(pkt);
     }
 }

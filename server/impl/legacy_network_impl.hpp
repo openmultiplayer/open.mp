@@ -63,12 +63,12 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         return res;
     }
 
-    bool read(std::vector<NetworkBitStreamValue>& input) override {
-        for (size_t i = 0; i < input.size(); ++i) {
-            read(input[i]);
-            if (input[i].type == NetworkBitStreamValueType::NONE) {
+    bool read(NetworkBitStreamValueList input) override {
+        for (size_t i = 0; i < input.len; ++i) {
+            read(input.data[i]);
+            if (input.data[i].type == NetworkBitStreamValueType::NONE) {
                 for (size_t j = 0; j < i; ++j) {
-                    tryFree(input[j]);
+                    tryFree(input.data[j]);
                 }
                 return false;
             }
@@ -185,9 +185,9 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         input.type = NetworkBitStreamValueType::NONE;
     }
 
-    void free(std::vector<NetworkBitStreamValue>& input) override {
-        for (NetworkBitStreamValue& value : input) {
-            tryFree(value);
+    void free(NetworkBitStreamValueList input) override {
+        for (size_t i = 0; i < input.len; ++i) {
+            tryFree(input.data[i]);
         }
     }
 };
@@ -200,32 +200,32 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
         return ENetworkType::RakNetLegacy;
     }
 
-    bool sendPacket(IPlayer& player, int id, const std::vector<NetworkBitStreamValue>& params) override {
+    bool sendPacket(IPlayer& player, int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
         lbs.write(NetworkBitStreamValue::INT16(id));
-        for (size_t i = 0; i < params.size(); ++i) {
-            lbs.write(params[i]);
+        for (size_t i = 0; i < params.len; ++i) {
+            lbs.write(params.data[i]);
         }
 
         return rakNetServer.Send(&bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, ridFromPID[player.getID()], false);
     }
 
-    bool sendRPC(int id, const std::vector<NetworkBitStreamValue>& params) override {
+    bool sendRPC(int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
-        for (size_t i = 0; i < params.size(); ++i) {
-            lbs.write(params[i]);
+        for (size_t i = 0; i < params.len; ++i) {
+            lbs.write(params.data[i]);
         }
 
         return rakNetServer.RPC(id, &bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(IPlayer& player, int id, const std::vector<NetworkBitStreamValue>& params) override {
+    bool sendRPC(IPlayer& player, int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
-        for (size_t i = 0; i < params.size(); ++i) {
-            lbs.write(params[i]);
+        for (size_t i = 0; i < params.len; ++i) {
+            lbs.write(params.data[i]);
         }
 
         return rakNetServer.RPC(id, &bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, ridFromPID[player.getID()], false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
@@ -235,12 +235,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 
-    void onTick(uint64_t tick) override {
-        for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
-            // todo process packet
-            rakNetServer.DeallocatePacket(pkt);
-        }
-    }
+    void onTick(uint64_t tick) override;
 
     void onInit() override {
         ridFromPID.fill(RakNet::UNASSIGNED_PLAYER_ID);
