@@ -149,6 +149,15 @@
     <ClCompile Include="impl\legacy_network_impl.cpp" />
     <ClCompile Include="server.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="impl\core_impl.hpp" />
+    <ClInclude Include="impl\entity_impl.hpp" />
+    <ClInclude Include="impl\events_impl.hpp" />
+    <ClInclude Include="impl\legacy_network_impl.hpp" />
+    <ClInclude Include="impl\network_impl.hpp" />
+    <ClInclude Include="impl\player_impl.hpp" />
+    <ClInclude Include="impl\vehicle_impl.hpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
