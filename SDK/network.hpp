@@ -34,6 +34,9 @@ enum class NetworkBitStreamValueType {
 	FIXED_LEN_UINT8_ARR,  ///< au8
 };
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-field-initializers"
+
 #define NBSVCONS(type, name) \
 	static NetworkBitStreamValue type(decltype(NetworkBitStreamValue::name) name) { \
 		NetworkBitStreamValue res{ NetworkBitStreamValueType::type }; \
@@ -116,6 +119,7 @@ struct NetworkBitStreamValue {
 	NBSVCONS(FIXED_LEN_UINT8_ARR, au8);
 };
 
+#pragma clang diagnostic pop
 #undef NBSVCONS
 
 typedef std::vector<NetworkBitStreamValue> NetworkBitStreamValueList;
