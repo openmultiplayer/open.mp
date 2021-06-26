@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.19)
 project(open-mp LANGUAGES C CXX VERSION 0.0.1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
@@ -161,7 +161,9 @@ include_directories(lib)
 include_directories(SDK)
 
 ############# Components (plugins) #############
-add_subdirectory(SimplePlugin)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+	add_subdirectory(PawnPlugin)
+endif()
 
 target_compile_definitions(Server PUBLIC
 	WIN32_LEAN_AND_MEAN
@@ -171,7 +173,6 @@ target_compile_definitions(Server PUBLIC
 
 target_link_libraries(Server PUBLIC
 	CONAN_PKG::glm
-	pawn-runtime
 	raknet
 )
 
