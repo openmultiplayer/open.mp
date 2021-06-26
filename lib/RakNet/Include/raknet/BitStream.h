@@ -835,7 +835,7 @@ namespace RakNet
 	/// \param[in] currentValue The current value to write
 	/// \param[in] lastValue The last value to compare against
 	template <>
-		inline void BitStream::WriteDelta(bool currentValue, __attribute__((unused)) bool lastValue)
+		inline void BitStream::WriteDelta(bool currentValue, bool lastValue)
 	{
 #ifdef _MSC_VER
 #pragma warning(disable:4100)   // warning C4100: 'lastValue' : unreferenced formal parameter
@@ -954,7 +954,7 @@ namespace RakNet
 	/// \param[in] currentValue The current value to write
 	/// \param[in] lastValue The last value to compare against
 	template <>
-		inline void BitStream::WriteCompressedDelta(bool currentValue, __attribute__((unused)) bool lastValue)
+		inline void BitStream::WriteCompressedDelta(bool currentValue, bool lastValue)
 	{
 #ifdef _MSC_VER
 #pragma warning(disable:4100)   // warning C4100: 'lastValue' : unreferenced formal parameter

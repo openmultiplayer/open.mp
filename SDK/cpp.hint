@@ -1,0 +1,2 @@
+#define SDK_API __declspec(dllexport)
+#define SDK_API __declspec(dllimport)

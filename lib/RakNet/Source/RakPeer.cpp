@@ -1055,7 +1055,7 @@ unsigned short RakPeer::GetMaximumNumberOfPeers( void ) const
 // This can be called whether the client is active or not, and registered functions stay registered unless unregistered with
 // UnregisterAsRemoteProcedureCall
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-void RakPeer::RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPointer ) ( RPCParameters *rpcParms ) )
+void RakPeer::RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPointer ) ( RPCParameters *rpcParms, void* extra ), void* extra)
 {
 	if ( uniqueID == 0 ||
 #if RPCID_STRING
@@ -1064,7 +1064,7 @@ void RakPeer::RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPo
 			functionPointer == 0 )
 		return;
 
-	rpcMap.AddIdentifierWithFunction(uniqueID, (void*)functionPointer, false);
+	rpcMap.AddIdentifierWithFunction(uniqueID, (void*)functionPointer, false, extra);
 
 	/*
 	char uppercaseUniqueID[ 256 ];
@@ -1100,7 +1100,7 @@ void RakPeer::RegisterClassMemberRPC( RPCID  uniqueID, void *functionPointer )
 			functionPointer == 0 )
 		return;
 
-	rpcMap.AddIdentifierWithFunction(uniqueID, functionPointer, true);
+	rpcMap.AddIdentifierWithFunction(uniqueID, functionPointer, true, nullptr);
 }
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3120,7 +3120,7 @@ bool RakPeer::HandleRPCPacket( const char *data, int length, PlayerID playerId )
 		else
 #endif
 		{
-			node->staticFunctionPointer( &rpcParms );
+			node->staticFunctionPointer( &rpcParms, node->extraPointer );
 		}
 	}
 	else
@@ -3176,7 +3176,7 @@ bool RakPeer::HandleRPCPacket( const char *data, int length, PlayerID playerId )
 		else
 #endif
 		{
-			node->staticFunctionPointer( &rpcParms );
+			node->staticFunctionPointer( &rpcParms, node->extraPointer );
 		}
 
 

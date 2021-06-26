@@ -45,9 +45,9 @@ namespace RakNet
 	 /// Force casting of member functions to void *
 		union
 		{
-			void ( *staticFunctionPointer ) ( RPCParameters *rpcParms );
+			void ( *staticFunctionPointer ) ( RPCParameters *rpcParms, void* extra );
 			#if (defined(__GNUC__)  || defined(__GCCXML__))
-			void (*memberFunctionPointer)(void* _this, RPCParameters *rpcParms);
+			void (*memberFunctionPointer)(void* _this, RPCParameters *rpcParms, void* extra);
 			#else
 			void (__cdecl *memberFunctionPointer)(void* _this, RPCParameters *rpcParms);
 			#endif
@@ -57,6 +57,8 @@ namespace RakNet
 		
 		/// Is this a member function pointer?  True if so.  If false it's a regular C function.
 		bool isPointerToMember;
+
+		void* extraPointer;
 	};
 }
 
