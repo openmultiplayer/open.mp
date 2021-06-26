@@ -118,7 +118,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 
     bool readConstString(NetworkBitStreamValue::String& input) {
-        if (input.len > unsigned int(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+        if (input.len > (unsigned int)(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
             return false;
         }
 
