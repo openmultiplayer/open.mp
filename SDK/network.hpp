@@ -118,22 +118,30 @@ struct NetworkBitStreamValue {
 
 #undef NBSVCONS
 
-typedef std::vector<NetworkBitStreamValue> NetworkBitStreamValueList;
+typedef struct {
+	NetworkBitStreamValue* data;
+	size_t len;
+} NetworkBitStreamValueList;
 
 struct INetworkBitStream {
 	virtual bool write(const NetworkBitStreamValue& value) = 0;
 	virtual void read(NetworkBitStreamValue& input) = 0;
-	virtual bool read(NetworkBitStreamValueList& input) = 0;
+	virtual bool read(NetworkBitStreamValueList input) = 0;
 	virtual NetworkBitStreamValue read(const NetworkBitStreamValue& input) = 0;
-	virtual void free(NetworkBitStreamValueList& input) = 0;
+	virtual void free(NetworkBitStreamValueList input) = 0;
 };
 
+template <size_t Size>
 struct NetworkBitStreamValueReadRAII {
 	INetworkBitStream& bs;
-	NetworkBitStreamValueList data;
+	std::array<NetworkBitStreamValue, Size> data;
+
+	NetworkBitStreamValueList get() {
+		return { data.data(), data.size() };
+	}
 
 	~NetworkBitStreamValueReadRAII() {
-		bs.free(data);
+		bs.free(get());
 	}
 };
 
