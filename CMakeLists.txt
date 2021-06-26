@@ -172,7 +172,7 @@ target_compile_definitions(Server PUBLIC
 )
 
 target_link_libraries(Server PUBLIC
-	CONAN_PKG::glm
+	SDK
 	raknet
 )
 
