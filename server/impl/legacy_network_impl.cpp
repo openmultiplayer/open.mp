@@ -277,11 +277,11 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork() {
 
 static RakNet::BitStream GetBitStream(RakNet::RPCParameters& rpcParams)
 {
-    size_t
+    unsigned int
         bits = rpcParams.numberOfBitsOfData;
     if (bits == 0)
         return RakNet::BitStream();
-    size_t
+    unsigned int
         bytes = (bits - 1) / 8 + 1;
     return RakNet::BitStream(rpcParams.input, bytes, false);
 }
@@ -297,13 +297,13 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 
     IPool<IPlayer, MAX_PLAYERS>& pool = network->core.players.getPool();
 
-    size_t freeIdx = pool.findFreeIndex();
+    int freeIdx = pool.findFreeIndex();
     if (freeIdx == -1) {
         // No free index
         return;
     }
 
-    size_t pid = pool.claim(freeIdx);
+    int pid = pool.claim(freeIdx);
     if (pid == -1) {
         // No free index
         return;
