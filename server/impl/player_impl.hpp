@@ -109,7 +109,7 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         };
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
             if (target != &peer) {
-                target->getNetwork().sendRPC(137, { PlayerJoinOutgoing.data(), PlayerJoinOutgoing.size() });
+                target->getNetwork().sendRPC(137, PlayerJoinOutgoing);
             }
         }
 
@@ -123,7 +123,7 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
             NetworkBitStreamValue::UINT8(reason)
         };
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
-            target->getNetwork().sendRPC(138, { data.data(), data.size() });
+            target->getNetwork().sendRPC(138, data);
         }
     }
 };

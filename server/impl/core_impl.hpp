@@ -87,7 +87,7 @@ struct Core final : public ICore, public PlayerEventHandler {
             NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(serverName)) /* ServerName */,
             NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(NetworkBitStreamValue::Array<uint8_t>::FromStdArray(vehicles.models())) /* VehicleModels */
         };
-        player.getNetwork().sendRPC(139, { PlayerConnectOutgoing.data(), PlayerConnectOutgoing.size() });
+        player.getNetwork().sendRPC(139, PlayerConnectOutgoing);
     }
 
     void run(uint32_t tickUS) {
