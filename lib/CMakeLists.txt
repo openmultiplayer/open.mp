@@ -124,3 +124,6 @@ set_property(TARGET raknet PROPERTY FOLDER "lib")
 # ---
 add_conan_lib(CONAN_PKG::glm glm/0.9.9.8)
 
+# JSON
+# ----
+add_conan_lib(CONAN_PKG::nlohmann_json nlohmann_json/3.9.1)

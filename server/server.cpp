@@ -3,6 +3,7 @@
 struct IUnknown;
 #include <Windows.h>
 #include "impl/core_impl.hpp"
+#include <nlohmann/json.hpp>
 
 typedef bool (*PluginEntryPoint_t)(ICore* iface);
 
