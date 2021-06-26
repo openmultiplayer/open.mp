@@ -145,13 +145,16 @@ struct NetworkBitStreamValueReadRAII {
 	}
 };
 
-struct GlobalNetworkEventHandler {
-	virtual bool receivedPacket(IPlayer& peer, int id, INetworkBitStream& bs) {}
-	virtual bool receivedRPC(IPlayer& peer, int id, INetworkBitStream& bs) {}
-	virtual bool incomingConnection(int id, uint64_t address, uint16_t port) {}
+struct NetworkEventHandler {
+	virtual bool incomingConnection(int id, uint64_t address, uint16_t port) { return true; }
 };
 
-struct SingleNetworkEventHandler {
+struct NetworkInOutEventHandler {
+	virtual bool receivedPacket(IPlayer& peer, int id, INetworkBitStream& bs) { return true; }
+	virtual bool receivedRPC(IPlayer& peer, int id, INetworkBitStream& bs) { return true; }
+};
+
+struct SingleNetworkInOutEventHandler {
 	virtual bool received(IPlayer& peer, INetworkBitStream& bs) { return true; }
 };
 
@@ -162,9 +165,10 @@ enum class ENetworkType {
 
 struct INetwork {
 	virtual ENetworkType getNetworkType() = 0;
-	virtual IEventDispatcher<GlobalNetworkEventHandler>& getGlobalEventDispatcher() = 0;
-	virtual IIndexedEventDispatcher<SingleNetworkEventHandler, 256>& getPerRPCEventDispatcher() = 0;
-	virtual IIndexedEventDispatcher<SingleNetworkEventHandler, 256>& getPerPacketEventDispatcher() = 0;
+	virtual IEventDispatcher<NetworkEventHandler>& getEventDispatcher() = 0;
+	virtual IEventDispatcher<NetworkInOutEventHandler>& getInOutEventDispatcher() = 0;
+	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerRPCInOutEventDispatcher() = 0;
+	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() = 0;
 	virtual bool sendPacket(IPlayer& peer, int id, const NetworkBitStreamValueList& params) = 0;
 	virtual bool sendRPC(IPlayer& peer, int id, const NetworkBitStreamValueList& params) = 0;
 	virtual bool sendRPC(int id, const NetworkBitStreamValueList& params) = 0;

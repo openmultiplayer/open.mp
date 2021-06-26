@@ -63,7 +63,7 @@ struct Player final : public IPlayer, public EntityIDProvider {
     }
 };
 
-struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public PlayerEventHandler, public SingleNetworkEventHandler {
+struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public PlayerEventHandler, public SingleNetworkInOutEventHandler {
     ICore& core;
 
     PlayerPool(ICore& core)
