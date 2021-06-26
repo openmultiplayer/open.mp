@@ -162,6 +162,35 @@ struct SingleNetworkInOutEventHandler {
 	virtual bool received(IPlayer& peer, INetworkBitStream& bs) { return true; }
 };
 
+namespace RakNetLegacy {
+	namespace Incoming {
+		namespace RPC {
+			enum {
+				PlayerJoin = 25,
+			};
+		}
+		namespace Packet {
+			enum {
+
+			};
+		}
+	}
+	namespace Outgoing {
+		namespace RPC {
+			enum {
+				PlayerJoin = 137,
+				PlayerQuit = 138,
+				PlayerInit = 139,
+			};
+		}
+		namespace Packet {
+			enum {
+
+			};
+		}
+	}
+}
+
 enum class ENetworkType {
 	RakNetLegacy,
 	ENet,
