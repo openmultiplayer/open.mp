@@ -26,12 +26,16 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             bs.Write(input.u16); break;
         case NetworkBitStreamValueType::UINT32:
             bs.Write(input.u32); break;
+        case NetworkBitStreamValueType::UINT64:
+            bs.Write(input.u64); break;
         case NetworkBitStreamValueType::INT8:
             bs.Write(input.i8); break;
         case NetworkBitStreamValueType::INT16:
             bs.Write(input.i16); break;
         case NetworkBitStreamValueType::INT32:
             bs.Write(input.i32); break;
+        case NetworkBitStreamValueType::INT64:
+            bs.Write(input.i64); break;
         case NetworkBitStreamValueType::DOUBLE:
             bs.Write(input.d); break;
         case NetworkBitStreamValueType::FLOAT:
@@ -52,7 +56,8 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             writeDynamicString<uint32_t>(input.s); break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
             writeConstArray<uint8_t>(input.au8); break;
-            // todo more cases
+        case NetworkBitStreamValueType::NONE:
+            assert(false); break;
         }
         return true;
     }
@@ -137,12 +142,16 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = bs.Read(input.u16); break;
         case NetworkBitStreamValueType::UINT32:
             success = bs.Read(input.u32); break;
+        case NetworkBitStreamValueType::UINT64:
+            success = bs.Read(input.u64); break;
         case NetworkBitStreamValueType::INT8:
             success = bs.Read(input.i8); break;
         case NetworkBitStreamValueType::INT16:
             success = bs.Read(input.i16); break;
         case NetworkBitStreamValueType::INT32:
             success = bs.Read(input.i32); break;
+        case NetworkBitStreamValueType::INT64:
+            success = bs.Read(input.i64); break;
         case NetworkBitStreamValueType::DOUBLE:
             success = bs.Read(input.d); break;
         case NetworkBitStreamValueType::FLOAT:
@@ -163,8 +172,10 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = readDynamicString<uint32_t>(input.s); break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
             success = readConstArray<uint8_t>(input.au8); break;
-            // todo more cases
+        case NetworkBitStreamValueType::NONE:
+            assert(false); break;
         }
+
         if (!success) {
             input.type = NetworkBitStreamValueType::NONE;
         }
@@ -176,10 +187,12 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            delete input.s.str;
+            delete[] input.s.str;
             break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
-            delete input.au8.data;
+            delete[] input.au8.data;
+            break;
+        default:
             break;
         }
         input.type = NetworkBitStreamValueType::NONE;

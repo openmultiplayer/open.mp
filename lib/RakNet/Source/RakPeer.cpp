@@ -1350,11 +1350,12 @@ bool RakPeer::RPC( RPCID  uniqueID, const char *data, unsigned int bitLength, Pa
 		RakNetTime stopWaitingTime;
 //		RPCIndex arrivedRPCIndex;
 //		char uniqueIdentifier[256];
-		if (reliability==UNRELIABLE)
-			if (playerId==UNASSIGNED_PLAYER_ID)
-				stopWaitingTime=RakNet::GetTime()+1500; // Lets guess the ave. ping is 500.  Not important to be very accurate
+		if (reliability == UNRELIABLE) {
+			if (playerId == UNASSIGNED_PLAYER_ID)
+				stopWaitingTime = RakNet::GetTime() + 1500; // Lets guess the ave. ping is 500.  Not important to be very accurate
 			else
-				stopWaitingTime=RakNet::GetTime()+GetAveragePing(playerId)*3;
+				stopWaitingTime = RakNet::GetTime() + GetAveragePing(playerId) * 3;
+		}
 
 		// For reliable messages, block until we get a reply or the connection is lost
 		// For unreliable messages, block until we get a reply, the connection is lost, or 3X the ping passes
@@ -3035,7 +3036,7 @@ bool RakPeer::HandleRPCPacket( const char *data, int length, PlayerID playerId )
 		return false;
 	}
 
-	networkID = { 0 };
+	networkID = { { 0 } };
 #if RAKNET_LEGACY
 	networkIDIsEncoded = false;
 #else
@@ -4205,7 +4206,6 @@ namespace RakNet
 		BufferedCommandStruct *bcs;
 		bool callerDataAllocationUsed;
 		RakNetStatisticsStruct *rnss;
-		int sentThisTick=0;
 
 		do
 		{
@@ -4487,7 +4487,7 @@ namespace RakNet
 				while ( bitSize > 0 )
 				{
 					// These types are for internal use and should never arrive from a network packet
-					if (data[0]==ID_CONNECTION_ATTEMPT_FAILED && data[0]==ID_MODIFIED_PACKET)
+					if (data[0]==ID_CONNECTION_ATTEMPT_FAILED || data[0]==ID_MODIFIED_PACKET)
 					{
 						RakAssert(0);
 						continue;
