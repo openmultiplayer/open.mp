@@ -5,19 +5,24 @@
 
 template <size_t PacketCount, size_t RPCCount>
 struct Network : public INetwork {
-    EventDispatcher<GlobalNetworkEventHandler> networkEventDispatcher;
-    IndexedEventDispatcher<SingleNetworkEventHandler, PacketCount> rpcEventDispatcher;
-    IndexedEventDispatcher<SingleNetworkEventHandler, RPCCount> packetEventDispatcher;
+    EventDispatcher<NetworkEventHandler> networkEventDispatcher;
+    EventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
+    IndexedEventDispatcher<SingleNetworkInOutEventHandler, PacketCount> rpcInOutEventDispatcher;
+    IndexedEventDispatcher<SingleNetworkInOutEventHandler, RPCCount> packetInOutEventDispatcher;
 
-    IEventDispatcher<GlobalNetworkEventHandler>& getGlobalEventDispatcher() override {
+    IEventDispatcher<NetworkEventHandler>& getEventDispatcher() override {
         return networkEventDispatcher;
     }
 
-    IIndexedEventDispatcher<SingleNetworkEventHandler, 256>& getPerRPCEventDispatcher() override {
-        return rpcEventDispatcher;
+    IEventDispatcher<NetworkInOutEventHandler>& getInOutEventDispatcher() override {
+        return inOutEventDispatcher;
     }
 
-    IIndexedEventDispatcher<SingleNetworkEventHandler, 256>& getPerPacketEventDispatcher() override {
-        return packetEventDispatcher;
+    IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerRPCInOutEventDispatcher() override {
+        return rpcInOutEventDispatcher;
+    }
+
+    IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() override {
+        return packetInOutEventDispatcher;
     }
 };

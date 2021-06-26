@@ -63,7 +63,7 @@ struct Player final : public IPlayer, public EntityIDProvider {
     }
 };
 
-struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public PlayerEventHandler {
+struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public PlayerEventHandler, public SingleNetworkInOutEventHandler {
     ICore& core;
 
     PlayerPool(ICore& core)
@@ -76,42 +76,49 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         eventDispatcher.removeEventHandler(this);
     }
 
-    void onConnect(IPlayer& player, INetworkBitStream& bs) override {
-        auto PlayerJoinIncoming = NetworkBitStreamValueReadRAII{
+    // RPC 25 (OnPlayerConnect)
+    bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        NetworkBitStreamValueReadRAII<6> PlayerJoinIncoming{
             bs,
-            {
+            {{
                 { NetworkBitStreamValueType::UINT32 /* VersionNumber */},
                 { NetworkBitStreamValueType::UINT8 /* Modded */ },
                 { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* Name */ },
                 { NetworkBitStreamValueType::UINT32 /* ChallengeResponse */ },
                 { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* Key */ },
                 { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* VersionString */ }
-            }
+            }}
         };
-        if (bs.read(PlayerJoinIncoming.data)) {
-            player.versionNumber() = PlayerJoinIncoming.data[0].u32;
-            player.modded() = PlayerJoinIncoming.data[1].u8;
-            player.name() = PlayerJoinIncoming.data[2].s;
-            player.challengeResponse() = PlayerJoinIncoming.data[3].u32;
-            player.key() = PlayerJoinIncoming.data[4].s;
-            player.versionString() = PlayerJoinIncoming.data[5].s;
+        if (bs.read(PlayerJoinIncoming.get())) {
+            peer.versionNumber() = PlayerJoinIncoming.data[0].u32;
+            peer.modded() = PlayerJoinIncoming.data[1].u8;
+            peer.name() = PlayerJoinIncoming.data[2].s;
+            peer.challengeResponse() = PlayerJoinIncoming.data[3].u32;
+            peer.key() = PlayerJoinIncoming.data[4].s;
+            peer.versionString() = PlayerJoinIncoming.data[5].s;
+        }
+        else {
+            return false;
         }
 
-        auto PlayerJoinOutgoing = std::vector<NetworkBitStreamValue>{
-            NetworkBitStreamValue::UINT16(uint16_t(player.getID())), /* PlayerID */
+        std::array<NetworkBitStreamValue, 4> PlayerJoinOutgoing {
+            NetworkBitStreamValue::UINT16(uint16_t(peer.getID())), /* PlayerID */
             NetworkBitStreamValue::INT32(0xFF0000FF), /* Colour */
             NetworkBitStreamValue::UINT8(false), /* IsNPC */
-            NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(player.name())) /* Name */
+            NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(peer.name())) /* Name */
         };
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
-            if (target != &player) {
+            if (target != &peer) {
                 target->getNetwork().sendRPC(137, PlayerJoinOutgoing);
             }
         }
+
+        eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
+        return true;
     }
 
     void onDisconnect(IPlayer& player, int reason) override {
-        auto data = std::vector<NetworkBitStreamValue>{
+        std::array<NetworkBitStreamValue, 2> data {
             NetworkBitStreamValue::UINT16(uint16_t(player.getID())), /* PlayerID */
             NetworkBitStreamValue::UINT8(reason)
         };
