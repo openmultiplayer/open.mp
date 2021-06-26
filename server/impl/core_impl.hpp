@@ -18,13 +18,13 @@ struct Core final : public ICore, public PlayerEventHandler {
         network(*this),
         players(*this)
     {
-        network.getPerRPCEventDispatcher().addEventHandler(&players, 25);
+        network.getPerRPCInOutEventDispatcher().addEventHandler(&players, 25);
         players.getEventDispatcher().addEventHandler(this);
     }
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
-        network.getPerRPCEventDispatcher().removeEventHandler(&players, 25);
+        network.getPerRPCInOutEventDispatcher().removeEventHandler(&players, 25);
     }
 
     int getVersion() override {
@@ -58,7 +58,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     void onConnect(IPlayer& player) override {
         std::string serverName("heh lol");
 
-        std::array<NetworkBitStreamValue, 27> PlayerConnectOutgoing = {
+        std::array<NetworkBitStreamValue, 27> PlayerConnectOutgoing {
             NetworkBitStreamValue::BIT(true) /* EnableZoneNames */,
             NetworkBitStreamValue::BIT(true) /* UsePlayerPedAnims */,
             NetworkBitStreamValue::BIT(true) /* AllowInteriorWeapons */,
