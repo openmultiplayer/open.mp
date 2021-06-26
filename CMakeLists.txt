@@ -118,9 +118,6 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
 	add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 endif()
 
-add_subdirectory(lib)
-
-
 function(GroupSourcesByFolder target)
 	set(SOURCE_GROUP_DELIMITER "/")
 	set(last_dir "")
@@ -146,70 +143,50 @@ function(GroupSourcesByFolder target)
 	endif()
 endfunction()
 
+add_subdirectory(lib)
+add_subdirectory(SDK)
 
-set(PROJECT server-lib)
-add_library(server-lib STATIC)
+set(PROJECT Server)
+add_executable(Server "")
 
-if(MSVC)
-	target_compile_options(server-lib PUBLIC "/bigobj")
-endif()
-
-enable_warnings(server-lib)
+# enable_warnings(Server)
 
 file(GLOB_RECURSE source_list "${CMAKE_CURRENT_SOURCE_DIR}/server/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/server/*.hpp")
 
-set_property(TARGET server-lib PROPERTY SOURCES ${source_list})
+set_property(TARGET Server PROPERTY SOURCES ${source_list})
 
-GroupSourcesByFolder(server-lib)
+GroupSourcesByFolder(Server)
 
 include_directories(lib)
+include_directories(SDK)
 
-target_compile_definitions(server-lib PUBLIC
+############# Components (plugins) #############
+add_subdirectory(SimplePlugin)
+
+target_compile_definitions(Server PUBLIC
 	WIN32_LEAN_AND_MEAN
 	VC_EXTRALEAN
 	NOGDI
 )
 
-target_link_libraries(server-lib PUBLIC
+target_link_libraries(Server PUBLIC
 	CONAN_PKG::glm
 	pawn-runtime
 	raknet
 )
 
 if(MSVC)
-	target_link_libraries(server-lib PRIVATE
+	target_link_libraries(Server PRIVATE
 		mpr
 		shlwapi
 	)
 else()
-	target_link_libraries(server-lib PRIVATE
+	target_link_libraries(Server PRIVATE
 		dl
 	)
 endif()
 
-set_property(TARGET server-lib PROPERTY OUTPUT_NAME omp-server-static)
-set_property(TARGET server-lib PROPERTY FOLDER "server")
+set_property(TARGET Server PROPERTY OUTPUT_NAME omp-server)
+set_property(TARGET Server PROPERTY FOLDER "Server")
 
-set(PROJECT server)
-
-add_executable(server "")
-
-# Make sure the server-lib is wholly linked as to preserve all global initialization
-if(MSVC)
-    set(SERVER_LIB_LINK server-lib)
-    target_link_options(server PUBLIC "/WHOLEARCHIVE:$<TARGET_FILE:server-lib>")
-else()
-    set(SERVER_LIB_LINK -Wl,--whole-archive server-lib -Wl,--no-whole-archive)
-endif()
-
-target_link_libraries(server PRIVATE ${SERVER_LIB_LINK})
-
-# Get the test source files again, because we removed them from the list for the purpose of filters.
-set_property(TARGET server PROPERTY SOURCES
-	"${CMAKE_CURRENT_SOURCE_DIR}/main.cpp"
-)
-
-set_property(TARGET server PROPERTY OUTPUT_NAME omp-server)
-set_property(TARGET server PROPERTY FOLDER "server")
-
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT server)
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Server)
