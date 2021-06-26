@@ -156,10 +156,9 @@ endif()
 
 enable_warnings(server-lib)
 
-set_property(TARGET server-lib PROPERTY SOURCES
-	"${CMAKE_CURRENT_SOURCE_DIR}/server/server.cpp"
-	"${CMAKE_CURRENT_SOURCE_DIR}/server/sdk/test.cpp"
-)
+file(GLOB_RECURSE source_list "${CMAKE_CURRENT_SOURCE_DIR}/server/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/server/*.hpp")
+
+set_property(TARGET server-lib PROPERTY SOURCES ${source_list})
 
 GroupSourcesByFolder(server-lib)
 
