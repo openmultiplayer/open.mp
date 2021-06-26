@@ -1,0 +1,68 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.31321.278
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Server", "server\server.vcxproj", "{4E480087-A549-49BB-9131-6EB4BE4EB980}"
+	ProjectSection(ProjectDependencies) = postProject
+		{95538A63-2050-40A8-A70E-D9B27F74327B} = {95538A63-2050-40A8-A70E-D9B27F74327B}
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9} = {524C52EB-F03F-4557-87AE-36D3DFF6D7E9}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SimplePlugin", "SimplePlugin\SimplePlugin.vcxproj", "{961245DE-1007-408D-B421-8FD34D2CA93E}"
+	ProjectSection(ProjectDependencies) = postProject
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9} = {524C52EB-F03F-4557-87AE-36D3DFF6D7E9}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SDK", "SDK\SDK.vcxproj", "{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RakNet", "lib\RakNet\RakNet.vcxproj", "{95538A63-2050-40A8-A70E-D9B27F74327B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Debug|x64.ActiveCfg = Debug|x64
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Debug|x64.Build.0 = Debug|x64
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Debug|x86.ActiveCfg = Debug|Win32
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Debug|x86.Build.0 = Debug|Win32
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Release|x64.ActiveCfg = Release|x64
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Release|x64.Build.0 = Release|x64
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Release|x86.ActiveCfg = Release|Win32
+		{4E480087-A549-49BB-9131-6EB4BE4EB980}.Release|x86.Build.0 = Release|Win32
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Debug|x64.ActiveCfg = Debug|x64
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Debug|x64.Build.0 = Debug|x64
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Debug|x86.ActiveCfg = Debug|Win32
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Debug|x86.Build.0 = Debug|Win32
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Release|x64.ActiveCfg = Release|x64
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Release|x64.Build.0 = Release|x64
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Release|x86.ActiveCfg = Release|Win32
+		{961245DE-1007-408D-B421-8FD34D2CA93E}.Release|x86.Build.0 = Release|Win32
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Debug|x64.ActiveCfg = Debug|x64
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Debug|x64.Build.0 = Debug|x64
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Debug|x86.ActiveCfg = Debug|Win32
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Debug|x86.Build.0 = Debug|Win32
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Release|x64.ActiveCfg = Release|x64
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Release|x64.Build.0 = Release|x64
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Release|x86.ActiveCfg = Release|Win32
+		{524C52EB-F03F-4557-87AE-36D3DFF6D7E9}.Release|x86.Build.0 = Release|Win32
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Debug|x64.ActiveCfg = Debug|x64
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Debug|x64.Build.0 = Debug|x64
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Debug|x86.ActiveCfg = Debug|Win32
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Debug|x86.Build.0 = Debug|Win32
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Release|x64.ActiveCfg = Release|x64
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Release|x64.Build.0 = Release|x64
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Release|x86.ActiveCfg = Release|Win32
+		{95538A63-2050-40A8-A70E-D9B27F74327B}.Release|x86.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FB3974E9-7474-47B9-B18D-53272EDF1BFD}
+	EndGlobalSection
+EndGlobal

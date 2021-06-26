@@ -357,9 +357,9 @@ bool RakClient::DeleteCompressionLayer( bool inputLayer )
 	return RakPeer::DeleteCompressionLayer( inputLayer );
 }
 
-void RakClient::RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPointer ) ( RPCParameters *rpcParms ) )
+void RakClient::RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPointer ) ( RPCParameters *rpcParms, void* extra ), void* extra )
 {
-	RakPeer::RegisterAsRemoteProcedureCall( uniqueID, functionPointer );
+	RakPeer::RegisterAsRemoteProcedureCall( uniqueID, functionPointer, extra );
 }
 
 void RakClient::RegisterClassMemberRPC( RPCID  uniqueID, void *functionPointer )

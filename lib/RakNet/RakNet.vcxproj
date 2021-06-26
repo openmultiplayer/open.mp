@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Include\raknet\BigTypes.h" />
+    <ClInclude Include="Include\raknet\BitStream.h" />
+    <ClInclude Include="Include\raknet\CheckSum.h" />
+    <ClInclude Include="Include\raknet\ClientContextStruct.h" />
+    <ClInclude Include="Include\raknet\CommandParserInterface.h" />
+    <ClInclude Include="Include\raknet\ConsoleServer.h" />
+    <ClInclude Include="Include\raknet\DataBlockEncryptor.h" />
+    <ClInclude Include="Include\raknet\DS_BinarySearchTree.h" />
+    <ClInclude Include="Include\raknet\DS_BPlusTree.h" />
+    <ClInclude Include="Include\raknet\DS_HuffmanEncodingTree.h" />
+    <ClInclude Include="Include\raknet\DS_HuffmanEncodingTreeNode.h" />
+    <ClInclude Include="Include\raknet\DS_LinkedList.h" />
+    <ClInclude Include="Include\raknet\DS_List.h" />
+    <ClInclude Include="Include\raknet\DS_Map.h" />
+    <ClInclude Include="Include\raknet\DS_MemoryPool.h" />
+    <ClInclude Include="Include\raknet\DS_OrderedList.h" />
+    <ClInclude Include="Include\raknet\DS_Queue.h" />
+    <ClInclude Include="Include\raknet\DS_QueueLinkedList.h" />
+    <ClInclude Include="Include\raknet\DS_RangeList.h" />
+    <ClInclude Include="Include\raknet\Export.h" />
+    <ClInclude Include="Include\raknet\GetTime.h" />
+    <ClInclude Include="Include\raknet\InternalPacket.h" />
+    <ClInclude Include="Include\raknet\InternalPacketPool.h" />
+    <ClInclude Include="Include\raknet\MTUSize.h" />
+    <ClInclude Include="Include\raknet\NetworkIDGenerator.h" />
+    <ClInclude Include="Include\raknet\NetworkTypes.h" />
+    <ClInclude Include="Include\raknet\PacketEnumerations.h" />
+    <ClInclude Include="Include\raknet\PacketLogger.h" />
+    <ClInclude Include="Include\raknet\PacketPriority.h" />
+    <ClInclude Include="Include\raknet\PluginInterface.h" />
+    <ClInclude Include="Include\raknet\RakAssert.h" />
+    <ClInclude Include="Include\raknet\RakClient.h" />
+    <ClInclude Include="Include\raknet\RakClientInterface.h" />
+    <ClInclude Include="Include\raknet\RakNetCommandParser.h" />
+    <ClInclude Include="Include\raknet\RakNetDefines.h" />
+    <ClInclude Include="Include\raknet\RakNetStatistics.h" />
+    <ClInclude Include="Include\raknet\RakNetTransport.h" />
+    <ClInclude Include="Include\raknet\RakNetworkFactory.h" />
+    <ClInclude Include="Include\raknet\RakPeer.h" />
+    <ClInclude Include="Include\raknet\RakPeerInterface.h" />
+    <ClInclude Include="Include\raknet\RakServer.h" />
+    <ClInclude Include="Include\raknet\RakServerInterface.h" />
+    <ClInclude Include="Include\raknet\RakSleep.h" />
+    <ClInclude Include="Include\raknet\Rand.h" />
+    <ClInclude Include="Include\raknet\ReliabilityLayer.h" />
+    <ClInclude Include="Include\raknet\ReplicaEnums.h" />
+    <ClInclude Include="Include\raknet\rijndael-boxes.h" />
+    <ClInclude Include="Include\raknet\rijndael.h" />
+    <ClInclude Include="Include\raknet\RouterInterface.h" />
+    <ClInclude Include="Include\raknet\RPCMap.h" />
+    <ClInclude Include="Include\raknet\RPCNode.h" />
+    <ClInclude Include="Include\raknet\RSACrypt.h" />
+    <ClInclude Include="Include\raknet\SHA1.h" />
+    <ClInclude Include="Include\raknet\SimpleMutex.h" />
+    <ClInclude Include="Include\raknet\SingleProducerConsumer.h" />
+    <ClInclude Include="Include\raknet\SocketLayer.h" />
+    <ClInclude Include="Include\raknet\StringCompressor.h" />
+    <ClInclude Include="Include\raknet\StringTable.h" />
+    <ClInclude Include="Include\raknet\TransportInterface.h" />
+    <ClInclude Include="Include\raknet\Types.h" />
+    <ClInclude Include="Include\raknet\_findfirst.h" />
+    <ClInclude Include="SAMPRakNet.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SAMPRakNet.cpp" />
+    <ClCompile Include="Source\BitStream.cpp" />
+    <ClCompile Include="Source\CheckSum.cpp" />
+    <ClCompile Include="Source\CommandParserInterface.cpp" />
+    <ClCompile Include="Source\ConsoleServer.cpp" />
+    <ClCompile Include="Source\DataBlockEncryptor.cpp" />
+    <ClCompile Include="Source\DS_HuffmanEncodingTree.cpp" />
+    <ClCompile Include="Source\GetTime.cpp" />
+    <ClCompile Include="Source\InternalPacketPool.cpp" />
+    <ClCompile Include="Source\NetworkTypes.cpp" />
+    <ClCompile Include="Source\PluginInterface.cpp" />
+    <ClCompile Include="Source\RakClient.cpp" />
+    <ClCompile Include="Source\RakNetCommandParser.cpp" />
+    <ClCompile Include="Source\RakNetworkFactory.cpp" />
+    <ClCompile Include="Source\RakPeer.cpp" />
+    <ClCompile Include="Source\rakserver.cpp" />
+    <ClCompile Include="Source\RakSleep.cpp" />
+    <ClCompile Include="Source\Rand.cpp" />
+    <ClCompile Include="Source\ReliabilityLayer.cpp" />
+    <ClCompile Include="Source\rijndael.cpp" />
+    <ClCompile Include="Source\RPCMap.cpp" />
+    <ClCompile Include="Source\SHA1.cpp" />
+    <ClCompile Include="Source\SimpleMutex.cpp" />
+    <ClCompile Include="Source\SocketLayer.cpp" />
+    <ClCompile Include="Source\StringCompressor.cpp" />
+    <ClCompile Include="Source\StringTable.cpp" />
+    <ClCompile Include="Source\_findfirst.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Source\Makefile" />
+    <None Include="Source\Makefile.am" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>16.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{95538a63-2050-40a8-a70e-d9b27f74327b}</ProjectGuid>
+    <RootNamespace>RakNet</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v142</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;RAKNET_LEGACY;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)\Include\raknet;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+    <Lib>
+      <AdditionalDependencies>Ws2_32.lib</AdditionalDependencies>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;RAKNET_LEGACY;_CRT_SECURE_NO_WARNINGS;_WINSOCK_DEPRECATED_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir)\Include\raknet;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>
+      </SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

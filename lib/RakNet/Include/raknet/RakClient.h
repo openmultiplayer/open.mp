@@ -191,7 +191,7 @@ namespace RakNet
 		/// Register a C or static member function as available for calling as a remote procedure call
 		/// \param[in] uniqueID: A null-terminated unique string to identify this procedure.  Recommended you use the macro CLASS_MEMBER_ID for class member functions
 		/// \param[in] functionPointer(...): The name of the function to be used as a function pointer. This can be called whether active or not, and registered functions stay registered unless unregistered
-		void RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPointer ) ( RPCParameters *rpcParms ) ) override;
+		void RegisterAsRemoteProcedureCall( RPCID  uniqueID, void ( *functionPointer ) ( RPCParameters *rpcParms, void* extra ), void* extra ) override;
 
 		/// \ingroup RAKNET_RPC
 		/// Register a C++ member function as available for calling as a remote procedure call.
