@@ -162,7 +162,7 @@ include_directories(SDK)
 
 ############# Components (plugins) #############
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	add_subdirectory(PawnPlugin)
+	add_subdirectory(Server/Components/PawnPlugin)
 endif()
 
 target_compile_definitions(Server PUBLIC
