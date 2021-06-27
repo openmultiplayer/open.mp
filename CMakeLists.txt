@@ -126,7 +126,7 @@ function(GroupSourcesByFolder target)
 	get_target_property(sources ${target} SOURCES)
 
 	foreach(file ${sources})
-		file(RELATIVE_PATH relative_file "${PROJECT_SOURCE_DIR}" ${file})
+		file(RELATIVE_PATH relative_file "${CMAKE_CURRENT_SOURCE_DIR}" ${file})
 		get_filename_component(dir "${relative_file}" PATH)
 		if(NOT "${dir}" STREQUAL "${last_dir}")
 			if(files)
@@ -151,11 +151,19 @@ add_executable(Server "")
 
 # enable_warnings(Server)
 
-file(GLOB_RECURSE source_list "${CMAKE_CURRENT_SOURCE_DIR}/server/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/server/*.hpp")
+file(GLOB_RECURSE source_list "${CMAKE_CURRENT_SOURCE_DIR}/Server/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/Server/*.hpp")
+
+set (EXCLUDE_COMPONENTS_DIR "Server/Components")
+foreach (TMP_PATH ${source_list})
+	string (FIND ${TMP_PATH} ${EXCLUDE_COMPONENTS_DIR} EXCLUDE_DIR_FOUND)
+	if (NOT ${EXCLUDE_DIR_FOUND} EQUAL -1)
+		list (REMOVE_ITEM source_list ${TMP_PATH})
+	endif ()
+endforeach(TMP_PATH)
 
 set_property(TARGET Server PROPERTY SOURCES ${source_list})
 
-GroupSourcesByFolder(Server)
+GroupSourcesByFolder(Server ${CMAKE_CURRENT_SOURCE_DIR})
 
 include_directories(lib)
 include_directories(SDK)
