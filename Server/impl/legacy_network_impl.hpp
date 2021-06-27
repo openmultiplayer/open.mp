@@ -210,7 +210,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
     ~RakNetLegacyNetwork();
 
     ENetworkType getNetworkType() override {
-        return ENetworkType::RakNetLegacy;
+        return ENetworkType_RakNetLegacy;
     }
 
     bool sendPacket(IPlayer& player, int id, NetworkBitStreamValueList params) override {
@@ -224,7 +224,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
         return rakNetServer.Send(&bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, ridFromPID[player.getID()], false);
     }
 
-    bool sendRPC(int id, NetworkBitStreamValueList params) override {
+    bool broadcastRPC(int id, NetworkBitStreamValueList params) override {
         RakNet::BitStream bs;
         RakNetLegacyBitStream lbs(bs);
         for (size_t i = 0; i < params.len; ++i) {
