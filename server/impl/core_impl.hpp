@@ -11,26 +11,26 @@
 
 struct Core final : public ICore, public PlayerEventHandler {
     EventDispatcher<CoreEventHandler> eventDispatcher;
-    RakNetLegacyNetwork network;
+    RakNetLegacyNetwork legacyNetwork;
     PlayerPool players;
     VehiclePool vehicles;
     json props;
 
     Core() :
-        network(*this),
+        legacyNetwork(*this),
         players(*this)
     {
         std::ifstream ifs("config.json");
         if (ifs.good()) {
             props = json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
         }
-        network.getPerRPCInOutEventDispatcher().addEventHandler(&players, RakNetLegacy::Incoming::RPC::PlayerJoin);
+        addPerRPCEventHandler<NetCode::RPC::PlayerConnect>(&players);
         players.getEventDispatcher().addEventHandler(this);
     }
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
-        network.getPerRPCInOutEventDispatcher().removeEventHandler(&players, RakNetLegacy::Incoming::RPC::PlayerJoin);
+        removePerRPCEventHandler<NetCode::RPC::PlayerConnect>(&players);
     }
 
     int getVersion() override {
@@ -45,16 +45,16 @@ struct Core final : public ICore, public PlayerEventHandler {
         printf("\r\n");
     }
 
-    INetwork& getNetworkInterface() override {
-        return network;
-    }
-
     IPlayerPool& getPlayers() override {
         return players;
     }
 
     IVehiclePool& getVehicles() override {
         return vehicles;
+    }
+
+    std::vector<INetwork*> getNetworks() override {
+        return { &legacyNetwork };
     }
 
     IEventDispatcher<CoreEventHandler>& getEventDispatcher() override {
@@ -68,36 +68,36 @@ struct Core final : public ICore, public PlayerEventHandler {
     void onConnect(IPlayer& player) override {
         std::string serverName("heh lol");
 
-        std::array<NetworkBitStreamValue, 27> PlayerConnectOutgoing {
-            NetworkBitStreamValue::BIT(true) /* EnableZoneNames */,
-            NetworkBitStreamValue::BIT(true) /* UsePlayerPedAnims */,
-            NetworkBitStreamValue::BIT(true) /* AllowInteriorWeapons */,
-            NetworkBitStreamValue::BIT(true) /* UseLimitGlobalChatRadius */,
-            NetworkBitStreamValue::FLOAT(45.f) /* LimitGlobalChatRadius */,
-            NetworkBitStreamValue::BIT(true) /* EnableStuntBonus */,
-            NetworkBitStreamValue::FLOAT(45.f) /* SetNameTagDrawDistance */,
-            NetworkBitStreamValue::BIT(true) /* DisableInteriorEnterExits */,
-            NetworkBitStreamValue::BIT(true) /* DisableNameTagLOS */,
-            NetworkBitStreamValue::BIT(true) /* ManualVehicleEngineAndLights */,
-            NetworkBitStreamValue::UINT32(0) /* SetSpawnInfoCount */,
-            NetworkBitStreamValue::UINT16(uint16_t(player.getID())) /* PlayerID */,
-            NetworkBitStreamValue::BIT(true) /* ShowNameTags */,
-            NetworkBitStreamValue::UINT32(true) /* ShowPlayerMarkers */,
-            NetworkBitStreamValue::UINT8(12) /* SetWorldTime */,
-            NetworkBitStreamValue::UINT8(5) /* SetWeather */,
-            NetworkBitStreamValue::FLOAT(0.08f) /* SetGravity */,
-            NetworkBitStreamValue::BIT(false) /* LanMode */,
-            NetworkBitStreamValue::UINT32(1000) /* SetDeathDropAmount */,
-            NetworkBitStreamValue::BIT(false) /* Instagib */,
-            NetworkBitStreamValue::UINT32(30) /* OnFootRate */,
-            NetworkBitStreamValue::UINT32(30) /* InCarRate */,
-            NetworkBitStreamValue::UINT32(30) /* WeaponRate */,
-            NetworkBitStreamValue::UINT32(1) /* Multiplier */,
-            NetworkBitStreamValue::UINT32(1) /* LagCompensation */,
-            NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(serverName)) /* ServerName */,
-            NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(NetworkBitStreamValue::Array<uint8_t>::FromStdArray(vehicles.models())) /* VehicleModels */
-        };
-        player.getNetwork().sendRPC(RakNetLegacy::Outgoing::RPC::PlayerInit, PlayerConnectOutgoing);
+        NetCode::RPC::PlayerInit playerInitRPC;
+        playerInitRPC.EnableZoneNames = true;
+        playerInitRPC.UsePlayerPedAnims = true;
+        playerInitRPC.AllowInteriorWeapons = true;
+        playerInitRPC.UseLimitGlobalChatRadius = true;
+        playerInitRPC.LimitGlobalChatRadius = 45.f;
+        playerInitRPC.EnableStuntBonus = true;
+        playerInitRPC.SetNameTagDrawDistance = 45.f;
+        playerInitRPC.DisableInteriorEnterExits = true;
+        playerInitRPC.DisableNameTagLOS = true;
+        playerInitRPC.ManualVehicleEngineAndLights = true;
+        playerInitRPC.SetSpawnInfoCount = 0;
+        playerInitRPC.PlayerID = player.getID();
+        playerInitRPC.ShowNameTags = true;
+        playerInitRPC.ShowPlayerMarkers = true;
+        playerInitRPC.SetWorldTime = 12;
+        playerInitRPC.SetWeather = 5;
+        playerInitRPC.SetGravity = 0.08f;
+        playerInitRPC.LanMode = false;
+        playerInitRPC.SetDeathDropAmount = 1000;
+        playerInitRPC.Instagib = false;
+        playerInitRPC.OnFootRate = 30;
+        playerInitRPC.InCarRate = 30;
+        playerInitRPC.WeaponRate = 30;
+        playerInitRPC.Multiplier = 1;
+        playerInitRPC.LagCompensation = 1;
+        playerInitRPC.ServerName = serverName;
+        playerInitRPC.VehicleModels = &vehicles.models();
+
+        player.getNetwork().sendRPC(player, playerInitRPC);
     }
 
     void run(uint32_t tickUS) {

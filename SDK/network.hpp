@@ -162,39 +162,25 @@ struct SingleNetworkInOutEventHandler {
 	virtual bool received(IPlayer& peer, INetworkBitStream& bs) { return true; }
 };
 
-namespace RakNetLegacy {
-	namespace Incoming {
-		namespace RPC {
-			enum {
-				PlayerJoin = 25,
-			};
-		}
-		namespace Packet {
-			enum {
+enum ENetworkType {
+	ENetworkType_RakNetLegacy,
+	ENetworkType_ENet,
 
-			};
-		}
-	}
-	namespace Outgoing {
-		namespace RPC {
-			enum {
-				PlayerJoin = 137,
-				PlayerQuit = 138,
-				PlayerInit = 139,
-			};
-		}
-		namespace Packet {
-			enum {
-
-			};
-		}
-	}
-}
-
-enum class ENetworkType {
-	RakNetLegacy,
-	ENet,
+	ENetworkType_End
 };
+
+template <int S, int ...Args>
+struct NetworkPacketBase {
+	static const int Size = S;
+	static constexpr const int ID[ENetworkType_End] = { Args... };
+	bool read(INetworkBitStream& bs);
+	std::array<NetworkBitStreamValue, Size> write() const;
+};
+std::false_type is_network_packet_impl(...);
+template <int S, int ...Args>
+std::true_type is_network_packet_impl(NetworkPacketBase<S, Args...> const volatile&);
+template <typename T>
+using is_network_packet = decltype(is_network_packet_impl(std::declval<T&>()));
 
 struct INetwork {
 	virtual ENetworkType getNetworkType() = 0;
@@ -204,7 +190,7 @@ struct INetwork {
 	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() = 0;
 	virtual bool sendPacket(IPlayer& peer, int id, NetworkBitStreamValueList params) = 0;
 	virtual bool sendRPC(IPlayer& peer, int id, NetworkBitStreamValueList params) = 0;
-	virtual bool sendRPC(int id, NetworkBitStreamValueList params) = 0;
+	virtual bool broadcastRPC(int id, NetworkBitStreamValueList params) = 0;
 
 	template <size_t Size>
 	inline bool sendPacket(IPlayer& peer, int id, std::array<NetworkBitStreamValue, Size>& params) {
@@ -217,7 +203,18 @@ struct INetwork {
 	}
 
 	template <size_t Size>
-	inline bool sendRPC(int id, std::array<NetworkBitStreamValue, Size>& params) {
-		return sendRPC(id, NetworkBitStreamValueList{ params.data(), params.size() });
+	inline bool broadcastRPC(int id, std::array<NetworkBitStreamValue, Size>& params) {
+		return broadcastRPC(id, NetworkBitStreamValueList{ params.data(), params.size() });
+	}
+
+	template<class Packet>
+	inline bool sendRPC(IPlayer& peer, const Packet& packet) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		std::array<NetworkBitStreamValue, Packet::Size> res = packet.write();
+		const ENetworkType type = peer.getNetwork().getNetworkType();
+		if (type >= ENetworkType_End) {
+			return false;
+		}
+		return sendRPC(peer, Packet::ID[type], res);
 	}
 };
