@@ -7,9 +7,9 @@ struct IEventDispatcher {
 	virtual bool hasEventHandler(EventHandlerType* handler) = 0;
 };
 
-template <class EventHandlerType, size_t Count>
+template <class EventHandlerType, size_t C>
 struct IIndexedEventDispatcher {
-	static const size_t count = Count;
+	static const size_t Count = C;
 
 	virtual bool addEventHandler(EventHandlerType* handler, size_t index) = 0;
 	virtual bool removeEventHandler(EventHandlerType* handler, size_t index) = 0;
