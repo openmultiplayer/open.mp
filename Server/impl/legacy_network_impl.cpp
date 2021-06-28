@@ -5,7 +5,8 @@
 
 RakNetLegacyNetwork::RakNetLegacyNetwork(Core& core) :
     core(core),
-    rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface())
+    rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface()),
+    wlbs(wbs)
 {
     rakNetServer.SetMTUSize(512);
     rakNetServer.AttachPlugin(this);
@@ -315,7 +316,10 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     unsigned short cPort;
     network->rakNetServer.GetPlayerIPFromID(rpcParams->sender, cIP, &cPort);
 
-    player.setNetworkData(network, cIP, cPort);
+    INetworkPeer::NetworkID nid;
+    nid.address = rid.binaryAddress;
+    nid.port = rid.port;
+    player.setNetworkData(nid, network, cIP, cPort);
 
     if (!network->networkEventDispatcher.stopAtFalse(
         [&player, &rid](NetworkEventHandler* handler) {
@@ -329,21 +333,21 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     }
 
     network->pidFromRID.emplace(rid, pid);
-    network->ridFromPID[pid] = rid;
+
+    RakNet::BitStream bs = GetBitStream(*rpcParams);
+    RakNetLegacyBitStream lbs(bs);
 
     network->inOutEventDispatcher.all(
-        [&rpcParams, &player](NetworkInOutEventHandler* handler) {
-            RakNet::BitStream bs = GetBitStream(*rpcParams);
-            RakNetLegacyBitStream lbs(bs);
+        [&player, &lbs](NetworkInOutEventHandler* handler) {
+            lbs.reset(BSResetRead);
             handler->receivedRPC(player, NetCode::RPC::PlayerConnect::ID[ENetworkType_RakNetLegacy], lbs);
         }
     );
 
     network->rpcInOutEventDispatcher.all(
         NetCode::RPC::PlayerConnect::ID[ENetworkType_RakNetLegacy],
-        [&rpcParams, &player](SingleNetworkInOutEventHandler* handler) {
-            RakNet::BitStream bs = GetBitStream(*rpcParams);
-            RakNetLegacyBitStream lbs(bs);
+        [&player, &lbs](SingleNetworkInOutEventHandler* handler) {
+            lbs.reset(BSResetRead);
             handler->received(player, lbs);
         }
     );
@@ -357,7 +361,6 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
 
     int pid = pos->second;
     pidFromRID.erase(rid);
-    ridFromPID[pid] = RakNet::UNASSIGNED_PLAYER_ID;
 
     auto& pool = core.players.getPool();
     if (!pool.valid(pid)) {
@@ -384,21 +387,21 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     }
 
     IPlayer& player = pool.get(pid);
+    RakNet::BitStream bs = GetBitStream(*rpcParams);
+    RakNetLegacyBitStream lbs(bs);
 
     bool processed = false;
     network->inOutEventDispatcher.all(
-        [&rpcParams, &player, &processed](NetworkInOutEventHandler* handler) {
-            RakNet::BitStream bs = GetBitStream(*rpcParams);
-            RakNetLegacyBitStream lbs(bs);
+        [&player, &lbs, &processed](NetworkInOutEventHandler* handler) {
+            lbs.reset(BSResetRead);
             processed |= handler->receivedRPC(player, ID, lbs);
         }
     );
 
     network->rpcInOutEventDispatcher.all(
         ID,
-        [&rpcParams, &player, &processed](SingleNetworkInOutEventHandler* handler) {
-            RakNet::BitStream bs = GetBitStream(*rpcParams);
-            RakNetLegacyBitStream lbs(bs);
+        [&player, &lbs, &processed](SingleNetworkInOutEventHandler* handler) {
+            lbs.reset(BSResetRead);
             processed |= handler->received(player, lbs);
         }
     );
@@ -406,6 +409,17 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     if (!processed) {
         network->core.printLn("Received unprocessed RPC %i", ID);
     }
+}
+
+void RakNetLegacyNetwork::onInit() {
+    const json& props = core.getProperties();
+    rakNetServer.Start(
+        props.value<int>("max_players", DEFAULT_MAX_PLAYERS),
+        0,
+        core.sleepTimer.count(),
+        props.value<unsigned short>("port", DEFAULT_PORT)
+    );
+    rakNetServer.StartOccasionalPing();
 }
 
 void RakNetLegacyNetwork::onTick(uint64_t tick) {

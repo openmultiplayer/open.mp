@@ -16,192 +16,159 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
 
     RakNetLegacyBitStream(RakNet::BitStream& bs) : bs(bs) {}
 
+    ENetworkType getNetworkType() override {
+        return ENetworkType_RakNetLegacy;
+    }
+
+    void reset(ENetworkBitStreamReset reset) override {
+        if (reset & BSResetRead) {
+            bs.ResetReadPointer();
+        }
+        if (reset & BSResetWrite) {
+            bs.ResetWritePointer();
+        }
+    }
+
     bool write(const NetworkBitStreamValue& input) override {
         switch (input.type) {
         case NetworkBitStreamValueType::BIT:
-            bs.Write(input.b); break;
+            bs.Write(std::get<bool>(input.data)); break;
         case NetworkBitStreamValueType::UINT8:
-            bs.Write(input.u8); break;
+            bs.Write(std::get<uint8_t>(input.data)); break;
         case NetworkBitStreamValueType::UINT16:
-            bs.Write(input.u16); break;
+            bs.Write(std::get<uint16_t>(input.data)); break;
         case NetworkBitStreamValueType::UINT32:
-            bs.Write(input.u32); break;
+            bs.Write(std::get<uint32_t>(input.data)); break;
         case NetworkBitStreamValueType::UINT64:
-            bs.Write(input.u64); break;
+            bs.Write(std::get<uint64_t>(input.data)); break;
         case NetworkBitStreamValueType::INT8:
-            bs.Write(input.i8); break;
+            bs.Write(std::get<int8_t>(input.data)); break;
         case NetworkBitStreamValueType::INT16:
-            bs.Write(input.i16); break;
+            bs.Write(std::get<int16_t>(input.data)); break;
         case NetworkBitStreamValueType::INT32:
-            bs.Write(input.i32); break;
+            bs.Write(std::get<int32_t>(input.data)); break;
         case NetworkBitStreamValueType::INT64:
-            bs.Write(input.i64); break;
+            bs.Write(std::get<int64_t>(input.data)); break;
         case NetworkBitStreamValueType::DOUBLE:
-            bs.Write(input.d); break;
+            bs.Write(std::get<double>(input.data)); break;
         case NetworkBitStreamValueType::FLOAT:
-            bs.Write(input.f); break;
+            bs.Write(std::get<float>(input.data)); break;
         case NetworkBitStreamValueType::VEC2:
-            bs.Write(input.v2); break;
+            bs.Write(std::get<vector2>(input.data)); break;
         case NetworkBitStreamValueType::VEC3:
-            bs.Write(input.v3); break;
+            bs.Write(std::get<vector3>(input.data)); break;
         case NetworkBitStreamValueType::VEC4:
-            bs.Write(input.v4); break;
+            bs.Write(std::get<vector4>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            writeFixedString(input.s); break;
+            writeFixedString(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
-            writeDynamicString<uint8_t>(input.s); break;
+            writeDynamicString<uint8_t>(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
-            writeDynamicString<uint16_t>(input.s); break;
+            writeDynamicString<uint16_t>(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
-            writeDynamicString<uint32_t>(input.s); break;
+            writeDynamicString<uint32_t>(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
-            writeFixedArray<uint8_t>(input.au8); break;
+            writeFixedArray<uint8_t>(std::get<NetworkArray<uint8_t>>(input.data)); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
         return true;
     }
 
-    NetworkBitStreamValue read(const NetworkBitStreamValue& input) override {
-        NetworkBitStreamValue res{ input.type };
-        read(res);
-        return res;
-    }
-
-    bool read(NetworkBitStreamValueList input) override {
-        for (size_t i = 0; i < input.len; ++i) {
-            read(input.data[i]);
-            if (input.data[i].type == NetworkBitStreamValueType::NONE) {
-                for (size_t j = 0; j < i; ++j) {
-                    tryFree(input.data[j]);
-                }
-                return false;
-            }
-        }
-        return true;
+    template <typename LenType>
+    void writeDynamicString(const NetworkString& input) {
+        bs.Write(static_cast<LenType>(input.count));
+        bs.Write(input.data, input.count);
     }
 
     template <typename LenType>
-    void writeDynamicString(const NetworkBitStreamValue::String& input) {
-        bs.Write(static_cast<LenType>(input.len));
-        bs.Write(input.str, input.len);
-    }
-
-    template <typename LenType>
-    bool readDynamicString(NetworkBitStreamValue::String& input) {
+    bool readDynamicString(NetworkString& input) {
         LenType len;
         if (!bs.Read(len)) {
             return false;
         }
 
-        input.len = len;
-        if (input.len > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+        if (len > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
             return false;
         }
 
-        input.str = new char[input.len];
-        return bs.Read(input.str, input.len);
+        input.allocate(len);
+        return bs.Read(input.data, input.count);
     }
 
     template <typename T>
-    void writeFixedArray(const NetworkBitStreamValue::Array<T>& input) {
-        bs.Write(reinterpret_cast<const char*>(input.data), input.len * sizeof(T));
+    void writeFixedArray(const NetworkArray<T>& input) {
+        bs.Write(reinterpret_cast<const char*>(input.data), input.count * sizeof(T));
     }
 
     template <typename T>
-    bool readFixedArray(NetworkBitStreamValue::Array<T>& input) {
-        if (input.len * sizeof(T) > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+    bool readFixedArray(NetworkArray<T>& input) {
+        if (input.count * sizeof(T) > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
             return false;
         }
 
-        input.data = new T[input.len];
-        return bs.Read(reinterpret_cast<char*>(input.data), input.len * sizeof(T));
+        input.allocate(input.count);
+        return bs.Read(reinterpret_cast<char*>(input.data), input.count * sizeof(T));
     }
 
-    void writeFixedString(const NetworkBitStreamValue::String& input) {
-        bs.Write(input.str, input.len);
+    void writeFixedString(const NetworkString& input) {
+        bs.Write(input.data, input.count);
     }
 
-    bool readFixedString(NetworkBitStreamValue::String& input) {
-        if (input.len > (unsigned int)(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+    bool readFixedString(NetworkString& input) {
+        if (input.count * sizeof(char) > (unsigned int)(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
             return false;
         }
 
-        input.str = new char[input.len];
-        return bs.Read(input.str, input.len);
+        input.allocate(input.count);
+        return bs.Read(input.data, input.count);
     }
 
-    void read(NetworkBitStreamValue& input) override {
+    bool read(NetworkBitStreamValue& input) override {
         bool success = false;
         switch (input.type) {
         case NetworkBitStreamValueType::BIT:
-            success = bs.Read(input.b); break;
+            success = bs.Read(input.data.emplace<bool>()); break;
         case NetworkBitStreamValueType::UINT8:
-            success = bs.Read(input.u8); break;
+            success = bs.Read(input.data.emplace<uint8_t>()); break;
         case NetworkBitStreamValueType::UINT16:
-            success = bs.Read(input.u16); break;
+            success = bs.Read(input.data.emplace<uint16_t>()); break;
         case NetworkBitStreamValueType::UINT32:
-            success = bs.Read(input.u32); break;
+            success = bs.Read(input.data.emplace<uint32_t>()); break;
         case NetworkBitStreamValueType::UINT64:
-            success = bs.Read(input.u64); break;
+            success = bs.Read(input.data.emplace<uint64_t>()); break;
         case NetworkBitStreamValueType::INT8:
-            success = bs.Read(input.i8); break;
+            success = bs.Read(input.data.emplace<int8_t>()); break;
         case NetworkBitStreamValueType::INT16:
-            success = bs.Read(input.i16); break;
+            success = bs.Read(input.data.emplace<int16_t>()); break;
         case NetworkBitStreamValueType::INT32:
-            success = bs.Read(input.i32); break;
+            success = bs.Read(input.data.emplace<int32_t>()); break;
         case NetworkBitStreamValueType::INT64:
-            success = bs.Read(input.i64); break;
+            success = bs.Read(input.data.emplace<int64_t>()); break;
         case NetworkBitStreamValueType::DOUBLE:
-            success = bs.Read(input.d); break;
+            success = bs.Read(input.data.emplace<double>()); break;
         case NetworkBitStreamValueType::FLOAT:
-            success = bs.Read(input.f); break;
+            success = bs.Read(input.data.emplace<float>()); break;
         case NetworkBitStreamValueType::VEC2:
-            success = bs.Read(input.v2); break;
+            success = bs.Read(input.data.emplace<vector2>()); break;
         case NetworkBitStreamValueType::VEC3:
-            success = bs.Read(input.v3); break;
+            success = bs.Read(input.data.emplace<vector3>()); break;
         case NetworkBitStreamValueType::VEC4:
-            success = bs.Read(input.v4); break;
+            success = bs.Read(input.data.emplace<vector4>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            success = readFixedString(input.s); break;
+            success = readFixedString(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
-            success = readDynamicString<uint8_t>(input.s); break;
+            success = readDynamicString<uint8_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
-            success = readDynamicString<uint16_t>(input.s); break;
+            success = readDynamicString<uint16_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
-            success = readDynamicString<uint32_t>(input.s); break;
+            success = readDynamicString<uint32_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
-            success = readFixedArray<uint8_t>(input.au8); break;
+            success = readFixedArray<uint8_t>(input.data.emplace<NetworkArray<uint8_t>>()); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
-
-        if (!success) {
-            input.type = NetworkBitStreamValueType::NONE;
-        }
-    }
-
-    void tryFree(NetworkBitStreamValue& input) {
-        switch (input.type) {
-        case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
-        case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
-        case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
-        case NetworkBitStreamValueType::FIXED_LEN_STR:
-            delete[] input.s.str;
-            break;
-        case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
-            delete[] input.au8.data;
-            break;
-        default:
-            break;
-        }
-        input.type = NetworkBitStreamValueType::NONE;
-    }
-
-    void free(NetworkBitStreamValueList input) override {
-        for (size_t i = 0; i < input.len; ++i) {
-            tryFree(input.data[i]);
-        }
+        return success;
     }
 };
 
@@ -213,35 +180,40 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
         return ENetworkType_RakNetLegacy;
     }
 
-    bool sendPacket(IPlayer& player, int id, NetworkBitStreamValueList params) override {
-        RakNet::BitStream bs;
-        RakNetLegacyBitStream lbs(bs);
-        lbs.write(NetworkBitStreamValue::INT16(id));
-        for (size_t i = 0; i < params.len; ++i) {
-            lbs.write(params.data[i]);
+    bool sendPacket(INetworkPeer& peer, INetworkBitStream& bs) override {
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || peer.getNetwork().getNetworkType() != ENetworkType_RakNetLegacy) {
+            return false;
         }
 
-        return rakNetServer.Send(&bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, ridFromPID[player.getID()], false);
+        RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
+        const INetworkPeer::NetworkID nid = peer.getNetworkID();
+        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
 
-    bool broadcastRPC(int id, NetworkBitStreamValueList params) override {
-        RakNet::BitStream bs;
-        RakNetLegacyBitStream lbs(bs);
-        for (size_t i = 0; i < params.len; ++i) {
-            lbs.write(params.data[i]);
+    bool broadcastRPC(int id, INetworkBitStream& bs) override {
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy) {
+            return false;
         }
 
-        return rakNetServer.RPC(id, &bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
+        return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(IPlayer& player, int id, NetworkBitStreamValueList params) override {
-        RakNet::BitStream bs;
-        RakNetLegacyBitStream lbs(bs);
-        for (size_t i = 0; i < params.len; ++i) {
-            lbs.write(params.data[i]);
+    bool sendRPC(INetworkPeer& peer, int id, INetworkBitStream& bs) override {
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || peer.getNetwork().getNetworkType() != ENetworkType_RakNetLegacy) {
+            return false;
         }
 
-        return rakNetServer.RPC(id, &bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, ridFromPID[player.getID()], false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
+        const INetworkPeer::NetworkID nid = peer.getNetworkID();
+        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+    }
+
+    INetworkBitStream& writeBitStream() override {
+        wlbs.bs.Reset();
+        return wlbs;
     }
 
     static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
@@ -249,12 +221,7 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 
     void onTick(uint64_t tick) override;
-
-    void onInit() override {
-        ridFromPID.fill(RakNet::UNASSIGNED_PLAYER_ID);
-        rakNetServer.Start(MAX_PLAYERS, 0, 5, 7777);
-        rakNetServer.StartOccasionalPing();
-    }
+    void onInit() override;
 
     void OnRakNetDisconnect(RakNet::PlayerID rid);
 
@@ -269,5 +236,6 @@ struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHan
     Core& core;
     RakNet::RakServerInterface& rakNetServer;
     std::map<RakNet::PlayerID, int> pidFromRID;
-    std::array<RakNet::PlayerID, MAX_PLAYERS> ridFromPID;
+    RakNet::BitStream wbs;
+    RakNetLegacyBitStream wlbs;
 };

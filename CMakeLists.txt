@@ -177,6 +177,7 @@ target_compile_definitions(Server PUBLIC
 	WIN32_LEAN_AND_MEAN
 	VC_EXTRALEAN
 	NOGDI
+	OMP_EXPORTS
 )
 
 target_link_libraries(Server PUBLIC

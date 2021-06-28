@@ -4,26 +4,37 @@
 #include "entity.hpp"
 
 struct IVehicle;
-struct INetwork;
-struct INetworkBitStream;
 
-struct IPlayer : public IEntity {
-	virtual void setNetworkData(INetwork* network, const std::string& IP, unsigned short port) = 0;
-	virtual INetwork& getNetwork() = 0;
+/// A player interface
+struct IPlayer : public IEntity, public INetworkPeer {
+	/// Get the player's current vehicle
 	virtual IVehicle* getVehicle() = 0;
+
+	/// Get the player's version number
 	virtual int& versionNumber() = 0;
+
+	/// Get the player's modded status
 	virtual char& modded() = 0;
+
+	/// Get the player's name
 	virtual std::string& name() = 0;
+
+	/// Get the player's challenge response
 	virtual unsigned int& challengeResponse() = 0;
+
+	/// Get the player's key
 	virtual std::string& key() = 0;
+
+	/// Get the player's version string
 	virtual std::string& versionString() = 0;
 };
 
+/// A player event handler
 struct PlayerEventHandler {
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
 };
 
+/// A player pool interface
 struct IPlayerPool : public IEventDispatcherPool<IPlayer, MAX_PLAYERS, PlayerEventHandler> {
 };
-
