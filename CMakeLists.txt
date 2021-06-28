@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.19)
 project(open-mp LANGUAGES C CXX VERSION 0.0.1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_BUILD_TYPE Debug)
+
 
 if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
 	message(

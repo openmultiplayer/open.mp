@@ -3,7 +3,6 @@
 struct IUnknown;
 //#include <Windows.h>
 #include "impl/core_impl.hpp"
-#include <nlohmann/json.hpp>
 #include <exports.hpp>
 #include "pluginloader.hpp"
 
