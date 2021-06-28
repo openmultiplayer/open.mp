@@ -1,12 +1,7 @@
 #pragma once
 
-
-#ifdef OMP_EXPORTS
-#define OMP_API __declspec(dllexport)
-#else
-#define OMP_API __declspec(dllimport)
-#endif
-
 #include "core.hpp"
 
+/// The plugin's entry point function
+/// To be used like so: PLUGIN_ENTRY_POINT(ICore* core) { ... }
 #define PLUGIN_ENTRY_POINT extern "C" __declspec(dllexport) bool __cdecl PluginEntryPoint

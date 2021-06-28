@@ -5,55 +5,38 @@
 
 namespace NetCode {
 	namespace RPC {
-		struct Invalid final : NetworkPacketBase<0, 0> {
+		struct Invalid final : NetworkPacketBase<0> {
 			bool read(INetworkBitStream& bs) {
 			}
 
-			std::array<NetworkBitStreamValue, Size> write() const {
+			void write(INetworkBitStream& bs) const {
 			}
 		};
 
-		struct PlayerConnect final : NetworkPacketBase<6, 25> {
-
+		struct PlayerConnect final : NetworkPacketBase<25> {
 			uint32_t VersionNumber;
 			uint8_t Modded;
-			std::string Name;
+			NetworkString Name;
 			uint32_t ChallengeResponse;
-			std::string Key;
-			std::string VersionString;
+			NetworkString Key;
+			NetworkString VersionString;
 
 			bool read(INetworkBitStream& bs) {
-				NetworkBitStreamValueReadRAII<Size> PlayerJoinIncoming{
-					bs,
-					{{
-						{ NetworkBitStreamValueType::UINT32 /* VersionNumber */},
-						{ NetworkBitStreamValueType::UINT8 /* Modded */ },
-						{ NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* Name */ },
-						{ NetworkBitStreamValueType::UINT32 /* ChallengeResponse */ },
-						{ NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* Key */ },
-						{ NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 /* VersionString */ }
-					}}
-				};
-				if (bs.read(PlayerJoinIncoming.get())) {
-					VersionNumber = PlayerJoinIncoming.data[0].u32;
-					Modded = PlayerJoinIncoming.data[1].u8;
-					Name = PlayerJoinIncoming.data[2].s;
-					ChallengeResponse = PlayerJoinIncoming.data[3].u32;
-					Key = PlayerJoinIncoming.data[4].s;
-					VersionString = PlayerJoinIncoming.data[5].s;
-					return true;
-				}
-				else {
-					return false;
-				}
+				CHECKED_READ(VersionNumber, bs, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(Modded, bs, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Name, bs, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
+				CHECKED_READ(ChallengeResponse, bs, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(Key, bs, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
+				CHECKED_READ(VersionString, bs, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
+				return true;
 			}
 
-			std::array<NetworkBitStreamValue, Size> write() const {
+			void write(INetworkBitStream& bs) const {
 
 			}
 		};
 
-		struct PlayerJoin final : NetworkPacketBase<4, 137> {
+		struct PlayerJoin final : NetworkPacketBase<137> {
 			int PlayerID;
 			uint32_t Colour;
 			bool IsNPC;
@@ -62,32 +45,28 @@ namespace NetCode {
 			bool read(INetworkBitStream& bs) {
 			}
 
-			std::array<NetworkBitStreamValue, Size> write() const {
-				return {
-					NetworkBitStreamValue::UINT16(uint16_t(PlayerID)), /* PlayerID */
-					NetworkBitStreamValue::INT32(Colour), /* Colour */
-					NetworkBitStreamValue::UINT8(IsNPC), /* IsNPC */
-					NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(Name)) /* Name */
-				};
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::INT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT8(IsNPC));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkString(Name)));
 			}
 		};
 
-		struct PlayerQuit final : NetworkPacketBase<2, 138> {
+		struct PlayerQuit final : NetworkPacketBase<138> {
 			int PlayerID;
 			uint8_t Reason;
 
 			bool read(INetworkBitStream& bs) {
 			}
 
-			std::array<NetworkBitStreamValue, Size> write() const {
-				return {
-					NetworkBitStreamValue::UINT16(uint16_t(PlayerID)), /* PlayerID */
-					NetworkBitStreamValue::UINT8(Reason)
-				};
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::UINT8(Reason));
 			}
 		};
 
-		struct PlayerInit final : NetworkPacketBase<27, 139> {
+		struct PlayerInit final : NetworkPacketBase<139> {
 			bool         EnableZoneNames;
 			bool         UsePlayerPedAnims;
 			bool         AllowInteriorWeapons;
@@ -119,36 +98,34 @@ namespace NetCode {
 			bool read(INetworkBitStream& bs) {
 			}
 
-			std::array<NetworkBitStreamValue, Size> write() const {
-				return {
-					NetworkBitStreamValue::BIT(EnableZoneNames) /* EnableZoneNames */,
-					NetworkBitStreamValue::BIT(UsePlayerPedAnims) /* UsePlayerPedAnims */,
-					NetworkBitStreamValue::BIT(AllowInteriorWeapons) /* AllowInteriorWeapons */,
-					NetworkBitStreamValue::BIT(UseLimitGlobalChatRadius) /* UseLimitGlobalChatRadius */,
-					NetworkBitStreamValue::FLOAT(LimitGlobalChatRadius) /* LimitGlobalChatRadius */,
-					NetworkBitStreamValue::BIT(EnableStuntBonus) /* EnableStuntBonus */,
-					NetworkBitStreamValue::FLOAT(SetNameTagDrawDistance) /* SetNameTagDrawDistance */,
-					NetworkBitStreamValue::BIT(DisableInteriorEnterExits) /* DisableInteriorEnterExits */,
-					NetworkBitStreamValue::BIT(DisableNameTagLOS) /* DisableNameTagLOS */,
-					NetworkBitStreamValue::BIT(ManualVehicleEngineAndLights) /* ManualVehicleEngineAndLights */,
-					NetworkBitStreamValue::UINT32(SetSpawnInfoCount) /* SetSpawnInfoCount */,
-					NetworkBitStreamValue::UINT16(uint16_t(PlayerID)) /* PlayerID */,
-					NetworkBitStreamValue::BIT(ShowNameTags) /* ShowNameTags */,
-					NetworkBitStreamValue::UINT32(ShowPlayerMarkers) /* ShowPlayerMarkers */,
-					NetworkBitStreamValue::UINT8(SetWorldTime) /* SetWorldTime */,
-					NetworkBitStreamValue::UINT8(SetWeather) /* SetWeather */,
-					NetworkBitStreamValue::FLOAT(SetGravity) /* SetGravity */,
-					NetworkBitStreamValue::BIT(LanMode) /* LanMode */,
-					NetworkBitStreamValue::UINT32(SetDeathDropAmount) /* SetDeathDropAmount */,
-					NetworkBitStreamValue::BIT(Instagib) /* Instagib */,
-					NetworkBitStreamValue::UINT32(OnFootRate) /* OnFootRate */,
-					NetworkBitStreamValue::UINT32(InCarRate) /* InCarRate */,
-					NetworkBitStreamValue::UINT32(WeaponRate) /* WeaponRate */,
-					NetworkBitStreamValue::UINT32(Multiplier) /* Multiplier */,
-					NetworkBitStreamValue::UINT32(LagCompensation) /* LagCompensation */,
-					NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkBitStreamValue::String::FromStdString(ServerName)) /* ServerName */,
-					NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(NetworkBitStreamValue::Array<uint8_t>::FromStdArray(*VehicleModels)) /* VehicleModels */
-				};
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(EnableZoneNames));
+				bs.write(NetworkBitStreamValue::BIT(UsePlayerPedAnims));
+				bs.write(NetworkBitStreamValue::BIT(AllowInteriorWeapons));
+				bs.write(NetworkBitStreamValue::BIT(UseLimitGlobalChatRadius));
+				bs.write(NetworkBitStreamValue::FLOAT(LimitGlobalChatRadius));
+				bs.write(NetworkBitStreamValue::BIT(EnableStuntBonus));
+				bs.write(NetworkBitStreamValue::FLOAT(SetNameTagDrawDistance));
+				bs.write(NetworkBitStreamValue::BIT(DisableInteriorEnterExits));
+				bs.write(NetworkBitStreamValue::BIT(DisableNameTagLOS));
+				bs.write(NetworkBitStreamValue::BIT(ManualVehicleEngineAndLights));
+				bs.write(NetworkBitStreamValue::UINT32(SetSpawnInfoCount));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::BIT(ShowNameTags));
+				bs.write(NetworkBitStreamValue::UINT32(ShowPlayerMarkers));
+				bs.write(NetworkBitStreamValue::UINT8(SetWorldTime));
+				bs.write(NetworkBitStreamValue::UINT8(SetWeather));
+				bs.write(NetworkBitStreamValue::FLOAT(SetGravity));
+				bs.write(NetworkBitStreamValue::BIT(LanMode));
+				bs.write(NetworkBitStreamValue::UINT32(SetDeathDropAmount));
+				bs.write(NetworkBitStreamValue::BIT(Instagib));
+				bs.write(NetworkBitStreamValue::UINT32(OnFootRate));
+				bs.write(NetworkBitStreamValue::UINT32(InCarRate));
+				bs.write(NetworkBitStreamValue::UINT32(WeaponRate));
+				bs.write(NetworkBitStreamValue::UINT32(Multiplier));
+				bs.write(NetworkBitStreamValue::UINT32(LagCompensation));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(NetworkString(ServerName)));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(NetworkArray<uint8_t>(*VehicleModels)));
 			}
 		};
 	}

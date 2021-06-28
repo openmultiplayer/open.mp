@@ -21,8 +21,10 @@ struct Player final : public IPlayer, public EntityIDProvider {
     unsigned int challengeResponse_;
     std::string key_;
     std::string versionString_;
+    INetworkPeer::NetworkID nID_;
 
-    void setNetworkData(INetwork* network, const std::string& IP, unsigned short port) override {
+    void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const std::string& IP, unsigned short port) override {
+        this->nID_ = networkID;
         this->network = network;
         this->ip = IP;
         this->port = port;
@@ -34,6 +36,10 @@ struct Player final : public IPlayer, public EntityIDProvider {
     unsigned int& challengeResponse() override { return challengeResponse_; }
     std::string& key() override { return key_; }
     std::string& versionString() override { return versionString_; }
+
+    INetworkPeer::NetworkID getNetworkID() override {
+        return nID_;
+    }
 
     INetwork& getNetwork() override {
         return *network;
@@ -98,7 +104,7 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         playerJoinPacket.Name = peer.name();
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
             if (target != &peer) {
-                target->getNetwork().sendRPC(*target, playerJoinPacket);
+                target->sendRPC(playerJoinPacket);
             }
         }
 
@@ -111,7 +117,7 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         packet.PlayerID = player.getID();
         packet.Reason = reason;
         for (IPlayer* target : core.getPlayers().getPool().entries()) {
-            target->getNetwork().sendRPC(*target, packet);
+            target->sendRPC(packet);
         }
     }
 };
