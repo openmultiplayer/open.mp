@@ -3,6 +3,7 @@
 #include <mutex>
 #include <cstdarg>
 #include <fstream>
+#include <condition_variable>
 #include "events_impl.hpp"
 #include "entity_impl.hpp"
 #include "legacy_network_impl.hpp"
