@@ -77,6 +77,9 @@ struct NetworkArray {
 		data(const_cast<T*>(array.data()))
 	{}
 
+	template <size_t Size>
+	NetworkArray<T>(std::array<T, Size>&& array) = delete;
+
 	/// Copy constructor
 	NetworkArray<T>(const NetworkArray<T>& other) {
 		selfAllocated = other.selfAllocated;
@@ -138,22 +141,13 @@ struct NetworkString : NetworkArray<char> {
 		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
 	{ }
 
+	NetworkString(std::string&& str) = delete;
+
 	/// Conversion operator for copying data to a std::string
 	operator std::string() {
 		return std::string(data, count);
 	}
 };
-
-/// Helper macro that reads a bit stream value and returns false on fail
-#define CHECKED_READ(output, bs, input) \
-	{ \
-		NetworkBitStreamValue output ## _in input; \
-		if (!bs.read(output ## _in)) { \
-			return false; \
-		} else { \
-			output = std::get<decltype(output)>(output ## _in.data); \
-		} \
-	}
 
 /// Helper macro to quickly define a NetworkBitStreamValue constructor and bind it to a data type
 #define NBSVCONS(type, dataType) \
@@ -166,7 +160,7 @@ struct NetworkString : NetworkArray<char> {
 struct NetworkBitStreamValue {
 	NetworkBitStreamValueType type; ///< The type of the value
 
-	std::variant<
+	using Variant = std::variant<
 		bool,
 		uint8_t,
 		uint16_t,
@@ -183,7 +177,9 @@ struct NetworkBitStreamValue {
 		vector4,
 		NetworkString,
 		NetworkArray<uint8_t>
-	> data; ///< The union which holds all possible data types
+	>;
+
+	Variant data; ///< The union which holds all possible data types
 
 	// Constructors
 	NBSVCONS(BIT, bool);
@@ -246,6 +242,17 @@ struct INetworkBitStream {
 	/// Reset the stream
 	/// @param reset The type of reset to do
 	virtual void reset(ENetworkBitStreamReset reset) = 0;
+
+	/// Helper function that reads a bit stream value and sets it to a variable
+	template <typename T, typename ...Args>
+	bool read(T& output, Args... args) {
+		NetworkBitStreamValue input{ std::forward<Args>(args)... };
+		if (!read(input)) {
+			return false;
+		}
+		output = std::get<T>(input.data);
+		return true;
+	}
 };
 
 /// An event handler for network events
@@ -367,3 +374,14 @@ struct INetworkPeer {
 	}
 
 };
+
+/// Helper macro that reads a bit stream value and returns false on fail
+#define CHECKED_READ(output, input) \
+	{ \
+		NetworkBitStreamValue output ## _in input; \
+		if (!bs.read(output ## _in)) { \
+			return false; \
+		} else { \
+			output = std::get<decltype(output)>(output ## _in.data); \
+		} \
+	}
