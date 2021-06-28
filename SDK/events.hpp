@@ -1,5 +1,6 @@
 #pragma once
 
+/// An event dispatcher
 template <class EventHandlerType>
 struct IEventDispatcher {
 	virtual bool addEventHandler(EventHandlerType* handler) = 0;
@@ -7,6 +8,7 @@ struct IEventDispatcher {
 	virtual bool hasEventHandler(EventHandlerType* handler) = 0;
 };
 
+/// An indexed event dispatcher which executes events based on an index
 template <class EventHandlerType, size_t C>
 struct IIndexedEventDispatcher {
 	static const size_t Count = C;

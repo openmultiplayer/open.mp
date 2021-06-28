@@ -4,6 +4,7 @@ struct IUnknown;
 #include <Windows.h>
 #include "impl/core_impl.hpp"
 #include <nlohmann/json.hpp>
+#include <exports.hpp>
 
 typedef bool (*PluginEntryPoint_t)(ICore* iface);
 
@@ -45,5 +46,5 @@ int main()
     int loaded = loadPlugins(*core, "components");
     core->printLn("Loaded %i plugin(s)", loaded);
     core->eventDispatcher.dispatch(&CoreEventHandler::onInit);
-    core->run(5);
+    core->run();
 }

@@ -15,6 +15,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     PlayerPool players;
     VehiclePool vehicles;
     json props;
+    std::chrono::milliseconds sleepTimer;
 
     Core() :
         legacyNetwork(*this),
@@ -97,12 +98,11 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.ServerName = serverName;
         playerInitRPC.VehicleModels = &vehicles.models();
 
-        player.getNetwork().sendRPC(player, playerInitRPC);
+        player.sendRPC(playerInitRPC);
     }
 
-    void run(uint32_t tickUS) {
-        std::chrono::milliseconds
-            tickcount(tickUS);
+    void run() {
+        sleepTimer = std::chrono::milliseconds(props.value<long long>("sleep_timer", DEFAULT_SLEEP_TIMER));
 
         std::mutex mutex;
         std::condition_variable seen;
@@ -117,7 +117,7 @@ struct Core final : public ICore, public PlayerEventHandler {
             {
                 std::unique_lock<std::mutex>
                     lk(mutex);
-                if (seen.wait_until(lk, now + tickcount, sawNewCommand)) {
+                if (seen.wait_until(lk, now + sleepTimer, sawNewCommand)) {
                 }
                 else {
                     auto onTickNow = std::chrono::system_clock::now();
