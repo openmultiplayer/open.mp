@@ -67,42 +67,40 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void onConnect(IPlayer& player) override {
-        std::string serverName("heh lol");
-
         NetCode::RPC::PlayerInit playerInitRPC;
-        playerInitRPC.EnableZoneNames = true;
-        playerInitRPC.UsePlayerPedAnims = true;
-        playerInitRPC.AllowInteriorWeapons = true;
-        playerInitRPC.UseLimitGlobalChatRadius = true;
-        playerInitRPC.LimitGlobalChatRadius = 45.f;
-        playerInitRPC.EnableStuntBonus = true;
-        playerInitRPC.SetNameTagDrawDistance = 45.f;
-        playerInitRPC.DisableInteriorEnterExits = true;
-        playerInitRPC.DisableNameTagLOS = true;
-        playerInitRPC.ManualVehicleEngineAndLights = true;
-        playerInitRPC.SetSpawnInfoCount = 0;
+        playerInitRPC.EnableZoneNames = Config::getOption<int>(props, "enable_zone_names");
+        playerInitRPC.UsePlayerPedAnims = Config::getOption<int>(props, "use_player_ped_anims");
+        playerInitRPC.AllowInteriorWeapons = Config::getOption<int>(props, "allow_interior_weapons");
+        playerInitRPC.UseLimitGlobalChatRadius = Config::getOption<int>(props, "use_limit_global_chat_radius");
+        playerInitRPC.LimitGlobalChatRadius = Config::getOption<float>(props, "limit_global_chat_radius");
+        playerInitRPC.EnableStuntBonus = Config::getOption<int>(props, "enable_stunt_bonus");
+        playerInitRPC.SetNameTagDrawDistance = Config::getOption<float>(props, "name_tag_draw_distance");
+        playerInitRPC.DisableInteriorEnterExits = Config::getOption<int>(props, "disable_interior_enter_exits");
+        playerInitRPC.DisableNameTagLOS = Config::getOption<int>(props, "disable_name_tag_los");
+        playerInitRPC.ManualVehicleEngineAndLights = Config::getOption<int>(props, "manual_vehicle_engine_and_lights");
+        playerInitRPC.ShowNameTags = Config::getOption<int>(props, "show_name_tags");
+        playerInitRPC.ShowPlayerMarkers = Config::getOption<int>(props, "show_player_markers");
+        playerInitRPC.SetWorldTime = Config::getOption<int>(props, "world_time");
+        playerInitRPC.SetWeather = Config::getOption<int>(props, "weather");
+        playerInitRPC.SetGravity = Config::getOption<float>(props, "gravity");
+        playerInitRPC.LanMode = Config::getOption<int>(props, "lan_mode");
+        playerInitRPC.SetDeathDropAmount = Config::getOption<int>(props, "death_drop_amount");
+        playerInitRPC.Instagib = Config::getOption<int>(props, "instagib");
+        playerInitRPC.OnFootRate = Config::getOption<int>(props, "on_foot_rate");
+        playerInitRPC.InCarRate = Config::getOption<int>(props, "in_car_rate");
+        playerInitRPC.WeaponRate = Config::getOption<int>(props, "weapon_rate");
+        playerInitRPC.Multiplier = Config::getOption<int>(props, "multiplier");
+        playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
+        playerInitRPC.ServerName = Config::getOption<std::string>(props, "server_name");
+        playerInitRPC.SetSpawnInfoCount = 0; /* todo */
         playerInitRPC.PlayerID = player.getID();
-        playerInitRPC.ShowNameTags = true;
-        playerInitRPC.ShowPlayerMarkers = true;
-        playerInitRPC.SetWorldTime = 12;
-        playerInitRPC.SetWeather = 5;
-        playerInitRPC.SetGravity = 0.08f;
-        playerInitRPC.LanMode = false;
-        playerInitRPC.SetDeathDropAmount = 1000;
-        playerInitRPC.Instagib = false;
-        playerInitRPC.OnFootRate = 30;
-        playerInitRPC.InCarRate = 30;
-        playerInitRPC.WeaponRate = 30;
-        playerInitRPC.Multiplier = 1;
-        playerInitRPC.LagCompensation = 1;
-        playerInitRPC.ServerName = serverName;
-        playerInitRPC.VehicleModels = &vehicles.models();
+        playerInitRPC.VehicleModels = &vehicles.models(); /* todo */
 
         player.sendRPC(playerInitRPC);
     }
 
     void run() {
-        sleepTimer = std::chrono::milliseconds(props.value<long long>("sleep_timer", DEFAULT_SLEEP_TIMER));
+        sleepTimer = std::chrono::milliseconds(Config::getOption<int>(props, "sleep"));
 
         std::mutex mutex;
         std::condition_variable seen;

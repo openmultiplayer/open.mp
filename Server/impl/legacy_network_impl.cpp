@@ -414,10 +414,10 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 void RakNetLegacyNetwork::onInit() {
     const json& props = core.getProperties();
     rakNetServer.Start(
-        props.value<int>("max_players", DEFAULT_MAX_PLAYERS),
+        Config::getOption<int>(props, "max_players"),
         0,
         core.sleepTimer.count(),
-        props.value<unsigned short>("port", DEFAULT_PORT)
+        Config::getOption<int>(props, "port")
     );
     rakNetServer.StartOccasionalPing();
 }
