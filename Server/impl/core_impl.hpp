@@ -91,10 +91,11 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.WeaponRate = Config::getOption<int>(props, "weapon_rate");
         playerInitRPC.Multiplier = Config::getOption<int>(props, "multiplier");
         playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
-        playerInitRPC.ServerName = Config::getOption<std::string>(props, "server_name");
+        std::string serverName = Config::getOption<std::string>(props, "server_name");
+        playerInitRPC.ServerName = serverName;
         playerInitRPC.SetSpawnInfoCount = 0; /* todo */
         playerInitRPC.PlayerID = player.getID();
-        playerInitRPC.VehicleModels = &vehicles.models(); /* todo */
+        playerInitRPC.VehicleModels = NetworkArray<uint8_t>(vehicles.models()); /* todo */
 
         player.sendRPC(playerInitRPC);
     }
