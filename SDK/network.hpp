@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <variant>
+#include <cassert>
 #include "types.hpp"
 #include "events.hpp"
 #include "exports.hpp"
@@ -35,7 +36,8 @@ enum class NetworkBitStreamValueType {
 	DYNAMIC_LEN_STR_16,   ///< NetworkString
 	DYNAMIC_LEN_STR_32,   ///< NetworkString
 	FIXED_LEN_STR,        ///< NetworkString
-	FIXED_LEN_UINT8_ARR,  ///< NetworkArray<uint8_t>
+	FIXED_LEN_ARR_UINT8,  ///< NetworkArray<uint8_t>
+	FIXED_LEN_ARR_UINT32  ///< NetworkArray<uint32_t>
 };
 
 /// Type used for storing arrays to pass to the networks
@@ -151,7 +153,7 @@ struct NetworkString : NetworkArray<char> {
 
 /// Helper macro to quickly define a NetworkBitStreamValue constructor and bind it to a data type
 #define NBSVCONS(type, dataType) \
-	static NetworkBitStreamValue type(dataType dat) { \
+	static NetworkBitStreamValue type(const dataType& dat) { \
 		NetworkBitStreamValue res{ NetworkBitStreamValueType::type }; \
 		res.data = dat; \
 		return res; \
@@ -176,7 +178,8 @@ struct NetworkBitStreamValue {
 		vector3,
 		vector4,
 		NetworkString,
-		NetworkArray<uint8_t>
+		NetworkArray<uint8_t>,
+		NetworkArray<uint32_t>
 	>;
 
 	Variant data; ///< The union which holds all possible data types
@@ -203,7 +206,8 @@ struct NetworkBitStreamValue {
 	NBSVCONS(DYNAMIC_LEN_STR_16, NetworkString);
 	NBSVCONS(DYNAMIC_LEN_STR_32, NetworkString);
 	NBSVCONS(FIXED_LEN_STR, NetworkString);
-	NBSVCONS(FIXED_LEN_UINT8_ARR, NetworkArray<uint8_t>);
+	NBSVCONS(FIXED_LEN_ARR_UINT8, NetworkArray<uint8_t>);
+	NBSVCONS(FIXED_LEN_ARR_UINT32, NetworkArray<uint32_t>);
 };
 
 #undef NBSVCONS
@@ -275,8 +279,14 @@ struct SingleNetworkInOutEventHandler {
 /// Provides an array of packet IDs
 /// @typeparam PacketIDs A list of packet IDs for each network in the ENetworkType enum
 template <int ...PacketIDs>
-struct NetworkPacketBase {
+class NetworkPacketBase {
 	static constexpr const int ID[ENetworkType_End] = { PacketIDs... };
+
+public:
+	inline static int getID(ENetworkType type) {
+		assert(type < ENetworkType_End);
+		return ID[type];
+	}
 };
 
 std::false_type is_network_packet_impl(...);
@@ -370,7 +380,7 @@ struct INetworkPeer {
 
 		INetworkBitStream& bs = network.writeBitStream();
 		packet.write(bs);
-		return sendRPC(Packet::ID[type], bs);
+		return sendRPC(Packet::getID(type), bs);
 	}
 
 };

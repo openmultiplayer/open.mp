@@ -138,7 +138,7 @@ namespace NetCode {
 				bs.read(Multiplier, NetworkBitStreamValueType::UINT32);
 				bs.read(LagCompensation, NetworkBitStreamValueType::UINT32);
 				bs.read(ServerName, NetworkBitStreamValueType::DYNAMIC_LEN_STR_8);
-				bs.read(VehicleModels, NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR);
+				bs.read(VehicleModels, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8);
 				return true;
 			}
 
@@ -169,7 +169,86 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(Multiplier));
 				bs.write(NetworkBitStreamValue::UINT32(LagCompensation));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(ServerName));
-				bs.write(NetworkBitStreamValue::FIXED_LEN_UINT8_ARR(VehicleModels));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(VehicleModels));
+			}
+		};
+
+		struct PlayerRequestClass final : NetworkPacketBase<128> {
+			uint16_t Classid;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(Classid, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(Classid));
+			}
+		};
+
+		struct PlayerRequestClassResponse final : NetworkPacketBase<128> {
+			uint8_t Selectable;
+			uint8_t TeamID;
+			uint32_t ModelID;
+			uint8_t Unknown1;
+			glm::vec3 Spawn;
+			float ZAngle;
+			NetworkArray<uint32_t> Weapons;
+			NetworkArray<uint32_t> Ammos;
+
+			/// Default constructor
+			PlayerRequestClassResponse() {}
+
+			/// Construction from a IClass
+			PlayerRequestClassResponse(IClass& cls) {
+				TeamID = cls.team();
+				ModelID = cls.skin();
+				Spawn = cls.spawn();
+				ZAngle = cls.angle();
+			}
+
+			bool read(INetworkBitStream& bs) {
+				bs.read(Selectable, NetworkBitStreamValueType::UINT8);
+				bs.read(TeamID, NetworkBitStreamValueType::UINT8);
+				bs.read(ModelID, NetworkBitStreamValueType::UINT32);
+				bs.read(Unknown1, NetworkBitStreamValueType::UINT8);
+				bs.read(Spawn, NetworkBitStreamValueType::VEC3);
+				bs.read(ZAngle, NetworkBitStreamValueType::FLOAT);
+				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
+				bs.read(Ammos, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Selectable));
+				bs.write(NetworkBitStreamValue::UINT8(TeamID));
+				bs.write(NetworkBitStreamValue::UINT32(ModelID));
+				bs.write(NetworkBitStreamValue::UINT8(Unknown1));
+				bs.write(NetworkBitStreamValue::VEC3(Spawn));
+				bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Weapons));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
+			}
+		};
+
+		struct PlayerRequestSpawn final : NetworkPacketBase<129> {
+			bool read(INetworkBitStream& bs) {
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct PlayerRequestSpawnResponse final : NetworkPacketBase<129> {
+			uint32_t Allow;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read(Allow, NetworkBitStreamValueType::UINT32);
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Allow));
 			}
 		};
 	}

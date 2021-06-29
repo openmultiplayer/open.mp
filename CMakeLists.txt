@@ -147,9 +147,8 @@ add_subdirectory(lib)
 add_subdirectory(SDK)
 
 set(PROJECT Server)
-add_executable(Server "")
 
-# enable_warnings(Server)
+#enable_warnings(Server)
 
 file(GLOB_RECURSE source_list "${CMAKE_CURRENT_SOURCE_DIR}/Server/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/Server/*.hpp")
 
@@ -161,7 +160,7 @@ foreach (TMP_PATH ${source_list})
 	endif ()
 endforeach(TMP_PATH)
 
-set_property(TARGET Server PROPERTY SOURCES ${source_list})
+add_executable(Server ${source_list})
 
 GroupSourcesByFolder(Server ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -172,6 +171,7 @@ include_directories(SDK)
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 	add_subdirectory(Server/Components/PawnPlugin)
 endif()
+add_subdirectory(Server/Components/PacketTracker)
 
 target_compile_definitions(Server PUBLIC
 	WIN32_LEAN_AND_MEAN
