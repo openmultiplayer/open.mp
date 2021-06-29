@@ -73,6 +73,7 @@ namespace NetCode {
 			bool read(INetworkBitStream& bs) {
 				bs.read(PlayerID, NetworkBitStreamValueType::UINT16);
 				bs.read(Reason, NetworkBitStreamValueType::UINT8);
+				return true;
 			}
 
 			void write(INetworkBitStream& bs) const {
