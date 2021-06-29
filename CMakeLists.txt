@@ -19,6 +19,7 @@ if(MSVC)
 	add_link_options("/LARGEADDRESSAWARE")
 	# Use strict intermediate floating-point precision
 	add_compile_options("/fp:strict")
+	add_compile_options("/arch:SSE2")
 
 elseif(UNIX)
 	# Linux GCC/Clang
@@ -78,19 +79,6 @@ else()
 	set(flags_DebugPreprocess "-E")
 endif()
 
-function(enable_warnings proj)
-	# GLM_FORCE_SILENT_WARNINGS Disables warnings in GLM.
-	# 4100 is `unreferenced formal parameter` in MSVC.
-	if(MSVC)
-		target_compile_options(${proj} PUBLIC /W4 /WX /wd4100 /wd4307 -DGLM_FORCE_SILENT_WARNINGS)
-	else()
-		target_compile_options(${proj} PUBLIC -fpermissive -DGLM_FORCE_SILENT_WARNINGS)
-		if (CROSS_BUILD)
-			target_compile_options(${proj} PUBLIC -Wno-attributes)
-		endif()
-	endif()
-endfunction()
-
 # set up special DebugPreprocess type (will preprocess files and output the result)
 set(CMAKE_C_FLAGS_DEBUGPREPROCESS "${CMAKE_C_FLAGS_DEBUG} ${flags_DebugPreprocess}")
 set(CMAKE_CXX_FLAGS_DEBUGPREPROCESS "${CMAKE_CXX_FLAGS_DEBUG} ${flags_DebugPreprocess}")
@@ -145,58 +133,4 @@ endfunction()
 
 add_subdirectory(lib)
 add_subdirectory(SDK)
-
-set(PROJECT Server)
-
-#enable_warnings(Server)
-
-file(GLOB_RECURSE source_list "${CMAKE_CURRENT_SOURCE_DIR}/Server/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/Server/*.hpp")
-
-set (EXCLUDE_COMPONENTS_DIR "Server/Components")
-foreach (TMP_PATH ${source_list})
-	string (FIND ${TMP_PATH} ${EXCLUDE_COMPONENTS_DIR} EXCLUDE_DIR_FOUND)
-	if (NOT ${EXCLUDE_DIR_FOUND} EQUAL -1)
-		list (REMOVE_ITEM source_list ${TMP_PATH})
-	endif ()
-endforeach(TMP_PATH)
-
-add_executable(Server ${source_list})
-
-GroupSourcesByFolder(Server ${CMAKE_CURRENT_SOURCE_DIR})
-
-include_directories(lib)
-include_directories(SDK)
-
-############# Components (plugins) #############
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	add_subdirectory(Server/Components/PawnPlugin)
-endif()
-add_subdirectory(Server/Components/PacketTracker)
-
-target_compile_definitions(Server PUBLIC
-	WIN32_LEAN_AND_MEAN
-	VC_EXTRALEAN
-	NOGDI
-	OMP_EXPORTS
-)
-
-target_link_libraries(Server PUBLIC
-	SDK
-	raknet
-)
-
-if(MSVC)
-	target_link_libraries(Server PRIVATE
-		mpr
-		shlwapi
-	)
-else()
-	target_link_libraries(Server PRIVATE
-		dl
-	)
-endif()
-
-set_property(TARGET Server PROPERTY OUTPUT_NAME omp-server)
-set_property(TARGET Server PROPERTY FOLDER "Server")
-
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Server)
+add_subdirectory(Server)
