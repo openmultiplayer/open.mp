@@ -2,11 +2,11 @@
 #include <filesystem>
 struct IUnknown;
 #include <Windows.h>
-#include "impl/core_impl.hpp"
+#include "core_impl.hpp"
 #include <nlohmann/json.hpp>
 #include <exports.hpp>
 
-typedef bool (*PluginEntryPoint_t)(ICore* iface);
+typedef bool (__cdecl *PluginEntryPoint_t)(ICore* iface);
 
 int loadPlugins(Core &core, const std::filesystem::path &path) {
     std::filesystem::create_directory(path);
