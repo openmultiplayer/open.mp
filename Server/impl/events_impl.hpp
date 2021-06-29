@@ -2,6 +2,7 @@
 
 #include <set>
 #include <algorithm>
+#include <vector>
 #include <events.hpp>
 
 template <class EventHandlerType>
@@ -39,8 +40,16 @@ private:
     std::set<EventHandlerType*> handlers;
 };
 
-template <class EventHandlerType, size_t Count>
-struct IndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandlerType, Count> {
+template <class EventHandlerType>
+struct IndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandlerType> {
+    IndexedEventDispatcher(size_t max) :
+        handlers(max)
+    { }
+
+    size_t count() override {
+        return handlers.size();
+    }
+
     bool addEventHandler(EventHandlerType* handler, size_t index) override {
         if (index >= handlers.size()) {
             return false;
@@ -83,5 +92,5 @@ struct IndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandle
     }
 
 private:
-    std::array<std::set<EventHandlerType*>, Count> handlers;
+    std::vector<std::set<EventHandlerType*>> handlers;
 };
