@@ -63,34 +63,9 @@ elseif(UNIX)
 
 endif()
 
-# set up configuration types
-if(CMAKE_CONFIGURATION_TYPES)
-	set(CMAKE_CONFIGURATION_TYPES "Debug;Release;DebugPreprocess" CACHE STRING "" FORCE)
-else()
-	if(NOT CMAKE_BUILD_TYPE)
-		set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
-	endif()
-	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY HELPSTRING "Choose the type of build.")
-	set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug;Release;DebugPreprocess")
-endif()
-if(MSVC)
-	set(flags_DebugPreprocess "/P")
-else()
-	set(flags_DebugPreprocess "-E")
-endif()
-
-# set up special DebugPreprocess type (will preprocess files and output the result)
-set(CMAKE_C_FLAGS_DEBUGPREPROCESS "${CMAKE_C_FLAGS_DEBUG} ${flags_DebugPreprocess}")
-set(CMAKE_CXX_FLAGS_DEBUGPREPROCESS "${CMAKE_CXX_FLAGS_DEBUG} ${flags_DebugPreprocess}")
-set(CMAKE_EXE_LINKER_FLAGS_DEBUGPREPROCESS ${CMAKE_EXE_LINKER_FLAGS_DEBUG})
-set(CMAKE_SHARED_LINKER_FLAGS_DEBUGPREPROCESS ${CMAKE_SHARED_LINKER_FLAGS_DEBUG})
-set(CMAKE_MODULE_LINKER_FLAGS_DEBUGPREPROCESS ${CMAKE_MODULE_LINKER_FLAGS_DEBUG})
-
 # Flags to know when we are compiling in Debug mode.
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
-set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DO_PRINTF")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DO_PRINTF")
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -D_DEBUG -D_DO_PRINTF")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG -D_DO_PRINTF")
 
 if(WIN32)
 	# https://stackoverflow.com/questions/42946335/deprecated-header-codecvt-replacement
