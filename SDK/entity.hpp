@@ -4,6 +4,10 @@
 #include "types.hpp"
 #include "events.hpp"
 
+struct IIDProvider {
+	virtual int getID() = 0;
+};
+
 /// A statically sized pool interface 
 template <typename T, size_t Count>
 struct IPool {
@@ -44,10 +48,7 @@ struct IEventDispatcherPool {
 };
 
 /// A base entity interface
-struct IEntity {
-	/// Get the entity's ID
-	virtual int getID() = 0;
-
+struct IEntity : public IIDProvider {
 	/// Get the entity's position
 	virtual vector3 getPosition() = 0;
 

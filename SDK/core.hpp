@@ -6,6 +6,7 @@
 #include "network.hpp"
 #include "player.hpp"
 #include "vehicle.hpp"
+#include "class.hpp"
 
 /// An event handler for core events
 struct CoreEventHandler {
@@ -36,15 +37,17 @@ struct ICore {
 	/// Get a list of available networks
 	virtual std::vector<INetwork*> getNetworks() = 0;
 
+	virtual IClassPool& getClasses() = 0;
+
 	/// Add a per-RPC event handler for each network for the packet's network ID
-	template <class Packet, class EventHandlerType>
-	inline void addPerRPCEventHandler(EventHandlerType* handler) {
+	template <class Packet>
+	inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		std::vector<INetwork*> networks = getNetworks();
 		for (INetwork* network : networks) {
 			ENetworkType type = network->getNetworkType();
 			if (type < ENetworkType_End) {
-				network->getPerRPCInOutEventDispatcher().addEventHandler(handler, Packet::ID[network->getNetworkType()]);
+				network->getPerRPCInOutEventDispatcher().addEventHandler(handler, Packet::getID(network->getNetworkType()));
 			}
 		}
 	}
@@ -57,7 +60,7 @@ struct ICore {
 		for (INetwork* network : networks) {
 			ENetworkType type = network->getNetworkType();
 			if (type < ENetworkType_End) {
-				network->getPerRPCInOutEventDispatcher().removeEventHandler(handler, Packet::ID[network->getNetworkType()]);
+				network->getPerRPCInOutEventDispatcher().removeEventHandler(handler, Packet::getID(network->getNetworkType()));
 			}
 		}
 	}

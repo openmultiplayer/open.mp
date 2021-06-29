@@ -8,30 +8,31 @@
 #include "legacy_network_impl.hpp"
 #include "player_impl.hpp"
 #include "vehicle_impl.hpp"
+#include "class_impl.hpp"
 
 struct Core final : public ICore, public PlayerEventHandler {
     EventDispatcher<CoreEventHandler> eventDispatcher;
     RakNetLegacyNetwork legacyNetwork;
     PlayerPool players;
     VehiclePool vehicles;
+    ClassPool classes;
     json props;
     std::chrono::milliseconds sleepTimer;
 
     Core() :
         legacyNetwork(*this),
-        players(*this)
+        players(*this),
+        classes(*this)
     {
         std::ifstream ifs("config.json");
         if (ifs.good()) {
             props = json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
         }
-        addPerRPCEventHandler<NetCode::RPC::PlayerConnect>(&players);
         players.getEventDispatcher().addEventHandler(this);
     }
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
-        removePerRPCEventHandler<NetCode::RPC::PlayerConnect>(&players);
     }
 
     int getVersion() override {
@@ -66,6 +67,10 @@ struct Core final : public ICore, public PlayerEventHandler {
         return props;
     }
 
+    IClassPool& getClasses() override {
+        return classes;
+    }
+
     void onConnect(IPlayer& player) override {
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = Config::getOption<int>(props, "enable_zone_names");
@@ -93,9 +98,9 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
         std::string serverName = Config::getOption<std::string>(props, "server_name");
         playerInitRPC.ServerName = serverName;
-        playerInitRPC.SetSpawnInfoCount = 0; /* todo */
+        playerInitRPC.SetSpawnInfoCount = classes.getPool().entries().size();
         playerInitRPC.PlayerID = player.getID();
-        playerInitRPC.VehicleModels = NetworkArray<uint8_t>(vehicles.models()); /* todo */
+        playerInitRPC.VehicleModels = NetworkArray<uint8_t>(vehicles.models());
 
         player.sendRPC(playerInitRPC);
     }

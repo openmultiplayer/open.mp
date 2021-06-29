@@ -67,8 +67,10 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             writeDynamicString<uint16_t>(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
             writeDynamicString<uint32_t>(std::get<NetworkString>(input.data)); break;
-        case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
+        case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8:
             writeFixedArray<uint8_t>(std::get<NetworkArray<uint8_t>>(input.data)); break;
+        case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
+            writeFixedArray<uint32_t>(std::get<NetworkArray<uint32_t>>(input.data)); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
@@ -163,8 +165,10 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = readDynamicString<uint16_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
             success = readDynamicString<uint32_t>(input.data.emplace<NetworkString>()); break;
-        case NetworkBitStreamValueType::FIXED_LEN_UINT8_ARR:
+        case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8:
             success = readFixedArray<uint8_t>(input.data.emplace<NetworkArray<uint8_t>>()); break;
+        case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
+            success = readFixedArray<uint32_t>(input.data.emplace<NetworkArray<uint32_t>>()); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }

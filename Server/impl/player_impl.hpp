@@ -8,8 +8,9 @@
 #include <netcode.hpp>
 #include "events_impl.hpp"
 #include "entity_impl.hpp"
+#include "class_impl.hpp"
 
-struct Player final : public IPlayer, public EntityIDProvider {
+struct Player final : public IPlayer, public PoolIDProvider {
     vector3 pos;
     vector4 rot;
     INetwork* network = nullptr;
@@ -22,12 +23,17 @@ struct Player final : public IPlayer, public EntityIDProvider {
     std::string key_;
     std::string versionString_;
     INetworkPeer::NetworkID nID_;
+    Class class_;
 
     void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const std::string& IP, unsigned short port) override {
         this->nID_ = networkID;
         this->network = network;
         this->ip = IP;
         this->port = port;
+    }
+
+    IClass& classData() override {
+        return class_;
     }
 
     int& versionNumber() override { return versionNumber_; }
@@ -46,7 +52,7 @@ struct Player final : public IPlayer, public EntityIDProvider {
     }
 
     int getID() override {
-        return id;
+        return poolID;
     }
 
     vector3 getPosition() override {
@@ -70,46 +76,73 @@ struct Player final : public IPlayer, public EntityIDProvider {
     }
 };
 
-struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public PlayerEventHandler, public SingleNetworkInOutEventHandler {
+struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public PlayerEventHandler {
     ICore& core;
 
-    PlayerPool(ICore& core)
-        : core(core)
+    struct PlayerConnectHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerConnectHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::PlayerConnect playerConnectPacket;
+            if (!playerConnectPacket.read(bs)) {
+                return false;
+            }
+
+            peer.versionNumber() = playerConnectPacket.VersionNumber;
+            peer.modded() = playerConnectPacket.Modded;
+            peer.name() = playerConnectPacket.Name;
+            peer.challengeResponse() = playerConnectPacket.ChallengeResponse;
+            peer.key() = playerConnectPacket.Key;
+            peer.versionString() = playerConnectPacket.VersionString;
+
+            NetCode::RPC::PlayerJoin playerJoinPacket;
+            playerJoinPacket.PlayerID = peer.getID();
+            playerJoinPacket.Colour = 0xFF0000FF;
+            playerJoinPacket.IsNPC = false;
+            playerJoinPacket.Name = peer.name();
+            for (IPlayer* target : self.core.getPlayers().getPool().entries()) {
+                if (target != &peer) {
+                    target->sendRPC(playerJoinPacket);
+                }
+            }
+
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
+            return true;
+        }
+    } playerConnectHandler;
+
+    struct PlayerRequestSpawnHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerRequestSpawnHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
+            playerRequestSpawnResponse.Allow = self.eventDispatcher.stopAtFalse(
+                [&peer](PlayerEventHandler* handler) {
+                    return handler->onPlayerRequestSpawn(peer);
+                }
+            );
+
+            peer.sendRPC(playerRequestSpawnResponse);
+            return true;
+        }
+    } playerRequestSpawnHandler;
+
+    PlayerPool(ICore& core) :
+        core(core),
+        playerConnectHandler(*this),
+        playerRequestSpawnHandler(*this)
     {
+        core.addPerRPCEventHandler<NetCode::RPC::PlayerConnect>(&playerConnectHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnHandler);
         eventDispatcher.addEventHandler(this);
     }
 
     ~PlayerPool() {
         eventDispatcher.removeEventHandler(this);
-    }
-
-    // RPC 25 (OnPlayerConnect)
-    bool received(IPlayer& peer, INetworkBitStream& bs) override {
-        NetCode::RPC::PlayerConnect playerConnectPacket;
-        if (!playerConnectPacket.read(bs)) {
-            return false;
-        }
-
-        peer.versionNumber() = playerConnectPacket.VersionNumber;
-        peer.modded() = playerConnectPacket.Modded;
-        peer.name() = playerConnectPacket.Name;
-        peer.challengeResponse() = playerConnectPacket.ChallengeResponse;
-        peer.key() = playerConnectPacket.Key;
-        peer.versionString() = playerConnectPacket.VersionString;
-
-        NetCode::RPC::PlayerJoin playerJoinPacket;
-        playerJoinPacket.PlayerID = peer.getID();
-        playerJoinPacket.Colour = 0xFF0000FF;
-        playerJoinPacket.IsNPC = false;
-        playerJoinPacket.Name = peer.name();
-        for (IPlayer* target : core.getPlayers().getPool().entries()) {
-            if (target != &peer) {
-                target->sendRPC(playerJoinPacket);
-            }
-        }
-
-        eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
-        return true;
+        core.removePerRPCEventHandler<NetCode::RPC::PlayerConnect>(&playerConnectHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnHandler);
     }
 
     void onDisconnect(IPlayer& player, int reason) override {
