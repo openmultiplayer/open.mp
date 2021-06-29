@@ -6,8 +6,8 @@
 #include <type_traits>
 #include <entity.hpp>
 
-struct EntityIDProvider {
-    int id;
+struct PoolIDProvider {
+    int poolID;
 };
 
 template <typename Type, typename Interface, int Count>
@@ -27,8 +27,8 @@ struct Pool final : public IPool<Interface, Count> {
             m_pool[freeIdx] = Type();
             m_taken.set(freeIdx);
             m_entries.insert(&m_pool[freeIdx]);
-            if constexpr (std::is_base_of<EntityIDProvider, Type>::value) {
-                m_pool[freeIdx].id = freeIdx;
+            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+                m_pool[freeIdx].poolID = freeIdx;
             }
         }
         return freeIdx;
@@ -40,8 +40,8 @@ struct Pool final : public IPool<Interface, Count> {
             m_pool[hint] = Type();
             m_taken.set(hint);
             m_entries.insert(&m_pool[hint]);
-            if constexpr (std::is_base_of<EntityIDProvider, Type>::value) {
-                m_pool[hint].id = hint;
+            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+                m_pool[hint].poolID = hint;
             }
             return hint;
         }
@@ -77,7 +77,7 @@ struct Pool final : public IPool<Interface, Count> {
 private:
     std::array<Type, Count> m_pool;
     std::bitset<Count> m_taken;
-    std::set<Interface*> m_entries;
+    std::set<Interface*> m_entries; // Should be sorted by ID by default because it points to contiguous memory
 };
 
 template <typename Type, typename Interface, size_t Count, class EventHandlerType>

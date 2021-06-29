@@ -8,13 +8,13 @@
 #include "events_impl.hpp"
 #include "entity_impl.hpp"
 
-struct Vehicle final : public IVehicle, public EntityIDProvider {
+struct Vehicle final : public IVehicle, public PoolIDProvider {
     vector3 pos;
     vector4 rot;
     std::array<IPlayer*, MAX_SEATS> passengers;
 
     int getID() override {
-        return id;
+        return poolID;
     }
 
     vector3 getPosition() override {
@@ -38,7 +38,7 @@ struct Vehicle final : public IVehicle, public EntityIDProvider {
     }
 };
 
-struct VehiclePool : public InheritedEventDispatcherPool<Vehicle, IVehiclePool>, EntityIDProvider {
+struct VehiclePool : public InheritedEventDispatcherPool<Vehicle, IVehiclePool> {
     VehiclePool() {
         modelCount.fill(0u);
     }

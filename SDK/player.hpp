@@ -2,6 +2,7 @@
 
 #include <string>
 #include "entity.hpp"
+#include "class.hpp"
 
 struct IVehicle;
 
@@ -27,14 +28,18 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's version string
 	virtual std::string& versionString() = 0;
+
+	virtual IClass& classData() = 0;
 };
 
 /// A player event handler
 struct PlayerEventHandler {
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
+	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
 };
 
 /// A player pool interface
 struct IPlayerPool : public IEventDispatcherPool<IPlayer, MAX_PLAYERS, PlayerEventHandler> {
+
 };
