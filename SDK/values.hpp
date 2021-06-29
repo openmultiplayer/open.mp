@@ -45,7 +45,10 @@ namespace Config {
 	template <typename T>
 	T getOption(const json& config, std::string option) {
 		auto it = defaults.find(option);
-		if (it == defaults.end()) {
+		if (config.is_null() || config.is_discarded()) {
+			return std::get<T>(it->second);
+		}
+		else if (it == defaults.end()) {
 			return config.value<T>(option, T());
 		}
 		else {
