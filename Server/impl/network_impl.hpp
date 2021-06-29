@@ -3,12 +3,16 @@
 #include <network.hpp>
 #include "events_impl.hpp"
 
-template <size_t PacketCount, size_t RPCCount>
 struct Network : public INetwork {
     EventDispatcher<NetworkEventHandler> networkEventDispatcher;
     EventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
-    IndexedEventDispatcher<SingleNetworkInOutEventHandler, PacketCount> rpcInOutEventDispatcher;
-    IndexedEventDispatcher<SingleNetworkInOutEventHandler, RPCCount> packetInOutEventDispatcher;
+    IndexedEventDispatcher<SingleNetworkInOutEventHandler> rpcInOutEventDispatcher;
+    IndexedEventDispatcher<SingleNetworkInOutEventHandler> packetInOutEventDispatcher;
+
+    Network(size_t packetCount, size_t rpcCount) :
+        rpcInOutEventDispatcher(rpcCount),
+        packetInOutEventDispatcher(packetCount)
+    {}
 
     IEventDispatcher<NetworkEventHandler>& getEventDispatcher() override {
         return networkEventDispatcher;
@@ -18,11 +22,11 @@ struct Network : public INetwork {
         return inOutEventDispatcher;
     }
 
-    IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerRPCInOutEventDispatcher() override {
+    IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerRPCInOutEventDispatcher() override {
         return rpcInOutEventDispatcher;
     }
 
-    IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() override {
+    IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerPacketInOutEventDispatcher() override {
         return packetInOutEventDispatcher;
     }
 };

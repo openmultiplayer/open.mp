@@ -300,10 +300,10 @@ struct INetwork {
 	virtual IEventDispatcher<NetworkInOutEventHandler>& getInOutEventDispatcher() = 0;
 
 	/// Get the dispatcher which dispatches I/O events bound to a specific RPC ID
-	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerRPCInOutEventDispatcher() = 0;
+	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerRPCInOutEventDispatcher() = 0;
 
 	/// Get the dispatcher which dispatches I/O events bound to a specific packet ID
-	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler, 256>& getPerPacketInOutEventDispatcher() = 0;
+	virtual IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerPacketInOutEventDispatcher() = 0;
 
 	/// Attempt to send a packet to a network peer
 	/// @param peer The network peer to send the packet to

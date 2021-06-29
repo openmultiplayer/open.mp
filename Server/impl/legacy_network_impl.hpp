@@ -172,7 +172,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 };
 
-struct RakNetLegacyNetwork final : public Network<256, 256>, public CoreEventHandler, public RakNet::PluginInterface {
+struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public RakNet::PluginInterface {
     RakNetLegacyNetwork(Core& core);
     ~RakNetLegacyNetwork();
 

@@ -4,6 +4,7 @@
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
 RakNetLegacyNetwork::RakNetLegacyNetwork(Core& core) :
+    Network(256, 256),
     core(core),
     rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface()),
     wlbs(wbs)
