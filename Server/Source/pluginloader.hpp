@@ -25,7 +25,7 @@ std::vector<IPlugin*> loadPlugins(Core &core, const std::filesystem::path &path)
         if (p.path().extension() == ".so") {
         #endif
             core.printLn("Loading plugin %s", p.path().filename().u8string().c_str());
-            HMODULE pluginLib = PLUGIN_OPEN(p.path().u8string().c_str());
+            auto pluginLib = PLUGIN_OPEN(p.path().u8string().c_str());
             if (pluginLib == nullptr) {
                 core.printLn("\tFailed to load plugin.");
                 continue;
