@@ -77,7 +77,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install conan
     - name: Generate build files
-      run: mkdir build && cd build && cmake .. -G Ninja -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_C_FLAGS=-m32
+      run: mkdir build && cd build && cmake .. -G Ninja -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_C_FLAGS=-m32 _DCMAKE_BUILD_TYPE=Release
 
     - name: Build
       run: |
