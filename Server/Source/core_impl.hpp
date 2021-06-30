@@ -18,6 +18,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     ClassPool classes;
     json props;
     std::chrono::milliseconds sleepTimer;
+    std::map<UUID, IPlugin*> plugins;
 
     Core() :
         legacyNetwork(*this),
@@ -33,6 +34,11 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
+    }
+
+    IPlugin* queryPlugin(UUID id) override {
+        auto it = plugins.find(id);
+        return it == plugins.end() ? nullptr : it->second;
     }
 
     int getVersion() override {
@@ -103,6 +109,15 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.VehicleModels = NetworkArray<uint8_t>(vehicles.models());
 
         player.sendRPC(playerInitRPC);
+    }
+
+    void addPlugins(const std::vector<IPlugin*>& newPlugins) {
+        for (auto& plugin : newPlugins) {
+            auto res = plugins.try_emplace(plugin->getUUID(), plugin);
+            if (!res.second) {
+                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", plugin->pluginName(), res.first->second->pluginName(), plugin->getUUID());
+            }
+        }
     }
 
     void run() {

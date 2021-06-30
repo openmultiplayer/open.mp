@@ -8,6 +8,7 @@
 #include <netcode.hpp>
 #include <events.hpp>
 #include <pool.hpp>
+#include <unordered_map>
 #include "class_impl.hpp"
 
 struct Player final : public IPlayer, public PoolIDProvider {
@@ -24,6 +25,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
     std::string versionString_;
     INetworkPeer::NetworkID nID_;
     Class class_;
+    std::unordered_map<UUID, IPlayerData*> playerData_;
+
+    IPlayerData* queryData(UUID uuid) override {
+        auto it = playerData_.find(uuid);
+        return it == playerData_.end() ? nullptr : it->second;
+    }
+
+    void addData(IPlayerData* playerData) override {
+        playerData_.emplace(playerData->getUUID(), playerData);
+    }
+
+    void removeData(IPlayerData* playerData) override {
+        playerData_.erase(playerData->getUUID());
+    }
 
     void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const std::string& IP, unsigned short port) override {
         this->nID_ = networkID;
@@ -73,6 +88,12 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     IVehicle* getVehicle() override {
         return nullptr;
+    }
+
+    ~Player() {
+        for (auto& v : playerData_) {
+            v.second->free();
+        }
     }
 };
 
