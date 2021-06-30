@@ -81,6 +81,8 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
 	add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 function(GroupSourcesByFolder target)
 	set(SOURCE_GROUP_DELIMITER "/")
 	set(last_dir "")

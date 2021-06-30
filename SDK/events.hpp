@@ -93,7 +93,7 @@ struct IndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandle
 
     template<typename Return, typename ...Params, typename ...Args>
     void dispatch(size_t index, Return(EventHandlerType::* mf)(Params...), Args &&... args) {
-        if (index >= Count) {
+        if (index >= handlers.size()) {
             return;
         }
         for (EventHandlerType* handler : handlers[index]) {
