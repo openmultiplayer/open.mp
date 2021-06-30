@@ -7,6 +7,7 @@
 #include "player.hpp"
 #include "vehicle.hpp"
 #include "class.hpp"
+#include "plugin.hpp"
 
 /// An event handler for core events
 struct CoreEventHandler {
@@ -37,7 +38,21 @@ struct ICore {
 	/// Get a list of available networks
 	virtual std::vector<INetwork*> getNetworks() = 0;
 
+	/// Get the pool of player classes
 	virtual IClassPool& getClasses() = 0;
+
+	/// Query a plugin by its ID
+	/// @param id The UUID of the plugin
+	/// @return A pointer to the plugin or nullptr if not available
+	virtual IPlugin* queryPlugin(UUID id) = 0;
+
+	/// Query a plugin by its type
+	/// @typeparam PluginT The plugin type, must derive from IPlugin
+	template <class PluginT>
+	PluginT* queryPlugin() {
+		static_assert(std::is_base_of<IPlugin, PluginT>::value, "queryPlugin parameter must inherit from IPlugin");
+		return static_cast<PluginT*>(queryPlugin(PluginT::IID));
+	}
 
 	/// Add a per-RPC event handler for each network for the packet's network ID
 	template <class Packet>

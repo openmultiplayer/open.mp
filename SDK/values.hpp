@@ -44,6 +44,7 @@ namespace Config {
 		{ "server_name", "open.mp server" }
 	};
 
+	/// Get a config option as either int, float or std::string
 	template <typename T>
 	T getOption(const json& config, std::string option) {
 		auto it = defaults.find(option);

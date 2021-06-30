@@ -3,7 +3,9 @@
 #include <set>
 #include "types.hpp"
 #include "events.hpp"
+#include "plugin.hpp"
 
+/// An interface for ID providers
 struct IIDProvider {
 	virtual int getID() = 0;
 };
