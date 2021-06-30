@@ -6,8 +6,8 @@
 #include <vehicle.hpp>
 #include <network.hpp>
 #include <netcode.hpp>
-#include "events_impl.hpp"
-#include "entity_impl.hpp"
+#include <events.hpp>
+#include <pool.hpp>
 #include "class_impl.hpp"
 
 struct Player final : public IPlayer, public PoolIDProvider {
