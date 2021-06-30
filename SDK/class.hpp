@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <pool.hpp>
 
 struct IPlayer;
 

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <network.hpp>
-#include "events_impl.hpp"
+#include <events.hpp>
 
 struct Network : public INetwork {
     EventDispatcher<NetworkEventHandler> networkEventDispatcher;

@@ -4,7 +4,50 @@
 #include <bitset>
 #include <array>
 #include <type_traits>
-#include <entity.hpp>
+#include <cassert>
+
+/* Interfaces, to be passed around */
+
+/// A statically sized pool interface 
+template <typename T, size_t Count>
+struct IPool {
+	/// Get the first free index or -1 if no index is available to use
+	virtual int findFreeIndex() = 0;
+
+	/// Claim the first free index
+	virtual int claim() = 0;
+
+	/// Attempt to claim the index at hint and if unavailable, claim the first available index
+	virtual int claim(int hint) = 0;
+
+	/// Check if an index is claimed
+	virtual bool valid(int index) = 0;
+
+	/// Get the object at an index
+	virtual T& get(int index) = 0;
+
+	/// Release the object at an index
+	virtual bool release(int index) = 0;
+
+	/// Get a set of all the available objects
+	virtual const std::set<T*>& entries() = 0;
+};
+
+/// A pool with an event dispatcher build in
+template <typename T, size_t Count, class EventHandlerType>
+struct IEventDispatcherPool {
+	using Type = T;
+	static const size_t Cnt = Count;
+	using EventHandler = EventHandlerType;
+
+	/// Get the pool
+	virtual IPool<T, Count>& getPool() = 0;
+
+	/// Get the event dispatcher
+	virtual IEventDispatcher<EventHandlerType>& getEventDispatcher() = 0;
+};
+
+/* Implementation, NOT to be passed around */
 
 struct PoolIDProvider {
     int poolID;

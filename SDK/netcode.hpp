@@ -216,6 +216,7 @@ namespace NetCode {
 				bs.read(ZAngle, NetworkBitStreamValueType::FLOAT);
 				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
 				bs.read(Ammos, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
+				return true;
 			}
 
 			void write(INetworkBitStream& bs) const {

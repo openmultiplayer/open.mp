@@ -3,8 +3,8 @@
 #include <mutex>
 #include <cstdarg>
 #include <fstream>
-#include "events_impl.hpp"
-#include "entity_impl.hpp"
+#include <events.hpp>
+#include <pool.hpp>
 #include "legacy_network_impl.hpp"
 #include "player_impl.hpp"
 #include "vehicle_impl.hpp"
