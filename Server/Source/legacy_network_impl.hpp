@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <condition_variable>
 #include <network.hpp>
 #include <core.hpp>
 #include <raknet/BitStream.h>
