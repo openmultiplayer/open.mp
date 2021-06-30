@@ -9,7 +9,6 @@
 #include <events.hpp>
 #include <pool.hpp>
 #include <unordered_map>
-#include "class_impl.hpp"
 
 struct Player final : public IPlayer, public PoolIDProvider {
     vector3 pos;
@@ -24,7 +23,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
     std::string key_;
     std::string versionString_;
     INetworkPeer::NetworkID nID_;
-    Class class_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
 
     IPlayerData* queryData(UUID uuid) override {
@@ -45,10 +43,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
         this->network = network;
         this->ip = IP;
         this->port = port;
-    }
-
-    IClass& classData() override {
-        return class_;
     }
 
     int& versionNumber() override { return versionNumber_; }
