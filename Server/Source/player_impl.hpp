@@ -31,7 +31,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
     void addData(IPlayerData* playerData) override {
-        playerData_.emplace(playerData->getUUID(), playerData);
+        playerData_.try_emplace(playerData->getUUID(), playerData);
     }
 
     void removeData(IPlayerData* playerData) override {
