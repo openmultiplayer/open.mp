@@ -2,7 +2,16 @@
 
 #include <string>
 #include "entity.hpp"
-#include "class.hpp"
+#include "pool.hpp"
+
+/// Holds weapon slot data
+struct WeaponSlotData {
+	uint32_t id;
+	uint32_t ammo;
+};
+
+/// An array of weapon slots
+typedef std::array<WeaponSlotData, MAX_WEAPON_SLOTS> WeaponSlots;
 
 /// A player data interface for per-player data
 struct IPlayerData : public IUUIDProvider {
@@ -36,9 +45,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's version string
 	virtual std::string& versionString() = 0;
-
-	/// Get the player's class data
-	virtual IClass& classData() = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
