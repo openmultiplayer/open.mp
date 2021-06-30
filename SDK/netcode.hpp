@@ -1,5 +1,6 @@
 #pragma once
 
+#include "types.hpp"
 #include "network.hpp"
 #include "player.hpp"
 
@@ -200,11 +201,11 @@ namespace NetCode {
 			PlayerRequestClassResponse() {}
 
 			/// Construction from a IClass
-			PlayerRequestClassResponse(IClass& cls) {
-				TeamID = cls.team();
-				ModelID = cls.skin();
-				Spawn = cls.spawn();
-				ZAngle = cls.angle();
+			PlayerRequestClassResponse(int team, int model, vector3 spawn, float angle) {
+				TeamID = team;
+				ModelID = model;
+				Spawn = spawn;
+				ZAngle = angle;
 			}
 
 			bool read(INetworkBitStream& bs) {

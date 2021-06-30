@@ -8,22 +8,20 @@
 #include "legacy_network_impl.hpp"
 #include "player_impl.hpp"
 #include "vehicle_impl.hpp"
-#include "class_impl.hpp"
+#include <Server/Components/Classes/classes.hpp>
 
 struct Core final : public ICore, public PlayerEventHandler {
     EventDispatcher<CoreEventHandler> eventDispatcher;
     RakNetLegacyNetwork legacyNetwork;
     PlayerPool players;
     VehiclePool vehicles;
-    ClassPool classes;
     json props;
     std::chrono::milliseconds sleepTimer;
     std::map<UUID, IPlugin*> plugins;
 
     Core() :
         legacyNetwork(*this),
-        players(*this),
-        classes(*this)
+        players(*this)
     {
         std::ifstream ifs("config.json");
         if (ifs.good()) {
@@ -73,10 +71,6 @@ struct Core final : public ICore, public PlayerEventHandler {
         return props;
     }
 
-    IClassPool& getClasses() override {
-        return classes;
-    }
-
     void onConnect(IPlayer& player) override {
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = Config::getOption<int>(props, "enable_zone_names");
@@ -104,7 +98,8 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
         std::string serverName = Config::getOption<std::string>(props, "server_name");
         playerInitRPC.ServerName = serverName;
-        playerInitRPC.SetSpawnInfoCount = classes.getPool().entries().size();
+        IClassesPlugin* classes = ICore::queryPlugin<IClassesPlugin>();
+        playerInitRPC.SetSpawnInfoCount = classes ? classes->getClasses().getPool().entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
         playerInitRPC.VehicleModels = NetworkArray<uint8_t>(vehicles.models());
 
