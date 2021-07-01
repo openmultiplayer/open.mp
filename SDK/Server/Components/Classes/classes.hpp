@@ -3,28 +3,20 @@
 #include <sdk.hpp>
 
 /// Player class interface
-struct IClass : public IIDProvider {
-	/// Get the class's team
-	virtual int& team() = 0;
-
-	/// Get the class's skin ID
-	virtual int& skin() = 0;
-
-	/// Get the class's spawn position
-	virtual vector3& spawn() = 0;
-
-	/// Get the class's spawn angle
-	virtual float& angle() = 0;
-
-	/// Get the class's spawn weapons
-	virtual WeaponSlots& weapons() = 0;
+struct PlayerClass {
+	int team; ///< The class's team
+	int skin; ///< The class's skin ID
+	Vector3 spawn; ///< The class's spawn position
+	float angle; ///< The class's angle
+	WeaponSlots weapons; ///< The class's weapons
 };
 
 static const UUID PlayerClassData_UUID = UUID(0x185655ded843788b);
 struct IPlayerClassData : public IPlayerData {
 	PROVIDE_UUID(PlayerClassData_UUID)
 
-	virtual IClass& getClass() = 0;
+	virtual const PlayerClass& getClass() = 0;
+	virtual void setSpawnInfo(const PlayerClass& info) = 0;
 };
 
 /// The player class event handler
@@ -32,14 +24,12 @@ struct ClassEventHandler {
 	virtual bool onPlayerRequestClass(IPlayer& player, unsigned int classId) { return true; }
 };
 
-/// The player class pool
-struct IClassPool : public IEventDispatcherPool<IClass, MAX_CLASSES, ClassEventHandler> {
-
-};
+typedef IPool<PlayerClass, MAX_CLASSES> IClassPool;
 
 static const UUID ClassesPlugin_UUID = UUID(0x8cfb3183976da208);
 struct IClassesPlugin : public IPlugin {
 	PROVIDE_UUID(ClassesPlugin_UUID)
 
 	virtual IClassPool& getClasses() = 0;
+	virtual IEventDispatcher<ClassEventHandler>& getEventDispatcher() = 0;
 };

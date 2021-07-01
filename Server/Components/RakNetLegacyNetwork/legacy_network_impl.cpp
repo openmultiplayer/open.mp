@@ -1,9 +1,9 @@
 #include "legacy_network_impl.hpp"
-#include "core_impl.hpp"
+#include <netcode.hpp>
 
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
-RakNetLegacyNetwork::RakNetLegacyNetwork(Core& core) :
+RakNetLegacyNetwork::RakNetLegacyNetwork(ICore& core) :
     Network(256, 256),
     core(core),
     rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface()),
@@ -297,7 +297,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         return;
     }
 
-    IPool<IPlayer, MAX_PLAYERS>& pool = network->core.players.getPool();
+    IPool<IPlayer, MAX_PLAYERS>& pool = network->core.getPlayers().getPool();
 
     int freeIdx = pool.findFreeIndex();
     if (freeIdx == -1) {
@@ -352,6 +352,13 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             handler->received(player, lbs);
         }
     );
+
+    network->networkEventDispatcher.all(
+        [&player, &lbs](NetworkEventHandler* handler) {
+            lbs.reset(BSResetRead);
+            handler->onPeerConnect(player, lbs);
+        }
+    );
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
@@ -363,13 +370,13 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
     int pid = pos->second;
     pidFromRID.erase(rid);
 
-    auto& pool = core.players.getPool();
+    auto& pool = core.getPlayers().getPool();
     if (!pool.valid(pid)) {
         return;
     }
 
     IPlayer& player = pool.get(pid);
-    core.players.eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, player, 0);
+    networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, 0 /* TODO reason */);
     pool.release(pid);
 }
 
@@ -413,11 +420,11 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 }
 
 void RakNetLegacyNetwork::onInit() {
-    const json& props = core.getProperties();
+    const JSON& props = core.getProperties();
     rakNetServer.Start(
         Config::getOption<int>(props, "max_players"),
         0,
-        core.sleepTimer.count(),
+        Config::getOption<int>(props, "sleep"),
         Config::getOption<int>(props, "port")
     );
     rakNetServer.StartOccasionalPing();

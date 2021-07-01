@@ -6,8 +6,6 @@ struct IUnknown;
 #include <sdk.hpp>
 #include "pluginloader.hpp"
 
-
-
 int main()
 {
     Core* core = new Core();

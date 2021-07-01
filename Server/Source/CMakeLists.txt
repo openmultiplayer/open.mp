@@ -17,10 +17,6 @@ target_link_libraries(Server PUBLIC
 	SDK
 )
 
-target_link_libraries(Server PRIVATE
-	raknet
-)
-
 if(MSVC)
 	target_link_libraries(Server PRIVATE
 		mpr

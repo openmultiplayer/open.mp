@@ -8,7 +8,6 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/PluginInterface.h>
-#include "network_impl.hpp"
 
 struct Core;
 
@@ -55,11 +54,11 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::FLOAT:
             bs.Write(std::get<float>(input.data)); break;
         case NetworkBitStreamValueType::VEC2:
-            bs.Write(std::get<vector2>(input.data)); break;
+            bs.Write(std::get<Vector2>(input.data)); break;
         case NetworkBitStreamValueType::VEC3:
-            bs.Write(std::get<vector3>(input.data)); break;
+            bs.Write(std::get<Vector3>(input.data)); break;
         case NetworkBitStreamValueType::VEC4:
-            bs.Write(std::get<vector4>(input.data)); break;
+            bs.Write(std::get<Vector4>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
             writeFixedString(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
@@ -70,6 +69,8 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             writeDynamicString<uint32_t>(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8:
             writeFixedArray<uint8_t>(std::get<NetworkArray<uint8_t>>(input.data)); break;
+        case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT16:
+            writeFixedArray<uint16_t>(std::get<NetworkArray<uint16_t>>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
             writeFixedArray<uint32_t>(std::get<NetworkArray<uint32_t>>(input.data)); break;
         case NetworkBitStreamValueType::NONE:
@@ -153,11 +154,11 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::FLOAT:
             success = bs.Read(input.data.emplace<float>()); break;
         case NetworkBitStreamValueType::VEC2:
-            success = bs.Read(input.data.emplace<vector2>()); break;
+            success = bs.Read(input.data.emplace<Vector2>()); break;
         case NetworkBitStreamValueType::VEC3:
-            success = bs.Read(input.data.emplace<vector3>()); break;
+            success = bs.Read(input.data.emplace<Vector3>()); break;
         case NetworkBitStreamValueType::VEC4:
-            success = bs.Read(input.data.emplace<vector4>()); break;
+            success = bs.Read(input.data.emplace<Vector4>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
             success = readFixedString(std::get<NetworkString>(input.data)); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
@@ -168,6 +169,8 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = readDynamicString<uint32_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8:
             success = readFixedArray<uint8_t>(input.data.emplace<NetworkArray<uint8_t>>()); break;
+        case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT16:
+            success = readFixedArray<uint16_t>(input.data.emplace<NetworkArray<uint16_t>>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
             success = readFixedArray<uint32_t>(input.data.emplace<NetworkArray<uint32_t>>()); break;
         case NetworkBitStreamValueType::NONE:
@@ -178,7 +181,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
 };
 
 struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public RakNet::PluginInterface {
-    RakNetLegacyNetwork(Core& core);
+    RakNetLegacyNetwork(ICore& core);
     ~RakNetLegacyNetwork();
 
     ENetworkType getNetworkType() override {
@@ -238,7 +241,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return OnRakNetDisconnect(playerId);
     }
 
-    Core& core;
+    ICore& core;
     RakNet::RakServerInterface& rakNetServer;
     std::map<RakNet::PlayerID, int> pidFromRID;
     RakNet::BitStream wbs;

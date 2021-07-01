@@ -7,8 +7,8 @@ struct MyPlugin : public ISomePlugin {
 		return "PluginProvider";
 	}
 
-	vector3 someVec() override {
-		return vector3(1.f, 2.f, 3.f);
+	Vector3 someVec() override {
+		return Vector3(1.f, 2.f, 3.f);
 	}
 } plugin;
 
