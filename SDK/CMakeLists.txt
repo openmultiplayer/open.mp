@@ -8,7 +8,7 @@ target_link_libraries(SDK INTERFACE
 
 target_include_directories(SDK INTERFACE .)
 
-file(GLOB sdk_source_list "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
+file(GLOB_RECURSE sdk_source_list "*.hpp")
 
 set_property(TARGET SDK PROPERTY SOURCES ${sdk_source_list})
 

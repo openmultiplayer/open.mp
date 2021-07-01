@@ -12,7 +12,7 @@ struct MyPlugin : public IPlugin, public NetworkInOutEventHandler {
 	}
 
 	bool receivedPacket(IPlayer& peer, int id, INetworkBitStream& bs) override {
-		core->printLn("[%s %ull:%u] Received packet %i from network %i", peer.name().c_str(), peer.getNetworkID().address, peer.getNetworkID().port, id, peer.getNetwork().getNetworkType());
+		core->printLn("[%s %llu:%u] Received packet %i from network %i", peer.name().c_str(), peer.getNetworkID().address, peer.getNetworkID().port, id, peer.getNetwork().getNetworkType());
 		return true;
 	}
 
