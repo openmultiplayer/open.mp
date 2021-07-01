@@ -21,8 +21,8 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 		return "PlayerDataProvider";
 	}
 
-	void onConnect(IPlayer& player) override {
-		player.addData(new SomePlayerData());
+	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+		return new SomePlayerData();
 	}
 } plugin;
 
