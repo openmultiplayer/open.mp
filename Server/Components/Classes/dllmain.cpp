@@ -60,7 +60,7 @@ struct PlayerClassData final : IPlayerClassData {
 	}
 };
 
-struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
+struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler, public CoreEventHandler {
 	ClassPool classes;
     EventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
@@ -150,8 +150,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 		core(core),
         onPlayerRequestClassHandler(*this)
 	{
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
-		core.getPlayers().getEventDispatcher().addEventHandler(this);
+        core.getEventDispatcher().addEventHandler(this);
+        core.getPlayers().getEventDispatcher().addEventHandler(this);
 	}
 
 	IClassPool& getClasses() override {
@@ -174,9 +174,14 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 		delete this;
 	}
 
+    void onInit() override {
+        core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
+    }
+
 	~ClassesPlugin() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
 		core.getPlayers().getEventDispatcher().removeEventHandler(this);
+        core.getEventDispatcher().removeEventHandler(this);
 	}
 };
 
