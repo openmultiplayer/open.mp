@@ -11,7 +11,7 @@
 /// An event handler for core events
 struct CoreEventHandler {
 	virtual void onInit() {}
-	virtual void onTick(uint64_t tick) {}
+	virtual void onTick(uint64_t tick) {} // TODO move to a separate handler, called too often
 };
 
 /// The core interface
@@ -76,6 +76,7 @@ struct ICore {
 		}
 	}
 
+	/// Add a network event handler to all available networks' dispatchers
 	inline void addNetworkEventHandler(NetworkEventHandler* handler) {
 		DynamicArray<INetwork*>& networks = getNetworks();
 		for (INetwork* network : networks) {
@@ -83,6 +84,7 @@ struct ICore {
 		}
 	}
 
+	/// Remove a network event handler from all available networks' dispatchers
 	inline void removeNetworkEventHandler(NetworkEventHandler* handler) {
 		DynamicArray<INetwork*>& networks = getNetworks();
 		for (INetwork* network : networks) {

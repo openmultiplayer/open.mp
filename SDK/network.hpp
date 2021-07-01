@@ -246,6 +246,8 @@ enum ENetworkBitStreamReset {
 	BSReset = BSResetRead | BSResetWrite ///< Reset both
 };
 
+/* Interfaces, to be passed around */
+
 /// An interface to a network bit stream
 struct INetworkBitStream {
 	/// Get the network type of the bit stream
@@ -354,8 +356,12 @@ struct INetwork {
 	virtual INetworkBitStream& writeBitStream() = 0;
 };
 
+/// A plugin interface which allows for writing a network plugin
 struct INetworkPlugin : public IPlugin {
+	/// Return Network plugin type
 	PluginType pluginType() override { return PluginType::Network; }
+
+	/// Return the network provided by the plugin
 	virtual INetwork* getNetwork() = 0;
 };
 
@@ -410,6 +416,8 @@ struct INetworkPeer {
 	}
 
 };
+
+/* Implementation, NOT to be passed around */
 
 struct Network : public INetwork {
     EventDispatcher<NetworkEventHandler> networkEventDispatcher;
