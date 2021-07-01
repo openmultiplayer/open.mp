@@ -45,16 +45,16 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual char& modded() = 0;
 
 	/// Get the player's name
-	virtual std::string& name() = 0;
+	virtual String& name() = 0;
 
 	/// Get the player's challenge response
 	virtual unsigned int& challengeResponse() = 0;
 
 	/// Get the player's key
-	virtual std::string& key() = 0;
+	virtual String& key() = 0;
 
 	/// Get the player's version string
-	virtual std::string& versionString() = 0;
+	virtual String& versionString() = 0;
 
 	virtual void giveWeapon(WeaponSlotData weapon) = 0;
 
