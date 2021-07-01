@@ -2,7 +2,6 @@
 
 #include "values.hpp"
 #include "entity.hpp"
-#include "pool.hpp"
 
 struct IPlayer;
 
