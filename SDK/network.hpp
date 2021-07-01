@@ -5,6 +5,7 @@
 #include <vector>
 #include <variant>
 #include <cassert>
+#include "plugin.hpp"
 #include "types.hpp"
 #include "events.hpp"
 #include "exports.hpp"
@@ -37,6 +38,7 @@ enum class NetworkBitStreamValueType {
 	DYNAMIC_LEN_STR_32,   ///< NetworkString
 	FIXED_LEN_STR,        ///< NetworkString
 	FIXED_LEN_ARR_UINT8,  ///< NetworkArray<uint8_t>
+	FIXED_LEN_ARR_UINT16, ///< NetworkArray<uint16_t>
 	FIXED_LEN_ARR_UINT32  ///< NetworkArray<uint32_t>
 };
 
@@ -189,11 +191,12 @@ struct NetworkBitStreamValue {
 		int64_t,
 		float,
 		double,
-		vector2,
-		vector3,
-		vector4,
+		Vector2,
+		Vector3,
+		Vector4,
 		NetworkString,
 		NetworkArray<uint8_t>,
+		NetworkArray<uint16_t>,
 		NetworkArray<uint32_t>
 	>;
 
@@ -211,17 +214,18 @@ struct NetworkBitStreamValue {
 	NBSVCONS(INT64, int64_t);
 	NBSVCONS(FLOAT, float);
 	NBSVCONS(DOUBLE, double);
-	NBSVCONS(VEC2, vector2);
-	NBSVCONS(VEC3, vector3);
-	NBSVCONS(VEC4, vector4);
-	NBSVCONS(VEC3_COMPRESSED, vector3);
-	NBSVCONS(VEC3_SAMP, vector3);
-	NBSVCONS(HP_ARMOR_COMPRESSED, vector2);
+	NBSVCONS(VEC2, Vector2);
+	NBSVCONS(VEC3, Vector3);
+	NBSVCONS(VEC4, Vector4);
+	NBSVCONS(VEC3_COMPRESSED, Vector3);
+	NBSVCONS(VEC3_SAMP, Vector3);
+	NBSVCONS(HP_ARMOR_COMPRESSED, Vector2);
 	NBSVCONS(DYNAMIC_LEN_STR_8, NetworkString);
 	NBSVCONS(DYNAMIC_LEN_STR_16, NetworkString);
 	NBSVCONS(DYNAMIC_LEN_STR_32, NetworkString);
 	NBSVCONS(FIXED_LEN_STR, NetworkString);
 	NBSVCONS(FIXED_LEN_ARR_UINT8, NetworkArray<uint8_t>);
+	NBSVCONS(FIXED_LEN_ARR_UINT16, NetworkArray<uint16_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT32, NetworkArray<uint32_t>);
 };
 
@@ -277,6 +281,8 @@ struct INetworkBitStream {
 /// An event handler for network events
 struct NetworkEventHandler {
 	virtual bool incomingConnection(int id, uint64_t address, uint16_t port) { return true; }
+	virtual void onPeerConnect(IPlayer& peer, INetworkBitStream& bs) { }
+	virtual void onPeerDisconnect(IPlayer& peer, int reason) { }
 };
 
 /// An event handler for network I/O events
@@ -348,6 +354,11 @@ struct INetwork {
 	virtual INetworkBitStream& writeBitStream() = 0;
 };
 
+struct INetworkPlugin : public IPlugin {
+	PluginType pluginType() override { return PluginType::Network; }
+	virtual INetwork* getNetwork() = 0;
+};
+
 /// A network peer interface
 struct INetworkPeer {
 	/// Peer network ID
@@ -400,13 +411,30 @@ struct INetworkPeer {
 
 };
 
-/// Helper macro that reads a bit stream value and returns false on fail
-#define CHECKED_READ(output, input) \
-	{ \
-		NetworkBitStreamValue output ## _in input; \
-		if (!bs.read(output ## _in)) { \
-			return false; \
-		} else { \
-			output = std::get<decltype(output)>(output ## _in.data); \
-		} \
-	}
+struct Network : public INetwork {
+    EventDispatcher<NetworkEventHandler> networkEventDispatcher;
+    EventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
+    IndexedEventDispatcher<SingleNetworkInOutEventHandler> rpcInOutEventDispatcher;
+    IndexedEventDispatcher<SingleNetworkInOutEventHandler> packetInOutEventDispatcher;
+
+    Network(size_t packetCount, size_t rpcCount) :
+        rpcInOutEventDispatcher(rpcCount),
+        packetInOutEventDispatcher(packetCount)
+    {}
+
+    IEventDispatcher<NetworkEventHandler>& getEventDispatcher() override {
+        return networkEventDispatcher;
+    }
+
+    IEventDispatcher<NetworkInOutEventHandler>& getInOutEventDispatcher() override {
+        return inOutEventDispatcher;
+    }
+
+    IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerRPCInOutEventDispatcher() override {
+        return rpcInOutEventDispatcher;
+    }
+
+    IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerPacketInOutEventDispatcher() override {
+        return packetInOutEventDispatcher;
+    }
+};

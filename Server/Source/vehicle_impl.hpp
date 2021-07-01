@@ -9,27 +9,27 @@
 #include <pool.hpp>
 
 struct Vehicle final : public IVehicle, public PoolIDProvider {
-    vector3 pos;
-    vector4 rot;
+    Vector3 pos;
+    Vector4 rot;
     std::array<IPlayer*, MAX_SEATS> passengers;
 
     int getID() override {
         return poolID;
     }
 
-    vector3 getPosition() override {
+    Vector3 getPosition() override {
         return pos;
     }
 
-    void setPosition(vector3 position) override {
+    void setPosition(Vector3 position) override {
         pos = position;
     }
 
-    vector4 getRotation() override {
+    Vector4 getRotation() override {
         return rot;
     }
 
-    void setRotation(vector4 rotation) override {
+    void setRotation(Vector4 rotation) override {
         rot = rotation;
     }
 

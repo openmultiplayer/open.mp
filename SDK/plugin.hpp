@@ -10,10 +10,17 @@ struct IUUIDProvider {
 	virtual UUID getUUID() = 0;
 };
 
+enum PluginType {
+	Network,
+	Other,
+};
+
 /// A plugin interface
 struct IPlugin : public IUUIDProvider {
 	/// Get the plugin's name
 	virtual const char* pluginName() = 0;
+
+	virtual PluginType pluginType() { return PluginType::Other; }
 
 	/// Frees the plugin data
 	virtual void free() {}

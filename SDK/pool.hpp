@@ -12,6 +12,8 @@
 /// A statically sized pool interface 
 template <typename T, size_t Count>
 struct IPool {
+    static const size_t Cnt = Count;
+
 	/// Get the first free index or -1 if no index is available to use
 	virtual int findFreeIndex() = 0;
 

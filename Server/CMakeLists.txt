@@ -9,7 +9,7 @@ function(add_server_component name)
 
 	add_library(${PROJECT_NAME} SHARED ${plugin_source_list})
 
-	target_link_libraries(${PROJECT_NAME} PUBLIC
+	target_link_libraries(${PROJECT_NAME} PRIVATE
 		SDK
 		Server
 	)

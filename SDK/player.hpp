@@ -1,12 +1,13 @@
 #pragma once
 
 #include <string>
+#include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
 
 /// Holds weapon slot data
 struct WeaponSlotData {
-	uint32_t id;
+	uint8_t id;
 	uint32_t ammo;
 
 	uint8_t slot()
@@ -61,6 +62,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void resetWeapons() = 0;
 
 	virtual void setArmedWeapon(uint32_t weapon) = 0;
+
+	virtual Color& color() = 0;
+
+	virtual void streamInPlayer(IPlayer& other) = 0;
+
+	virtual bool isPlayerStreamedIn(IPlayer& other) = 0;
+
+	virtual void streamOutPlayer(IPlayer& other) = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;

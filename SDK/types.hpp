@@ -13,10 +13,11 @@
 #include <nlohmann/json.hpp>
 #include "exports.hpp"
 
-typedef glm::vec2 vector2;
-typedef glm::vec3 vector3;
-typedef glm::vec4 vector4;
-typedef nlohmann::json json;
+typedef glm::vec2 Vector2;
+typedef glm::vec3 Vector3;
+typedef glm::vec4 Vector4;
+typedef uint32_t Color;
+typedef nlohmann::json JSON;
 typedef uint64_t UUID;
 
 // Use these instead of STL classes when passing them around the SDK
