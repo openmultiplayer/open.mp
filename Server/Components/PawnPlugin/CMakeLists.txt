@@ -12,7 +12,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PUBLIC
 	SDK
 	pawn-runtime
-	Server
 )
 
 GroupSourcesByFolder(${PROJECT_NAME})

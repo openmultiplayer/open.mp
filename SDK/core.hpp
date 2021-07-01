@@ -6,6 +6,7 @@
 #include "network.hpp"
 #include "player.hpp"
 #include "vehicle.hpp"
+#include "class.hpp"
 #include "plugin.hpp"
 
 /// An event handler for core events
@@ -36,6 +37,9 @@ struct ICore {
 
 	/// Get a list of available networks
 	virtual std::vector<INetwork*> getNetworks() = 0;
+
+	/// Get the pool of player classes
+	virtual IClassPool& getClasses() = 0;
 
 	/// Query a plugin by its ID
 	/// @param id The UUID of the plugin
