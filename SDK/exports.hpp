@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <new>
 
 #ifdef OMP_EXPORTS
     #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
