@@ -20,6 +20,7 @@ struct IPlugin : public IUUIDProvider {
 	/// Get the plugin's name
 	virtual const char* pluginName() = 0;
 
+	/// Get the plugin's type
 	virtual PluginType pluginType() { return PluginType::Other; }
 
 	/// Frees the plugin data

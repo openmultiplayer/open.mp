@@ -57,18 +57,27 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's version string
 	virtual String& versionString() = 0;
 
+	/// Give a weapon to the player
 	virtual void giveWeapon(WeaponSlotData weapon) = 0;
 
+	/// Reset the player's weapons
 	virtual void resetWeapons() = 0;
 
+	/// Set the player's currently armed weapon
 	virtual void setArmedWeapon(uint32_t weapon) = 0;
 
+	/// Get or set the player's color
 	virtual Color& color() = 0;
 
+	/// Stream in a player for the current player
+	/// @param other The player to stream in
 	virtual void streamInPlayer(IPlayer& other) = 0;
 
+	/// Check if a player is streamed in for the current player
 	virtual bool isPlayerStreamedIn(IPlayer& other) = 0;
 
+	/// Stream out a player for the current player
+	/// @param other The player to stream out
 	virtual void streamOutPlayer(IPlayer& other) = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
