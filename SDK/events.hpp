@@ -1,6 +1,6 @@
 #pragma once
 
-#include <set>
+#include <unordered_set>
 #include <algorithm>
 #include <vector>
 
@@ -57,7 +57,7 @@ struct EventDispatcher final : public IEventDispatcher<EventHandlerType> {
     }
 
 private:
-    std::set<EventHandlerType*> handlers;
+    std::unordered_set<EventHandlerType*> handlers;
 };
 
 template <class EventHandlerType>
@@ -112,5 +112,5 @@ struct IndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandle
     }
 
 private:
-    std::vector<std::set<EventHandlerType*>> handlers;
+    std::vector<std::unordered_set<EventHandlerType*>> handlers;
 };

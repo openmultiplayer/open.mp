@@ -32,10 +32,10 @@ struct ICore {
 	virtual IEventDispatcher<CoreEventHandler>& getEventDispatcher() = 0;
 
 	/// Get the properties as a JSON object
-	virtual const json& getProperties() = 0;
+	virtual const JSON& getProperties() = 0;
 
 	/// Get a list of available networks
-	virtual DynamicArray<INetwork*> getNetworks() = 0;
+	virtual DynamicArray<INetwork*>& getNetworks() = 0;
 
 	/// Query a plugin by its ID
 	/// @param id The UUID of the plugin
@@ -67,12 +67,26 @@ struct ICore {
 	template <class Packet, class EventHandlerType>
 	inline void removePerRPCEventHandler(EventHandlerType* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		DynamicArray<INetwork*> networks = getNetworks();
+		DynamicArray<INetwork*>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			ENetworkType type = network->getNetworkType();
 			if (type < ENetworkType_End) {
 				network->getPerRPCInOutEventDispatcher().removeEventHandler(handler, Packet::getID(network->getNetworkType()));
 			}
+		}
+	}
+
+	inline void addNetworkEventHandler(NetworkEventHandler* handler) {
+		DynamicArray<INetwork*>& networks = getNetworks();
+		for (INetwork* network : networks) {
+			network->getEventDispatcher().addEventHandler(handler);
+		}
+	}
+
+	inline void removeNetworkEventHandler(NetworkEventHandler* handler) {
+		DynamicArray<INetwork*>& networks = getNetworks();
+		for (INetwork* network : networks) {
+			network->getEventDispatcher().removeEventHandler(handler);
 		}
 	}
 };

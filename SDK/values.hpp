@@ -13,6 +13,7 @@ constexpr int MAX_CLASSES = 320;
 constexpr int MAX_WEAPON_SLOTS = 12;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
+constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
 
 namespace Config {
@@ -48,7 +49,7 @@ namespace Config {
 
 	/// Get a config option as either int, float or std::string
 	template <typename T>
-	T getOption(const json& config, std::string option) {
+	T getOption(const JSON& config, std::string option) {
 		auto it = defaults.find(option);
 		if (config.is_null() || config.is_discarded()) {
 			return std::get<T>(it->second);

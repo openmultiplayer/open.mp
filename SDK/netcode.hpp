@@ -4,6 +4,17 @@
 #include "network.hpp"
 #include "player.hpp"
 
+/// Helper macro that reads a bit stream value and returns false on fail
+#define CHECKED_READ(output, input) \
+	{ \
+		NetworkBitStreamValue output ## _in input; \
+		if (!bs.read(output ## _in)) { \
+			return false; \
+		} else { \
+			output = std::get<decltype(output)>(output ## _in.data); \
+		} \
+	}
+
 namespace NetCode {
 	namespace RPC {
 		struct Invalid final : NetworkPacketBase<0> {
@@ -47,12 +58,12 @@ namespace NetCode {
 
 		struct PlayerJoin final : NetworkPacketBase<137> {
 			int PlayerID;
-			uint32_t Colour;
+			Color Colour;
 			bool IsNPC;
 			NetworkString Name;
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(PlayerID, NetworkBitStreamValueType::UINT32);
+				bs.read(PlayerID, NetworkBitStreamValueType::UINT16);
 				bs.read(Colour, NetworkBitStreamValueType::UINT32);
 				bs.read(IsNPC, NetworkBitStreamValueType::UINT8);
 				bs.read(Name, NetworkBitStreamValueType::DYNAMIC_LEN_STR_8);
@@ -194,14 +205,14 @@ namespace NetCode {
 			uint8_t Unknown1;
 			glm::vec3 Spawn;
 			float ZAngle;
-			NetworkArray<uint32_t> Weapons;
+			NetworkArray<uint8_t> Weapons;
 			NetworkArray<uint32_t> Ammos;
 
 			/// Default constructor
 			PlayerRequestClassResponse() {}
 
 			/// Construction from a IClass
-			PlayerRequestClassResponse(int team, int model, vector3 spawn, float angle) {
+			PlayerRequestClassResponse(int team, int model, Vector3 spawn, float angle) {
 				TeamID = team;
 				ModelID = model;
 				Spawn = spawn;
@@ -215,7 +226,7 @@ namespace NetCode {
 				bs.read(Unknown1, NetworkBitStreamValueType::UINT8);
 				bs.read(Spawn, NetworkBitStreamValueType::VEC3);
 				bs.read(ZAngle, NetworkBitStreamValueType::FLOAT);
-				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
+				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8);
 				bs.read(Ammos, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
 				return true;
 			}
@@ -227,7 +238,30 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Unknown1));
 				bs.write(NetworkBitStreamValue::VEC3(Spawn));
 				bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
-				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Weapons));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(Weapons));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
+			}
+		};
+
+		struct SetSpawnInfo final : NetworkPacketBase<68> {
+			uint8_t TeamID;
+			uint32_t ModelID;
+			uint8_t Unknown1;
+			Vector3 Spawn;
+			float ZAngle;
+			NetworkArray<uint8_t> Weapons;
+			NetworkArray<uint32_t> Ammos;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(TeamID));
+				bs.write(NetworkBitStreamValue::UINT32(ModelID));
+				bs.write(NetworkBitStreamValue::UINT8(Unknown1));
+				bs.write(NetworkBitStreamValue::VEC3(Spawn));
+				bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(Weapons));
 				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
 			}
 		};
@@ -298,6 +332,40 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT32(Weapon));
+			}
+		};
+
+		struct PlayerStreamIn final : NetworkPacketBase<32> {
+			int PlayerID;
+			uint8_t Team;
+			Vector3 Pos;
+			float Angle;
+			Color Colour;
+			uint8_t FightingStyle;
+			NetworkArray<uint16_t> SkillLevel;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(Team));
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+				bs.write(NetworkBitStreamValue::UINT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT8(FightingStyle));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT16(SkillLevel));
+			}
+		};
+
+		struct PlayerStreamOut final : NetworkPacketBase<163> {
+			int PlayerID;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 			}
 		};
 	}

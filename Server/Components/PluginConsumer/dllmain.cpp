@@ -15,7 +15,7 @@ struct MyPlugin : public IPlugin, public CoreEventHandler {
 	void onInit() override {
 		ISomePlugin* somePlugin = core->queryPlugin<ISomePlugin>();
 		if (somePlugin) {
-			vector3 someVec = somePlugin->someVec();
+			Vector3 someVec = somePlugin->someVec();
 			core->printLn("Some plugin %s returned vector (%f, %f, %f)", somePlugin->pluginName(), someVec.x, someVec.y, someVec.z);
 		}
 		else {
