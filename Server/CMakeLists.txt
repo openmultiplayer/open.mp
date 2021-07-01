@@ -9,10 +9,6 @@ function(add_server_component name)
 
 	add_library(${PROJECT_NAME} SHARED ${plugin_source_list})
 
-	target_include_directories(${PROJECT_NAME} PRIVATE
-	${CMAKE_SOURCE_DIR}/SDK
-	)
-
 	target_link_libraries(${PROJECT_NAME} PUBLIC
 		SDK
 		Server
