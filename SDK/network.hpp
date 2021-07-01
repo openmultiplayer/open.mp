@@ -139,11 +139,26 @@ struct NetworkString : NetworkArray<char> {
 
 	/// Constructor for holding std::string data without copying it or freeing it
 	/// @param string The std::string whose data to hold
+	NetworkString(const String& str) :
+		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
+	{ }
+
+	/// Constructor for holding std::string data without copying it or freeing it
+	/// @param string The std::string whose data to hold
 	NetworkString(const std::string& str) :
 		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
 	{ }
 
+	/// Disallow move operators
+	NetworkString(String&& str) = delete;
 	NetworkString(std::string&& str) = delete;
+	String& operator=(String&& str) = delete;
+	String& operator=(std::string&& str) = delete;
+
+	/// Conversion operator for copying data to a std::string
+	operator String() {
+		return String(data, count);
+	}
 
 	/// Conversion operator for copying data to a std::string
 	operator std::string() {
@@ -352,7 +367,7 @@ struct INetworkPeer {
 	/// @param network The network to set
 	/// @param IP The IP to set
 	/// @param port The port to set
-	virtual void setNetworkData(NetworkID networkID, INetwork* network, const std::string& IP, unsigned short port) = 0;
+	virtual void setNetworkData(NetworkID networkID, INetwork* network, const String& IP, unsigned short port) = 0;
 
 	/// Attempt to send a packet to the network peer
 	/// @param bs The bit stream with data to send

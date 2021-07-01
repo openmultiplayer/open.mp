@@ -35,7 +35,7 @@ struct ICore {
 	virtual const json& getProperties() = 0;
 
 	/// Get a list of available networks
-	virtual std::vector<INetwork*> getNetworks() = 0;
+	virtual DynamicArray<INetwork*> getNetworks() = 0;
 
 	/// Query a plugin by its ID
 	/// @param id The UUID of the plugin
@@ -54,7 +54,7 @@ struct ICore {
 	template <class Packet>
 	inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		std::vector<INetwork*> networks = getNetworks();
+		DynamicArray<INetwork*> networks = getNetworks();
 		for (INetwork* network : networks) {
 			ENetworkType type = network->getNetworkType();
 			if (type < ENetworkType_End) {
@@ -67,7 +67,7 @@ struct ICore {
 	template <class Packet, class EventHandlerType>
 	inline void removePerRPCEventHandler(EventHandlerType* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		std::vector<INetwork*> networks = getNetworks();
+		DynamicArray<INetwork*> networks = getNetworks();
 		for (INetwork* network : networks) {
 			ENetworkType type = network->getNetworkType();
 			if (type < ENetworkType_End) {

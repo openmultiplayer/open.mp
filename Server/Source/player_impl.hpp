@@ -15,14 +15,14 @@ struct Player final : public IPlayer, public PoolIDProvider {
     vector3 pos;
     vector4 rot;
     INetwork* network = nullptr;
-    std::string ip;
+    String ip;
     unsigned short port;
     int versionNumber_;
     char modded_;
-    std::string name_;
+    String name_;
     unsigned int challengeResponse_;
-    std::string key_;
-    std::string versionString_;
+    String key_;
+    String versionString_;
     INetworkPeer::NetworkID nID_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
@@ -40,7 +40,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         playerData_.try_emplace(playerData->getUUID(), playerData);
     }
 
-    void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const std::string& IP, unsigned short port) override {
+    void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const String& IP, unsigned short port) override {
         this->nID_ = networkID;
         this->network = network;
         this->ip = IP;
@@ -49,10 +49,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     int& versionNumber() override { return versionNumber_; }
     char& modded() override { return modded_; }
-    std::string& name() override { return name_; }
+    String& name() override { return name_; }
     unsigned int& challengeResponse() override { return challengeResponse_; }
-    std::string& key() override { return key_; }
-    std::string& versionString() override { return versionString_; }
+    String& key() override { return key_; }
+    String& versionString() override { return versionString_; }
 
     INetworkPeer::NetworkID getNetworkID() override {
         return nID_;
@@ -198,7 +198,12 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
                 IClass& cls = classData->getClass();
                 WeaponSlots& weapons = cls.weapons();
                 for (size_t i = 3; i < weapons.size(); ++i) {
-                    peer.giveWeapon(weapons[i]);
+                    if (weapons[i].id == 0) {
+                        continue;
+                    }
+                    if (weapons[i].id <= 18 || (weapons[i].id >= 22 && weapons[i].id <= 46)) {
+                        peer.giveWeapon(weapons[i]);
+                    }
                 }
             }
 
