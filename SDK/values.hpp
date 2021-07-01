@@ -12,8 +12,6 @@ constexpr int MAX_VEHICLES = 2000;
 constexpr int MAX_CLASSES = 320;
 constexpr int MAX_WEAPON_SLOTS = 13;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
-constexpr int MAX_WEAPON_ID = 46;
-constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
 
 namespace Config {
 	static const std::map<std::string, std::variant<int, float, std::string>> defaults{

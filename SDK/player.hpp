@@ -2,26 +2,7 @@
 
 #include <string>
 #include "entity.hpp"
-#include "pool.hpp"
-
-/// Holds weapon slot data
-struct WeaponSlotData {
-	uint32_t id;
-	uint32_t ammo;
-
-	uint8_t slot()
-	{
-		static const uint8_t slots[] = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 10, 10, 10, 10, 8, 8, 8, INVALID_WEAPON_SLOT, INVALID_WEAPON_SLOT, INVALID_WEAPON_SLOT, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 4, 6, 6, 7, 7, 7, 7, 8, 12, 9, 9, 9, 11, 11, 11 };
-		if (id >= GLM_COUNTOF(slots))
-		{
-			return INVALID_WEAPON_SLOT;
-		}
-		return slots[id];
-	}
-};
-
-/// An array of weapon slots
-typedef std::array<WeaponSlotData, MAX_WEAPON_SLOTS> WeaponSlots;
+#include "class.hpp"
 
 /// A player data interface for per-player data
 struct IPlayerData : public IUUIDProvider {
@@ -56,14 +37,15 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's version string
 	virtual std::string& versionString() = 0;
 
-	virtual void giveWeapon(WeaponSlotData weapon) = 0;
-
-	virtual void resetWeapons() = 0;
-
-	virtual void setArmedWeapon(uint32_t weapon) = 0;
+	/// Get the player's class data
+	virtual IClass& classData() = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
+
+	/// Remove data associated with the player
+	/// @note You don't need to do so manually as any player data is destroyed on player connect
+	virtual void removeData(IPlayerData* playerData) = 0;
 
 	/// Query player data by its ID
 	/// @param id The UUID of the data
@@ -81,11 +63,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 /// A player event handler
 struct PlayerEventHandler {
-	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
 	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
-	virtual void onSpawn(IPlayer& player) {}
 };
 
 /// A player pool interface

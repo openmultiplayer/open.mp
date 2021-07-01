@@ -1,7 +1,7 @@
 #pragma once
 
-#include <Server/Components/Classes/classes.hpp>
-#include <netcode.hpp>
+#include "class.hpp"
+#include "core.hpp"
 
 struct Class : public IClass, PoolIDProvider {
     int team_;
@@ -43,7 +43,7 @@ struct DefaultClass final : public Class {
         skin_ = 0;
         spawn_ = vector3(0.0f, 0.0f, 3.1279f);
         angle_ = 0.f;
-        weapons_.fill(WeaponSlotData{ 0, 0 });
+        weapons_.fill(WeaponSlotData { 0, 0});
     }
 };
 
@@ -65,15 +65,12 @@ struct ClassPool final : public InheritedEventDispatcherPool<Class, IClassPool> 
                 }
             )) {
                 if (self.pool.valid(playerRequestClassPacket.Classid)) {
-                    IClass& cls = self.pool.get(playerRequestClassPacket.Classid);
-                    IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
-                    if (clsData) {
-                        clsData->getClass() = cls;
-                    }
+                    IClass& cls = peer.classData();
+                    cls = self.pool.get(playerRequestClassPacket.Classid);
                     WeaponSlots& weapons = cls.weapons();
                     std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                     std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                    NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team(), cls.skin(), cls.spawn(), cls.angle());
+                    NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
                     playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
@@ -86,7 +83,7 @@ struct ClassPool final : public InheritedEventDispatcherPool<Class, IClassPool> 
                     WeaponSlots& weapons = defClass.weapons();
                     std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                     std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                    NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(defClass.team(), defClass.skin(), defClass.spawn(), defClass.angle());
+                    NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(defClass);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
                     playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
@@ -113,7 +110,7 @@ struct ClassPool final : public InheritedEventDispatcherPool<Class, IClassPool> 
     ClassPool(ICore& core) :
         core(core),
         onPlayerRequestClassHandler(*this)
-    {
+    { 
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
     }
 
