@@ -3,6 +3,7 @@
 #include <mutex>
 #include <cstdarg>
 #include <fstream>
+#include <condition_variable>
 #include <events.hpp>
 #include <pool.hpp>
 #include "player_impl.hpp"
