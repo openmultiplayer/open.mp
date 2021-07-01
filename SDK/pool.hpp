@@ -80,7 +80,7 @@ struct Pool final : public IPool<Interface, Count> {
     int claim(int hint) override {
         assert(hint < Count);
         if (!valid(hint)) {
-            m_pool[hint] = Type();
+            new (&m_pool[hint]) Type();
             m_taken.set(hint);
             m_entries.insert(&m_pool[hint]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
