@@ -59,7 +59,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         return vehicles;
     }
 
-    std::vector<INetwork*> getNetworks() override {
+    DynamicArray<INetwork*> getNetworks() override {
         return { &legacyNetwork };
     }
 

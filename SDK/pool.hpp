@@ -5,6 +5,7 @@
 #include <array>
 #include <type_traits>
 #include <cassert>
+#include "types.hpp"
 
 /* Interfaces, to be passed around */
 
@@ -30,7 +31,7 @@ struct IPool {
 	virtual bool release(int index) = 0;
 
 	/// Get a set of all the available objects
-	virtual const std::set<T*>& entries() = 0;
+	virtual const OrderedSet<T*>& entries() = 0;
 };
 
 /// A pool with an event dispatcher build in
@@ -113,14 +114,14 @@ struct Pool final : public IPool<Interface, Count> {
         return res;
     }
 
-    const std::set<Interface*>& entries() override {
+    const OrderedSet<Interface*>& entries() override {
         return m_entries;
     }
 
 private:
     std::array<Type, Count> m_pool;
     std::bitset<Count> m_taken;
-    std::set<Interface*> m_entries; // Should be sorted by ID by default because it points to contiguous memory
+    OrderedSet<Interface*> m_entries; // Should be sorted by ID by default because it points to contiguous memory
 };
 
 template <typename Type, typename Interface, size_t Count, class EventHandlerType>
