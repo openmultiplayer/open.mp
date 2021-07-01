@@ -9,6 +9,7 @@
 #include <events.hpp>
 #include <pool.hpp>
 #include <unordered_map>
+#include <Server/Components/Classes/classes.hpp>
 
 struct Player final : public IPlayer, public PoolIDProvider {
     vector3 pos;
@@ -24,6 +25,11 @@ struct Player final : public IPlayer, public PoolIDProvider {
     std::string versionString_;
     INetworkPeer::NetworkID nID_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
+    WeaponSlots weapons_;
+
+    Player() {
+        weapons_.fill({ 0, 0 });
+    }
 
     IPlayerData* queryData(UUID uuid) override {
         auto it = playerData_.find(uuid);
@@ -32,10 +38,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     void addData(IPlayerData* playerData) override {
         playerData_.try_emplace(playerData->getUUID(), playerData);
-    }
-
-    void removeData(IPlayerData* playerData) override {
-        playerData_.erase(playerData->getUUID());
     }
 
     void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const std::string& IP, unsigned short port) override {
@@ -84,6 +86,39 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return nullptr;
     }
 
+    void giveWeapon(WeaponSlotData weapon) override {
+        if (weapon.id > MAX_WEAPON_ID) {
+            return;
+        }
+
+        if (weapon.ammo == 0) {
+            return;
+        }
+
+        uint8_t slot = weapon.slot();
+        if (slot >= weapons_.size()) {
+            return;
+        }
+
+        weapons_[slot] = weapon;
+
+        NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+        givePlayerWeaponRPC.Weapon = weapon.id;
+        givePlayerWeaponRPC.Ammo = weapon.ammo;
+        sendRPC(givePlayerWeaponRPC);
+    }
+
+    void resetWeapons() override {
+        weapons_.fill({ 0, 0 });
+        sendRPC(NetCode::RPC::ResetPlayerWeapons());
+    }
+
+    void setArmedWeapon(uint32_t weapon) override {
+        NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+        setPlayerArmedWeaponRPC.Weapon = weapon;
+        sendRPC(setPlayerArmedWeaponRPC);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
@@ -122,6 +157,15 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
                 }
             }
 
+            self.eventDispatcher.all(
+                [&peer](PlayerEventHandler* handler) {
+                    IPlayerData* data = handler->onPlayerDataRequest(peer);
+                    if (data) {
+                        peer.addData(data);
+                    }
+                }
+            );
+
             self.eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
             return true;
         }
@@ -144,10 +188,32 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         }
     } playerRequestSpawnHandler;
 
+    struct PlayerSpawnHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerSpawnHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
+            if (classData) {
+                IClass& cls = classData->getClass();
+                WeaponSlots& weapons = cls.weapons();
+                for (size_t i = 3; i < weapons.size(); ++i) {
+                    peer.giveWeapon(weapons[i]);
+                }
+            }
+
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
+
+            return true;
+        }
+    } playerSpawnHandler;
+
+
     PlayerPool(ICore& core) :
         core(core),
         playerConnectHandler(*this),
-        playerRequestSpawnHandler(*this)
+        playerRequestSpawnHandler(*this),
+        playerSpawnHandler(*this)
     {
         core.addPerRPCEventHandler<NetCode::RPC::PlayerConnect>(&playerConnectHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnHandler);

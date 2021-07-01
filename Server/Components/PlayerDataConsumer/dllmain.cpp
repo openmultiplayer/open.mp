@@ -13,10 +13,9 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 	}
 
 	bool onPlayerRequestSpawn(IPlayer& player) override {
-		IPlayerData* data = player.queryData<ISomePlayerData>();
+		ISomePlayerData* data = player.queryData<ISomePlayerData>();
 		if (data) {
-			ISomePlayerData* pdata = static_cast<ISomePlayerData*>(data);
-			core->printLn("Player %s with some data %i requested spawn", player.name().c_str(), pdata->getSomeInt());
+			core->printLn("Player %s with some data %i requested spawn", player.name().c_str(), data->getSomeInt());
 		}
 		return true;
 	}

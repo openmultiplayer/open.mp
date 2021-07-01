@@ -30,8 +30,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 		return "Classes";
 	}
 
-	void onConnect(IPlayer& player) override {
-		player.addData(new PlayerClassData());
+	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+		return new PlayerClassData();
 	}
 
 	void free() override {

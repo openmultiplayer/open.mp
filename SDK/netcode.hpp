@@ -253,5 +253,52 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(Allow));
 			}
 		};
+
+		struct PlayerSpawn final : NetworkPacketBase<52> {
+			bool read(INetworkBitStream& bs) {
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct GivePlayerWeapon final : NetworkPacketBase<22> {
+			uint32_t Weapon;
+			uint32_t Ammo;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read(Weapon, NetworkBitStreamValueType::UINT32);
+				bs.read(Ammo, NetworkBitStreamValueType::UINT32);
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Weapon));
+				bs.write(NetworkBitStreamValue::UINT32(Ammo));
+			}
+		};
+
+		struct ResetPlayerWeapons final : NetworkPacketBase<21> {
+			bool read(INetworkBitStream& bs) {
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct SetPlayerArmedWeapon final : NetworkPacketBase<67> {
+			uint32_t Weapon;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read(Weapon, NetworkBitStreamValueType::UINT32);
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Weapon));
+			}
+		};
 	}
 }
