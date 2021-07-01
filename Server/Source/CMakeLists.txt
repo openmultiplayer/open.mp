@@ -15,6 +15,9 @@ target_compile_definitions(Server PUBLIC
 
 target_link_libraries(Server PUBLIC
 	SDK
+)
+
+target_link_libraries(Server PRIVATE
 	raknet
 )
 
