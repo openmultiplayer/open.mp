@@ -15,6 +15,7 @@ constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
 constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
+constexpr int MAX_PLAYER_NAME = 24;
 
 namespace Config {
 	static const std::map<std::string, std::variant<int, float, std::string>> defaults{

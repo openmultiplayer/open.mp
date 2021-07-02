@@ -373,30 +373,34 @@ struct INetworkPeer {
 		unsigned short port; ///< The peer's port
 	};
 
-	/// Get the peer's network ID
-	virtual NetworkID getNetworkID() = 0;
-
-	/// Get the peer's network
-	virtual INetwork& getNetwork() = 0;
+	/// Peer network data
+	struct NetworkData {
+		INetwork* network; ///< The network associated with the peer
+		INetworkPeer::NetworkID networkID; ///< The peer's network ID
+		String IP; ///< The peer's IP as a string
+		unsigned short port; ///< The peer's port number
+	};
 
 	/// Set the peer's network data
 	/// @param networkID The network ID to set
 	/// @param network The network to set
 	/// @param IP The IP to set
 	/// @param port The port to set
-	virtual void setNetworkData(NetworkID networkID, INetwork* network, const String& IP, unsigned short port) = 0;
+	virtual void setNetworkData(const NetworkData& data) = 0;
+
+	virtual const NetworkData& getNetworkData() = 0;
 
 	/// Attempt to send a packet to the network peer
 	/// @param bs The bit stream with data to send
 	bool sendPacket(INetworkBitStream& bs) {
-		return getNetwork().sendPacket(*this, bs);
+		return getNetworkData().network->sendPacket(*this, bs);
 	}
 
 	/// Attempt to send an RPC to the network peer
 	/// @param id The RPC ID for the current network
 	/// @param bs The bit stream with data to send
 	bool sendRPC(int id, INetworkBitStream& bs) {
-		return getNetwork().sendRPC(*this, id, bs);
+		return getNetworkData().network->sendRPC(*this, id, bs);
 	}
 
 	/// Attempt to send a packet derived from NetworkPacketBase to the peer
@@ -404,7 +408,7 @@ struct INetworkPeer {
 	template<class Packet>
 	inline bool sendRPC(const Packet& packet) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		INetwork& network = getNetwork();
+		INetwork& network = *getNetworkData().network;
 		const ENetworkType type = network.getNetworkType();
 		if (type >= ENetworkType_End) {
 			return false;
@@ -414,7 +418,6 @@ struct INetworkPeer {
 		packet.write(bs);
 		return sendRPC(Packet::getID(type), bs);
 	}
-
 };
 
 /* Implementation, NOT to be passed around */

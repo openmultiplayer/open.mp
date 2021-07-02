@@ -368,5 +368,20 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 			}
 		};
+
+		struct SetPlayerName final : NetworkPacketBase<11> {
+			uint16_t PlayerID;
+			NetworkString Name;
+			uint8_t Success;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
+				bs.write(NetworkBitStreamValue::UINT8(Success));
+			}
+		};
 	}
 }
