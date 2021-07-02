@@ -298,7 +298,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         return;
     }
 
-    IPool<IPlayer, MAX_PLAYERS>& pool = network->core->getPlayers().getPool();
+    IPlayerPool& pool = network->core->getPlayers();
 
     int freeIdx = pool.findFreeIndex();
     if (freeIdx == -1) {
@@ -318,10 +318,13 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     unsigned short cPort;
     network->rakNetServer.GetPlayerIPFromID(rpcParams->sender, cIP, &cPort);
 
-    INetworkPeer::NetworkID nid;
-    nid.address = rid.binaryAddress;
-    nid.port = rid.port;
-    player.setNetworkData(nid, network, cIP, cPort);
+    INetworkPeer::NetworkData netData;
+    netData.networkID.address = rid.binaryAddress;
+    netData.networkID.port = rid.port;
+    netData.network = network;
+    netData.IP = cIP;
+    netData.port = cPort;
+    player.setNetworkData(netData);
 
     if (!network->networkEventDispatcher.stopAtFalse(
         [&player, &rid](NetworkEventHandler* handler) {
@@ -371,7 +374,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
     int pid = pos->second;
     pidFromRID.erase(rid);
 
-    auto& pool = core->getPlayers().getPool();
+    IPlayerPool& pool = core->getPlayers();
     if (!pool.valid(pid)) {
         return;
     }
@@ -390,7 +393,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     }
 
     int pid = pos->second;
-    auto& pool = network->core->getPlayers().getPool();
+    IPlayerPool& pool = network->core->getPlayers();
     if (!pool.valid(pid)) {
         return;
     }
@@ -438,7 +441,7 @@ void RakNetLegacyNetwork::onTick(uint64_t tick) {
         auto pos = pidFromRID.find(pkt->playerId);
         if (pos != pidFromRID.end()) {
             int pid = pos->second;
-            auto& pool = core->getPlayers().getPool();
+            auto& pool = core->getPlayers();
             if (pool.valid(pid)) {
                 IPlayer& player = pool.get(pid);
                 RakNet::BitStream bs(pkt->data, pkt->length, false);
