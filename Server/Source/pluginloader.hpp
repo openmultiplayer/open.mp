@@ -36,7 +36,7 @@ std::vector<IPlugin*> loadPlugins(Core &core, const std::filesystem::path &path)
                 PLUGIN_FREE(pluginLib);
                 continue;
             }
-            IPlugin* plugin = OnPluginLoad(&core);
+            IPlugin* plugin = OnPluginLoad();
             if (plugin != nullptr) {
                 core.printLn("\tSuccessfully loaded with UUID %016llx", plugin->getUUID());
                 res.push_back(plugin);

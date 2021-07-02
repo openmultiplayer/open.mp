@@ -2,13 +2,11 @@
 #include "legacy_network_impl.hpp"
 
 struct RakNetLegacyNetworkPlugin : INetworkPlugin {
-	ICore& core;
 	RakNetLegacyNetwork legacyNetwork;
 
-	RakNetLegacyNetworkPlugin(ICore& core) :
-		core(core),
-		legacyNetwork(core)
-	{}
+	void onInit(ICore* core) override {
+		legacyNetwork.init(core);
+	}
 
 	INetwork* getNetwork() override {
 		return &legacyNetwork;
@@ -23,6 +21,6 @@ struct RakNetLegacyNetworkPlugin : INetworkPlugin {
 	}
 };
 
-PLUGIN_ENTRY_POINT(ICore* core) {
-	return new RakNetLegacyNetworkPlugin(*core);
+PLUGIN_ENTRY_POINT() {
+	return new RakNetLegacyNetworkPlugin();
 }

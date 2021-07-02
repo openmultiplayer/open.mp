@@ -180,7 +180,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
 };
 
 struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public RakNet::PluginInterface {
-    RakNetLegacyNetwork(ICore& core);
+    RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
     ENetworkType getNetworkType() override {
@@ -228,7 +228,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 
     void onTick(uint64_t tick) override;
-    void onInit() override;
+    void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid);
 
@@ -240,7 +240,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return OnRakNetDisconnect(playerId);
     }
 
-    ICore& core;
+    ICore* core;
     RakNet::RakServerInterface& rakNetServer;
     std::map<RakNet::PlayerID, int> pidFromRID;
     RakNet::BitStream wbs;

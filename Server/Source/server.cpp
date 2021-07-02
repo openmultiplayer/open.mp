@@ -12,6 +12,6 @@ int main()
     std::vector<IPlugin*> plugins = loadPlugins(*core, "components");
     core->printLn("Loaded %i plugin(s)", plugins.size());
     core->addPlugins(plugins);
-    core->eventDispatcher.dispatch(&CoreEventHandler::onInit);
+    core->initiated();
     core->run();
 }

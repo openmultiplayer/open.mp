@@ -1,9 +1,7 @@
 #include <sdk.hpp>
 #include "../PluginProvider/someplugin.hpp"
 
-ICore* core;
-
-struct MyPlugin : public IPlugin, public CoreEventHandler {
+struct MyPlugin : public IPlugin {
 	UUID getUUID() override {
 		return 0xab2c1f6bb3c0ef5b;
 	}
@@ -12,7 +10,7 @@ struct MyPlugin : public IPlugin, public CoreEventHandler {
 		return "PluginConsumer";
 	}
 
-	void onInit() override {
+	void onInit(ICore* core) override {
 		ISomePlugin* somePlugin = core->queryPlugin<ISomePlugin>();
 		if (somePlugin) {
 			Vector3 someVec = somePlugin->someVec();
@@ -24,8 +22,6 @@ struct MyPlugin : public IPlugin, public CoreEventHandler {
 	}
 } plugin;
 
-PLUGIN_ENTRY_POINT(ICore* c) {
-	core = c;
-	core->getEventDispatcher().addEventHandler(&plugin);
+PLUGIN_ENTRY_POINT() {
 	return &plugin;
 }
