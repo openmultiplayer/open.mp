@@ -14,20 +14,20 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 
 	void onInit(ICore* core) override {
 		c = core;
-		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().addEventHandler(this);
 	}
 
 	bool onPlayerRequestSpawn(IPlayer& player) override {
 		ISomePlayerData* data = player.queryData<ISomePlayerData>();
 		if (data) {
-			c->printLn("Player %s with some data %i requested spawn", player.name().c_str(), data->getSomeInt());
+			c->printLn("Player %s with some data %i requested spawn", player.getName().c_str(), data->getSomeInt());
 		}
 		return true;
 	}
 
 	~MyPlugin() {
 		if (c) {
-			c->getPlayers().getEventDispatcher().removeEventHandler(this);
+			c->getPlayers().removeEventHandler(this);
 		}
 	}
 } plugin;

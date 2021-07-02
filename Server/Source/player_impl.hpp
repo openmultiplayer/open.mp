@@ -11,27 +11,13 @@
 #include <unordered_map>
 #include <Server/Components/Classes/classes.hpp>
 
-enum PlayerFightingStyle {
-
-};
-
-enum PlayerState {
-
-};
-
 struct Player final : public IPlayer, public PoolIDProvider {
+    IPlayerPool* pool_ = nullptr;
+    NetworkData netData_;
+    PlayerGameData gameData_;
     Vector3 pos_;
     float angle_;
-    INetwork* network = nullptr;
-    String ip;
-    unsigned short port;
-    int versionNumber_;
-    char modded_;
     String name_;
-    unsigned int challengeResponse_;
-    String key_;
-    String versionString_;
-    INetworkPeer::NetworkID nID_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Color color_;
@@ -48,11 +34,15 @@ struct Player final : public IPlayer, public PoolIDProvider {
         skillLevels_.fill(0);
     }
 
+    virtual IPlayerPool* getPlayerPool() const override {
+        return pool_;
+    }
+
     Color& color() override {
         return color_;
     }
 
-    IPlayerData* queryData(UUID uuid) override {
+    IPlayerData* queryData(UUID uuid) const override {
         auto it = playerData_.find(uuid);
         return it == playerData_.end() ? nullptr : it->second;
     }
@@ -87,26 +77,39 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(playerStreamOutRPC);
     }
 
-    void setNetworkData(INetworkPeer::NetworkID networkID, INetwork* network, const String& IP, unsigned short port) override {
-        this->nID_ = networkID;
-        this->network = network;
-        this->ip = IP;
-        this->port = port;
+    void setNetworkData(const NetworkData& data) override {
+        netData_ = data;
     }
 
-    int& versionNumber() override { return versionNumber_; }
-    char& modded() override { return modded_; }
-    String& name() override { return name_; }
-    unsigned int& challengeResponse() override { return challengeResponse_; }
-    String& key() override { return key_; }
-    String& versionString() override { return versionString_; }
-
-    INetworkPeer::NetworkID getNetworkID() override {
-        return nID_;
+    const NetworkData& getNetworkData() override {
+        return netData_;
     }
 
-    INetwork& getNetwork() override {
-        return *network;
+    virtual const PlayerGameData& getGameData() const override {
+        return gameData_;
+    }
+
+    virtual EPlayerNameStatus setName(const String& name) override {
+        assert(pool_);
+        if (pool_->isNameTaken(name, this)) {
+            return EPlayerNameStatus::Taken;
+        }
+        else if (name.length() > MAX_PLAYER_NAME) {
+            return EPlayerNameStatus::Invalid;
+        }
+        name_ = name;
+
+        NetCode::RPC::SetPlayerName setPlayerNameRPC;
+        setPlayerNameRPC.PlayerID = poolID;
+        setPlayerNameRPC.Name = name_;
+        setPlayerNameRPC.Success = true;
+        pool_->broadcastRPC(setPlayerNameRPC);
+
+        return EPlayerNameStatus::Updated;
+    }
+
+    virtual const String& getName() const override {
+        return name_;
     }
 
     int getID() override {
@@ -173,8 +176,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 };
 
-struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPool>, public NetworkEventHandler, public CoreEventHandler {
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public CoreEventHandler {
     ICore& core;
+    Pool<Player, IPlayer, IPlayerPool::Cnt> pool;
+    EventDispatcher<PlayerEventHandler> eventDispatcher;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -218,29 +223,78 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         }
     } playerSpawnRPCHandler;
 
+    int findFreeIndex() override {
+        return pool.findFreeIndex();
+    }
+
+    int claim() override {
+        int res = pool.claim();
+        if (res != -1) {
+            pool.getStorage(res).pool_ = this;
+        }
+        return res;
+    }
+
+    int claim(int hint) override {
+        int res = pool.claim(hint);
+        if (res != -1) {
+            pool.getStorage(res).pool_ = this;
+        }
+        return res;
+    }
+
+    bool valid(int index) override {
+        return pool.valid(index);
+    }
+
+    IPlayer& get(int index) override {
+        return pool.get(index);
+    }
+
+    bool release(int index) override {
+        return pool.release(index);
+    }
+
+    /// Get a set of all the available objects
+    const OrderedSet<IPlayer*>& entries() const override {
+        return pool.entries();
+    }
+
+    bool addEventHandler(PlayerEventHandler* handler) override {
+        return eventDispatcher.addEventHandler(handler);
+    }
+
+    bool removeEventHandler(PlayerEventHandler* handler) override {
+        return eventDispatcher.removeEventHandler(handler);
+    }
+
+    bool hasEventHandler(PlayerEventHandler* handler) override {
+        return eventDispatcher.hasEventHandler(handler);
+    }
+
     void onPeerConnect(IPlayer& peer, INetworkBitStream& bs) override {
         NetCode::RPC::PlayerConnect playerConnectPacket;
         if (!playerConnectPacket.read(bs)) {
             return;
         }
 
-        peer.versionNumber() = playerConnectPacket.VersionNumber;
-        peer.modded() = playerConnectPacket.Modded;
-        peer.name() = playerConnectPacket.Name;
-        peer.challengeResponse() = playerConnectPacket.ChallengeResponse;
-        peer.key() = playerConnectPacket.Key;
-        peer.versionString() = playerConnectPacket.VersionString;
+        PlayerGameData gameData;
+        gameData.versionNumber = playerConnectPacket.VersionNumber;
+        gameData.modded = playerConnectPacket.Modded;
+        gameData.challengeResponse = playerConnectPacket.ChallengeResponse;
+        gameData.key = playerConnectPacket.Key;
+        gameData.versionString = playerConnectPacket.VersionString;
+
+        Player& player = pool.getStorage(peer.getID());
+        player.gameData_ = gameData;
+        player.name_ = playerConnectPacket.Name;
 
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = peer.getID();
         playerJoinPacket.Colour = peer.color();
         playerJoinPacket.IsNPC = false;
-        playerJoinPacket.Name = peer.name();
-        for (IPlayer* target : core.getPlayers().getPool().entries()) {
-            if (target != &peer) {
-                target->sendRPC(playerJoinPacket);
-            }
-        }
+        playerJoinPacket.Name = peer.getName();
+        core.getPlayers().broadcastRPC(playerJoinPacket, &peer);
 
         eventDispatcher.all(
             [&peer](PlayerEventHandler* handler) {
@@ -258,7 +312,7 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         NetCode::RPC::PlayerQuit packet;
         packet.PlayerID = peer.getID();
         packet.Reason = reason;
-        for (IPlayer* target : core.getPlayers().getPool().entries()) {
+        for (IPlayer* target : core.getPlayers().entries()) {
             target->sendRPC(packet);
         }
     }
@@ -271,14 +325,32 @@ struct PlayerPool final : public InheritedEventDispatcherPool<Player, IPlayerPoo
         core.getEventDispatcher().addEventHandler(this);
     }
 
+    bool isNameTaken(const String& name, const IPlayer* skip) override {
+        const auto& players = pool.entries();
+        return std::any_of(players.begin(), players.end(),
+            [&name, &skip](const IPlayer* const& player) {
+                // Don't check name for player to skip
+                if (player == skip) {
+                    return false;
+                }
+                const String& otherName = player->getName();
+                return std::equal(name.begin(), name.end(), otherName.begin(),
+                    [](const char& c1, const char& c2) {
+                        return std::tolower(c1) == std::tolower(c2);
+                    }
+                );
+            }
+        );
+    }
+
     void onInit() override {
         core.addNetworkEventHandler(this);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerConnect>(&playerSpawnRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
     }
 
     ~PlayerPool() {
-        core.removePerRPCEventHandler<NetCode::RPC::PlayerConnect>(&playerSpawnRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);

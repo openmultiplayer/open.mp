@@ -19,7 +19,8 @@ struct MyPlugin : public IPlugin, public NetworkInOutEventHandler {
 	}
 
 	bool receivedPacket(IPlayer& peer, int id, INetworkBitStream& bs) override {
-		c->printLn("[%s %llu:%u] Received packet %i from network %i", peer.name().c_str(), peer.getNetworkID().address, peer.getNetworkID().port, id, peer.getNetwork().getNetworkType());
+		INetworkPeer::NetworkData netData = peer.getNetworkData();
+		c->printLn("[%s %s:%u] Received packet %i from network %i", peer.getName().c_str(), netData.IP.c_str(), netData.port, id, netData.network->getNetworkType());
 		return true;
 	}
 

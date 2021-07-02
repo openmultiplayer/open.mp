@@ -5,6 +5,14 @@
 #include "entity.hpp"
 #include "pool.hpp"
 
+enum PlayerFightingStyle {
+
+};
+
+enum PlayerState {
+
+};
+
 /// Holds weapon slot data
 struct WeaponSlotData {
 	uint8_t id;
@@ -24,6 +32,14 @@ struct WeaponSlotData {
 /// An array of weapon slots
 typedef std::array<WeaponSlotData, MAX_WEAPON_SLOTS> WeaponSlots;
 
+struct PlayerGameData {
+	int versionNumber;
+	char modded;
+	unsigned int challengeResponse;
+	String key;
+	String versionString;
+};
+
 /// A player data interface for per-player data
 struct IPlayerData : public IUUIDProvider {
 	/// Frees the player data object, called on player disconnect, usually defaults to delete this
@@ -31,31 +47,34 @@ struct IPlayerData : public IUUIDProvider {
 };
 
 struct IVehicle;
+struct IPlayerPool;
+
+/// The player's name status returned when updating their name
+enum EPlayerNameStatus {
+	Updated, ///< The name has successfully been updated
+	Taken, ///< The name is already taken by another player
+	Invalid ///< The name is invalid
+};
 
 /// A player interface
 struct IPlayer : public IEntity, public INetworkPeer {
 	virtual ~IPlayer() {}
 
+	/// Get the player pool that the player is stored in
+	virtual IPlayerPool* getPlayerPool() const = 0;
+
 	/// Get the player's current vehicle
 	virtual IVehicle* getVehicle() = 0;
 
-	/// Get the player's version number
-	virtual int& versionNumber() = 0;
+	/// Get the player's game data
+	virtual const PlayerGameData& getGameData() const = 0;
 
-	/// Get the player's modded status
-	virtual char& modded() = 0;
+	/// Set the player's name
+	/// @return The player's new name status
+	virtual EPlayerNameStatus setName(const String& name) = 0;
 
 	/// Get the player's name
-	virtual String& name() = 0;
-
-	/// Get the player's challenge response
-	virtual unsigned int& challengeResponse() = 0;
-
-	/// Get the player's key
-	virtual String& key() = 0;
-
-	/// Get the player's version string
-	virtual String& versionString() = 0;
+	virtual const String& getName() const = 0;
 
 	/// Give a weapon to the player
 	virtual void giveWeapon(WeaponSlotData weapon) = 0;
@@ -86,12 +105,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Query player data by its ID
 	/// @param id The UUID of the data
 	/// @return A pointer to the data or nullptr if not available
-	virtual IPlayerData* queryData(UUID id) = 0;
+	virtual IPlayerData* queryData(UUID id) const = 0;
 
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>
-	PlayerDataT* queryData() {
+	PlayerDataT* queryData() const {
 		static_assert(std::is_base_of<IPlayerData, PlayerDataT>::value, "queryData parameter must inherit from IPlayerData");
 		return static_cast<PlayerDataT*>(queryData(PlayerDataT::IID));
 	}
@@ -107,6 +126,22 @@ struct PlayerEventHandler {
 };
 
 /// A player pool interface
-struct IPlayerPool : public IEventDispatcherPool<IPlayer, MAX_PLAYERS, PlayerEventHandler> {
+struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<PlayerEventHandler> {
+	virtual bool isNameTaken(const String& name, const IPlayer* skip = nullptr) = 0;
 
+	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline int broadcastRPC(const Packet& packet, const IPlayer* skip = nullptr) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		int succeeded = 0;
+		for (IPlayer* player : entries()) {
+			if (player != skip) {
+				if (player->sendRPC(packet)) {
+					++succeeded;
+				}
+			}
+		}
+		return succeeded;
+	}
 };

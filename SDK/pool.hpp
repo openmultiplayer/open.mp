@@ -33,7 +33,7 @@ struct IPool {
 	virtual bool release(int index) = 0;
 
 	/// Get a set of all the available objects
-	virtual const OrderedSet<T*>& entries() = 0;
+	virtual const OrderedSet<T*>& entries() const = 0;
 };
 
 /// A pool with an event dispatcher build in
@@ -116,8 +116,13 @@ struct Pool final : public IPool<Interface, Count> {
         return res;
     }
 
-    const OrderedSet<Interface*>& entries() override {
+    const OrderedSet<Interface*>& entries() const override {
         return m_entries;
+    }
+
+    inline Type& getStorage(int index) {
+        assert(index < Count);
+        return m_pool[index];
     }
 
 private:

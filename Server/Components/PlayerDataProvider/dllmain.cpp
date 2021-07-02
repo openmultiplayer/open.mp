@@ -20,7 +20,7 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 	}
 
 	void onInit(ICore* core) override {
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().addEventHandler(this);
 	}
 
 	IPlayerData* onPlayerDataRequest(IPlayer& player) override {

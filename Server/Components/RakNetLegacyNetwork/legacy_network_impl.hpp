@@ -188,12 +188,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     bool sendPacket(INetworkPeer& peer, INetworkBitStream& bs) override {
-        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || peer.getNetwork().getNetworkType() != ENetworkType_RakNetLegacy) {
+        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
         RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
-        const INetworkPeer::NetworkID nid = peer.getNetworkID();
+        const INetworkPeer::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
@@ -208,12 +209,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     bool sendRPC(INetworkPeer& peer, int id, INetworkBitStream& bs) override {
-        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || peer.getNetwork().getNetworkType() != ENetworkType_RakNetLegacy) {
+        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
         RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
-        const INetworkPeer::NetworkID nid = peer.getNetworkID();
+        const INetworkPeer::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
