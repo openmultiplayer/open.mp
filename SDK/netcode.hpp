@@ -205,7 +205,7 @@ namespace NetCode {
 			uint8_t Unknown1;
 			glm::vec3 Spawn;
 			float ZAngle;
-			NetworkArray<uint8_t> Weapons;
+			NetworkArray<uint32_t> Weapons;
 			NetworkArray<uint32_t> Ammos;
 
 			/// Default constructor
@@ -226,7 +226,7 @@ namespace NetCode {
 				bs.read(Unknown1, NetworkBitStreamValueType::UINT8);
 				bs.read(Spawn, NetworkBitStreamValueType::VEC3);
 				bs.read(ZAngle, NetworkBitStreamValueType::FLOAT);
-				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8);
+				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
 				bs.read(Ammos, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
 				return true;
 			}
@@ -238,7 +238,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Unknown1));
 				bs.write(NetworkBitStreamValue::VEC3(Spawn));
 				bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
-				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(Weapons));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Weapons));
 				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
 			}
 		};

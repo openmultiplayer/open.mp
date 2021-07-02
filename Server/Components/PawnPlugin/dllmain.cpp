@@ -1,8 +1,8 @@
 #include "sdk.hpp"
 
-ICore* core;
-
 struct MyPlugin : public IPlugin, public CoreEventHandler {
+	ICore* c = nullptr;
+
 	UUID getUUID() override {
 		return 0x78906cd9f19c36a6;
 	}
@@ -11,19 +11,28 @@ struct MyPlugin : public IPlugin, public CoreEventHandler {
 		return "PawnPlugin";
 	}
 
+	void onInit(ICore* core) override {
+		c = core;
+		c->getEventDispatcher().addEventHandler(this);
+	}
+
 	void onInit() override {
-		core->printLn("Server initiated with SDK version %i", core->getVersion());
+		c->printLn("Server initiated with SDK version %i", c->getVersion());
 	}
 
 	void onTick(uint64_t tick) override {
 		if ((tick % 1000)==0) {
-			core->printLn("1000 ticks passed");
+			c->printLn("1000 ticks passed");
+		}
+	}
+
+	~MyPlugin() {
+		if (c) {
+			c->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;
 
-PLUGIN_ENTRY_POINT(ICore* c) {
-	core = c;
-	core->getEventDispatcher().addEventHandler(&plugin);
+PLUGIN_ENTRY_POINT() {
 	return &plugin;
 }

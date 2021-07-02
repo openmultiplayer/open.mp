@@ -3,15 +3,14 @@
 
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
-RakNetLegacyNetwork::RakNetLegacyNetwork(ICore& core) :
+RakNetLegacyNetwork::RakNetLegacyNetwork() :
     Network(256, 256),
-    core(core),
+    core(nullptr),
     rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface()),
     wlbs(wbs)
 {
     rakNetServer.SetMTUSize(512);
     rakNetServer.AttachPlugin(this);
-    core.getEventDispatcher().addEventHandler(this);
 
     RPCHOOK(0);
     RPCHOOK(1);
@@ -272,7 +271,9 @@ RakNetLegacyNetwork::RakNetLegacyNetwork(ICore& core) :
 #undef RPCHOOK
 
 RakNetLegacyNetwork::~RakNetLegacyNetwork() {
-    core.getEventDispatcher().removeEventHandler(this);
+    if (core) {
+        core->getEventDispatcher().removeEventHandler(this);
+    }
     rakNetServer.Disconnect(300);
     RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
 }
@@ -297,7 +298,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         return;
     }
 
-    IPool<IPlayer, MAX_PLAYERS>& pool = network->core.getPlayers().getPool();
+    IPool<IPlayer, MAX_PLAYERS>& pool = network->core->getPlayers().getPool();
 
     int freeIdx = pool.findFreeIndex();
     if (freeIdx == -1) {
@@ -370,7 +371,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
     int pid = pos->second;
     pidFromRID.erase(rid);
 
-    auto& pool = core.getPlayers().getPool();
+    auto& pool = core->getPlayers().getPool();
     if (!pool.valid(pid)) {
         return;
     }
@@ -389,7 +390,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     }
 
     int pid = pos->second;
-    auto& pool = network->core.getPlayers().getPool();
+    auto& pool = network->core->getPlayers().getPool();
     if (!pool.valid(pid)) {
         return;
     }
@@ -415,12 +416,14 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     );
 
     if (!processed) {
-        network->core.printLn("Received unprocessed RPC %i", ID);
+        network->core->printLn("Received unprocessed RPC %i", ID);
     }
 }
 
-void RakNetLegacyNetwork::onInit() {
-    const JSON& props = core.getProperties();
+void RakNetLegacyNetwork::init(ICore* c) {
+    core = c;
+    core->getEventDispatcher().addEventHandler(this);
+    const JSON& props = core->getProperties();
     rakNetServer.Start(
         Config::getOption<int>(props, "max_players"),
         0,
@@ -435,7 +438,7 @@ void RakNetLegacyNetwork::onTick(uint64_t tick) {
         auto pos = pidFromRID.find(pkt->playerId);
         if (pos != pidFromRID.end()) {
             int pid = pos->second;
-            auto& pool = core.getPlayers().getPool();
+            auto& pool = core->getPlayers().getPool();
             if (pool.valid(pid)) {
                 IPlayer& player = pool.get(pid);
                 RakNet::BitStream bs(pkt->data, pkt->length, false);

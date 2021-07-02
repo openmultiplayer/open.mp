@@ -1,10 +1,12 @@
 #include "someplugin.hpp"
 
-ICore* core;
-
 struct MyPlugin : public ISomePlugin {
 	const char* pluginName() override {
 		return "PluginProvider";
+	}
+
+	void onInit(ICore* core) override {
+
 	}
 
 	Vector3 someVec() override {
@@ -12,7 +14,6 @@ struct MyPlugin : public ISomePlugin {
 	}
 } plugin;
 
-PLUGIN_ENTRY_POINT(ICore* c) {
-	core = c;
+PLUGIN_ENTRY_POINT() {
 	return &plugin;
 }

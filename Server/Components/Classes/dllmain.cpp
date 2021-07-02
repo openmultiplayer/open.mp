@@ -65,7 +65,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
     EventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
-	ICore& core;
+	ICore* core;
 
     struct PlayerRequestClassHandler : public SingleNetworkInOutEventHandler {
         ClassesPlugin& self;
@@ -88,12 +88,12 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                     if (clsData) {
                         const PlayerClass& cls = clsData->getClass();
                         const WeaponSlots& weapons = cls.weapons;
-                        std::array<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                        std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                         std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
                         NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
                         playerRequestClassResponse.Selectable = true;
                         playerRequestClassResponse.Unknown1 = 0;
-                        playerRequestClassResponse.Weapons = NetworkArray<uint8_t>(weaponIDsArray);
+                        playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
                         playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
                         peer.sendRPC(playerRequestClassResponse);
@@ -107,35 +107,35 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                         clsDataCast->cls = cls;
                     }
                     const WeaponSlots& weapons = cls.weapons;
-                    std::array<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                    std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                     std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
                     NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
-                    playerRequestClassResponse.Weapons = NetworkArray<uint8_t>(weaponIDsArray);
+                    playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
                     playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
                     peer.sendRPC(playerRequestClassResponse);
                 }
                 else {
                     const WeaponSlots& weapons = defClass.weapons;
-                    std::array<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                    std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                     std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
                     NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(defClass.team, defClass.skin, defClass.spawn, defClass.angle);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
-                    playerRequestClassResponse.Weapons = NetworkArray<uint8_t>(weaponIDsArray);
+                    playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
                     playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
                     peer.sendRPC(playerRequestClassResponse);
                 }
             }
             else {
-                std::array<uint8_t, 3> weaponIDsArray = { 0, 0, 0 };
+                std::array<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
                 std::array<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
                 NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponseNotAllowed;
                 playerRequestClassResponseNotAllowed.Selectable = false;
-                playerRequestClassResponseNotAllowed.Weapons = NetworkArray<uint8_t>(weaponIDsArray);
+                playerRequestClassResponseNotAllowed.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
                 playerRequestClassResponseNotAllowed.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
                 peer.sendRPC(playerRequestClassResponseNotAllowed);
@@ -146,13 +146,16 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         }
     } onPlayerRequestClassHandler;
 
-	ClassesPlugin(ICore& core) :
-		core(core),
+	ClassesPlugin() :
         onPlayerRequestClassHandler(*this)
 	{
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
-		core.getPlayers().getEventDispatcher().addEventHandler(this);
 	}
+
+    void onInit(ICore* c) override {
+        core = c;
+        core->addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
+        core->getPlayers().getEventDispatcher().addEventHandler(this);
+    }
 
 	IClassPool& getClasses() override {
 		return classes;
@@ -175,11 +178,11 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 	}
 
 	~ClassesPlugin() {
-        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
-		core.getPlayers().getEventDispatcher().removeEventHandler(this);
+        core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
+		core->getPlayers().getEventDispatcher().removeEventHandler(this);
 	}
 };
 
-PLUGIN_ENTRY_POINT(ICore* core) {
-	return new ClassesPlugin(*core);
+PLUGIN_ENTRY_POINT() {
+	return new ClassesPlugin();
 }

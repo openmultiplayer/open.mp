@@ -1,7 +1,5 @@
 #include "playerdata.hpp"
 
-ICore* core;
-
 struct SomePlayerData final : public ISomePlayerData {
 	int getSomeInt() override {
 		return 420;
@@ -21,13 +19,15 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 		return "PlayerDataProvider";
 	}
 
+	void onInit(ICore* core) override {
+		core->getPlayers().getEventDispatcher().addEventHandler(this);
+	}
+
 	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
 		return new SomePlayerData();
 	}
 } plugin;
 
-PLUGIN_ENTRY_POINT(ICore* c) {
-	core = c;
-	core->getPlayers().getEventDispatcher().addEventHandler(&plugin);
+PLUGIN_ENTRY_POINT() {
 	return &plugin;
 }

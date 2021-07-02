@@ -33,6 +33,16 @@ struct Core final : public ICore, public PlayerEventHandler {
         players.getEventDispatcher().removeEventHandler(this);
     }
 
+    void initiated() {
+        std::for_each(plugins.begin(), plugins.end(),
+            [this](const std::pair<UUID, IPlugin*>& pair) {
+                pair.second->onInit(this);
+            }
+        );
+
+        eventDispatcher.dispatch(&CoreEventHandler::onInit);
+    }
+
     IPlugin* queryPlugin(UUID id) override {
         auto it = plugins.find(id);
         return it == plugins.end() ? nullptr : it->second;
