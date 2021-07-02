@@ -312,9 +312,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::PlayerQuit packet;
         packet.PlayerID = peer.getID();
         packet.Reason = reason;
-        for (IPlayer* target : core.getPlayers().entries()) {
-            target->sendRPC(packet);
-        }
+        broadcastRPC(packet);
     }
 
     PlayerPool(ICore& core) :
