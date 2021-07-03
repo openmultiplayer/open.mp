@@ -172,6 +172,18 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = readFixedArray<uint16_t>(input.data.emplace<NetworkArray<uint16_t>>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
             success = readFixedArray<uint32_t>(input.data.emplace<NetworkArray<uint32_t>>()); break;
+        case NetworkBitStreamValueType::HP_ARMOR_COMPRESSED: {
+            uint8_t
+                health, armour;
+            if (!(success = bs.Read(health))) {
+                break;
+            }
+            else if (!(success = bs.Read(armour))) {
+                break;
+            }
+            input.data.emplace<Vector2>(health, armour);
+            break;
+        }
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
