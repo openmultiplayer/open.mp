@@ -423,10 +423,10 @@ struct INetworkPeer {
 /* Implementation, NOT to be passed around */
 
 struct Network : public INetwork {
-    EventDispatcher<NetworkEventHandler> networkEventDispatcher;
-    EventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
-    IndexedEventDispatcher<SingleNetworkInOutEventHandler> rpcInOutEventDispatcher;
-    IndexedEventDispatcher<SingleNetworkInOutEventHandler> packetInOutEventDispatcher;
+	DefaultEventDispatcher<NetworkEventHandler> networkEventDispatcher;
+	DefaultEventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
+    DefaultIndexedEventDispatcher<SingleNetworkInOutEventHandler> rpcInOutEventDispatcher;
+    DefaultIndexedEventDispatcher<SingleNetworkInOutEventHandler> packetInOutEventDispatcher;
 
     Network(size_t packetCount, size_t rpcCount) :
         rpcInOutEventDispatcher(rpcCount),
