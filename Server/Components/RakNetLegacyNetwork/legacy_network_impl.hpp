@@ -7,8 +7,17 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/PluginInterface.h>
+#include <glm/glm.hpp>
+#define MAGNITUDE_EPSILON 0.00001f
 
 struct Core;
+
+template <typename T, typename U>
+inline constexpr auto CEILDIV(T n, U d) -> decltype (n / d)
+{
+    return (n) ? ((n - (T)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
+}
+
 
 struct RakNetLegacyBitStream final : public INetworkBitStream {
     RakNet::BitStream& bs;
@@ -72,6 +81,31 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             writeFixedArray<uint16_t>(std::get<NetworkArray<uint16_t>>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
             writeFixedArray<uint32_t>(std::get<NetworkArray<uint32_t>>(input.data)); break;
+        case NetworkBitStreamValueType::HP_ARMOR_COMPRESSED: {
+            uint8_t ha =
+                (std::get<Vector2>(input.data).x >= 100 ? 0x0F : (uint8_t)CEILDIV((int)std::get<Vector2>(input.data).x, 7)) << 4 |
+                (std::get<Vector2>(input.data).y >= 100 ? 0x0F : (uint8_t)CEILDIV((int)std::get<Vector2>(input.data).y, 7));
+            bs.Write(ha);
+            break;
+        }
+        case NetworkBitStreamValueType::VEC3_SAMP: {
+            Vector3 vector = std::get<Vector3>(input.data);
+            float magnitude = glm::length(vector);
+            bs.Write(magnitude);
+            if (magnitude > MAGNITUDE_EPSILON)
+            {
+                vector /= magnitude;
+                bs.WriteCompressed(vector.x);
+                bs.WriteCompressed(vector.y);
+                bs.WriteCompressed(vector.z);
+            }
+            break;
+        }
+        case NetworkBitStreamValueType::GTA_QUAT: {
+            GTAQuat quat = std::get<GTAQuat>(input.data);
+            bs.WriteNormQuat(quat.w, quat.x, quat.y, quat.z);
+            break;
+        }
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
@@ -184,6 +218,8 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             input.data.emplace<Vector2>(health, armour);
             break;
         }
+        case NetworkBitStreamValueType::GTA_QUAT:
+            success = bs.Read(input.data.emplace<GTAQuat>()); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }

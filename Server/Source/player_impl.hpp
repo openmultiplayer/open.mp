@@ -270,7 +270,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            self.core.printLn("%s %f %f %f health: %f", peer.getName().c_str(), footSync.Position.x, footSync.Position.y, footSync.Position.z, footSync.HealthArmour.x);
+            footSync.PlayerID = peer.getID();
+
+            peer.setPosition(footSync.Position);
+            self.broadcastPacket(footSync, &peer);
             return true;
         }
     } playerFootSyncHandler;
