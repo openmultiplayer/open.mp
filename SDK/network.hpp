@@ -39,7 +39,8 @@ enum class NetworkBitStreamValueType {
 	FIXED_LEN_STR,        ///< NetworkString
 	FIXED_LEN_ARR_UINT8,  ///< NetworkArray<uint8_t>
 	FIXED_LEN_ARR_UINT16, ///< NetworkArray<uint16_t>
-	FIXED_LEN_ARR_UINT32  ///< NetworkArray<uint32_t>
+	FIXED_LEN_ARR_UINT32,  ///< NetworkArray<uint32_t>
+	GTA_QUAT ///< GTAQuat
 };
 
 /// Type used for storing arrays to pass to the networks
@@ -197,7 +198,8 @@ struct NetworkBitStreamValue {
 		NetworkString,
 		NetworkArray<uint8_t>,
 		NetworkArray<uint16_t>,
-		NetworkArray<uint32_t>
+		NetworkArray<uint32_t>,
+		GTAQuat
 	>;
 
 	Variant data; ///< The union which holds all possible data types
@@ -227,6 +229,7 @@ struct NetworkBitStreamValue {
 	NBSVCONS(FIXED_LEN_ARR_UINT8, NetworkArray<uint8_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT16, NetworkArray<uint16_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT32, NetworkArray<uint32_t>);
+	NBSVCONS(GTA_QUAT, GTAQuat);
 };
 
 #undef NBSVCONS
@@ -417,6 +420,22 @@ struct INetworkPeer {
 		INetworkBitStream& bs = network.writeBitStream();
 		packet.write(bs);
 		return sendRPC(Packet::getID(type), bs);
+	}
+
+	/// Attempt to send a packet derived from NetworkPacketBase to the peer
+	/// @param packet The packet to send
+	template<class Packet>
+	inline bool sendPacket(const Packet& packet) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		INetwork& network = *getNetworkData().network;
+		const ENetworkType type = network.getNetworkType();
+		if (type >= ENetworkType_End) {
+			return false;
+		}
+
+		INetworkBitStream& bs = network.writeBitStream();
+		packet.write(bs);
+		return sendPacket(bs);
 	}
 };
 
