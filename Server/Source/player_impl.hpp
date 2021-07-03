@@ -239,12 +239,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if(!sendChatMessage.read(bs)) {
                 return false;
             }
-            
-            NetCode::RPC::SendClientMessage sendClientMessage;
-            sendClientMessage.colour = peer.color();
-            sendClientMessage.message = sendChatMessage.message;
 
-            self.broadcastRPC(sendClientMessage);
+            sendChatMessage.PlayerID = peer.getID();
+            self.broadcastRPC(sendChatMessage);
 
             return true;
         }
