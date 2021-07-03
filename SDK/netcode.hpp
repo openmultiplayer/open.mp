@@ -401,12 +401,16 @@ namespace NetCode {
 
 		struct SendChatMessage final : NetworkPacketBase<101> {
 			NetworkString message;
+			int PlayerID;
 			bool read(INetworkBitStream& bs) {
 				CHECKED_READ(message, {NetworkBitStreamValueType::DYNAMIC_LEN_STR_8});
 				return true;
 			}
 
-			void write(INetworkBitStream& bs) const {}
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(message));
+			}
 		};
 	}
 }
