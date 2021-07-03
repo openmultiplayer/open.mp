@@ -383,5 +383,30 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Success));
 			}
 		};
+
+		struct SendClientMessage final : NetworkPacketBase<93> {
+			NetworkString message;
+			Color colour;
+
+			bool read(INetworkBitStream& bs) {
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(colour));
+				bs.write(NetworkBitStreamValue::UINT32(message.count));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_STR(message));
+			}
+		};
+
+		struct SendChatMessage final : NetworkPacketBase<101> {
+			NetworkString message;
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(message, {NetworkBitStreamValueType::DYNAMIC_LEN_STR_8});
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {}
+		};
 	}
 }

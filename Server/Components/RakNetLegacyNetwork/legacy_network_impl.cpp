@@ -420,6 +420,8 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 
     if (!processed) {
         network->core->printLn("Received unprocessed RPC %i", ID);
+        network->core->printLn("Content length: %d", (*rpcParams).input[0]);
+        network->core->printLn("Content hello: %s", (*rpcParams).input);
     }
 }
 
