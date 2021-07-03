@@ -404,7 +404,19 @@ namespace NetCode {
 			uint16_t AnimationFlags;
 
 			bool read(INetworkBitStream& bs) {
-				
+				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Rotation, {NetworkBitStreamValueType::VEC4});
+				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
+				CHECKED_READ(Weapon, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(SpecialAction, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(SurfingOffset, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(SurfingID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AnimationID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AnimationFlags, { NetworkBitStreamValueType::UINT16 });
 				return true;
 			}
 		};
