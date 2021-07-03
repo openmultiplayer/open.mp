@@ -388,18 +388,18 @@ namespace NetCode {
 	}
 	namespace PACKET {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
-			uint16_t PlayerID;
+			int PlayerID;
 			uint16_t LeftRight;
 			uint16_t UpDown;
 			uint16_t Keys;
 			Vector3 Position;
-			Vector4 Rotation;
+			GTAQuat Rotation;
 			Vector2 HealthArmour;
 			uint8_t Weapon;
 			uint8_t SpecialAction;
 			Vector3 Velocity;
-			Vector3 SurfingOffset;
 			uint16_t SurfingID;
+			Vector3 SurfingOffset;
 			uint16_t AnimationID;
 			uint16_t AnimationFlags;
 
@@ -408,7 +408,7 @@ namespace NetCode {
 				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
 				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
 				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Rotation, {NetworkBitStreamValueType::VEC4});
+				CHECKED_READ(Rotation, {NetworkBitStreamValueType::GTA_QUAT });
 				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
 				CHECKED_READ(Weapon, { NetworkBitStreamValueType::UINT8 });
 				CHECKED_READ(SpecialAction, { NetworkBitStreamValueType::UINT8 });
@@ -418,6 +418,31 @@ namespace NetCode {
 				CHECKED_READ(AnimationID, { NetworkBitStreamValueType::UINT16 });
 				CHECKED_READ(AnimationFlags, { NetworkBitStreamValueType::UINT16 });
 				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(207));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::BIT(true));
+				bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				bs.write(NetworkBitStreamValue::BIT(true));
+				bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
+				bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(HealthArmour));
+				bs.write(NetworkBitStreamValue::UINT8(Weapon));
+				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
+				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
+				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < 3000));
+
+				if (SurfingID) {
+					bs.write(NetworkBitStreamValue::UINT16(SurfingID));
+					bs.write(NetworkBitStreamValue::VEC3(SurfingOffset));
+				}
+
+				bs.write(NetworkBitStreamValue::INT16(AnimationID));
+				bs.write(NetworkBitStreamValue::INT16(AnimationFlags));
 			}
 		};
 	}

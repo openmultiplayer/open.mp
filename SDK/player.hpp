@@ -148,6 +148,11 @@ struct PlayerEventHandler {
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 };
 
+enum EBroadcastPacketSendType {
+	BroadcastGlobally = 0, ///< Send to everyone on the server
+	BroadcastStreamed ///< Only send to people who have the player streamed in for them
+};
+
 /// A player pool interface
 struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<PlayerEventHandler> {
 	/// Returns whether a name is taken by any player
@@ -163,6 +168,24 @@ struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<Player
 		for (IPlayer* player : entries()) {
 			if (player != skip) {
 				if (player->sendRPC(packet)) {
+					++succeeded;
+				}
+			}
+		}
+		return succeeded;
+	}
+
+	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers that fit the criteria
+	/// @param packet The packet to send
+	/// @param from The player who the packet is being sent from
+	/// @param type The broadcast type that will determine who to send this packet to
+	template<class Packet>
+	inline int broadcastPacket(const Packet& packet, IPlayer* from = nullptr, EBroadcastPacketSendType type = EBroadcastPacketSendType::BroadcastStreamed) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		int succeeded = 0;
+		for (IPlayer* player : entries()) {
+			if (player != from && (type != EBroadcastPacketSendType::BroadcastStreamed || from->isPlayerStreamedIn(*player) || from == nullptr)) {
+				if (player->sendPacket(packet)) {
 					++succeeded;
 				}
 			}

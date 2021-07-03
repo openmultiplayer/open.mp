@@ -11,6 +11,7 @@
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <nlohmann/json.hpp>
+#include "gtaquat.hpp"
 #include "exports.hpp"
 
 typedef glm::vec2 Vector2;
