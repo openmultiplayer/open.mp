@@ -169,6 +169,13 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerArmedWeaponRPC);
     }
 
+    void sendMessage(Color colour, const String& message) {
+        NetCode::RPC::SendClientMessage sendClientMessage;
+        sendClientMessage.colour = colour;
+        sendClientMessage.message = message;
+        sendRPC(sendClientMessage);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
@@ -222,6 +229,26 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return true;
         }
     } playerSpawnRPCHandler;
+
+    struct PlayerClientMessagePCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerClientMessagePCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::SendChatMessage sendChatMessage;
+            if(!sendChatMessage.read(bs)) {
+                return false;
+            }
+            
+            NetCode::RPC::SendClientMessage sendClientMessage;
+            sendClientMessage.colour = peer.color();
+            sendClientMessage.message = sendChatMessage.message;
+
+            self.broadcastRPC(sendClientMessage);
+
+            return true;
+        }
+    } playerClientMessagePCHandler;
 
     int findFreeIndex() override {
         return pool.findFreeIndex();
@@ -318,7 +345,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     PlayerPool(ICore& core) :
         core(core),
         playerRequestSpawnRPCHandler(*this),
-        playerSpawnRPCHandler(*this)
+        playerSpawnRPCHandler(*this),
+        playerClientMessagePCHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -345,11 +373,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::SendChatMessage>(&playerClientMessagePCHandler);
     }
 
     ~PlayerPool() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::SendChatMessage>(&playerClientMessagePCHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
