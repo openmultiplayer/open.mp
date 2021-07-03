@@ -260,6 +260,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerSpawnRPCHandler;
 
+    struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerFootSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            self.core.printLn("wow i got foot sync");
+            return true;
+        }
+    } playerFootSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -394,7 +404,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     PlayerPool(ICore& core) :
         core(core),
         playerRequestSpawnRPCHandler(*this),
-        playerSpawnRPCHandler(*this)
+        playerSpawnRPCHandler(*this),
+        playerFootSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -421,6 +432,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+        core.addPerPacketEventHandler<NetCode::PACKET::PlayerFootSync>(&playerFootSyncHandler);
     }
 
     void onTick(uint64_t tick) override {
@@ -457,6 +469,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     ~PlayerPool() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+        core.removePerPacketEventHandler<NetCode::PACKET::PlayerFootSync>(&playerFootSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }

@@ -63,6 +63,19 @@ struct ICore {
 		}
 	}
 
+	/// Add a per-PACKET event handler for each network for the packet's network ID
+	template <class Packet>
+	inline void addPerPacketEventHandler(SingleNetworkInOutEventHandler* handler) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		DynamicArray<INetwork*> networks = getNetworks();
+		for (INetwork* network : networks) {
+			ENetworkType type = network->getNetworkType();
+			if (type < ENetworkType_End) {
+				network->getPerPacketInOutEventDispatcher().addEventHandler(handler, Packet::getID(network->getNetworkType()));
+			}
+		}
+	}
+
 	/// Remove a per-RPC event handler for each network for the packet's network ID
 	template <class Packet, class EventHandlerType>
 	inline void removePerRPCEventHandler(EventHandlerType* handler) {
@@ -72,6 +85,19 @@ struct ICore {
 			ENetworkType type = network->getNetworkType();
 			if (type < ENetworkType_End) {
 				network->getPerRPCInOutEventDispatcher().removeEventHandler(handler, Packet::getID(network->getNetworkType()));
+			}
+		}
+	}
+
+	/// Remove a per-PACKET event handler for each network for the packet's network ID
+	template <class Packet, class EventHandlerType>
+	inline void removePerPacketEventHandler(EventHandlerType* handler) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		DynamicArray<INetwork*>& networks = getNetworks();
+		for (INetwork* network : networks) {
+			ENetworkType type = network->getNetworkType();
+			if (type < ENetworkType_End) {
+				network->getPerPacketInOutEventDispatcher().removeEventHandler(handler, Packet::getID(network->getNetworkType()));
 			}
 		}
 	}
