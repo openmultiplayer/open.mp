@@ -386,4 +386,27 @@ namespace NetCode {
 			}
 		};
 	}
+	namespace PACKET {
+		struct PlayerFootSync final : NetworkPacketBase<207> {
+			uint16_t PlayerID;
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			Vector3 Position;
+			Vector4 Rotation;
+			Vector2 HealthArmour;
+			uint8_t Weapon;
+			uint8_t SpecialAction;
+			Vector3 Velocity;
+			Vector3 SurfingOffset;
+			uint16_t SurfingID;
+			uint16_t AnimationID;
+			uint16_t AnimationFlags;
+
+			bool read(INetworkBitStream& bs) {
+				
+				return true;
+			}
+		};
+	}
 }
