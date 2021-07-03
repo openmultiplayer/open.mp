@@ -72,7 +72,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-				bs.write(NetworkBitStreamValue::INT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT32(Colour));
 				bs.write(NetworkBitStreamValue::UINT8(IsNPC));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
 			}
@@ -338,6 +338,7 @@ namespace NetCode {
 		struct PlayerStreamIn final : NetworkPacketBase<32> {
 			int PlayerID;
 			uint8_t Team;
+			uint32_t Skin;
 			Vector3 Pos;
 			float Angle;
 			Color Colour;
@@ -350,6 +351,7 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 				bs.write(NetworkBitStreamValue::UINT8(Team));
+				bs.write(NetworkBitStreamValue::UINT32(Skin));
 				bs.write(NetworkBitStreamValue::VEC3(Pos));
 				bs.write(NetworkBitStreamValue::FLOAT(Angle));
 				bs.write(NetworkBitStreamValue::UINT32(Colour));
