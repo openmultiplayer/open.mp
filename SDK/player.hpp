@@ -10,7 +10,16 @@ enum PlayerFightingStyle {
 };
 
 enum PlayerState {
-
+	PlayerState_None = 0,
+	PlayerState_OnFoot = 1,
+	PlayerState_Driver = 2,
+	PlayerState_Passenger = 3,
+	PlayerState_ExitVehicle = 4,
+	PlayerState_EnterVehicleDriver = 5,
+	PlayerState_EnterVehiclePassenger = 6,
+	PlayerState_Wasted = 7,
+	PlayerState_Spawned = 8,
+	PlayerState_Spectating = 9
 };
 
 /// Holds weapon slot data
@@ -61,10 +70,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual ~IPlayer() {}
 
 	/// Get the player pool that the player is stored in
-	virtual IPlayerPool* getPlayerPool() const = 0;
+	virtual IPlayerPool* getPool() const = 0;
 
 	/// Get the player's current vehicle
-	virtual IVehicle* getVehicle() = 0;
+	virtual IVehicle* getVehicle() const = 0;
 
 	/// Get the player's game data
 	virtual const PlayerGameData& getGameData() const = 0;
@@ -85,8 +94,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's currently armed weapon
 	virtual void setArmedWeapon(uint32_t weapon) = 0;
 
-	/// Get or set the player's color
-	virtual Color& color() = 0;
+	/// Get the player's color
+	virtual const Color& getColor() const = 0;
 
 	/// Stream in a player for the current player
 	/// @param other The player to stream in
@@ -98,6 +107,18 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Stream out a player for the current player
 	/// @param other The player to stream out
 	virtual void streamOutPlayer(IPlayer& other) = 0;
+
+	/// Get the player's state
+	virtual PlayerState getState() const = 0;
+
+	/// Get the player's team
+	virtual int getTeam() const = 0;
+
+	/// Get the player's fighting style
+	virtual PlayerFightingStyle getFightingStyle() const = 0;
+
+	/// Get the player's skill levels
+	virtual const std::array<uint16_t, NUM_SKILL_LEVELS>& getSkillLevels() const = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
@@ -123,10 +144,14 @@ struct PlayerEventHandler {
 	virtual void onDisconnect(IPlayer& player, int reason) {}
 	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
 	virtual void onSpawn(IPlayer& player) {}
+	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
+	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 };
 
 /// A player pool interface
 struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<PlayerEventHandler> {
+	/// Returns whether a name is taken by any player
+	/// @param skip The player to exclude from the check
 	virtual bool isNameTaken(const String& name, const IPlayer* skip = nullptr) = 0;
 
 	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers

@@ -12,6 +12,15 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     Vector3 pos;
     Vector4 rot;
     std::array<IPlayer*, MAX_SEATS> passengers;
+    int virtualWorld_ = 0;
+
+    virtual int getVirtualWorld() override {
+        return virtualWorld_;
+    }
+
+    virtual void setVirtualWorld(int vw) override {
+        virtualWorld_ = vw;
+    }
 
     int getID() override {
         return poolID;
@@ -38,7 +47,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     }
 };
 
-struct VehiclePool : public InheritedEventDispatcherPool<Vehicle, IVehiclePool> {
+struct VehiclePool : public InheritedDefaultEventDispatcherPool<Vehicle, IVehiclePool> {
     VehiclePool() {
         modelCount.fill(0u);
     }
