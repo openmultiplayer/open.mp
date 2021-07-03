@@ -11,7 +11,7 @@
 #include <Server/Components/Classes/classes.hpp>
 
 struct Core final : public ICore, public PlayerEventHandler {
-    EventDispatcher<CoreEventHandler> eventDispatcher;
+    DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     VehiclePool vehicles;
     JSON props;

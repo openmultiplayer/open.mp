@@ -1,7 +1,7 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <netcode.hpp>
 
-typedef Pool<PlayerClass, PlayerClass, MAX_CLASSES> ClassPool;
+typedef DefaultPool<PlayerClass, PlayerClass, MAX_CLASSES> ClassPool;
 
 static const struct DefaultClass final : public PlayerClass {
     DefaultClass() {
@@ -21,6 +21,7 @@ struct PlayerClassData final : IPlayerClassData {
 
     PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest) :
         player(player),
+        cls(defClass),
         inClassRequest(inClassRequest),
         skipDefaultClassRequest(skipDefaultClassRequest)
     {}
@@ -62,7 +63,7 @@ struct PlayerClassData final : IPlayerClassData {
 
 struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 	ClassPool classes;
-    EventDispatcher<ClassEventHandler> eventDispatcher;
+    DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
 	ICore* core;

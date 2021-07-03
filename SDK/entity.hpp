@@ -23,4 +23,10 @@ struct IEntity : public IIDProvider {
 
 	/// Set the entity's rotation
 	virtual void setRotation(Vector4 rotation) = 0;
+
+	/// Get the entity's virtual world
+	virtual int getVirtualWorld() = 0;
+
+	/// Set the entity's virtual world
+	virtual void setVirtualWorld(int vw) = 0;
 };
