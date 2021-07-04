@@ -43,12 +43,31 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return state_;
     }
 
+    void setTeam(int team) override {
+        team_ = team;
+        NetCode::RPC::SetPlayerTeam setPlayerTeamRPC;
+        setPlayerTeamRPC.PlayerID = poolID;
+        setPlayerTeamRPC.Team = team;
+        pool_->broadcastRPC(setPlayerTeamRPC);
+    }
+
     int getTeam() const override {
         return team_;
     }
 
     PlayerFightingStyle getFightingStyle() const override {
         return fightingStyle_;
+    }
+
+    void setSkillLevel(PlayerWeaponSkill skill, int level) override {
+        if (skill < skillLevels_.size()) {
+            skillLevels_[skill] = level;
+            NetCode::RPC::SetPlayerSkillLevel setPlayerSkillLevelRPC;
+            setPlayerSkillLevelRPC.PlayerID = poolID;
+            setPlayerSkillLevelRPC.SkillType = skill;
+            setPlayerSkillLevelRPC.SkillLevel = level;
+            pool_->broadcastRPC(setPlayerSkillLevelRPC);
+        }
     }
 
     const std::array<uint16_t, NUM_SKILL_LEVELS>& getSkillLevels() const override {
@@ -61,6 +80,14 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     const Color& getColor() const override {
         return color_;
+    }
+
+    void setColor(Color color) override {
+        color_ = color;
+        NetCode::RPC::SetPlayerColor setPlayerColorRPC;
+        setPlayerColorRPC.PlayerID = poolID;
+        setPlayerColorRPC.Colour = color;
+        pool_->broadcastRPC(setPlayerColorRPC);
     }
 
     IPlayerData* queryData(UUID uuid) const override {
@@ -110,7 +137,15 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return gameData_;
     }
 
-    virtual EPlayerNameStatus setName(const String& name) override {
+    void setFightingStyle(PlayerFightingStyle style) override {
+        fightingStyle_ = style;
+        NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
+        setPlayerFightingStyleRPC.PlayerID = poolID;
+        setPlayerFightingStyleRPC.Style = style;
+        pool_->broadcastRPC(setPlayerFightingStyleRPC);
+    }
+
+    EPlayerNameStatus setName(const String& name) override {
         assert(pool_);
         if (pool_->isNameTaken(name, this)) {
             return EPlayerNameStatus::Taken;
@@ -129,7 +164,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return EPlayerNameStatus::Updated;
     }
 
-    virtual const String& getName() const override {
+    const String& getName() const override {
         return name_;
     }
 
@@ -143,6 +178,16 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     void setPosition(Vector3 position) override {
         pos_ = position;
+        NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
+        setPlayerPosRPC.Pos = position;
+        sendRPC(setPlayerPosRPC);
+    }
+
+    void setPositionFindZ(Vector3 position) override {
+        pos_ = position;
+        NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
+        setPlayerPosRPC.Pos = position;
+        sendRPC(setPlayerPosRPC);
     }
 
     Vector4 getRotation() override {
@@ -151,6 +196,9 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     void setRotation(Vector4 rotation) override {
         angle_ = rotation.x;
+        NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
+        setPlayerFacingAngleRPC.Angle = angle_;
+        sendRPC(setPlayerFacingAngleRPC);
     }
 
     IVehicle* getVehicle() const override {

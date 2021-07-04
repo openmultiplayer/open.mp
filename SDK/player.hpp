@@ -6,7 +6,12 @@
 #include "pool.hpp"
 
 enum PlayerFightingStyle {
-
+	PlayerFightingStyle_Normal = 4,
+	PlayerFightingStyle_Boxing = 5,
+	PlayerFightingStyle_KungFu = 6,
+	PlayerFightingStyle_KneeHead = 7,
+	PlayerFightingStyle_GrabKick = 15,
+	PlayerFightingStyle_Elbow = 16
 };
 
 enum PlayerState {
@@ -20,6 +25,20 @@ enum PlayerState {
 	PlayerState_Wasted = 7,
 	PlayerState_Spawned = 8,
 	PlayerState_Spectating = 9
+};
+
+enum PlayerWeaponSkill {
+	PlayerWeaponSkill_Pistol,
+	PlayerWeaponSkill_SilencedPistol,
+	PlayerWeaponSkill_DesertEagle,
+	PlayerWeaponSkill_Shotgun,
+	PlayerWeaponSkill_SawnOff,
+	PlayerWeaponSkill_SPAS12,
+	PlayerWeaponSkill_Uzi,
+	PlayerWeaponSkill_MP5,
+	PlayerWeaponSkill_AK47,
+	PlayerWeaponSkill_M4,
+	PlayerWeaponSkill_Sniper
 };
 
 /// Holds weapon slot data
@@ -78,6 +97,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's game data
 	virtual const PlayerGameData& getGameData() const = 0;
 
+	/// Set the player's position with the proper Z coordinate for the map
+	virtual void setPositionFindZ(Vector3 pos) = 0;
+
 	/// Set the player's name
 	/// @return The player's new name status
 	virtual EPlayerNameStatus setName(const String& name) = 0;
@@ -93,6 +115,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Set the player's currently armed weapon
 	virtual void setArmedWeapon(uint32_t weapon) = 0;
+
+	/// Set the player's color
+	virtual void setColor(Color color) = 0;
 
 	/// Get the player's color
 	virtual const Color& getColor() const = 0;
@@ -111,13 +136,28 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
+	/// Set the player's team
+	virtual void setTeam(int team) = 0;
+
 	/// Get the player's team
 	virtual int getTeam() const = 0;
 
+	/// Set the player's fighting style
+	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
+	virtual void setFightingStyle(PlayerFightingStyle style) = 0;
+
 	/// Get the player's fighting style
+	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
 	virtual PlayerFightingStyle getFightingStyle() const = 0;
 
+	/// Set the player's skill level
+	/// @note See https://open.mp/docs/scripting/resources/weaponskills
+	/// @param skill The skill type
+	/// @param level The skill level
+	virtual void setSkillLevel(PlayerWeaponSkill skill, int level) = 0;
+
 	/// Get the player's skill levels
+	/// @note See https://open.mp/docs/scripting/resources/weaponskills
 	virtual const std::array<uint16_t, NUM_SKILL_LEVELS>& getSkillLevels() const = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
