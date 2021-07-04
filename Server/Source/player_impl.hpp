@@ -271,8 +271,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             footSync.PlayerID = peer.getID();
-
-            peer.setPosition(footSync.Position);
+            Player& player = self.storage.get(peer.getID());
+            player.pos_ = footSync.Position;
+            player.state_ = PlayerState_OnFoot;
             self.broadcastPacket(footSync, &peer);
             return true;
         }

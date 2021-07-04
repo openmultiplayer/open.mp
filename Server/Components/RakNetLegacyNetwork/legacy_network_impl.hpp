@@ -12,10 +12,9 @@
 
 struct Core;
 
-template <typename T, typename U>
-inline constexpr auto CEILDIV(T n, U d) -> decltype (n / d)
+inline constexpr auto CEILDIV(int n, int d) -> decltype (n / d)
 {
-    return (n) ? ((n - (T)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
+    return (n) ? ((n - (int)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
 }
 
 
@@ -102,7 +101,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             break;
         }
         case NetworkBitStreamValueType::GTA_QUAT: {
-            GTAQuat quat = std::get<GTAQuat>(input.data);
+            const GTAQuat& quat = std::get<GTAQuat>(input.data);
             bs.WriteNormQuat(quat.w, quat.x, quat.y, quat.z);
             break;
         }
