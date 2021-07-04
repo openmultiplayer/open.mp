@@ -1,8 +1,7 @@
 #pragma once
 
+#include "types.hpp"
 #include <glm/glm.hpp>
-#include <glm/vec3.hpp>
-#include <glm/ext/scalar_constants.hpp>
 
 // WARNING: Do not use glm::quat or glm::vec4 for quaternions instead of this class!
 // The game uses a weird implementation of Euler angles and/or quaternions than almost everything you'd find.
@@ -24,14 +23,14 @@ public:
 	{
 	}
 
-	GTAQuat(float x, float y, float z) : GTAQuat(glm::vec3(x, y, z))
+	GTAQuat(float x, float y, float z) : GTAQuat(Vector3(x, y, z))
 	{
 	}
 
-	GTAQuat(glm::vec3 degrees) {
-		glm::vec3 radians = glm::radians(degrees);
-		glm::vec3 c = cos(radians * -0.5f);
-		glm::vec3 s = sin(radians * -0.5f);
+	GTAQuat(Vector3 degrees) {
+		Vector3 radians = glm::radians(degrees);
+		Vector3 c = cos(radians * -0.5f);
+		Vector3 s = sin(radians * -0.5f);
 
 		w = c.x * c.y * c.z + s.x * s.y * s.z;
 		x = c.x * s.y * s.z + s.x * c.y * c.z;
@@ -39,7 +38,7 @@ public:
 		z = c.x * c.y * s.z - s.x * s.y * c.z;
 	}
 
-	glm::vec3 ToEuler() const {
+	Vector3 ToEuler() const {
 		float temp = 2 * y * z - 2 * x * w;
 		float rx, ry, rz;
 
@@ -63,7 +62,7 @@ public:
 		}
 
 		// Keep each component in the [0, 360) interval
-		return mod(glm::vec3(rx, ry, rz), 360.0f);
+		return mod(Vector3(rx, ry, rz), 360.0f);
 	}
 
 	float w = 0.0f, x = 0.0f, y = 0.0f, z = 0.0f;

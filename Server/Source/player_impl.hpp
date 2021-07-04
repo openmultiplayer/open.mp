@@ -17,7 +17,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     NetworkData netData_;
     PlayerGameData gameData_;
     Vector3 pos_;
-    float angle_;
+    GTAQuat rot_;
     String name_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
@@ -26,13 +26,21 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int virtualWorld_;
     int team_;
     int skin_;
-    PlayerFightingStyle fightingStyle_ = PlayerFightingStyle_Normal;
+    PlayerFightingStyle fightingStyle_;
     PlayerState state_;
     std::array<uint16_t, NUM_SKILL_LEVELS> skillLevels_;
+    float health_, armour_;
+    PlayerKeyData keys_;
+    int action_;
+    Vector3 velocity_;
+    PlayerAnimationData animation_;
+    PlayerSurfingData surfing_;
+    WeaponSlotData armedWeapon_;
 
     Player() :
         pool_(nullptr),
         virtualWorld_(0),
+        fightingStyle_(PlayerFightingStyle_Normal),
         state_(PlayerState_None)
     {
         weapons_.fill({ 0, 0 });
@@ -48,11 +56,19 @@ struct Player final : public IPlayer, public PoolIDProvider {
         NetCode::RPC::SetPlayerTeam setPlayerTeamRPC;
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
-        pool_->broadcastRPC(setPlayerTeamRPC);
+        pool_->broadcastRPC(setPlayerTeamRPC, BroadcastStreamed, this, false /* skipFrom */);
     }
 
     int getTeam() const override {
         return team_;
+    }
+
+    void setSkin(int skin) override {
+        skin_ = skin;
+        NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
+        setPlayerSkinRPC.PlayerID = poolID;
+        setPlayerSkinRPC.Skin = skin;
+        pool_->broadcastRPC(setPlayerSkinRPC, BroadcastStreamed, this, false /* skipFrom */);
     }
 
     int getSkin() const override {
@@ -70,7 +86,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
             setPlayerSkillLevelRPC.PlayerID = poolID;
             setPlayerSkillLevelRPC.SkillType = skill;
             setPlayerSkillLevelRPC.SkillLevel = level;
-            pool_->broadcastRPC(setPlayerSkillLevelRPC);
+            pool_->broadcastRPC(setPlayerSkillLevelRPC, BroadcastStreamed, this, false /* skipFrom */);
         }
     }
 
@@ -91,7 +107,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         NetCode::RPC::SetPlayerColor setPlayerColorRPC;
         setPlayerColorRPC.PlayerID = poolID;
         setPlayerColorRPC.Colour = color;
-        pool_->broadcastRPC(setPlayerColorRPC);
+        pool_->broadcastRPC(setPlayerColorRPC, BroadcastGlobally, this, false /* skipFrom */);
     }
 
     IPlayerData* queryData(UUID uuid) const override {
@@ -103,7 +119,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         playerData_.try_emplace(playerData->getUUID(), playerData);
     }
 
-    void streamInPlayer(IPlayer& other) override {
+    void streamInPlayer(const IPlayer& other) override {
         const int pid = other.getID();
         streamedPlayers_.set(pid);
         NetCode::RPC::PlayerStreamIn playerStreamInRPC;
@@ -118,11 +134,11 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(playerStreamInRPC);
     }
 
-    virtual bool isPlayerStreamedIn(IPlayer& other) override {
+    virtual bool isPlayerStreamedIn(const IPlayer& other) const override {
         return streamedPlayers_.test(other.getID());
     }
 
-    void streamOutPlayer(IPlayer& other) override {
+    void streamOutPlayer(const IPlayer& other) override {
         const int pid = other.getID();
         streamedPlayers_.reset(pid);
         NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
@@ -134,7 +150,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         netData_ = data;
     }
 
-    const NetworkData& getNetworkData() override {
+    const NetworkData& getNetworkData() const override {
         return netData_;
     }
 
@@ -147,7 +163,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
         setPlayerFightingStyleRPC.PlayerID = poolID;
         setPlayerFightingStyleRPC.Style = style;
-        pool_->broadcastRPC(setPlayerFightingStyleRPC);
+        pool_->broadcastRPC(setPlayerFightingStyleRPC, BroadcastStreamed, this, false /* skipFrom */);
     }
 
     EPlayerNameStatus setName(const String& name) override {
@@ -164,7 +180,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         setPlayerNameRPC.PlayerID = poolID;
         setPlayerNameRPC.Name = name_;
         setPlayerNameRPC.Success = true;
-        pool_->broadcastRPC(setPlayerNameRPC);
+        pool_->broadcastRPC(setPlayerNameRPC, BroadcastGlobally, this, false /* skipFrom */);
 
         return EPlayerNameStatus::Updated;
     }
@@ -173,11 +189,11 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return name_;
     }
 
-    int getID() override {
+    int getID() const override {
         return poolID;
     }
 
-    Vector3 getPosition() override {
+    Vector3 getPosition() const override {
         return pos_;
     }
 
@@ -195,19 +211,23 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerPosRPC);
     }
 
-    Vector4 getRotation() override {
-        return Vector4(angle_);
+    GTAQuat getRotation() const override {
+        return rot_;
     }
 
-    void setRotation(Vector4 rotation) override {
-        angle_ = rotation.x;
+    void setRotation(GTAQuat rotation) override {
+        rot_ = rotation;
         NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
-        setPlayerFacingAngleRPC.Angle = angle_;
+        setPlayerFacingAngleRPC.Angle = rot_.ToEuler().z;
         sendRPC(setPlayerFacingAngleRPC);
     }
 
     IVehicle* getVehicle() const override {
         return nullptr;
+    }
+
+    PlayerKeyData getKeyState() const override {
+        return keys_;
     }
 
     void giveWeapon(WeaponSlotData weapon) override {
@@ -243,7 +263,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerArmedWeaponRPC);
     }
 
-    virtual int getVirtualWorld() override {
+    virtual int getVirtualWorld() const override {
         return virtualWorld_;
     }
 
@@ -291,11 +311,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 const PlayerClass& cls = classData->getClass();
                 Player& player = self.storage.get(peer.getID());
                 player.pos_ = cls.spawn;
-                player.angle_ = cls.angle;
+                player.rot_ = GTAQuat(0.f, 0.f, cls.angle);
                 player.team_ = cls.team;
                 player.skin_ = cls.skin;
                 const WeaponSlots& weapons = cls.weapons;
-                for (size_t i = 0; i < weapons.size(); ++i) {
+                for (size_t i = 3; i < weapons.size(); ++i) {
                     if (weapons[i].id == 0) {
                         continue;
                     }
@@ -324,9 +344,22 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            footSync.PlayerID = peer.getID();
-            Player& player = self.storage.get(peer.getID());
+            int pid = peer.getID();
+            footSync.PlayerID = pid;
+            Player& player = self.storage.get(pid);
             player.pos_ = footSync.Position;
+            player.rot_ = footSync.Rotation;
+            player.keys_.keys = footSync.Keys;
+            player.keys_.leftRight = footSync.LeftRight;
+            player.keys_.upDown = footSync.UpDown;
+            player.health_ = footSync.HealthArmour.x;
+            player.armour_ = footSync.HealthArmour.y;
+            player.armedWeapon_.id = footSync.Weapon;
+            player.velocity_ = footSync.Velocity;
+            player.animation_.ID = footSync.AnimationID;
+            player.animation_.flags = footSync.AnimationFlags;
+            player.surfing_ = footSync.SurfingData;
+            player.action_ = footSync.SpecialAction;
             player.state_ = PlayerState_OnFoot;
 
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
@@ -335,7 +368,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if(allowedupdate) {
-                self.broadcastPacket(footSync, &peer);
+                self.broadcastPacket(footSync, BroadcastStreamed, &peer);
             }
             return true;
         }
@@ -348,7 +381,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     int claim() override {
         int res = storage.claim();
         if (res != -1) {
-            storage.get(res).pool_ = this;
+            Player& player = storage.get(res);
+            player.pool_ = this;
+            player.streamedPlayers_.set(player.poolID);
         }
         return res;
     }
@@ -356,7 +391,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     int claim(int hint) override {
         int res = storage.claim(hint);
         if (res != -1) {
-            storage.get(res).pool_ = this;
+            Player& player = storage.get(res);
+            player.pool_ = this;
+            player.streamedPlayers_.set(player.poolID);
         }
         return res;
     }
@@ -465,7 +502,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::PlayerQuit packet;
         packet.PlayerID = peer.getID();
         packet.Reason = reason;
-        broadcastRPC(packet);
+        broadcastRPC(packet, BroadcastGlobally);
     }
 
     PlayerPool(ICore& core) :
