@@ -528,20 +528,17 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Weapon));
 				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
 				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
-				bs.write(NetworkBitStreamValue::BIT(SurfingID >= 0 && SurfingID < MAX_SURFING_ID));
+				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < MAX_SURFING_ID));
 
 				if (SurfingID) {
 					bs.write(NetworkBitStreamValue::UINT16(SurfingID));
 					bs.write(NetworkBitStreamValue::VEC3(SurfingOffset));
 				}
 
+				bs.write(NetworkBitStreamValue::BIT(AnimationID > 0));
 				if (AnimationID) {
-					bs.write(NetworkBitStreamValue::BIT(true));
 					bs.write(NetworkBitStreamValue::UINT16(AnimationID));
 					bs.write(NetworkBitStreamValue::UINT16(AnimationFlags));
-				}
-				else {
-					bs.write(NetworkBitStreamValue::BIT(false));
 				}
 			}
 		};
