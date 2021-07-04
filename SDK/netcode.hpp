@@ -434,7 +434,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Weapon));
 				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
 				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
-				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < 3000));
+				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < MAX_SURFING_ID));
 
 				if (SurfingID) {
 					bs.write(NetworkBitStreamValue::UINT16(SurfingID));

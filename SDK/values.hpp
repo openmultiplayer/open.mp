@@ -16,6 +16,7 @@ constexpr int MAX_WEAPON_ID = 46;
 constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
 constexpr int MAX_PLAYER_NAME = 24;
+constexpr int MAX_SURFING_ID = 3000;
 
 namespace Config {
 	static const std::map<std::string, std::variant<int, float, std::string>> defaults{
