@@ -41,6 +41,28 @@ enum PlayerWeaponSkill {
 	PlayerWeaponSkill_Sniper
 };
 
+struct PlayerKeyData {
+	// todo fill with union
+	uint16_t keys;
+	uint16_t upDown;
+	uint16_t leftRight;
+};
+
+struct PlayerAnimationData {
+	uint16_t ID;
+	uint16_t flags;
+};
+
+struct PlayerSurfingData {
+	enum class Type {
+		None,
+		Vehicle,
+		Object
+	} type;
+	int ID;
+	Vector3 offset;
+};
+
 /// Holds weapon slot data
 struct WeaponSlotData {
 	uint8_t id;
@@ -124,14 +146,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Stream in a player for the current player
 	/// @param other The player to stream in
-	virtual void streamInPlayer(IPlayer& other) = 0;
+	virtual void streamInPlayer(const IPlayer& other) = 0;
 
 	/// Check if a player is streamed in for the current player
-	virtual bool isPlayerStreamedIn(IPlayer& other) = 0;
+	virtual bool isPlayerStreamedIn(const IPlayer& other) const = 0;
 
 	/// Stream out a player for the current player
 	/// @param other The player to stream out
-	virtual void streamOutPlayer(IPlayer& other) = 0;
+	virtual void streamOutPlayer(const IPlayer& other) = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
@@ -141,6 +163,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's team
 	virtual int getTeam() const = 0;
+
+	/// Set the player's skin
+	virtual void setSkin(int skin) = 0;
 
 	/// Get the player's skin
 	virtual int getSkin() const = 0;
@@ -158,6 +183,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param skill The skill type
 	/// @param level The skill level
 	virtual void setSkillLevel(PlayerWeaponSkill skill, int level) = 0;
+
+	/// Get the player's key state
+	virtual PlayerKeyData getKeyState() const = 0;
 
 	/// Get the player's skill levels
 	/// @note See https://open.mp/docs/scripting/resources/weaponskills
@@ -215,11 +243,14 @@ struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS> {
 	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>
-	inline int broadcastRPC(const Packet& packet, const IPlayer* skip = nullptr) {
+	inline int broadcastRPC(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr, bool skipFrom = false) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		int succeeded = 0;
 		for (IPlayer* player : entries()) {
-			if (player != skip) {
+			if (skipFrom && player == from) {
+				continue;
+			}
+			if (type != EBroadcastPacketSendType::BroadcastStreamed || from == nullptr || from->isPlayerStreamedIn(*player)) {
 				if (player->sendRPC(packet)) {
 					++succeeded;
 				}
@@ -233,7 +264,7 @@ struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS> {
 	/// @param from The player who the packet is being sent from
 	/// @param type The broadcast type that will determine who to send this packet to
 	template<class Packet>
-	inline int broadcastPacket(const Packet& packet, IPlayer* from = nullptr, EBroadcastPacketSendType type = EBroadcastPacketSendType::BroadcastStreamed) {
+	inline int broadcastPacket(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		int succeeded = 0;
 		for (IPlayer* player : entries()) {

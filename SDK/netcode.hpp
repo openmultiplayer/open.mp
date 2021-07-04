@@ -186,10 +186,12 @@ namespace NetCode {
 		};
 
 		struct PlayerRequestClass final : NetworkPacketBase<128> {
-			uint16_t Classid;
+			int Classid;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(Classid, { NetworkBitStreamValueType::UINT16 });
+				uint16_t classid;
+				CHECKED_READ(classid, { NetworkBitStreamValueType::UINT16 });
+				Classid = classid;
 				return true;
 			}
 
@@ -253,6 +255,7 @@ namespace NetCode {
 			NetworkArray<uint32_t> Ammos;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -346,6 +349,7 @@ namespace NetCode {
 			NetworkArray<uint16_t> SkillLevel;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -364,6 +368,7 @@ namespace NetCode {
 			int PlayerID;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -377,6 +382,7 @@ namespace NetCode {
 			uint8_t Success;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -391,6 +397,7 @@ namespace NetCode {
 			Color Colour;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -403,6 +410,7 @@ namespace NetCode {
 			Vector3 Pos;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -414,6 +422,7 @@ namespace NetCode {
 			Vector3 Pos;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -425,6 +434,7 @@ namespace NetCode {
 			float Angle;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -437,6 +447,7 @@ namespace NetCode {
 			uint8_t Team;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -450,6 +461,7 @@ namespace NetCode {
 			uint8_t Style;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -464,12 +476,27 @@ namespace NetCode {
 			uint16_t SkillLevel;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 				bs.write(NetworkBitStreamValue::UINT32(SkillType));
 				bs.write(NetworkBitStreamValue::UINT16(SkillLevel));
+			}
+		};
+
+		struct SetPlayerSkin final : NetworkPacketBase<153> {
+			int PlayerID;
+			uint32_t Skin;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(Skin));
 			}
 		};
 	}
@@ -485,10 +512,9 @@ namespace NetCode {
 			uint8_t Weapon;
 			uint8_t SpecialAction;
 			Vector3 Velocity;
-			uint16_t SurfingID;
-			Vector3 SurfingOffset;
 			uint16_t AnimationID;
 			uint16_t AnimationFlags;
+			PlayerSurfingData SurfingData;
 
 			bool read(INetworkBitStream& bs) {
 				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
@@ -500,15 +526,29 @@ namespace NetCode {
 				CHECKED_READ(Weapon, { NetworkBitStreamValueType::UINT8 });
 				CHECKED_READ(SpecialAction, { NetworkBitStreamValueType::UINT8 });
 				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(SurfingOffset, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(SurfingID, { NetworkBitStreamValueType::UINT16 });
+				if (!bs.read(SurfingData.offset, NetworkBitStreamValueType::VEC3)) {
+					return false;
+				}
+				uint16_t surfingID;
+				CHECKED_READ(surfingID, { NetworkBitStreamValueType::UINT16 });
+				SurfingData.ID = surfingID;
+				if (SurfingData.ID < MAX_VEHICLES) {
+					SurfingData.type = PlayerSurfingData::Type::Vehicle;
+				}
+				else if (SurfingData.ID < MAX_VEHICLES+MAX_OBJECTS) {
+					SurfingData.ID -= MAX_VEHICLES;
+					SurfingData.type = PlayerSurfingData::Type::Object;
+				}
+				else {
+					SurfingData.type = PlayerSurfingData::Type::None;
+				}
 				CHECKED_READ(AnimationID, { NetworkBitStreamValueType::UINT16 });
 				CHECKED_READ(AnimationFlags, { NetworkBitStreamValueType::UINT16 });
 				return true;
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT8(207));
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
 				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
 
 				bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
@@ -528,11 +568,18 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Weapon));
 				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
 				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
-				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < MAX_SURFING_ID));
 
-				if (SurfingID) {
-					bs.write(NetworkBitStreamValue::UINT16(SurfingID));
-					bs.write(NetworkBitStreamValue::VEC3(SurfingOffset));
+				bs.write(NetworkBitStreamValue::BIT(SurfingData.type != PlayerSurfingData::Type::None));
+				if (SurfingData.type != PlayerSurfingData::Type::None) {
+					int id = 0;
+					if (SurfingData.type == PlayerSurfingData::Type::Vehicle) {
+						id = SurfingData.ID;
+					}
+					else if (SurfingData.type == PlayerSurfingData::Type::Object) {
+						id = SurfingData.ID + MAX_VEHICLES;
+					}
+					bs.write(NetworkBitStreamValue::UINT16(id));
+					bs.write(NetworkBitStreamValue::VEC3(SurfingData.offset));
 				}
 
 				bs.write(NetworkBitStreamValue::BIT(AnimationID > 0));
