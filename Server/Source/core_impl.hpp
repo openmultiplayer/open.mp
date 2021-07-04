@@ -26,11 +26,11 @@ struct Core final : public ICore, public PlayerEventHandler {
         if (ifs.good()) {
             props = JSON::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
         }
-        players.addEventHandler(this);
+        players.getEventDispatcher().addEventHandler(this);
     }
 
     ~Core() {
-        players.removeEventHandler(this);
+        players.getEventDispatcher().removeEventHandler(this);
     }
 
     void initiated() {

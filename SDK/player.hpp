@@ -158,7 +158,9 @@ enum EBroadcastPacketSendType {
 };
 
 /// A player pool interface
-struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<PlayerEventHandler> {
+struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS> {
+	/// Returns a dispatcher to the main player event dispatcher.
+	virtual IEventDispatcher<PlayerEventHandler>& getEventDispatcher() = 0;
 
 	/// Returns a dispatcher to the PlayerUpdateEvent.
 	virtual IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() = 0;

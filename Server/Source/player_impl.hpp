@@ -325,16 +325,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return storage.entries();
     }
 
-    bool addEventHandler(PlayerEventHandler* handler) override {
-        return eventDispatcher.addEventHandler(handler);
-    }
-
-    bool removeEventHandler(PlayerEventHandler* handler) override {
-        return eventDispatcher.removeEventHandler(handler);
-    }
-
-    bool hasEventHandler(PlayerEventHandler* handler) override {
-        return eventDispatcher.hasEventHandler(handler);
+    IEventDispatcher<PlayerEventHandler>& getEventDispatcher() override {
+        return eventDispatcher;
     }
 
     IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() override {
