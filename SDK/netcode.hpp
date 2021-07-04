@@ -510,10 +510,17 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT8(207));
 				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-				bs.write(NetworkBitStreamValue::BIT(true));
-				bs.write(NetworkBitStreamValue::UINT16(LeftRight));
-				bs.write(NetworkBitStreamValue::BIT(true));
-				bs.write(NetworkBitStreamValue::UINT16(UpDown));
+
+				bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
+				if (LeftRight) {
+					bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(UpDown > 0));
+				if (UpDown) {
+					bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				}
+
 				bs.write(NetworkBitStreamValue::UINT16(Keys));
 				bs.write(NetworkBitStreamValue::VEC3(Position));
 				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
@@ -521,15 +528,21 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Weapon));
 				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
 				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
-				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < MAX_SURFING_ID));
+				bs.write(NetworkBitStreamValue::BIT(SurfingID >= 0 && SurfingID < MAX_SURFING_ID));
 
 				if (SurfingID) {
 					bs.write(NetworkBitStreamValue::UINT16(SurfingID));
 					bs.write(NetworkBitStreamValue::VEC3(SurfingOffset));
 				}
 
-				bs.write(NetworkBitStreamValue::INT16(AnimationID));
-				bs.write(NetworkBitStreamValue::INT16(AnimationFlags));
+				if (AnimationID) {
+					bs.write(NetworkBitStreamValue::BIT(true));
+					bs.write(NetworkBitStreamValue::UINT16(AnimationID));
+					bs.write(NetworkBitStreamValue::UINT16(AnimationFlags));
+				}
+				else {
+					bs.write(NetworkBitStreamValue::BIT(false));
+				}
 			}
 		};
 	}
