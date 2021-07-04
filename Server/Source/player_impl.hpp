@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <Server/Components/Classes/classes.hpp>
 #include <glm/glm.hpp>
+#include <regex>
 
 struct Player final : public IPlayer, public PoolIDProvider {
     IPlayerPool* pool_;
@@ -351,8 +352,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            // Filters ~k, ~K (uppercase), % and
+            std::regex filter = std::regex("(~(k|K)|%)");
+            // Filters 6 characters between { and }, keeping out coloring
+            std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
+            std::string str = std::regex_replace((std::string)sendChatMessage.message, filter, "#");
+            str = std::regex_replace(str, filterColourNodes, " ");
+
+            sendChatMessage.message = str;
             sendChatMessage.PlayerID = peer.getID();
-            self.broadcastRPC(sendChatMessage);
+
+            self.broadcastRPC(sendChatMessage, BroadcastGlobally);
 
             return true;
         }

@@ -402,8 +402,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT32(colour));
-				bs.write(NetworkBitStreamValue::UINT32(message.count));
-				bs.write(NetworkBitStreamValue::FIXED_LEN_STR(message));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(message));
 			}
 		};
 
