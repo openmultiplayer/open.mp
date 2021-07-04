@@ -7,15 +7,23 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/PluginInterface.h>
+#include <glm/glm.hpp>
+#define MAGNITUDE_EPSILON 0.00001f
 
 struct Core;
+
+inline constexpr auto CEILDIV(int n, int d) -> decltype (n / d)
+{
+    return (n) ? ((n - (int)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
+}
+
 
 struct RakNetLegacyBitStream final : public INetworkBitStream {
     RakNet::BitStream& bs;
 
     RakNetLegacyBitStream(RakNet::BitStream& bs) : bs(bs) {}
 
-    ENetworkType getNetworkType() override {
+    ENetworkType getNetworkType() const override {
         return ENetworkType_RakNetLegacy;
     }
 
@@ -72,6 +80,31 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             writeFixedArray<uint16_t>(std::get<NetworkArray<uint16_t>>(input.data)); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
             writeFixedArray<uint32_t>(std::get<NetworkArray<uint32_t>>(input.data)); break;
+        case NetworkBitStreamValueType::HP_ARMOR_COMPRESSED: {
+            uint8_t ha =
+                (std::get<Vector2>(input.data).x >= 100 ? 0x0F : (uint8_t)CEILDIV((int)std::get<Vector2>(input.data).x, 7)) << 4 |
+                (std::get<Vector2>(input.data).y >= 100 ? 0x0F : (uint8_t)CEILDIV((int)std::get<Vector2>(input.data).y, 7));
+            bs.Write(ha);
+            break;
+        }
+        case NetworkBitStreamValueType::VEC3_SAMP: {
+            Vector3 vector = std::get<Vector3>(input.data);
+            float magnitude = glm::length(vector);
+            bs.Write(magnitude);
+            if (magnitude > MAGNITUDE_EPSILON)
+            {
+                vector /= magnitude;
+                bs.WriteCompressed(vector.x);
+                bs.WriteCompressed(vector.y);
+                bs.WriteCompressed(vector.z);
+            }
+            break;
+        }
+        case NetworkBitStreamValueType::GTA_QUAT: {
+            const GTAQuat& quat = std::get<GTAQuat>(input.data);
+            bs.WriteNormQuat(quat.w, quat.x, quat.y, quat.z);
+            break;
+        }
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
@@ -172,6 +205,20 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = readFixedArray<uint16_t>(input.data.emplace<NetworkArray<uint16_t>>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
             success = readFixedArray<uint32_t>(input.data.emplace<NetworkArray<uint32_t>>()); break;
+        case NetworkBitStreamValueType::HP_ARMOR_COMPRESSED: {
+            uint8_t
+                health, armour;
+            if (!(success = bs.Read(health))) {
+                break;
+            }
+            else if (!(success = bs.Read(armour))) {
+                break;
+            }
+            input.data.emplace<Vector2>(health, armour);
+            break;
+        }
+        case NetworkBitStreamValueType::GTA_QUAT:
+            success = bs.Read(input.data.emplace<GTAQuat>()); break;
         case NetworkBitStreamValueType::NONE:
             assert(false); break;
         }
@@ -183,38 +230,38 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
-    ENetworkType getNetworkType() override {
+    ENetworkType getNetworkType() const override {
         return ENetworkType_RakNetLegacy;
     }
 
-    bool sendPacket(INetworkPeer& peer, INetworkBitStream& bs) override {
+    bool sendPacket(const INetworkPeer& peer, const INetworkBitStream& bs) override {
         const INetworkPeer::NetworkData& netData = peer.getNetworkData();
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
-        RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
+        const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         const INetworkPeer::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
 
-    bool broadcastRPC(int id, INetworkBitStream& bs) override {
+    bool broadcastRPC(int id, const INetworkBitStream& bs) override {
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
-        RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
+        const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(INetworkPeer& peer, int id, INetworkBitStream& bs) override {
+    bool sendRPC(const INetworkPeer& peer, int id, const INetworkBitStream& bs) override {
         const INetworkPeer::NetworkData& netData = peer.getNetworkData();
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
-        RakNetLegacyBitStream& lbs = static_cast<RakNetLegacyBitStream&>(bs);
+        const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         const INetworkPeer::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);

@@ -9,6 +9,7 @@
 #include "types.hpp"
 #include "events.hpp"
 #include "exports.hpp"
+#include "gtaquat.hpp"
 
 struct IPlayer;
 struct INetworkPeer;
@@ -39,7 +40,8 @@ enum class NetworkBitStreamValueType {
 	FIXED_LEN_STR,        ///< NetworkString
 	FIXED_LEN_ARR_UINT8,  ///< NetworkArray<uint8_t>
 	FIXED_LEN_ARR_UINT16, ///< NetworkArray<uint16_t>
-	FIXED_LEN_ARR_UINT32  ///< NetworkArray<uint32_t>
+	FIXED_LEN_ARR_UINT32,  ///< NetworkArray<uint32_t>
+	GTA_QUAT ///< GTAQuat
 };
 
 /// Type used for storing arrays to pass to the networks
@@ -197,7 +199,8 @@ struct NetworkBitStreamValue {
 		NetworkString,
 		NetworkArray<uint8_t>,
 		NetworkArray<uint16_t>,
-		NetworkArray<uint32_t>
+		NetworkArray<uint32_t>,
+		GTAQuat
 	>;
 
 	Variant data; ///< The union which holds all possible data types
@@ -227,6 +230,7 @@ struct NetworkBitStreamValue {
 	NBSVCONS(FIXED_LEN_ARR_UINT8, NetworkArray<uint8_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT16, NetworkArray<uint16_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT32, NetworkArray<uint32_t>);
+	NBSVCONS(GTA_QUAT, GTAQuat);
 };
 
 #undef NBSVCONS
@@ -252,7 +256,7 @@ enum ENetworkBitStreamReset {
 struct INetworkBitStream {
 	/// Get the network type of the bit stream
 	/// @return The network type of the bit stream
-	virtual ENetworkType getNetworkType() = 0;
+	virtual ENetworkType getNetworkType() const = 0;
 
 	/// Write a value into the bit stream
 	/// @param value The value to write to the bit stream
@@ -324,7 +328,7 @@ using is_network_packet = decltype(is_network_packet_impl(std::declval<T&>()));
 struct INetwork {
 	/// Get the network type of the network
 	/// @return The network type of the network
-	virtual ENetworkType getNetworkType() = 0;
+	virtual ENetworkType getNetworkType() const = 0;
 
 	/// Get the dispatcher which dispatches network events
 	virtual IEventDispatcher<NetworkEventHandler>& getEventDispatcher() = 0;
@@ -341,18 +345,20 @@ struct INetwork {
 	/// Attempt to send a packet to a network peer
 	/// @param peer The network peer to send the packet to
 	/// @param bs The bit stream with data to send
-	virtual bool sendPacket(INetworkPeer& peer, INetworkBitStream& bs) = 0;
+	virtual bool sendPacket(const INetworkPeer& peer, const INetworkBitStream& bs) = 0;
 
 	/// Attempt to send an RPC to a network peer
 	/// @param peer The network peer to send the RPC to
 	/// @param id The RPC ID for the current network
 	/// @param bs The bit stream with data to send
-	virtual bool sendRPC(INetworkPeer& peer, int id, INetworkBitStream& bs) = 0;
+	virtual bool sendRPC(const INetworkPeer& peer, int id, const INetworkBitStream& bs) = 0;
 
 	/// Attempt to broadcast an RPC to everyone on this network
 	/// @param id The RPC ID for the current network
 	/// @param bs The bit stream with data to send
-	virtual bool broadcastRPC(int id, INetworkBitStream& bs) = 0;
+	virtual bool broadcastRPC(int id, const INetworkBitStream& bs) = 0;
+
+	/// Get a new bit stream for writing
 	virtual INetworkBitStream& writeBitStream() = 0;
 };
 
@@ -388,25 +394,25 @@ struct INetworkPeer {
 	/// @param port The port to set
 	virtual void setNetworkData(const NetworkData& data) = 0;
 
-	virtual const NetworkData& getNetworkData() = 0;
+	virtual const NetworkData& getNetworkData() const = 0;
 
 	/// Attempt to send a packet to the network peer
 	/// @param bs The bit stream with data to send
-	bool sendPacket(INetworkBitStream& bs) {
+	bool sendPacket(INetworkBitStream& bs) const {
 		return getNetworkData().network->sendPacket(*this, bs);
 	}
 
 	/// Attempt to send an RPC to the network peer
 	/// @param id The RPC ID for the current network
 	/// @param bs The bit stream with data to send
-	bool sendRPC(int id, INetworkBitStream& bs) {
+	bool sendRPC(int id, INetworkBitStream& bs) const {
 		return getNetworkData().network->sendRPC(*this, id, bs);
 	}
 
 	/// Attempt to send a packet derived from NetworkPacketBase to the peer
 	/// @param packet The packet to send
 	template<class Packet>
-	inline bool sendRPC(const Packet& packet) {
+	inline bool sendRPC(const Packet& packet) const {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		INetwork& network = *getNetworkData().network;
 		const ENetworkType type = network.getNetworkType();
@@ -417,6 +423,22 @@ struct INetworkPeer {
 		INetworkBitStream& bs = network.writeBitStream();
 		packet.write(bs);
 		return sendRPC(Packet::getID(type), bs);
+	}
+
+	/// Attempt to send a packet derived from NetworkPacketBase to the peer
+	/// @param packet The packet to send
+	template<class Packet>
+	inline bool sendPacket(const Packet& packet) const {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		INetwork& network = *getNetworkData().network;
+		const ENetworkType type = network.getNetworkType();
+		if (type >= ENetworkType_End) {
+			return false;
+		}
+
+		INetworkBitStream& bs = network.writeBitStream();
+		packet.write(bs);
+		return sendPacket(bs);
 	}
 };
 

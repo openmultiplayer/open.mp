@@ -186,10 +186,12 @@ namespace NetCode {
 		};
 
 		struct PlayerRequestClass final : NetworkPacketBase<128> {
-			uint16_t Classid;
+			int Classid;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(Classid, { NetworkBitStreamValueType::UINT16 });
+				uint16_t classid;
+				CHECKED_READ(classid, { NetworkBitStreamValueType::UINT16 });
+				Classid = classid;
 				return true;
 			}
 
@@ -253,6 +255,7 @@ namespace NetCode {
 			NetworkArray<uint32_t> Ammos;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -346,6 +349,7 @@ namespace NetCode {
 			NetworkArray<uint16_t> SkillLevel;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -364,6 +368,7 @@ namespace NetCode {
 			int PlayerID;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -372,11 +377,12 @@ namespace NetCode {
 		};
 
 		struct SetPlayerName final : NetworkPacketBase<11> {
-			uint16_t PlayerID;
+			int PlayerID;
 			NetworkString Name;
 			uint8_t Success;
 
 			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -408,10 +414,208 @@ namespace NetCode {
 				CHECKED_READ(message, {NetworkBitStreamValueType::DYNAMIC_LEN_STR_8});
 				return true;
 			}
-
+			
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(message));
+			}
+		};
+
+		struct SetPlayerColor final : NetworkPacketBase<72> {
+			int PlayerID;
+			Color Colour;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(Colour));
+			}
+		};
+
+		struct SetPlayerPosition final : NetworkPacketBase<12> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetPlayerPositionFindZ final : NetworkPacketBase<13> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetPlayerFacingAngle final : NetworkPacketBase<19> {
+			float Angle;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+			}
+		};
+
+		struct SetPlayerTeam final : NetworkPacketBase<69> {
+			int PlayerID;
+			uint8_t Team;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(Team));
+			}
+		};
+
+		struct SetPlayerFightingStyle final : NetworkPacketBase<89> {
+			int PlayerID;
+			uint8_t Style;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(Style));
+			}
+		};
+
+		struct SetPlayerSkillLevel final : NetworkPacketBase<34> {
+			int PlayerID;
+			uint32_t SkillType;
+			uint16_t SkillLevel;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(SkillType));
+				bs.write(NetworkBitStreamValue::UINT16(SkillLevel));
+			}
+		};
+
+		struct SetPlayerSkin final : NetworkPacketBase<153> {
+			int PlayerID;
+			uint32_t Skin;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(Skin));
+			}
+		};
+	}
+	namespace Packet {
+		struct PlayerFootSync final : NetworkPacketBase<207> {
+			int PlayerID;
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			Vector3 Position;
+			GTAQuat Rotation;
+			Vector2 HealthArmour;
+			uint8_t Weapon;
+			uint8_t SpecialAction;
+			Vector3 Velocity;
+			uint16_t AnimationID;
+			uint16_t AnimationFlags;
+			PlayerSurfingData SurfingData;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Rotation, {NetworkBitStreamValueType::GTA_QUAT });
+				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
+				CHECKED_READ(Weapon, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(SpecialAction, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				if (!bs.read(SurfingData.offset, NetworkBitStreamValueType::VEC3)) {
+					return false;
+				}
+				uint16_t surfingID;
+				CHECKED_READ(surfingID, { NetworkBitStreamValueType::UINT16 });
+				SurfingData.ID = surfingID;
+				if (SurfingData.ID < MAX_VEHICLES) {
+					SurfingData.type = PlayerSurfingData::Type::Vehicle;
+				}
+				else if (SurfingData.ID < MAX_VEHICLES+MAX_OBJECTS) {
+					SurfingData.ID -= MAX_VEHICLES;
+					SurfingData.type = PlayerSurfingData::Type::Object;
+				}
+				else {
+					SurfingData.type = PlayerSurfingData::Type::None;
+				}
+				CHECKED_READ(AnimationID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AnimationFlags, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+
+				bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
+				if (LeftRight) {
+					bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(UpDown > 0));
+				if (UpDown) {
+					bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				}
+
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
+				bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(HealthArmour));
+				bs.write(NetworkBitStreamValue::UINT8(Weapon));
+				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
+				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
+
+				bs.write(NetworkBitStreamValue::BIT(SurfingData.type != PlayerSurfingData::Type::None));
+				if (SurfingData.type != PlayerSurfingData::Type::None) {
+					int id = 0;
+					if (SurfingData.type == PlayerSurfingData::Type::Vehicle) {
+						id = SurfingData.ID;
+					}
+					else if (SurfingData.type == PlayerSurfingData::Type::Object) {
+						id = SurfingData.ID + MAX_VEHICLES;
+					}
+					bs.write(NetworkBitStreamValue::UINT16(id));
+					bs.write(NetworkBitStreamValue::VEC3(SurfingData.offset));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(AnimationID > 0));
+				if (AnimationID) {
+					bs.write(NetworkBitStreamValue::UINT16(AnimationID));
+					bs.write(NetworkBitStreamValue::UINT16(AnimationFlags));
+				}
 			}
 		};
 	}
