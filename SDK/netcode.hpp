@@ -372,7 +372,7 @@ namespace NetCode {
 		};
 
 		struct SetPlayerName final : NetworkPacketBase<11> {
-			uint16_t PlayerID;
+			int PlayerID;
 			NetworkString Name;
 			uint8_t Success;
 
@@ -383,6 +383,93 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
 				bs.write(NetworkBitStreamValue::UINT8(Success));
+			}
+		};
+
+		struct SetPlayerColor final : NetworkPacketBase<72> {
+			int PlayerID;
+			Color Colour;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(Colour));
+			}
+		};
+
+		struct SetPlayerPosition final : NetworkPacketBase<12> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetPlayerPositionFindZ final : NetworkPacketBase<13> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetPlayerFacingAngle final : NetworkPacketBase<19> {
+			float Angle;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+			}
+		};
+
+		struct SetPlayerTeam final : NetworkPacketBase<69> {
+			int PlayerID;
+			uint8_t Team;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(Team));
+			}
+		};
+
+		struct SetPlayerFightingStyle final : NetworkPacketBase<89> {
+			int PlayerID;
+			uint8_t Style;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(Style));
+			}
+		};
+
+		struct SetPlayerSkillLevel final : NetworkPacketBase<34> {
+			int PlayerID;
+			uint32_t SkillType;
+			uint16_t SkillLevel;
+
+			bool read(INetworkBitStream& bs) {
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(SkillType));
+				bs.write(NetworkBitStreamValue::UINT16(SkillLevel));
 			}
 		};
 	}
