@@ -10,13 +10,13 @@ constexpr int MAX_SEATS = 4;
 constexpr int MAX_PLAYERS = 1000;
 constexpr int MAX_VEHICLES = 2000;
 constexpr int MAX_CLASSES = 320;
+constexpr int MAX_OBJECTS = 1000;
 constexpr int MAX_WEAPON_SLOTS = 12;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
 constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
 constexpr int MAX_PLAYER_NAME = 24;
-constexpr int MAX_SURFING_ID = 3000;
 
 namespace Config {
 	static const std::map<std::string, std::variant<int, float, std::string>> defaults{
