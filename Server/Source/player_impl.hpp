@@ -209,6 +209,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     ICore& core;
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
+    DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -265,7 +266,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerFootSyncHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            NetCode::PACKET::PlayerFootSync footSync;
+            NetCode::Packet::PlayerFootSync footSync;
             if (!footSync.read(bs)) {
                 return false;
             }
@@ -275,8 +276,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.pos_ = footSync.Position;
             player.state_ = PlayerState_OnFoot;
 
-            bool allowedupdate = self.eventDispatcher.stopAtFalse(
-                [&peer](PlayerEventHandler* handler) {
+            bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+                [&peer](PlayerUpdateEventHandler* handler) {
                     return handler->onUpdate(peer);
                 });
 
@@ -334,6 +335,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     bool hasEventHandler(PlayerEventHandler* handler) override {
         return eventDispatcher.hasEventHandler(handler);
+    }
+
+    IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() override {
+        return playerUpdateDispatcher;
     }
 
     void onPeerConnect(IPlayer& peer, INetworkBitStream& bs) override {
@@ -449,7 +454,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.addPerPacketEventHandler<NetCode::PACKET::PlayerFootSync>(&playerFootSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
     }
 
     void onTick(uint64_t tick) override {
@@ -486,7 +491,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     ~PlayerPool() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.removePerPacketEventHandler<NetCode::PACKET::PlayerFootSync>(&playerFootSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }

@@ -146,6 +146,9 @@ struct PlayerEventHandler {
 	virtual void onSpawn(IPlayer& player) {}
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
+};
+
+struct PlayerUpdateEventHandler {
 	virtual bool onUpdate(IPlayer& player) { return true; }
 };
 
@@ -156,6 +159,10 @@ enum EBroadcastPacketSendType {
 
 /// A player pool interface
 struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<PlayerEventHandler> {
+
+	/// Returns a dispatcher to the PlayerUpdateEvent.
+	virtual IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() = 0;
+
 	/// Returns whether a name is taken by any player
 	/// @param skip The player to exclude from the check
 	virtual bool isNameTaken(const String& name, const IPlayer* skip = nullptr) = 0;
