@@ -185,7 +185,7 @@ struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS>, IEventDispatcher<Player
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		int succeeded = 0;
 		for (IPlayer* player : entries()) {
-			if (player != from && (type != EBroadcastPacketSendType::BroadcastStreamed || from->isPlayerStreamedIn(*player) || from == nullptr)) {
+			if (player != from && (type != EBroadcastPacketSendType::BroadcastStreamed || from == nullptr || from->isPlayerStreamedIn(*player))) {
 				if (player->sendPacket(packet)) {
 					++succeeded;
 				}
