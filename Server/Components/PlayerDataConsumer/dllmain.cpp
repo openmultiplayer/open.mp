@@ -14,7 +14,7 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 
 	void onInit(ICore* core) override {
 		c = core;
-		c->getPlayers().addEventHandler(this);
+		c->getPlayers().getEventDispatcher().addEventHandler(this);
 	}
 
 	bool onPlayerRequestSpawn(IPlayer& player) override {
@@ -27,7 +27,7 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 
 	~MyPlugin() {
 		if (c) {
-			c->getPlayers().removeEventHandler(this);
+			c->getPlayers().getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;

@@ -473,4 +473,64 @@ namespace NetCode {
 			}
 		};
 	}
+	namespace Packet {
+		struct PlayerFootSync final : NetworkPacketBase<207> {
+			int PlayerID;
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			Vector3 Position;
+			GTAQuat Rotation;
+			Vector2 HealthArmour;
+			uint8_t Weapon;
+			uint8_t SpecialAction;
+			Vector3 Velocity;
+			uint16_t SurfingID;
+			Vector3 SurfingOffset;
+			uint16_t AnimationID;
+			uint16_t AnimationFlags;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Rotation, {NetworkBitStreamValueType::GTA_QUAT });
+				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
+				CHECKED_READ(Weapon, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(SpecialAction, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(SurfingOffset, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(SurfingID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AnimationID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AnimationFlags, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(207));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::BIT(true));
+				bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				bs.write(NetworkBitStreamValue::BIT(true));
+				bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
+				bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(HealthArmour));
+				bs.write(NetworkBitStreamValue::UINT8(Weapon));
+				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
+				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
+				bs.write(NetworkBitStreamValue::BIT(SurfingID > 0 && SurfingID < MAX_SURFING_ID));
+
+				if (SurfingID) {
+					bs.write(NetworkBitStreamValue::UINT16(SurfingID));
+					bs.write(NetworkBitStreamValue::VEC3(SurfingOffset));
+				}
+
+				bs.write(NetworkBitStreamValue::INT16(AnimationID));
+				bs.write(NetworkBitStreamValue::INT16(AnimationFlags));
+			}
+		};
+	}
 }
