@@ -274,7 +274,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = self.storage.get(peer.getID());
             player.pos_ = footSync.Position;
             player.state_ = PlayerState_OnFoot;
-            self.broadcastPacket(footSync, &peer);
+
+            bool allowedupdate = self.eventDispatcher.stopAtFalse(
+                [&peer](PlayerEventHandler* handler) {
+                    return handler->onUpdate(peer);
+                });
+
+            if(allowedupdate) {
+                self.broadcastPacket(footSync, &peer);
+            }
             return true;
         }
     } playerFootSyncHandler;
