@@ -386,7 +386,7 @@ namespace NetCode {
 			}
 		};
 	}
-	namespace PACKET {
+	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
 			int PlayerID;
 			uint16_t LeftRight;
