@@ -26,7 +26,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int virtualWorld_;
     int team_;
     int skin_;
-    PlayerFightingStyle fightingStyle_;
+    PlayerFightingStyle fightingStyle_ = PlayerFightingStyle_Normal;
     PlayerState state_;
     std::array<uint16_t, NUM_SKILL_LEVELS> skillLevels_;
 
