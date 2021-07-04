@@ -447,14 +447,14 @@ void RakNetLegacyNetwork::onTick(uint64_t tick) {
                 RakNet::BitStream bs(pkt->data, pkt->length, false);
                 uint8_t type;
                 if (bs.Read(type)) {
-                    inOutEventDispatcher.all([&player, type, &pkt](NetworkInOutEventHandler* handler) {
-                        RakNet::BitStream bs(pkt->data, pkt->length, false);
+                    inOutEventDispatcher.all([&player, type, &bs](NetworkInOutEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
                         RakNetLegacyBitStream lbs(bs);
                         handler->receivedPacket(player, type, lbs);
                         });
 
-                    packetInOutEventDispatcher.all(type, [&player, &pkt](SingleNetworkInOutEventHandler* handler) {
-                        RakNet::BitStream bs(pkt->data, pkt->length, false);
+                    packetInOutEventDispatcher.all(type, [&player, &bs](SingleNetworkInOutEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
                         RakNetLegacyBitStream lbs(bs);
                         handler->received(player, lbs);
                         });

@@ -10,11 +10,11 @@
 
 struct Vehicle final : public IVehicle, public PoolIDProvider {
     Vector3 pos;
-    Vector4 rot;
+    GTAQuat rot;
     std::array<IPlayer*, MAX_SEATS> passengers;
     int virtualWorld_ = 0;
 
-    virtual int getVirtualWorld() override {
+    virtual int getVirtualWorld() const override {
         return virtualWorld_;
     }
 
@@ -22,11 +22,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
         virtualWorld_ = vw;
     }
 
-    int getID() override {
+    int getID() const override {
         return poolID;
     }
 
-    Vector3 getPosition() override {
+    Vector3 getPosition() const override {
         return pos;
     }
 
@@ -34,11 +34,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
         pos = position;
     }
 
-    Vector4 getRotation() override {
+    GTAQuat getRotation() const override {
         return rot;
     }
 
-    void setRotation(Vector4 rotation) override {
+    void setRotation(GTAQuat rotation) override {
         rot = rotation;
     }
 

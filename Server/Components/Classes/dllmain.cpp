@@ -155,7 +155,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
     void onInit(ICore* c) override {
         core = c;
         core->addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
-        core->getPlayers().addEventHandler(this);
+        core->getPlayers().getEventDispatcher().addEventHandler(this);
     }
 
 	IClassPool& getClasses() override {
@@ -180,7 +180,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 
 	~ClassesPlugin() {
         core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
-		core->getPlayers().removeEventHandler(this);
+		core->getPlayers().getEventDispatcher().removeEventHandler(this);
 	}
 };
 
