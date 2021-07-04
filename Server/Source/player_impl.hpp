@@ -55,6 +55,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return team_;
     }
 
+    int getSkin() const override {
+        return skin_;
+    }
+
     PlayerFightingStyle getFightingStyle() const override {
         return fightingStyle_;
     }
@@ -104,6 +108,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         streamedPlayers_.set(pid);
         NetCode::RPC::PlayerStreamIn playerStreamInRPC;
         playerStreamInRPC.PlayerID = pid;
+        playerStreamInRPC.Skin = other.getSkin();
         playerStreamInRPC.Team = other.getTeam();
         playerStreamInRPC.Colour = other.getColor();
         playerStreamInRPC.Pos = other.getPosition();

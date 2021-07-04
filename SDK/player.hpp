@@ -142,6 +142,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's team
 	virtual int getTeam() const = 0;
 
+	/// Get the player's skin
+	virtual int getSkin() const = 0;
+
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
 	virtual void setFightingStyle(PlayerFightingStyle style) = 0;
