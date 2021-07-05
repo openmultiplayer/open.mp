@@ -31,17 +31,21 @@ struct Player final : public IPlayer, public PoolIDProvider {
     std::array<uint16_t, NUM_SKILL_LEVELS> skillLevels_;
     float health_, armour_;
     PlayerKeyData keys_;
-    int action_;
+    PlayerSpecialAction action_;
     Vector3 velocity_;
     PlayerAnimationData animation_;
     PlayerSurfingData surfing_;
-    WeaponSlotData armedWeapon_;
+    uint32_t armedWeapon_;
+    GTAQuat rotTransform_;
 
     Player() :
         pool_(nullptr),
         virtualWorld_(0),
         fightingStyle_(PlayerFightingStyle_Normal),
-        state_(PlayerState_None)
+        state_(PlayerState_None),
+        surfing_{PlayerSurfingData::Type::None},
+        armedWeapon_(0),
+        rotTransform_(0.f, 0.f, 0.f)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(0);
@@ -73,6 +77,90 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     int getSkin() const override {
         return skin_;
+    }
+
+    PlayerAnimationData getAnimationData() const override {
+        return animation_;
+    }
+
+    void applyAnimation(const Animation& animation, PlayerAnimationSyncType syncType) override {
+        NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC;
+        applyPlayerAnimationRPC.PlayerID = poolID;
+        applyPlayerAnimationRPC.AnimLib = animation.lib;
+        applyPlayerAnimationRPC.AnimName = animation.name;
+        applyPlayerAnimationRPC.Delta = animation.delta;
+        applyPlayerAnimationRPC.Loop = animation.loop;
+        applyPlayerAnimationRPC.LockX = animation.lockX;
+        applyPlayerAnimationRPC.LockY = animation.lockY;
+        applyPlayerAnimationRPC.Freeze = animation.freeze;
+        applyPlayerAnimationRPC.Time = animation.time;
+
+        if (syncType == PlayerAnimationSyncType_NoSync) {
+            sendRPC(applyPlayerAnimationRPC);
+        }
+        else {
+            pool_->broadcastRPC(applyPlayerAnimationRPC, BroadcastStreamed, this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
+        }
+    }
+
+    void clearAnimations(PlayerAnimationSyncType syncType) override {
+        NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
+        clearPlayerAnimationsRPC.PlayerID = poolID;
+
+        if (syncType == PlayerAnimationSyncType_NoSync) {
+            sendRPC(clearPlayerAnimationsRPC);
+        }
+        else {
+            pool_->broadcastRPC(clearPlayerAnimationsRPC, BroadcastStreamed, this, false /* skipFrom */);
+        }
+    }
+
+    PlayerSurfingData getSurfingData() const override {
+        return surfing_;
+    }
+
+    void setHealth(float health) override {
+        health_ = health;
+        NetCode::RPC::SetPlayerHealth setPlayerHealthRPC;
+        setPlayerHealthRPC.Health = health;
+        sendRPC(setPlayerHealthRPC);
+    }
+
+    float getHealth() const override {
+        return health_;
+    }
+
+    void setArmour(float armour) override {
+        armour_ = armour;
+        NetCode::RPC::SetPlayerArmour setPlayerArmourRPC;
+        setPlayerArmourRPC.Armour = armour;
+        sendRPC(setPlayerArmourRPC);
+    }
+
+    float getArmour() const override {
+        return armour_;
+    }
+
+    void setAction(PlayerSpecialAction action) override {
+        action_ = action;
+        NetCode::RPC::SetPlayerSpecialAction setPlayerSpecialActionRPC;
+        setPlayerSpecialActionRPC.Action = action;
+        sendRPC(setPlayerSpecialActionRPC);
+    }
+
+    PlayerSpecialAction getAction() const override {
+        return action_;
+    }
+
+    void setVelocity(Vector3 velocity) override {
+        velocity_ = velocity;
+        NetCode::RPC::SetPlayerVelocity setPlayerVelocityRPC;
+        setPlayerVelocityRPC.Velocity = velocity;
+        sendRPC(setPlayerVelocityRPC);
+    }
+
+    Vector3 getVelocity() const override {
+        return velocity_;
     }
 
     PlayerFightingStyle getFightingStyle() const override {
@@ -128,7 +216,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         playerStreamInRPC.Team = other.getTeam();
         playerStreamInRPC.Colour = other.getColor();
         playerStreamInRPC.Pos = other.getPosition();
-        playerStreamInRPC.Angle = other.getRotation().x;
+        playerStreamInRPC.Angle = other.getRotation().ToEuler().z;
         playerStreamInRPC.FightingStyle = other.getFightingStyle();
         playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(other.getSkillLevels());
         sendRPC(playerStreamInRPC);
@@ -216,7 +304,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
     void setRotation(GTAQuat rotation) override {
-        rot_ = rotation;
+        rot_ = rotation * rotTransform_;
         NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
         setPlayerFacingAngleRPC.Angle = rot_.ToEuler().z;
         sendRPC(setPlayerFacingAngleRPC);
@@ -226,7 +314,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return nullptr;
     }
 
-    PlayerKeyData getKeyState() const override {
+    PlayerKeyData getKeyData() const override {
         return keys_;
     }
 
@@ -263,12 +351,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerArmedWeaponRPC);
     }
 
+    uint32_t getArmedWeapon() const override {
+        return armedWeapon_;
+    }
+
     virtual int getVirtualWorld() const override {
         return virtualWorld_;
     }
 
     virtual void setVirtualWorld(int vw) override {
         virtualWorld_ = vw;
+    }
+
+    void setTransform(const GTAQuat& tm) override {
+        rotTransform_ = tm;
     }
 
     ~Player() {
@@ -306,14 +402,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerSpawnRPCHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            Player& player = self.storage.get(peer.getID());
+            player.state_ = PlayerState_Spawned;
+
             IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
             if (classData) {
                 const PlayerClass& cls = classData->getClass();
-                Player& player = self.storage.get(peer.getID());
                 player.pos_ = cls.spawn;
-                player.rot_ = GTAQuat(0.f, 0.f, cls.angle);
+                player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
                 player.team_ = cls.team;
                 player.skin_ = cls.skin;
+                player.weapons_[0] = cls.weapons[0];
+                player.weapons_[1] = cls.weapons[1];
+                player.weapons_[2] = cls.weapons[2];
                 const WeaponSlots& weapons = cls.weapons;
                 for (size_t i = 3; i < weapons.size(); ++i) {
                     if (weapons[i].id == 0) {
@@ -324,9 +425,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     }
                 }
             }
-
-            Player& player = self.storage.get(peer.getID());
-            player.state_ = PlayerState_Spawned;
 
             self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
@@ -347,6 +445,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             int pid = peer.getID();
             footSync.PlayerID = pid;
             Player& player = self.storage.get(pid);
+            footSync.Rotation *= player.rotTransform_;
             player.pos_ = footSync.Position;
             player.rot_ = footSync.Rotation;
             player.keys_.keys = footSync.Keys;
@@ -354,12 +453,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.keys_.upDown = footSync.UpDown;
             player.health_ = footSync.HealthArmour.x;
             player.armour_ = footSync.HealthArmour.y;
-            player.armedWeapon_.id = footSync.Weapon;
+            player.armedWeapon_ = footSync.Weapon;
             player.velocity_ = footSync.Velocity;
             player.animation_.ID = footSync.AnimationID;
             player.animation_.flags = footSync.AnimationFlags;
             player.surfing_ = footSync.SurfingData;
-            player.action_ = footSync.SpecialAction;
+            player.action_ = PlayerSpecialAction(footSync.SpecialAction);
             player.state_ = PlayerState_OnFoot;
 
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
