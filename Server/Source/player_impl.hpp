@@ -352,17 +352,24 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            // Filters ~k, ~K (uppercase), % and
+            // Filters ~k, ~K (uppercase), and %. Replace with #.
             std::regex filter = std::regex("(~(k|K)|%)");
-            // Filters 6 characters between { and }, keeping out coloring
+            // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
             std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            std::string str = std::regex_replace((std::string)sendChatMessage.message, filter, "#");
-            str = std::regex_replace(str, filterColourNodes, " ");
+            std::string filteredMessage = std::regex_replace((std::string)sendChatMessage.message, filter, "#");
+            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
 
-            sendChatMessage.message = str;
-            sendChatMessage.PlayerID = peer.getID();
+            auto useDefaultBehavior = self.eventDispatcher.stopAtFalse(
+                [&peer, &filteredMessage](PlayerEventHandler* handler) {
+                    return handler->onPlayerText(peer, String(filteredMessage.data(), filteredMessage.length()));
+                });
 
-            self.broadcastRPC(sendChatMessage, BroadcastGlobally);
+            if(useDefaultBehavior) {
+                NetCode::RPC::SendChatMessage outgoingChatMessage;
+                outgoingChatMessage.message = filteredMessage;
+                outgoingChatMessage.PlayerID = peer.getID();
+                self.broadcastRPC(outgoingChatMessage, BroadcastGlobally);
+            }
 
             return true;
         }
