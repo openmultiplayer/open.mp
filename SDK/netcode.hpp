@@ -397,7 +397,7 @@ namespace NetCode {
 			Color colour;
 
 			bool read(INetworkBitStream& bs) {
-				return true;
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
