@@ -264,11 +264,18 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerArmedWeaponRPC);
     }
 
-    void sendMessage(Color colour, const String& message) {
+    void sendClientMessage(const Color& colour, const String& message) const override {
         NetCode::RPC::SendClientMessage sendClientMessage;
         sendClientMessage.colour = colour;
         sendClientMessage.message = message;
         sendRPC(sendClientMessage);
+    }
+
+    void sendChatMessage(const String& message) const override {
+        NetCode::RPC::SendChatMessage sendChatMessage;
+        sendChatMessage.PlayerID = poolID;
+        sendChatMessage.message = message;
+        sendRPC(sendChatMessage);
     }
     
     virtual int getVirtualWorld() const override {
@@ -342,9 +349,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerSpawnRPCHandler;
 
-    struct PlayerClientMessagePCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerTextRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
-        PlayerClientMessagePCHandler(PlayerPool& self) : self(self) {}
+        PlayerTextRPCHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::SendChatMessage sendChatMessage;
@@ -359,21 +366,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             std::string filteredMessage = std::regex_replace((std::string)sendChatMessage.message, filter, "#");
             filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
 
+            String message = String(filteredMessage.data(), filteredMessage.length());
             auto useDefaultBehavior = self.eventDispatcher.stopAtFalse(
-                [&peer, &filteredMessage](PlayerEventHandler* handler) {
-                    return handler->onPlayerText(peer, String(filteredMessage.data(), filteredMessage.length()));
+                [&peer, &message](PlayerEventHandler* handler) {
+                    return handler->onPlayerText(peer, message);
                 });
 
             if(useDefaultBehavior) {
-                NetCode::RPC::SendChatMessage outgoingChatMessage;
-                outgoingChatMessage.message = filteredMessage;
-                outgoingChatMessage.PlayerID = peer.getID();
-                self.broadcastRPC(outgoingChatMessage, BroadcastGlobally);
+                peer.sendChatMessage(message);
             }
 
             return true;
         }
-    } playerClientMessagePCHandler;
+    } PlayerTextRPCHandler;
     
     struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -550,7 +555,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core(core),
         playerRequestSpawnRPCHandler(*this),
         playerSpawnRPCHandler(*this),
-        playerClientMessagePCHandler(*this),
+        PlayerTextRPCHandler(*this),
         playerFootSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
@@ -578,7 +583,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::SendChatMessage>(&playerClientMessagePCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
     }
 
@@ -616,7 +621,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     ~PlayerPool() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::SendChatMessage>(&playerClientMessagePCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
