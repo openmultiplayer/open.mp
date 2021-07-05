@@ -90,6 +90,16 @@ struct PlayerGameData {
 	String versionString;
 };
 
+struct PlayerAimData {
+	uint8_t CamMode;
+	Vector3 CamFrontVector;
+	Vector3 CamPos;
+	float AimZ;
+	uint8_t CamZoom;
+	uint8_t WeaponState;
+	uint8_t AspectRatio;
+};
+
 /// A player data interface for per-player data
 struct IPlayerData : public IUUIDProvider {
 	/// Frees the player data object, called on player disconnect, usually defaults to delete this
@@ -190,6 +200,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's skill levels
 	/// @note See https://open.mp/docs/scripting/resources/weaponskills
 	virtual const std::array<uint16_t, NUM_SKILL_LEVELS>& getSkillLevels() const = 0;
+
+	/// Get the player's aim data
+	virtual const PlayerAimData& getAimData() const = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
