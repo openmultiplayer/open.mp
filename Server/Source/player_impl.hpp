@@ -36,6 +36,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     PlayerAnimationData animation_;
     PlayerSurfingData surfing_;
     WeaponSlotData armedWeapon_;
+    PlayerAimData aimingData_;
 
     Player() :
         pool_(nullptr),
@@ -230,6 +231,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return keys_;
     }
 
+    const PlayerAimData& getAimData() const override {
+        return aimingData_;
+    }
+
     void giveWeapon(WeaponSlotData weapon) override {
         if (weapon.id > MAX_WEAPON_ID) {
             return;
@@ -383,9 +388,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (!aimSync.read(bs)) {
                 return false;
             }
-            
+
             const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
             if (frontvec > 0.0 && frontvec < 1.5) {
+                Player& player = self.storage.get(peer.getID());
+                player.aimingData_.AimZ = aimSync.AimZ;
+                player.aimingData_.CamFrontVector = aimSync.CamFrontVector;
+                player.aimingData_.CamMode = aimSync.CamMode;
+                player.aimingData_.CamZoom = aimSync.CamZoom;
+                player.aimingData_.WeaponState = aimSync.WeaponState;
+                player.aimingData_.AspectRatio = aimSync.AspectRatio;
+
                 aimSync.PlayerID = peer.getID();
                 self.broadcastPacket(aimSync, BroadcastStreamed, &peer);
             }
