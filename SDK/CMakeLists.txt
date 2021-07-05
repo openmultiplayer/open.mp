@@ -6,6 +6,11 @@ target_link_libraries(SDK INTERFACE
 	CONAN_PKG::nlohmann_json
 )
 
+target_compile_definitions(SDK INTERFACE
+	GLM_FORCE_SSE2
+	GLM_FORCE_QUAT_DATA_WXYZ
+)
+
 target_include_directories(SDK INTERFACE .)
 
 file(GLOB_RECURSE sdk_source_list "*.hpp")

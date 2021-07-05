@@ -4,6 +4,7 @@
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
+#include "anim.hpp"
 
 enum PlayerFightingStyle {
 	PlayerFightingStyle_Normal = 4,
@@ -41,6 +42,35 @@ enum PlayerWeaponSkill {
 	PlayerWeaponSkill_Sniper
 };
 
+enum PlayerSpecialAction {
+	SpecialAction_None,
+	SpecialAction_Duck,
+	SpecialAction_Jetpack,
+	SpecialAction_EnterVehicle,
+	SpecialAction_ExitVehicle,
+	SpecialAction_Dance1,
+	SpecialAction_Dance2,
+	SpecialAction_Dance3,
+	SpecialAction_Dance4,
+	SpecialAction_HandsUp = 10,
+	SpecialAction_Cellphone,
+	SpecialAction_Sitting,
+	SpecialAction_StopCellphone,
+	SpecialAction_Beer = 20,
+	Specialaction_Smoke,
+	SpecialAction_Wine,
+	SpecialAction_Sprunk,
+	SpecialAction_Cuffed,
+	SpecialAction_Carry,
+	SpecialAction_Pissing = 68
+};
+
+enum PlayerAnimationSyncType {
+	PlayerAnimationSyncType_NoSync,
+	PlayerAnimationSyncType_Sync,
+	PlayerAnimationSyncType_SyncOthers
+};
+
 struct PlayerKeyData {
 	// todo fill with union
 	uint16_t keys;
@@ -51,6 +81,20 @@ struct PlayerKeyData {
 struct PlayerAnimationData {
 	uint16_t ID;
 	uint16_t flags;
+
+	std::pair<String, String> name() const {
+		if (ID >= GLM_COUNTOF(AnimationNames)) {
+			return { "", "" };
+		}
+
+		const String full = AnimationNames[ID];
+		unsigned int idx = full.find(':');
+		if (idx == -1) {
+			return { "", "" };
+		}
+
+		return { full.substr(0, idx), full.substr(idx + 1) };
+	}
 };
 
 struct PlayerSurfingData {
@@ -138,11 +182,44 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's currently armed weapon
 	virtual void setArmedWeapon(uint32_t weapon) = 0;
 
+	/// Get the player's currently armed weapon
+	virtual uint32_t getArmedWeapon() const = 0;
+
 	/// Set the player's color
 	virtual void setColor(Color color) = 0;
 
 	/// Get the player's color
 	virtual const Color& getColor() const = 0;
+
+	/// Set the transform applied to player rotation
+	virtual void setTransform(const GTAQuat& tm) = 0;
+
+	/// Set the player's health
+	virtual void setHealth(float health) = 0;
+
+	/// Get the player's health
+	virtual float getHealth() const = 0;
+
+	/// Set the player's armour
+	virtual void setArmour(float armour) = 0;
+	
+	/// Get the player's armour
+	virtual float getArmour() const = 0;
+
+	/// Apply an animation to the player
+	/// @param animation The animation to apply
+	/// @param syncType How to sync the animation
+	virtual void applyAnimation(const Animation& animation, PlayerAnimationSyncType syncType) = 0;
+
+	/// Clear the player's animation
+	/// @param syncType How to sync the animation
+	virtual void clearAnimations(PlayerAnimationSyncType syncType) = 0;
+
+	/// Get the player's animation data
+	virtual PlayerAnimationData getAnimationData() const = 0;
+
+	/// Get the player's surf data
+	virtual PlayerSurfingData getSurfingData() const = 0;
 
 	/// Stream in a player for the current player
 	/// @param other The player to stream in
@@ -184,8 +261,20 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param level The skill level
 	virtual void setSkillLevel(PlayerWeaponSkill skill, int level) = 0;
 
-	/// Get the player's key state
-	virtual PlayerKeyData getKeyState() const = 0;
+	/// Set the player's special action
+	virtual void setAction(PlayerSpecialAction action) = 0;
+
+	/// Get the player's special action
+	virtual PlayerSpecialAction getAction() const = 0;
+
+	/// Set the player's velocity
+	virtual void setVelocity(Vector3 velocity) = 0;
+
+	/// Get the player's velocity
+	virtual Vector3 getVelocity() const = 0;
+
+	/// Get the player's key data
+	virtual PlayerKeyData getKeyData() const = 0;
 
 	/// Get the player's skill levels
 	/// @note See https://open.mp/docs/scripting/resources/weaponskills
