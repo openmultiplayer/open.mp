@@ -374,6 +374,25 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerFootSyncHandler;
 
+    struct PlayerAimSyncHandler : public SingleNetworkInOutEventHandler{
+        PlayerPool & self;
+        PlayerAimSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerAimSync aimSync;
+            if (!aimSync.read(bs)) {
+                return false;
+            }
+            
+            const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
+            if (frontvec > 0.0 && frontvec < 1.5) {
+                aimSync.PlayerID = peer.getID();
+                self.broadcastPacket(aimSync, BroadcastStreamed, &peer);
+            }
+            return true;
+        }
+    } playerAimSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -509,7 +528,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core(core),
         playerRequestSpawnRPCHandler(*this),
         playerSpawnRPCHandler(*this),
-        playerFootSyncHandler(*this)
+        playerFootSyncHandler(*this),
+        playerAimSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -537,6 +557,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
     }
 
     void onTick(uint64_t tick) override {
@@ -574,6 +595,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
