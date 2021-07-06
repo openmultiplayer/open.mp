@@ -753,5 +753,37 @@ namespace NetCode {
 				return true;
 			}
 		};
+
+		struct PlayerBulletSync final : NetworkPacketBase<206> {
+			int PlayerID;
+			uint8_t HitType;
+			uint16_t HitID;
+			Vector3 Origin;
+			Vector3 HitPos;
+			Vector3 Offset;
+			uint8_t WeaponID;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(HitType, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(HitID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Origin, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(HitPos, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Offset, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(WeaponID, { NetworkBitStreamValueType::UINT8 });
+				return true;
+			}
+
+			bool write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::UINT8(HitType));
+				bs.write(NetworkBitStreamValue::UINT16(HitID));
+				bs.write(NetworkBitStreamValue::VEC3(Origin));
+				bs.write(NetworkBitStreamValue::VEC3(HitPos));
+				bs.write(NetworkBitStreamValue::VEC3(Offset));
+				bs.write(NetworkBitStreamValue::UINT8(WeaponID));
+				return true;
+			}
+		};
 	}
 }

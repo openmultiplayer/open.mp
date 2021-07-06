@@ -71,6 +71,14 @@ enum PlayerAnimationSyncType {
 	PlayerAnimationSyncType_SyncOthers
 };
 
+enum PlayerBulletHitType : uint8_t {
+	PlayerBulletHitType_None,
+	PlayerBulletHitType_Player = 1,
+	PlayerBulletHitType_Vehicle = 2,
+	PlayerBulletHitType_Object = 3,
+	PlayerBulletHitType_PlayerObject = 4,
+};
+
 struct PlayerKeyData {
 	// todo fill with union
 	uint16_t keys;
