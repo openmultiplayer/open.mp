@@ -38,6 +38,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     PlayerSurfingData surfing_;
     uint32_t armedWeapon_;
     GTAQuat rotTransform_;
+    PlayerAimData aimingData_;
 
     Player() :
         pool_(nullptr),
@@ -319,6 +320,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return keys_;
     }
 
+    const PlayerAimData& getAimData() const override {
+        return aimingData_;
+    }
+
     void giveWeapon(WeaponSlotData weapon) override {
         if (weapon.id > MAX_WEAPON_ID) {
             return;
@@ -519,6 +524,33 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerFootSyncHandler;
 
+    struct PlayerAimSyncHandler : public SingleNetworkInOutEventHandler{
+        PlayerPool & self;
+        PlayerAimSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerAimSync aimSync;
+            if (!aimSync.read(bs)) {
+                return false;
+            }
+
+            const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
+            if (frontvec > 0.0 && frontvec < 1.5) {
+                Player& player = self.storage.get(peer.getID());
+                player.aimingData_.AimZ = aimSync.AimZ;
+                player.aimingData_.CamFrontVector = aimSync.CamFrontVector;
+                player.aimingData_.CamMode = aimSync.CamMode;
+                player.aimingData_.CamZoom = aimSync.CamZoom;
+                player.aimingData_.WeaponState = aimSync.WeaponState;
+                player.aimingData_.AspectRatio = aimSync.AspectRatio;
+
+                aimSync.PlayerID = peer.getID();
+                self.broadcastPacket(aimSync, BroadcastStreamed, &peer);
+            }
+            return true;
+        }
+    } playerAimSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -654,8 +686,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core(core),
         playerRequestSpawnRPCHandler(*this),
         playerSpawnRPCHandler(*this),
-        PlayerTextRPCHandler(*this),
-        playerFootSyncHandler(*this)
+        playerFootSyncHandler(*this),
+        playerAimSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -684,6 +716,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
     }
 
     void onTick(uint64_t tick) override {
@@ -722,6 +755,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
