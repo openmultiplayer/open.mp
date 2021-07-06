@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <Server/Components/Classes/classes.hpp>
 #include <glm/glm.hpp>
+#include <regex>
 
 struct Player final : public IPlayer, public PoolIDProvider {
     IPlayerPool* pool_;
@@ -355,6 +356,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return armedWeapon_;
     }
 
+    void sendClientMessage(const Color& colour, const String& message) const override {
+        NetCode::RPC::SendClientMessage sendClientMessage;
+        sendClientMessage.colour = colour;
+        sendClientMessage.message = message;
+        sendRPC(sendClientMessage);
+    }
+
+    void sendChatMessage(const String& message) const override {
+        NetCode::RPC::SendChatMessage sendChatMessage;
+        sendChatMessage.PlayerID = poolID;
+        sendChatMessage.message = message;
+        sendRPC(sendChatMessage);
+    }
+    
     virtual int getVirtualWorld() const override {
         return virtualWorld_;
     }
@@ -432,6 +447,37 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerSpawnRPCHandler;
 
+    struct PlayerTextRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerTextRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::SendChatMessage sendChatMessage;
+            if(!sendChatMessage.read(bs)) {
+                return false;
+            }
+
+            // Filters ~k, ~K (uppercase), and %. Replace with #.
+            std::regex filter = std::regex("(~(k|K)|%)");
+            // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
+            std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
+            std::string filteredMessage = std::regex_replace((std::string)sendChatMessage.message, filter, "#");
+            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+
+            String message = String(filteredMessage.data(), filteredMessage.length());
+            auto useDefaultBehavior = self.eventDispatcher.stopAtFalse(
+                [&peer, &message](PlayerEventHandler* handler) {
+                    return handler->onPlayerText(peer, message);
+                });
+
+            if(useDefaultBehavior) {
+                peer.sendChatMessage(message);
+            }
+
+            return true;
+        }
+    } PlayerTextRPCHandler;
+    
     struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
         PlayerFootSyncHandler(PlayerPool& self) : self(self) {}
@@ -608,6 +654,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core(core),
         playerRequestSpawnRPCHandler(*this),
         playerSpawnRPCHandler(*this),
+        PlayerTextRPCHandler(*this),
         playerFootSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
@@ -635,6 +682,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
     }
 
@@ -672,6 +720,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     ~PlayerPool() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
