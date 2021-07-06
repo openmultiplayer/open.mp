@@ -204,36 +204,6 @@ private:
 	}
 
 	template <typename ... T>
-	inline int PushOne(IPlayer const & arg, T ... args)
-	{
-		int
-			ret = PushOne(args...);
-		if (ret == AMX_ERR_NONE)
-			return Push((cell)arg.getID());
-		return ret;
-	}
-
-	template <typename ... T>
-	inline int PushOne(IPlayer arg, T ... args)
-	{
-		int
-			ret = PushOne(args...);
-		if (ret == AMX_ERR_NONE)
-			return Push((cell)arg->getID());
-		return ret;
-	}
-
-	template <typename ... T>
-	inline int PushOne(IVehicle arg, T ... args)
-	{
-		int
-			ret = PushOne(args...);
-		if (ret == AMX_ERR_NONE)
-			return Push((cell)arg->getID());
-		return ret;
-	}
-
-	template <typename ... T>
 	inline int PushOne(char const * arg, T ... args)
 	{
 		int
