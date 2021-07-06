@@ -102,7 +102,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         }
         case NetworkBitStreamValueType::GTA_QUAT: {
             const GTAQuat& quat = std::get<GTAQuat>(input.data);
-            bs.WriteNormQuat(quat.w, quat.x, quat.y, quat.z);
+            bs.WriteNormQuat(quat.q.w, quat.q.x, quat.q.y, quat.q.z);
             break;
         }
         case NetworkBitStreamValueType::NONE:

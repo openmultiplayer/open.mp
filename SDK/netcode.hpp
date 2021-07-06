@@ -499,6 +499,94 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(Skin));
 			}
 		};
+
+		struct SetPlayerHealth final : NetworkPacketBase<14> {
+			float Health;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+			}
+		};
+
+		struct SetPlayerArmour final : NetworkPacketBase<66> {
+			float Armour;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::FLOAT(Armour));
+			}
+		};
+
+		struct SetPlayerSpecialAction final : NetworkPacketBase<88> {
+			int Action;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Action));
+			}
+		};
+
+		struct SetPlayerVelocity final : NetworkPacketBase<90> {
+			Vector3 Velocity;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Velocity));
+			}
+		};
+
+		struct ApplyPlayerAnimation final : NetworkPacketBase<86> {
+			int PlayerID;
+			NetworkString AnimLib;
+			NetworkString AnimName;
+			float Delta;
+			bool Loop;
+			bool LockX;
+			bool LockY;
+			bool Freeze;
+			uint32_t Time;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(AnimLib));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(AnimName));
+				bs.write(NetworkBitStreamValue::FLOAT(Delta));
+				bs.write(NetworkBitStreamValue::BIT(Loop));
+				bs.write(NetworkBitStreamValue::BIT(LockX));
+				bs.write(NetworkBitStreamValue::BIT(LockY));
+				bs.write(NetworkBitStreamValue::BIT(Freeze));
+				bs.write(NetworkBitStreamValue::UINT32(Time));
+			}
+		};
+
+		struct ClearPlayerAnimations final : NetworkPacketBase<87> {
+			int PlayerID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
