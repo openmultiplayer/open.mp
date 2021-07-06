@@ -152,6 +152,11 @@ struct PlayerAimData {
 	uint8_t AspectRatio;
 };
 
+struct PlayerBulletData {
+	Vector3 Origin;
+	Vector3 HitPos;
+};
+
 /// A player data interface for per-player data
 struct IPlayerData : public IUUIDProvider {
 	/// Frees the player data object, called on player disconnect, usually defaults to delete this
@@ -307,6 +312,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's aim data
 	virtual const PlayerAimData& getAimData() const = 0;
 
+	/// Get the player's bullet data
+	virtual const PlayerBulletData& getBulletData() const = 0;
+
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
 
@@ -334,6 +342,7 @@ struct PlayerEventHandler {
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onPlayerText(IPlayer& player, String message) { return true; }
+	virtual bool onPlayerWeaponShot(IPlayer& player, uint8_t weapon, PlayerBulletHitType hitType, uint16_t hitID, Vector3 hitPos) { return true; }
 };
 
 struct PlayerUpdateEventHandler {
