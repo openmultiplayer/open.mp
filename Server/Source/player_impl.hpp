@@ -39,6 +39,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     uint32_t armedWeapon_;
     GTAQuat rotTransform_;
     PlayerAimData aimingData_;
+    PlayerBulletData bulletData_;
 
     Player() :
         pool_(nullptr),
@@ -324,6 +325,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return aimingData_;
     }
 
+    const PlayerBulletData& getBulletData() const override {
+        return bulletData_;
+    }
+
     void giveWeapon(WeaponSlotData weapon) override {
         if (weapon.id > MAX_WEAPON_ID) {
             return;
@@ -607,8 +612,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false; // OOB shot
             }
 
-            bulletSync.PlayerID = peer.getID();
-            self.broadcastPacket(bulletSync, BroadcastStreamed, &peer);
+            player.bulletData_.HitPos = bulletSync.Offset;
+            player.bulletData_.Origin = bulletSync.Origin;
+
+            bool allowed = self.eventDispatcher.stopAtFalse(
+                [&peer, &bulletSync](PlayerEventHandler* handler) {
+                    return handler->onPlayerWeaponShot(peer, bulletSync.WeaponID, static_cast<PlayerBulletHitType>(bulletSync.HitType), bulletSync.HitID, bulletSync.Offset);
+                });
+
+            if (allowed) {
+                bulletSync.PlayerID = peer.getID();
+                self.broadcastPacket(bulletSync, BroadcastStreamed, &peer);
+            }
             return true;
         }
     } playerBulletSyncHandler;
