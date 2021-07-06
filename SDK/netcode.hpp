@@ -705,5 +705,43 @@ namespace NetCode {
 				}
 			}
 		};
+
+		struct PlayerAimSync final : NetworkPacketBase<203> {
+			int PlayerID;
+			uint8_t CamMode;
+			Vector3 CamFrontVector;
+			Vector3 CamPos;
+			float AimZ;
+			union {
+				uint8_t ZoomWepState;
+				struct {
+					uint8_t CamZoom : 6;
+					uint8_t WeaponState : 2;
+				};
+			};
+			uint8_t AspectRatio;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(CamMode, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(CamFrontVector, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(CamPos, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(AimZ, { NetworkBitStreamValueType::FLOAT });
+				CHECKED_READ(ZoomWepState, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(AspectRatio, { NetworkBitStreamValueType::UINT8 });
+				return true;
+			}
+
+			bool write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::UINT8(CamMode));
+				bs.write(NetworkBitStreamValue::VEC3(CamFrontVector));
+				bs.write(NetworkBitStreamValue::VEC3(CamPos));
+				bs.write(NetworkBitStreamValue::FLOAT(AimZ));
+				bs.write(NetworkBitStreamValue::UINT8(ZoomWepState));
+				bs.write(NetworkBitStreamValue::UINT8(AspectRatio));
+				return true;
+			}
+		};
 	}
 }
