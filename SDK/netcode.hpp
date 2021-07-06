@@ -406,12 +406,22 @@ namespace NetCode {
 			}
 		};
 
-		struct SendChatMessage final : NetworkPacketBase<101> {
+		struct PlayerRequestChatMessage final : NetworkPacketBase<101> {
 			NetworkString message;
-			int PlayerID;
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(message, {NetworkBitStreamValueType::DYNAMIC_LEN_STR_8});
+				CHECKED_READ(message, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
 				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct PlayerChatMessage final : NetworkPacketBase<101> {
+			int PlayerID;
+			NetworkString message;
+			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 			
 			void write(INetworkBitStream& bs) const {
