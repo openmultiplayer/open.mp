@@ -583,7 +583,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             Player& player = self.storage.get(peer.getID());
 
-            if (!(bulletSync.WeaponID >= 22 && bulletSync.WeaponID <= 34) && bulletSync.WeaponID != 38) {
+            if (!WeaponSlotData{ bulletSync.WeaponID }.shootable()) {
                 return false; // They're sending data for a weapon that doesn't shoot
             }
             else if (bulletSync.HitType == PlayerBulletHitType_Player) {
