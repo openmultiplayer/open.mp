@@ -71,6 +71,14 @@ enum PlayerAnimationSyncType {
 	PlayerAnimationSyncType_SyncOthers
 };
 
+enum PlayerBulletHitType : uint8_t {
+	PlayerBulletHitType_None,
+	PlayerBulletHitType_Player = 1,
+	PlayerBulletHitType_Vehicle = 2,
+	PlayerBulletHitType_Object = 3,
+	PlayerBulletHitType_PlayerObject = 4,
+};
+
 struct PlayerKeyData {
 	// todo fill with union
 	uint16_t keys;
@@ -121,6 +129,11 @@ struct WeaponSlotData {
 		}
 		return slots[id];
 	}
+
+	bool shootable()
+	{
+		return (id >= 22 && id <= 34) || id == 38;
+	}
 };
 
 /// An array of weapon slots
@@ -142,6 +155,14 @@ struct PlayerAimData {
 	uint8_t CamZoom;
 	uint8_t WeaponState;
 	uint8_t AspectRatio;
+};
+
+struct PlayerBulletData {
+	Vector3 origin;
+	Vector3 hitPos;
+	uint8_t weapon;
+	PlayerBulletHitType hitType;
+	uint16_t hitID;
 };
 
 /// A player data interface for per-player data
@@ -299,6 +320,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's aim data
 	virtual const PlayerAimData& getAimData() const = 0;
 
+	/// Get the player's bullet data
+	virtual const PlayerBulletData& getBulletData() const = 0;
+
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
 
@@ -321,11 +345,12 @@ struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
-	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
+	virtual bool onRequestSpawn(IPlayer& player) { return true; }
 	virtual void onSpawn(IPlayer& player) {}
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
-	virtual bool onPlayerText(IPlayer& player, String message) { return true; }
+	virtual bool onText(IPlayer& player, String message) { return true; }
+	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 };
 
 struct PlayerUpdateEventHandler {
