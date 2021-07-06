@@ -566,6 +566,53 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerAimSyncHandler;
 
+    struct PlayerBulletSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerBulletSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerBulletSync bulletSync;
+            if (!bulletSync.read(bs)) {
+                return false;
+            }
+
+            Player& player = self.storage.get(peer.getID());
+
+            if (!(bulletSync.WeaponID >= 22 && bulletSync.WeaponID <= 34) && bulletSync.WeaponID != 38) {
+                return false; // They're sending data for a weapon that doesn't shoot
+            }
+            else if (bulletSync.HitType == PlayerBulletHitType_Player) {
+                if (peer.getID() == bulletSync.HitID) {
+                    return false;
+                }
+                else if (!self.storage.valid(bulletSync.HitID)) {
+                    return false;
+                }
+
+                Player& targetedplayer = self.storage.get(peer.getID());
+                if (!player.isPlayerStreamedIn(targetedplayer)) {
+                    return false;
+                }
+            }
+            // Check if hitid is valid for vehicles/objects
+
+            static const float bounds = 20000.0f * 20000.0f;
+            if (glm::dot(bulletSync.Origin, bulletSync.Origin) > bounds) {
+                return false; // OOB origin
+            }
+            if (bulletSync.HitType == PlayerBulletHitType_None && glm::dot(bulletSync.Offset, bulletSync.Offset) > bounds) {
+                return false; // OOB shot
+            }
+            else if (bulletSync.HitType != PlayerBulletHitType_None && glm::dot(bulletSync.Offset, bulletSync.Offset) > 1000.0f * 1000.0f) {
+                return false; // OOB shot
+            }
+
+            bulletSync.PlayerID = peer.getID();
+            self.broadcastPacket(bulletSync, BroadcastStreamed, &peer);
+            return true;
+        }
+    } playerBulletSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -703,7 +750,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerSpawnRPCHandler(*this),
         playerTextRPCHandler(*this),
         playerFootSyncHandler(*this),
-        playerAimSyncHandler(*this)
+        playerAimSyncHandler(*this),
+        playerBulletSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -733,6 +781,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
     }
 
     void onTick(uint64_t tick) override {
@@ -772,6 +821,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestChatMessage>(&playerTextRPCHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
