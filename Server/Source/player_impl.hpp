@@ -413,7 +413,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
             playerRequestSpawnResponse.Allow = self.eventDispatcher.stopAtFalse(
                 [&peer](PlayerEventHandler* handler) {
-                    return handler->onPlayerRequestSpawn(peer);
+                    return handler->onRequestSpawn(peer);
                 }
             );
 
@@ -476,7 +476,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             bool send = self.eventDispatcher.stopAtFalse(
                 [&peer, &filteredMessage](PlayerEventHandler* handler) {
-                    return handler->onPlayerText(peer, filteredMessage);
+                    return handler->onText(peer, filteredMessage);
                 });
 
             if(send) {
@@ -594,7 +594,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     return false;
                 }
 
-                Player& targetedplayer = self.storage.get(peer.getID());
+                Player& targetedplayer = self.storage.get(bulletSync.HitID);
                 if (!player.isPlayerStreamedIn(targetedplayer)) {
                     return false;
                 }
@@ -612,12 +612,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false; // OOB shot
             }
 
-            player.bulletData_.HitPos = bulletSync.Offset;
-            player.bulletData_.Origin = bulletSync.Origin;
-
+            player.bulletData_.hitPos = bulletSync.Offset;
+            player.bulletData_.origin = bulletSync.Origin;
+            player.bulletData_.hitID = bulletSync.HitID;
+            player.bulletData_.hitType = static_cast<PlayerBulletHitType>(bulletSync.HitType);
+            player.bulletData_.weapon = bulletSync.WeaponID;
             bool allowed = self.eventDispatcher.stopAtFalse(
-                [&peer, &bulletSync](PlayerEventHandler* handler) {
-                    return handler->onPlayerWeaponShot(peer, bulletSync.WeaponID, static_cast<PlayerBulletHitType>(bulletSync.HitType), bulletSync.HitID, bulletSync.Offset);
+                [&peer, &player](PlayerEventHandler* handler) {
+                    return handler->onWeaponShot(peer, player.getBulletData());
                 });
 
             if (allowed) {

@@ -153,8 +153,11 @@ struct PlayerAimData {
 };
 
 struct PlayerBulletData {
-	Vector3 Origin;
-	Vector3 HitPos;
+	Vector3 origin;
+	Vector3 hitPos;
+	uint8_t weapon;
+	PlayerBulletHitType hitType;
+	uint16_t hitID;
 };
 
 /// A player data interface for per-player data
@@ -337,12 +340,12 @@ struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
-	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
+	virtual bool onRequestSpawn(IPlayer& player) { return true; }
 	virtual void onSpawn(IPlayer& player) {}
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
-	virtual bool onPlayerText(IPlayer& player, String message) { return true; }
-	virtual bool onPlayerWeaponShot(IPlayer& player, uint8_t weapon, PlayerBulletHitType hitType, uint16_t hitID, Vector3 hitPos) { return true; }
+	virtual bool onText(IPlayer& player, String message) { return true; }
+	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 };
 
 struct PlayerUpdateEventHandler {
