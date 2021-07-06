@@ -369,7 +369,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
     void sendChatMessage(const String& message) const override {
-        NetCode::RPC::SendChatMessage sendChatMessage;
+        NetCode::RPC::PlayerChatMessage sendChatMessage;
         sendChatMessage.PlayerID = poolID;
         sendChatMessage.message = message;
         sendRPC(sendChatMessage);
@@ -457,8 +457,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerTextRPCHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            NetCode::RPC::SendChatMessage sendChatMessage;
-            if(!sendChatMessage.read(bs)) {
+            NetCode::RPC::PlayerRequestChatMessage playerChatMessageRequest;
+            if(!playerChatMessageRequest.read(bs)) {
                 return false;
             }
 
@@ -466,22 +466,37 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             std::regex filter = std::regex("(~(k|K)|%)");
             // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
             std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            std::string filteredMessage = std::regex_replace((std::string)sendChatMessage.message, filter, "#");
+            String filteredMessage = std::regex_replace(static_cast<String>(playerChatMessageRequest.message), filter, "#");
             filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
 
-            String message = String(filteredMessage.data(), filteredMessage.length());
-            auto useDefaultBehavior = self.eventDispatcher.stopAtFalse(
-                [&peer, &message](PlayerEventHandler* handler) {
-                    return handler->onPlayerText(peer, message);
+            bool send = self.eventDispatcher.stopAtFalse(
+                [&peer, &filteredMessage](PlayerEventHandler* handler) {
+                    return handler->onPlayerText(peer, filteredMessage);
                 });
 
-            if(useDefaultBehavior) {
-                peer.sendChatMessage(message);
+            if(send) {
+                const JSON& options = self.core.getProperties();
+                if (Config::getOption<int>(options, "use_limit_global_chat_radius")) {
+                    const float limit = Config::getOption<float>(options, "limit_global_chat_radius");
+                    const Vector3 pos = peer.getPosition();
+                    for (IPlayer* const& other : self.storage.entries()) {
+                        float dist = glm::distance(pos, other->getPosition());
+                        if (dist < limit) {
+                            peer.sendChatMessage(filteredMessage);
+                        }
+                    }
+                }
+                else {
+                    NetCode::RPC::PlayerChatMessage playerChatMessage;
+                    playerChatMessage.PlayerID = peer.getID();
+                    playerChatMessage.message = filteredMessage;
+                    self.broadcastRPC(playerChatMessage, EBroadcastPacketSendType::BroadcastGlobally);
+                }
             }
 
             return true;
         }
-    } PlayerTextRPCHandler;
+    } playerTextRPCHandler;
     
     struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -686,6 +701,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core(core),
         playerRequestSpawnRPCHandler(*this),
         playerSpawnRPCHandler(*this),
+        playerTextRPCHandler(*this),
         playerFootSyncHandler(*this),
         playerAimSyncHandler(*this)
     {
@@ -714,7 +730,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
     }
@@ -753,7 +769,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     ~PlayerPool() {
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::SendChatMessage>(&PlayerTextRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestChatMessage>(&playerTextRPCHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.removeNetworkEventHandler(this);
