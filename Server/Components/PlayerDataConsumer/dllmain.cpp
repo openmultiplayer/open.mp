@@ -17,7 +17,7 @@ struct MyPlugin : public IPlugin, public PlayerEventHandler {
 		c->getPlayers().getEventDispatcher().addEventHandler(this);
 	}
 
-	bool onPlayerRequestSpawn(IPlayer& player) override {
+	bool onRequestSpawn(IPlayer& player) override {
 		ISomePlayerData* data = player.queryData<ISomePlayerData>();
 		if (data) {
 			c->printLn("Player %s with some data %i requested spawn", player.getName().c_str(), data->getSomeInt());
