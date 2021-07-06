@@ -247,6 +247,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's skin
 	virtual int getSkin() const = 0;
 
+	// Send a message to the player
+	virtual void sendClientMessage(const Color& colour, const String& message) const = 0;
+
+	// Send a standardly formatted chat message as the player to everyone
+	virtual void sendChatMessage(const String& message) const = 0;
+
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
 	virtual void setFightingStyle(PlayerFightingStyle style) = 0;
@@ -306,6 +312,7 @@ struct PlayerEventHandler {
 	virtual void onSpawn(IPlayer& player) {}
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
+	virtual bool onPlayerText(IPlayer& player, String message) { return true; }
 };
 
 struct PlayerUpdateEventHandler {
