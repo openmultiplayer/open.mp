@@ -129,6 +129,11 @@ struct WeaponSlotData {
 		}
 		return slots[id];
 	}
+
+	bool shootable()
+	{
+		return (id >= 22 && id <= 34) || id == 38;
+	}
 };
 
 /// An array of weapon slots
