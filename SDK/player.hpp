@@ -231,6 +231,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's health
 	virtual float getHealth() const = 0;
 
+	/// Set the player's score
+	virtual void setScore(int score) = 0;
+
+	/// Get the player's score
+	virtual int getScore() const = 0;
+
 	/// Set the player's armour
 	virtual void setArmour(float armour) = 0;
 	
