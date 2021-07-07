@@ -1,4 +1,5 @@
 #include "legacy_network_impl.hpp"
+#include "raknet/../../SAMPRakNet.hpp"
 #include <netcode.hpp>
 
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
@@ -427,21 +428,34 @@ void RakNetLegacyNetwork::init(ICore* c) {
     core = c;
     core->getEventDispatcher().addEventHandler(this);
     const JSON& props = core->getProperties();
+    int maxPlayers = Config::getOption<int>(props, "max_players");
+    std::string serverName = Config::getOption<std::string>(props, "server_name");
+    int port = Config::getOption<int>(props, "port");
     rakNetServer.Start(
-        Config::getOption<int>(props, "max_players"),
+        maxPlayers,
         0,
         Config::getOption<int>(props, "sleep"),
-        Config::getOption<int>(props, "port")
+        port
     );
     rakNetServer.StartOccasionalPing();
+    SAMPRakNet::SetPort(port);
+    SAMPQuery::SetMaxPlayers(maxPlayers);
+    SAMPQuery::SetServerName(serverName);
 }
 
 void RakNetLegacyNetwork::onTick(uint64_t tick) {
+    auto & pool = core->getPlayers();
+
+    std::unordered_map<std::string, int> playerListForQuery;
+    for (IPlayer * const & player : core->getPlayers().entries()) {
+        playerListForQuery[player->getName().c_str()] = player->getScore();
+    }
+    SAMPQuery::SetPlayerList(playerListForQuery);
+
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
         auto pos = pidFromRID.find(pkt->playerId);
         if (pos != pidFromRID.end()) {
             int pid = pos->second;
-            auto& pool = core->getPlayers();
             if (pool.valid(pid)) {
                 IPlayer& player = pool.get(pid);
                 RakNet::BitStream bs(pkt->data, pkt->length, false);
