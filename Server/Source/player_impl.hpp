@@ -27,6 +27,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int virtualWorld_;
     int team_;
     int skin_;
+    int score_;
     PlayerFightingStyle fightingStyle_;
     PlayerState state_;
     std::array<uint16_t, NUM_SKILL_LEVELS> skillLevels_;
@@ -68,6 +69,14 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     int getTeam() const override {
         return team_;
+    }
+
+    void setScore(int score) override {
+        score_ = score;
+    }
+
+    int getScore() const override {
+        return score_;
     }
 
     void setSkin(int skin) override {
