@@ -6,10 +6,6 @@
 #endif
 #include "SAMPRakNet.hpp"
 
-char 
-	SAMPRakNet::
-	sendBuffer[4092];
-
 uint8_t
 	SAMPRakNet::
 	buffer_[MAXIMUM_MTU_SIZE];
@@ -20,27 +16,31 @@ uint32_t
 
 uint16_t
 	SAMPRakNet::
+	portNumber = 7777;
+
+char 
+	SAMPQuery::
+	sendBuffer[4092];
+
+uint16_t
+	SAMPQuery::
 	maxPlayers;
 
 std::unordered_map<std::string, int>
-	SAMPRakNet::
-	players;
+	SAMPQuery::
+	playerList;
 
 std::string
-	SAMPRakNet::
+	SAMPQuery::
 	serverName;
 
 std::string
-	SAMPRakNet::
-	gameModeName;
+	SAMPQuery::
+	gameModeName = "Unknown";
 
 std::unordered_map<std::string, std::string>
-	SAMPRakNet::
+	SAMPQuery::
 	rules;
-
-uint16_t
-	SAMPRakNet::
-	portNumber = 7777;
 
 uint16_t
 	SAMPRakNet::
@@ -54,141 +54,6 @@ void
 	SetPort(uint16_t value)
 {
 	portNumber = value;
-}
-
-uint16_t
-	SAMPRakNet::
-	GetPlayerCount()
-{
-	return static_cast<uint16_t>(players.size());
-}
-
-uint16_t
-	SAMPRakNet::
-	GetMaxPlayers()
-{
-	return maxPlayers;
-}
-
-void
-	SAMPRakNet::
-	SetMaxPlayers(uint16_t value)
-{
-	maxPlayers = value;
-}
-
-std::unordered_map<std::string, int> &
-	SAMPRakNet::
-	GetPlayers()
-{
-	return players;
-}
-
-void
-	SAMPRakNet::
-	AddPlayerToPool(const std::string& playerName, int score)
-{
-	auto _player = players.find(playerName);
-	if (_player == players.end())
-	{
-		players.insert({ playerName, score });
-	}
-}
-
-void
-	SAMPRakNet::
-	RemovePlayerFromPool(const std::string& playerName)
-{
-	auto _player = players.find(playerName);
-	if (_player != players.end())
-	{
-		players.erase(playerName);
-	}
-}
-
-std::string &
-	SAMPRakNet::
-	GetServerName()
-{
-	return serverName;
-}
-
-void
-	SAMPRakNet::
-	SetServerName(const std::string & value)
-{
-	serverName = value;
-}
-
-std::string &
-	SAMPRakNet::
-	GetGameModeName()
-{
-	return gameModeName;
-}
-
-void
-	SAMPRakNet::
-	SetGameModeName(const std::string& value)
-{
-	gameModeName = value;
-}
-
-std::unordered_map<std::string, std::string> &
-	SAMPRakNet::
-	GetRules()
-{
-	return rules;
-}
-
-template<typename... Args>
-void
-	SAMPRakNet::
-	SetRuleValue(const Args &... args)
-{
-	std::vector<std::string> ruleData = { args... };
-	int ruleCount = ruleData.size();
-	if (ruleCount % 2)
-	{
-		ruleCount--;
-	}
-
-	for (int index = 0; index < ruleCount; index += 2)
-	{
-		const std::string 
-			& ruleName = ruleData[index];
-		const std::string
-			& ruleValue = ruleData[index + 1];
-		rules[ruleName] = ruleValue;
-	}
-}
-
-void
-	SAMPRakNet::
-	RemoveRule(const std::string & ruleName)
-{
-	auto _rule = rules.find(ruleName);
-	if (_rule != rules.end())
-	{
-		rules.erase(ruleName);
-	}
-}
-
-template<typename T>
-void 
-	SAMPRakNet::
-	WriteToSendBuffer(unsigned int & offset, T value, unsigned int size)
-{
-	*reinterpret_cast<T*>(&sendBuffer[offset]) = value;
-	offset += size;
-}
-
-void 
-	SAMPRakNet::
-	WriteToSendBuffer(char const * src, unsigned int & offset, unsigned int size)
-{
-	strncpy(&sendBuffer[offset], src, size);
-	offset += size;
 }
 
 uint8_t *
@@ -291,8 +156,128 @@ char const *
 	return "RakNet decryption checksum mismatch";
 }
 
+uint16_t
+	SAMPQuery::
+	GetPlayerCount()
+{
+	return static_cast<uint16_t>(playerList.size());
+}
+
+uint16_t
+	SAMPQuery::
+	GetMaxPlayers()
+{
+	return maxPlayers;
+}
+
+void
+	SAMPQuery::
+	SetMaxPlayers(uint16_t value)
+{
+	maxPlayers = value;
+}
+
+std::unordered_map<std::string, int> &
+	SAMPQuery::
+	GetPlayers()
+{
+	return playerList;
+}
+
+void
+	SAMPQuery::
+	SetPlayerList(const std::unordered_map<std::string, int> & players)
+{
+	playerList = players;
+}
+
+std::string &
+	SAMPQuery::
+	GetServerName()
+{
+	return serverName;
+}
+
+void
+	SAMPQuery::
+	SetServerName(const std::string & value)
+{
+	serverName = value;
+}
+
+std::string &
+	SAMPQuery::
+	GetGameModeName()
+{
+	return gameModeName;
+}
+
+void
+	SAMPQuery::
+	SetGameModeName(const std::string& value)
+{
+	gameModeName = value;
+}
+
+std::unordered_map<std::string, std::string> &
+	SAMPQuery::
+	GetRules()
+{
+	return rules;
+}
+
+template<typename... Args>
+void
+	SAMPQuery::
+	SetRuleValue(const Args &... args)
+{
+	std::vector<std::string> ruleData = { args... };
+	int ruleCount = ruleData.size();
+	if (ruleCount % 2)
+	{
+		ruleCount--;
+	}
+
+	for (int index = 0; index < ruleCount; index += 2)
+	{
+		const std::string 
+			& ruleName = ruleData[index];
+		const std::string
+			& ruleValue = ruleData[index + 1];
+		rules[ruleName] = ruleValue;
+	}
+}
+
+void
+	SAMPQuery::
+	RemoveRule(const std::string & ruleName)
+{
+	auto _rule = rules.find(ruleName);
+	if (_rule != rules.end())
+	{
+		rules.erase(ruleName);
+	}
+}
+
+template<typename T>
 void 
-	SAMPRakNet::
+	SAMPQuery::
+	WriteToSendBuffer(unsigned int & offset, T value, unsigned int size)
+{
+	*reinterpret_cast<T*>(&sendBuffer[offset]) = value;
+	offset += size;
+}
+
+void 
+	SAMPQuery::
+	WriteToSendBuffer(char const * src, unsigned int & offset, unsigned int size)
+{
+	strncpy(&sendBuffer[offset], src, size);
+	offset += size;
+}
+
+void 
+	SAMPQuery::
 	HandleQuery(SOCKET instance, int size, sockaddr_in const & client, char const* buffer)
 {
 	unsigned int bufferLength = 0;
@@ -317,8 +302,7 @@ void
 		int serverNameLength = GetServerName().length();
 		int gameModeNameLength = gameModeName.length();
 
-		const std::string
-			& languageName = (GetRules().find("language") != GetRules().end()) ? GetRules()["language"] : "";
+		const std::string & languageName = (GetRules().find("language") != GetRules().end()) ? GetRules()["language"] : "EN";
 		int languageNameLength = languageName.length();
 
 		memcpy(sendBuffer, buffer, 10);
