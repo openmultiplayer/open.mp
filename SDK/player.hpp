@@ -218,6 +218,18 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's currently armed weapon
 	virtual uint32_t getArmedWeapon() const = 0;
 
+	/// Set the player's shop name
+	virtual void setShopName(const String& name) = 0;
+
+	/// Get the player's shop name
+	virtual const String& getShopName() const = 0;
+
+	/// Set the player's drunk level
+	virtual void setDrunkLevel(int level) = 0;
+
+	/// Get the player's drunk level
+	virtual int getDrunkLevel() const = 0;
+
 	/// Set the player's color
 	virtual void setColor(Color color) = 0;
 

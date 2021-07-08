@@ -160,12 +160,12 @@ struct NetworkString : NetworkArray<char> {
 	String& operator=(std::string&& str) = delete;
 
 	/// Conversion operator for copying data to a std::string
-	operator String() {
+	operator String() const {
 		return String(data, count);
 	}
 
 	/// Conversion operator for copying data to a std::string
-	operator std::string() {
+	operator std::string() const {
 		return std::string(data, count);
 	}
 };
