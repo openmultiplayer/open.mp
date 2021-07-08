@@ -173,7 +173,6 @@ struct IPlayerData : public IUUIDProvider {
 	virtual void free() = 0;
 };
 
-struct IVehicle;
 struct IPlayerPool;
 
 /// The player's name status returned when updating their name
@@ -189,9 +188,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player pool that the player is stored in
 	virtual IPlayerPool* getPool() const = 0;
-
-	/// Get the player's current vehicle
-	virtual IVehicle* getVehicle() const = 0;
 
 	/// Get the player's game data
 	virtual const PlayerGameData& getGameData() const = 0;
@@ -357,6 +353,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param other The player to stream out
 	virtual void streamOutPlayer(IPlayer& other) = 0;
 
+	virtual const DynamicArray<IPlayer*>& streamedInPlayers() const = 0;
+
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
@@ -500,11 +498,21 @@ struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS> {
 	inline int broadcastRPC(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr, bool skipFrom = false) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		int succeeded = 0;
-		for (IPlayer* player : entries()) {
-			if (skipFrom && player == from) {
-				continue;
+		if (type == EBroadcastPacketSendType::BroadcastStreamed && from != nullptr) {
+			for (IPlayer* player : from->streamedInPlayers()) {
+				if (skipFrom && player == from) {
+					continue;
+				}
+				if (player->sendRPC(packet)) {
+					++succeeded;
+				}
 			}
-			if (type != EBroadcastPacketSendType::BroadcastStreamed || from == nullptr || from->isPlayerStreamedIn(*player)) {
+		}
+		else if (type == EBroadcastPacketSendType::BroadcastGlobally) {
+			for (IPlayer* player : entries()) {
+				if (skipFrom && player == from) {
+					continue;
+				}
 				if (player->sendRPC(packet)) {
 					++succeeded;
 				}
@@ -518,11 +526,24 @@ struct IPlayerPool : public IPool<IPlayer, MAX_PLAYERS> {
 	/// @param from The player who the packet is being sent from
 	/// @param type The broadcast type that will determine who to send this packet to
 	template<class Packet>
-	inline int broadcastPacket(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr) {
+	inline int broadcastPacket(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr, bool skipFrom = true) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		int succeeded = 0;
-		for (IPlayer* player : entries()) {
-			if (player != from && (type != EBroadcastPacketSendType::BroadcastStreamed || from == nullptr || from->isPlayerStreamedIn(*player))) {
+		if (type == EBroadcastPacketSendType::BroadcastStreamed && from != nullptr) {
+			for (IPlayer* player : from->streamedInPlayers()) {
+				if (skipFrom && player == from) {
+					continue;
+				}
+				if (player->sendPacket(packet)) {
+					++succeeded;
+				}
+			}
+		}
+		else if (type == EBroadcastPacketSendType::BroadcastGlobally) {
+			for (IPlayer* player : entries()) {
+				if (skipFrom && player == from) {
+					continue;
+				}
 				if (player->sendPacket(packet)) {
 					++succeeded;
 				}
