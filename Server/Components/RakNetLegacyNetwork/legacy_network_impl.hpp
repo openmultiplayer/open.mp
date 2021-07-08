@@ -247,6 +247,10 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     bool broadcastRPC(int id, const INetworkBitStream& bs) override {
+        if (id == INVALID_PACKET_ID) {
+            return false;
+        }
+
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
@@ -256,6 +260,10 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     bool sendRPC(const INetworkPeer& peer, int id, const INetworkBitStream& bs) override {
+        if (id == INVALID_PACKET_ID) {
+            return false;
+        }
+
         const INetworkPeer::NetworkData& netData = peer.getNetworkData();
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
@@ -287,6 +295,17 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void OnCloseConnection(RakNet::RakPeerInterface* peer, RakNet::PlayerID playerId) override {
         return OnRakNetDisconnect(playerId);
+    }
+
+    unsigned getPing(const INetworkPeer& peer) override {
+        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
+        if (netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
+            return 0;
+        }
+
+        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        return rakNetServer.GetLastPing(rid);
     }
 
     ICore* core;

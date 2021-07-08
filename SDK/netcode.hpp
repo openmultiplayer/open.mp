@@ -15,6 +15,17 @@
 		} \
 	}
 
+/// Helper macro that reads a bit stream value and returns false on fail
+#define CHECKED_READ_TYPE(output, type, input) \
+	{ \
+		NetworkBitStreamValue output ## _in input; \
+		if (!bs.read(output ## _in)) { \
+			return false; \
+		} else { \
+			output = std::get<type>(output ## _in.data); \
+		} \
+	}
+
 namespace NetCode {
 	namespace RPC {
 		struct Invalid final : NetworkPacketBase<0> {
@@ -748,6 +759,153 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::INT32(Level));
+			}
+		};
+
+		struct PlayAudioStreamForPlayer final : NetworkPacketBase<41> {
+			NetworkString URL;
+			Vector3 Position;
+			float Distance;
+			bool Usepos;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(URL));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Distance));
+				bs.write(NetworkBitStreamValue::UINT8(Usepos));
+			}
+		};
+
+		struct StopAudioStreamForPlayer final : NetworkPacketBase<42> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct SetPlayerAmmo final : NetworkPacketBase<145> {
+			uint8_t Weapon;
+			uint16_t Ammo;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Weapon));
+				bs.write(NetworkBitStreamValue::UINT16(Ammo));
+			}
+		};
+
+		struct SendPlayerScoresAndPings final : NetworkPacketBase<155> {
+			int PlayerID;
+			int32_t Score;
+			uint32_t Ping;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::INT32(Score));
+				bs.write(NetworkBitStreamValue::UINT32(Ping));
+			}
+		};
+
+		struct OnPlayerRequestScoresAndPings final : NetworkPacketBase<155> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct RemoveBuildingForPlayer final : NetworkPacketBase<43> {
+			unsigned ModelID;
+			Vector3 Position;
+			float Radius;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(ModelID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Radius));
+			}
+		};
+
+		struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct SetPlayerInterior final : NetworkPacketBase<156> {
+			unsigned Interior;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Interior));
+			}
+		};
+
+		struct SetPlayerWantedLevel final : NetworkPacketBase<133> {
+			unsigned Level;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Level));
+			}
+		};
+
+		struct OnPlayerGiveTakeDamage final : NetworkPacketBase<115> {
+			bool Taking;
+			int PlayerID;
+			float Damage;
+			uint32_t WeaponID;
+			uint32_t Bodypart;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(Taking, { NetworkBitStreamValueType::BIT });
+				CHECKED_READ_TYPE(PlayerID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Damage, { NetworkBitStreamValueType::FLOAT });
+				CHECKED_READ(WeaponID, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(Bodypart, { NetworkBitStreamValueType::UINT32 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct OnPlayerInteriorChange final : NetworkPacketBase<118> {
+			unsigned Interior;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(Interior, uint8_t, { NetworkBitStreamValueType::UINT8 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
 			}
 		};
 	}
