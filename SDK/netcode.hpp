@@ -979,6 +979,120 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 			}
 		};
+
+		struct StreamInVehicle final : NetworkPacketBase<164> {
+			int VehicleID;
+			int ModelID;
+			Vector3 Position;
+			float Angle;
+			uint8_t Colour1;
+			uint8_t Colour2;
+			float Health;
+			uint8_t	Interior;
+			uint32_t DoorDamage;
+			uint32_t PanelDamage;
+			uint8_t LightDamage;
+			uint8_t TyreDamage;
+			uint8_t Siren;
+			std::array<int, 14> Mods;
+			uint8_t Paintjob;
+			int32_t BodyColour1;
+			int32_t BodyColour2;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT32(ModelID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+				bs.write(NetworkBitStreamValue::UINT8(Colour1));
+				bs.write(NetworkBitStreamValue::UINT8(Colour2));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+				bs.write(NetworkBitStreamValue::UINT8(Interior));
+				bs.write(NetworkBitStreamValue::UINT32(DoorDamage));
+				bs.write(NetworkBitStreamValue::UINT32(PanelDamage));
+				bs.write(NetworkBitStreamValue::UINT8(LightDamage));
+				bs.write(NetworkBitStreamValue::UINT8(TyreDamage));
+				bs.write(NetworkBitStreamValue::UINT8(Siren));
+				for (int mod : Mods) {
+					bs.write(NetworkBitStreamValue::UINT8(mod ? uint8_t(mod - 999) : 0));
+				}
+				bs.write(NetworkBitStreamValue::UINT8(Paintjob));
+				bs.write(NetworkBitStreamValue::UINT32(BodyColour1));
+				bs.write(NetworkBitStreamValue::UINT32(BodyColour2));
+			}
+		};
+
+		struct StreamOutVehicle final : NetworkPacketBase<165> {
+			int VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+			}
+		};
+
+		struct OnPlayerEnterVehicle final : NetworkPacketBase<26> {
+			int VehicleID;
+			uint8_t Passenger;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Passenger, { NetworkBitStreamValueType::UINT8 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct EnterVehicle final : NetworkPacketBase<26> {
+			int PlayerID;
+			int VehicleID;
+			uint8_t Passenger;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(Passenger));
+			}
+		};
+
+		struct OnPlayerExitVehicle final : NetworkPacketBase<154> {
+			int VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct ExitVehicle final : NetworkPacketBase<154> {
+			int PlayerID;
+			int VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
@@ -1151,6 +1265,84 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::INT32(Money));
 				bs.write(NetworkBitStreamValue::INT32(DrunkLevel));
+			}
+		};
+		
+		struct PlayerVehicleSync final : NetworkPacketBase<200> {
+			int PlayerID;
+			uint16_t VehicleID;
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			GTAQuat Rotation;
+			Vector3 Position;
+			Vector3 Velocity;
+			float Health;
+			Vector2 PlayerHealthArmour;
+			uint8_t Siren;
+			uint8_t LandingGear;
+			uint16_t TrailerID;
+			bool HasTrailer;
+
+			union {
+				uint8_t AdditionalKeyWeapon;
+				struct {
+					uint8_t WeaponID : 6;
+					uint8_t AdditionalKey : 2;
+				};
+			};
+
+			union {
+				uint32_t AbysmalShit;
+				struct {
+					uint32_t			 HydraThrustAngle;
+					float				 TrainSpeed;
+				};
+			};
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Rotation, { NetworkBitStreamValueType::GTA_QUAT });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Health, { NetworkBitStreamValueType::FLOAT });
+				CHECKED_READ(PlayerHealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
+				CHECKED_READ(AdditionalKeyWeapon, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Siren, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(LandingGear, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(TrailerID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AbysmalShit, { NetworkBitStreamValueType::UINT32 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(Health)));
+				bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(PlayerHealthArmour));
+				bs.write(NetworkBitStreamValue::UINT8(AdditionalKeyWeapon));
+				bs.write(NetworkBitStreamValue::BIT(Siren));
+				bs.write(NetworkBitStreamValue::BIT(LandingGear));
+
+				bs.write(NetworkBitStreamValue::BIT(AbysmalShit > 0));
+				if (AbysmalShit) {
+					bs.write(NetworkBitStreamValue::UINT32(AbysmalShit));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(HasTrailer));
+				if (HasTrailer) {
+					bs.write(NetworkBitStreamValue::UINT16(TrailerID));
+				}
 			}
 		};
 	}
