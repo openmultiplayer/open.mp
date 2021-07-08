@@ -5,7 +5,6 @@
 #include "events.hpp"
 #include "network.hpp"
 #include "player.hpp"
-#include "vehicle.hpp"
 #include "plugin.hpp"
 
 /// An event handler for core events
@@ -24,9 +23,6 @@ struct ICore {
 
 	/// Get the player pool
 	virtual IPlayerPool& getPlayers() = 0;
-
-	/// Get the vehicle pool
-	virtual IVehiclePool& getVehicles() = 0;
 
 	/// Get the core event dispatcher
 	virtual IEventDispatcher<CoreEventHandler>& getEventDispatcher() = 0;

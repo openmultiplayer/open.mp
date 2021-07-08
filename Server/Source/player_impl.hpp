@@ -3,13 +3,13 @@
 #include <values.hpp>
 #include <types.hpp>
 #include <player.hpp>
-#include <vehicle.hpp>
 #include <network.hpp>
 #include <netcode.hpp>
 #include <events.hpp>
 #include <pool.hpp>
 #include <unordered_map>
 #include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/Vehicles/vehicles.hpp>
 #include <glm/glm.hpp>
 #include <regex>
 
@@ -52,6 +52,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     unsigned interior_;
     unsigned wantedLevel_;
     int score_;
+    
 
     Player() :
         pool_(nullptr),
@@ -473,10 +474,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerFacingAngleRPC);
     }
 
-    IVehicle* getVehicle() const override {
-        return nullptr;
-    }
-
     PlayerKeyData getKeyData() const override {
         return keys_;
     }
@@ -594,6 +591,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
+    IVehiclesPlugin* vehiclesPlugin = nullptr;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -963,6 +961,44 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         player.streamedPlayers_.set(player.poolID);
     }
 
+    struct PlayerVehicleSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerVehicleSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerVehicleSync vehicleSync;
+
+            if (!self.vehiclesPlugin || !vehicleSync.read(bs) || !self.vehiclesPlugin->valid(vehicleSync.VehicleID)) {
+                return false;
+            }
+
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            player.pos_ = vehicleSync.Position;
+            player.keys_.keys = vehicleSync.Keys;
+            player.keys_.leftRight = vehicleSync.LeftRight;
+            player.keys_.upDown = vehicleSync.UpDown;
+            player.health_ = vehicleSync.PlayerHealthArmour.x;
+            player.armour_ = vehicleSync.PlayerHealthArmour.y;
+            player.armedWeapon_ = vehicleSync.WeaponID;
+            player.state_ = PlayerState_Driver;
+
+            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync)) {
+                vehicleSync.PlayerID = pid;
+
+                bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+                    [&peer](PlayerUpdateEventHandler* handler) {
+                        return handler->onUpdate(peer);
+                    });
+
+                if (allowedupdate) {
+                    self.broadcastPacket(vehicleSync, BroadcastStreamed, &peer);
+                }
+            }
+            return true;
+        }
+    } playerVehicleSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -1102,7 +1138,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerFootSyncHandler(*this),
         playerAimSyncHandler(*this),
         playerStatsSyncHandler(*this),
-        playerBulletSyncHandler(*this)
+        playerBulletSyncHandler(*this),
+        playerVehicleSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -1139,6 +1176,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
+
+        vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
     }
 
     void onTick(uint64_t tick) override {
@@ -1183,6 +1223,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
