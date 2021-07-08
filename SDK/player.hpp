@@ -357,6 +357,8 @@ struct PlayerEventHandler {
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual void onScoreChange(IPlayer& player, int score) {}
+	virtual void onNameChange(IPlayer & player, const String & oldName) {}
 };
 
 struct PlayerUpdateEventHandler {
