@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <utility>
+#include <chrono>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
@@ -222,6 +224,46 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's color
 	virtual const Color& getColor() const = 0;
 
+	/// Set whether the player is controllable
+	virtual void setControllable(bool controllable) = 0;
+
+	/// Get whether the player is controllable
+	virtual bool getControllable() const = 0;
+
+	/// Play a sound for the player at a position
+	/// @param sound The sound ID
+	/// @param pos The position to play at
+	virtual void playSound(uint32_t sound, Vector3 pos) = 0;
+
+	/// Get the sound that was last played
+	virtual uint32_t lastPlayedSound() const = 0;
+
+	/// Set the player's money
+	virtual void setMoney(int money) = 0;
+
+	/// Give money to the player
+	virtual void giveMoney(int money) = 0;
+
+	/// Reset the player's money to 0
+	virtual void resetMoney() = 0;
+
+	/// Get the player's money
+	virtual int getMoney() = 0;
+
+	/// Set the player's game time
+	/// @param hr The hours from 0 to 23
+	/// @param min The minutes from 0 to 59
+	virtual void setTime(std::chrono::hours hr, std::chrono::minutes min) = 0;
+
+	/// Get the player's game time
+	virtual std::pair<std::chrono::hours, std::chrono::minutes> getTime() const = 0;
+
+	/// Toggle the player's clock visibility
+	virtual void toggleClock(bool toggle) = 0;
+
+	/// Get whether the clock is visible for the player
+	virtual bool clockToggled() const = 0;
+
 	/// Set the transform applied to player rotation
 	virtual void setTransform(const GTAQuat& tm) = 0;
 
@@ -351,6 +393,7 @@ struct PlayerEventHandler {
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 };
 
 struct PlayerUpdateEventHandler {
