@@ -14,6 +14,7 @@
 #include <regex>
 
 struct Player final : public IPlayer, public PoolIDProvider {
+    DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     IPlayerPool* pool_;
     NetworkData netData_;
     PlayerGameData gameData_;
@@ -72,7 +73,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
     void setScore(int score) override {
-        score_ = score;
+        if (score_ != score) {
+            score_ = score;
+            eventDispatcher.dispatch(&PlayerEventHandler::onScoreChange, *this, score);
+        }
     }
 
     int getScore() const override {
@@ -274,6 +278,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
         else if (name.length() > MAX_PLAYER_NAME) {
             return EPlayerNameStatus::Invalid;
         }
+        eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
+
         name_ = name;
 
         NetCode::RPC::SetPlayerName setPlayerNameRPC;
@@ -281,7 +287,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
         setPlayerNameRPC.Name = name_;
         setPlayerNameRPC.Success = true;
         pool_->broadcastRPC(setPlayerNameRPC, BroadcastGlobally, this, false /* skipFrom */);
-
         return EPlayerNameStatus::Updated;
     }
 

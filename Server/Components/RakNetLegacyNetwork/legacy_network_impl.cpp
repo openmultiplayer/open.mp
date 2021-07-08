@@ -364,6 +364,10 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             handler->onPeerConnect(player, lbs);
         }
     );
+
+    std::unordered_map<std::string, int> & playerListForQuery = SAMPQuery::GetPlayers();
+    playerListForQuery[player.getName().c_str()] = player.getScore();
+    SAMPQuery::SetPlayerList(playerListForQuery);
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
@@ -382,6 +386,14 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
 
     IPlayer& player = pool.get(pid);
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, 0 /* TODO reason */);
+
+    std::unordered_map<std::string, int> & playerListForQuery = SAMPQuery::GetPlayers();
+    auto it = playerListForQuery.find(player.getName().c_str());
+    if (it != playerListForQuery.end()) {
+        playerListForQuery.erase(it);
+        SAMPQuery::SetPlayerList(playerListForQuery);
+    }
+
     pool.release(pid);
 }
 
@@ -427,6 +439,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 void RakNetLegacyNetwork::init(ICore* c) {
     core = c;
     core->getEventDispatcher().addEventHandler(this);
+    core->getPlayers().getEventDispatcher().addEventHandler(this);
     const JSON& props = core->getProperties();
     int maxPlayers = Config::getOption<int>(props, "max_players");
     std::string serverName = Config::getOption<std::string>(props, "server_name");
@@ -443,19 +456,28 @@ void RakNetLegacyNetwork::init(ICore* c) {
     SAMPQuery::SetServerName(serverName);
 }
 
-void RakNetLegacyNetwork::onTick(uint64_t tick) {
-    auto & pool = core->getPlayers();
+void RakNetLegacyNetwork::onScoreChange(IPlayer & player, int score) {
+    std::unordered_map<std::string, int> & playerList = SAMPQuery::GetPlayers();
+    playerList[player.getName().c_str()] = score;
+    SAMPQuery::SetPlayerList(playerList);
+}
 
-    std::unordered_map<std::string, int> playerListForQuery;
-    for (IPlayer * const & player : core->getPlayers().entries()) {
-        playerListForQuery[player->getName().c_str()] = player->getScore();
+void RakNetLegacyNetwork::onNameChange(IPlayer & player, const String& oldName) {
+    std::unordered_map<std::string, int> & playerList = SAMPQuery::GetPlayers();
+    auto it = playerList.find(oldName.c_str());
+    if (it != playerList.end()) {
+        playerList.erase(it);
     }
-    SAMPQuery::SetPlayerList(playerListForQuery);
+    playerList[player.getName().c_str()] = player.getScore();
+    SAMPQuery::SetPlayerList(playerList);
+}
 
+void RakNetLegacyNetwork::onTick(uint64_t tick) {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
         auto pos = pidFromRID.find(pkt->playerId);
         if (pos != pidFromRID.end()) {
             int pid = pos->second;
+            auto & pool = core->getPlayers();
             if (pool.valid(pid)) {
                 IPlayer& player = pool.get(pid);
                 RakNet::BitStream bs(pkt->data, pkt->length, false);

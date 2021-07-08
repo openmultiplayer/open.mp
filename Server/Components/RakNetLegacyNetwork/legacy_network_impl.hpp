@@ -226,7 +226,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 };
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public RakNet::PluginInterface {
+struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public RakNet::PluginInterface {
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
@@ -277,6 +277,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 
     void onTick(uint64_t tick) override;
+    void onScoreChange(IPlayer& player, int score) override;
+    void onNameChange(IPlayer & player, const String & oldName) override;
     void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid);
