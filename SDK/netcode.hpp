@@ -517,8 +517,10 @@ namespace NetCode {
 			}
 		};
 
-		struct SetPlayerCameraLookAtPosition final : NetworkPacketBase<158> {
+		struct SetPlayerCameraLookAt final : NetworkPacketBase<158> {
 			Vector3 Pos;
+			uint8_t cutType;
+			
 
 			bool read(INetworkBitStream& bs) {
 				return false;
