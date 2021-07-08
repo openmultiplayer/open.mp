@@ -15,6 +15,7 @@
 
 struct Player final : public IPlayer, public PoolIDProvider {
     IPlayerPool* pool_;
+    DefaultEventDispatcher<PlayerEventHandler>* playerEventDispatcher_;
     NetworkData netData_;
     PlayerGameData gameData_;
     Vector3 pos_;
@@ -39,23 +40,103 @@ struct Player final : public IPlayer, public PoolIDProvider {
     uint32_t armedWeapon_;
     GTAQuat rotTransform_;
     PlayerAimData aimingData_;
+    bool controllable_;
+    uint32_t lastPlayedSound_;
+    int money_;
+    std::chrono::minutes time_;
+    bool clockToggled_;
     PlayerBulletData bulletData_;
+    String shopName_;
+    int drunkLevel_;
+    String lastPlayedAudio_;
+    unsigned interior_;
+    unsigned wantedLevel_;
+    int score_;
 
     Player() :
         pool_(nullptr),
+        playerEventDispatcher_(nullptr),
         virtualWorld_(0),
         fightingStyle_(PlayerFightingStyle_Normal),
         state_(PlayerState_None),
         surfing_{PlayerSurfingData::Type::None},
         armedWeapon_(0),
-        rotTransform_(0.f, 0.f, 0.f)
+        rotTransform_(0.f, 0.f, 0.f),
+        controllable_(true),
+        lastPlayedSound_(0),
+        money_(0),
+        time_(0),
+        clockToggled_(false),
+        shopName_(),
+        drunkLevel_(0),
+        lastPlayedAudio_(),
+        interior_(0),
+        wantedLevel_(0),
+        score_(0)
     {
         weapons_.fill({ 0, 0 });
-        skillLevels_.fill(0);
+        skillLevels_.fill(MAX_SKILL_LEVEL);
     }
 
     PlayerState getState() const override {
         return state_;
+    }
+
+    void setDrunkLevel(int level) override {
+        drunkLevel_ = level;
+        NetCode::RPC::SetPlayerDrunkLevel setPlayerDrunkLevelRPC;
+        setPlayerDrunkLevelRPC.Level = level;
+        sendRPC(setPlayerDrunkLevelRPC);
+    }
+
+    int getDrunkLevel() const override {
+        return drunkLevel_;
+    }
+
+    void toggleClock(bool toggle) override {
+        clockToggled_ = toggle;
+        NetCode::RPC::TogglePlayerClock togglePlayerClockRPC;
+        togglePlayerClockRPC.Toggle = toggle;
+        sendRPC(togglePlayerClockRPC);
+    }
+
+    bool clockToggled() const override {
+        return clockToggled_;
+    }
+
+    void setMoney(int money) override {
+        resetMoney();
+        giveMoney(money);
+    }
+
+    void giveMoney(int money) override {
+        money_ += money;
+        NetCode::RPC::GivePlayerMoney givePlayerMoneyRPC;
+        givePlayerMoneyRPC.Money = money;
+        sendRPC(givePlayerMoneyRPC);
+    }
+
+    void resetMoney() override {
+        money_ = 0;
+        NetCode::RPC::ResetPlayerMoney resetPlayerMoneyRPC;
+        sendRPC(resetPlayerMoneyRPC);
+    }
+
+    int getMoney() override {
+        return money_;
+    }
+
+    virtual void setTime(std::chrono::hours hr, std::chrono::minutes min) override {
+        time_ = std::chrono::duration_cast<std::chrono::minutes>(hr) + min;
+        NetCode::RPC::SetPlayerTime setPlayerTimeRPC;
+        setPlayerTimeRPC.Hour = hr.count();
+        setPlayerTimeRPC.Minute = min.count();
+        sendRPC(setPlayerTimeRPC);
+    }
+
+    virtual std::pair<std::chrono::hours, std::chrono::minutes> getTime() const override {
+        std::chrono::hours hr = std::chrono::duration_cast<std::chrono::hours>(time_);
+        return { hr, time_ - hr };
     }
 
     void setTeam(int team) override {
@@ -84,6 +165,47 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     PlayerAnimationData getAnimationData() const override {
         return animation_;
+    }
+
+    void setControllable(bool controllable) override {
+        controllable_ = controllable;
+        NetCode::RPC::TogglePlayerControllable togglePlayerControllableRPC;
+        togglePlayerControllableRPC.Enable = controllable;
+        sendRPC(togglePlayerControllableRPC);
+    }
+
+    bool getControllable() const override {
+        return controllable_;
+    }
+
+    void playSound(uint32_t sound, Vector3 pos) override {
+        lastPlayedSound_ = sound;
+        NetCode::RPC::PlayerPlaySound playerPlaySoundRPC;
+        playerPlaySoundRPC.SoundID = sound;
+        playerPlaySoundRPC.Position = pos;
+    }
+
+    uint32_t lastPlayedSound() const override {
+        return lastPlayedSound_;
+    }
+
+    virtual void playAudio(const String& url, bool usePos, Vector3 pos, float distance) override {
+        lastPlayedAudio_ = url;
+        NetCode::RPC::PlayAudioStreamForPlayer playAudioStreamRPC;
+        playAudioStreamRPC.URL = url;
+        playAudioStreamRPC.Usepos = usePos;
+        playAudioStreamRPC.Position = pos;
+        playAudioStreamRPC.Distance = distance;
+        sendRPC(playAudioStreamRPC);
+    }
+
+    virtual void stopAudio() override {
+        NetCode::RPC::StopAudioStreamForPlayer stopAudioStreamRPC;
+        sendRPC(stopAudioStreamRPC);
+    }
+
+    const String& lastPlayedAudio() const override {
+        return lastPlayedAudio_;
     }
 
     void applyAnimation(const Animation& animation, PlayerAnimationSyncType syncType) override {
@@ -185,8 +307,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return skillLevels_;
     }
 
-    virtual IPlayerPool* getPool() const override {
+    IPlayerPool* getPool() const override {
         return pool_;
+    }
+
+    void removeDefaultObjects(unsigned model, Vector3 pos, float radius) override {
+        NetCode::RPC::RemoveBuildingForPlayer removeBuildingForPlayerRPC;
+        removeBuildingForPlayerRPC.ModelID = model;
+        removeBuildingForPlayerRPC.Position = pos;
+        removeBuildingForPlayerRPC.Radius = radius;
+    }
+
+    void forceClassSelection() override {
+        NetCode::RPC::ForcePlayerClassSelection forcePlayerClassSelectionRPC;
+        sendRPC(forcePlayerClassSelectionRPC);
     }
 
     const Color& getColor() const override {
@@ -201,6 +335,28 @@ struct Player final : public IPlayer, public PoolIDProvider {
         pool_->broadcastRPC(setPlayerColorRPC, BroadcastGlobally, this, false /* skipFrom */);
     }
 
+    virtual void setWantedLevel(unsigned level) override {
+        wantedLevel_ = level;
+        NetCode::RPC::SetPlayerWantedLevel setPlayerWantedLevelRPC;
+        setPlayerWantedLevelRPC.Level = level;
+        sendRPC(setPlayerWantedLevelRPC);
+    }
+
+    virtual unsigned getWantedLevel() const override {
+        return wantedLevel_;
+    }
+
+    virtual void setInterior(unsigned interior) override {
+        interior_ = interior;
+        NetCode::RPC::SetPlayerInterior setPlayerInteriorRPC;
+        setPlayerInteriorRPC.Interior = interior;
+        sendRPC(setPlayerInteriorRPC);
+    }
+
+    virtual unsigned getInterior() const override {
+        return interior_;
+    }
+
     IPlayerData* queryData(UUID uuid) const override {
         auto it = playerData_.find(uuid);
         return it == playerData_.end() ? nullptr : it->second;
@@ -210,7 +366,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         playerData_.try_emplace(playerData->getUUID(), playerData);
     }
 
-    void streamInPlayer(const IPlayer& other) override {
+    void streamInPlayer(IPlayer& other) override {
         const int pid = other.getID();
         streamedPlayers_.set(pid);
         NetCode::RPC::PlayerStreamIn playerStreamInRPC;
@@ -223,18 +379,22 @@ struct Player final : public IPlayer, public PoolIDProvider {
         playerStreamInRPC.FightingStyle = other.getFightingStyle();
         playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(other.getSkillLevels());
         sendRPC(playerStreamInRPC);
+
+        playerEventDispatcher_->dispatch(&PlayerEventHandler::onStreamIn, other, *this);
     }
 
-    virtual bool isPlayerStreamedIn(const IPlayer& other) const override {
+    bool isPlayerStreamedIn(const IPlayer& other) const override {
         return streamedPlayers_.test(other.getID());
     }
 
-    void streamOutPlayer(const IPlayer& other) override {
+    void streamOutPlayer(IPlayer& other) override {
         const int pid = other.getID();
         streamedPlayers_.reset(pid);
         NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
         playerStreamOutRPC.PlayerID = pid;
         sendRPC(playerStreamOutRPC);
+
+        playerEventDispatcher_->dispatch(&PlayerEventHandler::onStreamOut, other, *this);
     }
 
     void setNetworkData(const NetworkData& data) override {
@@ -245,7 +405,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return netData_;
     }
 
-    virtual const PlayerGameData& getGameData() const override {
+    const PlayerGameData& getGameData() const override {
         return gameData_;
     }
 
@@ -325,6 +485,14 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return bulletData_;
     }
 
+    virtual void setScore(int score) override {
+        score_ = score;
+    }
+
+    virtual int getScore() const override {
+        return score_;
+    }
+
     void giveWeapon(WeaponSlotData weapon) override {
         if (weapon.id > MAX_WEAPON_ID) {
             return;
@@ -347,6 +515,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(givePlayerWeaponRPC);
     }
 
+    void setWeaponAmmo(WeaponSlotData data) override {
+        int slot = data.slot();
+        if (slot < weapons_.size()) {
+            weapons_[slot] = data;
+            NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
+            setPlayerAmmoRPC.Weapon = data.id;
+            setPlayerAmmoRPC.Ammo = data.ammo;
+            sendRPC(setPlayerAmmoRPC);
+        }
+    }
+
     void resetWeapons() override {
         weapons_.fill({ 0, 0 });
         sendRPC(NetCode::RPC::ResetPlayerWeapons());
@@ -360,6 +539,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     uint32_t getArmedWeapon() const override {
         return armedWeapon_;
+    }
+
+    void setShopName(const String& name) override {
+        shopName_ = name;
+        NetCode::RPC::SetPlayerShopName setPlayerShopNameRPC;
+        setPlayerShopNameRPC.Name = name;
+        sendRPC(setPlayerShopNameRPC);
+    }
+
+    const String& getShopName() const override {
+        return shopName_;
     }
 
     void sendClientMessage(const Color& colour, const String& message) const override {
@@ -376,11 +566,11 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(sendChatMessage);
     }
     
-    virtual int getVirtualWorld() const override {
+    int getVirtualWorld() const override {
         return virtualWorld_;
     }
 
-    virtual void setVirtualWorld(int vw) override {
+    void setVirtualWorld(int vw) override {
         virtualWorld_ = vw;
     }
 
@@ -418,6 +608,110 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerRequestSpawnRPCHandler;
 
+    struct PlayerRequestScoresAndPingsRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerRequestScoresAndPingsRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            for (IPlayer* player : self.storage.entries()) {
+                NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC;
+                sendPlayerScoresAndPingsRPC.PlayerID = player->getID();
+                sendPlayerScoresAndPingsRPC.Score = player->getScore();
+                sendPlayerScoresAndPingsRPC.Ping = player->getPing();
+                sendPlayerScoresAndPingsRPC.write(bs);
+            }
+
+            return peer.sendRPC(NetCode::RPC::SendPlayerScoresAndPings::getID(peer.getNetworkData().network->getNetworkType()), bs);
+        }
+    } playerRequestScoresAndPingsRPCHandler;
+
+    struct PlayerGiveTakeDamageRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerGiveTakeDamageRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::OnPlayerGiveTakeDamage onPlayerGiveTakeDamageRPC;
+            if (!onPlayerGiveTakeDamageRPC.read(bs)) {
+                return false;
+            }
+
+            bool pidValid = self.storage.valid(onPlayerGiveTakeDamageRPC.PlayerID);
+            if (onPlayerGiveTakeDamageRPC.Taking) {
+                if (!pidValid) {
+                    return false;
+                }
+                self.eventDispatcher.dispatch(
+                    &PlayerEventHandler::onGiveDamage,
+                    peer,
+                    self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID),
+                    onPlayerGiveTakeDamageRPC.Damage,
+                    onPlayerGiveTakeDamageRPC.WeaponID,
+                    onPlayerGiveTakeDamageRPC.Bodypart
+                );
+            }
+            else {
+                self.eventDispatcher.dispatch(
+                    &PlayerEventHandler::onTakeDamage,
+                    peer,
+                    pidValid ? &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID) : nullptr,
+                    onPlayerGiveTakeDamageRPC.Damage,
+                    onPlayerGiveTakeDamageRPC.WeaponID,
+                    onPlayerGiveTakeDamageRPC.Bodypart
+                );
+            }
+
+            return true;
+        }
+    } playerGiveTakeDamageRPCHandler;
+
+    struct PlayerInteriorChangeRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerInteriorChangeRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::OnPlayerInteriorChange onPlayerInteriorChangeRPC;
+            if (!onPlayerInteriorChangeRPC.read(bs)) {
+                return false;
+            }
+
+            Player& player = self.storage.get(peer.getID());
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onInteriorChange, peer, onPlayerInteriorChangeRPC.Interior, player.interior_);
+            player.interior_ = onPlayerInteriorChangeRPC.Interior;
+
+            return true;
+        }
+    } playerInteriorChangeRPCHandler;
+
+    struct PlayerDeathRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerDeathRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::OnPlayerDeath onPlayerDeathRPC;
+            if (!onPlayerDeathRPC.read(bs)) {
+                return false;
+            }
+
+            const int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            player.state_ = PlayerState_Wasted;
+
+            bool killerIsValid = self.storage.valid(onPlayerDeathRPC.KillerID);
+            self.eventDispatcher.dispatch(
+                &PlayerEventHandler::onDeath,
+                peer, 
+                killerIsValid ? &self.storage.get(onPlayerDeathRPC.KillerID) : nullptr,
+                onPlayerDeathRPC.Reason
+            );
+
+            NetCode::RPC::PlayerDeath playerDeathRPC;
+            playerDeathRPC.PlayerID = pid;
+            self.broadcastRPC(playerDeathRPC, EBroadcastPacketSendType::BroadcastGlobally, &peer, true /* skipFrom */);
+
+            return true;
+        }
+    } playerDeathRPCHandler;
+
     struct PlayerSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
         PlayerSpawnRPCHandler(PlayerPool& self) : self(self) {}
@@ -444,6 +738,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     if (weapons[i].id <= 18 || (weapons[i].id >= 22 && weapons[i].id <= 46)) {
                         peer.giveWeapon(weapons[i]);
                     }
+                }
+            }
+
+            // Make sure to restream player on spawn
+            for (IPlayer* const& other : self.storage.entries()) {
+                if (&player != other && other->isPlayerStreamedIn(player)) {
+                    other->streamOutPlayer(player);
                 }
             }
 
@@ -528,6 +829,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.action_ = PlayerSpecialAction(footSync.SpecialAction);
             player.state_ = PlayerState_OnFoot;
 
+            if (!player.controllable_) {
+                footSync.Keys = 0;
+                footSync.UpDown = 0;
+                footSync.LeftRight = 0;
+            }
+
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                 [&peer](PlayerUpdateEventHandler* handler) {
                     return handler->onUpdate(peer);
@@ -552,7 +859,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
             if (frontvec > 0.0 && frontvec < 1.5) {
-                Player& player = self.storage.get(peer.getID());
+                const int pid = peer.getID();
+                Player& player = self.storage.get(pid);
                 player.aimingData_.AimZ = aimSync.AimZ;
                 player.aimingData_.CamFrontVector = aimSync.CamFrontVector;
                 player.aimingData_.CamMode = aimSync.CamMode;
@@ -560,12 +868,30 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.WeaponState = aimSync.WeaponState;
                 player.aimingData_.AspectRatio = aimSync.AspectRatio;
 
-                aimSync.PlayerID = peer.getID();
+                aimSync.PlayerID = pid;
                 self.broadcastPacket(aimSync, BroadcastStreamed, &peer);
             }
             return true;
         }
     } playerAimSyncHandler;
+
+    struct PlayerStatsSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerStatsSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerStatsSync statsSync;
+            if (!statsSync.read(bs)) {
+                return false;
+            }
+
+            Player& player = self.storage.get(peer.getID());
+            player.money_ = statsSync.Money;
+            player.drunkLevel_ = statsSync.DrunkLevel;
+
+            return true;
+        }
+    } playerStatsSyncHandler;
 
     struct PlayerBulletSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -577,13 +903,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            Player& player = self.storage.get(peer.getID());
+            const int pid = peer.getID();
+            Player& player = self.storage.get(pid);
 
             if (!WeaponSlotData{ bulletSync.WeaponID }.shootable()) {
                 return false; // They're sending data for a weapon that doesn't shoot
             }
             else if (bulletSync.HitType == PlayerBulletHitType_Player) {
-                if (peer.getID() == bulletSync.HitID) {
+                if (pid == bulletSync.HitID) {
                     return false;
                 }
                 else if (!self.storage.valid(bulletSync.HitID)) {
@@ -619,12 +946,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if (allowed) {
-                bulletSync.PlayerID = peer.getID();
+                bulletSync.PlayerID = pid;
                 self.broadcastPacket(bulletSync, BroadcastStreamed, &peer);
             }
             return true;
         }
     } playerBulletSyncHandler;
+
+    void initPlayer(Player& player) {
+        player.pool_ = this;
+        player.playerEventDispatcher_ = &eventDispatcher;
+        player.streamedPlayers_.set(player.poolID);
+    }
 
     struct PlayerVehicleSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -671,9 +1004,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     int claim() override {
         int res = storage.claim();
         if (res != -1) {
-            Player& player = storage.get(res);
-            player.pool_ = this;
-            player.streamedPlayers_.set(player.poolID);
+            initPlayer(storage.get(res));
         }
         return res;
     }
@@ -681,9 +1012,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     int claim(int hint) override {
         int res = storage.claim(hint);
         if (res != -1) {
-            Player& player = storage.get(res);
-            player.pool_ = this;
-            player.streamedPlayers_.set(player.poolID);
+            initPlayer(storage.get(res));
         }
         return res;
     }
@@ -798,10 +1127,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     PlayerPool(ICore& core) :
         core(core),
         playerRequestSpawnRPCHandler(*this),
+        playerRequestScoresAndPingsRPCHandler(*this),
+        playerGiveTakeDamageRPCHandler(*this),
+        playerInteriorChangeRPCHandler(*this),
+        playerDeathRPCHandler(*this),
         playerSpawnRPCHandler(*this),
         playerTextRPCHandler(*this),
         playerFootSyncHandler(*this),
         playerAimSyncHandler(*this),
+        playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
         playerVehicleSyncHandler(*this)
     {
@@ -831,9 +1165,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
+
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
     }
 
@@ -858,11 +1198,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 const bool isStreamedIn = player->isPlayerStreamedIn(*other);
                 if (!isStreamedIn && shouldBeStreamedIn) {
                     player->streamInPlayer(*other);
-                    eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *other, *player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
                     player->streamOutPlayer(*other);
-                    eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, *other, *player);
                 }
             }
         }
@@ -872,9 +1210,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestChatMessage>(&playerTextRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
+
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
