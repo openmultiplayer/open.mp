@@ -837,14 +837,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     return handler->onCommandText(peer, msg);
                 });
             if (send) {
-                if (msg == "/hi") {
-                    peer.setWeather(8);
-                    return true;
-                }
-                if (msg == "/get") {
-                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getWeather()));
-                    return true;
-                }
+                return true;
             }
 
             return false;
