@@ -505,6 +505,30 @@ namespace NetCode {
 			}
 		};
 
+		struct SetPlayerCameraPosition final : NetworkPacketBase<157> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetPlayerCameraLookAtPosition final : NetworkPacketBase<158> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
 		struct SetPlayerPositionFindZ final : NetworkPacketBase<13> {
 			Vector3 Pos;
 
