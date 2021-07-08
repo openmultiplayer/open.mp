@@ -7,13 +7,12 @@
 #include <events.hpp>
 #include <pool.hpp>
 #include "player_impl.hpp"
-#include "vehicle_impl.hpp"
 #include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/Vehicles/vehicles.hpp>
 
 struct Core final : public ICore, public PlayerEventHandler {
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
-    VehiclePool vehicles;
     JSON props;
     std::chrono::milliseconds sleepTimer;
     std::map<UUID, IPlugin*> plugins;
@@ -64,10 +63,6 @@ struct Core final : public ICore, public PlayerEventHandler {
         return players;
     }
 
-    IVehiclePool& getVehicles() override {
-        return vehicles;
-    }
-
     DynamicArray<INetwork*>& getNetworks() override {
         return networks;
     }
@@ -110,7 +105,8 @@ struct Core final : public ICore, public PlayerEventHandler {
         IClassesPlugin* classes = ICore::queryPlugin<IClassesPlugin>();
         playerInitRPC.SetSpawnInfoCount = classes ? classes->getClasses().entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
-        playerInitRPC.VehicleModels = NetworkArray<uint8_t>(vehicles.models());
+        IVehiclesPlugin* vehicles = ICore::queryPlugin<IVehiclesPlugin>();
+        playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>();
 
         player.sendRPC(playerInitRPC);
     }

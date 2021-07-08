@@ -625,6 +625,64 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 			}
 		};
+
+		struct StreamInVehicle final : NetworkPacketBase<164> {
+			int VehicleID;
+			int ModelID;
+			Vector3 Position;
+			float Angle;
+			uint8_t Colour1;
+			uint8_t Colour2;
+			float Health;
+			uint8_t	Interior;
+			uint32_t DoorDamage;
+			uint32_t PanelDamage;
+			uint8_t LightDamage;
+			uint8_t TyreDamage;
+			uint8_t Siren;
+			std::array<int, 14> Mods;
+			uint8_t Paintjob;
+			int32_t BodyColour1;
+			int32_t BodyColour2;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT32(ModelID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+				bs.write(NetworkBitStreamValue::UINT8(Colour1));
+				bs.write(NetworkBitStreamValue::UINT8(Colour2));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+				bs.write(NetworkBitStreamValue::UINT8(Interior));
+				bs.write(NetworkBitStreamValue::UINT32(DoorDamage));
+				bs.write(NetworkBitStreamValue::UINT32(PanelDamage));
+				bs.write(NetworkBitStreamValue::UINT8(LightDamage));
+				bs.write(NetworkBitStreamValue::UINT8(TyreDamage));
+				bs.write(NetworkBitStreamValue::UINT8(Siren));
+				for (int mod : Mods) {
+					bs.write(NetworkBitStreamValue::UINT8(mod ? uint8_t(mod - 999) : 0));
+				}
+				bs.write(NetworkBitStreamValue::UINT8(Paintjob));
+				bs.write(NetworkBitStreamValue::UINT32(BodyColour1));
+				bs.write(NetworkBitStreamValue::UINT32(BodyColour2));
+			}
+		};
+
+		struct StreamOutVehicle final : NetworkPacketBase<165> {
+			int VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {

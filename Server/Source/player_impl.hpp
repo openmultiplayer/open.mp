@@ -3,7 +3,6 @@
 #include <values.hpp>
 #include <types.hpp>
 #include <player.hpp>
-#include <vehicle.hpp>
 #include <network.hpp>
 #include <netcode.hpp>
 #include <events.hpp>
@@ -311,10 +310,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
         NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
         setPlayerFacingAngleRPC.Angle = rot_.ToEuler().z;
         sendRPC(setPlayerFacingAngleRPC);
-    }
-
-    IVehicle* getVehicle() const override {
-        return nullptr;
     }
 
     PlayerKeyData getKeyData() const override {
