@@ -18,6 +18,13 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
                 return false;
             }
 
+            self.eventDispatcher.dispatch(
+                &VehicleEventHandler::onPlayerEnterVehicle,
+                peer,
+                self.storage.get(onPlayerEnterVehicleRPC.VehicleID),
+                onPlayerEnterVehicleRPC.Passenger
+            );
+
             NetCode::RPC::EnterVehicle enterVehicleRPC;
             enterVehicleRPC.PlayerID = peer.getID();
             enterVehicleRPC.VehicleID = onPlayerEnterVehicleRPC.VehicleID;
@@ -36,6 +43,12 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
             if (!onPlayerExitVehicleRPC.read(bs) || !self.storage.valid(onPlayerExitVehicleRPC.VehicleID)) {
                 return false;
             }
+
+            self.eventDispatcher.dispatch(
+                &VehicleEventHandler::onPlayerExitVehicle,
+                peer,
+                self.storage.get(onPlayerExitVehicleRPC.VehicleID)
+            );
 
             NetCode::RPC::ExitVehicle exitVehicleRPC;
             exitVehicleRPC.PlayerID = peer.getID();
