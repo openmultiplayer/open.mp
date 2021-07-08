@@ -13,13 +13,16 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         PlayerEnterVehicleHandler(VehiclePlugin& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            NetCode::RPC::EnterVehicle enterVehicle;
-            if (!enterVehicle.read(bs) || !self.storage.valid(enterVehicle.VehicleID)) {
+            NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
+            if (!onPlayerEnterVehicleRPC.read(bs) || !self.storage.valid(onPlayerEnterVehicleRPC.VehicleID)) {
                 return false;
             }
 
-            enterVehicle.PlayerID = peer.getID();
-            self.core->getPlayers().broadcastRPC(enterVehicle, BroadcastStreamed, &peer, true);
+            NetCode::RPC::EnterVehicle enterVehicleRPC;
+            enterVehicleRPC.PlayerID = peer.getID();
+            enterVehicleRPC.VehicleID = onPlayerEnterVehicleRPC.VehicleID;
+            enterVehicleRPC.Passenger = onPlayerEnterVehicleRPC.Passenger;
+            self.core->getPlayers().broadcastRPC(enterVehicleRPC, BroadcastStreamed, &peer, true);
             return true;
         }
     } playerEnterVehicleHandler;
@@ -29,13 +32,15 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         PlayerExitVehicleHandler(VehiclePlugin& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            NetCode::RPC::ExitVehicle exitVehicle;
-            if (!exitVehicle.read(bs) || !self.storage.valid(exitVehicle.VehicleID)) {
+            NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
+            if (!onPlayerExitVehicleRPC.read(bs) || !self.storage.valid(onPlayerExitVehicleRPC.VehicleID)) {
                 return false;
             }
 
-            exitVehicle.PlayerID = peer.getID();
-            self.core->getPlayers().broadcastRPC(exitVehicle, BroadcastStreamed, &peer, true);
+            NetCode::RPC::ExitVehicle exitVehicleRPC;
+            exitVehicleRPC.PlayerID = peer.getID();
+            exitVehicleRPC.VehicleID = onPlayerExitVehicleRPC.VehicleID;
+            self.core->getPlayers().broadcastRPC(exitVehicleRPC, BroadcastStreamed, &peer, true);
             return true;
         }
     } playerExitVehicleHandler;
@@ -50,15 +55,15 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 	~VehiclePlugin()
 	{
         core->getEventDispatcher().removeEventHandler(this);
-        core->removePerRPCEventHandler<NetCode::RPC::EnterVehicle>(&playerEnterVehicleHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::ExitVehicle>(&playerExitVehicleHandler);
+        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
+        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
 	}
 
 	void onInit(ICore* core) override {
 		this->core = core;
         core->getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::EnterVehicle>(&playerEnterVehicleHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::ExitVehicle>(&playerExitVehicleHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
         claim(0);
 	}
     
@@ -134,7 +139,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
     }
 
     void onTick(uint64_t tick) override {
-        const float maxDist = 200.f * 200.f;
+        const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         for (IVehicle* const& vehicle : storage.entries()) {
             if (vehicle->getID() == 0) {
                 continue;
