@@ -967,15 +967,27 @@ namespace NetCode {
 			}
 		};
 
-		struct EnterVehicle final : NetworkPacketBase<26> {
-			int PlayerID;
-			uint16_t VehicleID;
+		struct OnPlayerEnterVehicle final : NetworkPacketBase<26> {
+			int VehicleID;
 			uint8_t Passenger;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
 				CHECKED_READ(Passenger, { NetworkBitStreamValueType::UINT8 });
 				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct EnterVehicle final : NetworkPacketBase<26> {
+			int PlayerID;
+			int VehicleID;
+			uint8_t Passenger;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -985,14 +997,24 @@ namespace NetCode {
 			}
 		};
 
-		struct ExitVehicle final : NetworkPacketBase<156> {
-			uint16_t PlayerID;
-			uint16_t VehicleID;
+		struct OnPlayerExitVehicle final : NetworkPacketBase<154> {
+			int VehicleID;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(PlayerID, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
 				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct ExitVehicle final : NetworkPacketBase<154> {
+			int PlayerID;
+			int VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
