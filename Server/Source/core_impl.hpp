@@ -106,7 +106,8 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.SetSpawnInfoCount = classes ? classes->getClasses().entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesPlugin* vehicles = ICore::queryPlugin<IVehiclesPlugin>();
-        playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>();
+        std::array<uint8_t, 212> emptyModel;
+        playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
 
         player.sendRPC(playerInitRPC);
     }

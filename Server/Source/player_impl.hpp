@@ -52,6 +52,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     unsigned interior_;
     unsigned wantedLevel_;
     int score_;
+    
 
     Player() :
         pool_(nullptr),
@@ -590,6 +591,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
+    IVehiclesPlugin* vehiclesPlugin = nullptr;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -966,12 +968,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::Packet::PlayerVehicleSync vehicleSync;
 
-            IVehiclesPlugin* vehicles = self.core.queryPlugin<IVehiclesPlugin>();
-            if (!vehicles || !vehicleSync.read(bs) || !vehicles->valid(vehicleSync.VehicleID)) {
+            if (!self.vehiclesPlugin || !vehicleSync.read(bs) || !self.vehiclesPlugin->valid(vehicleSync.VehicleID)) {
                 return false;
             }
 
-            Player& player = self.storage.get(peer.getID());
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
             player.pos_ = vehicleSync.Position;
             player.keys_.keys = vehicleSync.Keys;
             player.keys_.leftRight = vehicleSync.LeftRight;
@@ -981,8 +983,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.armedWeapon_ = vehicleSync.WeaponID;
             player.state_ = PlayerState_Driver;
 
-            if (vehicles->get(vehicleSync.VehicleID).updateFromSync(vehicleSync)) {
-                vehicleSync.PlayerID = peer.getID();
+            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync)) {
+                vehicleSync.PlayerID = pid;
 
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                     [&peer](PlayerUpdateEventHandler* handler) {
@@ -1175,6 +1177,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
+
+        vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
     }
 
     void onTick(uint64_t tick) override {
