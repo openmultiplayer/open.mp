@@ -42,7 +42,7 @@ elseif(UNIX)
 	endif()
 
 	set(CMAKE_C_FLAGS "-pthread")
-	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++")
+	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++ -ltbb")
 	
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)
