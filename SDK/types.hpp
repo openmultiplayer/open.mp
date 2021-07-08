@@ -32,3 +32,9 @@ template <typename Type>
 using OrderedSet = std::set<Type, std::less<Type>, OmpAllocator<Type>>;
 template <typename Type>
 using HashSet = std::unordered_set<Type, std::hash<Type>, std::equal_to<Type>, OmpAllocator<Type>>;
+
+template <typename T>
+inline String to_string(T conv) {
+	const std::string str = to_string(conv);
+	return String(str.data(), str.length());
+}
