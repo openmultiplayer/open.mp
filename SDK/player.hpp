@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <utility>
+#include <chrono>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
@@ -203,6 +205,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Give a weapon to the player
 	virtual void giveWeapon(WeaponSlotData weapon) = 0;
 
+	/// Set the player's ammo for a weapon
+	virtual void setWeaponAmmo(WeaponSlotData data) = 0;
+
 	/// Reset the player's weapons
 	virtual void resetWeapons() = 0;
 
@@ -212,11 +217,91 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's currently armed weapon
 	virtual uint32_t getArmedWeapon() const = 0;
 
+	/// Set the player's shop name
+	virtual void setShopName(const String& name) = 0;
+
+	/// Get the player's shop name
+	virtual const String& getShopName() const = 0;
+
+	/// Set the player's drunk level
+	virtual void setDrunkLevel(int level) = 0;
+
+	/// Get the player's drunk level
+	virtual int getDrunkLevel() const = 0;
+
 	/// Set the player's color
 	virtual void setColor(Color color) = 0;
 
 	/// Get the player's color
 	virtual const Color& getColor() const = 0;
+
+	/// Set whether the player is controllable
+	virtual void setControllable(bool controllable) = 0;
+
+	/// Get whether the player is controllable
+	virtual bool getControllable() const = 0;
+
+	/// Set the player's wanted level
+	virtual void setWantedLevel(unsigned level) = 0;
+
+	/// Get the player's wanted level
+	virtual unsigned getWantedLevel() const = 0;
+
+	/// Play a sound for the player at a position
+	/// @param sound The sound ID
+	/// @param pos The position to play at
+	virtual void playSound(uint32_t sound, Vector3 pos) = 0;
+
+	/// Get the sound that was last played
+	virtual uint32_t lastPlayedSound() const = 0;
+
+	/// Play an audio stream for the player
+	/// @param url The HTTP URL of the stream
+	/// @param[opt] usePos Whether to play in a radius at a specific position
+	/// @param pos The position to play at
+	/// @param distance The distance to play at
+	virtual void playAudio(const String& url, bool usePos = false, Vector3 pos = Vector3(0.f), float distance = 0.f) = 0;
+
+	/// Stop playing audio stream for the player
+	virtual void stopAudio() = 0;
+
+	/// Get the player's last played audio URL
+	virtual const String& lastPlayedAudio() const = 0;
+
+	/// Remove default map objects with a model in a radius at a specific position
+	/// @param model The object model to remove
+	/// @param pos The position to remove at
+	/// @param radius The radius to remove around
+	virtual void removeDefaultObjects(unsigned model, Vector3 pos, float radius) = 0;
+
+	/// Force class selection for the player
+	virtual void forceClassSelection() = 0;
+
+	/// Set the player's money
+	virtual void setMoney(int money) = 0;
+
+	/// Give money to the player
+	virtual void giveMoney(int money) = 0;
+
+	/// Reset the player's money to 0
+	virtual void resetMoney() = 0;
+
+	/// Get the player's money
+	virtual int getMoney() = 0;
+
+	/// Set the player's game time
+	/// @param hr The hours from 0 to 23
+	/// @param min The minutes from 0 to 59
+	virtual void setTime(std::chrono::hours hr, std::chrono::minutes min) = 0;
+
+	/// Get the player's game time
+	virtual std::pair<std::chrono::hours, std::chrono::minutes> getTime() const = 0;
+
+	/// Toggle the player's clock visibility
+	virtual void toggleClock(bool toggle) = 0;
+
+	/// Get whether the clock is visible for the player
+	virtual bool clockToggled() const = 0;
 
 	/// Set the transform applied to player rotation
 	virtual void setTransform(const GTAQuat& tm) = 0;
@@ -250,14 +335,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Stream in a player for the current player
 	/// @param other The player to stream in
-	virtual void streamInPlayer(const IPlayer& other) = 0;
+	virtual void streamInPlayer(IPlayer& other) = 0;
 
 	/// Check if a player is streamed in for the current player
 	virtual bool isPlayerStreamedIn(const IPlayer& other) const = 0;
 
 	/// Stream out a player for the current player
 	/// @param other The player to stream out
-	virtual void streamOutPlayer(const IPlayer& other) = 0;
+	virtual void streamOutPlayer(IPlayer& other) = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
@@ -306,6 +391,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's velocity
 	virtual Vector3 getVelocity() const = 0;
 
+	/// Set the player's interior
+	virtual void setInterior(unsigned interior) = 0;
+
+	/// Get the player's interior
+	virtual unsigned getInterior() const = 0;
+
 	/// Get the player's key data
 	virtual PlayerKeyData getKeyData() const = 0;
 
@@ -318,6 +409,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's bullet data
 	virtual const PlayerBulletData& getBulletData() const = 0;
+
+	/// Set the player's score
+	virtual void setScore(int score) = 0;
+
+	/// Get the player's score
+	virtual int getScore() const = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
@@ -347,6 +444,10 @@ struct PlayerEventHandler {
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
+	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
+	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
+	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 };
 
 struct PlayerUpdateEventHandler {
