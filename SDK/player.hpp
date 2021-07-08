@@ -199,7 +199,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
 	// Set the direction a player's camera looks at
-	virtual void setCameraLookAtPosition(Vector3 pos) = 0;
+	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;

@@ -54,6 +54,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     unsigned wantedLevel_;
     int score_;
     int weather_;
+    int cutType_;
     
 
     Player(const Player& other) = delete;
@@ -492,9 +493,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setCameraPosRPC);
     }
 
-    void setCameraLookAtPosition(Vector3 position) override {
+    void setCameraLookAt(Vector3 position, int cutType) override {
         cameraPos_ = position;
-        NetCode::RPC::SetPlayerCameraLookAtPosition setCameraLookAtPosRPC;
+        cutType_ = cutType;
+        NetCode::RPC::SetPlayerCameraLookAt setCameraLookAtPosRPC;
         setCameraLookAtPosRPC.Pos = position;
         sendRPC(setCameraLookAtPosRPC);
     }
