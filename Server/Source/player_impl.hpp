@@ -852,13 +852,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     return handler->onCommandText(peer, msg);
                 });
             if (send) {
-                if (msg == "/yo") {
-                    Vector3 vec(320.0,50.0,170.0);
-                    peer.setCameraPosition(vec);
-                    peer.setCameraLookAtPosition(vec);
-                    peer.sendClientMessage(0xFFFFFFFF, "confirm");
-                    return true;
-                }
+                return true;
             }
 
             return false;
