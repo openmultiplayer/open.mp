@@ -171,7 +171,6 @@ struct IPlayerData : public IUUIDProvider {
 	virtual void free() = 0;
 };
 
-struct IVehicle;
 struct IPlayerPool;
 
 /// The player's name status returned when updating their name
@@ -187,9 +186,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player pool that the player is stored in
 	virtual IPlayerPool* getPool() const = 0;
-
-	/// Get the player's current vehicle
-	virtual IVehicle* getVehicle() const = 0;
 
 	/// Get the player's game data
 	virtual const PlayerGameData& getGameData() const = 0;
