@@ -311,8 +311,12 @@ class NetworkPacketBase {
 
 public:
 	inline static int getID(ENetworkType type) {
-		assert(type < ENetworkType_End);
-		return ID[type];
+		if (type < ENetworkType_End) {
+			return ID[type];
+		}
+		else {
+			return INVALID_PACKET_ID;
+		}
 	}
 };
 
@@ -360,6 +364,9 @@ struct INetwork {
 
 	/// Get a new bit stream for writing
 	virtual INetworkBitStream& writeBitStream() = 0;
+
+	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
+	virtual unsigned getPing(const INetworkPeer& peer) = 0;
 };
 
 /// A plugin interface which allows for writing a network plugin
@@ -395,6 +402,10 @@ struct INetworkPeer {
 	virtual void setNetworkData(const NetworkData& data) = 0;
 
 	virtual const NetworkData& getNetworkData() const = 0;
+
+	unsigned getPing() const {
+		return getNetworkData().network->getPing(*this);
+	}
 
 	/// Attempt to send a packet to the network peer
 	/// @param bs The bit stream with data to send
