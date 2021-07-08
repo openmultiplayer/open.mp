@@ -877,5 +877,83 @@ namespace NetCode {
 				return true;
 			}
 		};
+		
+		struct PlayerVehicleSync final : NetworkPacketBase<200> {
+			int PlayerID;
+			uint16_t VehicleID;
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			GTAQuat Rotation;
+			Vector3 Position;
+			Vector3 Velocity;
+			float Health;
+			Vector2 PlayerHealthArmour;
+			uint8_t Siren;
+			uint8_t LandingGear;
+			uint16_t TrailerID;
+			bool HasTrailer;
+
+			union {
+				uint8_t AdditionalKeyWeapon;
+				struct {
+					uint8_t WeaponID : 6;
+					uint8_t AdditionalKey : 2;
+				};
+			};
+
+			union {
+				uint32_t AbysmalShit;
+				struct {
+					uint32_t			 HydraThrustAngle;
+					float				 TrainSpeed;
+				};
+			};
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Rotation, { NetworkBitStreamValueType::GTA_QUAT });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Health, { NetworkBitStreamValueType::FLOAT });
+				CHECKED_READ(PlayerHealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
+				CHECKED_READ(AdditionalKeyWeapon, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Siren, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(LandingGear, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(TrailerID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(AbysmalShit, { NetworkBitStreamValueType::UINT32 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
+				bs.write(NetworkBitStreamValue::UINT16(uint16_t(Health)));
+				bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(PlayerHealthArmour));
+				bs.write(NetworkBitStreamValue::UINT8(AdditionalKeyWeapon));
+				bs.write(NetworkBitStreamValue::BIT(Siren));
+				bs.write(NetworkBitStreamValue::BIT(LandingGear));
+
+				bs.write(NetworkBitStreamValue::BIT(AbysmalShit > 0));
+				if (AbysmalShit) {
+					bs.write(NetworkBitStreamValue::UINT32(AbysmalShit));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(HasTrailer));
+				if (HasTrailer) {
+					bs.write(NetworkBitStreamValue::UINT16(TrailerID));
+				}
+			}
+		};
 	}
 }
