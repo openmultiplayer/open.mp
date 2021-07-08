@@ -724,6 +724,32 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 			}
 		};
+
+		struct SetPlayerShopName final : NetworkPacketBase<33> {
+			NetworkString Name;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				String nameFixed(Name);
+				nameFixed.resize(0x20);
+				bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(nameFixed)));
+			}
+		};
+
+		struct SetPlayerDrunkLevel final : NetworkPacketBase<35> {
+			int32_t Level;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::INT32(Level));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
@@ -840,7 +866,7 @@ namespace NetCode {
 				return true;
 			}
 
-			bool write(INetworkBitStream& bs) const {
+			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
 				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
 				bs.write(NetworkBitStreamValue::UINT8(CamMode));
@@ -849,7 +875,6 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::FLOAT(AimZ));
 				bs.write(NetworkBitStreamValue::UINT8(ZoomWepState));
 				bs.write(NetworkBitStreamValue::UINT8(AspectRatio));
-				return true;
 			}
 		};
 
@@ -872,7 +897,7 @@ namespace NetCode {
 				return true;
 			}
 
-			bool write(INetworkBitStream& bs) const {
+			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
 				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
 				bs.write(NetworkBitStreamValue::UINT8(HitType));
@@ -881,7 +906,22 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::VEC3(HitPos));
 				bs.write(NetworkBitStreamValue::VEC3(Offset));
 				bs.write(NetworkBitStreamValue::UINT8(WeaponID));
+			}
+		};
+
+		struct PlayerStatsSync final : NetworkPacketBase<205> {
+			int32_t Money;
+			int32_t DrunkLevel;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(Money, { NetworkBitStreamValueType::INT32 });
+				CHECKED_READ(DrunkLevel, { NetworkBitStreamValueType::INT32 });
 				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::INT32(Money));
+				bs.write(NetworkBitStreamValue::INT32(DrunkLevel));
 			}
 		};
 	}
