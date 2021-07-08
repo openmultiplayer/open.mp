@@ -683,6 +683,40 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
 			}
 		};
+
+		struct EnterVehicle final : NetworkPacketBase<26> {
+			int PlayerID;
+			uint16_t VehicleID;
+			uint8_t Passenger;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Passenger, { NetworkBitStreamValueType::UINT8 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(Passenger));
+			}
+		};
+
+		struct ExitVehicle final : NetworkPacketBase<156> {
+			uint16_t PlayerID;
+			uint16_t VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(PlayerID, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {

@@ -40,6 +40,8 @@ struct VehicleEventHandler {
 	virtual void onStreamIn(IVehicle& vehicle, IPlayer& player) {}
 	virtual void onStreamOut(IVehicle& vehicle, IPlayer& player) {}
 	virtual void onDeath(int reason) {}
+	virtual void onPlayerEnterVehicle(IPlayer& player, IVehicle& vehicle, bool passenger) {}
+	virtual void onPlayerExitVehicle(IPlayer& player, IVehicle& vehicle) {}
 };
 
 /// A vehicle pool
