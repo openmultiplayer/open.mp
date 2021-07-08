@@ -109,9 +109,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 
     int claim() override {
         int res = storage.claim();
-        if (res != -1) {
-
-        }
         return res;
     }
 
