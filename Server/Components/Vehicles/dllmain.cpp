@@ -69,10 +69,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 		return "VehiclesPlugin";
 	}
 
-	UUID getUUID() override {
-		return 0x3f1f62ee9e22ab19;
-	}
-
 	std::array<uint8_t, MAX_VEHICLE_MODELS>& models() override {
 		return preloadModels;
 	}
