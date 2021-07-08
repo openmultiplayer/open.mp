@@ -11,6 +11,8 @@
 #include "exports.hpp"
 #include "gtaquat.hpp"
 
+constexpr int INVALID_PACKET_ID = -1;
+
 struct IPlayer;
 struct INetworkPeer;
 

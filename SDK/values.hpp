@@ -19,7 +19,6 @@ constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
 constexpr int MAX_PLAYER_NAME = 24;
 constexpr int MAX_ANIMATIONS = 1813;
 constexpr int MAX_SKILL_LEVEL = 999;
-constexpr int INVALID_PACKET_ID = -1;
 
 namespace Config {
 	static const std::map<std::string, std::variant<int, float, std::string>> defaults{
