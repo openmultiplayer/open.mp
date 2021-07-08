@@ -369,6 +369,15 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Send a standardly formatted chat message as the player to everyone
 	virtual void sendChatMessage(const String& message) const = 0;
 
+	// Send a command to server (Player)
+	virtual void sendCommand(const String& message) const = 0;
+
+	/// Set the player's weather
+	virtual void setWeather(int money) = 0;
+
+	/// Get the player's weather
+	virtual int getWeather() const = 0;
+
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
 	virtual void setFightingStyle(PlayerFightingStyle style) = 0;
@@ -447,6 +456,7 @@ struct PlayerEventHandler {
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
+	virtual bool onCommandText(IPlayer& player, String message) { return true; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
