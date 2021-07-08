@@ -625,6 +625,105 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 			}
 		};
+
+		struct TogglePlayerControllable final : NetworkPacketBase<15> {
+			bool Enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Enable));
+			}
+		};
+
+		struct PlayerPlaySound final : NetworkPacketBase<16> {
+			uint32_t SoundID;
+			Vector3 Position;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(SoundID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+			}
+		};
+
+		struct GivePlayerMoney final : NetworkPacketBase<18> {
+			int32_t Money;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::INT32(Money));
+			}
+		};
+
+		struct ResetPlayerMoney final : NetworkPacketBase<20> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct SetPlayerTime final : NetworkPacketBase<29> {
+			uint8_t Hour;
+			uint8_t Minute;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Hour));
+				bs.write(NetworkBitStreamValue::UINT8(Minute));
+			}
+		};
+
+		struct TogglePlayerClock final : NetworkPacketBase<30> {
+			bool Toggle;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Toggle));
+			}
+		};
+
+		struct OnPlayerDeath final : NetworkPacketBase<53> {
+			uint8_t Reason;
+			uint16_t KillerID;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(Reason, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(KillerID, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct PlayerDeath final : NetworkPacketBase<166> {
+			int PlayerID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
