@@ -5,7 +5,6 @@
 #include "events.hpp"
 #include "network.hpp"
 #include "player.hpp"
-#include "vehicle.hpp"
 #include "plugin.hpp"
 
 /// An event handler for core events
@@ -24,9 +23,6 @@ struct ICore {
 
 	/// Get the player pool
 	virtual IPlayerPool& getPlayers() = 0;
-
-	/// Get the vehicle pool
-	virtual IVehiclePool& getVehicles() = 0;
 
 	/// Get the core event dispatcher
 	virtual IEventDispatcher<CoreEventHandler>& getEventDispatcher() = 0;
@@ -56,9 +52,9 @@ struct ICore {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		DynamicArray<INetwork*> networks = getNetworks();
 		for (INetwork* network : networks) {
-			ENetworkType type = network->getNetworkType();
-			if (type < ENetworkType_End) {
-				network->getPerRPCInOutEventDispatcher().addEventHandler(handler, Packet::getID(network->getNetworkType()));
+			const int id = Packet::getID(network->getNetworkType());
+			if (id != INVALID_PACKET_ID) {
+				network->getPerRPCInOutEventDispatcher().addEventHandler(handler, id);
 			}
 		}
 	}
@@ -69,9 +65,9 @@ struct ICore {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		DynamicArray<INetwork*> networks = getNetworks();
 		for (INetwork* network : networks) {
-			ENetworkType type = network->getNetworkType();
-			if (type < ENetworkType_End) {
-				network->getPerPacketInOutEventDispatcher().addEventHandler(handler, Packet::getID(network->getNetworkType()));
+			const int id = Packet::getID(network->getNetworkType());
+			if (id != INVALID_PACKET_ID) {
+				network->getPerPacketInOutEventDispatcher().addEventHandler(handler, id);
 			}
 		}
 	}
@@ -82,9 +78,9 @@ struct ICore {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		DynamicArray<INetwork*>& networks = getNetworks();
 		for (INetwork* network : networks) {
-			ENetworkType type = network->getNetworkType();
-			if (type < ENetworkType_End) {
-				network->getPerRPCInOutEventDispatcher().removeEventHandler(handler, Packet::getID(network->getNetworkType()));
+			const int id = Packet::getID(network->getNetworkType());
+			if (id != INVALID_PACKET_ID) {
+				network->getPerRPCInOutEventDispatcher().removeEventHandler(handler, id);
 			}
 		}
 	}
@@ -95,9 +91,9 @@ struct ICore {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		DynamicArray<INetwork*>& networks = getNetworks();
 		for (INetwork* network : networks) {
-			ENetworkType type = network->getNetworkType();
-			if (type < ENetworkType_End) {
-				network->getPerPacketInOutEventDispatcher().removeEventHandler(handler, Packet::getID(network->getNetworkType()));
+			const int id = Packet::getID(network->getNetworkType());
+			if (id != INVALID_PACKET_ID) {
+				network->getPerPacketInOutEventDispatcher().removeEventHandler(handler, id);
 			}
 		}
 	}
