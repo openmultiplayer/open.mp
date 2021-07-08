@@ -68,7 +68,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
 
     void streamInForPlayer(const IPlayer& player) override;
     void streamOutForPlayer(const IPlayer& player) override;
-    bool updateFromSync(NetCode::Packet::PlayerVehicleSync& vehicleSync) override;
+    bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync) override;
 
     void setColour(int col1, int col2) override {
         bodyColour1 = col1;

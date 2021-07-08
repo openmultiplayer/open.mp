@@ -31,11 +31,14 @@ struct IVehicle : public IEntity {
 	/// Streams out the vehicle for a specific player
 	virtual void streamOutForPlayer(const IPlayer& player) = 0;
 
+	/// Set the vehicle's colour
 	virtual void setColour(int col1, int col2) = 0;
 
+	/// Set the vehicle's health
 	virtual void setHealth(float Health) = 0;
 
-	virtual bool updateFromSync(NetCode::Packet::PlayerVehicleSync& vehicleSync) = 0;
+	/// Update the vehicle from a sync packet
+	virtual bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync) = 0;
 };
 
 /// A vehicle event handler

@@ -29,7 +29,7 @@ void Vehicle::streamOutForPlayer(const IPlayer& player) {
     streamedPlayers_.set(player.getID(), false);
 }
 
-bool Vehicle::updateFromSync(NetCode::Packet::PlayerVehicleSync& vehicleSync) {
+bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync) {
     pos = vehicleSync.Position;
     rot = vehicleSync.Rotation;
     health = vehicleSync.Health;
