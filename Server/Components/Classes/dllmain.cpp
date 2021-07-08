@@ -6,14 +6,10 @@ typedef DefaultPool<PlayerClass, PlayerClass, MAX_CLASSES> ClassPool;
 static const struct DefaultClass final : public PlayerClass {
     DefaultClass() {
         team = 255;
-        skin = 10;
+        skin = 0;
         spawn = Vector3(0.0f, 0.0f, 3.1279f);
         angle = 0.f;
         weapons.fill(WeaponSlotData{ 0, 0 });
-        weapons[0] = WeaponSlotData{ 1, 0 };
-        weapons[1] = WeaponSlotData{ 4, 0 };
-        weapons[2] = WeaponSlotData{ 24, 50 };
-        weapons[3] = WeaponSlotData{ 26, 100 };
     }
 } defClass;
 
