@@ -202,8 +202,11 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Set the player's camera position
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
-	// Set the player's camera position
+	// Set the direction a player's camera looks at
 	virtual void setCameraLookAtPosition(Vector3 pos) = 0;
+
+	/// Sets the camera to a place behind the player
+	virtual void setCameraBehind() = 0;
 
 	/// Set the player's name
 	/// @return The player's new name status
