@@ -199,6 +199,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's position with the proper Z coordinate for the map
 	virtual void setPositionFindZ(Vector3 pos) = 0;
 
+	// Set the player's camera position
+	virtual void setCameraPosition(Vector3 pos) = 0;
+
+	// Set the player's camera position
+	virtual void setCameraLookAtPosition(Vector3 pos) = 0;
+
 	/// Set the player's name
 	/// @return The player's new name status
 	virtual EPlayerNameStatus setName(const String& name) = 0;
