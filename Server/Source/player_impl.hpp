@@ -19,6 +19,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     NetworkData netData_;
     PlayerGameData gameData_;
     Vector3 pos_;
+    Vector3 cameraPos_;
     GTAQuat rot_;
     String name_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
@@ -473,6 +474,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setPlayerPosRPC);
     }
 
+    void setCameraPosition(Vector3 position) override {
+        cameraPos_ = position;
+        NetCode::RPC::SetPlayerCameraPosition setCameraPosition;
+        setCameraPosition.Pos = position;
+        sendRPC(setCameraPosition);
+    }
+
+    void setCameraLookAtPosition(Vector3 position) override {
+        cameraPos_ = position;
+        NetCode::RPC::SetPlayerCameraLookAtPosition setCameraLookAtPosition;
+        setCameraLookAtPosition.Pos = position;
+        sendRPC(setCameraLookAtPosition);
+    }
+
     void setPositionFindZ(Vector3 position) override {
         pos_ = position;
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
@@ -837,7 +852,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     return handler->onCommandText(peer, msg);
                 });
             if (send) {
-                return true;
+                if (msg == "/yo") {
+                    Vector3 vec(320.0,50.0,170.0);
+                    peer.setCameraPosition(vec);
+                    peer.setCameraLookAtPosition(vec);
+                    peer.sendClientMessage(0xFFFFFFFF, "confirm");
+                    return true;
+                }
             }
 
             return false;
