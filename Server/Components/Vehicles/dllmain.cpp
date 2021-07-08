@@ -106,30 +106,70 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
 };
 
 struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
-	ICore* c;
+	ICore* core;
     PoolStorage<Vehicle, IVehicle, VehiclePlugin::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
 	std::array<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
 
-	VehiclePlugin()
+    struct PlayerEnterVehicleHandler : public SingleNetworkInOutEventHandler {
+        VehiclePlugin& self;
+        PlayerEnterVehicleHandler(VehiclePlugin& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::EnterVehicle enterVehicle;
+            if (!enterVehicle.read(bs)) {
+                return false;
+            }
+            else if (!self.storage.valid(enterVehicle.VehicleID)) {
+                return false;
+            }
+
+            enterVehicle.PlayerID = peer.getID();
+            self.core->getPlayers().broadcastRPC(enterVehicle, BroadcastStreamed, &peer, true);
+            return true;
+        }
+    } playerEnterVehicleHandler;
+
+    struct PlayerExitVehicleHandler : public SingleNetworkInOutEventHandler {
+        VehiclePlugin& self;
+        PlayerExitVehicleHandler(VehiclePlugin& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::ExitVehicle exitVehicle;
+            if (!exitVehicle.read(bs) || self.storage.valid(exitVehicle.VehicleID)) {
+                return false;
+            }
+
+            exitVehicle.PlayerID = peer.getID();
+            self.core->getPlayers().broadcastRPC(exitVehicle, BroadcastStreamed, &peer, true);
+            return true;
+        }
+    } playerExitVehicleHandler;
+
+    VehiclePlugin() :
+        playerEnterVehicleHandler(*this),
+        playerExitVehicleHandler(*this)
 	{
 		preloadModels.fill(0);
 	}
 
 	~VehiclePlugin()
 	{
-        c->getEventDispatcher().removeEventHandler(this);
+        core->getEventDispatcher().removeEventHandler(this);
+        core->removePerRPCEventHandler<NetCode::RPC::EnterVehicle>(&playerEnterVehicleHandler);
+        core->removePerRPCEventHandler<NetCode::RPC::ExitVehicle>(&playerExitVehicleHandler);
 	}
 
 	void onInit(ICore* core) override {
-		c = core;
-        c->getEventDispatcher().addEventHandler(this);
+		this->core = core;
+        core->getEventDispatcher().addEventHandler(this);
+        core->addPerRPCEventHandler<NetCode::RPC::EnterVehicle>(&playerEnterVehicleHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::ExitVehicle>(&playerExitVehicleHandler);
         claim(0);
         create(411, Vector3(0.0f, 5.0f, 3.5f), 0, 0, 0, -1);
 	}
     
     void onInit() override {
-
     }
 
 	const char* pluginName() override {
@@ -145,8 +185,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 	}
 
     IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = 0, int colour2 = 0, int respawnDelay = -1) override {
-        VehicleSpawnData data = VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay };
-        return create(data);
+        return create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay });
     }
 
     IVehicle* create(VehicleSpawnData data) override {
@@ -189,6 +228,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
     }
 
     bool valid(int index) override {
+        if (index == 0) {
+            return false;
+        }
         return storage.valid(index);
     }
 
@@ -214,7 +256,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 
             const int vw = vehicle->getVirtualWorld();
             const Vector3 pos = vehicle->getPosition();
-            for (IPlayer* const& player : c->getPlayers().entries()) {
+            for (IPlayer* const& player : core->getPlayers().entries()) {
                 const PlayerState state = player->getState();
                 const Vector2 dist2D = pos - player->getPosition();
                 const bool shouldBeStreamedIn =
