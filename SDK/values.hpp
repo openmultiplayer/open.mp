@@ -23,7 +23,7 @@ constexpr int INVALID_VEHICLE_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
 
 namespace Config {
-	static const std::map<std::string, std::variant<int, float, std::string>> defaults{
+	static const std::map<std::string, std::variant<int, float, std::string, std::vector<std::string>>> defaults{
 		{ "max_players", 50 },
 		{ "sleep", 5 },
 		{ "port", 7777 },
@@ -50,12 +50,14 @@ namespace Config {
 		{ "weapon_rate", 30 },
 		{ "multiplier", 10 },
 		{ "lag_compensation", true },
-		{ "server_name", "open.mp server" }
+		{ "server_name", "open.mp server" },
+		{ "entry_file", "test.amx" },
+		{ "side_scripts", std::vector<std::string>({}) }
 	};
 
 	/// Get a config option as either int, float or std::string
 	template <typename T>
-	T getOption(const JSON& config, std::string option) {
+	T getOption(const JSON & config, std::string option) {
 		auto it = defaults.find(option);
 		if (config.is_null() || config.is_discarded()) {
 			return std::get<T>(it->second);

@@ -1,5 +1,5 @@
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	add_subdirectory(PawnPlugin)
+	add_subdirectory(Pawn)
 endif()
 add_subdirectory(PacketTracker)
 add_subdirectory(PlayerDataProvider)
