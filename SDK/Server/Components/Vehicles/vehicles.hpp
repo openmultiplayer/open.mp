@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sdk.hpp>
+#include <netcode.hpp>
 
 struct IPlayer;
 
@@ -30,9 +31,11 @@ struct IVehicle : public IEntity {
 	/// Streams out the vehicle for a specific player
 	virtual void streamOutForPlayer(const IPlayer& player) = 0;
 
-	virtual void setBodyColour(int col1, int col2) = 0;
+	virtual void setColour(int col1, int col2) = 0;
 
 	virtual void setHealth(float Health) = 0;
+
+	virtual bool updateFromSync(NetCode::Packet::PlayerVehicleSync& vehicleSync) = 0;
 };
 
 /// A vehicle event handler

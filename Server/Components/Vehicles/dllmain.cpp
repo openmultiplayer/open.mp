@@ -1,109 +1,6 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
-
-struct Vehicle final : public IVehicle, public PoolIDProvider {
-    Vector3 pos;
-    GTAQuat rot;
-    std::array<IPlayer*, MAX_SEATS> passengers;
-    int virtualWorld_ = 0;
-    VehicleSpawnData spawnData;
-    std::bitset<IVehiclesPlugin::Cnt> streamedPlayers_;
-    std::array<int, 14> mods;
-    float health = 1000.0f;
-    uint8_t interior = 0;
-    uint32_t doorDamage = 0;
-    uint32_t panelDamage = 0;
-    uint8_t lightDamage = 0;
-    uint8_t tyreDamage = 0;
-    uint8_t siren = 0;
-    uint8_t paintJob;
-    int32_t bodyColour1;
-    int32_t bodyColour2;
-
-    Vehicle() {
-        mods.fill(0);
-    }
-
-    virtual int getVirtualWorld() const override {
-        return virtualWorld_;
-    }
-
-    virtual void setVirtualWorld(int vw) override {
-        virtualWorld_ = vw;
-    }
-
-    int getID() const override {
-        return poolID;
-    }
-
-    Vector3 getPosition() const override {
-        return pos;
-    }
-
-    void setPosition(Vector3 position) override {
-        pos = position;
-    }
-
-    GTAQuat getRotation() const override {
-        return rot;
-    }
-
-    void setRotation(GTAQuat rotation) override {
-        rot = rotation;
-    }
-
-    const std::array<IPlayer*, MAX_SEATS>& getPassengers() override {
-        return passengers;
-    }
-
-    void setSpawnData(VehicleSpawnData data) override {
-        spawnData = data;
-        pos = spawnData.position;
-        rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
-    }
-
-    bool isStreamedInForPlayer(const IPlayer& player) const override {
-        return streamedPlayers_.test(player.getID());
-    }
-
-    void streamInForPlayer(const IPlayer& player) override {
-        NetCode::RPC::StreamInVehicle streamIn;
-        streamIn.VehicleID = getID();
-        streamIn.ModelID = spawnData.modelID;
-        streamIn.Position = pos;
-        streamIn.Angle = rot.ToEuler().z;
-        streamIn.Colour1 = spawnData.colour1;
-        streamIn.Colour2 = spawnData.colour2;
-        streamIn.Health = health;
-        streamIn.Interior = interior;
-        streamIn.DoorDamage = doorDamage;
-        streamIn.LightDamage = lightDamage;
-        streamIn.TyreDamage = tyreDamage;
-        streamIn.Siren = siren;
-        streamIn.Mods = mods;
-        streamIn.Paintjob = paintJob;
-        streamIn.BodyColour1 = bodyColour1;
-        streamIn.BodyColour2 = bodyColour2;
-        player.sendRPC(streamIn);
-        streamedPlayers_.set(player.getID());
-    }
-
-    void streamOutForPlayer(const IPlayer& player) override {
-        NetCode::RPC::StreamOutVehicle streamOut;
-        streamOut.VehicleID = getID();
-        player.sendRPC(streamOut);
-        streamedPlayers_.set(player.getID(), false);
-    }
-
-    void setBodyColour(int col1, int col2) override {
-        bodyColour1 = col1;
-        bodyColour2 = col2;
-    }
-
-    void setHealth(float Health) override {
-        health = Health;
-    }
-};
+#include "vehicle.hpp"
 
 struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 	ICore* core;
@@ -117,10 +14,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::EnterVehicle enterVehicle;
-            if (!enterVehicle.read(bs)) {
-                return false;
-            }
-            else if (!self.storage.valid(enterVehicle.VehicleID)) {
+            if (!enterVehicle.read(bs) || !self.storage.valid(enterVehicle.VehicleID)) {
                 return false;
             }
 
@@ -136,7 +30,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::ExitVehicle exitVehicle;
-            if (!exitVehicle.read(bs) || self.storage.valid(exitVehicle.VehicleID)) {
+            if (!exitVehicle.read(bs) || !self.storage.valid(exitVehicle.VehicleID)) {
                 return false;
             }
 
@@ -166,7 +60,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         core->addPerRPCEventHandler<NetCode::RPC::EnterVehicle>(&playerEnterVehicleHandler);
         core->addPerRPCEventHandler<NetCode::RPC::ExitVehicle>(&playerExitVehicleHandler);
         claim(0);
-        create(411, Vector3(0.0f, 5.0f, 3.5f), 0, 0, 0, -1);
 	}
     
     void onInit() override {
