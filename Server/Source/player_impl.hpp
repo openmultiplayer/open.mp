@@ -45,6 +45,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
     std::chrono::minutes time_;
     bool clockToggled_;
     PlayerBulletData bulletData_;
+    String shopName_;
+    int drunkLevel_;
 
     Player() :
         pool_(nullptr),
@@ -58,7 +60,9 @@ struct Player final : public IPlayer, public PoolIDProvider {
         lastPlayedSound_(0),
         money_(0),
         time_(0),
-        clockToggled_(false)
+        clockToggled_(false),
+        shopName_(),
+        drunkLevel_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(0);
@@ -66,6 +70,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     PlayerState getState() const override {
         return state_;
+    }
+
+    void setDrunkLevel(int level) override {
+        drunkLevel_ = level;
+        NetCode::RPC::SetPlayerDrunkLevel setPlayerDrunkLevelRPC;
+        setPlayerDrunkLevelRPC.Level = level;
+        sendRPC(setPlayerDrunkLevelRPC);
+    }
+
+    int getDrunkLevel() const override {
+        return drunkLevel_;
     }
 
     void toggleClock(bool toggle) override {
@@ -444,6 +459,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return armedWeapon_;
     }
 
+    void setShopName(const String& name) override {
+        shopName_ = name;
+        NetCode::RPC::SetPlayerShopName setPlayerShopNameRPC;
+        setPlayerShopNameRPC.Name = name;
+        sendRPC(setPlayerShopNameRPC);
+    }
+
+    const String& getShopName() const override {
+        return shopName_;
+    }
+
     void sendClientMessage(const Color& colour, const String& message) const override {
         NetCode::RPC::SendClientMessage sendClientMessage;
         sendClientMessage.colour = colour;
@@ -693,6 +719,24 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerAimSyncHandler;
 
+    struct PlayerStatsSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerStatsSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerStatsSync statsSync;
+            if (!statsSync.read(bs)) {
+                return false;
+            }
+
+            Player& player = self.storage.get(peer.getID());
+            player.money_ = statsSync.Money;
+            player.drunkLevel_ = statsSync.DrunkLevel;
+
+            return true;
+        }
+    } playerStatsSyncHandler;
+
     struct PlayerBulletSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
         PlayerBulletSyncHandler(PlayerPool& self) : self(self) {}
@@ -892,6 +936,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerTextRPCHandler(*this),
         playerFootSyncHandler(*this),
         playerAimSyncHandler(*this),
+        playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
@@ -924,6 +969,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
     }
 
     void onTick(uint64_t tick) override {
@@ -965,6 +1011,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
