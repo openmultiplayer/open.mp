@@ -147,7 +147,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
     }
 
     /// Get a set of all the available objects
-    const OrderedSet<IVehicle*>& entries() const override {
+    const DynamicArray<IVehicle*>& entries() const override {
         return storage.entries();
     }
 
