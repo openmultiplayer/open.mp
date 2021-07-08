@@ -5,6 +5,7 @@
 #include <array>
 #include <type_traits>
 #include <cassert>
+#include <execution>
 #include "types.hpp"
 
 /* Interfaces, to be passed around */
@@ -33,7 +34,7 @@ struct IPool {
 	virtual bool release(int index) = 0;
 
 	/// Get a set of all the available objects
-	virtual const OrderedSet<T*>& entries() const = 0;
+	virtual const DynamicArray<T*>& entries() const = 0;
 };
 
 /// A pool with an event dispatcher build in
@@ -52,6 +53,48 @@ struct IEventDispatcherPool {
 
 /* Implementation, NOT to be passed around */
 
+template <typename T, size_t Size>
+struct UniqueIDArray {
+    int findFreeIndex() const {
+        for (int i = 0; i < Size; ++i) {
+            if (!valid_[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    void add(int index, T* data) {
+        assert(index < Size);
+        valid_.set(index);
+        entries_.push_back(data);
+    }
+
+    bool remove(int index, T* data) {
+        const bool res = valid_.test(index);
+        if (res) {
+            entries_.erase(std::find(std::execution::par, entries_.begin(), entries_.end(), data));
+            valid_.reset(index);
+        }
+        return res;
+    }
+
+    bool valid(int index) const {
+        if (index >= Size) {
+            return false;
+        }
+        return valid_.test(index);
+    }
+
+    const DynamicArray<T*>& entries() const {
+        return entries_;
+    }
+
+private:
+    std::bitset<Size> valid_;
+    DynamicArray<T*> entries_;
+};
+
 struct PoolIDProvider {
     int poolID;
 };
@@ -59,20 +102,14 @@ struct PoolIDProvider {
 template <typename Type, typename Interface, int Count>
 struct PoolStorage final {
     int findFreeIndex() {
-        for (int i = 0; i < Count; ++i) {
-            if (!taken_[i]) {
-                return i;
-            }
-        }
-        return -1;
+        return allocated_.findFreeIndex();
     }
 
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            pool_[freeIdx] = Type();
-            taken_.set(freeIdx);
-            entries_.insert(&pool_[freeIdx]);
+            new (&pool_[freeIdx]) Type();
+            allocated_.add(freeIdx, &pool_[freeIdx]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 pool_[freeIdx].poolID = freeIdx;
             }
@@ -84,8 +121,7 @@ struct PoolStorage final {
         assert(hint < Count);
         if (!valid(hint)) {
             new (&pool_[hint]) Type();
-            taken_.set(hint);
-            entries_.insert(&pool_[hint]);
+            allocated_.add(hint, &pool_[hint]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 pool_[hint].poolID = hint;
             }
@@ -97,10 +133,7 @@ struct PoolStorage final {
     }
 
     bool valid(int index) {
-        if (index >= Count) {
-            return false;
-        }
-        return taken_.test(index);
+        return allocated_.valid(index);
     }
 
     Type& get(int index) {
@@ -110,14 +143,13 @@ struct PoolStorage final {
 
     bool release(int index) {
         assert(index < Count);
-        bool res = entries_.erase(&pool_[index]) != 0;
-        taken_.reset(index);
+        bool res = allocated_.remove(index, &pool_[index]);
         pool_[index].~Type();
         return res;
     }
 
-    const OrderedSet<Interface*>& entries() const {
-        return entries_;
+    const DynamicArray<Interface*>& entries() const {
+        return allocated_.entries();
     }
 
     inline Type& internal(int index) {
@@ -127,8 +159,7 @@ struct PoolStorage final {
 
 private:
     std::array<Type, Count> pool_;
-    std::bitset<Count> taken_;
-    OrderedSet<Interface*> entries_; // Should be sorted by ID by default because it points to contiguous memory
+    UniqueIDArray<Interface, Count> allocated_;
 };
 
 template <typename Type, typename Interface, int Count>
@@ -158,7 +189,7 @@ struct DefaultPool final : public IPool<Interface, Count> {
         return storage.release(index);
     }
 
-    const OrderedSet<Interface*>& entries() const override {
+    const DynamicArray<Interface*>& entries() const override {
         return storage.entries();
     }
 };
