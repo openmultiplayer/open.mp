@@ -10,7 +10,6 @@ static const struct DefaultClass final : public PlayerClass {
         spawn = Vector3(0.0f, 0.0f, 3.1279f);
         angle = 0.f;
         weapons.fill(WeaponSlotData{ 0, 0 });
-        weapons[WeaponSlotData{ 22, 50 }.slot()] = WeaponSlotData{ 22, 50 };
     }
 } defClass;
 
