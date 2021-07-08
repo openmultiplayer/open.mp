@@ -529,6 +529,15 @@ namespace NetCode {
 			}
 		};
 
+		struct SetPlayerCameraBehindPlayer final : NetworkPacketBase<162> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
 		struct SetPlayerPositionFindZ final : NetworkPacketBase<13> {
 			Vector3 Pos;
 

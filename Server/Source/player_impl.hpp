@@ -476,16 +476,21 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     void setCameraPosition(Vector3 position) override {
         cameraPos_ = position;
-        NetCode::RPC::SetPlayerCameraPosition setCameraPosition;
-        setCameraPosition.Pos = position;
-        sendRPC(setCameraPosition);
+        NetCode::RPC::SetPlayerCameraPosition setCameraPosRPC;
+        setCameraPosRPC.Pos = position;
+        sendRPC(setCameraPosRPC);
     }
 
     void setCameraLookAtPosition(Vector3 position) override {
         cameraPos_ = position;
-        NetCode::RPC::SetPlayerCameraLookAtPosition setCameraLookAtPosition;
-        setCameraLookAtPosition.Pos = position;
-        sendRPC(setCameraLookAtPosition);
+        NetCode::RPC::SetPlayerCameraLookAtPosition setCameraLookAtPosRPC;
+        setCameraLookAtPosRPC.Pos = position;
+        sendRPC(setCameraLookAtPosRPC);
+    }
+
+    void setCameraBehind() override {
+        NetCode::RPC::SetPlayerCameraBehindPlayer setPlayerCameraBehindPlayerRPC;
+        sendRPC(setPlayerCameraBehindPlayerRPC);
     }
 
     void setPositionFindZ(Vector3 position) override {
