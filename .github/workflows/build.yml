@@ -68,8 +68,9 @@ jobs:
 
     - name: Install gcc/g++-multilib for linux & tbb & set clang
       run: |
-        sudo apt-get update
-        sudo apt install -y gcc-multilib g++-multilib clang libtbb-dev
+        sudo dpkg --add-architecture i386
+        sudo apt-get update -y
+        sudo apt install -y gcc-multilib g++-multilib clang libtbb-dev libtbb-dev:i386
         echo "CC=/usr/bin/clang" >> $GITHUB_ENV
         echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
     - name: Install latest conan
