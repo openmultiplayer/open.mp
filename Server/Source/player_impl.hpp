@@ -1192,7 +1192,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     void onTick(uint64_t tick) override {
-        const float maxDist = 200.f * 200.f;
+        const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         for (IPlayer* const& player : storage.entries()) {
             const int vw = player->getVirtualWorld();
             const Vector3 pos = player->getPosition();
