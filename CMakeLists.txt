@@ -44,6 +44,8 @@ elseif(UNIX)
 	set(CMAKE_C_FLAGS "-pthread")
 	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++")
 	
+	link_libraries(tbb)
+
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)
 		set(CMAKE_CXX_FLAGS "-march=${CROSS_BUILD_ARCH} ${CMAKE_CXX_FLAGS}")
