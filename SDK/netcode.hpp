@@ -441,6 +441,44 @@ namespace NetCode {
 			}
 		};
 
+		struct PlayerRequestCommandMessage final : NetworkPacketBase<50> {
+			NetworkString message;
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ(message, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_32 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct PlayerCommandMessage final : NetworkPacketBase<50> {
+			NetworkString message;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(message));
+			}
+		};
+
+
+		struct SetPlayerWeather final : NetworkPacketBase<152> {
+			uint8_t WeatherID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(WeatherID));
+			}
+		};
+
+
+
 		struct SetPlayerColor final : NetworkPacketBase<72> {
 			int PlayerID;
 			Color Colour;

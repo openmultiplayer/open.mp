@@ -52,6 +52,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     unsigned interior_;
     unsigned wantedLevel_;
     int score_;
+    int weather_;
 
     Player() :
         pool_(nullptr),
@@ -91,6 +92,23 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     int getDrunkLevel() const override {
         return drunkLevel_;
+    }
+
+    void sendCommand(const String& message) const override {
+        NetCode::RPC::PlayerCommandMessage sendCommand;
+        sendCommand.message = message;
+        sendRPC(sendCommand);
+    }
+
+    void setWeather(int WeatherID) override {
+        weather_ = WeatherID;
+        NetCode::RPC::SetPlayerWeather setPlayerWeatherRPC;
+        setPlayerWeatherRPC.WeatherID = WeatherID;
+        sendRPC(setPlayerWeatherRPC);
+    }
+
+    int getWeather() const override {
+        return weather_;
     }
 
     void toggleClock(bool toggle) override {
@@ -803,6 +821,36 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return true;
         }
     } playerTextRPCHandler;
+
+    struct PlayerCommandRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerCommandRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::PlayerRequestCommandMessage playerRequestCommandMessage;
+            if (!playerRequestCommandMessage.read(bs)) {
+                return false;
+            }
+            const String msg = playerRequestCommandMessage.message;
+            bool send = self.eventDispatcher.anyTrue(
+                [&peer, &msg](PlayerEventHandler* handler) {
+                    return handler->onCommandText(peer, msg);
+                });
+            if (send) {
+                if (msg == "/hi") {
+                    peer.setWeather(8);
+                    return true;
+                }
+                if (msg == "/get") {
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getWeather()));
+                    return true;
+                }
+            }
+
+            return false;
+
+        }
+    } playerCommandRPCHandler;
     
     struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -1099,6 +1147,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerDeathRPCHandler(*this),
         playerSpawnRPCHandler(*this),
         playerTextRPCHandler(*this),
+        playerCommandRPCHandler(*this),
         playerFootSyncHandler(*this),
         playerAimSyncHandler(*this),
         playerStatsSyncHandler(*this),
@@ -1130,6 +1179,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::PlayerCommandMessage>(&playerCommandRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
@@ -1174,6 +1224,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestChatMessage>(&playerTextRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestCommandMessage>(&playerCommandRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
