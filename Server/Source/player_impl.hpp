@@ -24,7 +24,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     std::unordered_map<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Color color_;
-    std::bitset<IPlayerPool::Cnt> streamedPlayers_;
+    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
     int virtualWorld_;
     int team_;
     int skin_;
@@ -52,6 +52,12 @@ struct Player final : public IPlayer, public PoolIDProvider {
     unsigned interior_;
     unsigned wantedLevel_;
     int score_;
+
+    Player(const Player& other) = delete;
+    Player(Player&& other) = delete;
+
+    Player& operator=(const Player& other) = delete;
+    Player& operator=(Player&& other) = delete;
 
     Player() :
         pool_(nullptr),
@@ -368,7 +374,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     void streamInPlayer(IPlayer& other) override {
         const int pid = other.getID();
-        streamedPlayers_.set(pid);
+        streamedPlayers_.add(pid, &other);
         NetCode::RPC::PlayerStreamIn playerStreamInRPC;
         playerStreamInRPC.PlayerID = pid;
         playerStreamInRPC.Skin = other.getSkin();
@@ -384,17 +390,21 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
     bool isPlayerStreamedIn(const IPlayer& other) const override {
-        return streamedPlayers_.test(other.getID());
+        return streamedPlayers_.valid(other.getID());
     }
 
     void streamOutPlayer(IPlayer& other) override {
         const int pid = other.getID();
-        streamedPlayers_.reset(pid);
+        streamedPlayers_.remove(pid, &other);
         NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
         playerStreamOutRPC.PlayerID = pid;
         sendRPC(playerStreamOutRPC);
 
         playerEventDispatcher_->dispatch(&PlayerEventHandler::onStreamOut, other, *this);
+    }
+
+    const DynamicArray<IPlayer*>& streamedInPlayers() const override {
+        return streamedPlayers_.entries();
     }
 
     void setNetworkData(const NetworkData& data) override {
@@ -960,7 +970,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     void initPlayer(Player& player) {
         player.pool_ = this;
         player.playerEventDispatcher_ = &eventDispatcher;
-        player.streamedPlayers_.set(player.poolID);
+        player.streamedPlayers_.add(player.poolID, &player);
     }
 
     int findFreeIndex() override {
@@ -996,7 +1006,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     /// Get a set of all the available objects
-    const OrderedSet<IPlayer*>& entries() const override {
+    const DynamicArray<IPlayer*>& entries() const override {
         return storage.entries();
     }
 
