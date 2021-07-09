@@ -19,6 +19,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     uint8_t paintJob;
     int32_t bodyColour1;
     int32_t bodyColour2;
+    IPlayer* driver;
 
     Vehicle() {
         mods.fill(0);
@@ -68,7 +69,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
 
     void streamInForPlayer(const IPlayer& player) override;
     void streamOutForPlayer(const IPlayer& player) override;
-    bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync) override;
+    bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
 
     void setColour(int col1, int col2) override {
         bodyColour1 = col1;
@@ -77,5 +78,15 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
 
     void setHealth(float Health) override {
         health = Health;
+    }
+
+    /// Sets the current driver of the vehicle
+    virtual void setDriver(IPlayer* player) override {
+        driver = player;
+    }
+
+    /// Returns the current driver of the vehicle
+    IPlayer* getDriver() override {
+        return driver;
     }
 };
