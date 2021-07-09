@@ -436,12 +436,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's bullet data
 	virtual const PlayerBulletData& getBulletData() const = 0;
 
-	/// Set the player's score
-	virtual void setScore(int score) = 0;
-
-	/// Get the player's score
-	virtual int getScore() const = 0;
-
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
 
