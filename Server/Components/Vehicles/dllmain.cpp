@@ -79,9 +79,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
         claim(0);
 	}
-    
-    void onInit() override {
-    }
 
 	const char* pluginName() override {
 		return "VehiclesPlugin";

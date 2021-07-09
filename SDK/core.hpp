@@ -9,7 +9,7 @@
 
 /// An event handler for core events
 struct CoreEventHandler {
-	virtual void onInit() {}
+	virtual void postInit() {}
 	virtual void onTick(uint64_t tick) {} // TODO move to a separate handler, called too often
 };
 
