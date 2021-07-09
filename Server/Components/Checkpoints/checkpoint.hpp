@@ -4,18 +4,11 @@
 #include <netcode.hpp>
 
 struct PlayerCheckpointData final : public IPlayerCheckpointData {
-	IPlayer& player_;
 	CheckpointType type_;
 	Vector3 position_;
 	Vector3 nextPosition_;
 	float size_;
 	bool inside_;
-
-	PlayerCheckpointData(IPlayer& player) : player_(player) {}
-
-	IPlayer& getPlayer() const override {
-		return player_;
-	}
 
 	CheckpointType getType() const override {
 		return type_;
@@ -61,13 +54,16 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 		delete this;
 	}
 
-	void enable() override {
+	void enable(IPlayer& player) override {
+		// Cannot be within a checkpoint once it's created
+		inside_ = false;
+
 		switch (type_) {
 		case CheckpointType::STANDARD:
 			NetCode::RPC::SetCheckpoint setCP;
 			setCP.position = position_;
 			setCP.size = size_;
-			player_.sendRPC(setCP);
+			player.sendRPC(setCP);
 			break;
 		case CheckpointType::RACE_NORMAL:
 		case CheckpointType::RACE_FINISH:
@@ -83,21 +79,21 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 			setRaceCP.position = position_;
 			setRaceCP.nextPosition = nextPosition_;
 			setRaceCP.size = size_;
-			player_.sendRPC(setRaceCP);
+			player.sendRPC(setRaceCP);
 			break;
 		default:
 			return;
 		}
-
-		// Cannot be within a checkpoint once it's created
-		inside_ = false;
 	}
 
-	void disable() override {
+	void disable(IPlayer& player) override {
+		// Cannot be within a checkpoint once it's disabled
+		inside_ = false;
+
 		switch (type_) {
 		case CheckpointType::STANDARD:
 			NetCode::RPC::DisableCheckpoint disableCP;
-			player_.sendRPC(disableCP);
+			player.sendRPC(disableCP);
 			break;
 		case CheckpointType::RACE_NORMAL:
 		case CheckpointType::RACE_FINISH:
@@ -109,13 +105,10 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 		case CheckpointType::RACE_AIR_THREE:
 		case CheckpointType::RACE_AIR_FOUR:
 			NetCode::RPC::DisableRaceCheckpoint disableRaceCP;
-			player_.sendRPC(disableRaceCP);
+			player.sendRPC(disableRaceCP);
 			break;
 		default:
 			return;
 		}
-
-		// Cannot be within a checkpoint once it's disabled
-		inside_ = false;
 	}
 };
