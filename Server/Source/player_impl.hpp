@@ -54,7 +54,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
     String lastPlayedAudio_;
     unsigned interior_;
     unsigned wantedLevel_;
-    int score_;
     int weather_;
     
 
@@ -546,14 +545,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     const PlayerBulletData& getBulletData() const override {
         return bulletData_;
-    }
-
-    virtual void setScore(int score) override {
-        score_ = score;
-    }
-
-    virtual int getScore() const override {
-        return score_;
     }
 
     void giveWeapon(WeaponSlotData weapon) override {
