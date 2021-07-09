@@ -8,6 +8,7 @@
 #include <raknet/RakServerInterface.h>
 #include <raknet/PluginInterface.h>
 #include <glm/glm.hpp>
+#include "Query/query.hpp"
 #define MAGNITUDE_EPSILON 0.00001f
 
 struct Core;
@@ -277,6 +278,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 
     void onTick(uint64_t tick) override;
+    int handleQuery(const char * buffer, char * output) override;
     void onScoreChange(IPlayer& player, int score) override;
     void onNameChange(IPlayer & player, const String & oldName) override;
     void init(ICore* core);
@@ -292,6 +294,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     ICore* core;
+    Query query;
     RakNet::RakServerInterface& rakNetServer;
     std::map<RakNet::PlayerID, int> pidFromRID;
     RakNet::BitStream wbs;
