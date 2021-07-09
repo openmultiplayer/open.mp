@@ -56,6 +56,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int score_;
     int weather_;
     int cutType_;
+    Vector4 worldBounds_;
     
 
     Player(const Player& other) = delete;
@@ -86,7 +87,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
         interior_(0),
         wantedLevel_(0),
         score_(0),
-        weather_(0)
+        weather_(0),
+        worldBounds_(0.f, 0.f, 0.f, 0.f)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -118,6 +120,13 @@ struct Player final : public IPlayer, public PoolIDProvider {
         NetCode::RPC::SetPlayerWeather setPlayerWeatherRPC;
         setPlayerWeatherRPC.WeatherID = WeatherID;
         sendRPC(setPlayerWeatherRPC);
+    }
+
+	void setWorldBounds(Vector4 coords) override {
+        worldBounds_ = coords;
+        NetCode::RPC::SetWorldBounds setWorldBoundsRPC;
+        setWorldBoundsRPC.coords = coords;
+        sendRPC(setWorldBoundsRPC);
     }
 
     int getWeather() const override {
@@ -929,6 +938,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
                 if (msg == "/setCameraLookAt") {       	
                     Vector3 setPos(1445.f, 2005.f, 5535.f);
+                    Vector4 setHos(144.f, 999.f, 222.f, 92.f);
                     peer.sendClientMessage(0xFFFFFFFF, "setCameraLookAt Before:");
                     peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getCameraLookAt().x) + " " + to_string(peer.getCameraLookAt().y) + " " + to_string(peer.getCameraLookAt().z));
                     peer.setCameraLookAt(setPos, 1);
@@ -943,6 +953,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     peer.setMoney(14000);
                     peer.sendClientMessage(0xFFFFFFFF, "money After:");
                     peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getMoney()));
+                    return true;
+                }
+
+                if (msg == "/setSkin") {
+                    peer.sendClientMessage(0xFFFFFFFF, "skin Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getSkin()));
+                    peer.setSkin(264);
+                    peer.sendClientMessage(0xFFFFFFFF, "skin After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getSkin()));
                     return true;
                 }
 
