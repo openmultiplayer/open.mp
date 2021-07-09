@@ -199,7 +199,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
 	// Set the direction a player's camera looks at
-	virtual void setCameraLookAtPosition(Vector3 pos) = 0;
+	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;
@@ -353,7 +353,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param other The player to stream out
 	virtual void streamOutPlayer(IPlayer& other) = 0;
 
+	/// Get the players which are streamed in for this player
 	virtual const DynamicArray<IPlayer*>& streamedInPlayers() const = 0;
+
+	/// Update other players' markers for the player
+	/// @param updateRate The rate at which to update in milliseconds
+	/// @param limit Whether the radius should be limited
+	/// @param radius The radius to limit in
+	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
