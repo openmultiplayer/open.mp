@@ -313,7 +313,7 @@ namespace NetCode {
 
 		struct SetCheckpoint final : NetworkPacketBase<107> {
 			Vector3 position;
-			float radius;
+			float size;
 
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -321,7 +321,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::VEC3(position));
-				bs.write(NetworkBitStreamValue::FLOAT(radius));
+				bs.write(NetworkBitStreamValue::FLOAT(size));
 			}
 		};
 
@@ -337,7 +337,7 @@ namespace NetCode {
 			uint8_t type;
 			Vector3 position;
 			Vector3 nextPosition;
-			float radius;
+			float size;
 
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -347,7 +347,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(type));
 				bs.write(NetworkBitStreamValue::VEC3(position));
 				bs.write(NetworkBitStreamValue::VEC3(nextPosition));
-				bs.write(NetworkBitStreamValue::FLOAT(radius));
+				bs.write(NetworkBitStreamValue::FLOAT(size));
 			}
 		};
 
