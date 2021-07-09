@@ -1196,7 +1196,10 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::INT32(DrunkLevel));
 			}
 		};
-		
+
+		struct PlayerMarkersSync final : NetworkPacketBase<208> {
+		};
+
 		struct PlayerVehicleSync final : NetworkPacketBase<200> {
 			int PlayerID;
 			uint16_t VehicleID;
