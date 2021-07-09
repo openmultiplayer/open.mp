@@ -49,4 +49,6 @@ target_include_directories(raknet
 
 if (WIN32)
 	target_link_libraries(raknet Ws2_32 SDK)
+else()
+	target_link_libraries(raknet SDK)
 endif()
