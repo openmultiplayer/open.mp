@@ -55,7 +55,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int score_;
     int weather_;
     int cutType_;
-    
+    std::chrono::system_clock::time_point lastMarkerUpdate_;
 
     Player(const Player& other) = delete;
     Player(Player&& other) = delete;
@@ -82,7 +82,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
         lastPlayedAudio_(),
         interior_(0),
         wantedLevel_(0),
-        score_(0)
+        score_(0),
+        lastMarkerUpdate_(std::chrono::system_clock::now())
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -629,6 +630,41 @@ struct Player final : public IPlayer, public PoolIDProvider {
         rotTransform_ = tm;
     }
 
+    void updateMarkers(std::chrono::milliseconds updateRate, bool limit = false, float radius = 200.f) override {
+        const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastMarkerUpdate_) > updateRate) {
+            lastMarkerUpdate_ = now;
+            INetworkBitStream& bs = netData_.network->writeBitStream();
+            const DynamicArray<IPlayer*>& players = pool_->entries();
+            bs.write(NetworkBitStreamValue::UINT8(NetCode::Packet::PlayerMarkersSync::getID(bs.getNetworkType())));
+            // TODO isNPC
+            bs.write(NetworkBitStreamValue::UINT32(players.size() - 1));
+            for (IPlayer* other : players) {
+                if (other == this) {
+                    continue;
+                }
+
+                const Vector3 otherPos = other->getPosition();
+                const PlayerState otherState = other->getState();
+                bool streamMarker =
+                    otherState != PlayerState_None &&
+                    otherState != PlayerState_Spectating &&
+                    virtualWorld_ == other->getVirtualWorld() &&
+                    (!limit || glm::dot(Vector2(pos_), Vector2(otherPos)) < radius * radius);
+
+                bs.write(NetworkBitStreamValue::UINT16(other->getID()));
+                bs.write(NetworkBitStreamValue::BIT(streamMarker));
+                if (streamMarker) {
+                    bs.write(NetworkBitStreamValue::INT16(otherPos.x));
+                    bs.write(NetworkBitStreamValue::INT16(otherPos.y));
+                    bs.write(NetworkBitStreamValue::INT16(otherPos.z));
+                }
+            }
+
+            sendPacket(bs);
+        }
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
@@ -642,6 +678,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
     IVehiclesPlugin* vehiclesPlugin = nullptr;
+    int markersShow;
+    std::chrono::milliseconds markersUpdateRate;
+    bool markersLimit;
+    float markersLimitRadius;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -1236,7 +1276,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         );
     }
 
-    void onInit() override {
+    void postInit() override {
+        const JSON& cfg = core.getProperties();
+        markersShow = Config::getOption<int>(cfg, "show_player_markers");
+        markersLimit = Config::getOption<int>(cfg, "limit_player_markers");
+        markersLimitRadius = Config::getOption<float>(cfg, "player_markers_draw_distance");
+        markersUpdateRate = std::chrono::milliseconds(Config::getOption<int>(cfg, "player_markers_update_rate"));
+
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
@@ -1261,6 +1307,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         for (IPlayer* const& player : storage.entries()) {
             const int vw = player->getVirtualWorld();
             const Vector3 pos = player->getPosition();
+
+            if (markersShow == Config::PlayerMarkerMode_Global) {
+                player->updateMarkers(markersUpdateRate, markersLimit, markersLimitRadius);
+            }
+
             for (IPlayer* const& other : storage.entries()) {
                 if (player == other) {
                     continue;

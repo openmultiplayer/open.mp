@@ -36,7 +36,7 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 		c->getEventDispatcher().addEventHandler(this);
 	}
 
-	void onInit() override {
+	void postInit() override {
 		c->printLn("Server initiated with SDK version %i", c->getVersion());
 	}
 
