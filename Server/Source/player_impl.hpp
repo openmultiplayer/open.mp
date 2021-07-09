@@ -20,6 +20,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     PlayerGameData gameData_;
     Vector3 pos_;
     Vector3 cameraPos_;
+    Vector3 cameraLookAt_;
     GTAQuat rot_;
     String name_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
@@ -66,10 +67,12 @@ struct Player final : public IPlayer, public PoolIDProvider {
     Player() :
         pool_(nullptr),
         playerEventDispatcher_(nullptr),
+        cameraPos_(0.f, 0.f, 0.f),
+        cameraLookAt_(0.f, 0.f, 0.f),
         virtualWorld_(0),
         fightingStyle_(PlayerFightingStyle_Normal),
         state_(PlayerState_None),
-        surfing_{PlayerSurfingData::Type::None},
+        surfing_{ PlayerSurfingData::Type::None },
         armedWeapon_(0),
         rotTransform_(0.f, 0.f, 0.f),
         controllable_(true),
@@ -82,7 +85,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
         lastPlayedAudio_(),
         interior_(0),
         wantedLevel_(0),
-        score_(0)
+        score_(0),
+        weather_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -493,12 +497,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setCameraPosRPC);
     }
 
+	Vector3 getCameraPosition() override {
+        return cameraPos_;
+    }
+
     void setCameraLookAt(Vector3 position, int cutType) override {
-        cameraPos_ = position;
+        cameraLookAt_ = position;
         cutType_ = cutType;
         NetCode::RPC::SetPlayerCameraLookAt setCameraLookAtPosRPC;
         setCameraLookAtPosRPC.Pos = position;
         sendRPC(setCameraLookAtPosRPC);
+    }
+
+	Vector3 getCameraLookAt() override {
+        return cameraLookAt_;
     }
 
     void setCameraBehind() override {
@@ -866,8 +878,87 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 [&peer, &msg](PlayerEventHandler* handler) {
                     return handler->onCommandText(peer, msg);
                 });
+        	
             if (send) {
-                return true;
+
+                if (msg == "/setWeather") {
+                    peer.sendClientMessage(0xFFFFFFFF, "weather Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getWeather()));
+                    peer.setWeather(15);
+                    peer.sendClientMessage(0xFFFFFFFF, "weather After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getWeather()));
+                    return true;
+                }
+            	
+                if (msg == "/setWanted") {
+                    peer.sendClientMessage(0xFFFFFFFF, "wanted Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getWantedLevel()));
+                    peer.setWantedLevel(4);
+                    peer.sendClientMessage(0xFFFFFFFF, "wanted After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getWantedLevel()));
+                    return true;
+                }
+
+                if (msg == "/setInterior") {
+                    peer.sendClientMessage(0xFFFFFFFF, "interior Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getInterior()));
+                    peer.setInterior(14);
+                    peer.sendClientMessage(0xFFFFFFFF, "interior After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getInterior()));
+                    return true;
+                }
+
+            	if (msg == "/setDrunk") {
+                    peer.sendClientMessage(0xFFFFFFFF, "drunk Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getDrunkLevel()));
+                    peer.setDrunkLevel(4444);
+                    peer.sendClientMessage(0xFFFFFFFF, "drunk After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getDrunkLevel()));
+                    return true;
+            	}
+
+            	if (msg == "/setCameraPos") {	
+                    Vector3 setPos(744.f, 250.f, 525.f);
+                    peer.sendClientMessage(0xFFFFFFFF, "camPos Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getCameraPosition().x) + " " + to_string(peer.getCameraPosition().y) + " " + to_string(peer.getCameraPosition().z));
+                    peer.setCameraPosition(setPos);
+                    peer.sendClientMessage(0xFFFFFFFF, "camPos After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getCameraPosition().x) + " " + to_string(peer.getCameraPosition().y) + " " + to_string(peer.getCameraPosition().z));
+                    return true;
+            	}
+
+                if (msg == "/setCameraLookAt") {       	
+                    Vector3 setPos(1445.f, 2005.f, 5535.f);
+                    peer.sendClientMessage(0xFFFFFFFF, "setCameraLookAt Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getCameraLookAt().x) + " " + to_string(peer.getCameraLookAt().y) + " " + to_string(peer.getCameraLookAt().z));
+                    peer.setCameraLookAt(setPos, 1);
+                    peer.sendClientMessage(0xFFFFFFFF, "setCameraLookAt After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getCameraLookAt().x) + " " + to_string(peer.getCameraLookAt().y) + " " + to_string(peer.getCameraLookAt().z));
+                    return true;
+                }
+
+                if (msg == "/setMoney") {
+                    peer.sendClientMessage(0xFFFFFFFF, "money Before:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getMoney()));
+                    peer.setMoney(14000);
+                    peer.sendClientMessage(0xFFFFFFFF, "money After:");
+                    peer.sendClientMessage(0xFFFFFFFF, to_string(peer.getMoney()));
+                    return true;
+                }
+
+            	if (msg == "/reset") {
+                    peer.setWeather(0);
+                    peer.setWantedLevel(0);
+                    peer.setInterior(0);
+                    peer.setDrunkLevel(0);
+                    peer.setMoney(0);
+                    Vector3 resetVector(0.f, 0.f, 0.f);
+                    peer.setCameraPosition(resetVector);
+                    peer.setCameraLookAt(resetVector, 0);
+                    peer.setCameraBehind();
+                    return true;
+            	}
+        	
             }
 
             return false;

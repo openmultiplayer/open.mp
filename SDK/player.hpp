@@ -198,8 +198,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Set the player's camera position
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
+	// Get the player's camera position
+	virtual Vector3 getCameraPosition() = 0;
+
 	// Set the direction a player's camera looks at
 	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
+
+	// Get the direction a player's camera looks at
+	virtual Vector3 getCameraLookAt() = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;
@@ -380,7 +386,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void sendCommand(const String& message) const = 0;
 
 	/// Set the player's weather
-	virtual void setWeather(int money) = 0;
+	virtual void setWeather(int WeatherID) = 0;
 
 	/// Get the player's weather
 	virtual int getWeather() const = 0;
