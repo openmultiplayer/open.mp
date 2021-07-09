@@ -18,16 +18,27 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
 
 	void onSpawn(IPlayer& player) override {
 		if (checkpoints) {
-			checkpoints->setPlayerCheckpoint(player, { 10.6290,4.7860,3.1096 }, 5.0f);
+			checkpoints->setPlayerCheckpoint(player, CheckpointType::STANDARD, Vector3(10.6290f,4.7860f,3.1096f), 5.0f);
 		}
 	}
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		c->printLn("%s has entered checkpoint", player.getName().c_str());
+		checkpoints->disablePlayerCheckpoint(player);
+		checkpoints->setPlayerCheckpoint(player, CheckpointType::RACE_FINISH, Vector3(2.6746f, -12.7014f, 5.1172f), 6.0f/*,Vector3(19.8583f, -15.1157f, 5.1172f)*/);
 	}
 
-	virtual void onPlayerLeaveCheckpoint(IPlayer& player) override {
+	void onPlayerLeaveCheckpoint(IPlayer& player) override {
 		c->printLn("%s has left checkpoint", player.getName().c_str());
+	}
+
+	void onPlayerEnterRaceCheckpoint(IPlayer& player) override {
+		c->printLn("%s has entered race checkpoint", player.getName().c_str());
+	}
+
+	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override {
+		c->printLn("%s has left race checkpoint", player.getName().c_str());
+		checkpoints->disablePlayerCheckpoint(player);
 	}
 
 	void onInit(ICore* core) override {
@@ -48,6 +59,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
 		IVehiclesPlugin* vehicles = c->queryPlugin<IVehiclesPlugin>();
 		if (vehicles) {
 			vehicles->create(411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
+			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
 		}
 
 		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
