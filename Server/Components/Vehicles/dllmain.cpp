@@ -2,7 +2,36 @@
 #include <netcode.hpp>
 #include "vehicle.hpp"
 
-struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
+struct PlayerVehicleData final : public IPlayerVehicleData {
+    IVehicle* vehicle = nullptr;
+    int seat = -1;
+
+    /// Get the player's vehicle
+    /// Returns nullptr if they aren't in a vehicle
+    IVehicle* getVehicle() override {
+        return vehicle;
+    }
+
+    /// Get the player's seat
+    /// Returns -1 if they aren't in a vehicle.
+    int getSeat() const override {
+        return seat;
+    }
+
+    void setVehicle(IVehicle* vehicle) override {
+        this->vehicle = vehicle;
+    }
+
+    void setSeat(int seat) override {
+        this->seat = seat;
+    }
+
+    void free() override {
+        delete this;
+    }
+};
+
+struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, public PlayerEventHandler {
 	ICore* core;
     PoolStorage<Vehicle, IVehicle, VehiclePlugin::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
@@ -58,6 +87,18 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         }
     } playerExitVehicleHandler;
 
+    void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
+        if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
+            IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+            if (data->getVehicle()) {
+                data->getVehicle()->setDriver(nullptr);
+            }
+
+            data->setVehicle(nullptr);
+            data->setSeat(-1);
+        }
+    }
+
     VehiclePlugin() :
         playerEnterVehicleHandler(*this),
         playerExitVehicleHandler(*this)
@@ -68,6 +109,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 	~VehiclePlugin()
 	{
         core->getEventDispatcher().removeEventHandler(this);
+        core->getPlayers().getEventDispatcher().removeEventHandler(this);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
 	}
@@ -75,10 +117,15 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 	void onInit(ICore* core) override {
 		this->core = core;
         core->getEventDispatcher().addEventHandler(this);
+        core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
         claim(0);
 	}
+
+    IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+        return new PlayerVehicleData();
+    }
 
 	const char* pluginName() override {
 		return "VehiclesPlugin";
