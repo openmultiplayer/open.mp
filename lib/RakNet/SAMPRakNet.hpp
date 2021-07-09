@@ -2,7 +2,6 @@
 
 #include <cstdint>
 #include <string>
-#include <unordered_map>
 #include <exception>
 
 #if defined _WIN32 || defined WIN32
@@ -22,9 +21,15 @@ typedef int SOCKET;
 #define MAXIMUM_MTU_SIZE 1500
 #endif
 
+#include "sdk.hpp"
+
 class SAMPRakNet
 {
 public:
+	static void ServerCoreInit(ICore * c) {
+		core = c;
+	}
+
 	static uint8_t * Decrypt(uint8_t const * src, int len);
 	static uint8_t * Encrypt(uint8_t const * src, int len);
 
@@ -33,6 +38,8 @@ public:
 
 	static uint32_t GetToken() { return token_; }
 	static void SetToken(uint32_t token) { token_ = token; }
+
+	static void HandleQuery(SOCKET instance, int size, const sockaddr_in & client, char const * buf);
 
 private:
 	static uint8_t
@@ -44,6 +51,8 @@ private:
 	static uint16_t
 		portNumber;
 
+	static ICore *
+		core;
 };
 
 class SAMPRakNetChecksumException : public std::exception
@@ -58,50 +67,4 @@ public:
 	const uint8_t
 		Expected,
 		Got;
-};
-
-class SAMPQuery 
-{
-public:
-	static void HandleQuery(SOCKET instance, int size, const sockaddr_in & client, char const * buf);
-
-	static uint16_t GetPlayerCount();
-	static uint16_t GetMaxPlayers();
-	static void SetMaxPlayers(uint16_t value);
-
-	static std::unordered_map<std::string, int> & GetPlayers();
-	static void SetPlayerList(const std::unordered_map<std::string, int> & players);
-
-	static std::string & GetServerName();
-	static void SetServerName(const std::string & value);
-
-	static std::string & GetGameModeName();
-	static void SetGameModeName(const std::string & value);
-
-	static std::unordered_map<std::string, std::string> & GetRules();
-	template<typename... Args>
-	static void SetRuleValue(const Args &... args);
-	static void RemoveRule(const std::string & ruleName);
-private:
-	static char
-		sendBuffer[4092];
-
-	static uint16_t
-		maxPlayers;
-
-	static std::unordered_map<std::string, int>
-		playerList;
-
-	static std::string
-		serverName;
-
-	static std::string
-		gameModeName;
-
-	static std::unordered_map<std::string, std::string>
-		rules;
-
-	template<typename T>
-	static void WriteToSendBuffer(unsigned int & offset, T value, unsigned int size = sizeof(T));
-	static void WriteToSendBuffer(char const * src, unsigned int & offset, unsigned int size);
 };

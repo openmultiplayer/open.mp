@@ -18,29 +18,9 @@ uint16_t
 	SAMPRakNet::
 	portNumber = 7777;
 
-char 
-	SAMPQuery::
-	sendBuffer[4092];
-
-uint16_t
-	SAMPQuery::
-	maxPlayers;
-
-std::unordered_map<std::string, int>
-	SAMPQuery::
-	playerList;
-
-std::string
-	SAMPQuery::
-	serverName;
-
-std::string
-	SAMPQuery::
-	gameModeName = "Unknown";
-
-std::unordered_map<std::string, std::string>
-	SAMPQuery::
-	rules;
+ICore *
+	SAMPRakNet::
+	core = nullptr;
 
 uint16_t
 	SAMPRakNet::
@@ -156,232 +136,22 @@ char const *
 	return "RakNet decryption checksum mismatch";
 }
 
-uint16_t
-	SAMPQuery::
-	GetPlayerCount()
-{
-	return static_cast<uint16_t>(playerList.size());
-}
-
-uint16_t
-	SAMPQuery::
-	GetMaxPlayers()
-{
-	return maxPlayers;
-}
-
-void
-	SAMPQuery::
-	SetMaxPlayers(uint16_t value)
-{
-	maxPlayers = value;
-}
-
-std::unordered_map<std::string, int> &
-	SAMPQuery::
-	GetPlayers()
-{
-	return playerList;
-}
-
-void
-	SAMPQuery::
-	SetPlayerList(const std::unordered_map<std::string, int> & players)
-{
-	playerList = players;
-}
-
-std::string &
-	SAMPQuery::
-	GetServerName()
-{
-	return serverName;
-}
-
-void
-	SAMPQuery::
-	SetServerName(const std::string & value)
-{
-	serverName = value;
-}
-
-std::string &
-	SAMPQuery::
-	GetGameModeName()
-{
-	return gameModeName;
-}
-
-void
-	SAMPQuery::
-	SetGameModeName(const std::string& value)
-{
-	gameModeName = value;
-}
-
-std::unordered_map<std::string, std::string> &
-	SAMPQuery::
-	GetRules()
-{
-	return rules;
-}
-
-template<typename... Args>
-void
-	SAMPQuery::
-	SetRuleValue(const Args &... args)
-{
-	std::vector<std::string> ruleData = { args... };
-	int ruleCount = ruleData.size();
-	if (ruleCount % 2)
-	{
-		ruleCount--;
-	}
-
-	for (int index = 0; index < ruleCount; index += 2)
-	{
-		const std::string 
-			& ruleName = ruleData[index];
-		const std::string
-			& ruleValue = ruleData[index + 1];
-		rules[ruleName] = ruleValue;
-	}
-}
-
-void
-	SAMPQuery::
-	RemoveRule(const std::string & ruleName)
-{
-	auto _rule = rules.find(ruleName);
-	if (_rule != rules.end())
-	{
-		rules.erase(ruleName);
-	}
-}
-
-template<typename T>
 void 
-	SAMPQuery::
-	WriteToSendBuffer(unsigned int & offset, T value, unsigned int size)
+	SAMPRakNet::
+	HandleQuery(SOCKET instance, int size, const sockaddr_in & client, char const * buf)
 {
-	*reinterpret_cast<T*>(&sendBuffer[offset]) = value;
-	offset += size;
-}
-
-void 
-	SAMPQuery::
-	WriteToSendBuffer(char const * src, unsigned int & offset, unsigned int size)
-{
-	strncpy(&sendBuffer[offset], src, size);
-	offset += size;
-}
-
-void 
-	SAMPQuery::
-	HandleQuery(SOCKET instance, int size, sockaddr_in const & client, char const* buffer)
-{
-	unsigned int bufferLength = 0;
-
-	// Ping
-	if (buffer[10] == 'p')
-	{
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
-
-		// Write 'p' signal and client ping
-		WriteToSendBuffer(bufferLength, 'p');
-		WriteToSendBuffer(bufferLength, *reinterpret_cast<unsigned int*>(const_cast<char*>(&buffer[11])));
-
-		sendto(instance, sendBuffer, bufferLength, 0, reinterpret_cast<const sockaddr*>(&client), size);
+	if (core == nullptr) {
 		return;
 	}
 
-	// Server info
-	else if (buffer[10] == 'i')
-	{
-		int serverNameLength = GetServerName().length();
-		int gameModeNameLength = gameModeName.length();
-
-		const std::string & languageName = (GetRules().find("language") != GetRules().end()) ? GetRules()["language"] : "EN";
-		int languageNameLength = languageName.length();
-
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
-
-		// Write `i` signal and player count details
-		WriteToSendBuffer(bufferLength, static_cast<unsigned short>('i'));
-		WriteToSendBuffer(bufferLength, GetPlayerCount());
-		WriteToSendBuffer(bufferLength, GetMaxPlayers());
-
-		// Write server name
-		WriteToSendBuffer(bufferLength, static_cast<int>(serverNameLength));
-		WriteToSendBuffer(GetServerName().c_str(), bufferLength, serverNameLength);
-		
-		// Write gamemode name
-		WriteToSendBuffer(bufferLength, static_cast<int>(gameModeNameLength));
-		WriteToSendBuffer(GetGameModeName().c_str(), bufferLength, gameModeNameLength);
-
-		// Write language name (since 0.3.7, it was map name before that)
-		WriteToSendBuffer(bufferLength, static_cast<int>(languageNameLength));
-		WriteToSendBuffer(languageName.c_str(), bufferLength, languageNameLength);
-
-		sendto(instance, sendBuffer, bufferLength, 0, reinterpret_cast<const sockaddr*>(&client), size);
-		return;
-	}
-
-	// Players
-	else if (buffer[10] == 'c')
-	{
-		memcpy(sendBuffer, buffer, 10); 
-		bufferLength += 10;
-
-		// Write 'c' signal and player count
-		WriteToSendBuffer(bufferLength, static_cast<unsigned char>('c'));
-		WriteToSendBuffer(bufferLength, GetPlayerCount());
-
-		const auto & _players =
-			GetPlayers();
-
-		for (auto & player : _players)
-		{
-			// Write player name
-			unsigned char playerNameLength = static_cast<unsigned char>(player.first.length());
-			WriteToSendBuffer(bufferLength, playerNameLength);
-			WriteToSendBuffer(player.first.c_str(), bufferLength, playerNameLength);
-
-			// Write player score
-			WriteToSendBuffer(bufferLength, player.second);
+	DynamicArray<INetwork *> & networks = core->getNetworks();
+	for (INetwork * network : networks) {
+		ENetworkType type = network->getNetworkType();
+		if (type == ENetworkType_RakNetLegacy) {
+			int outputLength = 0;
+			char output[4092];
+			outputLength = network->handleQuery(buf, output);
+			sendto(instance, output, outputLength, 0, reinterpret_cast<const sockaddr *>(&client), size);
 		}
-
-		sendto(instance, sendBuffer, bufferLength, 0, reinterpret_cast<const sockaddr*>(&client), size);
-		return;
-	}
-
-	// Rules
-	else if (buffer[10] == 'r')
-	{
-		const auto & _rules = GetRules();
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
-
-		// Write 'r' signal and rule count
-		WriteToSendBuffer(bufferLength, static_cast<unsigned char>('r'));
-		WriteToSendBuffer(bufferLength, static_cast<unsigned short>(_rules.size()));
-
-		for (auto & rule : _rules)
-		{
-			// Wrtie rule name
-			unsigned char ruleNameLength = static_cast<unsigned char>(rule.first.length());
-			WriteToSendBuffer(bufferLength, ruleNameLength);
-			WriteToSendBuffer(rule.first.c_str(), bufferLength, ruleNameLength);
-			
-			// Write rule value
-			unsigned char ruleValueLength = static_cast<unsigned char>(rule.second.length());
-			WriteToSendBuffer(bufferLength, ruleValueLength);
-			WriteToSendBuffer(rule.second.c_str(), bufferLength, ruleValueLength);
-		}
-
-		sendto(instance, sendBuffer, bufferLength, 0, reinterpret_cast<const sockaddr*>(&client), size);
-		return;
 	}
 }
