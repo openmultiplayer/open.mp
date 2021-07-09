@@ -34,10 +34,16 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 				return true;
 
 			cp->inside_ = true;
-			self.checkpointDispatcher.dispatch(
-				&PlayerCheckpointEventHandler::onPlayerEnterCheckpoint,
-				player
-			);
+			if(cp->type_ == CheckpointType::STANDARD)
+				self.checkpointDispatcher.dispatch(
+					&PlayerCheckpointEventHandler::onPlayerEnterCheckpoint,
+					player
+				);
+			else
+				self.checkpointDispatcher.dispatch(
+					&PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint,
+					player
+				);
 			return true; 
 		}
 	} playerEnterCheckpointHandler;
@@ -58,11 +64,16 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 				return true;
 
 			cp->inside_ = false;
-			self.checkpointDispatcher.dispatch(
-				&PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint,
-				player
-			);
-
+			if(cp->type_ == CheckpointType::STANDARD)
+				self.checkpointDispatcher.dispatch(
+					&PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint,
+					player
+				);
+			else
+				self.checkpointDispatcher.dispatch(
+					&PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint,
+					player
+				);
 			return true;
 		}
 	} playerLeaveCheckpointHandler;
@@ -94,9 +105,11 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 		core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerLeaveCheckpointHandler);
 	}
 
-	void setPlayerCheckpoint(const IPlayer& player, const Vector3 position, const float size) override {
+	void setPlayerCheckpoint(const IPlayer& player, const CheckpointType type, const Vector3 position, const float size, const Vector3 nextPosition = Vector3(0.0f, 0.0f, 0.0f)) override {
 		PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
+		cp->type_ = type;
 		cp->position_ = position;
+		cp->nextPosition_ = nextPosition;
 		cp->size_ = size;
 		cp->enable();
 	}
