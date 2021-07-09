@@ -12,6 +12,7 @@
 #include <glm/vec4.hpp>
 #include <nlohmann/json.hpp>
 #include "exports.hpp"
+#include <sstream>
 
 typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
@@ -35,6 +36,6 @@ using HashSet = std::unordered_set<Type, std::hash<Type>, std::equal_to<Type>, O
 
 template <typename T>
 inline String to_string(T conv) {
-	const std::string str = to_string(conv);
+	const std::string str = std::to_string(conv);
 	return String(str.data(), str.length());
 }
