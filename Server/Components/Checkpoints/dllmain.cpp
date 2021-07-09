@@ -5,90 +5,58 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 	DefaultEventDispatcher<PlayerCheckpointEventHandler> checkpointDispatcher;
 	ICore* core;
 
-	UUID getUUID() override {
-		return 0x44a937350d611dde;
-	}
-
 	DefaultEventDispatcher<PlayerCheckpointEventHandler>& getCheckpointDispatcher() override {
 		return checkpointDispatcher;
 	}
 
 	// Set up dummy checkpoint data for when the player connects
 	PlayerCheckpointData* onPlayerDataRequest(IPlayer& player) override {
-		return new PlayerCheckpointData(player);
+		return new PlayerCheckpointData();
 	}
 
-	struct PlayerEnterCheckpointHandler : public PlayerUpdateEventHandler {
+	struct PlayerCheckpointActionHandler : public PlayerUpdateEventHandler {
 		CheckpointsPlugin& self;
-		PlayerEnterCheckpointHandler(CheckpointsPlugin& self) : self(self) {}
+		PlayerCheckpointActionHandler(CheckpointsPlugin& self) : self(self) {}
 
 		bool onUpdate(IPlayer& player) override {
 			PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
-			if (cp->inside_)
-				return true;
-
-			const float radius = cp->size_ / 2;
+			const float radius = cp->type_ == CheckpointType::STANDARD ? cp->size_ / 2 : cp->size_;
 			const float maxDistance = radius * radius;
-			const Vector3 distance = cp->position_ - player.getPosition();
-			if (glm::dot(distance, distance) > maxDistance)
-				return true;
+			const Vector3 dist3D = cp->position_ - player.getPosition();
 
-			cp->inside_ = true;
-			if(cp->type_ == CheckpointType::STANDARD)
-				self.checkpointDispatcher.dispatch(
-					&PlayerCheckpointEventHandler::onPlayerEnterCheckpoint,
-					player
-				);
-			else
-				self.checkpointDispatcher.dispatch(
-					&PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint,
-					player
-				);
-			return true; 
-		}
-	} playerEnterCheckpointHandler;
-
-	struct PlayerLeaveCheckpointHandler : public PlayerUpdateEventHandler {
-		CheckpointsPlugin& self;
-		PlayerLeaveCheckpointHandler(CheckpointsPlugin& self) : self(self) {}
-
-		bool onUpdate(IPlayer& player) override {
-			PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
-			if (!cp->inside_)
-				return true;
-
-			const float radius = cp->size_ / 2;
-			const float maxDistance = radius * radius;
-			const Vector3 distance = cp->position_ - player.getPosition();
-			if (glm::dot(distance, distance) <= maxDistance)
-				return true;
-
-			cp->inside_ = false;
-			if(cp->type_ == CheckpointType::STANDARD)
-				self.checkpointDispatcher.dispatch(
-					&PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint,
-					player
-				);
-			else
-				self.checkpointDispatcher.dispatch(
-					&PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint,
-					player
-				);
+			if (glm::dot(dist3D, dist3D) > maxDistance) {
+				if (cp->inside_) {
+					cp->inside_ = false;
+					void (PlayerCheckpointEventHandler:: * leaveHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint : &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint;
+					self.checkpointDispatcher.dispatch(
+						leaveHandler,
+						player
+					);
+				}
+			}
+			else {
+				if (!cp->inside_) {
+					cp->inside_ = true;
+					void (PlayerCheckpointEventHandler:: * enterHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint : &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint;
+					self.checkpointDispatcher.dispatch(
+						enterHandler,
+						player
+					);
+				}
+			}
 			return true;
 		}
-	} playerLeaveCheckpointHandler;
+	} playerCheckpointActionHandler;
 
 	CheckpointsPlugin() :
-		playerEnterCheckpointHandler(*this),
-		playerLeaveCheckpointHandler(*this)
+		playerCheckpointActionHandler(*this)
 	{
 	}
 
 	void onInit(ICore* c) override {
 		core = c;
 		core->getPlayers().getEventDispatcher().addEventHandler(this);
-		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerEnterCheckpointHandler);
-		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerLeaveCheckpointHandler);
+		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
 	}
 
 	const char* pluginName() override {
@@ -101,22 +69,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 
 	~CheckpointsPlugin() {
 		core->getPlayers().getEventDispatcher().removeEventHandler(this);
-		core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerEnterCheckpointHandler);
-		core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerLeaveCheckpointHandler);
-	}
-
-	void setPlayerCheckpoint(const IPlayer& player, const CheckpointType type, const Vector3 position, const float size, const Vector3 nextPosition = Vector3(0.0f, 0.0f, 0.0f)) override {
-		PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
-		cp->type_ = type;
-		cp->position_ = position;
-		cp->nextPosition_ = nextPosition;
-		cp->size_ = size;
-		cp->enable();
-	}
-
-	void disablePlayerCheckpoint(const IPlayer& player) override {
-		PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
-		cp->disable();
+		core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
 	}
 };
 
