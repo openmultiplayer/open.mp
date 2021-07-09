@@ -56,6 +56,11 @@ struct DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType> 
         return std::all_of(handlers.begin(), handlers.end(), fn);
     }
 
+    template <typename Fn>
+    auto anyTrue(Fn fn) {
+        return std::any_of(handlers.begin(), handlers.end(), fn);
+    }
+
 private:
     std::unordered_set<EventHandlerType*> handlers;
 };

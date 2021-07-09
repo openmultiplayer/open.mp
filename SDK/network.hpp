@@ -11,6 +11,8 @@
 #include "exports.hpp"
 #include "gtaquat.hpp"
 
+constexpr int INVALID_PACKET_ID = -1;
+
 struct IPlayer;
 struct INetworkPeer;
 
@@ -160,12 +162,12 @@ struct NetworkString : NetworkArray<char> {
 	String& operator=(std::string&& str) = delete;
 
 	/// Conversion operator for copying data to a std::string
-	operator String() {
+	operator String() const {
 		return String(data, count);
 	}
 
 	/// Conversion operator for copying data to a std::string
-	operator std::string() {
+	operator std::string() const {
 		return std::string(data, count);
 	}
 };
@@ -311,8 +313,12 @@ class NetworkPacketBase {
 
 public:
 	inline static int getID(ENetworkType type) {
-		assert(type < ENetworkType_End);
-		return ID[type];
+		if (type < ENetworkType_End) {
+			return ID[type];
+		}
+		else {
+			return INVALID_PACKET_ID;
+		}
 	}
 };
 
@@ -365,6 +371,9 @@ struct INetwork {
 	// @param buffer Buffer passed to handler, in case there's already a data needed to be written into output or contains pre-processing data
 	// @param output Output buffer to write data into and use in network layer
 	virtual int handleQuery(const char * buffer, char * output) = 0;
+
+	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
+	virtual unsigned getPing(const INetworkPeer& peer) = 0;
 };
 
 /// A plugin interface which allows for writing a network plugin
@@ -400,6 +409,10 @@ struct INetworkPeer {
 	virtual void setNetworkData(const NetworkData& data) = 0;
 
 	virtual const NetworkData& getNetworkData() const = 0;
+
+	unsigned getPing() const {
+		return getNetworkData().network->getPing(*this);
+	}
 
 	/// Attempt to send a packet to the network peer
 	/// @param bs The bit stream with data to send
