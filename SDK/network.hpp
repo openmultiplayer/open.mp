@@ -360,6 +360,11 @@ struct INetwork {
 
 	/// Get a new bit stream for writing
 	virtual INetworkBitStream& writeBitStream() = 0;
+
+	/// For handling query, returns output buffer size
+	// @param buffer Buffer passed to handler, in case there's already a data needed to be written into output or contains pre-processing data
+	// @param output Output buffer to write data into and use in network layer
+	virtual int handleQuery(const char * buffer, char * output) = 0;
 };
 
 /// A plugin interface which allows for writing a network plugin
