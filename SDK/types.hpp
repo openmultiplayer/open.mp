@@ -12,7 +12,6 @@
 #include <glm/vec4.hpp>
 #include <nlohmann/json.hpp>
 #include "exports.hpp"
-#include <sstream>
 
 typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
