@@ -391,6 +391,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's weather
 	virtual int getWeather() const = 0;
 
+	// Set world bounds
+	virtual void setWorldBounds(Vector4 coords) = 0;
+
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
 	virtual void setFightingStyle(PlayerFightingStyle style) = 0;
