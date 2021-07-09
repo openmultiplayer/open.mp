@@ -39,7 +39,7 @@ struct Core final : public ICore, public PlayerEventHandler {
             }
         );
 
-        eventDispatcher.dispatch(&CoreEventHandler::onInit);
+        eventDispatcher.dispatch(&CoreEventHandler::postInit);
     }
 
     IPlugin* queryPlugin(UUID id) override {

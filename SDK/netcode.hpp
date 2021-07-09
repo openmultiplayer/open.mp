@@ -565,8 +565,10 @@ namespace NetCode {
 			}
 		};
 
-		struct SetPlayerCameraLookAtPosition final : NetworkPacketBase<158> {
+		struct SetPlayerCameraLookAt final : NetworkPacketBase<158> {
 			Vector3 Pos;
+			uint8_t cutType;
+			
 
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -1315,7 +1317,10 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::INT32(DrunkLevel));
 			}
 		};
-		
+
+		struct PlayerMarkersSync final : NetworkPacketBase<208> {
+		};
+
 		struct PlayerVehicleSync final : NetworkPacketBase<200> {
 			int PlayerID;
 			uint16_t VehicleID;
