@@ -21,7 +21,6 @@ static const UUID CheckpointData_UUID = UUID(0xbc07576aa3591a66);
 struct IPlayerCheckpointData : public IPlayerData {
 	PROVIDE_UUID(CheckpointData_UUID)
 
-	virtual IPlayer& getPlayer() const = 0;
 	virtual CheckpointType getType() const = 0;
 	virtual void setType(const CheckpointType type) = 0;
 	virtual Vector3 getPosition() const = 0;
@@ -33,8 +32,8 @@ struct IPlayerCheckpointData : public IPlayerData {
 	virtual bool hasPlayerInside() const = 0;
 	virtual void setPlayerInside(const bool inside) = 0;
 
-	virtual void enable() = 0;
-	virtual void disable() = 0;
+	virtual void enable(IPlayer& player) = 0;
+	virtual void disable(IPlayer& player) = 0;
 };
 
 struct PlayerCheckpointEventHandler {
@@ -50,8 +49,4 @@ struct ICheckpointsPlugin : public IPlugin {
 
 	// Access to event dispatchers for other components to add handlers to
 	virtual DefaultEventDispatcher<PlayerCheckpointEventHandler>& getCheckpointDispatcher() = 0;
-
-	// Wrappers
-	virtual void setPlayerCheckpoint(const IPlayer& player, const CheckpointType type, const Vector3 position, const float size, const Vector3 nextPosition = Vector3(0.0f, 0.0f, 0.0f)) = 0;
-	virtual void disablePlayerCheckpoint(const IPlayer& player) = 0;
 };

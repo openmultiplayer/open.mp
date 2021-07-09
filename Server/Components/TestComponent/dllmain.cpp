@@ -18,14 +18,23 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
 
 	void onSpawn(IPlayer& player) override {
 		if (checkpoints) {
-			checkpoints->setPlayerCheckpoint(player, CheckpointType::STANDARD, Vector3(10.6290f,4.7860f,3.1096f), 5.0f);
+			IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+			cp->setType(CheckpointType::STANDARD);
+			cp->setPosition(Vector3(10.6290f, 4.7860f, 3.1096f));
+			cp->setSize(5.0f);
+			cp->enable(player);
 		}
 	}
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		c->printLn("%s has entered checkpoint", player.getName().c_str());
-		checkpoints->disablePlayerCheckpoint(player);
-		checkpoints->setPlayerCheckpoint(player, CheckpointType::RACE_FINISH, Vector3(2.6746f, -12.7014f, 5.1172f), 6.0f/*,Vector3(19.8583f, -15.1157f, 5.1172f)*/);
+		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+		cp->disable(player);
+		cp->setType(CheckpointType::RACE_NORMAL);
+		cp->setPosition(Vector3(2.6746f, -12.7014f, 5.1172f));
+		cp->setNextPosition(Vector3(19.8583f, -15.1157f, 5.1172f));
+		cp->setSize(6.0f);
+		cp->enable(player);
 	}
 
 	void onPlayerLeaveCheckpoint(IPlayer& player) override {
@@ -38,7 +47,8 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
 
 	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override {
 		c->printLn("%s has left race checkpoint", player.getName().c_str());
-		checkpoints->disablePlayerCheckpoint(player);
+		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+		cp->disable(player);
 	}
 
 	void onInit(ICore* core) override {
