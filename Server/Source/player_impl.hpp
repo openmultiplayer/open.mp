@@ -665,6 +665,15 @@ struct Player final : public IPlayer, public PoolIDProvider {
         }
     }
 
+    bool setState(PlayerState state) override {
+        if (state_ != state) {
+            playerEventDispatcher_->dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
+            state_ = state;
+            return true;
+        }
+        return false;
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
@@ -786,7 +795,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             const int pid = peer.getID();
             Player& player = self.storage.get(pid);
-            player.state_ = PlayerState_Wasted;
+            player.setState(PlayerState_Wasted);
 
             bool killerIsValid = self.storage.valid(onPlayerDeathRPC.KillerID);
             self.eventDispatcher.dispatch(
@@ -810,7 +819,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             Player& player = self.storage.get(peer.getID());
-            player.state_ = PlayerState_Spawned;
+            player.setState(PlayerState_Spawned);
 
             IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
             if (classData) {
@@ -942,7 +951,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.animation_.flags = footSync.AnimationFlags;
             player.surfing_ = footSync.SurfingData;
             player.action_ = PlayerSpecialAction(footSync.SpecialAction);
-            player.state_ = PlayerState_OnFoot;
+            player.setState(PlayerState_OnFoot);
 
             if (!player.controllable_) {
                 footSync.Keys = 0;
@@ -1094,9 +1103,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
-            player.state_ = PlayerState_Driver;
+            player.setState(PlayerState_Driver);
 
-            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync)) {
+            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player)) {
                 vehicleSync.PlayerID = pid;
 
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(

@@ -443,6 +443,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's score
 	virtual int getScore() const = 0;
 
+	/// Update the player's state
+	/// Will call onStateChange if it changed
+	virtual bool setState(PlayerState state) = 0;
+
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
 
@@ -476,6 +480,7 @@ struct PlayerEventHandler {
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
+	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
 };
 
 struct PlayerUpdateEventHandler {

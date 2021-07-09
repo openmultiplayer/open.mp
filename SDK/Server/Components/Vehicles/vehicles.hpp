@@ -38,7 +38,13 @@ struct IVehicle : public IEntity {
 	virtual void setHealth(float Health) = 0;
 
 	/// Update the vehicle from a sync packet
-	virtual bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync) = 0;
+	virtual bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) = 0;
+
+	/// Sets the current driver of the vehicle
+	virtual void setDriver(IPlayer* player) = 0;
+
+	/// Returns the current driver of the vehicle
+	virtual IPlayer* getDriver() = 0;
 };
 
 /// A vehicle event handler
@@ -60,4 +66,23 @@ struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, MAX_VEHICLES> {
 
 	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = 0, int colour2 = 0, int respawnDelay = -1) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
+};
+
+/// Player vehicle data
+static const UUID SomePlayerData_UUID = UUID(0xa960485be6c70fb2);
+struct IPlayerVehicleData : public IPlayerData {
+	PROVIDE_UUID(SomePlayerData_UUID)
+
+	/// Get the player's vehicle
+	/// Returns nullptr if they aren't in a vehicle
+	virtual IVehicle* getVehicle() = 0;
+
+	/// Get the player's seat
+	/// Returns -1 if they aren't in a vehicle.
+	virtual int getSeat() const = 0;
+
+	virtual void setVehicle(IVehicle* vehicle) = 0;
+
+	virtual void setSeat(int seat) = 0;
+
 };

@@ -29,9 +29,19 @@ void Vehicle::streamOutForPlayer(const IPlayer& player) {
     streamedPlayers_.set(player.getID(), false);
 }
 
-bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync) {
+bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
     pos = vehicleSync.Position;
     rot = vehicleSync.Rotation;
     health = vehicleSync.Health;
+
+    if (driver != &player) {
+        driver = &player;
+        IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+        if (data->getVehicle()) {
+            data->getVehicle()->setDriver(nullptr);
+        }
+        data->setVehicle(this);
+        data->setSeat(0);
+    }
     return true;
 }
