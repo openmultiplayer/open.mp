@@ -729,6 +729,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             bool pidValid = self.storage.valid(onPlayerGiveTakeDamageRPC.PlayerID);
             if (onPlayerGiveTakeDamageRPC.Taking) {
+                self.eventDispatcher.dispatch(
+                    &PlayerEventHandler::onTakeDamage,
+                    peer,
+                    pidValid ? &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID) : nullptr,
+                    onPlayerGiveTakeDamageRPC.Damage,
+                    onPlayerGiveTakeDamageRPC.WeaponID,
+                    onPlayerGiveTakeDamageRPC.Bodypart
+                );
+            }
+            else {
                 if (!pidValid) {
                     return false;
                 }
@@ -736,16 +746,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     &PlayerEventHandler::onGiveDamage,
                     peer,
                     self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID),
-                    onPlayerGiveTakeDamageRPC.Damage,
-                    onPlayerGiveTakeDamageRPC.WeaponID,
-                    onPlayerGiveTakeDamageRPC.Bodypart
-                );
-            }
-            else {
-                self.eventDispatcher.dispatch(
-                    &PlayerEventHandler::onTakeDamage,
-                    peer,
-                    pidValid ? &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID) : nullptr,
                     onPlayerGiveTakeDamageRPC.Damage,
                     onPlayerGiveTakeDamageRPC.WeaponID,
                     onPlayerGiveTakeDamageRPC.Bodypart
