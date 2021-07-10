@@ -1095,6 +1095,20 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
 			}
 		};
+
+		struct SetVehiclePlate final : NetworkPacketBase<123> {
+			int VehicleID;
+			String plate;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(plate));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
