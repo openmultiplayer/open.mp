@@ -26,10 +26,10 @@ struct IVehicle : public IEntity {
 	virtual bool isStreamedInForPlayer(const IPlayer& player) const = 0;
 
 	/// Streams in the vehicle for a specific player
-	virtual void streamInForPlayer(const IPlayer& player) = 0;
+	virtual void streamInForPlayer(IPlayer& player) = 0;
 
 	/// Streams out the vehicle for a specific player
-	virtual void streamOutForPlayer(const IPlayer& player) = 0;
+	virtual void streamOutForPlayer(IPlayer& player) = 0;
 
 	/// Set the vehicle's colour
 	virtual void setColour(int col1, int col2) = 0;
@@ -45,6 +45,12 @@ struct IVehicle : public IEntity {
 
 	/// Returns the current driver of the vehicle
 	virtual IPlayer* getDriver() = 0;
+
+	/// Sets the vehicle's number plate
+	virtual void setPlate(String plate) = 0;
+
+	/// Get the vehicle's number plate
+	virtual const String& getPlate() = 0;
 };
 
 /// A vehicle event handler

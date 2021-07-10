@@ -90,7 +90,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-            if (data->getVehicle()) {
+            if (data->getVehicle() && data->getVehicle()->getDriver() == &player) {
                 data->getVehicle()->setDriver(nullptr);
             }
 

@@ -474,7 +474,7 @@ struct PlayerEventHandler {
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
-	virtual bool onCommandText(IPlayer& player, String message) { return true; }
+	virtual bool onCommandText(IPlayer& player, String message) { return false; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
