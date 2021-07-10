@@ -21,8 +21,18 @@ struct TestComponent : public IPlugin, public PlayerEventHandler {
 			std::string str = "Your vehicle ID is " + std::to_string(id) + " and your seat is " + std::to_string(seat);
 			player.sendClientMessage(-1, String(str.c_str()));
 		}
-		return true;
+		else if (!message.find("/plate")) {
+			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle()) {
+				int plate_space = message.find_first_of(" ");
+				if (plate_space != String::npos) {
+					data->getVehicle()->setPlate(message.substr(plate_space + 1));
+				}
+			}
+		}
+		return false;
 	}
+
 	void onInit(ICore* core) override {
 		c = core;
 		c->getPlayers().getEventDispatcher().addEventHandler(this);

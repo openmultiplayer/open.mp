@@ -7,7 +7,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     std::array<IPlayer*, MAX_SEATS> passengers;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
-    std::bitset<IVehiclesPlugin::Cnt> streamedPlayers_;
+    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
     std::array<int, 14> mods;
     float health = 1000.0f;
     uint8_t interior = 0;
@@ -20,6 +20,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     int32_t bodyColour1;
     int32_t bodyColour2;
     IPlayer* driver;
+    DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
+    String numberPlate;
 
     Vehicle() {
         mods.fill(0);
@@ -58,7 +60,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     }
 
     bool isStreamedInForPlayer(const IPlayer& player) const override {
-        return streamedPlayers_.test(player.getID());
+        return streamedPlayers_.valid(player.getID());
     }
 
     void setSpawnData(VehicleSpawnData data) override {
@@ -67,8 +69,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
         rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     }
 
-    void streamInForPlayer(const IPlayer& player) override;
-    void streamOutForPlayer(const IPlayer& player) override;
+    void streamInForPlayer(IPlayer& player) override;
+    void streamOutForPlayer(IPlayer& player) override;
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
 
     void setColour(int col1, int col2) override {
@@ -89,4 +91,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     IPlayer* getDriver() override {
         return driver;
     }
+
+    void setPlate(String plate) override;
+    const String& getPlate() override;
 };
