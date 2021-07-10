@@ -129,6 +129,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setWorldBoundsRPC);
     }
 
+    Vector4 getWorldBounds() const override {
+        return worldBounds_;
+    }
+
     int getWeather() const override {
         return weather_;
     }
