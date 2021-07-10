@@ -386,13 +386,16 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void sendCommand(const String& message) const = 0;
 
 	/// Set the player's weather
-	virtual void setWeather(int WeatherID) = 0;
+	virtual void setWeather(int weatherID) = 0;
 
 	/// Get the player's weather
 	virtual int getWeather() const = 0;
 
 	// Set world bounds
 	virtual void setWorldBounds(Vector4 coords) = 0;
+
+	// Get world bounds
+	virtual Vector4 getWorldBounds() const = 0;
 
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
