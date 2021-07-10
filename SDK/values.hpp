@@ -23,6 +23,12 @@ constexpr int INVALID_VEHICLE_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
 
 namespace Config {
+	enum PlayerMarkerMode {
+		PlayerMarkerMode_Off,
+		PlayerMarkerMode_Global,
+		PlayerMarkerMode_Streamed
+	};
+
 	static const std::map<std::string, std::variant<int, float, std::string, std::vector<std::string>>> defaults{
 		{ "max_players", 50 },
 		{ "sleep", 5 },
@@ -38,7 +44,10 @@ namespace Config {
 		{ "disable_name_tag_los", false },
 		{ "manual_vehicle_engine_and_lights", false},
 		{ "show_name_tags", true },
-		{ "show_player_markers", true },
+		{ "show_player_markers", PlayerMarkerMode_Global },
+		{ "limit_player_markers", false },
+		{ "player_markers_draw_distance", 250.f },
+		{ "player_markers_update_rate", 2500 },
 		{ "world_time", 12 },
 		{ "weather", 10 },
 		{ "gravity", 0.008f },
