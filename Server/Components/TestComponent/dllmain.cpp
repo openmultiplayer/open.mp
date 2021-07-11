@@ -89,7 +89,27 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             return true;
         }
 
+		if (message == "/setControllable") {
+            player.sendClientMessage(0xFFFFFFFF, "controllable Before:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getControllable()));
+            player.setControllable(false);
+            player.sendClientMessage(0xFFFFFFFF, "controllable After:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getControllable()));
+            return true;
+		}
+
+        if (message == "/setSpectating") {
+            player.sendClientMessage(0xFFFFFFFF, "spectating Before:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getSpectating()));
+            player.setSpectating(true);
+            player.sendClientMessage(0xFFFFFFFF, "spectating After:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getSpectating()));
+            return true;
+        }
+
         if (message == "/reset") {
+            player.setSpectating(false);
+            player.setControllable(true);
             player.setWeather(0);
             player.setWantedLevel(0);
             player.setInterior(0);
@@ -101,6 +121,8 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             player.setCameraBehind();
             return true;
         }
+
+        return false;
 
 	}
 
