@@ -525,6 +525,17 @@ namespace NetCode {
 			}
 		};
 
+		struct SetWorldBounds final : NetworkPacketBase<17> {
+			Vector4 coords;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC4(coords));
+			}
+		};
 
 
 		struct SetPlayerColor final : NetworkPacketBase<72> {

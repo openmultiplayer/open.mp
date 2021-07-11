@@ -20,6 +20,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     PlayerGameData gameData_;
     Vector3 pos_;
     Vector3 cameraPos_;
+    Vector3 cameraLookAt_;
     GTAQuat rot_;
     String name_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
@@ -55,6 +56,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int score_;
     int weather_;
     int cutType_;
+    Vector4 worldBounds_;
+    
     std::chrono::system_clock::time_point lastMarkerUpdate_;
 
     Player(const Player& other) = delete;
@@ -66,10 +69,12 @@ struct Player final : public IPlayer, public PoolIDProvider {
     Player() :
         pool_(nullptr),
         playerEventDispatcher_(nullptr),
+        cameraPos_(0.f, 0.f, 0.f),
+        cameraLookAt_(0.f, 0.f, 0.f),
         virtualWorld_(0),
         fightingStyle_(PlayerFightingStyle_Normal),
         state_(PlayerState_None),
-        surfing_{PlayerSurfingData::Type::None},
+        surfing_{ PlayerSurfingData::Type::None },
         armedWeapon_(0),
         rotTransform_(0.f, 0.f, 0.f),
         controllable_(true),
@@ -83,6 +88,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
         interior_(0),
         wantedLevel_(0),
         score_(0),
+        weather_(0),
+        worldBounds_(0.f, 0.f, 0.f, 0.f),
         lastMarkerUpdate_(std::chrono::system_clock::now())
     {
         weapons_.fill({ 0, 0 });
@@ -115,6 +122,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
         NetCode::RPC::SetPlayerWeather setPlayerWeatherRPC;
         setPlayerWeatherRPC.WeatherID = WeatherID;
         sendRPC(setPlayerWeatherRPC);
+    }
+
+	void setWorldBounds(Vector4 coords) override {
+        worldBounds_ = coords;
+        NetCode::RPC::SetWorldBounds setWorldBoundsRPC;
+        setWorldBoundsRPC.coords = coords;
+        sendRPC(setWorldBoundsRPC);
+    }
+
+    Vector4 getWorldBounds() const override {
+        return worldBounds_;
     }
 
     int getWeather() const override {
@@ -494,12 +512,20 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(setCameraPosRPC);
     }
 
+	Vector3 getCameraPosition() override {
+        return cameraPos_;
+    }
+
     void setCameraLookAt(Vector3 position, int cutType) override {
-        cameraPos_ = position;
+        cameraLookAt_ = position;
         cutType_ = cutType;
         NetCode::RPC::SetPlayerCameraLookAt setCameraLookAtPosRPC;
         setCameraLookAtPosRPC.Pos = position;
         sendRPC(setCameraLookAtPosRPC);
+    }
+
+	Vector3 getCameraLookAt() override {
+        return cameraLookAt_;
     }
 
     void setCameraBehind() override {
@@ -906,6 +932,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 [&peer, &msg](PlayerEventHandler* handler) {
                     return handler->onCommandText(peer, msg);
                 });
+        	
             if (send) {
                 return true;
             }
