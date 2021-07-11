@@ -198,8 +198,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Set the player's camera position
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
+	// Get the player's camera position
+	virtual Vector3 getCameraPosition() = 0;
+
 	// Set the direction a player's camera looks at
 	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
+
+	// Get the direction a player's camera looks at
+	virtual Vector3 getCameraLookAt() = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;
@@ -387,10 +393,16 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void sendCommand(const String& message) const = 0;
 
 	/// Set the player's weather
-	virtual void setWeather(int money) = 0;
+	virtual void setWeather(int weatherID) = 0;
 
 	/// Get the player's weather
 	virtual int getWeather() const = 0;
+
+	// Set world bounds
+	virtual void setWorldBounds(Vector4 coords) = 0;
+
+	// Get world bounds
+	virtual Vector4 getWorldBounds() const = 0;
 
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
@@ -470,7 +482,7 @@ struct PlayerEventHandler {
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
-	virtual bool onCommandText(IPlayer& player, String message) { return true; }
+	virtual bool onCommandText(IPlayer& player, String message) { return false; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}

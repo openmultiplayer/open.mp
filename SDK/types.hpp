@@ -35,6 +35,6 @@ using HashSet = std::unordered_set<Type, std::hash<Type>, std::equal_to<Type>, O
 
 template <typename T>
 inline String to_string(T conv) {
-	const std::string str = to_string(conv);
+	const std::string str = std::to_string(conv);
 	return String(str.data(), str.length());
 }
