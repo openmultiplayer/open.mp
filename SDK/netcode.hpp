@@ -781,6 +781,18 @@ namespace NetCode {
 			}
 		};
 
+		struct TogglePlayerSpectating final : NetworkPacketBase<124> {
+			bool Enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Enable));
+			}
+		};
+
 		struct PlayerPlaySound final : NetworkPacketBase<16> {
 			uint32_t SoundID;
 			Vector3 Position;
