@@ -43,6 +43,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     GTAQuat rotTransform_;
     PlayerAimData aimingData_;
     bool controllable_;
+    bool spectating_;
     uint32_t lastPlayedSound_;
     int money_;
     std::chrono::minutes time_;
@@ -78,6 +79,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         armedWeapon_(0),
         rotTransform_(0.f, 0.f, 0.f),
         controllable_(true),
+        spectating_(false),
         lastPlayedSound_(0),
         money_(0),
         time_(0),
@@ -222,6 +224,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     bool getControllable() const override {
         return controllable_;
+    }
+
+	void setSpectating(bool spectating) override {
+        spectating_ = spectating;
+        NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
+        togglePlayerSpectatingRPC.Enable = spectating;
+        sendRPC(togglePlayerSpectatingRPC);
+    }
+
+	bool getSpectating() const override {
+        return spectating_;
     }
 
     void playSound(uint32_t sound, Vector3 pos) override {
