@@ -327,6 +327,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get whether the clock is visible for the player
 	virtual bool clockToggled() const = 0;
 
+	/// Toggle widescreen for player
+	virtual void setWidescreen(bool enable) = 0;
+
+	// Get widescreen status from player
+	virtual bool getWidescreen() const = 0;
+
 	/// Set the transform applied to player rotation
 	virtual void setTransform(const GTAQuat& tm) = 0;
 
