@@ -98,3 +98,8 @@ SCRIPT_API(SendDeathMessage, bool(IPlayer* player, int PlayerID, int KillerID, i
 	return true;
 }
 
+SCRIPT_API(ToggleWidescreen, bool(IPlayer* player, bool enable))
+{
+	player->setWidescreen(enable);
+	return true;
+}
