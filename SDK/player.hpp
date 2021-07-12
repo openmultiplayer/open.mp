@@ -259,9 +259,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set whether the player is spectating
 	virtual void setSpectating(bool spectating) = 0;
 
-	/// Get whether the player is spectating
-	virtual bool getSpectating() const = 0;
-
 	/// Set the player's wanted level
 	virtual void setWantedLevel(unsigned level) = 0;
 
