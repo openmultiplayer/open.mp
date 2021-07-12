@@ -1,9 +1,6 @@
 #include <string>
 #include <vector>
 #include <cstring>
-#ifndef WIN32
-#	include <netinet/in.h>
-#endif
 #include "SAMPRakNet.hpp"
 
 uint8_t
