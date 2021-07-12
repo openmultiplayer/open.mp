@@ -327,6 +327,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's health
 	virtual float getHealth() const = 0;
 
+	/// Set the player's score
+	virtual void setScore(int score) = 0;
+
+	/// Get the player's score
+	virtual int getScore() const = 0;
+
 	/// Set the player's armour
 	virtual void setArmour(float armour) = 0;
 	
@@ -449,12 +455,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's bullet data
 	virtual const PlayerBulletData& getBulletData() const = 0;
 
-	/// Set the player's score
-	virtual void setScore(int score) = 0;
-
-	/// Get the player's score
-	virtual int getScore() const = 0;
-
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
 
@@ -484,6 +484,8 @@ struct PlayerEventHandler {
 	virtual bool onText(IPlayer& player, String message) { return true; }
 	virtual bool onCommandText(IPlayer& player, String message) { return false; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual void onScoreChange(IPlayer& player, int score) {}
+	virtual void onNameChange(IPlayer & player, const String & oldName) {}
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
