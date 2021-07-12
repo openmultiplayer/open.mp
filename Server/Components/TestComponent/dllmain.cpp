@@ -100,10 +100,10 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
 
         if (message == "/setSpectating") {
             player.sendClientMessage(0xFFFFFFFF, "spectating Before:");
-            player.sendClientMessage(0xFFFFFFFF, to_string(player.getSpectating()));
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getState()));
             player.setSpectating(true);
             player.sendClientMessage(0xFFFFFFFF, "spectating After:");
-            player.sendClientMessage(0xFFFFFFFF, to_string(player.getSpectating()));
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getState()));
             return true;
         }
 
