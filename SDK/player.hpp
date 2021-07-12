@@ -286,6 +286,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's last played audio URL
 	virtual const String& lastPlayedAudio() const = 0;
 
+	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
+
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
 	/// @param pos The position to remove at
