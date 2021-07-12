@@ -107,8 +107,15 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             return true;
         }
 
+        if (message == "/getState") {
+            player.sendClientMessage(0xFFFFFFFF, "state:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getState()));
+            return true;
+        }
+
+
         if (message == "/reset") {
-            player.setSpectating(false);
+            player.setState(PlayerState_OnFoot);
             player.setControllable(true);
             player.setWeather(0);
             player.setWantedLevel(0);
@@ -118,7 +125,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             Vector3 resetVector(0.f, 0.f, 0.f);
             player.setCameraPosition(resetVector);
             player.setCameraLookAt(resetVector, 0);
-            player.setCameraBehind();
+            player.setCameraBehind();   
             return true;
         }
 
