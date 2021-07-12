@@ -143,6 +143,14 @@ struct Player final : public IPlayer, public PoolIDProvider {
         return weather_;
     }
 
+    void createExplosion(Vector3 vec, int type, float radius) override {
+        NetCode::RPC::CreateExplosion createExplosionRPC;
+        createExplosionRPC.vec = vec;
+        createExplosionRPC.type = type;
+        createExplosionRPC.radius = radius;
+        sendRPC(createExplosionRPC);
+    }
+
     void toggleClock(bool toggle) override {
         clockToggled_ = toggle;
         NetCode::RPC::TogglePlayerClock togglePlayerClockRPC;

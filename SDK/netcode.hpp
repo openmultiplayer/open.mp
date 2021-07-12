@@ -988,6 +988,22 @@ namespace NetCode {
 			}
 		};
 
+		struct CreateExplosion final : NetworkPacketBase<79> {
+			Vector3 vec;
+			uint16_t type;
+			float radius;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(vec));
+				bs.write(NetworkBitStreamValue::UINT16(type));
+				bs.write(NetworkBitStreamValue::FLOAT(radius));
+			}
+		};
+
 		struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
 			bool read(INetworkBitStream& bs) {
 				return false;

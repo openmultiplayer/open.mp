@@ -113,10 +113,19 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             return true;
         }
 
+        if (message == "/playAudio") {
+            Vector3 vec(0.f, 0.f, 0.f);
+            player.playAudio("http://somafm.com/tags.pls");
+        }
+
+        if (message == "/createExplosion") {
+            player.createExplosion(player.getPosition(), 12, 10);
+        }
 
         if (message == "/reset") {
             player.setState(PlayerState_OnFoot);
             player.setControllable(true);
+            player.stopAudio();
             player.setWeather(0);
             player.setWantedLevel(0);
             player.setInterior(0);
