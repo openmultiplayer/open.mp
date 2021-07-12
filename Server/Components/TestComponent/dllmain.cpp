@@ -122,6 +122,10 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             player.createExplosion(player.getPosition(), 12, 10);
         }
 
+        if (message == "/sendDeathMessage") {
+            player.sendDeathMessage(player.getID(), 1, 2);
+        }
+
         if (message == "/reset") {
             player.setState(PlayerState_OnFoot);
             player.setControllable(true);

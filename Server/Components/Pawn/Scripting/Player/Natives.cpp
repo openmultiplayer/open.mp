@@ -92,3 +92,9 @@ SCRIPT_API(StopAudioStreamForPlayer, bool(IPlayer* player))
 	return true;
 }
 
+SCRIPT_API(SendDeathMessage, bool(IPlayer* player, int PlayerID, int KillerID, int reason))
+{
+	player->sendDeathMessage(PlayerID, KillerID, reason);
+	return true;
+}
+

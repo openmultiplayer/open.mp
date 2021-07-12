@@ -151,6 +151,14 @@ struct Player final : public IPlayer, public PoolIDProvider {
         sendRPC(createExplosionRPC);
     }
 
+    void sendDeathMessage(int PlayerID, int KillerID, int reason) override {
+        NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+        sendDeathMessageRPC.PlayerID = PlayerID;
+        sendDeathMessageRPC.KillerID = KillerID;
+        sendDeathMessageRPC.reason = reason;
+        sendRPC(sendDeathMessageRPC);
+    }
+
     void toggleClock(bool toggle) override {
         clockToggled_ = toggle;
         NetCode::RPC::TogglePlayerClock togglePlayerClockRPC;
