@@ -116,17 +116,30 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
         if (message == "/playAudio") {
             Vector3 vec(0.f, 0.f, 0.f);
             player.playAudio("http://somafm.com/tags.pls");
+            return true;
         }
 
         if (message == "/createExplosion") {
             player.createExplosion(player.getPosition(), 12, 10);
+            return true;
         }
 
         if (message == "/sendDeathMessage") {
             player.sendDeathMessage(player.getID(), 1, 2);
+            return true;
+        }
+
+        if (message == "/widescreen") {
+            player.sendClientMessage(0xFFFFFFFF, "widescreen Before:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getWidescreen()));
+            player.setWidescreen(true);
+            player.sendClientMessage(0xFFFFFFFF, "widescreen After:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getWidescreen()));
+            return true;
         }
 
         if (message == "/reset") {
+            player.setWidescreen(false);
             player.setState(PlayerState_OnFoot);
             player.setControllable(true);
             player.stopAudio();

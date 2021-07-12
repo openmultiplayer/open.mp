@@ -1055,6 +1055,18 @@ namespace NetCode {
 			}
 		};
 
+		struct ToggleWidescreen final : NetworkPacketBase<111> {
+			bool enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(enable));
+			}
+		};
+
 		struct OnPlayerGiveTakeDamage final : NetworkPacketBase<115> {
 			bool Taking;
 			int PlayerID;
