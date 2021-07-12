@@ -275,6 +275,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork() :
 RakNetLegacyNetwork::~RakNetLegacyNetwork() {
     if (core) {
         core->getEventDispatcher().removeEventHandler(this);
+        core->getPlayers().getEventDispatcher().removeEventHandler(this);
     }
     rakNetServer.Disconnect(300);
     RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
