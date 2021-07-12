@@ -256,6 +256,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get whether the player is controllable
 	virtual bool getControllable() const = 0;
 
+	/// Set whether the player is spectating
+	virtual void setSpectating(bool spectating) = 0;
+
 	/// Set the player's wanted level
 	virtual void setWantedLevel(unsigned level) = 0;
 
@@ -282,6 +285,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's last played audio URL
 	virtual const String& lastPlayedAudio() const = 0;
+
+	// Create an explosion
+	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
+
+	// Send Death message
+	virtual void sendDeathMessage(int PlayerID, int KillerID, int reason) = 0;
 
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
@@ -317,6 +326,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get whether the clock is visible for the player
 	virtual bool clockToggled() const = 0;
+
+	/// Toggle widescreen for player
+	virtual void setWidescreen(bool enable) = 0;
+
+	// Get widescreen status from player
+	virtual bool getWidescreen() const = 0;
 
 	/// Set the transform applied to player rotation
 	virtual void setTransform(const GTAQuat& tm) = 0;
@@ -373,6 +388,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param limit Whether the radius should be limited
 	/// @param radius The radius to limit in
 	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
+
+	/// Get the player's state
+	virtual void setState(PlayerState state) = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;

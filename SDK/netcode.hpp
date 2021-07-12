@@ -302,6 +302,8 @@ namespace NetCode {
 			}
 		};
 
+
+
 		struct PlayerSpawn final : NetworkPacketBase<52> {
 			bool read(INetworkBitStream& bs) {
 				return true;
@@ -509,6 +511,22 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(message));
+			}
+		};
+
+		struct SendDeathMessage final : NetworkPacketBase<55> {
+			int KillerID;
+			int PlayerID;
+			int reason;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(KillerID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(reason));
 			}
 		};
 
@@ -781,6 +799,18 @@ namespace NetCode {
 			}
 		};
 
+		struct TogglePlayerSpectating final : NetworkPacketBase<124> {
+			bool Enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Enable));
+			}
+		};
+
 		struct PlayerPlaySound final : NetworkPacketBase<16> {
 			uint32_t SoundID;
 			Vector3 Position;
@@ -976,6 +1006,22 @@ namespace NetCode {
 			}
 		};
 
+		struct CreateExplosion final : NetworkPacketBase<79> {
+			Vector3 vec;
+			uint16_t type;
+			float radius;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(vec));
+				bs.write(NetworkBitStreamValue::UINT16(type));
+				bs.write(NetworkBitStreamValue::FLOAT(radius));
+			}
+		};
+
 		struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -1006,6 +1052,18 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT8(Level));
+			}
+		};
+
+		struct ToggleWidescreen final : NetworkPacketBase<111> {
+			bool enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(enable));
 			}
 		};
 

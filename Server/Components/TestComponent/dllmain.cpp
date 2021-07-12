@@ -89,7 +89,60 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             return true;
         }
 
+		if (message == "/setControllable") {
+            player.sendClientMessage(0xFFFFFFFF, "controllable Before:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getControllable()));
+            player.setControllable(false);
+            player.sendClientMessage(0xFFFFFFFF, "controllable After:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getControllable()));
+            return true;
+		}
+
+        if (message == "/setSpectating") {
+            player.sendClientMessage(0xFFFFFFFF, "spectating Before:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getState()));
+            player.setSpectating(true);
+            player.sendClientMessage(0xFFFFFFFF, "spectating After:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getState()));
+            return true;
+        }
+
+        if (message == "/getState") {
+            player.sendClientMessage(0xFFFFFFFF, "state:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getState()));
+            return true;
+        }
+
+        if (message == "/playAudio") {
+            Vector3 vec(0.f, 0.f, 0.f);
+            player.playAudio("http://somafm.com/tags.pls");
+            return true;
+        }
+
+        if (message == "/createExplosion") {
+            player.createExplosion(player.getPosition(), 12, 10);
+            return true;
+        }
+
+        if (message == "/sendDeathMessage") {
+            player.sendDeathMessage(player.getID(), 1, 2);
+            return true;
+        }
+
+        if (message == "/widescreen") {
+            player.sendClientMessage(0xFFFFFFFF, "widescreen Before:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getWidescreen()));
+            player.setWidescreen(true);
+            player.sendClientMessage(0xFFFFFFFF, "widescreen After:");
+            player.sendClientMessage(0xFFFFFFFF, to_string(player.getWidescreen()));
+            return true;
+        }
+
         if (message == "/reset") {
+            player.setWidescreen(false);
+            player.setState(PlayerState_OnFoot);
+            player.setControllable(true);
+            player.stopAudio();
             player.setWeather(0);
             player.setWantedLevel(0);
             player.setInterior(0);
@@ -98,9 +151,11 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public PlayerC
             Vector3 resetVector(0.f, 0.f, 0.f);
             player.setCameraPosition(resetVector);
             player.setCameraLookAt(resetVector, 0);
-            player.setCameraBehind();
+            player.setCameraBehind();   
             return true;
         }
+
+        return false;
 
 	}
 
