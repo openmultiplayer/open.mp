@@ -302,6 +302,8 @@ namespace NetCode {
 			}
 		};
 
+
+
 		struct PlayerSpawn final : NetworkPacketBase<52> {
 			bool read(INetworkBitStream& bs) {
 				return true;
@@ -509,6 +511,22 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(message));
+			}
+		};
+
+		struct SendDeathMessage final : NetworkPacketBase<55> {
+			int KillerID;
+			int PlayerID;
+			int reason;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(KillerID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(reason));
 			}
 		};
 

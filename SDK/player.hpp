@@ -289,6 +289,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Create an explosion
 	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
 
+	// Send Death message
+	virtual void sendDeathMessage(int PlayerID, int KillerID, int reason) = 0;
+
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
 	/// @param pos The position to remove at
