@@ -1,18 +1,9 @@
 #include "query.hpp"
+#include <cstring>
 
 void Query::setMaxPlayers(uint16_t value)
 {
 	maxPlayers = value;
-}
-
-std::unordered_map<std::string, int> & Query::getPlayers()
-{
-	return playerList;
-}
-
-void Query::setPlayerList(const std::unordered_map<std::string, int> & players)
-{
-	playerList = players;
 }
 
 void Query::setServerName(const std::string & value)
@@ -60,33 +51,60 @@ void Query::removeRule(const std::string & ruleName)
 }
 
 template<typename T>
-void Query::writeToSendBuffer(unsigned int & offset, T value, unsigned int size)
+void Query::writeToBuffer(char * output, int & offset, T value, unsigned int size)
 {
-	*reinterpret_cast<T *>(&sendBuffer[offset]) = value;
+	*reinterpret_cast<T *>(&output[offset]) = value;
 	offset += size;
 }
 
-void Query::writeToSendBuffer(char const * src, unsigned int & offset, unsigned int size)
+void Query::writeToBuffer(char * output, char const * src, int & offset, unsigned int size)
 {
-	strncpy(&sendBuffer[offset], src, size);
+	memcpy(&output[offset], src, size);
 	offset += size;
+}
+
+void Query::preparePlayerListForQuery() {
+	if (core == nullptr) {
+		return;
+	}
+
+	playerListBufferLength = 0;
+
+	if (core->getPlayers().entries().size() >= 100) {
+		std::fill_n(playerListBuffer, sizeof(playerListBuffer), 0);
+		return;
+	}
+
+	for (IPlayer * player : core->getPlayers().entries()) {
+		const String & playerName = player->getName();
+
+		// Write player name
+		unsigned char playerNameLength = static_cast<unsigned char>(playerName.length());
+		writeToBuffer(playerListBuffer, playerListBufferLength, playerNameLength);
+		writeToBuffer(playerListBuffer, playerName.c_str(), playerListBufferLength, playerNameLength);
+		
+		// Write player score
+		writeToBuffer(playerListBuffer, playerListBufferLength, player->getScore());
+	}
 }
 
 int Query::handleQuery(char const * buffer, char * output)
 {
-	unsigned int bufferLength = 0;
+	int bufferLength = 0;
+
+	if (core == nullptr) {
+		return bufferLength;
+	}
 
 	// Ping
 	if (buffer[10] == 'p')
 	{
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
+		writeToBuffer(output, buffer, bufferLength, 10);
 
 		// Write 'p' signal and client ping
-		writeToSendBuffer(bufferLength, 'p');
-		writeToSendBuffer(bufferLength, *reinterpret_cast<unsigned int *>(const_cast<char *>(&buffer[11])));
+		writeToBuffer(output, bufferLength, 'p');
+		writeToBuffer(output, bufferLength, *reinterpret_cast<unsigned int *>(const_cast<char *>(&buffer[11])));
 
-		memcpy(output, sendBuffer, bufferLength);
 		return bufferLength;
 	}
 
@@ -99,52 +117,44 @@ int Query::handleQuery(char const * buffer, char * output)
 		const std::string & languageName = (rules.find("language") != rules.end()) ? rules["language"] : "EN";
 		int languageNameLength = languageName.length();
 
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
+		writeToBuffer(output, buffer, bufferLength, 10);
 
 		// Write `i` signal and player count details
-		writeToSendBuffer(bufferLength, static_cast<unsigned short>('i'));
-		writeToSendBuffer(bufferLength, static_cast<uint16_t>(playerList.size()));
-		writeToSendBuffer(bufferLength, maxPlayers);
+		writeToBuffer(output, bufferLength, static_cast<unsigned short>('i'));
+		writeToBuffer(output, bufferLength, static_cast<uint16_t>(core->getPlayers().entries().size()));
+		writeToBuffer(output, bufferLength, maxPlayers);
 
 		// Write server name
-		writeToSendBuffer(bufferLength, static_cast<int>(serverNameLength));
-		writeToSendBuffer(serverName.c_str(), bufferLength, serverNameLength);
+		writeToBuffer(output,bufferLength, static_cast<int>(serverNameLength));
+		writeToBuffer(output,serverName.c_str(), bufferLength, serverNameLength);
 
 		// Write gamemode name
-		writeToSendBuffer(bufferLength, static_cast<int>(gameModeNameLength));
-		writeToSendBuffer(gameModeName.c_str(), bufferLength, gameModeNameLength);
+		writeToBuffer(output,bufferLength, static_cast<int>(gameModeNameLength));
+		writeToBuffer(output,gameModeName.c_str(), bufferLength, gameModeNameLength);
 
 		// Write language name (since 0.3.7, it was map name before that)
-		writeToSendBuffer(bufferLength, static_cast<int>(languageNameLength));
-		writeToSendBuffer(languageName.c_str(), bufferLength, languageNameLength);
+		writeToBuffer(output,bufferLength, static_cast<int>(languageNameLength));
+		writeToBuffer(output,languageName.c_str(), bufferLength, languageNameLength);
 
-		memcpy(output, sendBuffer, bufferLength);
 		return bufferLength;
 	}
 
 	// Players
 	else if (buffer[10] == 'c')
 	{
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
+		writeToBuffer(output, buffer, bufferLength, 10);
+
+		// Ignore sending player list if player count if over 100
+		unsigned int playerCountForQuery = core->getPlayers().entries().size() >= 100 ? 0 : core->getPlayers().entries().size();
 
 		// Write 'c' signal and player count
-		writeToSendBuffer(bufferLength, static_cast<unsigned char>('c'));
-		writeToSendBuffer(bufferLength, static_cast<uint16_t>(playerList.size()));
+		writeToBuffer(output,bufferLength, static_cast<unsigned char>('c'));
+		writeToBuffer(output,bufferLength, static_cast<uint16_t>(playerCountForQuery));
 
-		for (auto & player : playerList)
-		{
-			// Write player name
-			unsigned char playerNameLength = static_cast<unsigned char>(player.first.length());
-			writeToSendBuffer(bufferLength, playerNameLength);
-			writeToSendBuffer(player.first.c_str(), bufferLength, playerNameLength);
-
-			// Write player score
-			writeToSendBuffer(bufferLength, player.second);
+		if (playerListBufferLength > 0) {
+			writeToBuffer(output, playerListBuffer, bufferLength, playerListBufferLength);
 		}
 
-		memcpy(output, sendBuffer, bufferLength);
 		return bufferLength;
 	}
 
@@ -152,27 +162,25 @@ int Query::handleQuery(char const * buffer, char * output)
 	else if (buffer[10] == 'r')
 	{
 		const auto & _rules = rules;
-		memcpy(sendBuffer, buffer, 10);
-		bufferLength += 10;
+		writeToBuffer(output, buffer, bufferLength, 10);
 
 		// Write 'r' signal and rule count
-		writeToSendBuffer(bufferLength, static_cast<unsigned char>('r'));
-		writeToSendBuffer(bufferLength, static_cast<unsigned short>(_rules.size()));
+		writeToBuffer(output,bufferLength, static_cast<unsigned char>('r'));
+		writeToBuffer(output,bufferLength, static_cast<unsigned short>(_rules.size()));
 
 		for (auto & rule : _rules)
 		{
 			// Wrtie rule name
 			unsigned char ruleNameLength = static_cast<unsigned char>(rule.first.length());
-			writeToSendBuffer(bufferLength, ruleNameLength);
-			writeToSendBuffer(rule.first.c_str(), bufferLength, ruleNameLength);
+			writeToBuffer(output,bufferLength, ruleNameLength);
+			writeToBuffer(output,rule.first.c_str(), bufferLength, ruleNameLength);
 
 			// Write rule value
 			unsigned char ruleValueLength = static_cast<unsigned char>(rule.second.length());
-			writeToSendBuffer(bufferLength, ruleValueLength);
-			writeToSendBuffer(rule.second.c_str(), bufferLength, ruleValueLength);
+			writeToBuffer(output,bufferLength, ruleValueLength);
+			writeToBuffer(output,rule.second.c_str(), bufferLength, ruleValueLength);
 		}
 
-		memcpy(output, sendBuffer, bufferLength);
 		return bufferLength;
 	}
 }
