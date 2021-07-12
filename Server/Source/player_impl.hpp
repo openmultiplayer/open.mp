@@ -96,6 +96,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
         skillLevels_.fill(MAX_SKILL_LEVEL);
     }
 
+    void setState(PlayerState state) override {
+        state_ = state;
+    }
+
     PlayerState getState() const override {
         return state_;
     }
