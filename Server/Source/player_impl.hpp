@@ -1200,6 +1200,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         packet.PlayerID = peer.getID();
         packet.Reason = reason;
         broadcastRPC(packet, BroadcastGlobally);
+
+        eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
     }
 
     PlayerPool(ICore& core) :
