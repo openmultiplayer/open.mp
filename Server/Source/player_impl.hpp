@@ -57,6 +57,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int weather_;
     int cutType_;
     Vector4 worldBounds_;
+    bool widescreen_;
     
     std::chrono::system_clock::time_point lastMarkerUpdate_;
 
@@ -90,10 +91,15 @@ struct Player final : public IPlayer, public PoolIDProvider {
         score_(0),
         weather_(0),
         worldBounds_(0.f, 0.f, 0.f, 0.f),
-        lastMarkerUpdate_(std::chrono::system_clock::now())
+        lastMarkerUpdate_(std::chrono::system_clock::now()),
+        widescreen_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
+    }
+
+    void setState(PlayerState state) override {
+        state_ = state;
     }
 
     PlayerState getState() const override {
@@ -137,6 +143,33 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     int getWeather() const override {
         return weather_;
+    }
+
+    void createExplosion(Vector3 vec, int type, float radius) override {
+        NetCode::RPC::CreateExplosion createExplosionRPC;
+        createExplosionRPC.vec = vec;
+        createExplosionRPC.type = type;
+        createExplosionRPC.radius = radius;
+        sendRPC(createExplosionRPC);
+    }
+
+    void sendDeathMessage(int PlayerID, int KillerID, int reason) override {
+        NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+        sendDeathMessageRPC.PlayerID = PlayerID;
+        sendDeathMessageRPC.KillerID = KillerID;
+        sendDeathMessageRPC.reason = reason;
+        sendRPC(sendDeathMessageRPC);
+    }
+
+    void setWidescreen(bool enable) override {
+        widescreen_ = enable;
+        NetCode::RPC::ToggleWidescreen toggleWidescreenRPC;
+        toggleWidescreenRPC.enable = enable;
+        sendRPC(toggleWidescreenRPC);
+    }
+
+    bool getWidescreen() const override {
+        return widescreen_;
     }
 
     void toggleClock(bool toggle) override {
@@ -233,6 +266,13 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     bool getControllable() const override {
         return controllable_;
+    }
+
+	void setSpectating(bool spectating) override {
+        state_ = PlayerState_Spectating;
+        NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
+        togglePlayerSpectatingRPC.Enable = spectating;
+        sendRPC(togglePlayerSpectatingRPC);
     }
 
     void playSound(uint32_t sound, Vector3 pos) override {
