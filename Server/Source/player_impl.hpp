@@ -30,6 +30,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int virtualWorld_;
     int team_;
     int skin_;
+    int score_;
     PlayerFightingStyle fightingStyle_;
     PlayerState state_;
     std::array<uint16_t, NUM_SKILL_LEVELS> skillLevels_;
@@ -53,7 +54,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
     String lastPlayedAudio_;
     unsigned interior_;
     unsigned wantedLevel_;
-    int score_;
     int weather_;
     int cutType_;
     Vector4 worldBounds_;
@@ -195,6 +195,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     int getTeam() const override {
         return team_;
+    }
+
+    void setScore(int score) override {
+        if (score_ != score) {
+            score_ = score;
+            playerEventDispatcher_->dispatch(&PlayerEventHandler::onScoreChange, *this, score);
+        }
+    }
+
+    int getScore() const override {
+        return score_;
     }
 
     void setSkin(int skin) override {
@@ -475,6 +486,8 @@ struct Player final : public IPlayer, public PoolIDProvider {
         else if (name.length() > MAX_PLAYER_NAME) {
             return EPlayerNameStatus::Invalid;
         }
+        playerEventDispatcher_->dispatch(&PlayerEventHandler::onNameChange, *this, name_);
+
         name_ = name;
 
         NetCode::RPC::SetPlayerName setPlayerNameRPC;
@@ -482,7 +495,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
         setPlayerNameRPC.Name = name_;
         setPlayerNameRPC.Success = true;
         pool_->broadcastRPC(setPlayerNameRPC, BroadcastGlobally, this, false /* skipFrom */);
-
         return EPlayerNameStatus::Updated;
     }
 
@@ -561,14 +573,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
     const PlayerBulletData& getBulletData() const override {
         return bulletData_;
-    }
-
-    virtual void setScore(int score) override {
-        score_ = score;
-    }
-
-    virtual int getScore() const override {
-        return score_;
     }
 
     void giveWeapon(WeaponSlotData weapon) override {
@@ -1264,6 +1268,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         packet.PlayerID = peer.getID();
         packet.Reason = reason;
         broadcastRPC(packet, BroadcastGlobally);
+
+        eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
     }
 
     PlayerPool(ICore& core) :
