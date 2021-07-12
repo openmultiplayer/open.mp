@@ -287,8 +287,6 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void onTick(uint64_t tick) override;
     int handleQuery(const char * buffer, char * output) override;
-    void onScoreChange(IPlayer& player, int score) override;
-    void onNameChange(IPlayer & player, const String & oldName) override;
     void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid);
@@ -299,6 +297,22 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void OnCloseConnection(RakNet::RakPeerInterface* peer, RakNet::PlayerID playerId) override {
         return OnRakNetDisconnect(playerId);
+    }
+
+    void onScoreChange(IPlayer & player, int score) override {
+        query.preparePlayerListForQuery();
+    }
+
+    void onNameChange(IPlayer & player, const String & oldName) override {
+        query.preparePlayerListForQuery();
+    }
+
+    void onConnect(IPlayer & player) override {
+        query.preparePlayerListForQuery();
+    }
+
+    void onDisconnect(IPlayer & player, int reason) override {
+        query.preparePlayerListForQuery();
     }
 
     unsigned getPing(const INetworkPeer& peer) override {

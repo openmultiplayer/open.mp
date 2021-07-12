@@ -366,10 +366,6 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             handler->onPeerConnect(player, lbs);
         }
     );
-
-    std::unordered_map<std::string, int> & playerListForQuery = network->query.getPlayers();
-    playerListForQuery[player.getName().c_str()] = player.getScore();
-    network->query.setPlayerList(playerListForQuery);
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
@@ -388,14 +384,6 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
 
     IPlayer& player = pool.get(pid);
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, 0 /* TODO reason */);
-
-    std::unordered_map<std::string, int> & playerListForQuery = query.getPlayers();
-    auto it = playerListForQuery.find(player.getName().c_str());
-    if (it != playerListForQuery.end()) {
-        playerListForQuery.erase(it);
-        query.setPlayerList(playerListForQuery);
-    }
-
     pool.release(pid);
 }
 
@@ -443,7 +431,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
     SAMPRakNet::ServerCoreInit(c);
-    query = Query();
+    query = Query(c);
 
     const JSON& props = core->getProperties();
     int maxPlayers = Config::getOption<int>(props, "max_players");
@@ -461,22 +449,6 @@ void RakNetLegacyNetwork::init(ICore* c) {
     SAMPRakNet::SetPort(port);
     query.setMaxPlayers(maxPlayers);
     query.setServerName(serverName);
-}
-
-void RakNetLegacyNetwork::onScoreChange(IPlayer & player, int score) {
-    std::unordered_map<std::string, int> & playerList = query.getPlayers();
-    playerList[player.getName().c_str()] = score;
-    query.setPlayerList(playerList);
-}
-
-void RakNetLegacyNetwork::onNameChange(IPlayer & player, const String& oldName) {
-    std::unordered_map<std::string, int> & playerList = query.getPlayers();
-    auto it = playerList.find(oldName.c_str());
-    if (it != playerList.end()) {
-        playerList.erase(it);
-    }
-    playerList[player.getName().c_str()] = player.getScore();
-    query.setPlayerList(playerList);
 }
 
 void RakNetLegacyNetwork::onTick(uint64_t tick) {
