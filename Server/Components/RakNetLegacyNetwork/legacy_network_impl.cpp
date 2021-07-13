@@ -1,4 +1,6 @@
 #include "legacy_network_impl.hpp"
+#include "raknet/../../SAMPRakNet.hpp"
+#include "Query/query.hpp"
 #include <netcode.hpp>
 
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
@@ -273,6 +275,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork() :
 RakNetLegacyNetwork::~RakNetLegacyNetwork() {
     if (core) {
         core->getEventDispatcher().removeEventHandler(this);
+        core->getPlayers().getEventDispatcher().removeEventHandler(this);
     }
     rakNetServer.Disconnect(300);
     RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
@@ -426,14 +429,26 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 void RakNetLegacyNetwork::init(ICore* c) {
     core = c;
     core->getEventDispatcher().addEventHandler(this);
+    core->getPlayers().getEventDispatcher().addEventHandler(this);
+    SAMPRakNet::ServerCoreInit(c);
+    query = Query(c);
+
     const JSON& props = core->getProperties();
+    int maxPlayers = Config::getOption<int>(props, "max_players");
+    std::string serverName = Config::getOption<std::string>(props, "server_name");
+    int port = Config::getOption<int>(props, "port");
+
     rakNetServer.Start(
-        Config::getOption<int>(props, "max_players"),
+        maxPlayers,
         0,
         Config::getOption<int>(props, "sleep"),
-        Config::getOption<int>(props, "port")
+        port
     );
     rakNetServer.StartOccasionalPing();
+
+    SAMPRakNet::SetPort(port);
+    query.setMaxPlayers(maxPlayers);
+    query.setServerName(serverName);
 }
 
 void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
@@ -441,7 +456,7 @@ void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
         auto pos = pidFromRID.find(pkt->playerId);
         if (pos != pidFromRID.end()) {
             int pid = pos->second;
-            auto& pool = core->getPlayers();
+            auto & pool = core->getPlayers();
             if (pool.valid(pid)) {
                 IPlayer& player = pool.get(pid);
                 RakNet::BitStream bs(pkt->data, pkt->length, false);
@@ -463,4 +478,9 @@ void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
         }
         rakNetServer.DeallocatePacket(pkt);
     }
+}
+
+int RakNetLegacyNetwork::handleQuery(const char * buffer, char * output) {
+    int outputLength = query.handleQuery(buffer, output);
+    return outputLength;
 }

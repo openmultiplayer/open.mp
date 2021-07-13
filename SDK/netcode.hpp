@@ -303,6 +303,8 @@ namespace NetCode {
 			}
 		};
 
+
+
 		struct PlayerSpawn final : NetworkPacketBase<52> {
 			bool read(INetworkBitStream& bs) {
 				return true;
@@ -310,6 +312,54 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 			}
+		};
+
+		struct SetCheckpoint final : NetworkPacketBase<107> {
+			Vector3 position;
+			float size;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(position));
+				bs.write(NetworkBitStreamValue::FLOAT(size));
+			}
+		};
+
+		struct DisableCheckpoint final : NetworkPacketBase<37> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {}
+		};
+
+		struct SetRaceCheckpoint final : NetworkPacketBase<38> {
+			uint8_t type;
+			Vector3 position;
+			Vector3 nextPosition;
+			float size;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(type));
+				bs.write(NetworkBitStreamValue::VEC3(position));
+				bs.write(NetworkBitStreamValue::VEC3(nextPosition));
+				bs.write(NetworkBitStreamValue::FLOAT(size));
+			}
+		};
+
+		struct DisableRaceCheckpoint final : NetworkPacketBase<39> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {}
 		};
 
 		struct GivePlayerWeapon final : NetworkPacketBase<22> {
@@ -465,6 +515,22 @@ namespace NetCode {
 			}
 		};
 
+		struct SendDeathMessage final : NetworkPacketBase<55> {
+			int KillerID;
+			int PlayerID;
+			int reason;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(KillerID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(reason));
+			}
+		};
+
 
 		struct SetPlayerWeather final : NetworkPacketBase<152> {
 			uint8_t WeatherID;
@@ -478,6 +544,17 @@ namespace NetCode {
 			}
 		};
 
+		struct SetWorldBounds final : NetworkPacketBase<17> {
+			Vector4 coords;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC4(coords));
+			}
+		};
 
 
 		struct SetPlayerColor final : NetworkPacketBase<72> {
@@ -723,6 +800,18 @@ namespace NetCode {
 			}
 		};
 
+		struct TogglePlayerSpectating final : NetworkPacketBase<124> {
+			bool Enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Enable));
+			}
+		};
+
 		struct PlayerPlaySound final : NetworkPacketBase<16> {
 			uint32_t SoundID;
 			Vector3 Position;
@@ -918,6 +1007,22 @@ namespace NetCode {
 			}
 		};
 
+		struct CreateExplosion final : NetworkPacketBase<79> {
+			Vector3 vec;
+			uint16_t type;
+			float radius;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::VEC3(vec));
+				bs.write(NetworkBitStreamValue::UINT16(type));
+				bs.write(NetworkBitStreamValue::FLOAT(radius));
+			}
+		};
+
 		struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -948,6 +1053,18 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT8(Level));
+			}
+		};
+
+		struct ToggleWidescreen final : NetworkPacketBase<111> {
+			bool enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(enable));
 			}
 		};
 
