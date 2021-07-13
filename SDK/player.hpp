@@ -198,8 +198,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Set the player's camera position
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
+	// Get the player's camera position
+	virtual Vector3 getCameraPosition() = 0;
+
 	// Set the direction a player's camera looks at
 	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
+
+	// Get the direction a player's camera looks at
+	virtual Vector3 getCameraLookAt() = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;
@@ -250,6 +256,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get whether the player is controllable
 	virtual bool getControllable() const = 0;
 
+	/// Set whether the player is spectating
+	virtual void setSpectating(bool spectating) = 0;
+
 	/// Set the player's wanted level
 	virtual void setWantedLevel(unsigned level) = 0;
 
@@ -276,6 +285,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's last played audio URL
 	virtual const String& lastPlayedAudio() const = 0;
+
+	// Create an explosion
+	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
+
+	// Send Death message
+	virtual void sendDeathMessage(int PlayerID, int KillerID, int reason) = 0;
 
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
@@ -312,6 +327,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get whether the clock is visible for the player
 	virtual bool clockToggled() const = 0;
 
+	/// Toggle widescreen for player
+	virtual void setWidescreen(bool enable) = 0;
+
+	// Get widescreen status from player
+	virtual bool getWidescreen() const = 0;
+
 	/// Set the transform applied to player rotation
 	virtual void setTransform(const GTAQuat& tm) = 0;
 
@@ -320,6 +341,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's health
 	virtual float getHealth() const = 0;
+
+	/// Set the player's score
+	virtual void setScore(int score) = 0;
+
+	/// Get the player's score
+	virtual int getScore() const = 0;
 
 	/// Set the player's armour
 	virtual void setArmour(float armour) = 0;
@@ -363,6 +390,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
 
 	/// Get the player's state
+	virtual void setState(PlayerState state) = 0;
+
+	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
 	/// Set the player's team
@@ -387,10 +417,16 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void sendCommand(const String& message) const = 0;
 
 	/// Set the player's weather
-	virtual void setWeather(int money) = 0;
+	virtual void setWeather(int weatherID) = 0;
 
 	/// Get the player's weather
 	virtual int getWeather() const = 0;
+
+	// Set world bounds
+	virtual void setWorldBounds(Vector4 coords) = 0;
+
+	// Get world bounds
+	virtual Vector4 getWorldBounds() const = 0;
 
 	/// Set the player's fighting style
 	/// @note See https://open.mp/docs/scripting/resources/fightingstyles
@@ -437,12 +473,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's bullet data
 	virtual const PlayerBulletData& getBulletData() const = 0;
 
-	/// Set the player's score
-	virtual void setScore(int score) = 0;
-
-	/// Get the player's score
-	virtual int getScore() const = 0;
-
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;
 
@@ -471,8 +501,10 @@ struct PlayerEventHandler {
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
-	virtual bool onCommandText(IPlayer& player, String message) { return true; }
+	virtual bool onCommandText(IPlayer& player, String message) { return false; }
 	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual void onScoreChange(IPlayer& player, int score) {}
+	virtual void onNameChange(IPlayer & player, const String & oldName) {}
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}

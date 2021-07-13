@@ -9,6 +9,7 @@
 #include <raknet/PluginInterface.h>
 #include <raknet/StringCompressor.h>
 #include <glm/glm.hpp>
+#include "Query/query.hpp"
 #define MAGNITUDE_EPSILON 0.00001f
 
 struct Core;
@@ -232,7 +233,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 };
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public RakNet::PluginInterface {
+struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public RakNet::PluginInterface {
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
@@ -289,7 +290,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
-
+    int handleQuery(const char * buffer, char * output) override;
     void onTick(std::chrono::microseconds elapsed) override;
     void init(ICore* core);
 
@@ -301,6 +302,22 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void OnCloseConnection(RakNet::RakPeerInterface* peer, RakNet::PlayerID playerId) override {
         return OnRakNetDisconnect(playerId);
+    }
+
+    void onScoreChange(IPlayer & player, int score) override {
+        query.preparePlayerListForQuery();
+    }
+
+    void onNameChange(IPlayer & player, const String & oldName) override {
+        query.preparePlayerListForQuery();
+    }
+
+    void onConnect(IPlayer & player) override {
+        query.preparePlayerListForQuery();
+    }
+
+    void onDisconnect(IPlayer & player, int reason) override {
+        query.preparePlayerListForQuery();
     }
 
     unsigned getPing(const INetworkPeer& peer) override {
@@ -315,6 +332,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     ICore* core;
+    Query query;
     RakNet::RakServerInterface& rakNetServer;
     std::map<RakNet::PlayerID, int> pidFromRID;
     RakNet::BitStream wbs;
