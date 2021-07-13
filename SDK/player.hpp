@@ -466,6 +466,7 @@ struct PlayerEventHandler {
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, int reason) {}
 	virtual bool onRequestSpawn(IPlayer& player) { return true; }
+	virtual void preSpawn(IPlayer& player) {}
 	virtual void onSpawn(IPlayer& player) {}
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
