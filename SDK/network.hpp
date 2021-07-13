@@ -42,8 +42,9 @@ enum class NetworkBitStreamValueType {
 	FIXED_LEN_STR,        ///< NetworkString
 	FIXED_LEN_ARR_UINT8,  ///< NetworkArray<uint8_t>
 	FIXED_LEN_ARR_UINT16, ///< NetworkArray<uint16_t>
-	FIXED_LEN_ARR_UINT32,  ///< NetworkArray<uint32_t>
-	GTA_QUAT ///< GTAQuat
+	FIXED_LEN_ARR_UINT32, ///< NetworkArray<uint32_t>
+	GTA_QUAT,             ///< GTAQuat
+	COMPRESSED_STR        ///< NetworkString
 };
 
 /// Type used for storing arrays to pass to the networks
@@ -233,6 +234,7 @@ struct NetworkBitStreamValue {
 	NBSVCONS(FIXED_LEN_ARR_UINT16, NetworkArray<uint16_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT32, NetworkArray<uint32_t>);
 	NBSVCONS(GTA_QUAT, GTAQuat);
+	NBSVCONS(COMPRESSED_STR, NetworkString);
 };
 
 #undef NBSVCONS
@@ -275,14 +277,19 @@ struct INetworkBitStream {
 	virtual void reset(ENetworkBitStreamReset reset) = 0;
 
 	/// Helper function that reads a bit stream value and sets it to a variable
-	template <typename T, typename ...Args>
-	bool read(T& output, Args... args) {
+	template <typename OutputType, typename T, typename ...Args>
+	bool readT(T& output, Args... args) {
 		NetworkBitStreamValue input{ std::forward<Args>(args)... };
 		if (!read(input)) {
 			return false;
 		}
-		output = std::get<T>(input.data);
+		output = std::get<OutputType>(input.data);
 		return true;
+	}
+
+	template <typename T, typename ...Args>
+	bool read(T& output, Args... args) {
+		return readT<T, T, Args...>(output, std::forward<Args>(args)...);
 	}
 };
 
