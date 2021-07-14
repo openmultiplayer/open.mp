@@ -222,6 +222,15 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			}
 			return true;
 		}
+		else if (!message.find("/putplayer") && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "Putting in vehicle.");
+			vehicle->putPlayer(1, 0);
+			return true;
+		}
+		else if (message == "/getVehId") {
+			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getID()));
+			return true;
+		}
 		else if (!message.find("/component") && vehicle) {
 			int plate_space = message.find_first_of(" ");
 			if (plate_space != String::npos) {

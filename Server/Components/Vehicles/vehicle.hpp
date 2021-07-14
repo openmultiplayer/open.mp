@@ -108,4 +108,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int getComponentInSlot(int slot) override;
 
     void removeComponent(int component) override;
+
+    void putPlayer(int VehicleID, int SeatID) override;
 };
