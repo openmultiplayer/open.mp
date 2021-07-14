@@ -174,8 +174,10 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
         }
 
         if (message == "/reset") {
+			vehicle->setHealth(player, 100);
             player.setWidescreen(false);
             player.setControllable(true);
+			player.setSpectating(false);
             player.stopAudio();
             player.setWeather(0);
             player.setWantedLevel(0);
@@ -222,6 +224,44 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			}
 			return true;
 		}
+		else if (!message.find("/putplayer") && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "Putting in vehicle.");
+			vehicle->putPlayer(player, 0);
+			return true;
+		}
+
+		else if (message == "/removeplayer" && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "Removing from vehicle.");
+			vehicle->removePlayer(player);
+			return true;
+		}
+		else if (message == "/getvehid" && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "Vehicle ID:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getID()));
+			return true;
+		}
+
+		else if (message == "/getvehhp" && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "Vehicle HP:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
+			return true;
+		}
+
+		else if (message == "/setvehzangle" && vehicle) {
+			vehicle->setZAngle(player, 129.f);
+			player.sendClientMessage(0xFFFFFFFF, "vehZAngle After:");
+			return true;
+		}
+
+		else if (message == "/setvehhp" && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "vehicleHP Before:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
+			vehicle->setHealth(player, 30);
+			player.sendClientMessage(0xFFFFFFFF, "vehicleHP After:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
+			return true;
+		}
+		
 		else if (!message.find("/component") && vehicle) {
 			int plate_space = message.find_first_of(" ");
 			if (plate_space != String::npos) {
