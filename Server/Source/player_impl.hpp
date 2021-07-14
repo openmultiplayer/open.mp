@@ -13,7 +13,7 @@
 #include <glm/glm.hpp>
 #include <regex>
 
-struct Player final : public IPlayer, public PoolIDProvider {
+struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     IPlayerPool* pool_;
     DefaultEventDispatcher<PlayerEventHandler>* playerEventDispatcher_;
     NetworkData netData_;
@@ -58,14 +58,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int cutType_;
     Vector4 worldBounds_;
     bool widescreen_;
-    
     std::chrono::system_clock::time_point lastMarkerUpdate_;
-
-    Player(const Player& other) = delete;
-    Player(Player&& other) = delete;
-
-    Player& operator=(const Player& other) = delete;
-    Player& operator=(Player&& other) = delete;
 
     Player() :
         pool_(nullptr),
@@ -73,6 +66,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         cameraPos_(0.f, 0.f, 0.f),
         cameraLookAt_(0.f, 0.f, 0.f),
         virtualWorld_(0),
+        score_(0),
         fightingStyle_(PlayerFightingStyle_Normal),
         state_(PlayerState_None),
         surfing_{ PlayerSurfingData::Type::None },
@@ -88,17 +82,16 @@ struct Player final : public IPlayer, public PoolIDProvider {
         lastPlayedAudio_(),
         interior_(0),
         wantedLevel_(0),
-        score_(0),
         weather_(0),
         worldBounds_(0.f, 0.f, 0.f, 0.f),
-        lastMarkerUpdate_(std::chrono::system_clock::now()),
-        widescreen_(0)
+        widescreen_(0),
+        lastMarkerUpdate_(std::chrono::system_clock::now())
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
     }
 
-    void setState(PlayerState state) override {
+    void setState(PlayerState state) {
         if (state_ != state) {
             playerEventDispatcher_->dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
             state_ = state;
@@ -272,7 +265,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
 	void setSpectating(bool spectating) override {
-        state_ = PlayerState_Spectating;
+        setState(PlayerState_Spectating);
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
         togglePlayerSpectatingRPC.Enable = spectating;
         sendRPC(togglePlayerSpectatingRPC);

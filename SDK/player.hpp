@@ -390,9 +390,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
 
 	/// Get the player's state
-	virtual void setState(PlayerState state) = 0;
-
-	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
 	/// Set the player's team
