@@ -3,7 +3,7 @@
 #include <netcode.hpp>
 
 template <class ObjectType>
-struct BaseObject : public ObjectType, public PoolIDProvider {
+struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 	Vector3 pos_;
 	Vector3 rot_;
 	int model_;
@@ -157,8 +157,10 @@ struct BaseObject : public ObjectType, public PoolIDProvider {
 				if (!std::isnan(rotSpeed_)) {
 					const float remainingRotation = glm::distance(rot_, moveData_.targetRot);
 					const float travelledRotation = std::chrono::duration_cast<float_seconds>(elapsed).count() * rotSpeed_;
-					const float rotationRatio = remainingRotation / travelledRotation;
-					rot_ += (moveData_.targetRot - rot_) / rotationRatio;
+					if (travelledRotation > std::numeric_limits<float>::epsilon()) {
+						const float rotationRatio = remainingRotation / travelledRotation;
+						rot_ += (moveData_.targetRot - rot_) / rotationRatio;
+					}
 				}
 			}
 		}
@@ -175,12 +177,6 @@ struct Object final : public BaseObject<IObject> {
 	Object() :
 		players_(nullptr)
 	{}
-
-	Object(const Object& other) = delete;
-	Object(Object&& other) = delete;
-
-	Object& operator=(const Object& other) = delete;
-	Object& operator=(Object&& other) = delete;
 
 	void restream() {
 		for (IPlayer* player : players_->entries()) {
@@ -337,12 +333,6 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 	PlayerObject() :
 		player_(nullptr)
 	{}
-
-	PlayerObject(const PlayerObject& other) = delete;
-	PlayerObject(PlayerObject&& other) = delete;
-
-	PlayerObject& operator=(const PlayerObject& other) = delete;
-	PlayerObject& operator=(PlayerObject&& other) = delete;
 
 	void restream() {
 		createObjectForClient(*player_);
