@@ -10,7 +10,7 @@
 /// An event handler for core events
 struct CoreEventHandler {
 	virtual void postInit() {}
-	virtual void onTick(uint64_t tick) {} // TODO move to a separate handler, called too often
+	virtual void onTick(std::chrono::microseconds elapsed) {} // TODO move to a separate handler, called too often
 };
 
 /// The core interface

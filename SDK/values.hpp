@@ -20,7 +20,10 @@ constexpr int MAX_PLAYER_NAME = 24;
 constexpr int MAX_ANIMATIONS = 1813;
 constexpr int MAX_SKILL_LEVEL = 999;
 constexpr int INVALID_VEHICLE_ID = 0xFFFF;
+constexpr int INVALID_OBJECT_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
+constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
+constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
 
 namespace Config {
 	enum PlayerMarkerMode {

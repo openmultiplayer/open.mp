@@ -40,7 +40,7 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 		c->printLn("Server initiated with SDK version %i", c->getVersion());
 	}
 
-	void onTick(uint64_t tick) override {
+	void onTick(std::chrono::microseconds elapsed) override {
 	}
 
 	~PawnPlugin() {

@@ -451,7 +451,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     query.setServerName(serverName);
 }
 
-void RakNetLegacyNetwork::onTick(uint64_t tick) {
+void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
         auto pos = pidFromRID.find(pkt->playerId);
         if (pos != pidFromRID.end()) {
