@@ -147,7 +147,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
         if (message == "/reset") {
             player.setWidescreen(false);
-            player.setState(PlayerState_OnFoot);
             player.setControllable(true);
             player.stopAudio();
             player.setWeather(0);
@@ -162,6 +161,41 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
             return true;
         }
 
+		if (message == "/moveobj" && obj) {
+			obj->startMoving(ObjectMoveData{ Vector3(10.f, 0.f, 10.f), Vector3(0.f), 1.f });
+		}
+
+		if (message == "/attach" && obj2) {
+			obj2->attachToPlayer(player, Vector3(0.f, 0.f, 2.f), Vector3(0.f));
+		}
+
+		if (message == "/createobj") {
+			objects->create(1340, Vector3(0.f, -2.f, 3.f), Vector3(0.f), 10.f);
+		}
+
+		IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
+		if (objectData) {
+			if (message == "/calf") {
+				ObjectAttachmentSlotData data;
+				data.model = 1337;
+				data.bone = PlayerBone_LeftCalf;
+				data.offset = Vector3(0.f);
+				data.rotation = Vector3(0.f);
+				data.scale = Vector3(0.5f);
+				data.color1 = 0;
+				data.color2 = 0;
+				objectData->setAttachedObject(0, data);
+			}
+
+			if (message == "/editcalf") {
+				objectData->editAttachedObject(0);
+			}
+
+			if (message == "/editobj") {
+				objectData->beginObjectSelection();
+			}
+		}
+
         return false;
 
 	}
@@ -172,7 +206,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
-		c->printLn("%s has entered checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have entered checkpoint");
 		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 		cp->disable(player);
 		cp->setType(CheckpointType::RACE_NORMAL);
@@ -183,15 +217,15 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	}
 
 	void onPlayerLeaveCheckpoint(IPlayer& player) override {
-		c->printLn("%s has left checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have left checkpoint");
 	}
 
 	void onPlayerEnterRaceCheckpoint(IPlayer& player) override {
-		c->printLn("%s has entered race checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have entered race checkpoint");
 	}
 
 	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override {
-		c->printLn("%s has left race checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have left race checkpoint");
 		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 		cp->disable(player);
 	}
@@ -244,36 +278,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			cp->enable(player);
 		}
 
-		static int s = 0;
-		if (s == 0) {
-			if (obj) {
-				obj->startMoving(ObjectMoveData{ Vector3(10.f, 0.f, 10.f), Vector3(0.f), 1.f });
-			}
-			if (obj2) {
-				obj2->attachToPlayer(player, Vector3(0.f, 0.f, 2.f), Vector3(0.f));
-			}
-		}
-		else if (s == 1) {
-			IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
-			if (objectData) {
-				ObjectAttachmentSlotData data;
-				data.model = 1337;
-				data.bone = PlayerBone_LeftCalf;
-				data.offset = Vector3(0.f);
-				data.rotation = Vector3(0.f);
-				data.scale = Vector3(0.5f);
-				data.color1 = 0;
-				data.color2 = 0;
-				objectData->setAttachedObject(0, data);
-
-				objectData->editAttachedObject(0);
-			}
-
-			if (objects) {
-				objects->create(1340, Vector3(0.f, -2.f, 3.f), Vector3(0.f), 10.f);
-			}
-		}
-
 		IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
 		if (objectData) {
 			IPlayerObject* obj = objectData->create(19371, Vector3(10.f), Vector3(0.f));
@@ -282,8 +286,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 				obj->setMaterial(0, 19341, "egg_texts", "easter_egg01", 0xFFFFFFFF);
 			}
 		}
-
-		++s;
 	}
 
 	void onMoved(IObject& object) override {
