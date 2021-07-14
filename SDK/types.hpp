@@ -38,3 +38,13 @@ inline String to_string(T conv) {
 	const std::string str = std::to_string(conv);
 	return String(str.data(), str.length());
 }
+
+struct NoCopy {
+	NoCopy() = default;
+
+	NoCopy(const NoCopy& other) = delete;
+	NoCopy(NoCopy&& other) = delete;
+
+	NoCopy& operator=(const NoCopy& other) = delete;
+	NoCopy& operator=(NoCopy&& other) = delete;
+};

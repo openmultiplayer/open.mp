@@ -13,6 +13,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
+	bool moved = false;
 
 
 	UUID getUUID() override {
@@ -36,12 +37,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			return true; 
 		}
 
-		bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) {
+		bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) override {
 			player.sendClientMessage(-1, String(("onRespray(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(colour1) + ", " + std::to_string(colour2) + ")").c_str()));
 			return true;
 		}
 
-		void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {
+		void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) override {
 			player.sendClientMessage(-1, String(("onEnterExitModShop(" + std::to_string(player.getID()) + ", " + std::to_string(enterexit) + ", " + std::to_string(interiorID) + ")").c_str()));
 		}
 	} vehicleEventWatcher;
@@ -174,7 +175,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
         if (message == "/reset") {
             player.setWidescreen(false);
-            player.setState(PlayerState_OnFoot);
             player.setControllable(true);
             player.stopAudio();
             player.setWeather(0);
@@ -240,12 +240,52 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			player.setMoney(99999);
 			return true;
 		}
-		else if (message == "/elegy" && vehicles) {
+		else if (message == "/infernus" && vehicles) {
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
 			vehicles->create(411, pos);
 			return true;
 		}
+		if (message == "/moveobj" && obj) {
+			if (!moved) {
+				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
+			}
+			else {
+				obj->startMoving(ObjectMoveData{ Vector3(14.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f), 0.3f });
+			}
+		}
+
+		if (message == "/attach" && obj2) {
+			obj2->attachToPlayer(player, Vector3(0.f, 0.f, 2.f), Vector3(0.f));
+		}
+
+		if (message == "/createobj") {
+			objects->create(1340, Vector3(0.f, -2.f, 3.f), Vector3(0.f), 10.f);
+		}
+
+		IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
+		if (objectData) {
+			if (message == "/calf") {
+				ObjectAttachmentSlotData data;
+				data.model = 1337;
+				data.bone = PlayerBone_LeftCalf;
+				data.offset = Vector3(0.f);
+				data.rotation = Vector3(0.f);
+				data.scale = Vector3(0.5f);
+				data.color1 = 0;
+				data.color2 = 0;
+				objectData->setAttachedObject(0, data);
+			}
+
+			if (message == "/editcalf") {
+				objectData->editAttachedObject(0);
+			}
+
+			if (message == "/editobj") {
+				objectData->beginObjectSelection();
+			}
+		}
+
         return false;
 
 	}
@@ -255,7 +295,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	}
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
-		c->printLn("%s has entered checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have entered checkpoint");
 		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 		cp->disable(player);
 		cp->setType(CheckpointType::RACE_NORMAL);
@@ -266,15 +306,15 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	}
 
 	void onPlayerLeaveCheckpoint(IPlayer& player) override {
-		c->printLn("%s has left checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have left checkpoint");
 	}
 
 	void onPlayerEnterRaceCheckpoint(IPlayer& player) override {
-		c->printLn("%s has entered race checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have entered race checkpoint");
 	}
 
 	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override {
-		c->printLn("%s has left race checkpoint", player.getName().c_str());
+		player.sendClientMessage(0xFFFFFFFF, "You have left race checkpoint");
 		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 		cp->disable(player);
 	}
@@ -309,7 +349,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		objects = c->queryPlugin<IObjectsPlugin>();
 		if (objects) {
 			objects->getEventDispatcher().addEventHandler(this);
-			obj = objects->create(1337, Vector3(0.f, 0.f, 10.f), Vector3(90.f, 0.f, 0.f));
+			obj = objects->create(19370, Vector3(4.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f));
 			obj2 = objects->create(1337, Vector3(0.f, 0.f, 0.f), Vector3(0.f, 0.f, 0.f));
 			if (vehicle) {
 				IObject* obj = objects->create(19353, Vector3(0.f, 0.f, 10.f), Vector3(90.f, 0.f, 0.f));
@@ -328,36 +368,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			cp->enable(player);
 		}
 
-		static int s = 0;
-		if (s == 0) {
-			if (obj) {
-				obj->startMoving(ObjectMoveData{ Vector3(10.f, 0.f, 10.f), Vector3(0.f), 1.f });
-			}
-			if (obj2) {
-				obj2->attachToPlayer(player, Vector3(0.f, 0.f, 2.f), Vector3(0.f));
-			}
-		}
-		else if (s == 1) {
-			IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
-			if (objectData) {
-				ObjectAttachmentSlotData data;
-				data.model = 1337;
-				data.bone = PlayerBone_LeftCalf;
-				data.offset = Vector3(0.f);
-				data.rotation = Vector3(0.f);
-				data.scale = Vector3(0.5f);
-				data.color1 = 0;
-				data.color2 = 0;
-				objectData->setAttachedObject(0, data);
-
-				objectData->editAttachedObject(0);
-			}
-
-			if (objects) {
-				objects->create(1340, Vector3(0.f, -2.f, 3.f), Vector3(0.f), 10.f);
-			}
-		}
-
 		IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
 		if (objectData) {
 			IPlayerObject* obj = objectData->create(19371, Vector3(10.f), Vector3(0.f));
@@ -366,12 +376,10 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 				obj->setMaterial(0, 19341, "egg_texts", "easter_egg01", 0xFFFFFFFF);
 			}
 		}
-
-		++s;
 	}
 
 	void onMoved(IObject& object) override {
-		objects->release(object.getID());
+		moved = !moved;
 		const Vector3 vec = object.getPosition();
 		printf("Object position on move: (%f, %f, %f)", vec.x, vec.y, vec.z);
 	}

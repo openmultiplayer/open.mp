@@ -180,7 +180,7 @@ int Query::handleQuery(char const * buffer, char * output)
 			writeToBuffer(output,bufferLength, ruleValueLength);
 			writeToBuffer(output,rule.second.c_str(), bufferLength, ruleValueLength);
 		}
-
-		return bufferLength;
 	}
+
+	return bufferLength;
 }
