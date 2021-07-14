@@ -3,6 +3,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Objects/objects.hpp>
+#include <Server/Components/TextLabels/textlabels.hpp>
 
 struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler {
 	ICore* c = nullptr;
@@ -10,9 +11,11 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	IClassesPlugin* classes = nullptr;
 	IVehiclesPlugin* vehicles = nullptr;
 	IObjectsPlugin* objects = nullptr;
+	ITextLabelsPlugin* labels = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
+	ITextLabel* label = nullptr;
 	bool moved = false;
 
 
@@ -202,6 +205,42 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			}
 		}
 
+		if (labels) {
+			Vector3 origPos(5.f, 0.f, 3.f);
+			if (message == "/label") {
+				label = labels->create("Global Text", 0xFFFF00FF, origPos, 20.f, 0, true);
+			}
+
+			if (message == "/labelattachtovehicle" && vehicle) {
+				static bool attach = true;
+				if (attach) {
+					label->attachToVehicle(*vehicle, Vector3(0.f));
+				}
+				else {
+					label->detachFromVehicle(origPos);
+				}
+				attach = !attach;
+			}
+
+			if (message == "/labelattachtoplayer") {
+				static bool attach = true;
+				if (attach) {
+					label->attachToPlayer(player, Vector3(0.f));
+				}
+				else {
+					label->detachFromPlayer(origPos);
+				}
+				attach = !attach;
+			}
+		}
+
+		if (message == "/playerlabelattachtovehicle" && vehicle) {
+			IPlayerTextLabelData* labelData = player.queryData<IPlayerTextLabelData>();
+			if (labelData && labelData->valid(0)) {
+				labelData->get(0).attachToVehicle(*vehicle, Vector3(0.f, 0.f, 3.f));
+			}
+		}
+
         return false;
 
 	}
@@ -209,7 +248,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	const char* pluginName() override {
 		return "TestComponent";
 	}
-
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		player.sendClientMessage(0xFFFFFFFF, "You have entered checkpoint");
@@ -273,6 +311,8 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 				obj->setMaterialText(0, "Hello {008500}omp", 90, "Arial", 28, false, 0xFFFF8200, 0xFF000000, ObjectMaterialTextAlign_Center);
 			}
 		}
+
+		labels = c->queryPlugin<ITextLabelsPlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -291,6 +331,11 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 				obj->attachToVehicle(*vehicle, Vector3(0.f, 1.f, 2.f), Vector3(0.f, 0.f, 90.f));
 				obj->setMaterial(0, 19341, "egg_texts", "easter_egg01", 0xFFFFFFFF);
 			}
+		}
+
+		IPlayerTextLabelData* labelData = player.queryData<IPlayerTextLabelData>();
+		if (labelData) {
+			labelData->create("Player Text", 0x00FFFFFF, Vector3(-5.f, 0.f, 3.f), 20.f, false);
 		}
 	}
 
