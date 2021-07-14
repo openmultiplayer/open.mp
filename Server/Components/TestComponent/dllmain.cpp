@@ -227,6 +227,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			vehicle->putPlayer(1, 0);
 			return true;
 		}
+
+		else if (message == "/removeplayer" && vehicle) {
+			player.sendClientMessage(0xFFFFFFFF, "Removing from vehicle.");
+			vehicle->removePlayer();
+			return true;
+		}
 		else if (message == "/getVehId") {
 			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getID()));
 			return true;
