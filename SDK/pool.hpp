@@ -54,7 +54,7 @@ struct IEventDispatcherPool {
 /* Implementation, NOT to be passed around */
 
 template <typename T, size_t Size>
-struct UniqueIDArray {
+struct UniqueIDArray : public NoCopy {
     int findFreeIndex() const {
         return findFreeIndex(0);
     }
@@ -106,7 +106,7 @@ struct PoolIDProvider {
 };
 
 template <typename Type, typename Interface, int Count>
-struct PoolStorage final {
+struct PoolStorage final : public NoCopy {
     int findFreeIndex() {
         return allocated_.findFreeIndex();
     }
@@ -172,7 +172,7 @@ private:
 };
 
 template <typename Type, typename Interface, int Count>
-struct MarkedPoolStorage final {
+struct MarkedPoolStorage final : public NoCopy {
     int findFreeIndex() const {
         return allocated_.findFreeIndex();
     }
@@ -252,7 +252,7 @@ private:
 };
 
 template <typename Type, typename Interface, int Count>
-struct DefaultPool final : public IPool<Interface, Count> {
+struct DefaultPool final : public IPool<Interface, Count>, public NoCopy {
     PoolStorage<Type, Interface, Count> storage;
     int findFreeIndex() override {
         return storage.findFreeIndex();
