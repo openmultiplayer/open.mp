@@ -60,7 +60,10 @@ struct IVehicle : public IEntity {
 	virtual void setColour(int col1, int col2) = 0;
 
 	/// Set the vehicle's health
-	virtual void setHealth(float Health) = 0;
+	virtual void setHealth(IPlayer& player, float Health) = 0;
+
+	/// Get the vehicle's health
+	virtual float getHealth() = 0;
 
 	/// Update the vehicle from a sync packet
 	virtual bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) = 0;
@@ -98,13 +101,9 @@ struct IVehicle : public IEntity {
 	/// Removes a component from the vehicle.
 	virtual void removeComponent(int component) = 0;
 
-	virtual void putPlayer(int VehicleID, int SeatID) = 0;
+	virtual void putPlayer(IPlayer& player, int SeatID) = 0;
 	
 	virtual void removePlayer() = 0;
-
-	virtual void setHealth(int VehicleID, float health) = 0;
-
-	virtual float getHealth() = 0;
 };
 
 /// A vehicle event handler
