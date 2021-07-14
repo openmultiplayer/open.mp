@@ -443,9 +443,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's score
 	virtual int getScore() const = 0;
 
-	/// Update the player's state
-	/// Will call onStateChange if it changed
-	virtual bool setState(PlayerState state) = 0;
 
 	/// Add data associated with the player, preferrably used on player connect
 	virtual void addData(IPlayerData* playerData) = 0;

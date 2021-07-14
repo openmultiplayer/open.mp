@@ -8,7 +8,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
-    std::array<int, 14> mods;
+    std::array<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
     float health = 1000.0f;
     uint8_t interior = 0;
     uint32_t doorDamage = 0;
@@ -20,7 +20,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     int32_t bodyColour1;
     int32_t bodyColour2;
     IPlayer* driver;
-    DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
+    DefaultEventDispatcher<VehicleEventHandler>* eventDispatcher;
     String numberPlate;
 
     Vehicle() {
@@ -94,4 +94,21 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
 
     void setPlate(String plate) override;
     const String& getPlate() override;
+
+    void setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater = nullptr) override;
+    void getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) override;
+
+    /// Sets the vehicle's paintjob
+    void setPaintJob(int paintjob) override;
+
+    /// Gets the vehicle's paintjob
+    int getPaintJob() override;
+
+    /// Adds a component to the vehicle.
+    void addComponent(int component) override;
+
+    /// Gets the vehicle's component in a designated slot
+    int getComponentInSlot(int slot) override;
+
+    void removeComponent(int component) override;
 };
