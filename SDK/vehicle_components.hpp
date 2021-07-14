@@ -200,7 +200,7 @@ const VehicleComponentSlot allComponentSlots[MAX_VEHICLE_COMPONENTS] =
 	VehicleComponent_RearBumper
 };
 
-int getVehicleComponentSlot(int component) {
+static int getVehicleComponentSlot(int component) {
 	component -= 1000;
 	if (component < MAX_VEHICLE_COMPONENTS)
 	{

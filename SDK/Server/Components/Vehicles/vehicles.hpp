@@ -110,6 +110,7 @@ struct VehicleEventHandler {
 	virtual bool onPaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) { return true; }
 	virtual bool onMod(IPlayer& player, IVehicle& vehicle, int component) { return true; }
 	virtual bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) { return true; }
+	virtual void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {}
 };
 
 /// A vehicle pool
