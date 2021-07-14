@@ -157,8 +157,10 @@ struct BaseObject : public ObjectType, public PoolIDProvider {
 				if (!std::isnan(rotSpeed_)) {
 					const float remainingRotation = glm::distance(rot_, moveData_.targetRot);
 					const float travelledRotation = std::chrono::duration_cast<float_seconds>(elapsed).count() * rotSpeed_;
-					const float rotationRatio = remainingRotation / travelledRotation;
-					rot_ += (moveData_.targetRot - rot_) / rotationRatio;
+					if (travelledRotation > std::numeric_limits<float>::epsilon()) {
+						const float rotationRatio = remainingRotation / travelledRotation;
+						rot_ += (moveData_.targetRot - rot_) / rotationRatio;
+					}
 				}
 			}
 		}

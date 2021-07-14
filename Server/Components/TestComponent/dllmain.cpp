@@ -13,6 +13,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
+	bool moved = false;
 
 
 	UUID getUUID() override {
@@ -162,7 +163,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
         }
 
 		if (message == "/moveobj" && obj) {
-			obj->startMoving(ObjectMoveData{ Vector3(10.f, 0.f, 10.f), Vector3(0.f), 1.f });
+			if (!moved) {
+				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
+			}
+			else {
+				obj->startMoving(ObjectMoveData{ Vector3(14.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f), 0.3f });
+			}
 		}
 
 		if (message == "/attach" && obj2) {
@@ -259,7 +265,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		objects = c->queryPlugin<IObjectsPlugin>();
 		if (objects) {
 			objects->getEventDispatcher().addEventHandler(this);
-			obj = objects->create(1337, Vector3(0.f, 0.f, 10.f), Vector3(90.f, 0.f, 0.f));
+			obj = objects->create(19370, Vector3(4.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f));
 			obj2 = objects->create(1337, Vector3(0.f, 0.f, 0.f), Vector3(0.f, 0.f, 0.f));
 			if (vehicle) {
 				IObject* obj = objects->create(19353, Vector3(0.f, 0.f, 10.f), Vector3(90.f, 0.f, 0.f));
@@ -289,7 +295,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 	}
 
 	void onMoved(IObject& object) override {
-		objects->release(object.getID());
+		moved = !moved;
 		const Vector3 vec = object.getPosition();
 		printf("Object position on move: (%f, %f, %f)", vec.x, vec.y, vec.z);
 	}
