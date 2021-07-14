@@ -13,7 +13,7 @@
 #include <glm/glm.hpp>
 #include <regex>
 
-struct Player final : public IPlayer, public PoolIDProvider {
+struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     IPlayerPool* pool_;
     DefaultEventDispatcher<PlayerEventHandler>* playerEventDispatcher_;
     NetworkData netData_;
@@ -58,14 +58,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     int cutType_;
     Vector4 worldBounds_;
     bool widescreen_;
-    
     std::chrono::system_clock::time_point lastMarkerUpdate_;
-
-    Player(const Player& other) = delete;
-    Player(Player&& other) = delete;
-
-    Player& operator=(const Player& other) = delete;
-    Player& operator=(Player&& other) = delete;
 
     Player() :
         pool_(nullptr),
@@ -73,6 +66,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         cameraPos_(0.f, 0.f, 0.f),
         cameraLookAt_(0.f, 0.f, 0.f),
         virtualWorld_(0),
+        score_(0),
         fightingStyle_(PlayerFightingStyle_Normal),
         state_(PlayerState_None),
         surfing_{ PlayerSurfingData::Type::None },
@@ -88,17 +82,17 @@ struct Player final : public IPlayer, public PoolIDProvider {
         lastPlayedAudio_(),
         interior_(0),
         wantedLevel_(0),
-        score_(0),
         weather_(0),
         worldBounds_(0.f, 0.f, 0.f, 0.f),
-        lastMarkerUpdate_(std::chrono::system_clock::now()),
-        widescreen_(0)
+        widescreen_(0),
+        lastMarkerUpdate_(std::chrono::system_clock::now())
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
     }
 
-    void setState(PlayerState state) override {
+    void setState(PlayerState state) {
+        playerEventDispatcher_->dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
         state_ = state;
     }
 
@@ -269,7 +263,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
 	void setSpectating(bool spectating) override {
-        state_ = PlayerState_Spectating;
+        setState(PlayerState_Spectating);
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
         togglePlayerSpectatingRPC.Enable = spectating;
         sendRPC(togglePlayerSpectatingRPC);
@@ -856,7 +850,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             const int pid = peer.getID();
             Player& player = self.storage.get(pid);
-            player.state_ = PlayerState_Wasted;
+            player.setState(PlayerState_Wasted);
 
             bool killerIsValid = self.storage.valid(onPlayerDeathRPC.KillerID);
             self.eventDispatcher.dispatch(
@@ -880,7 +874,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             Player& player = self.storage.get(peer.getID());
-            player.state_ = PlayerState_Spawned;
+            player.setState(PlayerState_Spawned);
 
             self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
 
@@ -1015,7 +1009,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.animation_.flags = footSync.AnimationFlags;
             player.surfing_ = footSync.SurfingData;
             player.action_ = PlayerSpecialAction(footSync.SpecialAction);
-            player.state_ = PlayerState_OnFoot;
+            player.setState(PlayerState_OnFoot);
 
             if (!player.controllable_) {
                 footSync.Keys = 0;
@@ -1167,7 +1161,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
-            player.state_ = PlayerState_Driver;
+            player.setState(PlayerState_Driver);
 
             if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync)) {
                 vehicleSync.PlayerID = pid;
