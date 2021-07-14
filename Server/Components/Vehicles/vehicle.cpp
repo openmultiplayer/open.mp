@@ -73,6 +73,24 @@ const String& Vehicle::getPlate() {
     return numberPlate;
 }
 
+void Vehicle::setColour(int col1, int col2) {
+    bodyColour1 = col1;
+    bodyColour2 = col2;
+
+    NetCode::RPC::SCMEvent colourRPC;
+    colourRPC.PlayerID = 0xFFFF;
+    colourRPC.VehicleID = getID();
+    colourRPC.EventType = VehicleSCMEvent_SetColour;
+    colourRPC.Arg1 = col1;
+    colourRPC.Arg2 = col2;
+
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        if (player) {
+            player->sendRPC(colourRPC);
+        }
+    }
+}
+
 void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater) {
     tyreDamage = TyreStatus;
     doorDamage = DoorStatus;
