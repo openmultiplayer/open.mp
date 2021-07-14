@@ -201,11 +201,9 @@ void Vehicle::setHealth(IPlayer& player, float Health) {
 }
 
 
-void Vehicle::removePlayer() {
+void Vehicle::removePlayer(IPlayer& player) {
     NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(removePlayerFromVehicleRPC);
-    }
+    player.sendRPC(removePlayerFromVehicleRPC);
 }
 
 float Vehicle::getHealth() {
