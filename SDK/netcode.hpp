@@ -585,6 +585,16 @@ namespace NetCode {
 			}
 		};
 
+		struct RemovePlayerFromVehicle final : NetworkPacketBase<71> {
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
 		struct SetPlayerPosition final : NetworkPacketBase<12> {
 			Vector3 Pos;
 
