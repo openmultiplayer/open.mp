@@ -26,6 +26,24 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		void onDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) override {
 			player.sendClientMessage(-1, String(("onDamageStatsUpdate(" + std::to_string(vehicle.getID()) + ", " + std::to_string(player.getID()) + ")").c_str()));
 		}
+
+		bool onPaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) override {
+			player.sendClientMessage(-1, String(("onPaintJob(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(paintJob) + ")").c_str()));
+			return true; 
+		}
+		bool onMod(IPlayer& player, IVehicle& vehicle, int component) override {
+			player.sendClientMessage(-1, String(("onMod(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(component) + ")").c_str()));
+			return true; 
+		}
+
+		bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) {
+			player.sendClientMessage(-1, String(("onRespray(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(colour1) + ", " + std::to_string(colour2) + ")").c_str()));
+			return true;
+		}
+
+		void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {
+			player.sendClientMessage(-1, String(("onEnterExitModShop(" + std::to_string(player.getID()) + ", " + std::to_string(enterexit) + ", " + std::to_string(interiorID) + ")").c_str()));
+		}
 	} vehicleEventWatcher;
 
 	bool onCommandText(IPlayer& player, String message) override {
@@ -171,21 +189,13 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
             return true;
         }
 
-        return false;
-
-	}
-
-	const char* pluginName() override {
-		return "TestComponent";
-	}
-
-	bool onCommandText(IPlayer& player, String message) override {
 		if (message == "/myvehicle") {
 			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
 			int id = data ? (data->getVehicle() ? data->getVehicle()->getID() : INVALID_VEHICLE_ID) : INVALID_VEHICLE_ID;
 			int seat = data ? data->getSeat() : -1;
 			std::string str = "Your vehicle ID is " + std::to_string(id) + " and your seat is " + std::to_string(seat);
 			player.sendClientMessage(-1, String(str.c_str()));
+			return true;
 		}
 		else if (!message.find("/plate")) {
 			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
@@ -195,6 +205,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 					data->getVehicle()->setPlate(message.substr(plate_space + 1));
 				}
 			}
+			return true;
 		}
 		else if (message == "/teststatus" && vehicles) {
 			IVehicle* vehicle = &vehicles->get(1); // sue me
@@ -202,12 +213,14 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 				// Destroys everything, don't ask me to explain look at the wiki and cry like I did.
 				vehicle->setDamageStatus(322372134, 67371524, 69, 15);
 			}
+			return true;
 		}
 		else if (!message.find("/paintjob") && vehicle) {
 			int plate_space = message.find_first_of(" ");
 			if (plate_space != String::npos) {
 				vehicle->setPaintJob(std::atoi(message.substr(plate_space + 1).c_str()));
 			}
+			return true;
 		}
 		else if (!message.find("/component") && vehicle) {
 			int plate_space = message.find_first_of(" ");
@@ -220,10 +233,26 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 					vehicle->addComponent(component);
 				}
 			}
+			return true;
 		}
-		return false;
+		else if (message == "/transfender") {
+			player.setPosition(Vector3(2393.2690f, 1020.5157f, 10.5474f));
+			player.setMoney(99999);
+			return true;
+		}
+		else if (message == "/elegy" && vehicles) {
+			Vector3 pos = player.getPosition();
+			pos.x -= 3.0f;
+			vehicles->create(411, pos);
+			return true;
+		}
+        return false;
+
 	}
 
+	const char* pluginName() override {
+		return "TestComponent";
+	}
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		c->printLn("%s has entered checkpoint", player.getName().c_str());
@@ -269,6 +298,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		if (vehicles) {
 			vehicle = vehicles->create(411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
 			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
+			vehicles->getEventDispatcher().addEventHandler(&vehicleEventWatcher);
 		}
 
 		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
@@ -377,6 +407,10 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}	
 	}
 
+	TestComponent() :
+		vehicleEventWatcher(*this) {
+	}
+
 	~TestComponent() {
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
 		if (checkpoints) {
@@ -384,6 +418,9 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
+		}
+		if (vehicles) {
+			vehicles->getEventDispatcher().removeEventHandler(&vehicleEventWatcher);
 		}
 	}
 } plugin;

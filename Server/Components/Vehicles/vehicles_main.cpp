@@ -1,6 +1,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 #include "vehicle.hpp"
+#include "vehicle_components.hpp"
 
 struct PlayerVehicleData final : public IPlayerVehicleData {
     IVehicle* vehicle = nullptr;
@@ -138,6 +139,10 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 }
 
                 case VehicleSCMEvent_AddComponent: {
+                    if (getVehicleComponentSlot(scmEvent.Arg1) == VehicleComponent_None) {
+                        break;
+                    }
+
                     bool allowed = self.eventDispatcher.stopAtFalse(
                         [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
                             return handler->onMod(peer, vehicle, scmEvent.Arg1);
@@ -169,10 +174,26 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 }
 
                 case VehicleSCMEvent_EnterExitModShop: {
+                    self.eventDispatcher.all([&peer, scmEvent](VehicleEventHandler* handler) {
+                        handler->onEnterExitModShop(peer, scmEvent.Arg1, scmEvent.Arg2);
+                    });
 
+                    NetCode::RPC::SCMEvent enterExitRPC;
+                    enterExitRPC.PlayerID = peer.getID();
+                    enterExitRPC.VehicleID = vehicle.getID();
+                    enterExitRPC.EventType = VehicleSCMEvent_EnterExitModShop;
+                    enterExitRPC.Arg1 = scmEvent.Arg1;
+                    enterExitRPC.Arg2 = scmEvent.Arg2;
+                    
+                    for (IPlayer* player : vehicle.streamedPlayers_.entries()) {
+                        if (player != &peer) {
+                            player->sendRPC(enterExitRPC);
+                        } 
+                    }
                     break;
                 }
             }
+            return true;
         }
     } playerSCMEventHandler;
 
