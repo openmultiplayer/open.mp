@@ -71,12 +71,17 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void streamInForPlayer(IPlayer& player) override;
     void streamOutForPlayer(IPlayer& player) override;
+
+    /// Update the vehicle's data from a player sync packet.
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
 
+    /// Sets the vehicle's body colour
     void setColour(int col1, int col2) override;
 
-    void setHealth(IPlayer& player, float Health) override;
+    /// Sets the vehicle's health
+    void setHealth(float Health) override;
 
+    /// Gets the vehicle's current health
     float getHealth() override;
 
     /// Sets the current driver of the vehicle
@@ -107,13 +112,18 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Gets the vehicle's component in a designated slot
     int getComponentInSlot(int slot) override;
 
+    /// Removes a vehicle's component.
     void removeComponent(int component) override;
 
+    /// Puts the player inside this vehicle.
     void putPlayer(IPlayer& player, int SeatID) override;
 
+    /// Removes the player from the vehicle.
     void removePlayer(IPlayer& player) override;
 
-	void setZAngle(IPlayer& player, float angle) override;
+    /// Set the vehicle's Z angle.
+	void setZAngle(float angle) override;
 
+    /// Gets the vehicle's Z angle.
     float getZAngle() override;
 };

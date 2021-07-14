@@ -192,12 +192,14 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID) {
     player.sendRPC(putPlayerInVehicleRPC);
 }
 
-void Vehicle::setHealth(IPlayer& player, float Health) {
+void Vehicle::setHealth(float Health) {
     health = Health;
     NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
     setVehicleHealthRPC.VehicleID = poolID;
     setVehicleHealthRPC.health = Health;
-    player.sendRPC(setVehicleHealthRPC);
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(setVehicleHealthRPC);
+    }
 }
 
 
@@ -206,11 +208,14 @@ void Vehicle::removePlayer(IPlayer& player) {
     player.sendRPC(removePlayerFromVehicleRPC);
 }
 
-void Vehicle::setZAngle(IPlayer& player, float angle) {
+void Vehicle::setZAngle(float angle) {
+    rot.q.z = angle;
     NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
     setVehicleZAngleRPC.VehicleID = poolID;
     setVehicleZAngleRPC.angle = angle;
-    player.sendRPC(setVehicleZAngleRPC);
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(setVehicleZAngleRPC);
+    }
 }
 
 float Vehicle::getZAngle() {
