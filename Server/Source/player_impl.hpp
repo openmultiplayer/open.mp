@@ -99,7 +99,10 @@ struct Player final : public IPlayer, public PoolIDProvider {
     }
 
     void setState(PlayerState state) override {
-        state_ = state;
+        if (state_ != state) {
+            playerEventDispatcher_->dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
+            state_ = state;
+        }
     }
 
     PlayerState getState() const override {
@@ -733,15 +736,6 @@ struct Player final : public IPlayer, public PoolIDProvider {
 
             sendPacket(bs);
         }
-    }
-
-    bool setState(PlayerState state) {
-        if (state_ != state) {
-            playerEventDispatcher_->dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
-            state_ = state;
-            return true;
-        }
-        return false;
     }
 
     ~Player() {
