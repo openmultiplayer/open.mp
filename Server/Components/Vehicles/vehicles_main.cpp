@@ -33,7 +33,7 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
 
 struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, public PlayerEventHandler {
 	ICore* core;
-    PoolStorage<Vehicle, IVehicle, VehiclePlugin::Cnt> storage;
+    MarkedPoolStorage<Vehicle, IVehicle, VehiclePlugin::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
 	std::array<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
 
@@ -215,7 +215,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
         core->addPerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
         core->addPerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
-        claim(0);
+        storage.claimUnusable(0);
 	}
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override {
@@ -282,8 +282,8 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         return storage.get(index);
     }
 
-    bool release(int index) override {
-        return storage.release(index);
+    void release(int index) override {
+        storage.mark(index);
     }
 
     /// Get a set of all the available objects
@@ -291,13 +291,10 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         return storage.entries();
     }
 
-    void onTick(uint64_t tick) override {
+    void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (IVehicle* const& vehicle : storage.entries()) {
-            if (vehicle->getID() == 0) {
-                continue;
-            }
-
+        for (auto it = storage.entries().begin(); it != storage.entries().end();) {
+            IVehicle* vehicle = *it;
             const int vw = vehicle->getVirtualWorld();
             const Vector3 pos = vehicle->getPosition();
             for (IPlayer* const& player : core->getPlayers().entries()) {
@@ -319,6 +316,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                     eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, *vehicle, *player);
                 }
             }
+
+            int vid = vehicle->getID();
+            it = storage.marked(vid) ? storage.release(vid) : it + 1;
         }
     }
 };

@@ -42,8 +42,9 @@ enum class NetworkBitStreamValueType {
 	FIXED_LEN_STR,        ///< NetworkString
 	FIXED_LEN_ARR_UINT8,  ///< NetworkArray<uint8_t>
 	FIXED_LEN_ARR_UINT16, ///< NetworkArray<uint16_t>
-	FIXED_LEN_ARR_UINT32,  ///< NetworkArray<uint32_t>
-	GTA_QUAT ///< GTAQuat
+	FIXED_LEN_ARR_UINT32, ///< NetworkArray<uint32_t>
+	GTA_QUAT,             ///< GTAQuat
+	COMPRESSED_STR        ///< NetworkString
 };
 
 /// Type used for storing arrays to pass to the networks
@@ -233,6 +234,7 @@ struct NetworkBitStreamValue {
 	NBSVCONS(FIXED_LEN_ARR_UINT16, NetworkArray<uint16_t>);
 	NBSVCONS(FIXED_LEN_ARR_UINT32, NetworkArray<uint32_t>);
 	NBSVCONS(GTA_QUAT, GTAQuat);
+	NBSVCONS(COMPRESSED_STR, NetworkString);
 };
 
 #undef NBSVCONS
@@ -275,14 +277,19 @@ struct INetworkBitStream {
 	virtual void reset(ENetworkBitStreamReset reset) = 0;
 
 	/// Helper function that reads a bit stream value and sets it to a variable
-	template <typename T, typename ...Args>
-	bool read(T& output, Args... args) {
+	template <typename OutputType, typename T, typename ...Args>
+	bool readT(T& output, Args... args) {
 		NetworkBitStreamValue input{ std::forward<Args>(args)... };
 		if (!read(input)) {
 			return false;
 		}
-		output = std::get<T>(input.data);
+		output = std::get<OutputType>(input.data);
 		return true;
+	}
+
+	template <typename T, typename ...Args>
+	bool read(T& output, Args... args) {
+		return readT<T, T, Args...>(output, std::forward<Args>(args)...);
 	}
 };
 
@@ -366,6 +373,11 @@ struct INetwork {
 
 	/// Get a new bit stream for writing
 	virtual INetworkBitStream& writeBitStream() = 0;
+
+	/// For handling query, returns output buffer size
+	// @param buffer Buffer passed to handler, in case there's already a data needed to be written into output or contains pre-processing data
+	// @param output Output buffer to write data into and use in network layer
+	virtual int handleQuery(const char * buffer, char * output) = 0;
 
 	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
 	virtual unsigned getPing(const INetworkPeer& peer) = 0;
