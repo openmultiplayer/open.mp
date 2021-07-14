@@ -7,6 +7,7 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/PluginInterface.h>
+#include <raknet/StringCompressor.h>
 #include <glm/glm.hpp>
 #include "Query/query.hpp"
 #define MAGNITUDE_EPSILON 0.00001f
@@ -104,6 +105,11 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         case NetworkBitStreamValueType::GTA_QUAT: {
             const GTAQuat& quat = std::get<GTAQuat>(input.data);
             bs.WriteNormQuat(quat.q.w, quat.q.x, quat.q.y, quat.q.z);
+            break;
+        }
+        case NetworkBitStreamValueType::COMPRESSED_STR: {
+            const NetworkString& str = std::get<NetworkString>(input.data);
+            RakNet::StringCompressor::Instance()->EncodeString(str.data, str.count + 1, &bs);
             break;
         }
         case NetworkBitStreamValueType::NONE:
@@ -284,9 +290,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
-
-    void onTick(uint64_t tick) override;
     int handleQuery(const char * buffer, char * output) override;
+    void onTick(std::chrono::microseconds elapsed) override;
     void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid);

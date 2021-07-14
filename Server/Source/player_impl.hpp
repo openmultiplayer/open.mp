@@ -882,6 +882,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = self.storage.get(peer.getID());
             player.state_ = PlayerState_Spawned;
 
+            self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
+
             IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
             if (classData) {
                 const PlayerClass& cls = classData->getClass();
@@ -903,14 +905,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
             }
 
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
+
             // Make sure to restream player on spawn
             for (IPlayer* const& other : self.storage.entries()) {
                 if (&player != other && other->isPlayerStreamedIn(player)) {
                     other->streamOutPlayer(player);
                 }
             }
-
-            self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
             return true;
         }
@@ -1211,8 +1213,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return storage.get(index);
     }
 
-    bool release(int index) override {
-        return storage.release(index);
+    void release(int index) override {
+        storage.release(index);
     }
 
     /// Get a set of all the available objects
@@ -1375,7 +1377,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
     }
 
-    void onTick(uint64_t tick) override {
+    void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         for (IPlayer* const& player : storage.entries()) {
             const int vw = player->getVirtualWorld();
