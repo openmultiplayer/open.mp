@@ -103,7 +103,7 @@ struct IVehicle : public IEntity {
 
 	virtual void putPlayer(IPlayer& player, int SeatID) = 0;
 	
-	virtual void removePlayer() = 0;
+	virtual void removePlayer(IPlayer& player) = 0;
 };
 
 /// A vehicle event handler

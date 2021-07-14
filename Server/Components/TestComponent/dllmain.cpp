@@ -231,7 +231,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
 		else if (message == "/removeplayer" && vehicle) {
 			player.sendClientMessage(0xFFFFFFFF, "Removing from vehicle.");
-			vehicle->removePlayer();
+			vehicle->removePlayer(player);
 			return true;
 		}
 		else if (message == "/getvehid" && vehicle) {
