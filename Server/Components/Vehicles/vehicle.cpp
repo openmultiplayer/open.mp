@@ -185,28 +185,26 @@ void Vehicle::removeComponent(int component) {
     }
 }
 
-void Vehicle::putPlayer(int VehicleID, int SeatID) {
+void Vehicle::putPlayer(IPlayer& player, int SeatID) {
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
-    putPlayerInVehicleRPC.VehicleID = VehicleID;
+    putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
-	for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(putPlayerInVehicleRPC);
-	}
+    player.sendRPC(putPlayerInVehicleRPC);
 }
+
+void Vehicle::setHealth(IPlayer& player, float Health) {
+    health = Health;
+    NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
+    setVehicleHealthRPC.VehicleID = poolID;
+    setVehicleHealthRPC.health = Health;
+    player.sendRPC(setVehicleHealthRPC);
+}
+
 
 void Vehicle::removePlayer() {
     NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
     for (IPlayer* player : streamedPlayers_.entries()) {
         player->sendRPC(removePlayerFromVehicleRPC);
-    }
-}
-
-void Vehicle::setHealth(int VehicleID, float health) {
-    NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
-    setVehicleHealthRPC.VehicleID = VehicleID;
-    setVehicleHealthRPC.health = health;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(setVehicleHealthRPC);
     }
 }
 
