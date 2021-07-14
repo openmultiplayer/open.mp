@@ -469,7 +469,7 @@ struct INetworkPeer {
 
 /* Implementation, NOT to be passed around */
 
-struct Network : public INetwork {
+struct Network : public INetwork, public NoCopy {
 	DefaultEventDispatcher<NetworkEventHandler> networkEventDispatcher;
 	DefaultEventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
     DefaultIndexedEventDispatcher<SingleNetworkInOutEventHandler> rpcInOutEventDispatcher;

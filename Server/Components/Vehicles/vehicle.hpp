@@ -1,7 +1,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-struct Vehicle final : public IVehicle, public PoolIDProvider {
+struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
     std::array<IPlayer*, MAX_SEATS> passengers;
