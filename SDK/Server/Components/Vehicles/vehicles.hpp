@@ -60,7 +60,7 @@ struct IVehicle : public IEntity {
 	virtual void setColour(int col1, int col2) = 0;
 
 	/// Set the vehicle's health
-	virtual void setHealth(IPlayer& player, float Health) = 0;
+	virtual void setHealth(float Health) = 0;
 
 	/// Get the vehicle's health
 	virtual float getHealth() = 0;
@@ -98,15 +98,19 @@ struct IVehicle : public IEntity {
 	/// Gets the vehicle's component in a designated slot
 	virtual int getComponentInSlot(int slot) = 0;
 
-	/// Removes a component from the vehicle.
+	/// Removes a vehicle's component.
 	virtual void removeComponent(int component) = 0;
 
+	/// Puts the player inside this vehicle.
 	virtual void putPlayer(IPlayer& player, int SeatID) = 0;
-	
+
+	/// Removes the player from the vehicle.
 	virtual void removePlayer(IPlayer& player) = 0;
 
-	virtual void setZAngle(IPlayer& player, float angle) = 0;
+	/// Set the vehicle's Z angle.
+	virtual void setZAngle(float angle) = 0;
 
+	/// Gets the vehicle's Z angle.
 	virtual float getZAngle() = 0;
 };
 
