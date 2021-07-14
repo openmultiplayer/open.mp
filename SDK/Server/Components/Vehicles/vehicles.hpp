@@ -101,6 +101,10 @@ struct IVehicle : public IEntity {
 	virtual void putPlayer(int VehicleID, int SeatID) = 0;
 	
 	virtual void removePlayer() = 0;
+
+	virtual void setHealth(int VehicleID, float health) = 0;
+
+	virtual float getHealth() = 0;
 };
 
 /// A vehicle event handler
