@@ -209,6 +209,12 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         }
     }
 
+    void onDisconnect(IPlayer& player, int reason) override {
+        for (IVehicle* vehicle : entries()) {
+            vehicle->streamOutForPlayer(player);
+        }
+    }
+
     VehiclePlugin() :
         playerEnterVehicleHandler(*this),
         playerExitVehicleHandler(*this),
