@@ -193,3 +193,10 @@ void Vehicle::putPlayer(int VehicleID, int SeatID) {
         player->sendRPC(putPlayerInVehicleRPC);
 	}
 }
+
+void Vehicle::removePlayer() {
+    NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(removePlayerFromVehicleRPC);
+    }
+}
