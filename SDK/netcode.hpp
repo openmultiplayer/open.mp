@@ -1109,6 +1109,69 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(plate));
 			}
 		};
+
+		struct SetVehicleDamageStatus final : NetworkPacketBase<106> {
+			int VehicleID;
+			uint32_t DoorStatus;
+			uint32_t PanelStatus;
+			uint8_t LightStatus;
+			uint8_t TyreStatus;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(PanelStatus, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(DoorStatus, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(LightStatus, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(TyreStatus, { NetworkBitStreamValueType::UINT8 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT32(PanelStatus));
+				bs.write(NetworkBitStreamValue::UINT32(DoorStatus));
+				bs.write(NetworkBitStreamValue::UINT8(LightStatus));
+				bs.write(NetworkBitStreamValue::UINT8(TyreStatus));
+			}
+		};
+
+		struct SCMEvent final : NetworkPacketBase<96> {
+			int PlayerID;
+			int VehicleID;
+			uint32_t Arg1;
+			uint32_t Arg2;
+			uint32_t EventType;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint32_t, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(Arg1, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(Arg2, { NetworkBitStreamValueType::UINT32 });
+				CHECKED_READ(EventType, { NetworkBitStreamValueType::UINT32 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(EventType));
+				bs.write(NetworkBitStreamValue::UINT32(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT32(Arg1));
+				bs.write(NetworkBitStreamValue::UINT32(Arg2));
+			}
+		};
+
+		struct RemoveVehicleComponent final : NetworkPacketBase<57> {
+			int VehicleID;
+			int Component;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT16(Component));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {

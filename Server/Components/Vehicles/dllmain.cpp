@@ -37,6 +37,10 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
 	std::array<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
 
+    IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override {
+        return eventDispatcher;
+    }
+
     struct PlayerEnterVehicleHandler : public SingleNetworkInOutEventHandler {
         VehiclePlugin& self;
         PlayerEnterVehicleHandler(VehiclePlugin& self) : self(self) {}
@@ -87,6 +91,76 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         }
     } playerExitVehicleHandler;
 
+    struct PlayerUpdateVehicleDamageStatus : public SingleNetworkInOutEventHandler {
+        VehiclePlugin& self;
+        PlayerUpdateVehicleDamageStatus(VehiclePlugin& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
+            if (!onDamageStatus.read(bs) || !self.storage.valid(onDamageStatus.VehicleID)) {
+                return false;
+            }
+
+            IPlayerVehicleData* data = peer.queryData<IPlayerVehicleData>();
+            IVehicle* vehicle = data->getVehicle();
+            if (vehicle && vehicle->getDriver() == &peer) {
+                vehicle->setDamageStatus(onDamageStatus.PanelStatus, onDamageStatus.DoorStatus, onDamageStatus.LightStatus, onDamageStatus.TyreStatus, &peer);
+            }
+            return true;
+        }
+    } vehicleDamageStatusHandler;
+
+    struct PlayerSCMEventHandler : public SingleNetworkInOutEventHandler {
+        VehiclePlugin& self;
+        PlayerSCMEventHandler(VehiclePlugin& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::SCMEvent scmEvent;
+            if (!scmEvent.read(bs) || !self.storage.valid(scmEvent.VehicleID)) {
+                return false;
+            }
+
+            Vehicle& vehicle = self.storage.get(scmEvent.VehicleID);
+            if (!vehicle.isStreamedInForPlayer(peer)) {
+                return false;
+            }
+
+            switch (scmEvent.EventType) {
+                case VehicleSCMEvent_SetPaintjob: {
+                    bool allowed = self.eventDispatcher.stopAtFalse(
+                        [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
+                            return handler->onPaintJob(peer, vehicle, scmEvent.Arg1);
+                        });
+                    if (allowed) {
+                        vehicle.setPaintJob(scmEvent.Arg1);
+                    }
+                }
+
+                case VehicleSCMEvent_AddComponent: {
+                    bool allowed = self.eventDispatcher.stopAtFalse(
+                        [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
+                            return handler->onMod(peer, vehicle, scmEvent.Arg1);
+                        });
+
+                    if (allowed) {
+                        vehicle.addComponent(scmEvent.Arg1);
+                    }
+                    else {
+ 
+                    }
+                }
+
+                case VehicleSCMEvent_SetColour: {
+
+                }
+
+                case VehicleSCMEvent_EnterExitModShop: {
+
+                }
+            }
+        }
+    } playerSCMEventHandler;
+
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
@@ -101,7 +175,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 
     VehiclePlugin() :
         playerEnterVehicleHandler(*this),
-        playerExitVehicleHandler(*this)
+        playerExitVehicleHandler(*this),
+        vehicleDamageStatusHandler(*this),
+        playerSCMEventHandler(*this)
 	{
 		preloadModels.fill(0);
 	}
@@ -112,6 +188,8 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
+        core->removePerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
+        core->removePerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
 	}
 
 	void onInit(ICore* core) override {
@@ -120,6 +198,8 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
         claim(0);
 	}
 
@@ -152,7 +232,8 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
             return nullptr;
         }
 
-        IVehicle& vehicle = storage.get(pid);
+        Vehicle& vehicle = storage.get(pid);
+        vehicle.eventDispatcher = &eventDispatcher;
         vehicle.setSpawnData(data);
         return &vehicle;
     }
