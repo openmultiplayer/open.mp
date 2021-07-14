@@ -390,9 +390,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
 
 	/// Get the player's state
-	virtual void setState(PlayerState state) = 0;
-
-	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
 	/// Set the player's team
@@ -509,6 +506,7 @@ struct PlayerEventHandler {
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
+	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
 };
 
 struct PlayerUpdateEventHandler {
