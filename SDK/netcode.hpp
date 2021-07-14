@@ -585,6 +585,20 @@ namespace NetCode {
 			}
 		};
 
+		struct SetVehicleHealth final : NetworkPacketBase<147> {
+			int VehicleID;
+			float health;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::FLOAT(health));
+			}
+		};
+
 		struct RemovePlayerFromVehicle final : NetworkPacketBase<71> {
 
 			bool read(INetworkBitStream& bs) {

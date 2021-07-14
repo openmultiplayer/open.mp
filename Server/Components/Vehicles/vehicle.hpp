@@ -112,4 +112,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void putPlayer(int VehicleID, int SeatID) override;
 
     void removePlayer() override;
+
+    void setHealth(int VehicleID, float health) override;
+	
+    float getHealth() override;
 };
