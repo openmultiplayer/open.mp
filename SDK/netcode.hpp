@@ -571,6 +571,58 @@ namespace NetCode {
 			}
 		};
 
+		struct PutPlayerInVehicle final : NetworkPacketBase<70> {
+			int VehicleID;
+			int SeatID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(SeatID));
+			}
+		};
+
+		struct SetVehicleHealth final : NetworkPacketBase<147> {
+			int VehicleID;
+			float health;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::FLOAT(health));
+			}
+		};
+
+		struct SetVehicleZAngle final : NetworkPacketBase<160> {
+			int VehicleID;
+			float angle;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::FLOAT(angle));
+			}
+		};
+
+		struct RemovePlayerFromVehicle final : NetworkPacketBase<71> {
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
 		struct SetPlayerPosition final : NetworkPacketBase<12> {
 			Vector3 Pos;
 
@@ -1600,7 +1652,7 @@ namespace NetCode {
 		struct RemoveVehicleComponent final : NetworkPacketBase<57> {
 			int VehicleID;
 			int Component;
-
+				
 			bool read(INetworkBitStream& bs) {
 				return false;
 			}

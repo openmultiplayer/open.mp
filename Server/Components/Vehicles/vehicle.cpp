@@ -184,3 +184,41 @@ void Vehicle::removeComponent(int component) {
         player->sendRPC(modRPC);
     }
 }
+
+void Vehicle::putPlayer(IPlayer& player, int SeatID) {
+    NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
+    putPlayerInVehicleRPC.VehicleID = poolID;
+    putPlayerInVehicleRPC.SeatID = SeatID;
+    player.sendRPC(putPlayerInVehicleRPC);
+}
+
+void Vehicle::setHealth(IPlayer& player, float Health) {
+    health = Health;
+    NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
+    setVehicleHealthRPC.VehicleID = poolID;
+    setVehicleHealthRPC.health = Health;
+    player.sendRPC(setVehicleHealthRPC);
+}
+
+
+void Vehicle::removePlayer(IPlayer& player) {
+    NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
+    player.sendRPC(removePlayerFromVehicleRPC);
+}
+
+void Vehicle::setZAngle(IPlayer& player, float angle) {
+    NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
+    setVehicleZAngleRPC.VehicleID = poolID;
+    setVehicleZAngleRPC.angle = angle;
+    player.sendRPC(setVehicleZAngleRPC);
+}
+
+float Vehicle::getZAngle() {
+    return rot.ToEuler().z;
+}
+
+
+float Vehicle::getHealth() {
+    return health;
+}
+

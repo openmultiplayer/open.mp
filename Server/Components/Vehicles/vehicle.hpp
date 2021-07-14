@@ -75,9 +75,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void setColour(int col1, int col2) override;
 
-    void setHealth(float Health) override {
-        health = Health;
-    }
+    void setHealth(IPlayer& player, float Health) override;
+
+    float getHealth() override;
 
     /// Sets the current driver of the vehicle
     virtual void setDriver(IPlayer* player) override {
@@ -108,4 +108,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int getComponentInSlot(int slot) override;
 
     void removeComponent(int component) override;
+
+    void putPlayer(IPlayer& player, int SeatID) override;
+
+    void removePlayer(IPlayer& player) override;
+
+	void setZAngle(IPlayer& player, float angle) override;
+
+    float getZAngle() override;
 };
