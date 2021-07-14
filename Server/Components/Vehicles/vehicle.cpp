@@ -3,7 +3,7 @@
 
 void Vehicle::streamInForPlayer(IPlayer& player) {
     NetCode::RPC::StreamInVehicle streamIn;
-    streamIn.VehicleID = getID();
+    streamIn.VehicleID = poolID;
     streamIn.ModelID = spawnData.modelID;
     streamIn.Position = pos;
     streamIn.Angle = rot.ToEuler().z;
@@ -23,7 +23,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
 
     if (numberPlate.length()) {
         NetCode::RPC::SetVehiclePlate plateRPC;
-        plateRPC.VehicleID = getID();
+        plateRPC.VehicleID = poolID;
         plateRPC.plate = numberPlate;
         player.sendRPC(plateRPC);
     }
@@ -33,7 +33,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
 
 void Vehicle::streamOutForPlayer(IPlayer& player) {
     NetCode::RPC::StreamOutVehicle streamOut;
-    streamOut.VehicleID = getID();
+    streamOut.VehicleID = poolID;
     player.sendRPC(streamOut);
     streamedPlayers_.remove(player.getID(), &player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamOut, *this, player);
@@ -59,7 +59,7 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 void Vehicle::setPlate(String plate) {
     numberPlate = plate;
     NetCode::RPC::SetVehiclePlate plateRPC;
-    plateRPC.VehicleID = getID();
+    plateRPC.VehicleID = poolID;
     plateRPC.plate = plate;
 
     for (IPlayer* player : streamedPlayers_.entries()) {
@@ -79,7 +79,7 @@ void Vehicle::setColour(int col1, int col2) {
 
     NetCode::RPC::SCMEvent colourRPC;
     colourRPC.PlayerID = 0xFFFF;
-    colourRPC.VehicleID = getID();
+    colourRPC.VehicleID = poolID;
     colourRPC.EventType = VehicleSCMEvent_SetColour;
     colourRPC.Arg1 = col1;
     colourRPC.Arg2 = col2;
@@ -98,7 +98,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
     lightDamage = LightStatus;
 
     NetCode::RPC::SetVehicleDamageStatus damageStatus;
-    damageStatus.VehicleID = getID();
+    damageStatus.VehicleID = poolID;
     damageStatus.TyreStatus = tyreDamage;
     damageStatus.DoorStatus = doorDamage;
     damageStatus.PanelStatus = panelDamage;
@@ -128,7 +128,7 @@ void Vehicle::setPaintJob(int paintjob) {
     NetCode::RPC::SCMEvent paintRPC;
     paintRPC.PlayerID = 0xFFFF;
     paintRPC.EventType = VehicleSCMEvent_SetPaintjob;
-    paintRPC.VehicleID = getID();
+    paintRPC.VehicleID = poolID;
     paintRPC.Arg1 = paintjob;
 
     for (IPlayer* player : streamedPlayers_.entries()) {
@@ -152,7 +152,7 @@ void Vehicle::addComponent(int component) {
     NetCode::RPC::SCMEvent modRPC;
     modRPC.PlayerID = 0xFFFF;
     modRPC.EventType = VehicleSCMEvent_AddComponent;
-    modRPC.VehicleID = getID();
+    modRPC.VehicleID = poolID;
     modRPC.Arg1 = component;
 
     for (IPlayer* player : streamedPlayers_.entries()) {
@@ -178,7 +178,7 @@ void Vehicle::removeComponent(int component) {
     }
 
     NetCode::RPC::RemoveVehicleComponent modRPC;
-    modRPC.VehicleID = getID();
+    modRPC.VehicleID = poolID;
     modRPC.Component = component;
     for (IPlayer* player : streamedPlayers_.entries()) {
         player->sendRPC(modRPC);
