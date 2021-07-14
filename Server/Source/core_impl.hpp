@@ -146,7 +146,7 @@ struct Core final : public ICore, public PlayerEventHandler {
                     auto onTickNow = std::chrono::system_clock::now();
                     auto us = std::chrono::duration_cast<std::chrono::microseconds>(onTickNow - onTickPrev);
                     onTickPrev = onTickNow;
-                    eventDispatcher.dispatch(&CoreEventHandler::onTick, uint32_t(us.count()));
+                    eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
                 }
             }
         }
