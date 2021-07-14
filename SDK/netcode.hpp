@@ -599,6 +599,20 @@ namespace NetCode {
 			}
 		};
 
+		struct SetVehicleZAngle final : NetworkPacketBase<160> {
+			int VehicleID;
+			float angle;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::FLOAT(angle));
+			}
+		};
+
 		struct RemovePlayerFromVehicle final : NetworkPacketBase<71> {
 
 			bool read(INetworkBitStream& bs) {

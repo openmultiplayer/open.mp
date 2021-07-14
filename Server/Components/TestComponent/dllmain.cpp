@@ -174,6 +174,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
         }
 
         if (message == "/reset") {
+			vehicle->setHealth(player, 100);
             player.setWidescreen(false);
             player.setControllable(true);
 			player.setSpectating(false);
@@ -243,6 +244,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		else if (message == "/getvehhp" && vehicle) {
 			player.sendClientMessage(0xFFFFFFFF, "Vehicle HP:");
 			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
+			return true;
+		}
+
+		else if (message == "/setvehzangle" && vehicle) {
+			vehicle->setZAngle(player, 129.f);
+			player.sendClientMessage(0xFFFFFFFF, "vehZAngle After:");
 			return true;
 		}
 

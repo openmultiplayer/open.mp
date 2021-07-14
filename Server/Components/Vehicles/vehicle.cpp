@@ -206,6 +206,18 @@ void Vehicle::removePlayer(IPlayer& player) {
     player.sendRPC(removePlayerFromVehicleRPC);
 }
 
+void Vehicle::setZAngle(IPlayer& player, float angle) {
+    NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
+    setVehicleZAngleRPC.VehicleID = poolID;
+    setVehicleZAngleRPC.angle = angle;
+    player.sendRPC(setVehicleZAngleRPC);
+}
+
+float Vehicle::getZAngle() {
+    return rot.ToEuler().z;
+}
+
+
 float Vehicle::getHealth() {
     return health;
 }
