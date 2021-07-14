@@ -134,6 +134,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                     if (allowed) {
                         vehicle.setPaintJob(scmEvent.Arg1);
                     }
+                    break;
                 }
 
                 case VehicleSCMEvent_AddComponent: {
@@ -146,16 +147,30 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                         vehicle.addComponent(scmEvent.Arg1);
                     }
                     else {
- 
+                        NetCode::RPC::RemoveVehicleComponent modRPC;
+                        modRPC.VehicleID = scmEvent.VehicleID;
+                        modRPC.Component = scmEvent.Arg1;
+                        peer.sendRPC(modRPC);
                     }
+                    break;
                 }
 
                 case VehicleSCMEvent_SetColour: {
+                    bool allowed = self.eventDispatcher.stopAtFalse(
+                        [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
+                            return handler->onRespray(peer, vehicle, scmEvent.Arg1, scmEvent.Arg2);
+                        }
+                    );
 
+                    if (allowed) {
+                        vehicle.setColour(scmEvent.Arg1, scmEvent.Arg2);
+                    }
+                    break;
                 }
 
                 case VehicleSCMEvent_EnterExitModShop: {
 
+                    break;
                 }
             }
         }

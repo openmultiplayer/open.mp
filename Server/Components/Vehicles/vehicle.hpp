@@ -73,10 +73,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider {
     void streamOutForPlayer(IPlayer& player) override;
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
 
-    void setColour(int col1, int col2) override {
-        bodyColour1 = col1;
-        bodyColour2 = col2;
-    }
+    void setColour(int col1, int col2) override;
 
     void setHealth(float Health) override {
         health = Health;
