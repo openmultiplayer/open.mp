@@ -97,6 +97,8 @@ struct IVehicle : public IEntity {
 
 	/// Removes a component from the vehicle.
 	virtual void removeComponent(int component) = 0;
+
+	virtual void putPlayer(int VehicleID, int SeatID) = 0;
 };
 
 /// A vehicle event handler
