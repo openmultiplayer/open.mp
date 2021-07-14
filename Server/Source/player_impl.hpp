@@ -665,7 +665,7 @@ struct Player final : public IPlayer, public PoolIDProvider {
         }
     }
 
-    bool setState(PlayerState state) override {
+    bool setState(PlayerState state) {
         if (state_ != state) {
             playerEventDispatcher_->dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
             state_ = state;

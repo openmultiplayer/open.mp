@@ -1,4 +1,5 @@
 #include "vehicle.hpp"
+#include <vehicle_components.hpp>
 
 void Vehicle::streamInForPlayer(IPlayer& player) {
     NetCode::RPC::StreamInVehicle streamIn;
@@ -27,7 +28,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         player.sendRPC(plateRPC);
     }
     streamedPlayers_.add(player.getID(), &player);
-    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, *this, player);
+    eventDispatcher->dispatch(&VehicleEventHandler::onStreamIn, *this, player);
 }
 
 void Vehicle::streamOutForPlayer(IPlayer& player) {
@@ -35,7 +36,7 @@ void Vehicle::streamOutForPlayer(IPlayer& player) {
     streamOut.VehicleID = getID();
     player.sendRPC(streamOut);
     streamedPlayers_.remove(player.getID(), &player);
-    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, *this, player);
+    eventDispatcher->dispatch(&VehicleEventHandler::onStreamOut, *this, player);
 }
 
 bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
@@ -70,4 +71,98 @@ void Vehicle::setPlate(String plate) {
 
 const String& Vehicle::getPlate() {
     return numberPlate;
+}
+
+void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater) {
+    tyreDamage = TyreStatus;
+    doorDamage = DoorStatus;
+    panelDamage = PanelStatus;
+    lightDamage = LightStatus;
+
+    NetCode::RPC::SetVehicleDamageStatus damageStatus;
+    damageStatus.VehicleID = getID();
+    damageStatus.TyreStatus = tyreDamage;
+    damageStatus.DoorStatus = doorDamage;
+    damageStatus.PanelStatus = panelDamage;
+    damageStatus.LightStatus = lightDamage;
+
+    if (vehicleUpdater) {
+        eventDispatcher->dispatch(&VehicleEventHandler::onDamageStatusUpdate, *this, *vehicleUpdater);
+    }
+
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        if (player != vehicleUpdater) {
+            player->sendRPC(damageStatus);
+        }
+    }
+}
+
+void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) {
+    PanelStatus = panelDamage;
+    DoorStatus = doorDamage;
+    LightStatus = lightDamage;
+    TyreStatus = tyreDamage;
+}
+
+
+void Vehicle::setPaintJob(int paintjob) {
+    paintJob = paintjob + 1;
+    NetCode::RPC::SCMEvent paintRPC;
+    paintRPC.PlayerID = 0xFFFF;
+    paintRPC.EventType = VehicleSCMEvent_SetPaintjob;
+    paintRPC.VehicleID = getID();
+    paintRPC.Arg1 = paintjob;
+
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(paintRPC);
+    }
+}
+
+int Vehicle::getPaintJob() {
+    // Vehicle stream in thinks 0 is basically "no" paintjob but San Andreas has multiple
+    // paintjobs as ID 0 so... we just + 1 to it on stream in but nobody knows about that so - 1 back when someone is trying to get it.
+    return paintJob - 1;
+}
+
+void Vehicle::addComponent(int component) {
+    int slot = getVehicleComponentSlot(component);
+    if (slot == VehicleComponent_None) {
+        return;
+    }
+
+    mods[slot] = component;
+    NetCode::RPC::SCMEvent modRPC;
+    modRPC.PlayerID = 0xFFFF;
+    modRPC.EventType = VehicleSCMEvent_AddComponent;
+    modRPC.VehicleID = getID();
+    modRPC.Arg1 = component;
+
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(modRPC);
+    }
+}
+
+int Vehicle::getComponentInSlot(int slot) {
+    if (slot < 0 || slot >= MAX_VEHICLE_COMPONENT_SLOT) {
+        return INVALID_COMPONENT_ID;
+    }
+    return mods[slot];
+}
+
+void Vehicle::removeComponent(int component) {
+    int slot = getVehicleComponentSlot(component);
+    if (slot == VehicleComponent_None) {
+        return;
+    }
+
+    if (mods[slot] == component) {
+        mods[slot] = 0;
+    }
+
+    NetCode::RPC::RemoveVehicleComponent modRPC;
+    modRPC.VehicleID = getID();
+    modRPC.Component = component;
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(modRPC);
+    }
 }

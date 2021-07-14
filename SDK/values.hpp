@@ -21,6 +21,9 @@ constexpr int MAX_ANIMATIONS = 1813;
 constexpr int MAX_SKILL_LEVEL = 999;
 constexpr int INVALID_VEHICLE_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
+const int MAX_VEHICLE_COMPONENTS = 194;
+const int INVALID_COMPONENT_ID = 0;
+const int MAX_VEHICLE_COMPONENT_SLOT = 14;
 
 namespace Config {
 	enum PlayerMarkerMode {

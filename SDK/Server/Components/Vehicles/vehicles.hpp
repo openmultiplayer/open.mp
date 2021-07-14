@@ -14,6 +14,31 @@ struct VehicleSpawnData {
 	int respawnDelay;
 };
 
+enum VehicleSCMEvent : uint32_t {
+	VehicleSCMEvent_SetPaintjob = 1,
+	VehicleSCMEvent_AddComponent,
+	VehicleSCMEvent_SetColour,
+	VehicleSCMEvent_EnterExitModShop
+};
+
+enum VehicleComponentSlot {
+	VehicleComponent_None = -1,
+	VehicleComponent_Spoiler = 0,
+	VehicleComponent_Hood = 1,
+	VehicleComponent_Roof = 2,
+	VehicleComponent_SideSkirt = 3,
+	VehicleComponent_Lamps = 4,
+	VehicleComponent_Nitro = 5,
+	VehicleComponent_Exhaust = 6,
+	VehicleComponent_Wheels = 7,
+	VehicleComponent_Stereo = 8,
+	VehicleComponent_Hydraulics = 9,
+	VehicleComponent_FrontBumper = 10,
+	VehicleComponent_RearBumper = 11,
+	VehicleComponent_VentRight = 12,
+	VehicleComponent_VentLeft = 13,
+};
+
 /// A vehicle interface
 struct IVehicle : public IEntity {
 	/// Get an array of passengers
@@ -51,6 +76,27 @@ struct IVehicle : public IEntity {
 
 	/// Get the vehicle's number plate
 	virtual const String& getPlate() = 0;
+
+	/// Sets the vehicle's damage status
+	virtual void setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater = nullptr) = 0;
+
+	/// Gets the vehicle's damage status
+	virtual void getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) = 0;
+
+	/// Sets the vehicle's paintjob
+	virtual void setPaintJob(int paintjob) = 0;
+	
+	/// Gets the vehicle's paintjob
+	virtual int getPaintJob() = 0;
+
+	/// Adds a component to the vehicle.
+	virtual void addComponent(int component) = 0;
+
+	/// Gets the vehicle's component in a designated slot
+	virtual int getComponentInSlot(int slot) = 0;
+
+	/// Removes a component from the vehicle.
+	virtual void removeComponent(int component) = 0;
 };
 
 /// A vehicle event handler
@@ -60,6 +106,9 @@ struct VehicleEventHandler {
 	virtual void onDeath(IVehicle& vehicle, int reason) {}
 	virtual void onPlayerEnterVehicle(IPlayer& player, IVehicle& vehicle, bool passenger) {}
 	virtual void onPlayerExitVehicle(IPlayer& player, IVehicle& vehicle) {}
+	virtual void onDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) {}
+	virtual bool onPaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) { return true; }
+	virtual bool onMod(IPlayer& player, IVehicle& vehicle, int component) { return true; }
 };
 
 /// A vehicle pool
@@ -72,6 +121,8 @@ struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, MAX_VEHICLES> {
 
 	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = 0, int colour2 = 0, int respawnDelay = -1) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
+
+	virtual IEventDispatcher<VehicleEventHandler>& getEventDispatcher() = 0;
 };
 
 /// Player vehicle data
