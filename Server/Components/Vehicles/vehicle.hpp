@@ -112,5 +112,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void putPlayer(IPlayer& player, int SeatID) override;
 
     void removePlayer(IPlayer& player) override;
-	
+
+	void setZAngle(IPlayer& player, float angle) override;
+
+    float getZAngle() override;
 };
