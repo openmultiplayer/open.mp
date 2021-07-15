@@ -62,11 +62,15 @@ struct Colour {
 	{}
 
 	uint32_t RGBA() const {
-		return (r << 24) | (g << 16) | (b << 8) | a;
+		return ((r << 24) & 0xFF000000) | ((g << 16) & 0x00FF0000) | ((b << 8) & 0x0000FF00) | (a & 0x000000FF);
 	}
 
 	uint32_t ARGB() const {
-		return (a << 24) | (r << 16) | (g << 8) | b;
+		return ((a << 24) & 0xFF000000) | ((r << 16) & 0x00FF0000) | ((g << 8) & 0x0000FF00) | (b & 0x000000FF);
+	}
+
+	uint32_t ABGR() const {
+		return ((a << 24) & 0xFF000000) | ((b << 16) & 0x00FF0000) | ((g << 8) & 0x0000FF00) | (r & 0x000000FF);
 	}
 
 	static Colour FromRGBA(uint32_t from) {
