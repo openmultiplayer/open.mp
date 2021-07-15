@@ -67,16 +67,16 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 	}
 
-	void setMtl(int index, int model, const String& txd, const String& texture, Color color) {
+	void setMtl(int index, int model, const String& txd, const String& texture, Colour colour) {
 		materialsUsed_.set(index);
 		materials_[index].type = ObjectMaterialData::Type::Default;
 		materials_[index].model = model;
 		materials_[index].txdOrText = txd;
 		materials_[index].textureOrFont = texture;
-		materials_[index].materialColor = color;
+		materials_[index].materialColour = colour;
 	}
 
-	void setMtlText(int index, const String& text, int size, const String& fontFace, int fontSize, bool bold, Color fontColor, Color backColor, ObjectMaterialTextAlign align) {
+	void setMtlText(int index, const String& text, int size, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) {
 		materialsUsed_.set(index);
 		materials_[index].type = ObjectMaterialData::Type::Text;
 		materials_[index].txdOrText = text;
@@ -84,8 +84,8 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 		materials_[index].textureOrFont = fontFace;
 		materials_[index].fontSize = fontSize;
 		materials_[index].bold = bold;
-		materials_[index].fontColor = fontColor;
-		materials_[index].backgroundColor = backColor;
+		materials_[index].fontColour = fontColour;
+		materials_[index].backgroundColour = backColour;
 		materials_[index].alignment = align;
 	}
 
@@ -184,16 +184,16 @@ struct Object final : public BaseObject<IObject> {
 		}
 	}
 
-	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Color color) override {
+	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Colour colour) override {
 		if (index < materials_.size()) {
-			setMtl(index, model, txd, texture, color);
+			setMtl(index, model, txd, texture, colour);
 			restream();
 		}
 	}
 
-	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Color fontColor, Color backColor, ObjectMaterialTextAlign align) override {
+	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
 		if (index < materials_.size()) {
-			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColor, backColor, align);
+			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
 			restream();
 		}
 	}
@@ -338,9 +338,9 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		createObjectForClient(*player_);
 	}
 
-	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Color color) override {
+	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Colour colour) override {
 		if (index < materials_.size()) {
-			setMtl(index, model, txd, texture, color);
+			setMtl(index, model, txd, texture, colour);
 			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
 			setPlayerObjectMaterialRPC.ObjectID = poolID;
 			setPlayerObjectMaterialRPC.MaterialID = index;
@@ -348,9 +348,9 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		}
 	}
 
-	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Color fontColor, Color backColor, ObjectMaterialTextAlign align) override {
+	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
 		if (index < materials_.size()) {
-			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColor, backColor, align);
+			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
 			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
 			setPlayerObjectMaterialRPC.ObjectID = poolID;
 			setPlayerObjectMaterialRPC.MaterialID = index;

@@ -262,5 +262,3 @@ void Vehicle::setPosition(Vector3 position) {
 Vector3 Vehicle::getPosition() const {
     return pos;
 }
-
-
