@@ -1,0 +1,274 @@
+#include <Server/Components/Vehicles/vehicles.hpp>
+#include <netcode.hpp>
+#include "textlabel.hpp"
+
+struct PlayerTextLabelData final : IPlayerTextLabelData {
+    IPlayer& player;
+    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, ITextLabelsPlugin::Cnt> storage;
+
+    PlayerTextLabelData(IPlayer& player) :
+        player(player)
+    {}
+
+    PlayerTextLabel* createInternal(const String& text, Color color, Vector3 pos, float drawDist, bool los) {
+        int freeIdx = storage.findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        int pid = storage.claim(freeIdx);
+        if (pid == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        PlayerTextLabel& textLabel = storage.get(pid);
+        textLabel.player = &player;
+        textLabel.text = text;
+        textLabel.color = color;
+        textLabel.pos = pos;
+        textLabel.drawDist = drawDist;
+        textLabel.testLOS = los;
+        return &textLabel;
+    }
+
+    IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los) override {
+        PlayerTextLabel* created = createInternal(text, color, pos, drawDist, los);
+        if (created) {
+            created->streamInForClient(player, true);
+        }
+        return created;
+    }
+
+    IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los, IPlayer& attach) override {
+        PlayerTextLabel* created = createInternal(text, color, pos, drawDist, los);
+        if (created) {
+            created->attachmentData.playerID = attach.getID();
+            created->streamInForClient(player, true);
+        }
+        return created;
+    }
+
+    IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los, IVehicle& attach) override {
+        PlayerTextLabel* created = createInternal(text, color, pos, drawDist, los);
+        if (created) {
+            created->attachmentData.vehicleID = attach.getID();
+            created->streamInForClient(player, true);
+        }
+        return created;
+    }
+
+    void free() override {
+        delete this;
+    }
+
+    int findFreeIndex() override {
+        return storage.findFreeIndex();
+    }
+
+    int claim() override {
+        int res = storage.claim();
+        return res;
+    }
+
+    int claim(int hint) override {
+        int res = storage.claim(hint);
+        return res;
+    }
+
+    bool valid(int index) override {
+        return storage.valid(index);
+    }
+
+    IPlayerTextLabel& get(int index) override {
+        return storage.get(index);
+    }
+
+    void release(int index) override {
+        storage.mark(index);
+    }
+
+    /// Get a set of all the available labels
+    const DynamicArray<IPlayerTextLabel*>& entries() const override {
+        return storage.entries();
+    }
+};
+
+struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandler, public PlayerEventHandler {
+    ICore* core;
+    MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsPlugin::Cnt> storage;
+    IVehiclesPlugin* vehicles = nullptr;
+    IPlayerPool* players = nullptr;
+
+    const char* pluginName() override {
+        return "TextLabels";
+    }
+
+    void onInit(ICore* core) override {
+        this->core = core;
+        vehicles = core->queryPlugin<IVehiclesPlugin>();
+        players = &core->getPlayers();
+        core->getEventDispatcher().addEventHandler(this);
+        players->getEventDispatcher().addEventHandler(this);
+    }
+
+    ~TextLabelsPlugin() {
+        if (core) {
+            core->getEventDispatcher().removeEventHandler(this);
+            players->getEventDispatcher().removeEventHandler(this);
+        }
+    }
+
+    IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+        return new PlayerTextLabelData(player);
+    }
+
+    ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los) override {
+        int freeIdx = storage.findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        int pid = storage.claim(freeIdx);
+        if (pid == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        TextLabel& textLabel = storage.get(pid);
+        textLabel.text = text;
+        textLabel.color = color;
+        textLabel.pos = pos;
+        textLabel.drawDist = drawDist;
+        textLabel.virtualWorld = vw;
+        textLabel.testLOS = los;
+        return &textLabel;
+    }
+
+    ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override {
+        ITextLabel* created = create(text, color, pos, drawDist, vw, los);
+        if (created) {
+            created->attachToPlayer(attach, pos);
+        }
+        return created;
+    }
+
+    ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) override {
+        ITextLabel* created = create(text, color, pos, drawDist, vw, los);
+        if (created) {
+            created->attachToVehicle(attach, pos);
+        }
+        return created;
+    }
+
+    void free() override {
+        delete this;
+    }
+
+    int findFreeIndex() override {
+        return storage.findFreeIndex();
+    }
+
+    int claim() override {
+        int res = storage.claim();
+        return res;
+    }
+
+    int claim(int hint) override {
+        int res = storage.claim(hint);
+        return res;
+    }
+
+    bool valid(int index) override {
+        return storage.valid(index);
+    }
+
+    ITextLabel& get(int index) override {
+        return storage.get(index);
+    }
+
+    void release(int index) override {
+        storage.mark(index);
+    }
+
+    /// Get a set of all the available labels
+    const DynamicArray<ITextLabel*>& entries() const override {
+        return storage.entries();
+    }
+
+    void onTick(std::chrono::microseconds elapsed) override {
+        const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
+        for (auto it = storage.entries().begin(); it != storage.entries().end();) {
+            ITextLabel* textLabel = *it;
+            const int vw = textLabel->getVirtualWorld();
+            const TextLabelAttachmentData& data = textLabel->getAttachmentData();
+            Vector3 pos;
+            if (players->valid(data.playerID)) {
+                pos = players->get(data.playerID).getPosition();
+            }
+            else if (vehicles && vehicles->valid(data.vehicleID)) {
+                pos = vehicles->get(data.vehicleID).getPosition();
+            }
+            else {
+                pos = textLabel->getPosition();
+            }
+
+            for (IPlayer* const& player : players->entries()) {
+                const PlayerState state = player->getState();
+                const Vector3 dist3D = pos - player->getPosition();
+                const bool shouldBeStreamedIn =
+                    state != PlayerState_Spectating &&
+                    state != PlayerState_None &&
+                    player->getVirtualWorld() == vw &&
+                    glm::dot(dist3D, dist3D) < maxDist;
+
+                const bool isStreamedIn = textLabel->isStreamedInForPlayer(*player);
+                if (!isStreamedIn && shouldBeStreamedIn) {
+                    textLabel->streamInForPlayer(*player);
+                }
+                else if (isStreamedIn && !shouldBeStreamedIn) {
+                    textLabel->streamOutForPlayer(*player);
+                }
+            }
+
+            int id = textLabel->getID();
+            it = storage.marked(id) ? storage.release(id) : it + 1;
+        }
+
+        for (IPlayer* player : core->getPlayers().entries()) {
+            PlayerTextLabelData* data = player->queryData<PlayerTextLabelData>();
+            if (data) {
+                for (auto it = data->entries().begin(); it != data->entries().end();) {
+                    IPlayerTextLabel* textLabel = *it;
+                    int id = textLabel->getID();
+                    it = data->storage.marked(id) ? data->storage.release(id) : it + 1;
+                }
+            }
+        }
+    }
+
+    void onDisconnect(IPlayer& player, int reason) override {
+        const int pid = player.getID();
+        for (ITextLabel* textLabel : storage.entries()) {
+            if (textLabel->getAttachmentData().playerID == pid) {
+                textLabel->detachFromPlayer(textLabel->getPosition());
+            }
+        }
+        for (IPlayer* player : players->entries()) {
+            IPlayerTextLabelData* data = player->queryData<IPlayerTextLabelData>();
+            if (data) {
+                for (IPlayerTextLabel* textLabel : data->entries()) {
+                    if (textLabel->getAttachmentData().playerID == pid) {
+                        textLabel->detachFromPlayer(textLabel->getPosition());
+                    }
+                }
+            }
+        }
+    }
+};
+
+PLUGIN_ENTRY_POINT() {
+	return new TextLabelsPlugin();
+}
