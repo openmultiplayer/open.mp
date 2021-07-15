@@ -4,7 +4,7 @@
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
-    std::array<IPlayer*, MAX_SEATS> passengers;
+    std::array<IPlayer*, MAX_SEATS> occupants;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
@@ -56,7 +56,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     }
 
     const std::array<IPlayer*, MAX_SEATS>& getPassengers() override {
-        return passengers;
+        return occupants;
     }
 
     bool isStreamedInForPlayer(const IPlayer& player) const override {
