@@ -70,13 +70,15 @@ namespace NetCode {
 
 		struct PlayerJoin final : NetworkPacketBase<137> {
 			int PlayerID;
-			Color Colour;
+			Colour Col;
 			bool IsNPC;
 			NetworkString Name;
 
 			bool read(INetworkBitStream& bs) {
 				bs.read(PlayerID, NetworkBitStreamValueType::UINT16);
-				bs.read(Colour, NetworkBitStreamValueType::UINT32);
+				uint32_t rgba;
+				bs.read(rgba, NetworkBitStreamValueType::UINT32);
+				Col = Colour::FromRGBA(rgba);
 				bs.read(IsNPC, NetworkBitStreamValueType::UINT8);
 				bs.read(Name, NetworkBitStreamValueType::DYNAMIC_LEN_STR_8);
 				return true;
@@ -84,7 +86,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-				bs.write(NetworkBitStreamValue::UINT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
 				bs.write(NetworkBitStreamValue::UINT8(IsNPC));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
 			}
@@ -406,7 +408,7 @@ namespace NetCode {
 			uint32_t Skin;
 			Vector3 Pos;
 			float Angle;
-			Color Colour;
+			Colour Col;
 			uint8_t FightingStyle;
 			NetworkArray<uint16_t> SkillLevel;
 
@@ -420,7 +422,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(Skin));
 				bs.write(NetworkBitStreamValue::VEC3(Pos));
 				bs.write(NetworkBitStreamValue::FLOAT(Angle));
-				bs.write(NetworkBitStreamValue::UINT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
 				bs.write(NetworkBitStreamValue::UINT8(FightingStyle));
 				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT16(SkillLevel));
 			}
@@ -455,16 +457,16 @@ namespace NetCode {
 		};
 
 		struct SendClientMessage final : NetworkPacketBase<93> {
-			NetworkString message;
-			Color colour;
+			NetworkString Message;
+			Colour Col;
 
 			bool read(INetworkBitStream& bs) {
 				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT32(colour));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(message));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(Message));
 			}
 		};
 
@@ -559,7 +561,7 @@ namespace NetCode {
 
 		struct SetPlayerColor final : NetworkPacketBase<72> {
 			int PlayerID;
-			Color Colour;
+			Colour Col;
 
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -567,7 +569,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-				bs.write(NetworkBitStreamValue::UINT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
 			}
 		};
 
@@ -1235,15 +1237,15 @@ namespace NetCode {
 					bs.write(NetworkBitStreamValue::UINT16(MaterialData.model));
 					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.txdOrText));
 					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.textureOrFont));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.materialColor));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.materialColour.ARGB()));
 				}
 				else if (MaterialData.type == ObjectMaterialData::Type::Text) {
 					bs.write(NetworkBitStreamValue::UINT8(MaterialData.materialSize));
 					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.textureOrFont));
 					bs.write(NetworkBitStreamValue::UINT8(MaterialData.fontSize));
 					bs.write(NetworkBitStreamValue::UINT8(MaterialData.bold));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.fontColor));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.backgroundColor));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.fontColour.ARGB()));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.backgroundColour.ARGB()));
 					bs.write(NetworkBitStreamValue::UINT8(MaterialData.alignment));
 					bs.write(NetworkBitStreamValue::COMPRESSED_STR(MaterialData.txdOrText));
 				}
@@ -1300,15 +1302,15 @@ namespace NetCode {
 							bs.write(NetworkBitStreamValue::UINT16(data.model));
 							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(data.txdOrText));
 							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(data.textureOrFont));
-							bs.write(NetworkBitStreamValue::UINT32(data.materialColor));
+							bs.write(NetworkBitStreamValue::UINT32(data.materialColour.ARGB()));
 						}
 						else if (data.type == ObjectMaterialData::Type::Text) {
 							bs.write(NetworkBitStreamValue::UINT8(data.materialSize));
 							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(data.textureOrFont));
 							bs.write(NetworkBitStreamValue::UINT8(data.fontSize));
 							bs.write(NetworkBitStreamValue::UINT8(data.bold));
-							bs.write(NetworkBitStreamValue::UINT32(data.fontColor));
-							bs.write(NetworkBitStreamValue::UINT32(data.backgroundColor));
+							bs.write(NetworkBitStreamValue::UINT32(data.fontColour.ARGB()));
+							bs.write(NetworkBitStreamValue::UINT32(data.backgroundColour.ARGB()));
 							bs.write(NetworkBitStreamValue::UINT8(data.alignment));
 							bs.write(NetworkBitStreamValue::COMPRESSED_STR(data.txdOrText));
 						}
@@ -1425,8 +1427,8 @@ namespace NetCode {
 					bs.write(NetworkBitStreamValue::VEC3(AttachmentData.offset));
 					bs.write(NetworkBitStreamValue::VEC3(AttachmentData.rotation));
 					bs.write(NetworkBitStreamValue::VEC3(AttachmentData.scale));
-					bs.write(NetworkBitStreamValue::INT32(AttachmentData.color1));
-					bs.write(NetworkBitStreamValue::INT32(AttachmentData.color2));
+					bs.write(NetworkBitStreamValue::UINT32(AttachmentData.colour1.ARGB()));
+					bs.write(NetworkBitStreamValue::UINT32(AttachmentData.colour2.ARGB()));
 				}
 			}
 		};
@@ -1526,8 +1528,12 @@ namespace NetCode {
 				bs.read(AttachmentData.offset, NetworkBitStreamValueType::VEC3);
 				bs.read(AttachmentData.rotation, NetworkBitStreamValueType::VEC3);
 				bs.read(AttachmentData.scale, NetworkBitStreamValueType::VEC3);
-				bs.readT<int32_t>(AttachmentData.color1, NetworkBitStreamValueType::INT32);
-				return bs.readT<int32_t>(AttachmentData.color2, NetworkBitStreamValueType::INT32);
+				uint32_t argb;
+				bs.read(argb, NetworkBitStreamValueType::UINT32);
+				AttachmentData.colour1 = Colour::FromARGB(argb);
+				bool res = bs.read(argb, NetworkBitStreamValueType::UINT32);
+				AttachmentData.colour2 = Colour::FromARGB(argb);
+				return res;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1537,7 +1543,7 @@ namespace NetCode {
 		struct PlayerShowTextLabel final : NetworkPacketBase<36> {
 			bool PlayerTextLabel;
 			int TextLabelID;
-			Color Colour;
+			Colour Col;
 			Vector3 Position;
 			float DrawDistance;
 			bool LOS;
@@ -1551,7 +1557,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? MAX_TEXT_LABELS + TextLabelID : TextLabelID));
-				bs.write(NetworkBitStreamValue::UINT32(Colour));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
 				bs.write(NetworkBitStreamValue::VEC3(Position));
 				bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
 				bs.write(NetworkBitStreamValue::UINT8(LOS));
@@ -1612,6 +1618,119 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream & bs) const {
+			}
+		};
+
+		struct PlayerShowTextDraw final : NetworkPacketBase<134> {
+			bool PlayerTextDraw;
+			int TextDrawID;
+			bool UseBox;
+			bool Alignment;
+			bool Proportional;
+			Vector2 LetterSize;
+			Colour LetterColour;
+			Vector2 TextSize;
+			Colour BoxColour;
+			int Shadow;
+			int Outline;
+			Colour BackColour;
+			int Style;
+			bool Selectable;
+			Vector2 Position;
+			int Model;
+			Vector3 Rotation;
+			float Zoom;
+			int Color1;
+			int Color2;
+			NetworkString Text;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				uint8_t flags = UseBox | (Alignment << 1) | (Proportional << 4);
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::UINT8(flags));
+				bs.write(NetworkBitStreamValue::VEC2(LetterSize));
+				bs.write(NetworkBitStreamValue::UINT32(LetterColour.ABGR()));
+				bs.write(NetworkBitStreamValue::VEC2(TextSize));
+				bs.write(NetworkBitStreamValue::UINT32(BoxColour.ABGR()));
+				bs.write(NetworkBitStreamValue::UINT8(Shadow));
+				bs.write(NetworkBitStreamValue::UINT8(Outline));
+				bs.write(NetworkBitStreamValue::UINT32(BackColour.ABGR()));
+				bs.write(NetworkBitStreamValue::UINT8(Style));
+				bs.write(NetworkBitStreamValue::UINT8(Selectable));
+				bs.write(NetworkBitStreamValue::VEC2(Position));
+				bs.write(NetworkBitStreamValue::UINT16(Model));
+				bs.write(NetworkBitStreamValue::VEC3(Rotation));
+				bs.write(NetworkBitStreamValue::FLOAT(Zoom));
+				bs.write(NetworkBitStreamValue::INT16(Color1));
+				bs.write(NetworkBitStreamValue::INT16(Color2));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
+			}
+		};
+
+		struct PlayerHideTextDraw final : NetworkPacketBase<135> {
+			bool PlayerTextDraw;
+			int TextDrawID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+			}
+		};
+
+		struct PlayerTextDrawSetString final : NetworkPacketBase<105> {
+			bool PlayerTextDraw;
+			int TextDrawID;
+			NetworkString Text;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
+			}
+		};
+
+		struct PlayerBeginTextDrawSelect final : NetworkPacketBase<83> {
+			Colour Col;
+			bool Enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(Enable));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+			}
+		};
+
+		struct OnPlayerSelectTextDraw final : NetworkPacketBase<83> {
+			bool PlayerTextDraw;
+			bool Invalid;
+			int TextDrawID;
+
+			bool read(INetworkBitStream& bs) {
+				bool res = bs.readT<uint16_t>(TextDrawID, NetworkBitStreamValueType::UINT16);
+				Invalid = TextDrawID == INVALID_TEXTDRAW;
+				if (!Invalid) {
+					PlayerTextDraw = TextDrawID >= MAX_GLOBAL_TEXTDRAWS;
+					if (PlayerTextDraw) {
+						TextDrawID -= MAX_GLOBAL_TEXTDRAWS;
+					}
+				}
+				return res;
+			}
+
+			void write(INetworkBitStream& bs) const {
 			}
 		};
 	}
