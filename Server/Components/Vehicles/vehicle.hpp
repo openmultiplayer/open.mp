@@ -41,13 +41,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         return poolID;
     }
 
-    Vector3 getPosition() const override {
-        return pos;
-    }
+    Vector3 getPosition() const override;
 
-    void setPosition(Vector3 position) override {
-        pos = position;
-    }
+    void setPosition(Vector3 position) override;
 
     GTAQuat getRotation() const override {
         return rot;
