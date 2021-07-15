@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Objects/objects.hpp>
 #include <glm/glm.hpp>
 #include <regex>
 
@@ -742,6 +743,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
     IVehiclesPlugin* vehiclesPlugin = nullptr;
+    IObjectsPlugin* objectsPlugin = nullptr;
     int markersShow;
     std::chrono::milliseconds markersUpdateRate;
     bool markersLimit;
@@ -1122,10 +1124,53 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.bulletData_.hitID = bulletSync.HitID;
             player.bulletData_.hitType = static_cast<PlayerBulletHitType>(bulletSync.HitType);
             player.bulletData_.weapon = bulletSync.WeaponID;
-            bool allowed = self.eventDispatcher.stopAtFalse(
-                [&peer, &player](PlayerEventHandler* handler) {
-                    return handler->onWeaponShot(peer, player.getBulletData());
-                });
+
+            bool allowed = true;
+            switch (player.bulletData_.hitType) {
+            case PlayerBulletHitType_None:
+                allowed = self.eventDispatcher.stopAtFalse(
+                    [&player](PlayerEventHandler* handler) {
+                        return handler->onShotMissed(player, player.bulletData_);
+                    });
+                break;
+            case PlayerBulletHitType_Player:
+                if (self.storage.valid(player.bulletData_.hitID)) {
+                    IPlayer& target = self.storage.get(player.bulletData_.hitID);
+                    allowed = self.eventDispatcher.stopAtFalse(
+                        [&player, &target](PlayerEventHandler* handler) {
+                            return handler->onShotPlayer(player, target, player.bulletData_);
+                        });
+                }
+                break;
+            case PlayerBulletHitType_Vehicle:
+                if (self.vehiclesPlugin && self.vehiclesPlugin->valid(player.bulletData_.hitID)) {
+                    IVehicle& target = self.vehiclesPlugin->get(player.bulletData_.hitID);
+                    allowed = self.eventDispatcher.stopAtFalse(
+                        [&player, &target](PlayerEventHandler* handler) {
+                            return handler->onShotVehicle(player, target, player.bulletData_);
+                        });
+                }
+                break;
+            case PlayerBulletHitType_Object:
+                if (self.objectsPlugin && self.objectsPlugin->valid(player.bulletData_.hitID)) {
+                    IObject& target = self.objectsPlugin->get(player.bulletData_.hitID);
+                    allowed = self.eventDispatcher.stopAtFalse(
+                        [&player, &target](PlayerEventHandler* handler) {
+                            return handler->onShotObject(player, target, player.bulletData_);
+                        });
+                }
+                else {
+                    IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
+                    if (data && data->valid(player.bulletData_.hitID)) {
+                        IPlayerObject& target = data->get(player.bulletData_.hitID);
+                        allowed = self.eventDispatcher.stopAtFalse(
+                            [&player, &target](PlayerEventHandler* handler) {
+                                return handler->onShotPlayerObject(player, target, player.bulletData_);
+                            });
+                    }
+                }
+                break;
+            }
 
             if (allowed) {
                 bulletSync.PlayerID = pid;
@@ -1369,6 +1414,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
 
         vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
+        objectsPlugin = core.queryPlugin<IObjectsPlugin>();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
