@@ -26,6 +26,7 @@ constexpr float STREAM_DISTANCE = 200.f;
 constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
 constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
 constexpr int MAX_TEXT_LABELS = 1024;
+constexpr int MAX_PICKUPS = 4096;
 
 namespace Config {
 	enum PlayerMarkerMode {
