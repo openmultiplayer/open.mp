@@ -222,7 +222,9 @@ float Vehicle::getZAngle() {
     return rot.ToEuler().z;
 }
 
-void Vehicle::setParams(int objective, bool doorsLocked) {
+void Vehicle::setParams(int Objective, bool DoorsLocked) {
+    objective = Objective;
+    doorsLocked = DoorsLocked;
     NetCode::RPC::SetVehicleParams setVehicleParamsRPC;
     setVehicleParamsRPC.VehicleID = poolID;
     setVehicleParamsRPC.objective = objective;
