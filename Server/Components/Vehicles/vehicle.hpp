@@ -17,9 +17,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t tyreDamage = 0;
     uint8_t siren = 0;
     uint8_t paintJob;
-    int32_t bodyColour1;
-    int32_t bodyColour2;
-    IPlayer* driver;
+    int32_t bodyColour1 = -1;
+    int32_t bodyColour2 = -1;
+    IPlayer* driver = nullptr;
     DefaultEventDispatcher<VehicleEventHandler>* eventDispatcher;
     String numberPlate;
     uint8_t objective;
