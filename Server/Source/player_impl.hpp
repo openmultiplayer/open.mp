@@ -974,7 +974,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if (!send) {
-                peer.sendClientMessage(Colour::White(), "Unknown command");
+                peer.sendClientMessage(Colour::White(), "SERVER: Unknown command.");
             }
 
             return true;
