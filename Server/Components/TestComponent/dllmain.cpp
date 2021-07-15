@@ -235,30 +235,68 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			vehicle->removePlayer(player);
 			return true;
 		}
-		else if (message == "/getvehid" && vehicle) {
-			player.sendClientMessage(0xFFFFFFFF, "Vehicle ID:");
-			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getID()));
-			return true;
-		}
 
 		else if (message == "/getvehhp" && vehicle) {
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(0xFFFFFFFF, "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
 			player.sendClientMessage(0xFFFFFFFF, "Vehicle HP:");
-			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getHealth()));
 			return true;
 		}
 
 		else if (message == "/setvehzangle" && vehicle) {
-			vehicle->setZAngle(129.f);
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(0xFFFFFFFF, "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
+			player.sendClientMessage(0xFFFFFFFF, "vehZAngle Before:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getZAngle()));
+			data->getVehicle()->setZAngle(129.f);
 			player.sendClientMessage(0xFFFFFFFF, "vehZAngle After:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getZAngle()));
+			return true;
+		}
+
+		else if (message == "/setvehparams" && vehicle) {
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(0xFFFFFFFF, "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
+			player.sendClientMessage(0xFFFFFFFF, "Veh params set.");
+			data->getVehicle()->setParams(3, true);
 			return true;
 		}
 
 		else if (message == "/setvehhp" && vehicle) {
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(0xFFFFFFFF, "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
 			player.sendClientMessage(0xFFFFFFFF, "vehicleHP Before:");
-			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
-			vehicle->setHealth(30.0f);
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getHealth()));
+			data->getVehicle()->setHealth(45.f);
 			player.sendClientMessage(0xFFFFFFFF, "vehicleHP After:");
-			player.sendClientMessage(0xFFFFFFFF, to_string(vehicle->getHealth()));
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getHealth()));
+			return true;
+		}
+
+		else if (message == "/setvehpos" && vehicle) {
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(0xFFFFFFFF, "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
+			player.sendClientMessage(0xFFFFFFFF, "vehpos Before:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getPosition().x) + ", " + to_string(data->getVehicle()->getPosition().y) + ", " + to_string(data->getVehicle()->getPosition().z));
+			data->getVehicle()->setPosition(Vector3(17.f, 36.f, 3.f));
+			player.sendClientMessage(0xFFFFFFFF, "vehpos After:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getPosition().x) + ", " + to_string(data->getVehicle()->getPosition().y) + ", " + to_string(data->getVehicle()->getPosition().z));
 			return true;
 		}
 		

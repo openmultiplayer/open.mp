@@ -1600,6 +1600,36 @@ namespace NetCode {
 			}
 		};
 
+		struct SetVehicleParams final : NetworkPacketBase<161> {
+			int VehicleID;
+			int objective;
+			int doorsLocked;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(objective));
+				bs.write(NetworkBitStreamValue::UINT8(doorsLocked));
+			}
+		};
+
+		struct SetVehiclePosition final : NetworkPacketBase<159> {
+			int VehicleID;
+			Vector3 position;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::VEC3(position));
+			}
+		};
+
 		struct SetVehicleDamageStatus final : NetworkPacketBase<106> {
 			int VehicleID;
 			uint32_t DoorStatus;
