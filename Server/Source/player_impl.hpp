@@ -1198,6 +1198,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            IVehicle& vehicle = self.vehiclesPlugin->get(vehicleSync.VehicleID);
+            if (vehicle.isRespawning()) return false;
+
             int pid = peer.getID();
             Player& player = self.storage.get(pid);
             player.pos_ = vehicleSync.Position;
@@ -1208,8 +1211,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
             player.setState(PlayerState_Driver);
-
-            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player)) {
+            
+            if (vehicle.updateFromSync(vehicleSync, player)) {
                 vehicleSync.PlayerID = pid;
 
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
@@ -1238,10 +1241,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             int pid = peer.getID();
             Player& player = self.storage.get(pid);
+            IVehicle& vehicle = self.vehiclesPlugin->get(passengerSync.VehicleID);
+            if (vehicle.isRespawning()) return false;
+
             if (player.getState() != PlayerState_Passenger) {
                 IPlayerVehicleData* data = peer.queryData<IPlayerVehicleData>();
-                data->setVehicle(&self.vehiclesPlugin->get(passengerSync.VehicleID));
+                data->setVehicle(&vehicle);
                 data->setSeat(passengerSync.SeatID);
+                vehicle.addInternalOccupant(player);
             }
             player.pos_ = passengerSync.Position;
             player.keys_.keys = passengerSync.Keys;

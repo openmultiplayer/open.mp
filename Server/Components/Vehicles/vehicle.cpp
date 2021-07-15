@@ -30,6 +30,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     }
     streamedPlayers_.add(player.getID(), &player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamIn, *this, player);
+    respawning = false;
 }
 
 void Vehicle::streamOutForPlayer(IPlayer& player) {
@@ -52,6 +53,8 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 
     if (driver != &player) {
         driver = &player;
+        occupants.push_back(&player);
+        beenOccupied = true;
         IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
         if (data->getVehicle()) {
             data->getVehicle()->setDriver(nullptr);
@@ -193,6 +196,8 @@ void Vehicle::removeComponent(int component) {
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID) {
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
+    addInternalOccupant(player);
+    player.queryData<IPlayerVehicleData>()->setVehicle(this);
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
     player.sendRPC(putPlayerInVehicleRPC);
@@ -262,3 +267,77 @@ void Vehicle::setPosition(Vector3 position) {
 Vector3 Vehicle::getPosition() const {
     return pos;
 }
+
+void Vehicle::setDead(IPlayer& killer) {
+    dead = true;
+    timeOfDeath = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+    eventDispatcher->dispatch(&VehicleEventHandler::onDeath, *this, killer);
+}
+
+bool Vehicle::isDead() {
+    return dead;
+}
+
+void Vehicle::respawn() {
+    respawning = true;
+    dead = false;
+    pos = spawnData.position;
+    bodyColour1 = -1;
+    bodyColour2 = -1;
+    rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
+    beenOccupied = false;
+    lastOccupied = std::chrono::milliseconds(-1);
+    timeOfDeath = std::chrono::milliseconds(-1);
+    mods.fill(0);
+    doorDamage = 0;
+    tyreDamage = 0;
+    lightDamage = 0;
+    panelDamage = 0;
+    objective = 0;
+    doorsLocked = 0;
+    numberPlate.clear();
+    health = 1000.0f;
+    driver = nullptr;
+    occupants.clear();
+    
+    auto entries = streamedPlayers_.entries();
+    for (IPlayer* player : entries) {
+        streamOutForPlayer(*player);
+    }
+
+    eventDispatcher->dispatch(&VehicleEventHandler::onSpawn, *this);
+}
+
+int Vehicle::getRespawnDelay() {
+    return spawnData.respawnDelay;
+}
+
+bool Vehicle::isOccupied() {
+    return !occupants.empty();
+}
+
+bool Vehicle::hasBeenOccupied() {
+    return beenOccupied;
+}
+
+std::chrono::milliseconds Vehicle::getDeathTime() {
+    return timeOfDeath;
+}
+
+std::chrono::milliseconds Vehicle::getLastOccupiedTime() {
+    return lastOccupied;
+}
+
+void Vehicle::addInternalOccupant(IPlayer& player) {
+    occupants.push_back(&player);
+    beenOccupied = true;
+}
+
+void Vehicle::removeInternalOccupant(IPlayer& player) {
+    occupants.remove(&player);
+
+    if (occupants.empty()) {
+        lastOccupied = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+    }
+}
+
