@@ -1186,7 +1186,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerPassengerSyncHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            static int highest_id = 0;
             NetCode::Packet::PlayerPassengerSync passengerSync;
 
             if (!self.vehiclesPlugin || !passengerSync.read(bs) || !self.vehiclesPlugin->valid(passengerSync.VehicleID)) {
@@ -1195,12 +1194,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             int pid = peer.getID();
             Player& player = self.storage.get(pid);
-            passengerSync.PlayerID = pid;
+            if (player.getState() != PlayerState_Passenger) {
+                IPlayerVehicleData* data = peer.queryData<IPlayerVehicleData>();
+                data->setVehicle(&self.vehiclesPlugin->get(passengerSync.VehicleID));
+                data->setSeat(passengerSync.SeatID);
+            }
+            player.pos_ = passengerSync.Position;
+            player.keys_.keys = passengerSync.Keys;
+            player.keys_.leftRight = passengerSync.LeftRight;
+            player.keys_.upDown = passengerSync.UpDown;
+            player.health_ = passengerSync.HealthArmour.x;
+            player.armour_ = passengerSync.HealthArmour.y;
+            player.armedWeapon_ = passengerSync.WeaponID;
+            player.setState(PlayerState_Passenger);
 
-            self.core.printLn("%d Passenger seat %d %d", peer.getID(), passengerSync.SeatID, passengerSync.WeaponID);
-            highest_id = passengerSync.SeatID;
-            
-            self.broadcastPacket(passengerSync, BroadcastStreamed, &peer);
+            passengerSync.PlayerID = pid;
+            bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+                [&peer](PlayerUpdateEventHandler* handler) {
+                    return handler->onUpdate(peer);
+                });
+
+            if (allowedupdate) {
+                self.broadcastPacket(passengerSync, BroadcastStreamed, &peer);
+            }
             return true;
         }
     } playerPassengerSyncHandler;
