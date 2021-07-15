@@ -197,9 +197,34 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         }
     } playerSCMEventHandler;
 
+    struct VehicleDeathHandler final : public SingleNetworkInOutEventHandler {
+        VehiclePlugin& self;
+        VehicleDeathHandler(VehiclePlugin& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::VehicleDeath vehicleDeath;
+            if (!vehicleDeath.read(bs) || !self.storage.valid(vehicleDeath.VehicleID)) {
+                return false;
+            }
+
+            Vehicle& vehicle = self.storage.get(vehicleDeath.VehicleID);
+            auto occupants = vehicle.getOccupants();
+            if (!vehicle.isStreamedInForPlayer(peer)) {
+                return false;
+            }
+            else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer && std::find(occupants.begin(), occupants.end(), &peer) == occupants.end()) {
+                return false;
+            }
+
+            vehicle.setDead(peer);
+            return true;
+        }
+    } vehicleDeathHandler;
+
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+            data->getVehicle()->removeInternalOccupant(player);
             if (data->getVehicle() && data->getVehicle()->getDriver() == &player) {
                 data->getVehicle()->setDriver(nullptr);
             }
@@ -210,6 +235,10 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     }
 
     void onDisconnect(IPlayer& player, int reason) override {
+        IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+        if (data && data->getVehicle()) {
+            data->getVehicle()->removeInternalOccupant(player);
+        }
         for (IVehicle* vehicle : entries()) {
             vehicle->streamOutForPlayer(player);
         }
@@ -219,7 +248,8 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         playerEnterVehicleHandler(*this),
         playerExitVehicleHandler(*this),
         vehicleDamageStatusHandler(*this),
-        playerSCMEventHandler(*this)
+        playerSCMEventHandler(*this),
+        vehicleDeathHandler(*this)
 	{
 		preloadModels.fill(0);
 	}
@@ -232,6 +262,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
         core->removePerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
         core->removePerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
+        core->removePerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
 	}
 
 	void onInit(ICore* core) override {
@@ -242,6 +273,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
         core->addPerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
         core->addPerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
         storage.claimUnusable(0);
 	}
 
@@ -320,6 +352,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
+        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
         for (auto it = storage.entries().begin(); it != storage.entries().end();) {
             IVehicle* vehicle = *it;
             const int vw = vehicle->getVirtualWorld();
@@ -344,6 +377,16 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 }
             }
 
+            if (vehicle->isDead() && vehicle->getRespawnDelay() != -1 && !vehicle->isOccupied()) {
+                if (time - vehicle->getDeathTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
+                    vehicle->respawn();
+                }
+            }
+            else if (!vehicle->isOccupied() && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != -1) {
+                if (time - vehicle->getLastOccupiedTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
+                    vehicle->respawn();
+                }
+            }
             int vid = vehicle->getID();
             it = storage.marked(vid) ? storage.release(vid) : it + 1;
         }

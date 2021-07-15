@@ -356,6 +356,13 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			vehicles->create(437, pos);
 			return true;
 		}
+		else if (message == "/carrespawn" && vehicles) {
+			Vector3 pos = player.getPosition();
+			pos.x -= 3.0f;
+			vehicles->create(411, pos, 0.0f, 1, 1, 1000);
+			player.sendClientMessage(Colour::White(), "Enter the vehicle, move it a little, then exit.");
+			return true;
+		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {
 				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
@@ -471,6 +478,13 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		player.sendClientMessage(Colour::White(), "You have entered checkpoint");
+
+		if (vehicles) {
+			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle()) {
+				data->getVehicle()->respawn();
+			}
+		}
 		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 		cp->disable(player);
 		cp->setType(CheckpointType::RACE_NORMAL);

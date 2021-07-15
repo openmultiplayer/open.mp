@@ -1851,6 +1851,18 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(Component));
 			}
 		};
+
+		struct VehicleDeath final : NetworkPacketBase<136> {
+			int VehicleID;
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
