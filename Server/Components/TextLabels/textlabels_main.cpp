@@ -60,6 +60,11 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 
     void free() override {
+        /// Detach player from player labels so they don't try to send an RPC
+        for (IPlayerTextLabel* textLabel : storage.entries()) {
+            PlayerTextLabel& lbl = storage.get(textLabel->getID());
+            lbl.player = nullptr;
+        }
         delete this;
     }
 

@@ -7,6 +7,7 @@ add_subdirectory(Vehicles)
 add_subdirectory(Checkpoints)
 add_subdirectory(Objects)
 add_subdirectory(TextLabels)
+add_subdirectory(TextDraws)
 
 #add_subdirectory(PacketTracker)
 #add_subdirectory(PlayerDataProvider)
