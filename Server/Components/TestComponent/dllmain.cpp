@@ -376,6 +376,31 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}	
 	}
 
+	bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) override {
+		player.sendClientMessage(Colour::White(), "nice miss loser");
+		return true;
+	}
+
+	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
+		player.sendClientMessage(Colour::White(), "shot player " + target.getName());
+		return true;
+	}
+
+	bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) override {
+		player.sendClientMessage(Colour::White(), "shot vehicle id " + to_string(target.getID()));
+		return true;
+	}
+
+	bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) override {
+		player.sendClientMessage(Colour::White(), "shot object id " + to_string(target.getID()));
+		return true;
+	}
+
+	bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override {
+		player.sendClientMessage(Colour::White(), "shot player object id " + to_string(target.getID()));
+		return true;
+	}
+
 	~TestComponent() {
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
 		if (checkpoints) {
