@@ -9,6 +9,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 	Vector3 nextPosition_;
 	float size_;
 	bool inside_;
+	bool enabled_ = false;
 
 	CheckpointType getType() const override {
 		return type_;
@@ -57,6 +58,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 	void enable(IPlayer& player) override {
 		// Cannot be within a checkpoint once it's created
 		inside_ = false;
+		enabled_ = true;
 
 		switch (type_) {
 		case CheckpointType::STANDARD:
@@ -89,6 +91,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 	void disable(IPlayer& player) override {
 		// Cannot be within a checkpoint once it's disabled
 		inside_ = false;
+		enabled_ = false;
 
 		switch (type_) {
 		case CheckpointType::STANDARD:
