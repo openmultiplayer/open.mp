@@ -118,6 +118,12 @@ struct IVehicle : public IEntity {
 
 	// Gets the parameters for the vehicle.
 	virtual void getParams(int& objective, bool& doorsLocked) = 0;
+
+	// Sets (links) the vehicle to an interior.
+	virtual void setInterior(int InteriorID) = 0;
+
+	// Gets the vehicle's interior.
+	virtual int getInterior() = 0;
 	
 };
 
