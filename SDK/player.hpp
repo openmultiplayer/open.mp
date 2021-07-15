@@ -78,7 +78,6 @@ enum PlayerBulletHitType : uint8_t {
 	PlayerBulletHitType_Player = 1,
 	PlayerBulletHitType_Vehicle = 2,
 	PlayerBulletHitType_Object = 3,
-	PlayerBulletHitType_PlayerObject = 4,
 };
 
 struct PlayerKeyData {
@@ -487,6 +486,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
+struct IVehicle;
+struct IObject;
+struct IPlayerObject;
+
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
@@ -499,7 +502,11 @@ struct PlayerEventHandler {
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
 	virtual bool onCommandText(IPlayer& player, String message) { return false; }
-	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
 	virtual void onNameChange(IPlayer & player, const String & oldName) {}
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
