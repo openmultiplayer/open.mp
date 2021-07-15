@@ -4,23 +4,37 @@
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/TextDraws/textdraws.hpp>
 
-struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler {
+struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler, public TextDrawEventHandler {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
 	IClassesPlugin* classes = nullptr;
 	IVehiclesPlugin* vehicles = nullptr;
 	IObjectsPlugin* objects = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
+	ITextDrawsPlugin* tds = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
 	ITextLabel* label = nullptr;
+	ITextDraw* skinPreview = nullptr;
+	ITextDraw* vehiclePreview = nullptr;
+	ITextDraw* sprite = nullptr;
 	bool moved = false;
-
 
 	UUID getUUID() override {
 		return 0xd4a033a9c68adc86;
+	}
+
+	void onConnect(IPlayer& player) override {
+		IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
+		if (data) {
+			IPlayerTextDraw* textdraw = data->create(Vector2(20.f, 420.f), "Welcome to the test omp server");
+			if (textdraw) {
+				textdraw->setLetterColour(Colour::Cyan()).setSelectable(true);
+			}
+		}
 	}
 
 	bool onCommandText(IPlayer& player, String message) override {
@@ -172,14 +186,17 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			else {
 				obj->startMoving(ObjectMoveData{ Vector3(14.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f), 0.3f });
 			}
+			return true;
 		}
 
 		if (message == "/attach" && obj2) {
 			obj2->attachToPlayer(player, Vector3(0.f, 0.f, 2.f), Vector3(0.f));
+			return true;
 		}
 
 		if (message == "/createobj") {
 			objects->create(1340, Vector3(0.f, -2.f, 3.f), Vector3(0.f), 10.f);
+			return true;
 		}
 
 		IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
@@ -194,14 +211,17 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 				data.colour1 = Colour::None();
 				data.colour2 = Colour::None();
 				objectData->setAttachedObject(0, data);
+				return true;
 			}
 
 			if (message == "/editcalf") {
 				objectData->editAttachedObject(0);
+				return true;
 			}
 
 			if (message == "/editobj") {
 				objectData->beginObjectSelection();
+				return true;
 			}
 		}
 
@@ -209,6 +229,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			Vector3 origPos(5.f, 0.f, 3.f);
 			if (message == "/label") {
 				label = labels->create("Global Text", Colour::Yellow(), origPos, 20.f, 0, true);
+				return true;
 			}
 
 			if (message == "/labelattachtovehicle" && vehicle) {
@@ -220,6 +241,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 					label->detachFromVehicle(origPos);
 				}
 				attach = !attach;
+				return true;
 			}
 
 			if (message == "/labelattachtoplayer") {
@@ -231,6 +253,7 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 					label->detachFromPlayer(origPos);
 				}
 				attach = !attach;
+				return true;
 			}
 		}
 
@@ -238,6 +261,26 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			IPlayerTextLabelData* labelData = player.queryData<IPlayerTextLabelData>();
 			if (labelData && labelData->valid(0)) {
 				labelData->get(0).attachToVehicle(*vehicle, Vector3(0.f, 0.f, 3.f));
+			}
+			return true;
+		}
+
+		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
+		if (tdData && tdData->valid(0)) {
+			if (message.find("/settextdraw") == 0) {
+				String text = message.substr(message.find_first_of(' '));
+				tdData->get(0).setText(text);
+				return true;
+			}
+
+			if (message == "/hidetextdraw") {
+				tdData->get(0).hide();
+				return true;
+			}
+
+			if (message == "/selecttextdraw") {
+				tdData->beginSelection(Colour::Yellow());
+				return true;
 			}
 		}
 
@@ -313,6 +356,33 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 
 		labels = c->queryPlugin<ITextLabelsPlugin>();
+
+		tds = c->queryPlugin<ITextDrawsPlugin>();
+		if (tds) {
+			tds->getEventDispatcher().addEventHandler(this);
+
+			skinPreview = tds->create(Vector2(460.f, 360.f), 10);
+			if (skinPreview) {
+				skinPreview->
+					setUsingBox(true).
+					setBoxColour(Colour::White()).
+					setTextSize(Vector2(80.f));
+			}
+			vehiclePreview = tds->create(Vector2(560.f, 360.f), 411);
+			if (vehiclePreview) {
+				vehiclePreview->
+					setUsingBox(true).
+					setBoxColour(Colour::Cyan()).
+					setTextSize(Vector2(80.f)).
+					setPreviewRotation(GTAQuat(-30.f, 0.f, -45.f)).
+					setPreviewZoom(0.5f).
+					setPreviewVehicleColour(6, 126);
+			}
+			sprite = tds->create(Vector2(360.f, 360.f), "ld_tatt:10ls");
+			if (sprite) {
+				sprite->setStyle(TextDrawStyle_Sprite).setTextSize(Vector2(80.f)).setSelectable(true);
+			}
+		}
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -337,6 +407,35 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		if (labelData) {
 			labelData->create("Player Text", Colour::Cyan(), Vector3(-5.f, 0.f, 3.f), 20.f, false);
 		}
+
+		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
+		if (tdData && tdData->valid(0)) {
+			tdData->get(0).show();
+		}
+
+		if (skinPreview) {
+			skinPreview->showForPlayer(player);
+		}
+
+		if (vehiclePreview) {
+			vehiclePreview->showForPlayer(player);
+		}
+
+		if (sprite) {
+			sprite->showForPlayer(player);
+		}
+	}
+
+	void onTextDrawSelectionCancel(IPlayer& player) override {
+		player.sendClientMessage(Colour::White(), "Canceled textdraw selection");
+	}
+
+	void onTextDrawClick(IPlayer& player, ITextDraw& td) override {
+		player.sendClientMessage(Colour::White(), "Clicked textdraw " + to_string(td.getID()));
+	}
+
+	void onPlayerTextDrawClick(IPlayer& player, IPlayerTextDraw& td) override {
+		player.sendClientMessage(Colour::White(), "Clicked player textdraw " + to_string(td.getID()));
 	}
 
 	void onMoved(IObject& object) override {
@@ -408,6 +507,9 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
+		}
+		if (tds) {
+			tds->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;

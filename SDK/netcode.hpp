@@ -1579,6 +1579,119 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? MAX_TEXT_LABELS + TextLabelID : TextLabelID));
 			}
 		};
+
+		struct PlayerShowTextDraw final : NetworkPacketBase<134> {
+			bool PlayerTextDraw;
+			int TextDrawID;
+			bool UseBox;
+			bool Alignment;
+			bool Proportional;
+			Vector2 LetterSize;
+			Colour LetterColour;
+			Vector2 TextSize;
+			Colour BoxColour;
+			int Shadow;
+			int Outline;
+			Colour BackColour;
+			int Style;
+			bool Selectable;
+			Vector2 Position;
+			int Model;
+			Vector3 Rotation;
+			float Zoom;
+			int Color1;
+			int Color2;
+			NetworkString Text;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				uint8_t flags = UseBox | (Alignment << 1) | (Proportional << 4);
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::UINT8(flags));
+				bs.write(NetworkBitStreamValue::VEC2(LetterSize));
+				bs.write(NetworkBitStreamValue::UINT32(LetterColour.ABGR()));
+				bs.write(NetworkBitStreamValue::VEC2(TextSize));
+				bs.write(NetworkBitStreamValue::UINT32(BoxColour.ABGR()));
+				bs.write(NetworkBitStreamValue::UINT8(Shadow));
+				bs.write(NetworkBitStreamValue::UINT8(Outline));
+				bs.write(NetworkBitStreamValue::UINT32(BackColour.ABGR()));
+				bs.write(NetworkBitStreamValue::UINT8(Style));
+				bs.write(NetworkBitStreamValue::UINT8(Selectable));
+				bs.write(NetworkBitStreamValue::VEC2(Position));
+				bs.write(NetworkBitStreamValue::UINT16(Model));
+				bs.write(NetworkBitStreamValue::VEC3(Rotation));
+				bs.write(NetworkBitStreamValue::FLOAT(Zoom));
+				bs.write(NetworkBitStreamValue::INT16(Color1));
+				bs.write(NetworkBitStreamValue::INT16(Color2));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
+			}
+		};
+
+		struct PlayerHideTextDraw final : NetworkPacketBase<135> {
+			bool PlayerTextDraw;
+			int TextDrawID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+			}
+		};
+
+		struct PlayerTextDrawSetString final : NetworkPacketBase<105> {
+			bool PlayerTextDraw;
+			int TextDrawID;
+			NetworkString Text;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
+			}
+		};
+
+		struct PlayerBeginTextDrawSelect final : NetworkPacketBase<83> {
+			Colour Col;
+			bool Enable;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(Enable));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+			}
+		};
+
+		struct OnPlayerSelectTextDraw final : NetworkPacketBase<83> {
+			bool PlayerTextDraw;
+			bool Invalid;
+			int TextDrawID;
+
+			bool read(INetworkBitStream& bs) {
+				bool res = bs.readT<uint16_t>(TextDrawID, NetworkBitStreamValueType::UINT16);
+				Invalid = TextDrawID == INVALID_TEXTDRAW;
+				if (!Invalid) {
+					PlayerTextDraw = TextDrawID >= MAX_GLOBAL_TEXTDRAWS;
+					if (PlayerTextDraw) {
+						TextDrawID -= MAX_GLOBAL_TEXTDRAWS;
+					}
+				}
+				return res;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {

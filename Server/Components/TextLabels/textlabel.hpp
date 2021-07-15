@@ -150,7 +150,7 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
 };
 
 struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
-    IPlayer* player;
+    IPlayer* player = nullptr;
 
     void restream() override {
         streamOutForClient(*player, true);
@@ -165,6 +165,8 @@ struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
     }
 
     ~PlayerTextLabel() {
-        streamOutForClient(*player, true);
+        if (player) {
+            streamOutForClient(*player, false);
+        }
     }
 };
