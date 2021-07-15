@@ -10,7 +10,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         player(player)
     {}
 
-    PlayerTextLabel* createInternal(const String& text, Color color, Vector3 pos, float drawDist, bool los) {
+    PlayerTextLabel* createInternal(const String& text, Colour colour, Vector3 pos, float drawDist, bool los) {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -26,23 +26,23 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         PlayerTextLabel& textLabel = storage.get(pid);
         textLabel.player = &player;
         textLabel.text = text;
-        textLabel.color = color;
+        textLabel.colour = colour;
         textLabel.pos = pos;
         textLabel.drawDist = drawDist;
         textLabel.testLOS = los;
         return &textLabel;
     }
 
-    IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los) override {
-        PlayerTextLabel* created = createInternal(text, color, pos, drawDist, los);
+    IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los) override {
+        PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
             created->streamInForClient(player, true);
         }
         return created;
     }
 
-    IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los, IPlayer& attach) override {
-        PlayerTextLabel* created = createInternal(text, color, pos, drawDist, los);
+    IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los, IPlayer& attach) override {
+        PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
             created->attachmentData.playerID = attach.getID();
             created->streamInForClient(player, true);
@@ -50,8 +50,8 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return created;
     }
 
-    IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los, IVehicle& attach) override {
-        PlayerTextLabel* created = createInternal(text, color, pos, drawDist, los);
+    IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los, IVehicle& attach) override {
+        PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
             created->attachmentData.vehicleID = attach.getID();
             created->streamInForClient(player, true);
@@ -124,7 +124,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return new PlayerTextLabelData(player);
     }
 
-    ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los) override {
+    ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -139,7 +139,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
 
         TextLabel& textLabel = storage.get(pid);
         textLabel.text = text;
-        textLabel.color = color;
+        textLabel.colour = colour;
         textLabel.pos = pos;
         textLabel.drawDist = drawDist;
         textLabel.virtualWorld = vw;
@@ -147,16 +147,16 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return &textLabel;
     }
 
-    ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override {
-        ITextLabel* created = create(text, color, pos, drawDist, vw, los);
+    ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override {
+        ITextLabel* created = create(text, colour, pos, drawDist, vw, los);
         if (created) {
             created->attachToPlayer(attach, pos);
         }
         return created;
     }
 
-    ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) override {
-        ITextLabel* created = create(text, color, pos, drawDist, vw, los);
+    ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) override {
+        ITextLabel* created = create(text, colour, pos, drawDist, vw, los);
         if (created) {
             created->attachToVehicle(attach, pos);
         }
