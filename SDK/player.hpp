@@ -7,6 +7,8 @@
 #include "entity.hpp"
 #include "pool.hpp"
 #include "anim.hpp"
+#include "types.hpp"
+#include "values.hpp"
 
 enum PlayerFightingStyle {
 	PlayerFightingStyle_Normal = 4,
