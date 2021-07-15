@@ -130,4 +130,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
 	// Get the vehicle's parameters.
     void getParams(int& objective, bool& doorsLocked) override;
+
+    // Sets (links) the vehicle to an interior.
+    void setInterior(int InteriorID) override;
+
+	// Gets the vehicle's interior.
+    int getInterior() override;
 };
