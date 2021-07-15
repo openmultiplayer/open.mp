@@ -64,7 +64,7 @@ namespace RakNet
 
 			/// Signals that we are done reading the the data from the least recent call of ReadLock.
 			/// At this point that pointer is no longer valid, and should no longer be read.
-			void ReadUnlock(void);
+			void ReadUnlock(bool deallocate = false);
 
 			/// Clear is not thread-safe and none of the lock or unlock functions should be called while it is running.
 			void Clear(void);
@@ -200,7 +200,7 @@ namespace RakNet
 		}
 
 		template <class SingleProducerConsumerType>
-			void SingleProducerConsumer<SingleProducerConsumerType>::ReadUnlock( void )
+			void SingleProducerConsumer<SingleProducerConsumerType>::ReadUnlock(bool deallocate )
 		{
 	#ifdef _DEBUG
 			RakAssert(readAheadPointer!=readPointer); // If hits, then called ReadUnlock before ReadLock
@@ -210,7 +210,11 @@ namespace RakNet
 
 			// Allow writes to this memory block
 			readPointer->readyToRead=false;
+			auto old = readPointer;
 			readPointer=readPointer->next;
+			if (deallocate) {
+				delete (char*)old;
+			}
 		}
 
 		template <class SingleProducerConsumerType>
