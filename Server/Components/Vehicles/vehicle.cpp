@@ -222,6 +222,22 @@ float Vehicle::getZAngle() {
     return rot.ToEuler().z;
 }
 
+void Vehicle::setParams(int objective, bool doorsLocked) {
+    NetCode::RPC::SetVehicleParams setVehicleParamsRPC;
+    setVehicleParamsRPC.VehicleID = poolID;
+    setVehicleParamsRPC.objective = objective;
+    setVehicleParamsRPC.doorsLocked = doorsLocked;
+	for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(setVehicleParamsRPC);
+	}
+}
+
+void Vehicle::getParams(int& Objective, bool& DoorsLocked) {
+    Objective = objective;
+    DoorsLocked = doorsLocked;
+}
+
+
 
 float Vehicle::getHealth() {
     return health;
