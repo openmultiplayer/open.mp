@@ -2,6 +2,8 @@
 
 #include <sdk.hpp>
 #include <netcode.hpp>
+#include <chrono>
+#include <list>
 
 struct IPlayer;
 
@@ -41,8 +43,8 @@ enum VehicleComponentSlot {
 
 /// A vehicle interface
 struct IVehicle : public IEntity {
-	/// Get an array of passengers
-	virtual const std::array<IPlayer*, MAX_SEATS>& getPassengers() = 0;
+
+	virtual std::list<IPlayer*> const getOccupants() = 0;
 
 	/// Set the inital spawn data of the vehicle
 	virtual void setSpawnData(VehicleSpawnData data) = 0;
@@ -118,14 +120,43 @@ struct IVehicle : public IEntity {
 
 	// Gets the parameters for the vehicle.
 	virtual void getParams(int& objective, bool& doorsLocked) = 0;
+
+	/// Sets the vehicle's death state.
+	virtual void setDead(IPlayer& killer) = 0;
 	
+	/// Checks if the vehicle is dead.
+	virtual bool isDead() = 0;
+
+	/// Respawns the vehicle.
+	virtual void respawn() = 0;
+
+	/// Get the vehicle's respawn delay.
+	virtual int getRespawnDelay() = 0;
+
+	/// Checks if the vehicle has any occupants.
+	virtual bool isOccupied() = 0;
+
+	/// Checks if the vehicle has had any occupants.
+	virtual bool hasBeenOccupied() = 0;
+
+	/// Gets the time the vehicle died.
+	virtual std::chrono::milliseconds getDeathTime() = 0;
+
+	/// Gets the last time the vehicle has been occupied
+	virtual std::chrono::milliseconds getLastOccupiedTime() = 0;
+
+	/// Checks if the vehicle is respawning.
+	virtual bool isRespawning() = 0;
+
+	virtual void addInternalOccupant(IPlayer& player) = 0;
+	virtual void removeInternalOccupant(IPlayer& player) = 0;
 };
 
 /// A vehicle event handler
 struct VehicleEventHandler {
 	virtual void onStreamIn(IVehicle& vehicle, IPlayer& player) {}
 	virtual void onStreamOut(IVehicle& vehicle, IPlayer& player) {}
-	virtual void onDeath(IVehicle& vehicle, int reason) {}
+	virtual void onDeath(IVehicle& vehicle, IPlayer& player) {}
 	virtual void onPlayerEnterVehicle(IPlayer& player, IVehicle& vehicle, bool passenger) {}
 	virtual void onPlayerExitVehicle(IPlayer& player, IVehicle& vehicle) {}
 	virtual void onDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) {}
@@ -133,6 +164,7 @@ struct VehicleEventHandler {
 	virtual bool onMod(IPlayer& player, IVehicle& vehicle, int component) { return true; }
 	virtual bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) { return true; }
 	virtual void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {}
+	virtual void onSpawn(IVehicle& vehicle) {}
 };
 
 /// A vehicle pool

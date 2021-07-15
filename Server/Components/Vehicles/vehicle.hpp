@@ -1,11 +1,12 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
+#include <chrono>
 
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
-    std::array<IPlayer*, MAX_SEATS> occupants;
     int virtualWorld_ = 0;
+    std::list<IPlayer*> occupants;
     VehicleSpawnData spawnData;
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
     std::array<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
@@ -24,10 +25,17 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     String numberPlate;
     uint8_t objective;
     uint8_t doorsLocked;
+    bool dead = false;
+    std::chrono::milliseconds timeOfDeath;
+    bool beenOccupied = false;
+    std::chrono::milliseconds lastOccupied;
+    bool respawning = false;
 
     Vehicle() {
         mods.fill(0);
     }
+
+    std::list<IPlayer*> const getOccupants() override { return occupants; }
 
     virtual int getVirtualWorld() const override {
         return virtualWorld_;
@@ -51,10 +59,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void setRotation(GTAQuat rotation) override {
         rot = rotation;
-    }
-
-    const std::array<IPlayer*, MAX_SEATS>& getPassengers() override {
-        return occupants;
     }
 
     bool isStreamedInForPlayer(const IPlayer& player) const override {
@@ -130,4 +134,33 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
 	// Get the vehicle's parameters.
     void getParams(int& objective, bool& doorsLocked) override;
+
+    /// Sets the vehicle's death state.
+    void setDead(IPlayer& killer) override;
+
+    /// Checks if the vehicle is dead.
+    bool isDead() override;
+
+    /// Respawns the vehicle.
+    void respawn() override;
+
+    /// Get the vehicle's respawn delay.
+    int getRespawnDelay() override;
+
+    /// Checks if the vehicle has any occupants.
+    bool isOccupied() override;
+
+    /// Checks if the vehicle has had any occupants.
+    bool hasBeenOccupied() override;
+
+    /// Gets the time the vehicle died.
+    std::chrono::milliseconds getDeathTime() override;
+
+    /// Gets the last time the vehicle has been occupied
+    std::chrono::milliseconds getLastOccupiedTime() override;
+
+
+    bool isRespawning() override { return respawning; }
+    void addInternalOccupant(IPlayer& player) override;
+    void removeInternalOccupant(IPlayer& player) override;
 };
