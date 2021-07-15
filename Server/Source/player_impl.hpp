@@ -974,13 +974,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 [&peer, &msg](PlayerEventHandler* handler) {
                     return handler->onCommandText(peer, msg);
                 });
-        	
-            if (send) {
-                return true;
+
+            if (!send) {
+                peer.sendClientMessage(Colour::White(), "SERVER: Unknown command.");
             }
 
-            return false;
-
+            return true;
         }
     } playerCommandRPCHandler;
     
