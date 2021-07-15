@@ -22,6 +22,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     IPlayer* driver;
     DefaultEventDispatcher<VehicleEventHandler>* eventDispatcher;
     String numberPlate;
+    uint8_t objective;
+    uint8_t doorsLocked;
 
     Vehicle() {
         mods.fill(0);
@@ -126,4 +128,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     /// Gets the vehicle's Z angle.
     float getZAngle() override;
+
+	// Set the vehicle's parameters.
+    void setParams(int objective, bool doorsLocked) override;
+
+	// Get the vehicle's parameters.
+    void getParams(int& objective, bool& doorsLocked) override;
 };
