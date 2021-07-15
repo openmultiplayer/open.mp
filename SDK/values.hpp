@@ -21,12 +21,17 @@ constexpr int MAX_ANIMATIONS = 1813;
 constexpr int MAX_SKILL_LEVEL = 999;
 constexpr int INVALID_VEHICLE_ID = 0xFFFF;
 constexpr int INVALID_OBJECT_ID = 0xFFFF;
+constexpr int INVALID_PLAYER_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
 constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
 constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
 constexpr int MAX_VEHICLE_COMPONENTS = 194;
 constexpr int INVALID_COMPONENT_ID = 0;
 constexpr int MAX_VEHICLE_COMPONENT_SLOT = 14;
+constexpr int MAX_TEXT_LABELS = 1024;
+constexpr int MAX_GLOBAL_TEXTDRAWS = 2048;
+constexpr int MAX_PLAYER_TEXTDRAWS = 256;
+constexpr int INVALID_TEXTDRAW = 0xFFFF;
 
 namespace Config {
 	enum PlayerMarkerMode {

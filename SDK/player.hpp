@@ -7,6 +7,8 @@
 #include "entity.hpp"
 #include "pool.hpp"
 #include "anim.hpp"
+#include "types.hpp"
+#include "values.hpp"
 
 enum PlayerFightingStyle {
 	PlayerFightingStyle_Normal = 4,
@@ -78,7 +80,6 @@ enum PlayerBulletHitType : uint8_t {
 	PlayerBulletHitType_Player = 1,
 	PlayerBulletHitType_Vehicle = 2,
 	PlayerBulletHitType_Object = 3,
-	PlayerBulletHitType_PlayerObject = 4,
 };
 
 struct PlayerKeyData {
@@ -244,11 +245,11 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's drunk level
 	virtual int getDrunkLevel() const = 0;
 
-	/// Set the player's color
-	virtual void setColor(Color color) = 0;
+	/// Set the player's colour
+	virtual void setColour(Colour colour) = 0;
 
-	/// Get the player's color
-	virtual const Color& getColor() const = 0;
+	/// Get the player's colour
+	virtual const Colour& getColour() const = 0;
 
 	/// Set whether the player is controllable
 	virtual void setControllable(bool controllable) = 0;
@@ -405,7 +406,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual int getSkin() const = 0;
 
 	// Send a message to the player
-	virtual void sendClientMessage(const Color& colour, const String& message) const = 0;
+	virtual void sendClientMessage(const Colour& colour, const String& message) const = 0;
 
 	// Send a standardly formatted chat message as the player to everyone
 	virtual void sendChatMessage(const String& message) const = 0;
@@ -487,6 +488,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
+struct IVehicle;
+struct IObject;
+struct IPlayerObject;
+
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
@@ -499,7 +504,11 @@ struct PlayerEventHandler {
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
 	virtual bool onText(IPlayer& player, String message) { return true; }
 	virtual bool onCommandText(IPlayer& player, String message) { return false; }
-	virtual bool onWeaponShot(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
+	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
 	virtual void onNameChange(IPlayer & player, const String & oldName) {}
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
