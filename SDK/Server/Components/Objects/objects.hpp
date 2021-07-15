@@ -72,11 +72,11 @@ struct ObjectMaterialData {
 	};
 
 	union {
-		Color materialColor; // Default
-		Color fontColor; // Text
+		Colour materialColour; // Default
+		Colour fontColour; // Text
 	};
 
-	Color backgroundColor; // Text
+	Colour backgroundColour; // Text
 };
 
 typedef std::array<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> ObjectMaterialArray;
@@ -104,8 +104,8 @@ struct ObjectAttachmentSlotData {
 	Vector3 offset;
 	Vector3 rotation;
 	Vector3 scale;
-	Color color1;
-	Color color2;
+	Colour colour1;
+	Colour colour2;
 };
 
 /// Object move data
@@ -160,10 +160,10 @@ struct IBaseObject : public IEntity {
 	virtual ObjectMaterialArrayPair getMaterialData() const = 0;
 
 	/// Set the object's material to a texture
-	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Color color) = 0;
+	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Colour colour) = 0;
 
 	/// Set the object's material to some text
-	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Color fontColor, Color backColor, ObjectMaterialTextAlign align) = 0;
+	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) = 0;
 };
 
 /// An object interface

@@ -379,6 +379,11 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 
     void free() override {
+        /// Detach player from player objects so they don't try to send an RPC
+        for (IPlayerObject* object : storage.entries()) {
+            PlayerObject& obj = storage.get(object->getID());
+            obj.player_ = nullptr;
+        }
         delete this;
     }
 
