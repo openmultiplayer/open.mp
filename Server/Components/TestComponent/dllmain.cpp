@@ -217,10 +217,13 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			}
 			return true;
 		}
-		else if (!message.find("/paintjob") && vehicle) {
-			int plate_space = message.find_first_of(" ");
-			if (plate_space != String::npos) {
-				vehicle->setPaintJob(std::atoi(message.substr(plate_space + 1).c_str()));
+		else if (!message.find("/paintjob") && vehicles) {
+			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle()) {
+				int plate_space = message.find_first_of(" ");
+				if (plate_space != String::npos) {
+					data->getVehicle()->setPaintJob(std::atoi(message.substr(plate_space + 1).c_str()));
+				}
 			}
 			return true;
 		}
@@ -327,12 +330,14 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		else if (message == "/sultan" && vehicles) {
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
-			vehicles->create(560, pos);
+			vehicles->create(560, pos)->setColour(1, 1);
+			return true;
 		}
 		else if (message == "/bus" && vehicles) {
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
 			vehicles->create(437, pos);
+			return true;
 		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {

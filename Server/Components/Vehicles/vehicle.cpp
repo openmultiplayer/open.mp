@@ -14,6 +14,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     streamIn.DoorDamage = doorDamage;
     streamIn.LightDamage = lightDamage;
     streamIn.TyreDamage = tyreDamage;
+    streamIn.PanelDamage = panelDamage;
     streamIn.Siren = siren;
     streamIn.Mods = mods;
     streamIn.Paintjob = paintJob;
