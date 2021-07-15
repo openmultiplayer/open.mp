@@ -1917,5 +1917,50 @@ namespace NetCode {
 				}
 			}
 		};
+
+		struct PlayerPassengerSync final : NetworkPacketBase<211> {
+			int PlayerID;
+			int VehicleID;
+
+			union {
+				uint16_t DriveBySeatAdditionalKeyWeapon;
+				struct {
+					uint8_t SeatID : 2;
+					uint8_t DriveBy : 6;
+					uint8_t WeaponID : 6;
+					uint8_t AdditionalKey : 2;
+				};
+			};
+
+			Vector2 HealthArmour;
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			Vector3 Position;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(DriveBySeatAdditionalKeyWeapon, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
+				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT16(DriveBySeatAdditionalKeyWeapon));
+				bs.write(NetworkBitStreamValue::UINT8(HealthArmour.x));
+				bs.write(NetworkBitStreamValue::UINT8(HealthArmour.y));
+				bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+			}
+		};
 	}
 }

@@ -32,10 +32,15 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
 }
 
 void Vehicle::streamOutForPlayer(IPlayer& player) {
+    int id = player.getID();
+    if (!streamedPlayers_.valid(id)) {
+        return;
+    }
+
     NetCode::RPC::StreamOutVehicle streamOut;
     streamOut.VehicleID = poolID;
     player.sendRPC(streamOut);
-    streamedPlayers_.remove(player.getID(), &player);
+    streamedPlayers_.remove(id, &player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamOut, *this, player);
 }
 

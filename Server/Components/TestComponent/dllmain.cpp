@@ -286,6 +286,16 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			vehicles->create(411, pos);
 			return true;
 		}
+		else if (message == "/sultan" && vehicles) {
+			Vector3 pos = player.getPosition();
+			pos.x -= 3.0f;
+			vehicles->create(560, pos);
+		}
+		else if (message == "/bus" && vehicles) {
+			Vector3 pos = player.getPosition();
+			pos.x -= 3.0f;
+			vehicles->create(437, pos);
+		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {
 				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });

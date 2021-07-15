@@ -1181,6 +1181,30 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerVehicleSyncHandler;
 
+    struct PlayerPassengerSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerPassengerSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            static int highest_id = 0;
+            NetCode::Packet::PlayerPassengerSync passengerSync;
+
+            if (!self.vehiclesPlugin || !passengerSync.read(bs) || !self.vehiclesPlugin->valid(passengerSync.VehicleID)) {
+                return false;
+            }
+
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            passengerSync.PlayerID = pid;
+
+            self.core.printLn("%d Passenger seat %d %d", peer.getID(), passengerSync.SeatID, passengerSync.WeaponID);
+            highest_id = passengerSync.SeatID;
+            
+            self.broadcastPacket(passengerSync, BroadcastStreamed, &peer);
+            return true;
+        }
+    } playerPassengerSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -1324,7 +1348,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerAimSyncHandler(*this),
         playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
-        playerVehicleSyncHandler(*this)
+        playerVehicleSyncHandler(*this),
+        playerPassengerSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -1369,7 +1394,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
-
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
         vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
     }
 
@@ -1422,6 +1447,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
