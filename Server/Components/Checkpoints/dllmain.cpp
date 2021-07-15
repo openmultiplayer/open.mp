@@ -25,7 +25,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 			const Vector3 dist3D = cp->position_ - player.getPosition();
 
 			if (glm::dot(dist3D, dist3D) > maxDistance) {
-				if (cp->inside_) {
+				if (cp->enabled_ && cp->inside_) {
 					cp->inside_ = false;
 					void (PlayerCheckpointEventHandler:: * leaveHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint : &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint;
 					self.checkpointDispatcher.dispatch(
@@ -35,7 +35,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 				}
 			}
 			else {
-				if (!cp->inside_) {
+				if (cp->enabled_ && !cp->inside_) {
 					cp->inside_ = true;
 					void (PlayerCheckpointEventHandler:: * enterHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint : &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint;
 					self.checkpointDispatcher.dispatch(

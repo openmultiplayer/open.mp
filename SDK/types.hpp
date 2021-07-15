@@ -16,7 +16,6 @@
 typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
 typedef glm::vec4 Vector4;
-typedef uint32_t Color;
 typedef nlohmann::json JSON;
 typedef uint64_t UUID;
 
@@ -47,4 +46,64 @@ struct NoCopy {
 
 	NoCopy& operator=(const NoCopy& other) = delete;
 	NoCopy& operator=(NoCopy&& other) = delete;
+};
+
+struct Colour {
+	union {
+		struct {
+			uint8_t r, g, b, a;
+		};
+	};
+
+	Colour() = default;
+
+	Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF) :
+		r(r), g(g), b(b), a(a)
+	{}
+
+	uint32_t RGBA() const {
+		return (r << 24) | (g << 16) | (b << 8) | a;
+	}
+
+	uint32_t ARGB() const {
+		return (a << 24) | (r << 16) | (g << 8) | b;
+	}
+
+	static Colour FromRGBA(uint32_t from) {
+		Colour c;
+		c.r = (from & 0xFF000000) >> 24;
+		c.g = (from & 0x00FF0000) >> 16;
+		c.b = (from & 0x0000FF00) >> 8;
+		c.a = (from & 0x000000FF);
+		return c;
+	}
+
+	static Colour FromARGB(uint32_t from) {
+		Colour c;
+		c.a = (from & 0xFF000000) >> 24;
+		c.r = (from & 0x00FF0000) >> 16;
+		c.g = (from & 0x0000FF00) >> 8;
+		c.b = (from & 0x000000FF);
+		return c;
+	}
+
+	static Colour White() {
+		return Colour::FromRGBA(0xFFFFFFFF);
+	}
+
+	static Colour Black() {
+		return Colour::FromRGBA(0x000000FF);
+	}
+
+	static Colour None() {
+		return Colour::FromRGBA(0);
+	}
+
+	static Colour Yellow() {
+		return Colour::FromRGBA(0xFFFF00FF);
+	}
+
+	static Colour Cyan() {
+		return Colour::FromRGBA(0x00FFFFFF);
+	}
 };
