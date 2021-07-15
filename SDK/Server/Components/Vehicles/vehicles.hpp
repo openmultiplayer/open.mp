@@ -112,6 +112,13 @@ struct IVehicle : public IEntity {
 
 	/// Gets the vehicle's Z angle.
 	virtual float getZAngle() = 0;
+
+	// Sets parameters for the vehicle.
+	virtual void setParams(int objective, bool doorsLocked) = 0;
+
+	// Gets the parameters for the vehicle.
+	virtual void getParams(int& objective, bool& doorsLocked) = 0;
+	
 };
 
 /// A vehicle event handler
