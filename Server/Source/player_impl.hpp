@@ -25,7 +25,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     String name_;
     std::unordered_map<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
-    Color color_;
+    Colour colour_;
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
     int virtualWorld_;
     int team_;
@@ -414,15 +414,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(forcePlayerClassSelectionRPC);
     }
 
-    const Color& getColor() const override {
-        return color_;
+    const Colour& getColour() const override {
+        return colour_;
     }
 
-    void setColor(Color color) override {
-        color_ = color;
+    void setColour(Colour colour) override {
+        colour_ = colour;
         NetCode::RPC::SetPlayerColor setPlayerColorRPC;
         setPlayerColorRPC.PlayerID = poolID;
-        setPlayerColorRPC.Colour = color;
+        setPlayerColorRPC.Col = colour;
         pool_->broadcastRPC(setPlayerColorRPC, BroadcastGlobally, this, false /* skipFrom */);
     }
 
@@ -464,7 +464,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         playerStreamInRPC.PlayerID = pid;
         playerStreamInRPC.Skin = other.getSkin();
         playerStreamInRPC.Team = other.getTeam();
-        playerStreamInRPC.Colour = other.getColor();
+        playerStreamInRPC.Col = other.getColour();
         playerStreamInRPC.Pos = other.getPosition();
         playerStreamInRPC.Angle = other.getRotation().ToEuler().z;
         playerStreamInRPC.FightingStyle = other.getFightingStyle();
@@ -668,10 +668,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return shopName_;
     }
 
-    void sendClientMessage(const Color& colour, const String& message) const override {
+    void sendClientMessage(const Colour& colour, const String& message) const override {
         NetCode::RPC::SendClientMessage sendClientMessage;
-        sendClientMessage.colour = colour;
-        sendClientMessage.message = message;
+        sendClientMessage.Col = colour;
+        sendClientMessage.Message = message;
         sendRPC(sendClientMessage);
     }
 
@@ -1265,11 +1265,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 0x10C9C5FF, 0x70524DFF, 0x0BE472FF, 0x8A2CD7FF, 0x6152C2FF,
                 0xCF72A9FF, 0xE59338FF, 0xEEDC2DFF, 0xD8C762FF, 0xD8C762FF,
         };
-        player.color_ = colours[pid % GLM_COUNTOF(colours)];
+        player.colour_ = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
 
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = pid;
-        playerJoinPacket.Colour = peer.getColor();
+        playerJoinPacket.Col = peer.getColour();
         playerJoinPacket.IsNPC = false;
         playerJoinPacket.Name = peer.getName();
         for (IPlayer* const& other : core.getPlayers().entries()) {
@@ -1281,7 +1281,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             NetCode::RPC::PlayerJoin otherJoinPacket;
             otherJoinPacket.PlayerID = other->getID();
-            otherJoinPacket.Colour = other->getColor();
+            otherJoinPacket.Col = other->getColour();
             otherJoinPacket.IsNPC = false;
             otherJoinPacket.Name = other->getName();
             player.sendRPC(otherJoinPacket);

@@ -23,10 +23,10 @@ struct ITextLabelBase : public IEntity {
 	virtual const String& getText() const = 0;
 
 	/// Set the text label's colour
-	virtual void setColor(Color color) = 0;
+	virtual void setColour(Colour colour) = 0;
 
 	/// Get the text label's colour
-	virtual Color getColor() const = 0;
+	virtual Colour getColour() const = 0;
 
 	/// Set the text label's draw distance
 	virtual void setDrawDistance(float dist) = 0;
@@ -73,13 +73,13 @@ struct ITextLabelsPlugin : public IPlugin, public IPool<ITextLabel, MAX_TEXT_LAB
 	PROVIDE_UUID(TextLabelsPlugin_UUID);
 
 	/// Create a text label
-	virtual ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los) = 0;
+	virtual ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) = 0;
 
 	/// Create a text label and attach it to a player
-	virtual ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) = 0;
+	virtual ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) = 0;
 
 	/// Create a text label and attach it to a vehicle
-	virtual ITextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) = 0;
+	virtual ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) = 0;
 };
 
 static const UUID PlayerTextLabelData_UUID = UUID(0xb9e2bd0dc5148c3c);
@@ -88,11 +88,11 @@ struct IPlayerTextLabelData : public IPlayerData, public IPool<IPlayerTextLabel,
 	PROVIDE_UUID(PlayerTextLabelData_UUID);
 
 	/// Create a player text label
-	virtual IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los) = 0;
+	virtual IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los) = 0;
 
 	/// Create a player text label and attach it to a player
-	virtual IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los, IPlayer& attach) = 0;
+	virtual IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los, IPlayer& attach) = 0;
 
 	/// Create a player text label and attach it to a vehicle
-	virtual IPlayerTextLabel* create(const String& text, Color color, Vector3 pos, float drawDist, bool los, IVehicle& attach) = 0;
+	virtual IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los, IVehicle& attach) = 0;
 };

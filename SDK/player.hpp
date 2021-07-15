@@ -244,11 +244,11 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's drunk level
 	virtual int getDrunkLevel() const = 0;
 
-	/// Set the player's color
-	virtual void setColor(Color color) = 0;
+	/// Set the player's colour
+	virtual void setColour(Colour colour) = 0;
 
-	/// Get the player's color
-	virtual const Color& getColor() const = 0;
+	/// Get the player's colour
+	virtual const Colour& getColour() const = 0;
 
 	/// Set whether the player is controllable
 	virtual void setControllable(bool controllable) = 0;
@@ -405,7 +405,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual int getSkin() const = 0;
 
 	// Send a message to the player
-	virtual void sendClientMessage(const Color& colour, const String& message) const = 0;
+	virtual void sendClientMessage(const Colour& colour, const String& message) const = 0;
 
 	// Send a standardly formatted chat message as the player to everyone
 	virtual void sendChatMessage(const String& message) const = 0;
