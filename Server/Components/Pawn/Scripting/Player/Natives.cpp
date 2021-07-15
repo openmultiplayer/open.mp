@@ -4,7 +4,7 @@
 
 SCRIPT_API(SendClientMessage, bool(IPlayer* player, uint32_t colour, std::string const& msg))
 {
-	player->sendClientMessage(colour, msg.c_str());
+	player->sendClientMessage(Colour::FromRGBA(colour), msg.c_str());
 	return true;
 }
 
