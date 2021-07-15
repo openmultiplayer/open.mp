@@ -4,13 +4,18 @@
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/Pickups/pickups.hpp>
 
-struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler {
+struct TestComponent : 
+	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
+	public PickupEventHandler
+{
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
 	IClassesPlugin* classes = nullptr;
 	IVehiclesPlugin* vehicles = nullptr;
 	IObjectsPlugin* objects = nullptr;
+	IPickupsPlugin * pickups = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
@@ -313,6 +318,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 
 		labels = c->queryPlugin<ITextLabelsPlugin>();
+
+		pickups = c->queryPlugin<IPickupsPlugin>();
+		if (pickups) {
+			pickups->getEventDispatcher().addEventHandler(this);
+			pickups->create(1550, 1, { -25.0913, 36.2893, 3.1234 }, 0, false);
+		}
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -376,6 +387,11 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}	
 	}
 
+	void onPlayerPickUpPickup(IPlayer & player, IPickup & pickup) override {
+		player.sendClientMessage(0xFFFFFFFF, "You picked up a pickup.");
+		player.giveMoney(10000);
+	}
+
 	~TestComponent() {
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
 		if (checkpoints) {
@@ -383,6 +399,9 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
+		}
+		if (pickups) {
+			pickups->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;
