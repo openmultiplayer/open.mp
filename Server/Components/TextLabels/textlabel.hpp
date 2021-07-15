@@ -7,7 +7,7 @@ template <class T>
 struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     String text;
     Vector3 pos;
-    Color color;
+    Colour colour;
     float drawDist;
     TextLabelAttachmentData attachmentData;
     bool testLOS;
@@ -40,13 +40,13 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         return text;
     }
 
-    void setColor(Color col) override {
-        color = col;
+    void setColour(Colour col) override {
+        colour = col;
         restream();
     }
 
-    Color getColor() const override {
-        return color;
+    Colour getColour() const override {
+        return colour;
     }
 
     void setDrawDistance(float dist) override {
@@ -90,7 +90,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerShowTextLabel showTextLabelRPC;
         showTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
         showTextLabelRPC.TextLabelID = poolID;
-        showTextLabelRPC.Colour = color;
+        showTextLabelRPC.Col = colour;
         showTextLabelRPC.Position = pos;
         showTextLabelRPC.DrawDistance = drawDist;
         showTextLabelRPC.LOS = testLOS;
