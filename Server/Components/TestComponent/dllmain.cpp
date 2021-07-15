@@ -285,6 +285,20 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getHealth()));
 			return true;
 		}
+
+		else if (message == "/setvehpos" && vehicle) {
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(0xFFFFFFFF, "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
+			player.sendClientMessage(0xFFFFFFFF, "vehpos Before:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getPosition().x) + ", " + to_string(data->getVehicle()->getPosition().y) + ", " + to_string(data->getVehicle()->getPosition().z));
+			data->getVehicle()->setPosition(Vector3(17.f, 36.f, 3.f));
+			player.sendClientMessage(0xFFFFFFFF, "vehpos After:");
+			player.sendClientMessage(0xFFFFFFFF, to_string(data->getVehicle()->getPosition().x) + ", " + to_string(data->getVehicle()->getPosition().y) + ", " + to_string(data->getVehicle()->getPosition().z));
+			return true;
+		}
 		
 		else if (!message.find("/component") && vehicle) {
 			int plate_space = message.find_first_of(" ");
