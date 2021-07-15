@@ -364,7 +364,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			skinPreview = tds->create(Vector2(460.f, 360.f), 10);
 			if (skinPreview) {
 				skinPreview->
-					setStyle(TextDrawStyle_Preview).
 					setUsingBox(true).
 					setBoxColour(Colour::White()).
 					setTextSize(Vector2(80.f));
@@ -372,7 +371,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			vehiclePreview = tds->create(Vector2(560.f, 360.f), 411);
 			if (vehiclePreview) {
 				vehiclePreview->
-					setStyle(TextDrawStyle_Preview).
 					setUsingBox(true).
 					setBoxColour(Colour::Cyan()).
 					setTextSize(Vector2(80.f)).
