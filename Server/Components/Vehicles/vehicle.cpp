@@ -227,8 +227,39 @@ float Vehicle::getZAngle() {
     return rot.ToEuler().z;
 }
 
+void Vehicle::setParams(int Objective, bool DoorsLocked) {
+    objective = Objective;
+    doorsLocked = DoorsLocked;
+    NetCode::RPC::SetVehicleParams setVehicleParamsRPC;
+    setVehicleParamsRPC.VehicleID = poolID;
+    setVehicleParamsRPC.objective = objective;
+    setVehicleParamsRPC.doorsLocked = doorsLocked;
+	for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(setVehicleParamsRPC);
+	}
+}
+
+void Vehicle::getParams(int& Objective, bool& DoorsLocked) {
+    Objective = objective;
+    DoorsLocked = doorsLocked;
+}
 
 float Vehicle::getHealth() {
     return health;
 }
+
+void Vehicle::setPosition(Vector3 position) {
+    pos = position;
+    NetCode::RPC::SetVehiclePosition setVehiclePosition;
+    setVehiclePosition.VehicleID = poolID;
+    setVehiclePosition.position = position;
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(setVehiclePosition);
+    }
+}
+
+Vector3 Vehicle::getPosition() const {
+    return pos;
+}
+
 
