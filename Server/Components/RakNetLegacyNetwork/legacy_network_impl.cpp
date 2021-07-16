@@ -323,9 +323,9 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         }
     );
 
+    // No peer created, disconnect
     if (newPlayer == nullptr) {
-        // No free players
-        // send rpc?
+        network->rakNetServer.Kick(rid);
         return;
     }
 
@@ -337,8 +337,8 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             return handler->incomingConnection(player, netData);
         }
     )) {
-        // Incoming connection rejected
-        // send rpc?
+        // Entry denied, disconnect
+        network->rakNetServer.Kick(rid);
         return;
     }
 
