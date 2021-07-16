@@ -75,8 +75,8 @@ void Query::preparePlayerListForQuery() {
 		return;
 	}
 
-	for (IPlayer * player : core->getPlayers().entries()) {
-		const String & playerName = player->getName();
+	for (IPlayer& player : core->getPlayers().entries()) {
+		const String& playerName = player.getName();
 
 		// Write player name
 		unsigned char playerNameLength = static_cast<unsigned char>(playerName.length());
@@ -84,7 +84,7 @@ void Query::preparePlayerListForQuery() {
 		writeToBuffer(playerListBuffer, playerName.c_str(), playerListBufferLength, playerNameLength);
 		
 		// Write player score
-		writeToBuffer(playerListBuffer, playerListBufferLength, player->getScore());
+		writeToBuffer(playerListBuffer, playerListBufferLength, player.getScore());
 	}
 }
 

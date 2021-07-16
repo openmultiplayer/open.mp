@@ -235,8 +235,8 @@ struct TextDraw final : public TextDrawBase<ITextDraw> {
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> shownFor_;
 
     void restream() override {
-        for (IPlayer* player : shownFor_.entries()) {
-            showForClient(*player, false);
+        for (IPlayer& player : shownFor_.entries()) {
+            showForClient(player, false);
         }
     }
 
@@ -245,25 +245,25 @@ struct TextDraw final : public TextDrawBase<ITextDraw> {
     }
 
     void showForPlayer(IPlayer& player) override {
-        shownFor_.add(player.getID(), &player);
+        shownFor_.add(player.getID(), player);
         showForClient(player, false);
     }
 
     void hideForPlayer(IPlayer& player) override {
-        shownFor_.remove(player.getID(), &player);
+        shownFor_.remove(player.getID(), player);
         hideForClient(player, false);
     }
 
     void setText(const String& txt) override {
         TextDrawBase<ITextDraw>::setText(txt);
-        for (IPlayer* player : shownFor_.entries()) {
-            setTextForClient(*player, txt, false);
+        for (IPlayer& player : shownFor_.entries()) {
+            setTextForClient(player, txt, false);
         }
     }
 
     ~TextDraw() {
-        for (IPlayer* player : shownFor_.entries()) {
-            hideForClient(*player, false);
+        for (IPlayer& player : shownFor_.entries()) {
+            hideForClient(player, false);
         }
     }
 };
