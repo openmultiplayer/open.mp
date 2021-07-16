@@ -7,6 +7,7 @@
 #include <cassert>
 #include <execution>
 #include "types.hpp"
+#include "entity.hpp"
 
 /* Interfaces, to be passed around */
 
@@ -56,6 +57,10 @@ struct ScopedPoolReleaseLock {
     T& entry;
 
     ScopedPoolReleaseLock(IPool<T, Count>& pool, int index) : pool(pool), index(index), entry(pool.get(index)) {
+        pool.lock(index);
+    }
+
+    ScopedPoolReleaseLock(IPool<T, Count>& pool, const IIDProvider& provider) : pool(pool), index(index), entry(pool.get(provider.getID())) {
         pool.lock(index);
     }
 
