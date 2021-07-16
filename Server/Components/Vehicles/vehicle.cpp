@@ -242,6 +242,21 @@ void Vehicle::setHealth(float Health) {
     }
 }
 
+void Vehicle::setInterior(int InteriorID) {
+    interior = InteriorID;
+    NetCode::RPC::LinkVehicleToInterior linkVehicleToInteriorRPC;
+    linkVehicleToInteriorRPC.VehicleID = poolID;
+    linkVehicleToInteriorRPC.InteriorID = InteriorID;
+    for (IPlayer* player : streamedPlayers_.entries()) {
+        player->sendRPC(linkVehicleToInteriorRPC);
+    }
+}
+
+int Vehicle::getInterior() {
+    return interior;
+}
+
+
 
 void Vehicle::removePlayer(IPlayer& player) {
     NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
