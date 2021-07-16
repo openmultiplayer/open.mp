@@ -526,10 +526,7 @@ struct PlayerUpdateEventHandler {
 	virtual bool onUpdate(IPlayer& player) { return true; }
 };
 
-enum EBroadcastPacketSendType {
-	BroadcastGlobally = 0, ///< Send to everyone on the server
-	BroadcastStreamed ///< Only send to people who have the player streamed in for them
-};
+typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// A player pool interface
 struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
@@ -543,63 +540,55 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// @param skip The player to exclude from the check
 	virtual bool isNameTaken(const String& name, const IPlayer* skip = nullptr) = 0;
 
+	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastRPCToStreamed(const Packet& packet, const IPlayer& from, bool skipFrom = false) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : from.streamedInPlayers()) {
+			if (skipFrom && &player == &from) {
+				continue;
+			}
+			player.sendRPC(packet);
+		}
+	}
+
+	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastRPCToAll(const Packet& packet, const OptionalPlayer& skipFrom = OptionalPlayer()) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : entries()) {
+			if (skipFrom && &player == &skipFrom.value().get()) {
+				continue;
+			}
+			player.sendRPC(packet);
+		}
+	}
+
+	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
+/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastPacketToStreamed(const Packet& packet, const IPlayer& from, bool skipFrom = true) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : from.streamedInPlayers()) {
+			if (skipFrom && &player == &from) {
+				continue;
+			}
+			player.sendPacket(packet);
+		}
+	}
+
 	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>
-	inline int broadcastRPC(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr, bool skipFrom = false) {
+	inline void broadcastPacketToAll(const Packet& packet, const OptionalPlayer& skipFrom = OptionalPlayer()) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		int succeeded = 0;
-		if (type == EBroadcastPacketSendType::BroadcastStreamed && from != nullptr) {
-			for (IPlayer& player : from->streamedInPlayers()) {
-				if (skipFrom && &player == from) {
-					continue;
-				}
-				if (player.sendRPC(packet)) {
-					++succeeded;
-				}
+		for (IPlayer& player : entries()) {
+			if (skipFrom && &player == &skipFrom.value().get()) {
+				continue;
 			}
+			player.sendPacket(packet);
 		}
-		else if (type == EBroadcastPacketSendType::BroadcastGlobally) {
-			for (IPlayer& player : entries()) {
-				if (skipFrom && &player == from) {
-					continue;
-				}
-				if (player.sendRPC(packet)) {
-					++succeeded;
-				}
-			}
-		}
-		return succeeded;
-	}
-
-	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers that fit the criteria
-	/// @param packet The packet to send
-	/// @param from The player who the packet is being sent from
-	/// @param type The broadcast type that will determine who to send this packet to
-	template<class Packet>
-	inline int broadcastPacket(const Packet& packet, EBroadcastPacketSendType type, const IPlayer* from = nullptr, bool skipFrom = true) {
-		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		int succeeded = 0;
-		if (type == EBroadcastPacketSendType::BroadcastStreamed && from != nullptr) {
-			for (IPlayer& player : from->streamedInPlayers()) {
-				if (skipFrom && &player == from) {
-					continue;
-				}
-				if (player.sendPacket(packet)) {
-					++succeeded;
-				}
-			}
-		}
-		else if (type == EBroadcastPacketSendType::BroadcastGlobally) {
-			for (IPlayer& player : entries()) {
-				if (skipFrom && &player == from) {
-					continue;
-				}
-				if (player.sendPacket(packet)) {
-					++succeeded;
-				}
-			}
-		}
-		return succeeded;
 	}
 };

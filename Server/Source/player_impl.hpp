@@ -218,7 +218,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerTeam setPlayerTeamRPC;
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
-        pool_->broadcastRPC(setPlayerTeamRPC, BroadcastStreamed, this, false /* skipFrom */);
+        pool_->broadcastRPCToStreamed(setPlayerTeamRPC, *this, true /* skipFrom */);
     }
 
     int getTeam() const override {
@@ -241,7 +241,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
         setPlayerSkinRPC.PlayerID = poolID;
         setPlayerSkinRPC.Skin = skin;
-        pool_->broadcastRPC(setPlayerSkinRPC, BroadcastStreamed, this, false /* skipFrom */);
+        pool_->broadcastRPCToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
     }
 
     int getSkin() const override {
@@ -316,7 +316,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             sendRPC(applyPlayerAnimationRPC);
         }
         else {
-            pool_->broadcastRPC(applyPlayerAnimationRPC, BroadcastStreamed, this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
+            pool_->broadcastRPCToStreamed(applyPlayerAnimationRPC, *this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
         }
     }
 
@@ -328,7 +328,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             sendRPC(clearPlayerAnimationsRPC);
         }
         else {
-            pool_->broadcastRPC(clearPlayerAnimationsRPC, BroadcastStreamed, this, false /* skipFrom */);
+            pool_->broadcastRPCToStreamed(clearPlayerAnimationsRPC, *this, false /* skipFrom */);
         }
     }
 
@@ -396,7 +396,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPlayerSkillLevelRPC.PlayerID = poolID;
             setPlayerSkillLevelRPC.SkillType = skill;
             setPlayerSkillLevelRPC.SkillLevel = level;
-            pool_->broadcastRPC(setPlayerSkillLevelRPC, BroadcastStreamed, this, false /* skipFrom */);
+            pool_->broadcastRPCToStreamed(setPlayerSkillLevelRPC, *this, false /* skipFrom */);
         }
     }
 
@@ -429,7 +429,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerColor setPlayerColorRPC;
         setPlayerColorRPC.PlayerID = poolID;
         setPlayerColorRPC.Col = colour;
-        pool_->broadcastRPC(setPlayerColorRPC, BroadcastGlobally, this, false /* skipFrom */);
+        pool_->broadcastRPCToAll(setPlayerColorRPC);
     }
 
     virtual void setWantedLevel(unsigned level) override {
@@ -511,7 +511,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
         setPlayerFightingStyleRPC.PlayerID = poolID;
         setPlayerFightingStyleRPC.Style = style;
-        pool_->broadcastRPC(setPlayerFightingStyleRPC, BroadcastStreamed, this, false /* skipFrom */);
+        pool_->broadcastRPCToStreamed(setPlayerFightingStyleRPC, *this, false /* skipFrom */);
     }
 
     EPlayerNameStatus setName(const String& name) override {
@@ -530,7 +530,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerNameRPC.PlayerID = poolID;
         setPlayerNameRPC.Name = name_;
         setPlayerNameRPC.Success = true;
-        pool_->broadcastRPC(setPlayerNameRPC, BroadcastGlobally, this, false /* skipFrom */);
+        pool_->broadcastRPCToAll(setPlayerNameRPC);
         return EPlayerNameStatus::Updated;
     }
 
@@ -865,7 +865,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             NetCode::RPC::PlayerDeath playerDeathRPC;
             playerDeathRPC.PlayerID = pid;
-            self.broadcastRPC(playerDeathRPC, EBroadcastPacketSendType::BroadcastGlobally, &peer, true /* skipFrom */);
+            self.broadcastRPCToAll(playerDeathRPC, peer);
 
             return true;
         }
@@ -953,7 +953,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     NetCode::RPC::PlayerChatMessage playerChatMessage;
                     playerChatMessage.PlayerID = peer.getID();
                     playerChatMessage.message = filteredMessage;
-                    self.broadcastRPC(playerChatMessage, EBroadcastPacketSendType::BroadcastGlobally);
+                    self.broadcastRPCToAll(playerChatMessage);
                 }
             }
 
@@ -1025,7 +1025,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if(allowedupdate) {
-                self.broadcastPacket(footSync, BroadcastStreamed, &peer);
+                self.broadcastPacketToStreamed(footSync, peer);
             }
             return true;
         }
@@ -1053,7 +1053,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.AspectRatio = aimSync.AspectRatio;
 
                 aimSync.PlayerID = pid;
-                self.broadcastPacket(aimSync, BroadcastStreamed, &peer);
+                self.broadcastPacketToStreamed(aimSync, peer);
             }
             return true;
         }
@@ -1174,7 +1174,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (allowed) {
                 bulletSync.PlayerID = pid;
-                self.broadcastPacket(bulletSync, BroadcastStreamed, &peer);
+                self.broadcastPacketToStreamed(bulletSync, peer);
             }
             return true;
         }
@@ -1257,7 +1257,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     });
 
                 if (allowedupdate) {
-                    self.broadcastPacket(vehicleSync, BroadcastStreamed, &peer);
+                    self.broadcastPacketToStreamed(vehicleSync, peer);
                 }
             }
             return true;
@@ -1348,7 +1348,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = peer.getID();
             packet.Reason = reason;
-            broadcastRPC(packet, BroadcastGlobally);
+            broadcastRPCToAll(packet);
 
             eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
