@@ -463,7 +463,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
 
             IPlayerPool* players = player_.getPool();
             if (players) {
-                players->broadcastRPC(setPlayerAttachedObjectRPC, EBroadcastPacketSendType::BroadcastStreamed, &player_);
+                players->broadcastRPCToStreamed(setPlayerAttachedObjectRPC, player_);
             }
         }
     }
@@ -478,7 +478,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
 
         IPlayerPool* players = player_.getPool();
         if (players) {
-            players->broadcastRPC(setPlayerAttachedObjectRPC, EBroadcastPacketSendType::BroadcastStreamed, &player_);
+            players->broadcastRPCToStreamed(setPlayerAttachedObjectRPC, player_);
         }
     }
 
