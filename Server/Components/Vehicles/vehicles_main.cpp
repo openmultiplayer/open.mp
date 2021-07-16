@@ -289,7 +289,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 		return preloadModels;
 	}
 
-    IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = 0, int colour2 = 0, int respawnDelay = -1) override {
+    IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1) override {
         return create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay });
     }
 

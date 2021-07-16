@@ -1,6 +1,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 #include <chrono>
+#include "vehicle_colours.hpp"
 
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
@@ -68,6 +69,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void setSpawnData(VehicleSpawnData data) override {
         spawnData = data;
+
+        if (spawnData.colour1 == -1 || spawnData.colour2 == -1) {
+            int ignore;
+            getRandomVehicleColour(spawnData.modelID, spawnData.colour1 == -1 ? spawnData.colour1 : ignore, spawnData.colour2 == -1 ? spawnData.colour2 : ignore);
+        }
         pos = spawnData.position;
         rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     }

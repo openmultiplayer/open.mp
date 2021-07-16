@@ -373,6 +373,16 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 			player.sendClientMessage(Colour::White(), "Enter the vehicle, move it a little, then exit.");
 			return true;
 		}
+		else if (!message.find("/vehicle") && vehicles) {
+			int plate_space = message.find_first_of(" ");
+			if (plate_space != String::npos) {
+				int model = std::atoi(message.substr(plate_space + 1).c_str());
+				Vector3 pos = player.getPosition();
+				pos.x -= 3.0f;
+				vehicles->create(model, pos);
+			}
+			return true;
+		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {
 				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
