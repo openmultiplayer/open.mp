@@ -516,7 +516,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     EPlayerNameStatus setName(const String& name) override {
         assert(pool_);
-        if (pool_->isNameTaken(name, this)) {
+        if (pool_->isNameTaken(name, *this)) {
             return EPlayerNameStatus::Taken;
         }
         else if (name.length() > MAX_PLAYER_NAME) {
@@ -796,10 +796,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             bool pidValid = self.storage.valid(onPlayerGiveTakeDamageRPC.PlayerID);
             if (onPlayerGiveTakeDamageRPC.Taking) {
+                OptionalPlayer from;
+                if (pidValid) {
+                    from.emplace(self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID));
+                }
                 self.eventDispatcher.dispatch(
                     &PlayerEventHandler::onTakeDamage,
                     peer,
-                    pidValid ? &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID) : nullptr,
+                    from,
                     onPlayerGiveTakeDamageRPC.Damage,
                     onPlayerGiveTakeDamageRPC.WeaponID,
                     onPlayerGiveTakeDamageRPC.Bodypart
@@ -855,11 +859,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = self.storage.get(pid);
             player.setState(PlayerState_Wasted);
 
-            bool killerIsValid = self.storage.valid(onPlayerDeathRPC.KillerID);
+            OptionalPlayer killer;
+            if (self.storage.valid(onPlayerDeathRPC.KillerID)) {
+                killer.emplace(self.storage.get(onPlayerDeathRPC.KillerID));
+            }
             self.eventDispatcher.dispatch(
                 &PlayerEventHandler::onDeath,
                 peer, 
-                killerIsValid ? &self.storage.get(onPlayerDeathRPC.KillerID) : nullptr,
+                killer,
                 onPlayerDeathRPC.Reason
             );
 
@@ -1285,28 +1292,50 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return playerUpdateDispatcher;
     }
 
-    IPlayer* onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) override {
+    std::pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) override {
         NetCode::RPC::PlayerConnect playerConnectPacket;
         if (!playerConnectPacket.read(bs)) {
-            return nullptr;
+            return { NewConnectionResult_Ignore, nullptr };
+        }
+
+        const String name = playerConnectPacket.Name;
+        if (name.length() < MIN_PLAYER_NAME || name.length() > MAX_PLAYER_NAME) {
+            return { NewConnectionResult_BadName, nullptr };
+        }
+        for (char chr : name) {
+            if (!std::isalnum(chr) && chr != ']' && chr != '[' && chr != '_' && chr != '$' &&
+                chr != '=' && chr != '(' && chr != ')' && chr != '@' && chr != '.') {
+                return { NewConnectionResult_BadName, nullptr };
+            }
+        }
+
+        if (isNameTaken(name, OptionalPlayer())) {
+            return { NewConnectionResult_BadName, nullptr };
         }
 
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
-            return nullptr;
+            return { NewConnectionResult_NoPlayerSlot, nullptr };
         }
 
         int pid = storage.claim(freeIdx);
         if (pid == -1) {
             // No free index
-            return nullptr;
+            return { NewConnectionResult_NoPlayerSlot, nullptr };;
         }
 
-        return initPlayer(pid, netData, playerConnectPacket);
+        return { NewConnectionResult_Success, initPlayer(pid, netData, playerConnectPacket) };
     }
 
     void onPeerConnect(IPlayer& peer) override {
+        eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer);
+
+        // Don't process player, about to be disconnected
+        if (peer.getState() == PlayerState_Kicked) {
+            return;
+        }
+
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = peer.getID();
         playerJoinPacket.Col = peer.getColour();
@@ -1375,12 +1404,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.getEventDispatcher().addEventHandler(this);
     }
 
-    bool isNameTaken(const String& name, const IPlayer* skip) override {
+    bool isNameTaken(const String& name, const OptionalPlayer skip) override {
         const PoolEntryArray<IPlayer>& players = storage.entries();
         return std::any_of(players.begin(), players.end(),
             [&name, &skip](IPlayer& player) {
                 // Don't check name for player to skip
-                if (&player == skip) {
+                if (skip.has_value() && &player == &skip.value().get()) {
                     return false;
                 }
                 const String& otherName = player.getName();
