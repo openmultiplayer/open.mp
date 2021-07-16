@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <set>
 #include <unordered_set>
+#include <optional>
+#include <type_traits>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>

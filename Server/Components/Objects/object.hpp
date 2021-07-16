@@ -179,8 +179,8 @@ struct Object final : public BaseObject<IObject> {
 	{}
 
 	void restream() {
-		for (IPlayer* player : players_->entries()) {
-			createObjectForClient(*player);
+		for (IPlayer& player : players_->entries()) {
+			createObjectForClient(player);
 		}
 	}
 
@@ -213,8 +213,8 @@ struct Object final : public BaseObject<IObject> {
 	bool advance(std::chrono::microseconds elapsed) override {
 		if (anyDelayedProcessing_) {
 			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-			for (IPlayer* const& player : players_->entries()) {
-				const int pid = player->getID();
+			for (IPlayer& player : players_->entries()) {
+				const int pid = player.getID();
 				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
 					delayedProcessing_.reset(pid);
 					anyDelayedProcessing_ = delayedProcessing_.any();
@@ -224,20 +224,20 @@ struct Object final : public BaseObject<IObject> {
 						moveObjectRPC.ObjectID = poolID;
 						moveObjectRPC.CurrentPosition = pos_;
 						moveObjectRPC.MoveData = moveData_;
-						player->sendRPC(moveObjectRPC);
+						player.sendRPC(moveObjectRPC);
 					}
 
 					if (
 						attachmentData_.type == ObjectAttachmentData::Type::Player &&
 						players_->valid(attachmentData_.ID) &&
-						player->isPlayerStreamedIn(players_->get(attachmentData_.ID))
+						player.isPlayerStreamedIn(players_->get(attachmentData_.ID))
 					) {
 						NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
 						attachObjectToPlayerRPC.ObjectID = poolID;
 						attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
 						attachObjectToPlayerRPC.Offset = attachmentData_.offset;
 						attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-						player->sendRPC(attachObjectToPlayerRPC);
+						player.sendRPC(attachObjectToPlayerRPC);
 					}
 				}
 			}
@@ -319,8 +319,8 @@ struct Object final : public BaseObject<IObject> {
 
 	~Object() {
 		if (players_) {
-			for (IPlayer* player : players_->entries()) {
-				destroyForPlayer(*player);
+			for (IPlayer& player : players_->entries()) {
+				destroyForPlayer(player);
 			}
 		}
 	}
