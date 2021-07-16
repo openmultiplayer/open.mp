@@ -345,7 +345,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             // Entry denied, send reason and disconnect
             RakNet::BitStream bss;
             bss.Write(uint8_t(newConnectionResult.first));
-            network->rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+            network->rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
             network->rakNetServer.Kick(rid);
         }
         return;
