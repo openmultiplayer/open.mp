@@ -69,7 +69,7 @@ struct IPlayerTextLabel : public ITextLabelBase {
 
 static const UUID TextLabelsPlugin_UUID = UUID(0xa0c57ea80a009742);
 /// The text label plugin which is a global text label pool
-struct ITextLabelsPlugin : public IPlugin, public IPool<ITextLabel, MAX_TEXT_LABELS> {
+struct ITextLabelsPlugin : public IPlugin, public IPool<ITextLabel, TEXT_LABEL_POOL_SIZE> {
 	PROVIDE_UUID(TextLabelsPlugin_UUID);
 
 	/// Create a text label
@@ -84,7 +84,7 @@ struct ITextLabelsPlugin : public IPlugin, public IPool<ITextLabel, MAX_TEXT_LAB
 
 static const UUID PlayerTextLabelData_UUID = UUID(0xb9e2bd0dc5148c3c);
 /// The text label player data which is a player text label pool
-struct IPlayerTextLabelData : public IPlayerData, public IPool<IPlayerTextLabel, MAX_TEXT_LABELS> {
+struct IPlayerTextLabelData : public IPlayerData, public IPool<IPlayerTextLabel, TEXT_LABEL_POOL_SIZE> {
 	PROVIDE_UUID(PlayerTextLabelData_UUID);
 
 	/// Create a player text label
