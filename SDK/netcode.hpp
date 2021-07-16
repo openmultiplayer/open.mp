@@ -1622,7 +1622,7 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? MAX_TEXT_LABELS + TextLabelID : TextLabelID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? TEXT_LABEL_POOL_SIZE + TextLabelID : TextLabelID));
 				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
 				bs.write(NetworkBitStreamValue::VEC3(Position));
 				bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
@@ -1642,7 +1642,48 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? MAX_TEXT_LABELS + TextLabelID : TextLabelID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? TEXT_LABEL_POOL_SIZE + TextLabelID : TextLabelID));
+			}
+		};
+
+		struct PlayerCreatePickup final : NetworkPacketBase<95> {
+			int PickupID;
+			int Model;
+			int Type;
+			Vector3 Position;
+
+			bool read(INetworkBitStream & bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream & bs) const {
+				bs.write(NetworkBitStreamValue::INT32(PickupID));
+				bs.write(NetworkBitStreamValue::INT32(Model));
+				bs.write(NetworkBitStreamValue::INT32(Type));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+			}
+		};
+
+		struct PlayerDestroyPickup final : NetworkPacketBase<63> {
+			int PickupID;
+
+			bool read(INetworkBitStream & bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream & bs) const {
+				bs.write(NetworkBitStreamValue::INT32(PickupID));
+			}
+		};
+
+		struct OnPlayerPickUpPickup final : NetworkPacketBase<131> {
+			int PickupID;
+
+			bool read(INetworkBitStream & bs) {
+				return bs.readT<int32_t>(PickupID, NetworkBitStreamValueType::INT32);
+			}
+
+			void write(INetworkBitStream & bs) const {
 			}
 		};
 
@@ -1675,7 +1716,7 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				uint8_t flags = UseBox | (Alignment << 1) | (Proportional << 4);
-				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID));
 				bs.write(NetworkBitStreamValue::UINT8(flags));
 				bs.write(NetworkBitStreamValue::VEC2(LetterSize));
 				bs.write(NetworkBitStreamValue::UINT32(LetterColour.ABGR()));
@@ -1705,7 +1746,7 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID));
 			}
 		};
 
@@ -1719,7 +1760,7 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? MAX_GLOBAL_TEXTDRAWS + TextDrawID : TextDrawID));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
 			}
 		};
@@ -1747,9 +1788,9 @@ namespace NetCode {
 				bool res = bs.readT<uint16_t>(TextDrawID, NetworkBitStreamValueType::UINT16);
 				Invalid = TextDrawID == INVALID_TEXTDRAW;
 				if (!Invalid) {
-					PlayerTextDraw = TextDrawID >= MAX_GLOBAL_TEXTDRAWS;
+					PlayerTextDraw = TextDrawID >= GLOBAL_TEXTDRAW_POOL_SIZE;
 					if (PlayerTextDraw) {
-						TextDrawID -= MAX_GLOBAL_TEXTDRAWS;
+						TextDrawID -= GLOBAL_TEXTDRAW_POOL_SIZE;
 					}
 				}
 				return res;
@@ -1910,11 +1951,11 @@ namespace NetCode {
 				uint16_t surfingID;
 				CHECKED_READ(surfingID, { NetworkBitStreamValueType::UINT16 });
 				SurfingData.ID = surfingID;
-				if (SurfingData.ID < MAX_VEHICLES) {
+				if (SurfingData.ID < VEHICLE_POOL_SIZE) {
 					SurfingData.type = PlayerSurfingData::Type::Vehicle;
 				}
-				else if (SurfingData.ID < MAX_VEHICLES+MAX_OBJECTS) {
-					SurfingData.ID -= MAX_VEHICLES;
+				else if (SurfingData.ID < VEHICLE_POOL_SIZE +OBJECT_POOL_SIZE) {
+					SurfingData.ID -= VEHICLE_POOL_SIZE;
 					SurfingData.type = PlayerSurfingData::Type::Object;
 				}
 				else {
@@ -1954,7 +1995,7 @@ namespace NetCode {
 						id = SurfingData.ID;
 					}
 					else if (SurfingData.type == PlayerSurfingData::Type::Object) {
-						id = SurfingData.ID + MAX_VEHICLES;
+						id = SurfingData.ID + VEHICLE_POOL_SIZE;
 					}
 					bs.write(NetworkBitStreamValue::UINT16(id));
 					bs.write(NetworkBitStreamValue::VEC3(SurfingData.offset));

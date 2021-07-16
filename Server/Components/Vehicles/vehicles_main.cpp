@@ -52,18 +52,21 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 return false;
             }
 
-            self.eventDispatcher.dispatch(
-                &VehicleEventHandler::onPlayerEnterVehicle,
-                peer,
-                self.storage.get(onPlayerEnterVehicleRPC.VehicleID),
-                onPlayerEnterVehicleRPC.Passenger
-            );
+            {
+                ScopedPoolReleaseLock lock(self, onPlayerEnterVehicleRPC.VehicleID);
+                self.eventDispatcher.dispatch(
+                    &VehicleEventHandler::onPlayerEnterVehicle,
+                    peer,
+                    lock.entry,
+                    onPlayerEnterVehicleRPC.Passenger
+                );
+            }
 
             NetCode::RPC::EnterVehicle enterVehicleRPC;
             enterVehicleRPC.PlayerID = peer.getID();
             enterVehicleRPC.VehicleID = onPlayerEnterVehicleRPC.VehicleID;
             enterVehicleRPC.Passenger = onPlayerEnterVehicleRPC.Passenger;
-            self.core->getPlayers().broadcastRPC(enterVehicleRPC, BroadcastStreamed, &peer, true);
+            self.core->getPlayers().broadcastRPCToStreamed(enterVehicleRPC, peer, true);
             return true;
         }
     } playerEnterVehicleHandler;
@@ -78,16 +81,19 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 return false;
             }
 
-            self.eventDispatcher.dispatch(
-                &VehicleEventHandler::onPlayerExitVehicle,
-                peer,
-                self.storage.get(onPlayerExitVehicleRPC.VehicleID)
-            );
+            {
+                ScopedPoolReleaseLock lock(self, onPlayerExitVehicleRPC.VehicleID);
+                self.eventDispatcher.dispatch(
+                    &VehicleEventHandler::onPlayerExitVehicle,
+                    peer,
+                    lock.entry
+                );
+            }
 
             NetCode::RPC::ExitVehicle exitVehicleRPC;
             exitVehicleRPC.PlayerID = peer.getID();
             exitVehicleRPC.VehicleID = onPlayerExitVehicleRPC.VehicleID;
-            self.core->getPlayers().broadcastRPC(exitVehicleRPC, BroadcastStreamed, &peer, true);
+            self.core->getPlayers().broadcastRPCToStreamed(exitVehicleRPC, peer, true);
             return true;
         }
     } playerExitVehicleHandler;
@@ -185,9 +191,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                     enterExitRPC.Arg1 = scmEvent.Arg1;
                     enterExitRPC.Arg2 = scmEvent.Arg2;
                     
-                    for (IPlayer* player : vehicle.streamedPlayers_.entries()) {
-                        if (player != &peer) {
-                            player->sendRPC(enterExitRPC);
+                    for (IPlayer& player : vehicle.streamedPlayers_.entries()) {
+                        if (&player != &peer) {
+                            player.sendRPC(enterExitRPC);
                         } 
                     }
                     break;
@@ -208,11 +214,10 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
             }
 
             Vehicle& vehicle = self.storage.get(vehicleDeath.VehicleID);
-            auto occupants = vehicle.getOccupants();
             if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
             }
-            else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer && std::find(occupants.begin(), occupants.end(), &peer) == occupants.end()) {
+            else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer) {
                 return false;
             }
 
@@ -224,7 +229,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-            data->getVehicle()->removeInternalOccupant(player);
             if (data->getVehicle() && data->getVehicle()->getDriver() == &player) {
                 data->getVehicle()->setDriver(nullptr);
             }
@@ -234,13 +238,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         }
     }
 
-    void onDisconnect(IPlayer& player, int reason) override {
-        IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-        if (data && data->getVehicle()) {
-            data->getVehicle()->removeInternalOccupant(player);
-        }
-        for (IVehicle* vehicle : entries()) {
-            vehicle->streamOutForPlayer(player);
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+        for (IVehicle& vehicle : entries()) {
+            vehicle.streamOutForPlayer(player);
         }
     }
 
@@ -330,7 +330,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         if (index == 0) {
             return false;
         }
@@ -342,53 +342,68 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available objects
-    const DynamicArray<IVehicle*>& entries() const override {
+    const PoolEntryArray<IVehicle>& entries() const override {
         return storage.entries();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-        for (auto it = storage.entries().begin(); it != storage.entries().end();) {
-            IVehicle* vehicle = *it;
-            const int vw = vehicle->getVirtualWorld();
-            const Vector3 pos = vehicle->getPosition();
-            for (IPlayer* const& player : core->getPlayers().entries()) {
-                const PlayerState state = player->getState();
-                const Vector2 dist2D = pos - player->getPosition();
+        for (IVehicle& vehicle : storage.entries()) {
+            const int vw = vehicle.getVirtualWorld();
+            const Vector3 pos = vehicle.getPosition();
+            bool occupied = false;
+            for (IPlayer& player : core->getPlayers().entries()) {
+                const PlayerState state = player.getState();
+                const Vector2 dist2D = pos - player.getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    player->getVirtualWorld() == vw &&
+                    player.getVirtualWorld() == vw &&
                     glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
+                const bool isStreamedIn = vehicle.isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    vehicle->streamInForPlayer(*player);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, *vehicle, *player);
+                    vehicle.streamInForPlayer(player);
+                    ScopedPoolReleaseLock lock(*this, vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    vehicle->streamOutForPlayer(*player);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, *vehicle, *player);
+                    vehicle.streamOutForPlayer(player);
+                    ScopedPoolReleaseLock lock(*this, vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, player);
+                }
+
+                if (!occupied) {
+                    PlayerState state = player.getState();
+                    if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
+                        occupied = player.queryData<IPlayerVehicleData>()->getVehicle() == &vehicle;
+                    }
                 }
             }
 
-            if (vehicle->isDead() && vehicle->getRespawnDelay() != -1 && !vehicle->isOccupied()) {
-                if (time - vehicle->getDeathTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
-                    vehicle->respawn();
+            if (vehicle.isDead() && vehicle.getRespawnDelay() != -1 && !occupied) {
+                if (time - vehicle.getDeathTime() >= std::chrono::milliseconds(vehicle.getRespawnDelay())) {
+                    vehicle.respawn();
                 }
             }
-            else if (!vehicle->isOccupied() && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != -1) {
-                if (time - vehicle->getLastOccupiedTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
-                    vehicle->respawn();
+            else if (!occupied && vehicle.hasBeenOccupied() && vehicle.getRespawnDelay() != -1) {
+                if (time - vehicle.getLastOccupiedTime() >= std::chrono::milliseconds(vehicle.getRespawnDelay())) {
+                    vehicle.respawn();
                 }
             }
-            int vid = vehicle->getID();
-            it = storage.marked(vid) ? storage.release(vid) : it + 1;
         }
     }
 };

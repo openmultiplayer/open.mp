@@ -3,7 +3,7 @@
 
 struct PlayerTextDrawData final : IPlayerTextDrawData {
     IPlayer& player;
-    PoolStorage<PlayerTextDraw, IPlayerTextDraw, IPlayerTextDrawData::Cnt> storage;
+    MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, IPlayerTextDrawData::Cnt> storage;
     bool selecting;
 
     PlayerTextDrawData(IPlayer& player) :
@@ -74,9 +74,9 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     void free() override {
-        for (IPlayerTextDraw* textDraw : storage.entries()) {
-            PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
-            td->player = nullptr;
+        for (IPlayerTextDraw& textDraw : storage.entries()) {
+            PlayerTextDraw& td = static_cast<PlayerTextDraw&>(textDraw);
+            td.player = nullptr;
         }
         delete this;
     }
@@ -95,7 +95,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -104,18 +104,26 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     void release(int index) override {
-        storage.release(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available labels
-    const DynamicArray<IPlayerTextDraw*>& entries() const override {
+    const PoolEntryArray<IPlayerTextDraw>& entries() const override {
         return storage.entries();
     }
 };
 
 struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandler {
     ICore* core = nullptr;
-    PoolStorage<TextDraw, ITextDraw, ITextDrawsPlugin::Cnt> storage;
+    MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsPlugin::Cnt> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
     const char* pluginName() override {
@@ -140,10 +148,12 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
                 }
                 else {
                     if (RPC.PlayerTextDraw && data->valid(RPC.TextDrawID)) {
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, data->get(RPC.TextDrawID));
+                        ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
+                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.entry);
                     }
                     else if (!RPC.PlayerTextDraw && self.storage.valid(RPC.TextDrawID)) {
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, self.storage.get(RPC.TextDrawID));
+                        ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
+                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, lock.entry);
                     }
                 }
             }
@@ -235,7 +245,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -244,11 +254,18 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
     }
 
     void release(int index) override {
-        storage.release(index);
+        storage.release(index, false);
     }
 
-    /// Get a set of all the available labels
-    const DynamicArray<ITextDraw*>& entries() const override {
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
+    }
+
+    const PoolEntryArray<ITextDraw>& entries() const override {
         return storage.entries();
     }
 };
