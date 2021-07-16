@@ -22,21 +22,21 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
             IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
             if (data && data->selectingObject()) {
                 if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Global || self.valid(onPlayerSelectObjectRPC.ObjectID)) {
-                    IObject& obj = self.get(onPlayerSelectObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(self, onPlayerSelectObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectSelected,
                         peer,
-                        obj,
+                        lock.entry,
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position
                     );
                 }
                 else if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Player || data->valid(onPlayerSelectObjectRPC.ObjectID)) {
-                    IPlayerObject& obj = data->get(onPlayerSelectObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(*data, onPlayerSelectObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectSelected,
                         peer,
-                        obj,
+                        lock.entry,
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position
                     );
@@ -60,22 +60,22 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
             IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
             if (data && data->editingObject()) {
                 if (onPlayerEditObjectRPC.PlayerObject && data->valid(onPlayerEditObjectRPC.ObjectID)) {
-                    IPlayerObject& obj = data->get(onPlayerEditObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectEdited,
                         peer,
-                        obj,
+                        lock.entry,
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation
                     );
                 }
                 else if (self.valid(onPlayerEditObjectRPC.ObjectID)) {
-                    IObject& obj = self.get(onPlayerEditObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(self, onPlayerEditObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectEdited,
                         peer,
-                        obj,
+                        lock.entry,
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation
@@ -122,7 +122,9 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         playerSelectObjectEventHandler(*this),
         playerEditObjectEventHandler(*this),
         playerEditAttachedObjectEventHandler(*this)
-    {}
+    {
+        storage.claimUnusable(0);
+    }
 
     void onInit(ICore* core) override {
         this->core = core;
@@ -210,7 +212,10 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
+        if (index == 0) {
+            return false;
+        }
         return storage.valid(index);
     }
 
@@ -219,7 +224,15 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     IEventDispatcher<ObjectEventHandler>& getEventDispatcher() override {
@@ -237,7 +250,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         }
     }
 
-    void onDisconnect(IPlayer& player, int reason) override {
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
         for (IObject* obj : storage.entries()) {
             const ObjectAttachmentData& data = obj->getAttachmentData();
@@ -361,7 +374,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -370,7 +383,15 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available objects
@@ -482,28 +503,21 @@ struct PlayerObjectData final : public IPlayerObjectData {
 };
 
 void ObjectPlugin::onTick(std::chrono::microseconds elapsed) {
-    for (auto it = storage.entries().begin(); it != storage.entries().end();) {
-        IObject* obj = *it;
+    for (IObject* obj : storage.entries()) {
         if (obj->advance(elapsed)) {
-            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, *obj);
+            ScopedPoolReleaseLock lock(*this, *obj);
+            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.entry);
         }
-
-        int objid = obj->getID();
-        it = storage.marked(objid) ? storage.release(objid) : it + 1;
     }
 
     for (IPlayer* const& player : core->getPlayers().entries()) {
-        PlayerObjectData* data = player->queryData<PlayerObjectData>();
+        IPlayerObjectData* data = player->queryData<IPlayerObjectData>();
         if (data) {
-            auto& playerStorage = data->storage;
-            for (auto it = playerStorage.entries().begin(); it != playerStorage.entries().end();) {
-                IPlayerObject* obj = *it;
+            for (IPlayerObject* obj : data->entries()) {
                 if (obj->advance(elapsed)) {
-                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, *obj);
+                    ScopedPoolReleaseLock lock(*data, *obj);
+                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.entry);
                 }
-
-                int objid = obj->getID();
-                it = playerStorage.marked(objid) ? playerStorage.release(objid) : it + 1;
             }
         }
     }

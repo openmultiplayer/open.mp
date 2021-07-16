@@ -103,7 +103,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         std::string serverName = Config::getOption<std::string>(props, "server_name");
         playerInitRPC.ServerName = serverName;
         IClassesPlugin* classes = ICore::queryPlugin<IClassesPlugin>();
-        playerInitRPC.SetSpawnInfoCount = classes ? classes->getClasses().entries().size() : 0;
+        playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesPlugin* vehicles = ICore::queryPlugin<IVehiclesPlugin>();
         std::array<uint8_t, 212> emptyModel;

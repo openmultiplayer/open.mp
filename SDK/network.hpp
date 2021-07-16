@@ -15,6 +15,13 @@ constexpr int INVALID_PACKET_ID = -1;
 
 struct IPlayer;
 struct INetworkPeer;
+struct PeerNetworkData;
+
+enum PeerDisconnectReason {
+	PeerDisconnectReason_Timeout,
+	PeerDisconnectReason_Quit,
+	PeerDisconnectReason_Kicked
+};
 
 /// Used for specifying bit stream data types
 enum class NetworkBitStreamValueType {
@@ -295,9 +302,10 @@ struct INetworkBitStream {
 
 /// An event handler for network events
 struct NetworkEventHandler {
-	virtual bool incomingConnection(int id, uint64_t address, uint16_t port) { return true; }
-	virtual void onPeerConnect(IPlayer& peer, INetworkBitStream& bs) { }
-	virtual void onPeerDisconnect(IPlayer& peer, int reason) { }
+	virtual IPlayer* onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return nullptr; }
+	virtual bool incomingConnection(IPlayer& peer, const PeerNetworkData& netData) { return true; }
+	virtual void onPeerConnect(IPlayer& peer) { }
+	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };
 
 /// An event handler for network I/O events
@@ -381,6 +389,9 @@ struct INetwork {
 
 	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
 	virtual unsigned getPing(const INetworkPeer& peer) = 0;
+
+	/// Disconnect the peer from the network
+	virtual void disconnect(const INetworkPeer& peer) = 0;
 };
 
 /// A plugin interface which allows for writing a network plugin
@@ -392,31 +403,26 @@ struct INetworkPlugin : public IPlugin {
 	virtual INetwork* getNetwork() = 0;
 };
 
-/// A network peer interface
-struct INetworkPeer {
+/// Peer network data
+struct PeerNetworkData {
 	/// Peer network ID
 	struct NetworkID {
 		uint64_t address; ///< The peer's address
 		unsigned short port; ///< The peer's port
 	};
 
-	/// Peer network data
-	struct NetworkData {
-		INetwork* network; ///< The network associated with the peer
-		INetworkPeer::NetworkID networkID; ///< The peer's network ID
-		String IP; ///< The peer's IP as a string
-		unsigned short port; ///< The peer's port number
-	};
+	INetwork* network; ///< The network associated with the peer
+	NetworkID networkID; ///< The peer's network ID
+	String IP; ///< The peer's IP as a string
+	unsigned short port; ///< The peer's port number
+};
 
-	/// Set the peer's network data
-	/// @param networkID The network ID to set
-	/// @param network The network to set
-	/// @param IP The IP to set
-	/// @param port The port to set
-	virtual void setNetworkData(const NetworkData& data) = 0;
+/// A network peer interface
+struct INetworkPeer {
 
-	virtual const NetworkData& getNetworkData() const = 0;
+	virtual const PeerNetworkData& getNetworkData() const = 0;
 
+	/// Get the peer's ping from their network
 	unsigned getPing() const {
 		return getNetworkData().network->getPing(*this);
 	}

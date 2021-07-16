@@ -17,7 +17,7 @@
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     IPlayerPool* pool_;
     DefaultEventDispatcher<PlayerEventHandler>* playerEventDispatcher_;
-    NetworkData netData_;
+    PeerNetworkData netData_;
     PlayerGameData gameData_;
     Vector3 pos_;
     Vector3 cameraPos_;
@@ -384,6 +384,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return fightingStyle_;
     }
 
+    void kick() override {
+        state_ = PlayerState_Kicked;
+        netData_.network->disconnect(*this);
+    }
+
     void setSkillLevel(PlayerWeaponSkill skill, int level) override {
         if (skill < skillLevels_.size()) {
             skillLevels_[skill] = level;
@@ -493,11 +498,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return streamedPlayers_.entries();
     }
 
-    void setNetworkData(const NetworkData& data) override {
-        netData_ = data;
-    }
-
-    const NetworkData& getNetworkData() const override {
+    const PeerNetworkData& getNetworkData() const override {
         return netData_;
     }
 
@@ -1143,28 +1144,28 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 break;
             case PlayerBulletHitType_Vehicle:
                 if (self.vehiclesPlugin && self.vehiclesPlugin->valid(player.bulletData_.hitID)) {
-                    IVehicle& target = self.vehiclesPlugin->get(player.bulletData_.hitID);
+                    ScopedPoolReleaseLock lock(*self.vehiclesPlugin, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
-                        [&player, &target](PlayerEventHandler* handler) {
-                            return handler->onShotVehicle(player, target, player.bulletData_);
+                        [&player, &lock](PlayerEventHandler* handler) {
+                            return handler->onShotVehicle(player, lock.entry, player.bulletData_);
                         });
                 }
                 break;
             case PlayerBulletHitType_Object:
                 if (self.objectsPlugin && self.objectsPlugin->valid(player.bulletData_.hitID)) {
-                    IObject& target = self.objectsPlugin->get(player.bulletData_.hitID);
+                    ScopedPoolReleaseLock lock(*self.objectsPlugin, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
-                        [&player, &target](PlayerEventHandler* handler) {
-                            return handler->onShotObject(player, target, player.bulletData_);
+                        [&player, &lock](PlayerEventHandler* handler) {
+                            return handler->onShotObject(player, lock.entry, player.bulletData_);
                         });
                 }
                 else {
                     IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
                     if (data && data->valid(player.bulletData_.hitID)) {
-                        IPlayerObject& target = data->get(player.bulletData_.hitID);
+                        ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
                         allowed = self.eventDispatcher.stopAtFalse(
-                            [&player, &target](PlayerEventHandler* handler) {
-                                return handler->onShotPlayerObject(player, target, player.bulletData_);
+                            [&player, &lock](PlayerEventHandler* handler) {
+                                return handler->onShotPlayerObject(player, lock.entry, player.bulletData_);
                             });
                     }
                 }
@@ -1179,10 +1180,50 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerBulletSyncHandler;
 
-    void initPlayer(Player& player) {
+    IPlayer* initPlayer(int pid, const PeerNetworkData& netData, const NetCode::RPC::PlayerConnect& playerConnectPacket) {
+        Player& player = storage.get(pid);
+
+        PlayerGameData gameData;
+        gameData.versionNumber = playerConnectPacket.VersionNumber;
+        gameData.modded = playerConnectPacket.Modded;
+        gameData.challengeResponse = playerConnectPacket.ChallengeResponse;
+        gameData.key = playerConnectPacket.Key;
+        gameData.versionString = playerConnectPacket.VersionString;
+
         player.pool_ = this;
         player.playerEventDispatcher_ = &eventDispatcher;
         player.streamedPlayers_.add(player.poolID, &player);
+
+        player.netData_ = netData;
+        player.gameData_ = gameData;
+        player.name_ = playerConnectPacket.Name;
+
+        // Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846)
+        static constexpr uint32_t colours[] = {
+                0xFF8C13FF, 0xC715FFFF, 0x20B2AAFF, 0xDC143CFF, 0x6495EDFF,
+                0xF0E68CFF, 0x778899FF, 0xFF1493FF, 0xF4A460FF, 0xEE82EEFF,
+                0xFFD720FF, 0x8B4513FF, 0x4949A0FF, 0x148B8BFF, 0x14FF7FFF,
+                0x556B2FFF, 0x0FD9FAFF, 0x10DC29FF, 0x534081FF, 0x0495CDFF,
+                0xEF6CE8FF, 0xBD34DAFF, 0x247C1BFF, 0x0C8E5DFF, 0x635B03FF,
+                0xCB7ED3FF, 0x65ADEBFF, 0x5C1ACCFF, 0xF2F853FF, 0x11F891FF,
+                0x7B39AAFF, 0x53EB10FF, 0x54137DFF, 0x275222FF, 0xF09F5BFF,
+                0x3D0A4FFF, 0x22F767FF, 0xD63034FF, 0x9A6980FF, 0xDFB935FF,
+                0x3793FAFF, 0x90239DFF, 0xE9AB2FFF, 0xAF2FF3FF, 0x057F94FF,
+                0xB98519FF, 0x388EEAFF, 0x028151FF, 0xA55043FF, 0x0DE018FF,
+                0x93AB1CFF, 0x95BAF0FF, 0x369976FF, 0x18F71FFF, 0x4B8987FF,
+                0x491B9EFF, 0x829DC7FF, 0xBCE635FF, 0xCEA6DFFF, 0x20D4ADFF,
+                0x2D74FDFF, 0x3C1C0DFF, 0x12D6D4FF, 0x48C000FF, 0x2A51E2FF,
+                0xE3AC12FF, 0xFC42A8FF, 0x2FC827FF, 0x1A30BFFF, 0xB740C2FF,
+                0x42ACF5FF, 0x2FD9DEFF, 0xFAFB71FF, 0x05D1CDFF, 0xC471BDFF,
+                0x94436EFF, 0xC1F7ECFF, 0xCE79EEFF, 0xBD1EF2FF, 0x93B7E4FF,
+                0x3214AAFF, 0x184D3BFF, 0xAE4B99FF, 0x7E49D7FF, 0x4C436EFF,
+                0xFA24CCFF, 0xCE76BEFF, 0xA04E0AFF, 0x9F945CFF, 0xDCDE3DFF,
+                0x10C9C5FF, 0x70524DFF, 0x0BE472FF, 0x8A2CD7FF, 0x6152C2FF,
+                0xCF72A9FF, 0xE59338FF, 0xEEDC2DFF, 0xD8C762FF, 0xD8C762FF,
+        };
+        player.colour_ = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
+
+        return &player;
     }
 
     struct PlayerVehicleSyncHandler : public SingleNetworkInOutEventHandler {
@@ -1223,36 +1264,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerVehicleSyncHandler;
 
-    int findFreeIndex() override {
-        return storage.findFreeIndex();
-    }
-
-    int claim() override {
-        int res = storage.claim();
-        if (res != -1) {
-            initPlayer(storage.get(res));
-        }
-        return res;
-    }
-
-    int claim(int hint) override {
-        int res = storage.claim(hint);
-        if (res != -1) {
-            initPlayer(storage.get(res));
-        }
-        return res;
-    }
-
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
     IPlayer& get(int index) override {
         return storage.get(index);
-    }
-
-    void release(int index) override {
-        storage.release(index);
     }
 
     /// Get a set of all the available objects
@@ -1268,56 +1285,35 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return playerUpdateDispatcher;
     }
 
-    void onPeerConnect(IPlayer& peer, INetworkBitStream& bs) override {
+    IPlayer* onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) override {
         NetCode::RPC::PlayerConnect playerConnectPacket;
         if (!playerConnectPacket.read(bs)) {
-            return;
+            return nullptr;
         }
 
-        PlayerGameData gameData;
-        gameData.versionNumber = playerConnectPacket.VersionNumber;
-        gameData.modded = playerConnectPacket.Modded;
-        gameData.challengeResponse = playerConnectPacket.ChallengeResponse;
-        gameData.key = playerConnectPacket.Key;
-        gameData.versionString = playerConnectPacket.VersionString;
+        int freeIdx = storage.findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
 
-        int pid = peer.getID();
-        Player& player = storage.get(pid);
-        player.gameData_ = gameData;
-        player.name_ = playerConnectPacket.Name;
+        int pid = storage.claim(freeIdx);
+        if (pid == -1) {
+            // No free index
+            return nullptr;
+        }
 
-        // Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846)
-        static constexpr uint32_t colours[] = {
-                0xFF8C13FF, 0xC715FFFF, 0x20B2AAFF, 0xDC143CFF, 0x6495EDFF,
-                0xF0E68CFF, 0x778899FF, 0xFF1493FF, 0xF4A460FF, 0xEE82EEFF,
-                0xFFD720FF, 0x8B4513FF, 0x4949A0FF, 0x148B8BFF, 0x14FF7FFF,
-                0x556B2FFF, 0x0FD9FAFF, 0x10DC29FF, 0x534081FF, 0x0495CDFF,
-                0xEF6CE8FF, 0xBD34DAFF, 0x247C1BFF, 0x0C8E5DFF, 0x635B03FF,
-                0xCB7ED3FF, 0x65ADEBFF, 0x5C1ACCFF, 0xF2F853FF, 0x11F891FF,
-                0x7B39AAFF, 0x53EB10FF, 0x54137DFF, 0x275222FF, 0xF09F5BFF,
-                0x3D0A4FFF, 0x22F767FF, 0xD63034FF, 0x9A6980FF, 0xDFB935FF,
-                0x3793FAFF, 0x90239DFF, 0xE9AB2FFF, 0xAF2FF3FF, 0x057F94FF,
-                0xB98519FF, 0x388EEAFF, 0x028151FF, 0xA55043FF, 0x0DE018FF,
-                0x93AB1CFF, 0x95BAF0FF, 0x369976FF, 0x18F71FFF, 0x4B8987FF,
-                0x491B9EFF, 0x829DC7FF, 0xBCE635FF, 0xCEA6DFFF, 0x20D4ADFF,
-                0x2D74FDFF, 0x3C1C0DFF, 0x12D6D4FF, 0x48C000FF, 0x2A51E2FF,
-                0xE3AC12FF, 0xFC42A8FF, 0x2FC827FF, 0x1A30BFFF, 0xB740C2FF,
-                0x42ACF5FF, 0x2FD9DEFF, 0xFAFB71FF, 0x05D1CDFF, 0xC471BDFF,
-                0x94436EFF, 0xC1F7ECFF, 0xCE79EEFF, 0xBD1EF2FF, 0x93B7E4FF,
-                0x3214AAFF, 0x184D3BFF, 0xAE4B99FF, 0x7E49D7FF, 0x4C436EFF,
-                0xFA24CCFF, 0xCE76BEFF, 0xA04E0AFF, 0x9F945CFF, 0xDCDE3DFF,
-                0x10C9C5FF, 0x70524DFF, 0x0BE472FF, 0x8A2CD7FF, 0x6152C2FF,
-                0xCF72A9FF, 0xE59338FF, 0xEEDC2DFF, 0xD8C762FF, 0xD8C762FF,
-        };
-        player.colour_ = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
+        return initPlayer(pid, netData, playerConnectPacket);
+    }
 
+    void onPeerConnect(IPlayer& peer) override {
         NetCode::RPC::PlayerJoin playerJoinPacket;
-        playerJoinPacket.PlayerID = pid;
+        playerJoinPacket.PlayerID = peer.getID();
         playerJoinPacket.Col = peer.getColour();
         playerJoinPacket.IsNPC = false;
         playerJoinPacket.Name = peer.getName();
         for (IPlayer* const& other : core.getPlayers().entries()) {
-            if (&player == other) {
+            if (&peer == other) {
                 continue;
             }
 
@@ -1328,7 +1324,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             otherJoinPacket.Col = other->getColour();
             otherJoinPacket.IsNPC = false;
             otherJoinPacket.Name = other->getName();
-            player.sendRPC(otherJoinPacket);
+            peer.sendRPC(otherJoinPacket);
         }
 
         eventDispatcher.all(
@@ -1343,13 +1339,21 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
-    void onPeerDisconnect(IPlayer& peer, int reason) override {
-        NetCode::RPC::PlayerQuit packet;
-        packet.PlayerID = peer.getID();
-        packet.Reason = reason;
-        broadcastRPC(packet, BroadcastGlobally);
+    void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override {
+        if (peer.getPool() == this) {
+            if (peer.getState() == PlayerState_Kicked) {
+                reason = PeerDisconnectReason_Kicked;
+            }
 
-        eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
+            NetCode::RPC::PlayerQuit packet;
+            packet.PlayerID = peer.getID();
+            packet.Reason = reason;
+            broadcastRPC(packet, BroadcastGlobally);
+
+            eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
+
+            storage.release(peer.getID());
+        }
     }
 
     PlayerPool(ICore& core) :
