@@ -208,7 +208,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         storage.unlock(index);
     }
 
-    const DynamicArray<PlayerClass*>& entries() const override {
+    const PoolEntryArray<PlayerClass>& entries() const override {
         return storage.entries();
     }
 

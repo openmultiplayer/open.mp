@@ -218,7 +218,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerTeam setPlayerTeamRPC;
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
-        pool_->broadcastRPC(setPlayerTeamRPC, BroadcastStreamed, this, false /* skipFrom */);
+        pool_->broadcastRPCToStreamed(setPlayerTeamRPC, *this, true /* skipFrom */);
     }
 
     int getTeam() const override {
@@ -241,7 +241,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
         setPlayerSkinRPC.PlayerID = poolID;
         setPlayerSkinRPC.Skin = skin;
-        pool_->broadcastRPC(setPlayerSkinRPC, BroadcastStreamed, this, false /* skipFrom */);
+        pool_->broadcastRPCToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
     }
 
     int getSkin() const override {
@@ -316,7 +316,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             sendRPC(applyPlayerAnimationRPC);
         }
         else {
-            pool_->broadcastRPC(applyPlayerAnimationRPC, BroadcastStreamed, this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
+            pool_->broadcastRPCToStreamed(applyPlayerAnimationRPC, *this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
         }
     }
 
@@ -328,7 +328,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             sendRPC(clearPlayerAnimationsRPC);
         }
         else {
-            pool_->broadcastRPC(clearPlayerAnimationsRPC, BroadcastStreamed, this, false /* skipFrom */);
+            pool_->broadcastRPCToStreamed(clearPlayerAnimationsRPC, *this, false /* skipFrom */);
         }
     }
 
@@ -396,7 +396,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPlayerSkillLevelRPC.PlayerID = poolID;
             setPlayerSkillLevelRPC.SkillType = skill;
             setPlayerSkillLevelRPC.SkillLevel = level;
-            pool_->broadcastRPC(setPlayerSkillLevelRPC, BroadcastStreamed, this, false /* skipFrom */);
+            pool_->broadcastRPCToStreamed(setPlayerSkillLevelRPC, *this, false /* skipFrom */);
         }
     }
 
@@ -429,7 +429,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerColor setPlayerColorRPC;
         setPlayerColorRPC.PlayerID = poolID;
         setPlayerColorRPC.Col = colour;
-        pool_->broadcastRPC(setPlayerColorRPC, BroadcastGlobally, this, false /* skipFrom */);
+        pool_->broadcastRPCToAll(setPlayerColorRPC);
     }
 
     virtual void setWantedLevel(unsigned level) override {
@@ -465,7 +465,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void streamInPlayer(IPlayer& other) override {
         const int pid = other.getID();
-        streamedPlayers_.add(pid, &other);
+        streamedPlayers_.add(pid, other);
         NetCode::RPC::PlayerStreamIn playerStreamInRPC;
         playerStreamInRPC.PlayerID = pid;
         playerStreamInRPC.Skin = other.getSkin();
@@ -486,7 +486,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void streamOutPlayer(IPlayer& other) override {
         const int pid = other.getID();
-        streamedPlayers_.remove(pid, &other);
+        streamedPlayers_.remove(pid, other);
         NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
         playerStreamOutRPC.PlayerID = pid;
         sendRPC(playerStreamOutRPC);
@@ -494,7 +494,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         playerEventDispatcher_->dispatch(&PlayerEventHandler::onStreamOut, other, *this);
     }
 
-    const DynamicArray<IPlayer*>& streamedInPlayers() const override {
+    const PoolEntryArray<IPlayer>& streamedInPlayers() const override {
         return streamedPlayers_.entries();
     }
 
@@ -511,7 +511,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
         setPlayerFightingStyleRPC.PlayerID = poolID;
         setPlayerFightingStyleRPC.Style = style;
-        pool_->broadcastRPC(setPlayerFightingStyleRPC, BroadcastStreamed, this, false /* skipFrom */);
+        pool_->broadcastRPCToStreamed(setPlayerFightingStyleRPC, *this, false /* skipFrom */);
     }
 
     EPlayerNameStatus setName(const String& name) override {
@@ -530,7 +530,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerNameRPC.PlayerID = poolID;
         setPlayerNameRPC.Name = name_;
         setPlayerNameRPC.Success = true;
-        pool_->broadcastRPC(setPlayerNameRPC, BroadcastGlobally, this, false /* skipFrom */);
+        pool_->broadcastRPCToAll(setPlayerNameRPC);
         return EPlayerNameStatus::Updated;
     }
 
@@ -701,24 +701,24 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastMarkerUpdate_) > updateRate) {
             lastMarkerUpdate_ = now;
             INetworkBitStream& bs = netData_.network->writeBitStream();
-            const DynamicArray<IPlayer*>& players = pool_->entries();
+            const PoolEntryArray<IPlayer>& players = pool_->entries();
             bs.write(NetworkBitStreamValue::UINT8(NetCode::Packet::PlayerMarkersSync::getID(bs.getNetworkType())));
             // TODO isNPC
             bs.write(NetworkBitStreamValue::UINT32(players.size() - 1));
-            for (IPlayer* other : players) {
-                if (other == this) {
+            for (IPlayer& other : players) {
+                if (&other == this) {
                     continue;
                 }
 
-                const Vector3 otherPos = other->getPosition();
-                const PlayerState otherState = other->getState();
+                const Vector3 otherPos = other.getPosition();
+                const PlayerState otherState = other.getState();
                 bool streamMarker =
                     otherState != PlayerState_None &&
                     otherState != PlayerState_Spectating &&
-                    virtualWorld_ == other->getVirtualWorld() &&
+                    virtualWorld_ == other.getVirtualWorld() &&
                     (!limit || glm::dot(Vector2(pos_), Vector2(otherPos)) < radius * radius);
 
-                bs.write(NetworkBitStreamValue::UINT16(other->getID()));
+                bs.write(NetworkBitStreamValue::UINT16(other.getID()));
                 bs.write(NetworkBitStreamValue::BIT(streamMarker));
                 if (streamMarker) {
                     bs.write(NetworkBitStreamValue::INT16(otherPos.x));
@@ -772,11 +772,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerRequestScoresAndPingsRPCHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            for (IPlayer* player : self.storage.entries()) {
+            for (IPlayer& player : self.storage.entries()) {
                 NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC;
-                sendPlayerScoresAndPingsRPC.PlayerID = player->getID();
-                sendPlayerScoresAndPingsRPC.Score = player->getScore();
-                sendPlayerScoresAndPingsRPC.Ping = player->getPing();
+                sendPlayerScoresAndPingsRPC.PlayerID = player.getID();
+                sendPlayerScoresAndPingsRPC.Score = player.getScore();
+                sendPlayerScoresAndPingsRPC.Ping = player.getPing();
                 sendPlayerScoresAndPingsRPC.write(bs);
             }
 
@@ -865,7 +865,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             NetCode::RPC::PlayerDeath playerDeathRPC;
             playerDeathRPC.PlayerID = pid;
-            self.broadcastRPC(playerDeathRPC, EBroadcastPacketSendType::BroadcastGlobally, &peer, true /* skipFrom */);
+            self.broadcastRPCToAll(playerDeathRPC, peer);
 
             return true;
         }
@@ -905,9 +905,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
             // Make sure to restream player on spawn
-            for (IPlayer* const& other : self.storage.entries()) {
-                if (&player != other && other->isPlayerStreamedIn(player)) {
-                    other->streamOutPlayer(player);
+            for (IPlayer& other : self.storage.entries()) {
+                if (&player != &other && other.isPlayerStreamedIn(player)) {
+                    other.streamOutPlayer(player);
                 }
             }
 
@@ -942,8 +942,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 if (Config::getOption<int>(options, "use_limit_global_chat_radius")) {
                     const float limit = Config::getOption<float>(options, "limit_global_chat_radius");
                     const Vector3 pos = peer.getPosition();
-                    for (IPlayer* const& other : self.storage.entries()) {
-                        float dist = glm::distance(pos, other->getPosition());
+                    for (IPlayer& other : self.storage.entries()) {
+                        float dist = glm::distance(pos, other.getPosition());
                         if (dist < limit) {
                             peer.sendChatMessage(filteredMessage);
                         }
@@ -953,7 +953,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     NetCode::RPC::PlayerChatMessage playerChatMessage;
                     playerChatMessage.PlayerID = peer.getID();
                     playerChatMessage.message = filteredMessage;
-                    self.broadcastRPC(playerChatMessage, EBroadcastPacketSendType::BroadcastGlobally);
+                    self.broadcastRPCToAll(playerChatMessage);
                 }
             }
 
@@ -1025,7 +1025,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if(allowedupdate) {
-                self.broadcastPacket(footSync, BroadcastStreamed, &peer);
+                self.broadcastPacketToStreamed(footSync, peer);
             }
             return true;
         }
@@ -1053,7 +1053,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.AspectRatio = aimSync.AspectRatio;
 
                 aimSync.PlayerID = pid;
-                self.broadcastPacket(aimSync, BroadcastStreamed, &peer);
+                self.broadcastPacketToStreamed(aimSync, peer);
             }
             return true;
         }
@@ -1174,7 +1174,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (allowed) {
                 bulletSync.PlayerID = pid;
-                self.broadcastPacket(bulletSync, BroadcastStreamed, &peer);
+                self.broadcastPacketToStreamed(bulletSync, peer);
             }
             return true;
         }
@@ -1192,7 +1192,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         player.pool_ = this;
         player.playerEventDispatcher_ = &eventDispatcher;
-        player.streamedPlayers_.add(player.poolID, &player);
+        player.streamedPlayers_.add(player.poolID, player);
 
         player.netData_ = netData;
         player.gameData_ = gameData;
@@ -1257,7 +1257,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     });
 
                 if (allowedupdate) {
-                    self.broadcastPacket(vehicleSync, BroadcastStreamed, &peer);
+                    self.broadcastPacketToStreamed(vehicleSync, peer);
                 }
             }
             return true;
@@ -1273,7 +1273,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     /// Get a set of all the available objects
-    const DynamicArray<IPlayer*>& entries() const override {
+    const PoolEntryArray<IPlayer>& entries() const override {
         return storage.entries();
     }
 
@@ -1312,18 +1312,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerJoinPacket.Col = peer.getColour();
         playerJoinPacket.IsNPC = false;
         playerJoinPacket.Name = peer.getName();
-        for (IPlayer* const& other : core.getPlayers().entries()) {
-            if (&peer == other) {
+        for (IPlayer& other : core.getPlayers().entries()) {
+            if (&peer == &other) {
                 continue;
             }
 
-            other->sendRPC(playerJoinPacket);
+            other.sendRPC(playerJoinPacket);
 
             NetCode::RPC::PlayerJoin otherJoinPacket;
-            otherJoinPacket.PlayerID = other->getID();
-            otherJoinPacket.Col = other->getColour();
+            otherJoinPacket.PlayerID = other.getID();
+            otherJoinPacket.Col = other.getColour();
             otherJoinPacket.IsNPC = false;
-            otherJoinPacket.Name = other->getName();
+            otherJoinPacket.Name = other.getName();
             peer.sendRPC(otherJoinPacket);
         }
 
@@ -1348,7 +1348,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = peer.getID();
             packet.Reason = reason;
-            broadcastRPC(packet, BroadcastGlobally);
+            broadcastRPCToAll(packet);
 
             eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
@@ -1376,14 +1376,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     bool isNameTaken(const String& name, const IPlayer* skip) override {
-        const auto& players = storage.entries();
+        const PoolEntryArray<IPlayer>& players = storage.entries();
         return std::any_of(players.begin(), players.end(),
-            [&name, &skip](const IPlayer* const& player) {
+            [&name, &skip](IPlayer& player) {
                 // Don't check name for player to skip
-                if (player == skip) {
+                if (&player == skip) {
                     return false;
                 }
-                const String& otherName = player->getName();
+                const String& otherName = player.getName();
                 return std::equal(name.begin(), name.end(), otherName.begin(),
                     [](const char& c1, const char& c2) {
                         return std::tolower(c1) == std::tolower(c2);
@@ -1422,33 +1422,33 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (IPlayer* const& player : storage.entries()) {
-            const int vw = player->getVirtualWorld();
-            const Vector3 pos = player->getPosition();
+        for (IPlayer& player : storage.entries()) {
+            const int vw = player.getVirtualWorld();
+            const Vector3 pos = player.getPosition();
 
             if (markersShow == Config::PlayerMarkerMode_Global) {
-                player->updateMarkers(markersUpdateRate, markersLimit, markersLimitRadius);
+                player.updateMarkers(markersUpdateRate, markersLimit, markersLimitRadius);
             }
 
-            for (IPlayer* const& other : storage.entries()) {
-                if (player == other) {
+            for (IPlayer& other : storage.entries()) {
+                if (&player == &other) {
                     continue;
                 }
 
-                const PlayerState state = other->getState();
-                const Vector2 dist2D = pos - other->getPosition();
+                const PlayerState state = other.getState();
+                const Vector2 dist2D = pos - other.getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    other->getVirtualWorld() == vw &&
+                    other.getVirtualWorld() == vw &&
                     glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = player->isPlayerStreamedIn(*other);
+                const bool isStreamedIn = player.isPlayerStreamedIn(other);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    player->streamInPlayer(*other);
+                    player.streamInPlayer(other);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    player->streamOutPlayer(*other);
+                    player.streamOutPlayer(other);
                 }
             }
         }
