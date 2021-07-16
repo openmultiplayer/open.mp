@@ -47,6 +47,8 @@ struct IPool : IReadOnlyPool<T, Count> {
     virtual void unlock(int index) = 0;
 };
 
+/* Implementation, NOT to be passed around */
+
 template <class T, size_t Count>
 struct ScopedPoolReleaseLock {
     IPool<T, Count>& pool;
@@ -62,16 +64,10 @@ struct ScopedPoolReleaseLock {
     }
 };
 
-/* Implementation, NOT to be passed around */
-
 template <typename T, size_t Size>
 struct UniqueIDArray : public NoCopy {
-    int findFreeIndex() const {
-        return findFreeIndex(0);
-    }
-
-    int findFreeIndex(int hint) const {
-        for (int i = hint; i < Size; ++i) {
+    int findFreeIndex(int from) const {
+        for (int i = from; i < Size; ++i) {
             if (!valid_[i]) {
                 return i;
             }
@@ -117,9 +113,9 @@ struct PoolIDProvider {
 };
 
 template <typename Type, typename Interface, int Count>
-struct PoolStorage final : public NoCopy {
-    int findFreeIndex() {
-        return allocated_.findFreeIndex();
+struct PoolStorageBase : public NoCopy {
+    int findFreeIndex(int from = 0) {
+        return allocated_.findFreeIndex(from);
     }
 
     int claim() {
@@ -160,73 +156,32 @@ struct PoolStorage final : public NoCopy {
     Type& get(int index) {
         assert(index < Count);
         return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
-    }
-
-    void release(int index) {
-        assert(index < Count);
-        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
-        return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
     }
 
     const DynamicArray<Interface*>& entries() const {
         return allocated_.entries();
     }
 
-private:
+    void remove(int index) {
+        assert(index < Count);
+        allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
+        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
+    }
+
+protected:
     char pool_[Count * sizeof(Type)];
     UniqueIDArray<Interface, Count> allocated_;
 };
 
 template <typename Type, typename Interface, int Count>
-struct MarkedPoolStorage final : public NoCopy {
-    int findFreeIndex() const {
-        return allocated_.findFreeIndex();
+struct PoolStorage final : public PoolStorageBase<Type, Interface, Count> {
+    void release(int index) {
+        PoolStorageBase<Type, Interface, Count>::remove(index);
     }
+};
 
-    int findFreeIndex(int hint) const {
-        return allocated_.findFreeIndex(hint);
-    }
-
-    int claim() {
-        const int freeIdx = findFreeIndex();
-        if (freeIdx >= 0) {
-            new (reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)])) Type();
-            allocated_.add(freeIdx, reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)]));
-            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]).poolID = freeIdx;
-            }
-        }
-        return freeIdx;
-    }
-
-    int claim(int hint) {
-        assert(hint < Count);
-        if (!valid(hint)) {
-            new (reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)])) Type();
-            allocated_.add(hint, reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)]));
-            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]).poolID = hint;
-            }
-            return hint;
-        }
-        else {
-            return claim();
-        }
-    }
-
-    void claimUnusable(int index) {
-        allocated_.add(index);
-    }
-
-    bool valid(int index) const {
-        return allocated_.valid(index);
-    }
-
-    Type& get(int index) {
-        assert(index < Count);
-        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
-    }
-
+template <typename Type, typename Interface, int Count>
+struct MarkedPoolStorage final : public PoolStorageBase<Type, Interface, Count> {
     void lock(int index) {
         // Mark as locked
         marked_.set(index * 2);
@@ -248,18 +203,11 @@ struct MarkedPoolStorage final : public NoCopy {
         }
         else { // If not locked, immediately delete
             marked_.reset(index * 2 + 1);
-            reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
-            return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
+            PoolStorageBase<Type, Interface, Count>::remove(index);
         }
     }
 
-    const DynamicArray<Interface*>& entries() const {
-        return allocated_.entries();
-    }
-
 private:
-    char pool_[Count * sizeof(Type)];
-    UniqueIDArray<Interface, Count> allocated_;
     /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
     std::bitset<Count * 2> marked_;
 };
