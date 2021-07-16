@@ -292,6 +292,11 @@ static RakNet::BitStream GetBitStream(RakNet::RPCParameters& rpcParams)
     return RakNet::BitStream(rpcParams.input, bytes, false);
 }
 
+enum LegacyClientVersion {
+    LegacyClientVersion_037 = 4057,
+    LegacyClientVersion_03DL = 4061
+};
+
 void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra) {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
     const RakNet::PlayerID rid = rpcParams->sender;
@@ -315,21 +320,38 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     RakNet::BitStream bs = GetBitStream(*rpcParams);
     RakNetLegacyBitStream lbs(bs);
 
-    IPlayer* newPlayer = nullptr;
+    std::pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
+
+    {
+        NetCode::RPC::PlayerConnect playerConnectRPC;
+        playerConnectRPC.read(lbs);
+
+        if (playerConnectRPC.VersionNumber != LegacyClientVersion_037 || SAMPRakNet::GetToken() != (playerConnectRPC.ChallengeResponse ^ LegacyClientVersion_037)) {
+            if (playerConnectRPC.VersionNumber != LegacyClientVersion_03DL || SAMPRakNet::GetToken() != (playerConnectRPC.ChallengeResponse ^ LegacyClientVersion_03DL)) {
+                newConnectionResult.first = NewConnectionResult_VersionMismatch;
+            }
+        }
+    }
+
     network->networkEventDispatcher.anyTrue(
-        [&netData, &lbs, &newPlayer](NetworkEventHandler* handler) {
+        [&netData, &lbs, &newConnectionResult](NetworkEventHandler* handler) {
             lbs.reset(BSResetRead);
-            return (newPlayer = handler->onPeerRequest(netData, lbs)) != nullptr;
+            return (newConnectionResult = handler->onPeerRequest(netData, lbs)).first == NewConnectionResult_Success;
         }
     );
 
-    // No peer created, disconnect
-    if (newPlayer == nullptr) {
-        network->rakNetServer.Kick(rid);
+    if (newConnectionResult.first != NewConnectionResult_Success) {
+        if (newConnectionResult.first != NewConnectionResult_Ignore) {
+            // Entry denied, send reason and disconnect
+            RakNet::BitStream bss;
+            bss.Write(uint8_t(newConnectionResult.first));
+            network->rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+            network->rakNetServer.Kick(rid);
+        }
         return;
     }
 
-    IPlayer& player = *newPlayer;
+    IPlayer& player = *newConnectionResult.second;
     network->playerFromRID.emplace(rid, player);
 
     if (!network->networkEventDispatcher.stopAtFalse(
