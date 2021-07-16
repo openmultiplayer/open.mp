@@ -24,12 +24,9 @@ struct ClassEventHandler {
 	virtual bool onPlayerRequestClass(IPlayer& player, unsigned int classId) { return true; }
 };
 
-typedef IPool<PlayerClass, MAX_CLASSES> IClassPool;
-
 static const UUID ClassesPlugin_UUID = UUID(0x8cfb3183976da208);
-struct IClassesPlugin : public IPlugin {
+struct IClassesPlugin : public IPlugin, IPool<PlayerClass, CLASS_POOL_SIZE> {
 	PROVIDE_UUID(ClassesPlugin_UUID)
 
-	virtual IClassPool& getClasses() = 0;
 	virtual IEventDispatcher<ClassEventHandler>& getEventDispatcher() = 0;
 };
