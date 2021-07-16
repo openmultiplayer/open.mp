@@ -16,6 +16,12 @@ struct VehicleSpawnData {
 	int respawnDelay;
 };
 
+struct UnoccupiedVehicleUpdate {
+	uint8_t seat;
+	Vector3 position;
+	Vector3 velocity;
+};
+
 enum VehicleSCMEvent : uint32_t {
 	VehicleSCMEvent_SetPaintjob = 1,
 	VehicleSCMEvent_AddComponent,
@@ -69,6 +75,9 @@ struct IVehicle : public IEntity {
 
 	/// Update the vehicle from a sync packet
 	virtual bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) = 0;
+
+	/// Update the vehicle from an unoccupied sync packet
+	virtual bool updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) = 0;
 
 	/// Sets the current driver of the vehicle
 	virtual void setDriver(IPlayer* player) = 0;
@@ -165,6 +174,7 @@ struct VehicleEventHandler {
 	virtual bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) { return true; }
 	virtual void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {}
 	virtual void onSpawn(IVehicle& vehicle) {}
+	virtual bool onUnoccupiedVehicleUpdate(IVehicle& vehicle, IPlayer& player, UnoccupiedVehicleUpdate const updateData) { return true; }
 };
 
 /// A vehicle pool

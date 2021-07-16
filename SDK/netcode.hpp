@@ -2163,5 +2163,42 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::VEC3(Position));
 			}
 		};
+
+		struct PlayerUnoccupiedSync final : NetworkPacketBase<209> {
+			int VehicleID;
+			int PlayerID;
+			uint8_t SeatID;
+			Vector3 Roll;
+			Vector3 Rotation;
+			Vector3 Position;
+			Vector3 Velocity;
+			Vector3 AngularVelocity;
+			float Health;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(SeatID, { NetworkBitStreamValueType::UINT8 });
+				CHECKED_READ(Roll, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Rotation, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(AngularVelocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Health, { NetworkBitStreamValueType::FLOAT });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(SeatID));
+				bs.write(NetworkBitStreamValue::VEC3(Roll));
+				bs.write(NetworkBitStreamValue::VEC3(Rotation));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::VEC3(Velocity));
+				bs.write(NetworkBitStreamValue::VEC3(AngularVelocity));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+			}
+		};
 	}
 }

@@ -50,6 +50,7 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     pos = vehicleSync.Position;
     rot = vehicleSync.Rotation;
     health = vehicleSync.Health;
+    velocity = vehicleSync.Velocity;
 
     if (driver != &player) {
         driver = &player;
@@ -63,6 +64,34 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
         data->setSeat(0);
     }
     return true;
+}
+
+bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) {
+    if (occupants.empty() && !unoccupiedSync.SeatID) {
+        float playerDistance = glm::distance(player.getPosition(), pos);
+        auto& entries = streamedPlayers_.entries();
+        for (IPlayer* comparable : entries) {
+            if (comparable == &player) {
+                continue;
+            }
+
+            if (glm::distance(comparable->getPosition(), pos) < playerDistance) {
+                return false;
+            }
+        }
+    }
+
+    UnoccupiedVehicleUpdate data = UnoccupiedVehicleUpdate{ unoccupiedSync.SeatID, unoccupiedSync.Position, unoccupiedSync.Velocity };
+    bool allowed = 
+        eventDispatcher->stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
+            return handler->onUnoccupiedVehicleUpdate(*this, player, data);
+        });
+
+    if (allowed) {
+        pos = unoccupiedSync.Position;
+        velocity = unoccupiedSync.Velocity;
+    }
+    return allowed;
 }
 
 void Vehicle::setPlate(String plate) {
