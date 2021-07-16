@@ -18,12 +18,15 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
                 return false;
             }
 
-            self.eventDispatcher.dispatch(
-                &VehicleEventHandler::onPlayerEnterVehicle,
-                peer,
-                self.storage.get(onPlayerEnterVehicleRPC.VehicleID),
-                onPlayerEnterVehicleRPC.Passenger
-            );
+            {
+                ScopedPoolReleaseLock lock(self, onPlayerEnterVehicleRPC.VehicleID);
+                self.eventDispatcher.dispatch(
+                    &VehicleEventHandler::onPlayerEnterVehicle,
+                    peer,
+                    lock.entry,
+                    onPlayerEnterVehicleRPC.Passenger
+                );
+            }
 
             NetCode::RPC::EnterVehicle enterVehicleRPC;
             enterVehicleRPC.PlayerID = peer.getID();
@@ -44,11 +47,14 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
                 return false;
             }
 
-            self.eventDispatcher.dispatch(
-                &VehicleEventHandler::onPlayerExitVehicle,
-                peer,
-                self.storage.get(onPlayerExitVehicleRPC.VehicleID)
-            );
+            {
+                ScopedPoolReleaseLock lock(self, onPlayerExitVehicleRPC.VehicleID);
+                self.eventDispatcher.dispatch(
+                    &VehicleEventHandler::onPlayerExitVehicle,
+                    peer,
+                    lock.entry
+                );
+            }
 
             NetCode::RPC::ExitVehicle exitVehicleRPC;
             exitVehicleRPC.PlayerID = peer.getID();
@@ -173,11 +179,13 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
                 const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
                     vehicle->streamInForPlayer(*player);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, *vehicle, *player);
+                    ScopedPoolReleaseLock lock(*this, *vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, *player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
                     vehicle->streamOutForPlayer(*player);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, *vehicle, *player);
+                    ScopedPoolReleaseLock lock(*this, *vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, *player);
                 }
             }
         }

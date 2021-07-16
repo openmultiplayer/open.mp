@@ -17,11 +17,11 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 			}
 
 			if (self.valid(onPlayerPickUpPickupRPC.PickupID)) {
-				IPickup & pickup = self.get(onPlayerPickUpPickupRPC.PickupID);
+				ScopedPoolReleaseLock lock(self, onPlayerPickUpPickupRPC.PickupID);
 				self.eventDispatcher.dispatch(
 					&PickupEventHandler::onPlayerPickUpPickup,
 					peer,
-					pickup
+					lock.entry
 				);
 			}
 			return true;
