@@ -384,6 +384,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return fightingStyle_;
     }
 
+    void kick() override {
+        state_ = PlayerState_Kicked;
+        netData_.network->disconnect(*this);
+    }
+
     void setSkillLevel(PlayerWeaponSkill skill, int level) override {
         if (skill < skillLevels_.size()) {
             skillLevels_[skill] = level;
@@ -1334,8 +1339,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
-    void onPeerDisconnect(IPlayer& peer, int reason) override {
+    void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override {
         if (peer.getPool() == this) {
+            if (peer.getState() == PlayerState_Kicked) {
+                reason = PeerDisconnectReason_Kicked;
+            }
+
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = peer.getID();
             packet.Reason = reason;

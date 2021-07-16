@@ -255,7 +255,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         }
     }
 
-    void onDisconnect(IPlayer& player, int reason) override {
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
         for (ITextLabel* textLabel : storage.entries()) {
             if (textLabel->getAttachmentData().playerID == pid) {
