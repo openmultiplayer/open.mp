@@ -955,7 +955,7 @@ Packet* RakPeer::ReceiveIgnoreRPC( void )
 		while (threadPacket)
 		{
 			packet=*threadPacket;
-			packetSingleProducerConsumer.ReadUnlock(true);
+			packetSingleProducerConsumer.ReadUnlock();
 			threadPacket=packetSingleProducerConsumer.ReadLock();
 			packetPool.Push(packet);
 		}
@@ -3937,7 +3937,7 @@ namespace RakNet
 					if (rcs==rcsFirst)
 					{
 						// Delete the head of the queue
-						rakPeer->requestedConnectionList.ReadUnlock(true);
+						rakPeer->requestedConnectionList.ReadUnlock();
 						rcsFirst=rakPeer->requestedConnectionList.ReadLock();
 						rcs=rcsFirst;
 						continue;
@@ -4001,7 +4001,7 @@ namespace RakNet
 					connectionAttemptCancelled=true;
 					if (rcs==rcsFirst)
 					{
-						rakPeer->requestedConnectionList.ReadUnlock(true);
+						rakPeer->requestedConnectionList.ReadUnlock();
 						rcsFirst=rakPeer->requestedConnectionList.ReadLock();
 						rcs=rcsFirst;
 					}
@@ -4291,7 +4291,7 @@ namespace RakNet
 			bcs->data=0;
 	#endif
 
-			bufferedCommands.ReadUnlock(true);
+			bufferedCommands.ReadUnlock();
 		}
 
 		// Process connection attempts
@@ -4334,7 +4334,7 @@ namespace RakNet
 					// Remove this if possible
 					if (rcs==rcsFirst)
 					{
-						requestedConnectionList.ReadUnlock(true);
+						requestedConnectionList.ReadUnlock();
 						rcsFirst = requestedConnectionList.ReadLock();
 						rcs=rcsFirst;
 					}
