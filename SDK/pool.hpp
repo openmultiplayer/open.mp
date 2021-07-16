@@ -114,10 +114,10 @@ struct PoolStorage final : public NoCopy {
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (&pool_[freeIdx]) Type();
-            allocated_.add(freeIdx, &pool_[freeIdx]);
+            new (reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)])) Type();
+            allocated_.add(freeIdx, reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)]));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[freeIdx].poolID = freeIdx;
+                reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]).poolID = freeIdx;
             }
         }
         return freeIdx;
@@ -126,10 +126,10 @@ struct PoolStorage final : public NoCopy {
     int claim(int hint) {
         assert(hint < Count);
         if (!valid(hint)) {
-            new (&pool_[hint]) Type();
-            allocated_.add(hint, &pool_[hint]);
+            new (reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)])) Type();
+            allocated_.add(hint, reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)]));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[hint].poolID = hint;
+                reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]).poolID = hint;
             }
             return hint;
         }
@@ -148,13 +148,13 @@ struct PoolStorage final : public NoCopy {
 
     Type& get(int index) {
         assert(index < Count);
-        return pool_[index];
+        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
     typename DynamicArray<Interface*>::iterator release(int index) {
         assert(index < Count);
-        pool_[index].~Type();
-        return allocated_.remove(index, &pool_[index]);
+        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
+        return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
     }
 
     const DynamicArray<Interface*>& entries() const {
@@ -163,11 +163,11 @@ struct PoolStorage final : public NoCopy {
 
     inline Type& internal(int index) {
         assert(index < Count);
-        return pool_[index];
+        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
 private:
-    std::array<Type, Count> pool_;
+    char pool_[Count * sizeof(Type)];
     UniqueIDArray<Interface, Count> allocated_;
 };
 
@@ -184,10 +184,10 @@ struct MarkedPoolStorage final : public NoCopy {
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (&pool_[freeIdx]) Type();
-            allocated_.add(freeIdx, &pool_[freeIdx]);
+            new (reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)])) Type();
+            allocated_.add(freeIdx, reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)]));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[freeIdx].poolID = freeIdx;
+                reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]).poolID = freeIdx;
             }
         }
         return freeIdx;
@@ -196,10 +196,10 @@ struct MarkedPoolStorage final : public NoCopy {
     int claim(int hint) {
         assert(hint < Count);
         if (!valid(hint)) {
-            new (&pool_[hint]) Type();
-            allocated_.add(hint, &pool_[hint]);
+            new (reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)])) Type();
+            allocated_.add(hint, reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)]));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[hint].poolID = hint;
+                reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]).poolID = hint;
             }
             return hint;
         }
@@ -218,7 +218,7 @@ struct MarkedPoolStorage final : public NoCopy {
 
     Type& get(int index) {
         assert(index < Count);
-        return pool_[index];
+        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
     void mark(int index) {
@@ -232,8 +232,8 @@ struct MarkedPoolStorage final : public NoCopy {
     typename DynamicArray<Interface*>::iterator release(int index) {
         assert(index < Count);
         marked_.reset(index);
-        pool_[index].~Type();
-        return allocated_.remove(index, &pool_[index]);
+        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
+        return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
     }
 
     const DynamicArray<Interface*>& entries() const {
@@ -242,11 +242,11 @@ struct MarkedPoolStorage final : public NoCopy {
 
     inline Type& internal(int index) {
         assert(index < Count);
-        return pool_[index];
+        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
 private:
-    std::array<Type, Count> pool_;
+    char pool_[Count * sizeof(Type)];
     UniqueIDArray<Interface, Count> allocated_;
     std::bitset<Count> marked_;
 };
