@@ -30,6 +30,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     bool beenOccupied = false;
     std::chrono::milliseconds lastOccupied;
     bool respawning = false;
+    Vector3 velocity;
 
     Vehicle() {
         mods.fill(0);
@@ -76,6 +77,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     /// Update the vehicle's data from a player sync packet.
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
+
+    /// Update the vehicle's data from an unoccupied sync packet.
+    bool updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) override;
 
     /// Sets the vehicle's body colour
     void setColour(int col1, int col2) override;
