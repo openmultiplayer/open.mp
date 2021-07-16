@@ -22,7 +22,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int32_t bodyColour2 = -1;
     IPlayer* driver = nullptr;
     DefaultEventDispatcher<VehicleEventHandler>* eventDispatcher;
-    String numberPlate;
+    String numberPlate = "XYZSR998";
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
