@@ -1,8 +1,6 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <netcode.hpp>
 
-typedef DefaultPool<PlayerClass, PlayerClass, MAX_CLASSES> ClassPool;
-
 static const struct DefaultClass final : public PlayerClass {
     DefaultClass() {
         team = 255;
@@ -62,7 +60,7 @@ struct PlayerClassData final : IPlayerClassData {
 };
 
 struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
-	ClassPool classes;
+    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesPlugin::Cnt> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
@@ -100,8 +98,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                         peer.sendRPC(playerRequestClassResponse);
                     }
                 }
-                else if (self.classes.valid(playerRequestClassPacket.Classid)) {
-                    const PlayerClass& cls = self.classes.get(playerRequestClassPacket.Classid);
+                else if (self.storage.valid(playerRequestClassPacket.Classid)) {
+                    const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid);
                     IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
@@ -160,10 +158,6 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         core->getPlayers().getEventDispatcher().addEventHandler(this);
     }
 
-	IClassPool& getClasses() override {
-		return classes;
-	}
-
     IEventDispatcher<ClassEventHandler>& getEventDispatcher() override {
         return eventDispatcher;
     }
@@ -179,6 +173,44 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 	void free() override {
 		delete this;
 	}
+
+    int findFreeIndex() override {
+        return storage.findFreeIndex();
+    }
+
+    int claim() override {
+        int res = storage.claim();
+        return res;
+    }
+
+    int claim(int hint) override {
+        int res = storage.claim(hint);
+        return res;
+    }
+
+    bool valid(int index) const override {
+        return storage.valid(index);
+    }
+
+    PlayerClass& get(int index) override {
+        return storage.get(index);
+    }
+
+    void release(int index) override {
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
+    }
+
+    const PoolEntryArray<PlayerClass>& entries() const override {
+        return storage.entries();
+    }
 
 	~ClassesPlugin() {
         core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);

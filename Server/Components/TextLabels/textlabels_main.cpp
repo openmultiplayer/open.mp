@@ -61,8 +61,8 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
     void free() override {
         /// Detach player from player labels so they don't try to send an RPC
-        for (IPlayerTextLabel* textLabel : storage.entries()) {
-            PlayerTextLabel& lbl = storage.get(textLabel->getID());
+        for (IPlayerTextLabel& textLabel : storage.entries()) {
+            PlayerTextLabel& lbl = storage.get(textLabel.getID());
             lbl.player = nullptr;
         }
         delete this;
@@ -82,7 +82,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -91,11 +91,19 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available labels
-    const DynamicArray<IPlayerTextLabel*>& entries() const override {
+    const PoolEntryArray<IPlayerTextLabel>& entries() const override {
         return storage.entries();
     }
 };
@@ -186,7 +194,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -195,20 +203,27 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available labels
-    const DynamicArray<ITextLabel*>& entries() const override {
+    const PoolEntryArray<ITextLabel>& entries() const override {
         return storage.entries();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (auto it = storage.entries().begin(); it != storage.entries().end();) {
-            ITextLabel* textLabel = *it;
-            const int vw = textLabel->getVirtualWorld();
-            const TextLabelAttachmentData& data = textLabel->getAttachmentData();
+        for (ITextLabel& textLabel : storage.entries()) {
+            const int vw = textLabel.getVirtualWorld();
+            const TextLabelAttachmentData& data = textLabel.getAttachmentData();
             Vector3 pos;
             if (players->valid(data.playerID)) {
                 pos = players->get(data.playerID).getPosition();
@@ -217,56 +232,42 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
                 pos = vehicles->get(data.vehicleID).getPosition();
             }
             else {
-                pos = textLabel->getPosition();
+                pos = textLabel.getPosition();
             }
 
-            for (IPlayer* const& player : players->entries()) {
-                const PlayerState state = player->getState();
-                const Vector3 dist3D = pos - player->getPosition();
+            for (IPlayer& player : players->entries()) {
+                const PlayerState state = player.getState();
+                const Vector3 dist3D = pos - player.getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    player->getVirtualWorld() == vw &&
+                    player.getVirtualWorld() == vw &&
                     glm::dot(dist3D, dist3D) < maxDist;
 
-                const bool isStreamedIn = textLabel->isStreamedInForPlayer(*player);
+                const bool isStreamedIn = textLabel.isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    textLabel->streamInForPlayer(*player);
+                    textLabel.streamInForPlayer(player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    textLabel->streamOutForPlayer(*player);
-                }
-            }
-
-            int id = textLabel->getID();
-            it = storage.marked(id) ? storage.release(id) : it + 1;
-        }
-
-        for (IPlayer* player : core->getPlayers().entries()) {
-            PlayerTextLabelData* data = player->queryData<PlayerTextLabelData>();
-            if (data) {
-                for (auto it = data->entries().begin(); it != data->entries().end();) {
-                    IPlayerTextLabel* textLabel = *it;
-                    int id = textLabel->getID();
-                    it = data->storage.marked(id) ? data->storage.release(id) : it + 1;
+                    textLabel.streamOutForPlayer(player);
                 }
             }
         }
     }
 
-    void onDisconnect(IPlayer& player, int reason) override {
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
-        for (ITextLabel* textLabel : storage.entries()) {
-            if (textLabel->getAttachmentData().playerID == pid) {
-                textLabel->detachFromPlayer(textLabel->getPosition());
+        for (ITextLabel& textLabel : storage.entries()) {
+            if (textLabel.getAttachmentData().playerID == pid) {
+                textLabel.detachFromPlayer(textLabel.getPosition());
             }
         }
-        for (IPlayer* player : players->entries()) {
-            IPlayerTextLabelData* data = player->queryData<IPlayerTextLabelData>();
+        for (IPlayer& player : players->entries()) {
+            IPlayerTextLabelData* data = player.queryData<IPlayerTextLabelData>();
             if (data) {
-                for (IPlayerTextLabel* textLabel : data->entries()) {
-                    if (textLabel->getAttachmentData().playerID == pid) {
-                        textLabel->detachFromPlayer(textLabel->getPosition());
+                for (IPlayerTextLabel& textLabel : data->entries()) {
+                    if (textLabel.getAttachmentData().playerID == pid) {
+                        textLabel.detachFromPlayer(textLabel.getPosition());
                     }
                 }
             }

@@ -193,7 +193,7 @@ struct ObjectEventHandler;
 
 /// An object pool
 static const UUID ObjectsPlugin_UUID = UUID(0x59f8415f72da6160);
-struct IObjectsPlugin : public IPlugin, public IPool<IObject, MAX_OBJECTS> {
+struct IObjectsPlugin : public IPlugin, public IPool<IObject, OBJECT_POOL_SIZE> {
 	PROVIDE_UUID(ObjectsPlugin_UUID)
 
 	/// Get the object event dispatcher
@@ -222,7 +222,7 @@ struct ObjectEventHandler {
 };
 
 static const UUID PlayerObjectData_UUID = UUID(0x93d4ed2344b07456);
-struct IPlayerObjectData : public IPlayerData, public IPool<IPlayerObject, MAX_OBJECTS> {
+struct IPlayerObjectData : public IPlayerData, public IPool<IPlayerObject, OBJECT_POOL_SIZE> {
 	PROVIDE_UUID(PlayerObjectData_UUID);
 
 	/// Create a new player object

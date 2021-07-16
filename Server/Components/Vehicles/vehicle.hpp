@@ -7,7 +7,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
     int virtualWorld_ = 0;
-    std::list<IPlayer*> occupants;
     VehicleSpawnData spawnData;
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
     std::array<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
@@ -36,8 +35,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vehicle() {
         mods.fill(0);
     }
-
-    std::list<IPlayer*> const getOccupants() override { return occupants; }
 
     virtual int getVirtualWorld() const override {
         return virtualWorld_;
@@ -157,9 +154,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Get the vehicle's respawn delay.
     int getRespawnDelay() override;
 
-    /// Checks if the vehicle has any occupants.
-    bool isOccupied() override;
-
     /// Checks if the vehicle has had any occupants.
     bool hasBeenOccupied() override;
 
@@ -169,14 +163,14 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Gets the last time the vehicle has been occupied
     std::chrono::milliseconds getLastOccupiedTime() override;
 
-
     bool isRespawning() override { return respawning; }
-    void addInternalOccupant(IPlayer& player) override;
-    void removeInternalOccupant(IPlayer& player) override;
 
     // Sets (links) the vehicle to an interior.
     void setInterior(int InteriorID) override;
 
 	// Gets the vehicle's interior.
     int getInterior() override;
+
+    /// Set if the vehicle has been occupied.
+    void setBeenOccupied(bool occupied) override { this->beenOccupied = occupied; }
 };
