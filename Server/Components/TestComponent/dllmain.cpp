@@ -52,6 +52,16 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) override {
 			player.sendClientMessage(Colour::White(), String(("onEnterExitModShop(" + std::to_string(player.getID()) + ", " + std::to_string(enterexit) + ", " + std::to_string(interiorID) + ")").c_str()));
 		}
+
+		void onSpawn(IVehicle& vehicle) override {
+			
+		}
+
+		bool onUnoccupiedVehicleUpdate(IVehicle& vehicle, IPlayer& player, UnoccupiedVehicleUpdate const updateData) override {
+			player.sendClientMessage(Colour::White(), String(("onUnoccupiedVehicleUpdate(" + std::to_string(vehicle.getID()) + ", " + std::to_string(player.getID()) + ")").c_str()));
+			player.sendClientMessage(Colour::White(), to_string(updateData.position.x) + " " + to_string(updateData.position.y) + " " + to_string(updateData.position.z));
+			return true;
+		}
 	} vehicleEventWatcher;
 
 	void onConnect(IPlayer& player) override {

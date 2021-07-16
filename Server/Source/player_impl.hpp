@@ -1272,6 +1272,39 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerPassengerSyncHandler;
 
+    struct PlayerUnoccupiedSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerUnoccupiedSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync;
+
+            if (!self.vehiclesPlugin || !unoccupiedSync.read(bs) || !self.vehiclesPlugin->valid(unoccupiedSync.VehicleID)) {
+                return false;
+            }
+
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            IVehicle& vehicle = self.vehiclesPlugin->get(unoccupiedSync.VehicleID);
+
+            if (vehicle.isOccupied() && vehicle.getDriver()) {
+                return false;
+            }
+            else if (!vehicle.isStreamedInForPlayer(peer)) {
+                return false;
+            }
+            else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || peer.queryData<IPlayerVehicleData>()->getVehicle() != &vehicle)) {
+                return false;
+            }
+            
+            if (vehicle.updateFromUnoccupied(unoccupiedSync, peer)) {
+                unoccupiedSync.PlayerID = pid;
+                self.broadcastPacket(unoccupiedSync, BroadcastStreamed, &peer);
+            }
+            return true;
+        }
+    } playerUnoccupiedSyncHandler;
+
     int findFreeIndex() override {
         return storage.findFreeIndex();
     }
@@ -1416,7 +1449,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
         playerVehicleSyncHandler(*this),
-        playerPassengerSyncHandler(*this)
+        playerPassengerSyncHandler(*this),
+        playerUnoccupiedSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -1462,6 +1496,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
         vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
         objectsPlugin = core.queryPlugin<IObjectsPlugin>();
     }
@@ -1516,6 +1551,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
