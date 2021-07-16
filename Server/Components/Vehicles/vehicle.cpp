@@ -22,7 +22,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     streamIn.BodyColour2 = bodyColour2;
     player.sendRPC(streamIn);
 
-    if (numberPlate.length()) {
+    if (numberPlate != "XYZSR998") {
         NetCode::RPC::SetVehiclePlate plateRPC;
         plateRPC.VehicleID = poolID;
         plateRPC.plate = numberPlate;
