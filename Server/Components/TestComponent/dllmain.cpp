@@ -4,14 +4,19 @@
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/Pickups/pickups.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 
-struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler, public TextDrawEventHandler {
+struct TestComponent : 
+	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
+	public PickupEventHandler, public TextDrawEventHandler
+{
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
 	IClassesPlugin* classes = nullptr;
 	IVehiclesPlugin* vehicles = nullptr;
 	IObjectsPlugin* objects = nullptr;
+	IPickupsPlugin * pickups = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
 	ITextDrawsPlugin* tds = nullptr;
 	IObject* obj = nullptr;
@@ -74,7 +79,23 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 	}
 
+	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+		static const String reasonStr[] = {
+			"Timed out",
+			"Quit",
+			"Kicked"
+		};
+
+		for (IPlayer& other : c->getPlayers().entries()) {
+			other.sendClientMessage(Colour::Yellow(), "Player " + player.getName() + " has left the server, reason: " + reasonStr[reason]);
+		}
+	}
+
 	bool onCommandText(IPlayer& player, String message) override {
+
+		if (message == "/kickmeplz") {
+			player.kick();
+		}
 
         if (message == "/setweather") {
             player.sendClientMessage(Colour::White(), "weather Before:");
@@ -343,15 +364,15 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 
 		else if (message == "/repair" && vehicle) {
-		auto* data = player.queryData<IPlayerVehicleData>();
-		if (data->getVehicle() == nullptr) {
-			player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
-			return true;
-		}
-		player.sendClientMessage(Colour::White(), "Vehicle repaired.");
-		data->getVehicle()->setHealth(1000.f);
+			auto* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == nullptr) {
+				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
+				return true;
+			}
+			player.sendClientMessage(Colour::White(), "Vehicle repaired.");
+			data->getVehicle()->setHealth(1000.f);
 
-		return true;
+			return true;
 		}
 
 		else if (message == "/setvehpos" && vehicle) {
@@ -527,7 +548,6 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 
         return false;
-
 	}
 
 	const char* pluginName() override {
@@ -572,8 +592,8 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		
 		classes = c->queryPlugin<IClassesPlugin>();
 		if (classes) {
-			auto classid = classes->getClasses().claim();
-			PlayerClass& testclass = classes->getClasses().get(classid);
+			auto classid = classes->claim();
+			PlayerClass& testclass = classes->get(classid);
 
 			testclass.spawn = Vector3(0.0f, 0.0f, 3.1279f);
 			testclass.team = 255;
@@ -606,6 +626,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 
 		labels = c->queryPlugin<ITextLabelsPlugin>();
+
+		pickups = c->queryPlugin<IPickupsPlugin>();
+		if (pickups) {
+			pickups->getEventDispatcher().addEventHandler(this);
+			pickups->create(1550, 1, { -25.0913, 36.2893, 3.1234 }, 0, false);
+		}
 
 		tds = c->queryPlugin<ITextDrawsPlugin>();
 		if (tds) {
@@ -725,6 +751,11 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}	
 	}
 
+	void onPlayerPickUpPickup(IPlayer & player, IPickup & pickup) override {
+		player.sendClientMessage(Colour::White(), "You picked up a pickup.");
+		player.giveMoney(10000);
+	}
+
 	bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "nice miss loser");
 		return true;
@@ -737,16 +768,19 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
 	bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot vehicle id " + to_string(target.getID()));
+		vehicles->release(target.getID());
 		return true;
 	}
 
 	bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot object id " + to_string(target.getID()));
+		objects->release(target.getID());
 		return true;
 	}
 
 	bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot player object id " + to_string(target.getID()));
+		player.queryData<IPlayerObjectData>()->release(target.getID());
 		return true;
 	}
 
@@ -761,6 +795,9 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
+		}
+		if (pickups) {
+			pickups->getEventDispatcher().removeEventHandler(this);
 		}
 		if (tds) {
 			tds->getEventDispatcher().removeEventHandler(this);

@@ -168,7 +168,7 @@ struct TextDrawEventHandler {
 
 static const UUID TextDrawsPlugin_UUID = UUID(0x9b5dc2b1d15c992a);
 /// The textdraw plugin which is a global textdraw pool
-struct ITextDrawsPlugin : public IPlugin, public IPool<ITextDraw, MAX_GLOBAL_TEXTDRAWS> {
+struct ITextDrawsPlugin : public IPlugin, public IPool<ITextDraw, GLOBAL_TEXTDRAW_POOL_SIZE> {
 	PROVIDE_UUID(TextDrawsPlugin_UUID);
 
 	/// Get the textdraw event dispatcher
@@ -183,7 +183,7 @@ struct ITextDrawsPlugin : public IPlugin, public IPool<ITextDraw, MAX_GLOBAL_TEX
 
 static const UUID PlayerTextDrawData_UUID = UUID(0xbf08495682312400);
 /// The textdraw player data which is a player textdraw pool
-struct IPlayerTextDrawData : public IPlayerData, public IPool<IPlayerTextDraw, MAX_PLAYER_TEXTDRAWS> {
+struct IPlayerTextDrawData : public IPlayerData, public IPool<IPlayerTextDraw, PLAYER_TEXTDRAW_POOL_SIZE> {
 	PROVIDE_UUID(PlayerTextDrawData_UUID);
 
 	/// Begin selecting textdraws for the player

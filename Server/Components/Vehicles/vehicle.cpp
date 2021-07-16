@@ -28,7 +28,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         plateRPC.plate = numberPlate;
         player.sendRPC(plateRPC);
     }
-    streamedPlayers_.add(player.getID(), &player);
+    streamedPlayers_.add(player.getID(), player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamIn, *this, player);
     respawning = false;
 }
@@ -42,7 +42,7 @@ void Vehicle::streamOutForPlayer(IPlayer& player) {
     NetCode::RPC::StreamOutVehicle streamOut;
     streamOut.VehicleID = poolID;
     player.sendRPC(streamOut);
-    streamedPlayers_.remove(id, &player);
+    streamedPlayers_.remove(id, player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamOut, *this, player);
 }
 
@@ -54,7 +54,6 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 
     if (driver != &player) {
         driver = &player;
-        occupants.push_back(&player);
         beenOccupied = true;
         IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
         if (data->getVehicle()) {
@@ -67,15 +66,18 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 }
 
 bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) {
-    if (occupants.empty() && !unoccupiedSync.SeatID) {
+    if (!unoccupiedSync.SeatID) {
         float playerDistance = glm::distance(player.getPosition(), pos);
         auto& entries = streamedPlayers_.entries();
-        for (IPlayer* comparable : entries) {
-            if (comparable == &player) {
+        for (IPlayer& comparable : entries) {
+            if (&comparable == &player) {
                 continue;
             }
-
-            if (glm::distance(comparable->getPosition(), pos) < playerDistance) {
+            PlayerState state = comparable.getState();
+            if ((state == PlayerState_Driver || state == PlayerState_Passenger) && comparable.queryData<IPlayerVehicleData>()->getVehicle() == this) {
+                return false;
+            }
+            if (glm::distance(comparable.getPosition(), pos) < playerDistance) {
                 return false;
             }
         }
@@ -100,10 +102,8 @@ void Vehicle::setPlate(String plate) {
     plateRPC.VehicleID = poolID;
     plateRPC.plate = plate;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        if (player) {
-            player->sendRPC(plateRPC);
-        }
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(plateRPC);
     }
 }
 
@@ -122,10 +122,8 @@ void Vehicle::setColour(int col1, int col2) {
     colourRPC.Arg1 = col1;
     colourRPC.Arg2 = col2;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        if (player) {
-            player->sendRPC(colourRPC);
-        }
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(colourRPC);
     }
 }
 
@@ -146,9 +144,9 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
         eventDispatcher->dispatch(&VehicleEventHandler::onDamageStatusUpdate, *this, *vehicleUpdater);
     }
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        if (player != vehicleUpdater) {
-            player->sendRPC(damageStatus);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        if (&player != vehicleUpdater) {
+            player.sendRPC(damageStatus);
         }
     }
 }
@@ -169,8 +167,8 @@ void Vehicle::setPaintJob(int paintjob) {
     paintRPC.VehicleID = poolID;
     paintRPC.Arg1 = paintjob;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(paintRPC);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(paintRPC);
     }
 }
 
@@ -193,8 +191,8 @@ void Vehicle::addComponent(int component) {
     modRPC.VehicleID = poolID;
     modRPC.Arg1 = component;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(modRPC);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(modRPC);
     }
 }
 
@@ -218,14 +216,13 @@ void Vehicle::removeComponent(int component) {
     NetCode::RPC::RemoveVehicleComponent modRPC;
     modRPC.VehicleID = poolID;
     modRPC.Component = component;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(modRPC);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(modRPC);
     }
 }
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID) {
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
-    addInternalOccupant(player);
     player.queryData<IPlayerVehicleData>()->setVehicle(this);
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
@@ -237,8 +234,8 @@ void Vehicle::setHealth(float Health) {
     NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
     setVehicleHealthRPC.VehicleID = poolID;
     setVehicleHealthRPC.health = Health;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(setVehicleHealthRPC);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(setVehicleHealthRPC);
     }
 }
 
@@ -247,16 +244,14 @@ void Vehicle::setInterior(int InteriorID) {
     NetCode::RPC::LinkVehicleToInterior linkVehicleToInteriorRPC;
     linkVehicleToInteriorRPC.VehicleID = poolID;
     linkVehicleToInteriorRPC.InteriorID = InteriorID;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(linkVehicleToInteriorRPC);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(linkVehicleToInteriorRPC);
     }
 }
 
 int Vehicle::getInterior() {
     return interior;
 }
-
-
 
 void Vehicle::removePlayer(IPlayer& player) {
     NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
@@ -268,8 +263,8 @@ void Vehicle::setZAngle(float angle) {
     NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
     setVehicleZAngleRPC.VehicleID = poolID;
     setVehicleZAngleRPC.angle = angle;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(setVehicleZAngleRPC);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(setVehicleZAngleRPC);
     }
 }
 
@@ -284,8 +279,8 @@ void Vehicle::setParams(int Objective, bool DoorsLocked) {
     setVehicleParamsRPC.VehicleID = poolID;
     setVehicleParamsRPC.objective = objective;
     setVehicleParamsRPC.doorsLocked = doorsLocked;
-	for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(setVehicleParamsRPC);
+	for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(setVehicleParamsRPC);
 	}
 }
 
@@ -303,8 +298,8 @@ void Vehicle::setPosition(Vector3 position) {
     NetCode::RPC::SetVehiclePosition setVehiclePosition;
     setVehiclePosition.VehicleID = poolID;
     setVehiclePosition.position = position;
-    for (IPlayer* player : streamedPlayers_.entries()) {
-        player->sendRPC(setVehiclePosition);
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(setVehiclePosition);
     }
 }
 
@@ -342,11 +337,10 @@ void Vehicle::respawn() {
     numberPlate.clear();
     health = 1000.0f;
     driver = nullptr;
-    occupants.clear();
     
     auto entries = streamedPlayers_.entries();
-    for (IPlayer* player : entries) {
-        streamOutForPlayer(*player);
+    for (IPlayer& player : entries) {
+        streamOutForPlayer(player);
     }
 
     eventDispatcher->dispatch(&VehicleEventHandler::onSpawn, *this);
@@ -354,10 +348,6 @@ void Vehicle::respawn() {
 
 int Vehicle::getRespawnDelay() {
     return spawnData.respawnDelay;
-}
-
-bool Vehicle::isOccupied() {
-    return !occupants.empty();
 }
 
 bool Vehicle::hasBeenOccupied() {
@@ -370,18 +360,5 @@ std::chrono::milliseconds Vehicle::getDeathTime() {
 
 std::chrono::milliseconds Vehicle::getLastOccupiedTime() {
     return lastOccupied;
-}
-
-void Vehicle::addInternalOccupant(IPlayer& player) {
-    occupants.push_back(&player);
-    beenOccupied = true;
-}
-
-void Vehicle::removeInternalOccupant(IPlayer& player) {
-    occupants.remove(&player);
-
-    if (occupants.empty()) {
-        lastOccupied = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
-    }
 }
 

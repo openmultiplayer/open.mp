@@ -50,8 +50,6 @@ enum VehicleComponentSlot {
 /// A vehicle interface
 struct IVehicle : public IEntity {
 
-	virtual std::list<IPlayer*> const getOccupants() = 0;
-
 	/// Set the inital spawn data of the vehicle
 	virtual void setSpawnData(VehicleSpawnData data) = 0;
 
@@ -142,9 +140,6 @@ struct IVehicle : public IEntity {
 	/// Get the vehicle's respawn delay.
 	virtual int getRespawnDelay() = 0;
 
-	/// Checks if the vehicle has any occupants.
-	virtual bool isOccupied() = 0;
-
 	/// Checks if the vehicle has had any occupants.
 	virtual bool hasBeenOccupied() = 0;
 
@@ -157,15 +152,14 @@ struct IVehicle : public IEntity {
 	/// Checks if the vehicle is respawning.
 	virtual bool isRespawning() = 0;
 
-	virtual void addInternalOccupant(IPlayer& player) = 0;
-	virtual void removeInternalOccupant(IPlayer& player) = 0;
-
 	// Sets (links) the vehicle to an interior.
 	virtual void setInterior(int InteriorID) = 0;
 
 	// Gets the vehicle's interior.
 	virtual int getInterior() = 0;
 	
+	/// Set if the vehicle has been occupied.
+	virtual void setBeenOccupied(bool occupied) = 0;
 };
 
 /// A vehicle event handler
@@ -186,7 +180,7 @@ struct VehicleEventHandler {
 
 /// A vehicle pool
 static const UUID VehiclePlugin_UUID = UUID(0x3f1f62ee9e22ab19);
-struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, MAX_VEHICLES> {
+struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, VEHICLE_POOL_SIZE> {
 	PROVIDE_UUID(VehiclePlugin_UUID)
 
 	/// Get the number of model instances for each model
