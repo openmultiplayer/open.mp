@@ -185,7 +185,7 @@ struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, MAX_VEHICLES> {
 	/// Get the number of model instances for each model
 	virtual std::array<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
 
-	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = 0, int colour2 = 0, int respawnDelay = -1) = 0;
+	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
 
 	virtual IEventDispatcher<VehicleEventHandler>& getEventDispatcher() = 0;
