@@ -1329,6 +1329,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     void onPeerConnect(IPlayer& peer) override {
+        eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer);
+
+        // Don't process player, about to be disconnected
+        if (peer.getState() == PlayerState_Kicked) {
+            return;
+        }
+
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = peer.getID();
         playerJoinPacket.Col = peer.getColour();

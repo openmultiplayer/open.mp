@@ -503,6 +503,7 @@ struct IPlayerObject;
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
+	virtual void onIncomingConnection(IPlayer& player) { }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, PeerDisconnectReason reason) {}
 	virtual bool onRequestSpawn(IPlayer& player) { return true; }
