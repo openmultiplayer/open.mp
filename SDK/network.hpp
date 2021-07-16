@@ -312,7 +312,6 @@ enum NewConnectionResult {
 /// An event handler for network events
 struct NetworkEventHandler {
 	virtual std::pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return { NewConnectionResult_Ignore, nullptr }; }
-	virtual bool incomingConnection(IPlayer& peer, const PeerNetworkData& netData) { return true; }
 	virtual void onPeerConnect(IPlayer& peer) { }
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };
