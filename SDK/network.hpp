@@ -300,9 +300,18 @@ struct INetworkBitStream {
 	}
 };
 
+enum NewConnectionResult {
+	NewConnectionResult_Ignore, ///< Ignore the result
+	NewConnectionResult_VersionMismatch,
+	NewConnectionResult_BadName,
+	NewConnectionResult_BadMod,
+	NewConnectionResult_NoPlayerSlot,
+	NewConnectionResult_Success
+};
+
 /// An event handler for network events
 struct NetworkEventHandler {
-	virtual IPlayer* onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return nullptr; }
+	virtual std::pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return { NewConnectionResult_Ignore, nullptr }; }
 	virtual bool incomingConnection(IPlayer& peer, const PeerNetworkData& netData) { return true; }
 	virtual void onPeerConnect(IPlayer& peer) { }
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
