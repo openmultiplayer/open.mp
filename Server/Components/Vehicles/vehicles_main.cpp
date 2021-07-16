@@ -158,34 +158,34 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
     }
 
     /// Get a set of all the available objects
-    const DynamicArray<IVehicle*>& entries() const override {
+    const PoolEntryArray<IVehicle>& entries() const override {
         return storage.entries();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (IVehicle* vehicle : storage.entries()) {
-            const int vw = vehicle->getVirtualWorld();
-            const Vector3 pos = vehicle->getPosition();
-            for (IPlayer* const& player : core->getPlayers().entries()) {
-                const PlayerState state = player->getState();
-                const Vector2 dist2D = pos - player->getPosition();
+        for (IVehicle& vehicle : storage.entries()) {
+            const int vw = vehicle.getVirtualWorld();
+            const Vector3 pos = vehicle.getPosition();
+            for (IPlayer& player : core->getPlayers().entries()) {
+                const PlayerState state = player.getState();
+                const Vector2 dist2D = pos - player.getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    player->getVirtualWorld() == vw &&
+                    player.getVirtualWorld() == vw &&
                     glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
+                const bool isStreamedIn = vehicle.isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    vehicle->streamInForPlayer(*player);
-                    ScopedPoolReleaseLock lock(*this, *vehicle);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, *player);
+                    vehicle.streamInForPlayer(player);
+                    ScopedPoolReleaseLock lock(*this, vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    vehicle->streamOutForPlayer(*player);
-                    ScopedPoolReleaseLock lock(*this, *vehicle);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, *player);
+                    vehicle.streamOutForPlayer(player);
+                    ScopedPoolReleaseLock lock(*this, vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, player);
                 }
             }
         }
