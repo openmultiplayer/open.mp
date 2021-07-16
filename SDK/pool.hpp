@@ -60,9 +60,8 @@ struct ScopedPoolReleaseLock {
         pool.lock(index);
     }
 
-    ScopedPoolReleaseLock(IPool<T, Count>& pool, const IIDProvider& provider) : pool(pool), index(index), entry(pool.get(provider.getID())) {
-        pool.lock(index);
-    }
+    ScopedPoolReleaseLock(IPool<T, Count>& pool, const IIDProvider& provider) : ScopedPoolReleaseLock(pool, provider.getID())
+    {}
 
     ~ScopedPoolReleaseLock() {
         pool.unlock(index);
