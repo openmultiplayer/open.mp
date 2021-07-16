@@ -4,14 +4,19 @@
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/Pickups/pickups.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 
-struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler, public TextDrawEventHandler {
+struct TestComponent : 
+	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
+	public PickupEventHandler, public TextDrawEventHandler
+{
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
 	IClassesPlugin* classes = nullptr;
 	IVehiclesPlugin* vehicles = nullptr;
 	IObjectsPlugin* objects = nullptr;
+	IPickupsPlugin * pickups = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
 	ITextDrawsPlugin* tds = nullptr;
 	IObject* obj = nullptr;
@@ -357,6 +362,12 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 
 		labels = c->queryPlugin<ITextLabelsPlugin>();
 
+		pickups = c->queryPlugin<IPickupsPlugin>();
+		if (pickups) {
+			pickups->getEventDispatcher().addEventHandler(this);
+			pickups->create(1550, 1, { -25.0913, 36.2893, 3.1234 }, 0, false);
+		}
+
 		tds = c->queryPlugin<ITextDrawsPlugin>();
 		if (tds) {
 			tds->getEventDispatcher().addEventHandler(this);
@@ -475,6 +486,11 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}	
 	}
 
+	void onPlayerPickUpPickup(IPlayer & player, IPickup & pickup) override {
+		player.sendClientMessage(Colour::White(), "You picked up a pickup.");
+		player.giveMoney(10000);
+	}
+
 	bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "nice miss loser");
 		return true;
@@ -507,6 +523,9 @@ struct TestComponent : public IPlugin, public PlayerEventHandler, public ObjectE
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
+		}
+		if (pickups) {
+			pickups->getEventDispatcher().removeEventHandler(this);
 		}
 		if (tds) {
 			tds->getEventDispatcher().removeEventHandler(this);
