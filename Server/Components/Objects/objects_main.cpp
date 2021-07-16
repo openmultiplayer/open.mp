@@ -250,7 +250,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         }
     }
 
-    void onDisconnect(IPlayer& player, int reason) override {
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
         for (IObject* obj : storage.entries()) {
             const ObjectAttachmentData& data = obj->getAttachmentData();

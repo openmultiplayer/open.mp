@@ -2,6 +2,7 @@
 #include "raknet/../../SAMPRakNet.hpp"
 #include "Query/query.hpp"
 #include <netcode.hpp>
+#include <raknet/PacketEnumerations.h>
 
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
@@ -12,7 +13,6 @@ RakNetLegacyNetwork::RakNetLegacyNetwork() :
     wlbs(wbs)
 {
     rakNetServer.SetMTUSize(512);
-    rakNetServer.AttachPlugin(this);
 
     RPCHOOK(0);
     RPCHOOK(1);
@@ -360,16 +360,16 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, player);
 }
 
-void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid) {
+void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason) {
     PlayerFromRIDMap::iterator pos = playerFromRID.find(rid);
     if (pos == playerFromRID.end()) {
         return;
     }
 
-    IPlayer& player = pos->second;
     playerFromRID.erase(rid);
+    IPlayer& player = pos->second;
 
-    networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, 0 /* TODO reason */);
+    networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, reason);
 }
 
 template <size_t ID>
@@ -439,6 +439,12 @@ void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
             RakNet::BitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
             if (bs.Read(type)) {
+                if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {
+                    OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Quit);
+                }
+                else if (type == RakNet::ID_CONNECTION_LOST) {
+                    OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Timeout);
+                }
                 inOutEventDispatcher.all([&player, type, &bs](NetworkInOutEventHandler* handler) {
                     bs.SetReadOffset(8); // Ignore packet ID
                     RakNetLegacyBitStream lbs(bs);

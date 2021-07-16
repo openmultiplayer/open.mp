@@ -17,6 +17,12 @@ struct IPlayer;
 struct INetworkPeer;
 struct PeerNetworkData;
 
+enum PeerDisconnectReason {
+	PeerDisconnectReason_Timeout,
+	PeerDisconnectReason_Quit,
+	PeerDisconnectReason_Kicked
+};
+
 /// Used for specifying bit stream data types
 enum class NetworkBitStreamValueType {
 	NONE,
@@ -299,7 +305,7 @@ struct NetworkEventHandler {
 	virtual IPlayer* onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return nullptr; }
 	virtual bool incomingConnection(IPlayer& peer, const PeerNetworkData& netData) { return true; }
 	virtual void onPeerConnect(IPlayer& peer) { }
-	virtual void onPeerDisconnect(IPlayer& peer, int reason) { }
+	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };
 
 /// An event handler for network I/O events
@@ -383,6 +389,9 @@ struct INetwork {
 
 	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
 	virtual unsigned getPing(const INetworkPeer& peer) = 0;
+
+	/// Disconnect the peer from the network
+	virtual void disconnect(const INetworkPeer& peer) = 0;
 };
 
 /// A plugin interface which allows for writing a network plugin
@@ -413,6 +422,7 @@ struct INetworkPeer {
 
 	virtual const PeerNetworkData& getNetworkData() const = 0;
 
+	/// Get the peer's ping from their network
 	unsigned getPing() const {
 		return getNetworkData().network->getPing(*this);
 	}

@@ -29,7 +29,8 @@ enum PlayerState {
 	PlayerState_EnterVehiclePassenger = 6,
 	PlayerState_Wasted = 7,
 	PlayerState_Spawned = 8,
-	PlayerState_Spectating = 9
+	PlayerState_Spectating = 9,
+	PlayerState_Kicked
 };
 
 enum PlayerWeaponSkill {
@@ -186,6 +187,9 @@ enum EPlayerNameStatus {
 /// A player interface
 struct IPlayer : public IEntity, public INetworkPeer {
 	virtual ~IPlayer() {}
+
+	/// Kick the player
+	virtual void kick() = 0;
 
 	/// Get the player pool that the player is stored in
 	virtual IPlayerPool* getPool() const = 0;
@@ -496,7 +500,7 @@ struct IPlayerObject;
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
 	virtual void onConnect(IPlayer& player) {}
-	virtual void onDisconnect(IPlayer& player, int reason) {}
+	virtual void onDisconnect(IPlayer& player, PeerDisconnectReason reason) {}
 	virtual bool onRequestSpawn(IPlayer& player) { return true; }
 	virtual void preSpawn(IPlayer& player) {}
 	virtual void onSpawn(IPlayer& player) {}
