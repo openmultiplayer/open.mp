@@ -3,6 +3,8 @@
 #include <string>
 #include <utility>
 #include <chrono>
+#include <optional>
+#include <type_traits>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
@@ -492,6 +494,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
+typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
+
 struct IVehicle;
 struct IObject;
 struct IPlayerObject;
@@ -499,6 +503,7 @@ struct IPlayerObject;
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
+	virtual void onIncomingConnection(IPlayer& player) { }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, PeerDisconnectReason reason) {}
 	virtual bool onRequestSpawn(IPlayer& player) { return true; }
@@ -515,8 +520,8 @@ struct PlayerEventHandler {
 	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
 	virtual void onNameChange(IPlayer & player, const String & oldName) {}
-	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
-	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
+	virtual void onDeath(IPlayer& player, OptionalPlayer killer, int reason) {}
+	virtual void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, unsigned part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
@@ -525,8 +530,6 @@ struct PlayerEventHandler {
 struct PlayerUpdateEventHandler {
 	virtual bool onUpdate(IPlayer& player) { return true; }
 };
-
-typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// A player pool interface
 struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
@@ -538,7 +541,7 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 
 	/// Returns whether a name is taken by any player
 	/// @param skip The player to exclude from the check
-	virtual bool isNameTaken(const String& name, const IPlayer* skip = nullptr) = 0;
+	virtual bool isNameTaken(const String& name, const OptionalPlayer skip) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
 	/// @param packet The packet to send

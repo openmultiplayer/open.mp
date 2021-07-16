@@ -16,6 +16,7 @@ constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
 constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
+constexpr int MIN_PLAYER_NAME = 3;
 constexpr int MAX_PLAYER_NAME = 24;
 constexpr int MAX_ANIMATIONS = 1813;
 constexpr int MAX_SKILL_LEVEL = 999;
