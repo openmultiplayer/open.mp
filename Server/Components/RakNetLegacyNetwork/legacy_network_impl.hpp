@@ -242,13 +242,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     bool sendPacket(const INetworkPeer& peer, const INetworkBitStream& bs) override {
-        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
+        const PeerNetworkData& netData = peer.getNetworkData();
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
-        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
@@ -271,13 +271,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
             return false;
         }
 
-        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
+        const PeerNetworkData& netData = peer.getNetworkData();
         if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return false;
         }
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
-        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
@@ -321,20 +321,22 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     unsigned getPing(const INetworkPeer& peer) override {
-        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
+        const PeerNetworkData& netData = peer.getNetworkData();
         if (netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
             return 0;
         }
 
-        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.GetLastPing(rid);
     }
 
+    typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
+
     ICore* core;
     Query query;
     RakNet::RakServerInterface& rakNetServer;
-    std::map<RakNet::PlayerID, int> pidFromRID;
+    PlayerFromRIDMap playerFromRID;
     RakNet::BitStream wbs;
     RakNetLegacyBitStream wlbs;
 };

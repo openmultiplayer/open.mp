@@ -128,7 +128,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         if (index == 0) {
             return false;
         }
@@ -140,7 +140,15 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available objects
@@ -150,8 +158,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (auto it = storage.entries().begin(); it != storage.entries().end();) {
-            IVehicle* vehicle = *it;
+        for (IVehicle* vehicle : storage.entries()) {
             const int vw = vehicle->getVirtualWorld();
             const Vector3 pos = vehicle->getPosition();
             for (IPlayer* const& player : core->getPlayers().entries()) {
@@ -173,9 +180,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
                     eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, *vehicle, *player);
                 }
             }
-
-            int vid = vehicle->getID();
-            it = storage.marked(vid) ? storage.release(vid) : it + 1;
         }
     }
 };

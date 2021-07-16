@@ -7,10 +7,10 @@
 #include "types.hpp"
 
 constexpr int MAX_SEATS = 4;
-constexpr int MAX_PLAYERS = 1000;
-constexpr int MAX_VEHICLES = 2000;
-constexpr int MAX_CLASSES = 320;
-constexpr int MAX_OBJECTS = 1000;
+constexpr int PLAYER_POOL_SIZE = 1000;
+constexpr int VEHICLE_POOL_SIZE = 2000;
+constexpr int CLASS_POOL_SIZE = 320;
+constexpr int OBJECT_POOL_SIZE = 1000;
 constexpr int MAX_WEAPON_SLOTS = 12;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
@@ -25,11 +25,12 @@ constexpr int INVALID_PLAYER_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
 constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
 constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
-constexpr int MAX_TEXT_LABELS = 1024;
-constexpr int MAX_PICKUPS = 4096;
-constexpr int MAX_GLOBAL_TEXTDRAWS = 2048;
-constexpr int MAX_PLAYER_TEXTDRAWS = 256;
+constexpr int TEXT_LABEL_POOL_SIZE = 1024;
+constexpr int PICKUP_POOL_SIZE = 4096;
+constexpr int GLOBAL_TEXTDRAW_POOL_SIZE = 2048;
+constexpr int PLAYER_TEXTDRAW_POOL_SIZE = 256;
 constexpr int INVALID_TEXTDRAW = 0xFFFF;
+constexpr int ACTOR_POOL_SIZE = 1000;
 
 namespace Config {
 	enum PlayerMarkerMode {
