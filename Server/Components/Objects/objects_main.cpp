@@ -22,21 +22,21 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
             IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
             if (data && data->selectingObject()) {
                 if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Global || self.valid(onPlayerSelectObjectRPC.ObjectID)) {
-                    IObject& obj = self.get(onPlayerSelectObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(self, onPlayerSelectObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectSelected,
                         peer,
-                        obj,
+                        lock.entry,
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position
                     );
                 }
                 else if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Player || data->valid(onPlayerSelectObjectRPC.ObjectID)) {
-                    IPlayerObject& obj = data->get(onPlayerSelectObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(*data, onPlayerSelectObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectSelected,
                         peer,
-                        obj,
+                        lock.entry,
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position
                     );
@@ -60,22 +60,22 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
             IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
             if (data && data->editingObject()) {
                 if (onPlayerEditObjectRPC.PlayerObject && data->valid(onPlayerEditObjectRPC.ObjectID)) {
-                    IPlayerObject& obj = data->get(onPlayerEditObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectEdited,
                         peer,
-                        obj,
+                        lock.entry,
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation
                     );
                 }
                 else if (self.valid(onPlayerEditObjectRPC.ObjectID)) {
-                    IObject& obj = self.get(onPlayerEditObjectRPC.ObjectID);
+                    ScopedPoolReleaseLock lock(self, onPlayerEditObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectEdited,
                         peer,
-                        obj,
+                        lock.entry,
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation
@@ -505,17 +505,18 @@ struct PlayerObjectData final : public IPlayerObjectData {
 void ObjectPlugin::onTick(std::chrono::microseconds elapsed) {
     for (IObject* obj : storage.entries()) {
         if (obj->advance(elapsed)) {
-            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, *obj);
+            ScopedPoolReleaseLock lock(*this, *obj);
+            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.entry);
         }
     }
 
     for (IPlayer* const& player : core->getPlayers().entries()) {
-        PlayerObjectData* data = player->queryData<PlayerObjectData>();
+        IPlayerObjectData* data = player->queryData<IPlayerObjectData>();
         if (data) {
-            auto& playerStorage = data->storage;
-            for (IPlayerObject* obj : playerStorage.entries()) {
+            for (IPlayerObject* obj : data->entries()) {
                 if (obj->advance(elapsed)) {
-                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, *obj);
+                    ScopedPoolReleaseLock lock(*data, *obj);
+                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.entry);
                 }
             }
         }

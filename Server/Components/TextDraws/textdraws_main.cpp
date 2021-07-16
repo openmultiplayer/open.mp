@@ -148,10 +148,12 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
                 }
                 else {
                     if (RPC.PlayerTextDraw && data->valid(RPC.TextDrawID)) {
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, data->get(RPC.TextDrawID));
+                        ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
+                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.entry);
                     }
                     else if (!RPC.PlayerTextDraw && self.storage.valid(RPC.TextDrawID)) {
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, self.storage.get(RPC.TextDrawID));
+                        ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
+                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, lock.entry);
                     }
                 }
             }
