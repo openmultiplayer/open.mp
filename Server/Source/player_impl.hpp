@@ -1298,7 +1298,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return { NewConnectionResult_Ignore, nullptr };
         }
 
-        if (isNameTaken(playerConnectPacket.Name, OptionalPlayer())) {
+        const String name = playerConnectPacket.Name;
+        if (name.length() < MIN_PLAYER_NAME || name.length() > MAX_PLAYER_NAME) {
+            return { NewConnectionResult_BadName, nullptr };
+        }
+        for (char chr : name) {
+            if (!std::isalnum(chr) && chr != ']' && chr != '[' && chr != '_' && chr != '$' &&
+                chr != '=' && chr != '(' && chr != ')' && chr != '@' && chr != '.') {
+                return { NewConnectionResult_BadName, nullptr };
+            }
+        }
+
+        if (isNameTaken(name, OptionalPlayer())) {
             return { NewConnectionResult_BadName, nullptr };
         }
 
