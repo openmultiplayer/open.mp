@@ -328,8 +328,8 @@ struct TestComponent :
 		
 		classes = c->queryPlugin<IClassesPlugin>();
 		if (classes) {
-			auto classid = classes->getClasses().claim();
-			PlayerClass& testclass = classes->getClasses().get(classid);
+			auto classid = classes->claim();
+			PlayerClass& testclass = classes->get(classid);
 
 			testclass.spawn = Vector3(0.0f, 0.0f, 3.1279f);
 			testclass.team = 255;
@@ -503,16 +503,19 @@ struct TestComponent :
 
 	bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot vehicle id " + to_string(target.getID()));
+		vehicles->release(target.getID());
 		return true;
 	}
 
 	bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot object id " + to_string(target.getID()));
+		objects->release(target.getID());
 		return true;
 	}
 
 	bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot player object id " + to_string(target.getID()));
+		player.queryData<IPlayerObjectData>()->release(target.getID());
 		return true;
 	}
 

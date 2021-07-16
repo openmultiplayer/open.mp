@@ -6,7 +6,6 @@
 #include <raknet/BitStream.h>
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
-#include <raknet/PluginInterface.h>
 #include <raknet/StringCompressor.h>
 #include <glm/glm.hpp>
 #include "Query/query.hpp"
@@ -233,7 +232,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 };
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public RakNet::PluginInterface {
+struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler {
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
@@ -241,14 +240,25 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return ENetworkType_RakNetLegacy;
     }
 
+    void disconnect(const INetworkPeer& peer) override {
+        const PeerNetworkData& netData = peer.getNetworkData();
+        if (netData.network != this) {
+            return;
+        }
+
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
+        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        rakNetServer.Kick(rid);
+    }
+
     bool sendPacket(const INetworkPeer& peer, const INetworkBitStream& bs) override {
-        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
-        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
+        const PeerNetworkData& netData = peer.getNetworkData();
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network != this) {
             return false;
         }
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
-        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
@@ -271,13 +281,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
             return false;
         }
 
-        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
-        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
+        const PeerNetworkData& netData = peer.getNetworkData();
+        if (bs.getNetworkType() != ENetworkType_RakNetLegacy || netData.network != this) {
             return false;
         }
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
-        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
@@ -294,15 +304,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void onTick(std::chrono::microseconds elapsed) override;
     void init(ICore* core);
 
-    void OnRakNetDisconnect(RakNet::PlayerID rid);
-
-    void OnDisconnect(RakNet::RakPeerInterface* peer) override {
-        return OnRakNetDisconnect(peer->GetInternalID());
-    }
-
-    void OnCloseConnection(RakNet::RakPeerInterface* peer, RakNet::PlayerID playerId) override {
-        return OnRakNetDisconnect(playerId);
-    }
+    void OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason);
 
     void onScoreChange(IPlayer & player, int score) override {
         query.preparePlayerListForQuery();
@@ -316,25 +318,27 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         query.preparePlayerListForQuery();
     }
 
-    void onDisconnect(IPlayer & player, int reason) override {
+    void onDisconnect(IPlayer & player, PeerDisconnectReason reason) override {
         query.preparePlayerListForQuery();
     }
 
     unsigned getPing(const INetworkPeer& peer) override {
-        const INetworkPeer::NetworkData& netData = peer.getNetworkData();
-        if (netData.network->getNetworkType() != ENetworkType_RakNetLegacy) {
+        const PeerNetworkData& netData = peer.getNetworkData();
+        if (netData.network != this) {
             return 0;
         }
 
-        const INetworkPeer::NetworkID& nid = netData.networkID;
+        const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
         return rakNetServer.GetLastPing(rid);
     }
 
+    typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
+
     ICore* core;
     Query query;
     RakNet::RakServerInterface& rakNetServer;
-    std::map<RakNet::PlayerID, int> pidFromRID;
+    PlayerFromRIDMap playerFromRID;
     RakNet::BitStream wbs;
     RakNetLegacyBitStream wlbs;
 };
