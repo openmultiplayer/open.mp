@@ -113,9 +113,9 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
 
     void restream() override {
-        for (IPlayer* player : streamedFor_.entries()) {
-            streamOutForClient(*player, false);
-            streamInForClient(*player, false);
+        for (IPlayer& player : streamedFor_.entries()) {
+            streamOutForClient(player, false);
+            streamInForClient(player, false);
         }
     }
 
@@ -124,12 +124,12 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     }
 
     void streamInForPlayer(IPlayer& player) override {
-        streamedFor_.add(player.getID(), &player);
+        streamedFor_.add(player.getID(), player);
         streamInForClient(player, false);
     }
 
     void streamOutForPlayer(IPlayer& player) override {
-        streamedFor_.remove(player.getID(), &player);
+        streamedFor_.remove(player.getID(), player);
         streamOutForClient(player, false);
     }
 
@@ -143,8 +143,8 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     }
 
     ~TextLabel() {
-        for (IPlayer* player : streamedFor_.entries()) {
-            streamOutForClient(*player, false);
+        for (IPlayer& player : streamedFor_.entries()) {
+            streamOutForClient(player, false);
         }
     }
 };

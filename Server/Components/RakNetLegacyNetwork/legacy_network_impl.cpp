@@ -366,8 +366,8 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnec
         return;
     }
 
-    playerFromRID.erase(rid);
     IPlayer& player = pos->second;
+    playerFromRID.erase(rid);
 
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, reason);
 }
