@@ -173,4 +173,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     bool isRespawning() override { return respawning; }
     void addInternalOccupant(IPlayer& player) override;
     void removeInternalOccupant(IPlayer& player) override;
+
+    // Sets (links) the vehicle to an interior.
+    void setInterior(int InteriorID) override;
+
+	// Gets the vehicle's interior.
+    int getInterior() override;
 };

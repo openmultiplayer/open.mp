@@ -159,6 +159,13 @@ struct IVehicle : public IEntity {
 
 	virtual void addInternalOccupant(IPlayer& player) = 0;
 	virtual void removeInternalOccupant(IPlayer& player) = 0;
+
+	// Sets (links) the vehicle to an interior.
+	virtual void setInterior(int InteriorID) = 0;
+
+	// Gets the vehicle's interior.
+	virtual int getInterior() = 0;
+	
 };
 
 /// A vehicle event handler

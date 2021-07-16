@@ -601,6 +601,20 @@ namespace NetCode {
 			}
 		};
 
+		struct LinkVehicleToInterior final : NetworkPacketBase<65> {
+			int VehicleID;
+			int InteriorID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(InteriorID));
+			}
+		};
+
 		struct SetVehicleZAngle final : NetworkPacketBase<160> {
 			int VehicleID;
 			float angle;
