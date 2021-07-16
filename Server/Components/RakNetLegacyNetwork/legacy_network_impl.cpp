@@ -354,16 +354,6 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     IPlayer& player = *newConnectionResult.second;
     network->playerFromRID.emplace(rid, player);
 
-    if (!network->networkEventDispatcher.stopAtFalse(
-        [&netData, &player](NetworkEventHandler* handler) {
-            return handler->incomingConnection(player, netData);
-        }
-    )) {
-        // Entry denied, disconnect
-        network->rakNetServer.Kick(rid);
-        return;
-    }
-
     network->inOutEventDispatcher.all(
         [&player, &lbs](NetworkInOutEventHandler* handler) {
             lbs.reset(BSResetRead);
