@@ -203,11 +203,11 @@ struct Object final : public BaseObject<IObject> {
 			stopMoving();
 		}
 
-		players_->broadcastRPC(move(data), BroadcastGlobally);
+		players_->broadcastRPCToAll(move(data));
 	}
 
 	void stopMoving() override {
-		players_->broadcastRPC(stopMove(), BroadcastGlobally);
+		players_->broadcastRPCToAll(stopMove());
 	}
 
 	bool advance(std::chrono::microseconds elapsed) override {
@@ -270,7 +270,7 @@ struct Object final : public BaseObject<IObject> {
 		NetCode::RPC::SetObjectPosition setObjectPositionRPC;
 		setObjectPositionRPC.ObjectID = poolID;
 		setObjectPositionRPC.Position = position;
-		players_->broadcastRPC(setObjectPositionRPC, BroadcastGlobally);
+		players_->broadcastRPCToAll(setObjectPositionRPC);
 	}
 
 	void setRotation(GTAQuat rotation) override {
@@ -279,7 +279,7 @@ struct Object final : public BaseObject<IObject> {
 		NetCode::RPC::SetObjectRotation setObjectRotationRPC;
 		setObjectRotationRPC.ObjectID = poolID;
 		setObjectRotationRPC.Rotation = rot_;
-		players_->broadcastRPC(setObjectRotationRPC, BroadcastGlobally);
+		players_->broadcastRPCToAll(setObjectRotationRPC);
 	}
 
 	void setDrawDistance(float drawDistance) override {
@@ -314,7 +314,7 @@ struct Object final : public BaseObject<IObject> {
 		attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
 		attachObjectToPlayerRPC.Offset = attachmentData_.offset;
 		attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-		players_->broadcastRPC(attachObjectToPlayerRPC, EBroadcastPacketSendType::BroadcastStreamed, &player);
+		players_->broadcastRPCToStreamed(attachObjectToPlayerRPC, player);
 	}
 
 	~Object() {
