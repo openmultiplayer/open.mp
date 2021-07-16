@@ -42,7 +42,23 @@ struct TestComponent :
 		}
 	}
 
+	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+		static const String reasonStr[] = {
+			"Timed out",
+			"Quit",
+			"Kicked"
+		};
+
+		for (IPlayer& other : c->getPlayers().entries()) {
+			other.sendClientMessage(Colour::Yellow(), "Player " + player.getName() + " has left the server, reason: " + reasonStr[reason]);
+		}
+	}
+
 	bool onCommandText(IPlayer& player, String message) override {
+
+		if (message == "/kickmeplz") {
+			player.kick();
+		}
 
         if (message == "/setWeather") {
             player.sendClientMessage(Colour::White(), "weather Before:");

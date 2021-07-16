@@ -74,9 +74,9 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     void free() override {
-        for (IPlayerTextDraw* textDraw : storage.entries()) {
-            PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
-            td->player = nullptr;
+        for (IPlayerTextDraw& textDraw : storage.entries()) {
+            PlayerTextDraw& td = static_cast<PlayerTextDraw&>(textDraw);
+            td.player = nullptr;
         }
         delete this;
     }
@@ -116,7 +116,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     /// Get a set of all the available labels
-    const DynamicArray<IPlayerTextDraw*>& entries() const override {
+    const PoolEntryArray<IPlayerTextDraw>& entries() const override {
         return storage.entries();
     }
 };
@@ -265,7 +265,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         storage.unlock(index);
     }
 
-    const DynamicArray<ITextDraw*>& entries() const override {
+    const PoolEntryArray<ITextDraw>& entries() const override {
         return storage.entries();
     }
 };
