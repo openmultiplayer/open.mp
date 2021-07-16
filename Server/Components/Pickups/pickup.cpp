@@ -90,7 +90,7 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 		return res;
 	}
 
-	bool valid(int index) override {
+	bool valid(int index) const override {
 		return storage.valid(index);
 	}
 
@@ -100,8 +100,16 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 
 	void release(int index) override {
 		if (!storage.get(index).isStatic) {
-			storage.mark(index);
+			storage.release(index, false);
 		}
+	}
+
+	void lock(int index) override {
+		storage.lock(index);
+	}
+
+	void unlock(int index) override {
+		storage.unlock(index);
 	}
 
 	IEventDispatcher<PickupEventHandler> & getEventDispatcher() override {
@@ -115,8 +123,7 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 
 	void onTick(std::chrono::microseconds elapsed) override {
 		const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-		for (auto it = storage.entries().begin(); it != storage.entries().end();) {
-			IPickup * pickup = *it;
+		for (IPickup* pickup : storage.entries()) {
 			const int vw = pickup->getVirtualWorld();
 			Vector3 pos = pickup->getPosition();
 
@@ -137,9 +144,6 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 					pickup->streamOutForPlayer(*player);
 				}
 			}
-
-			int id = pickup->getID();
-			it = storage.marked(id) ? storage.release(id) : it + 1;
 		}
 	}
 };

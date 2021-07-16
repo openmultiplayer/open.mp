@@ -10,11 +10,24 @@
 
 /* Interfaces, to be passed around */
 
-/// A statically sized pool interface 
 template <typename T, size_t Count>
-struct IPool {
+struct IReadOnlyPool {
     static const size_t Cnt = Count;
 
+    /// Check if an index is claimed
+    virtual bool valid(int index) const = 0;
+
+    /// Get the object at an index
+    virtual T& get(int index) = 0;
+
+    /// Get a set of all the available objects
+    virtual const DynamicArray<T*>& entries() const = 0;
+
+};
+
+/// A statically sized pool interface 
+template <typename T, size_t Count>
+struct IPool : IReadOnlyPool<T, Count> {
 	/// Get the first free index or -1 if no index is available to use
 	virtual int findFreeIndex() = 0;
 
@@ -24,31 +37,29 @@ struct IPool {
 	/// Attempt to claim the index at hint and if unavailable, claim the first available index
 	virtual int claim(int hint) = 0;
 
-	/// Check if an index is claimed
-	virtual bool valid(int index) = 0;
-
-	/// Get the object at an index
-	virtual T& get(int index) = 0;
-
 	/// Release the object at an index
 	virtual void release(int index) = 0;
 
-	/// Get a set of all the available objects
-	virtual const DynamicArray<T*>& entries() const = 0;
+    /// Lock an entry at index to postpone release until unlocked
+    virtual void lock(int index) = 0;
+
+    /// Unlock an entry at index and release it if needed
+    virtual void unlock(int index) = 0;
 };
 
-/// A pool with an event dispatcher build in
-template <typename T, size_t Count, class EventHandlerType>
-struct IEventDispatcherPool {
-	using Type = T;
-	static const size_t Cnt = Count;
-	using EventHandler = EventHandlerType;
+template <class T, size_t Count>
+struct ScopedPoolReleaseLock {
+    IPool<T, Count>& pool;
+    int index;
+    T& entry;
 
-	/// Get the pool
-	virtual IPool<T, Count>& getPool() = 0;
+    ScopedPoolReleaseLock(IPool<T, Count>& pool, int index) : pool(pool), index(index), entry(pool.get(index)) {
+        pool.lock(index);
+    }
 
-	/// Get the event dispatcher
-	virtual IEventDispatcher<EventHandlerType>& getEventDispatcher() = 0;
+    ~ScopedPoolReleaseLock() {
+        pool.unlock(index);
+    }
 };
 
 /* Implementation, NOT to be passed around */
@@ -80,9 +91,9 @@ struct UniqueIDArray : public NoCopy {
     }
 
     /// Attempt to remove data for element at index and return the next iterator in the entries list
-    typename DynamicArray<T*>::iterator remove(int index, T* data) {
+    void remove(int index, T* data) {
         valid_.reset(index);
-        return entries_.erase(std::find(std::execution::par, entries_.begin(), entries_.end(), data));
+        entries_.erase(std::find(std::execution::par, entries_.begin(), entries_.end(), data));
     }
 
     bool valid(int index) const {
@@ -142,7 +153,7 @@ struct PoolStorage final : public NoCopy {
         allocated_.add(index);
     }
 
-    bool valid(int index) {
+    bool valid(int index) const {
         return allocated_.valid(index);
     }
 
@@ -151,7 +162,7 @@ struct PoolStorage final : public NoCopy {
         return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
-    typename DynamicArray<Interface*>::iterator release(int index) {
+    void release(int index) {
         assert(index < Count);
         reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
         return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
@@ -159,11 +170,6 @@ struct PoolStorage final : public NoCopy {
 
     const DynamicArray<Interface*>& entries() const {
         return allocated_.entries();
-    }
-
-    inline Type& internal(int index) {
-        assert(index < Count);
-        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
 private:
@@ -212,7 +218,7 @@ struct MarkedPoolStorage final : public NoCopy {
         allocated_.add(index);
     }
 
-    bool valid(int index) {
+    bool valid(int index) const {
         return allocated_.valid(index);
     }
 
@@ -221,64 +227,39 @@ struct MarkedPoolStorage final : public NoCopy {
         return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
-    void mark(int index) {
-        marked_.set(index);
+    void lock(int index) {
+        // Mark as locked
+        marked_.set(index * 2);
     }
 
-    bool marked(int index) {
-        return marked_.test(index);
+    void unlock(int index) {
+        marked_.reset(index * 2);
+        // If marked for deletion on unlock, release
+        if (marked_.test(index * 2 + 1)) {
+            release(index, true);
+        }
     }
 
-    typename DynamicArray<Interface*>::iterator release(int index) {
+    void release(int index, bool force) {
         assert(index < Count);
-        marked_.reset(index);
-        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
-        return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
+        // If locked, mark for deletion on unlock
+        if (marked_.test(index * 2)) {
+            marked_.set(index * 2 + 1);
+        }
+        else { // If not locked, immediately delete
+            marked_.reset(index * 2 + 1);
+            reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
+            return allocated_.remove(index, reinterpret_cast<Type*>(&pool_[index * sizeof(Type)]));
+        }
     }
 
     const DynamicArray<Interface*>& entries() const {
         return allocated_.entries();
     }
 
-    inline Type& internal(int index) {
-        assert(index < Count);
-        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
-    }
-
 private:
     char pool_[Count * sizeof(Type)];
     UniqueIDArray<Interface, Count> allocated_;
-    std::bitset<Count> marked_;
-};
-
-template <typename Type, typename Interface, int Count>
-struct DefaultPool final : public IPool<Interface, Count>, public NoCopy {
-    PoolStorage<Type, Interface, Count> storage;
-    int findFreeIndex() override {
-        return storage.findFreeIndex();
-    }
-
-    int claim() override {
-        return storage.claim();
-    }
-
-    int claim(int hint) override {
-        return storage.claim(hint);
-    }
-
-    bool valid(int index) override {
-        return storage.valid(index);
-    }
-
-    Interface& get(int index) override {
-        return storage.get(index);
-    }
-
-    void release(int index) override {
-        storage.release(index);
-    }
-
-    const DynamicArray<Interface*>& entries() const override {
-        return storage.entries();
-    }
+    /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
+    std::bitset<Count * 2> marked_;
 };

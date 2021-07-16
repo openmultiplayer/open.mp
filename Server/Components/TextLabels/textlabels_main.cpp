@@ -82,7 +82,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -91,7 +91,15 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available labels
@@ -186,7 +194,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return res;
     }
 
-    bool valid(int index) override {
+    bool valid(int index) const override {
         return storage.valid(index);
     }
 
@@ -195,7 +203,15 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     }
 
     void release(int index) override {
-        storage.mark(index);
+        storage.release(index, false);
+    }
+
+    void lock(int index) override {
+        storage.lock(index);
+    }
+
+    void unlock(int index) override {
+        storage.unlock(index);
     }
 
     /// Get a set of all the available labels
@@ -205,8 +221,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (auto it = storage.entries().begin(); it != storage.entries().end();) {
-            ITextLabel* textLabel = *it;
+        for (ITextLabel* textLabel : storage.entries()) {
             const int vw = textLabel->getVirtualWorld();
             const TextLabelAttachmentData& data = textLabel->getAttachmentData();
             Vector3 pos;
@@ -235,20 +250,6 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
                     textLabel->streamOutForPlayer(*player);
-                }
-            }
-
-            int id = textLabel->getID();
-            it = storage.marked(id) ? storage.release(id) : it + 1;
-        }
-
-        for (IPlayer* player : core->getPlayers().entries()) {
-            PlayerTextLabelData* data = player->queryData<PlayerTextLabelData>();
-            if (data) {
-                for (auto it = data->entries().begin(); it != data->entries().end();) {
-                    IPlayerTextLabel* textLabel = *it;
-                    int id = textLabel->getID();
-                    it = data->storage.marked(id) ? data->storage.release(id) : it + 1;
                 }
             }
         }
