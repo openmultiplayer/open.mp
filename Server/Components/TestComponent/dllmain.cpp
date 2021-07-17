@@ -625,6 +625,7 @@ struct TestComponent :
 			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
 			tower = vehicles->create(411, Vector3(15.0209f, 1.4806f, 3.1172f));
 			trailer = vehicles->create(400, Vector3(12.0209f, 5.4806f, 3.1172f));
+			tower->attachTrailer(*trailer);
 			vehicles->getEventDispatcher().addEventHandler(&vehicleEventWatcher);
 		}
 
