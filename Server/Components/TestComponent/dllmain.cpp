@@ -450,6 +450,16 @@ struct TestComponent :
 			player.sendClientMessage(Colour::White(), "Enjoy your new job.");
 			return true;
 		}
+		else if (message == "/detachtrailer" && vehicles && tower && trailer) {
+			tower->detachTrailer();
+			player.sendClientMessage(Colour::White(), "You lost your job.");
+			return true;
+		}
+		else if (message == "/towing" && vehicles && tower && trailer) {
+			String result = trailer->isTrailer() ? "towing" : "not towing";
+			player.sendClientMessage(Colour::White(), "vehicle is " + result);
+			return true;
+		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {
 				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
@@ -613,8 +623,8 @@ struct TestComponent :
 		if (vehicles) {
 			vehicle = vehicles->create(411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
 			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
-			tower = vehicles->create(515, Vector3(15.0209f, 1.4806f, 3.1172f));
-			trailer = vehicles->create(591, Vector3(12.0209f, 5.4806f, 3.1172f));
+			tower = vehicles->create(411, Vector3(15.0209f, 1.4806f, 3.1172f));
+			trailer = vehicles->create(400, Vector3(12.0209f, 5.4806f, 3.1172f));
 			vehicles->getEventDispatcher().addEventHandler(&vehicleEventWatcher);
 		}
 
