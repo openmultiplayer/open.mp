@@ -6,10 +6,11 @@
 #include <Server/Components/TextLabels/textlabels.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Menus/menus.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
-	public PickupEventHandler, public TextDrawEventHandler
+	public PickupEventHandler, public TextDrawEventHandler, MenuEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -18,7 +19,8 @@ struct TestComponent :
 	IObjectsPlugin* objects = nullptr;
 	IPickupsPlugin * pickups = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
-	ITextDrawsPlugin* tds = nullptr;
+	ITextDrawsPlugin * tds = nullptr;
+	IMenusPlugin* menus = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -26,6 +28,7 @@ struct TestComponent :
 	ITextDraw* skinPreview = nullptr;
 	ITextDraw* vehiclePreview = nullptr;
 	ITextDraw* sprite = nullptr;
+	IMenu * menu = nullptr;
 	bool moved = false;
 
 	UUID getUUID() override {
@@ -305,6 +308,13 @@ struct TestComponent :
 			}
 		}
 
+		if (menus && menu) {
+			if (message == "/menu") {
+				menu->showForPlayer(player);
+				return true;
+			}
+		}
+
         return false;
 
 	}
@@ -410,6 +420,15 @@ struct TestComponent :
 				sprite->setStyle(TextDrawStyle_Sprite).setTextSize(Vector2(80.f)).setSelectable(true);
 			}
 		}
+
+		menus = c->queryPlugin<IMenusPlugin>();
+		if (menus) {
+			menus->getEventDispatcher().addEventHandler(this);
+			menu = menus->create("Who's the goat????", { 200.0, 100.0 }, 0, 300.0, 300.0);
+			menu->addMenuItem("eminem", 0);
+			menu->addMenuItem("mj", 0);
+			menu->addMenuItem("snoop", 0);
+		}
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -505,6 +524,21 @@ struct TestComponent :
 	void onPlayerPickUpPickup(IPlayer & player, IPickup & pickup) override {
 		player.sendClientMessage(Colour::White(), "You picked up a pickup.");
 		player.giveMoney(10000);
+	}
+
+	bool onPlayerSelectedMenuRow(IPlayer & player, MenuRow row) override {
+		IPlayerMenuData * data = player.queryData<IPlayerMenuData>();
+		if (data->getMenuID() == menu->getID()) {
+			if (row == 1) {
+				player.sendClientMessage(Colour::White(), "Correct! You have received 10k dollas!!!!!");
+				player.giveMoney(10000);
+			}
+			else {
+				player.sendClientMessage(Colour::White(), "Wrong! You just lost 10k dollas!!!!!");
+				player.giveMoney(-10000);
+			}
+		}
+		return true;
 	}
 
 	bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) override {

@@ -32,6 +32,10 @@ constexpr int GLOBAL_TEXTDRAW_POOL_SIZE = 2048;
 constexpr int PLAYER_TEXTDRAW_POOL_SIZE = 256;
 constexpr int INVALID_TEXTDRAW = 0xFFFF;
 constexpr int ACTOR_POOL_SIZE = 1000;
+constexpr int MENU_POOL_SIZE = 128;
+constexpr int MAX_MENU_ITEMS = 12;
+constexpr int MAX_MENU_TEXT_LENGTH = 32;
+constexpr int INVALID_MENU_ID = 0xFF;
 
 namespace Config {
 	enum PlayerMarkerMode {
