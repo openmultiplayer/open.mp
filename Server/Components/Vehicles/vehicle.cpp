@@ -96,13 +96,13 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
     return allowed;
 }
 
-bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) {
+bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& trailerSync, IPlayer& player) {
     if (!streamedPlayers_.valid(player.getID())) {
         return false;
     }
 
-    pos = unoccupiedSync.Position;
-    velocity = unoccupiedSync.Velocity;
+    pos = trailerSync.Position;
+    velocity = trailerSync.Velocity;
 
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
     if (now - trailerUpdateTime > std::chrono::seconds(15)) {
