@@ -528,7 +528,7 @@ struct TestComponent :
 
 	bool onPlayerSelectedMenuRow(IPlayer & player, MenuRow row) override {
 		IPlayerMenuData * data = player.queryData<IPlayerMenuData>();
-		if (data->getMenuId() == menu->getID()) {
+		if (data->getMenuID() == menu->getID()) {
 			if (row == 1) {
 				player.sendClientMessage(Colour::White(), "Correct! You have received 10k dollas!!!!!");
 				player.giveMoney(10000);
