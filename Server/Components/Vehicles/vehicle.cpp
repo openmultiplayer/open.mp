@@ -96,6 +96,36 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
     return allowed;
 }
 
+bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) {
+    if (!streamedPlayers_.valid(player.getID())) {
+        return false;
+    }
+
+    pos = unoccupiedSync.Position;
+    velocity = unoccupiedSync.Velocity;
+
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+    if (now - trailerUpdateTime > std::chrono::seconds(15)) {
+        // For some reason if the trailer gets disattached on the recievers side, and not on the driver's side
+        // SA:MP will fail to reattach it, so we have to call the attach RPC again.
+        NetCode::RPC::AttachTrailer trailerRPC;
+        trailerRPC.TrailerID = poolID;
+        trailerRPC.VehicleID = player.queryData<IPlayerVehicleData>()->getVehicle()->getID();
+        for (IPlayer& otherplayers : streamedPlayers_.entries()) {
+            if (&otherplayers == &player) {
+                continue;
+            }
+            otherplayers.sendRPC(trailerRPC);
+        }
+        trailerUpdateTime = now;
+    }
+    bool allowed = eventDispatcher->stopAtFalse([&player, this](VehicleEventHandler* handler) {
+            return handler->onTrailerUpdate(player, *this);
+        }
+    );
+    return allowed;
+}
+
 void Vehicle::setPlate(String plate) {
     numberPlate = plate;
     NetCode::RPC::SetVehiclePlate plateRPC;
@@ -157,7 +187,6 @@ void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightS
     LightStatus = lightDamage;
     TyreStatus = tyreDamage;
 }
-
 
 void Vehicle::setPaintJob(int paintjob) {
     paintJob = paintjob + 1;
@@ -362,3 +391,13 @@ std::chrono::milliseconds Vehicle::getLastOccupiedTime() {
     return lastOccupied;
 }
 
+void Vehicle::attachTrailer(IVehicle& trailer) {
+    this->trailer = &trailer;
+    NetCode::RPC::AttachTrailer trailerRPC;
+    trailerRPC.TrailerID = trailer.getID();
+    trailerRPC.VehicleID = poolID;
+    auto entries = streamedPlayers_.entries();
+    for (IPlayer& player : entries) {
+        player.sendRPC(trailerRPC);
+    }
+}

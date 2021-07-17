@@ -1255,7 +1255,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             
             if (vehicle.updateFromSync(vehicleSync, player)) {
                 vehicleSync.PlayerID = pid;
-
+                
+                if (self.vehiclesPlugin->valid(vehicleSync.TrailerID)) {
+                    IVehicle& trailer = self.vehiclesPlugin->get(vehicleSync.TrailerID);
+                    if (trailer.getDriver() == nullptr) {
+                        vehicleSync.HasTrailer = true;
+                    }
+                    else {
+                        vehicleSync.TrailerID = INVALID_VEHICLE_ID;
+                    }
+                }
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                     [&peer](PlayerUpdateEventHandler* handler) {
                         return handler->onUpdate(peer);
@@ -1345,6 +1354,35 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return true;
         }
     } playerUnoccupiedSyncHandler;
+
+    struct PlayerTrailerSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerTrailerSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerTrailerSync trailerSync;
+
+            if (!self.vehiclesPlugin || !trailerSync.read(bs) || !self.vehiclesPlugin->valid(trailerSync.VehicleID)) {
+                return false;
+            }
+            
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            IVehicle& vehicle = self.vehiclesPlugin->get(trailerSync.VehicleID);
+            PlayerState state = player.getState();
+            if (state != PlayerState_Driver || peer.queryData<IPlayerVehicleData>()->getVehicle() == nullptr) {
+                return false;
+            }
+            else if (vehicle.getDriver() != nullptr) {
+                return false;
+            }
+            
+            if (vehicle.updateFromTrailerSync(trailerSync, peer)) {
+                self.broadcastPacketToStreamed(trailerSync, peer);
+            }
+            return true;
+        }
+    } playerTrailerSyncHandler;
 
     bool valid(int index) const override {
         return storage.valid(index);
@@ -1454,7 +1492,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerBulletSyncHandler(*this),
         playerVehicleSyncHandler(*this),
         playerPassengerSyncHandler(*this),
-        playerUnoccupiedSyncHandler(*this)
+        playerUnoccupiedSyncHandler(*this),
+        playerTrailerSyncHandler(*this)
     {
         core.getEventDispatcher().addEventHandler(this);
     }
@@ -1501,6 +1540,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
+
         vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
         objectsPlugin = core.queryPlugin<IObjectsPlugin>();
     }
