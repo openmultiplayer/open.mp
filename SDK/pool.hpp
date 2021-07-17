@@ -101,6 +101,11 @@ struct UniqueIDArray : public NoCopy {
         );
     }
 
+    void clear() {
+        valid_.reset();
+        entries_.clear();
+    }
+
     bool valid(int index) const {
         if (index >= Size) {
             return false;
