@@ -28,6 +28,14 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         plateRPC.plate = numberPlate;
         player.sendRPC(plateRPC);
     }
+
+    if (tower) {
+        NetCode::RPC::AttachTrailer trailerRPC;
+        trailerRPC.TrailerID = poolID;
+        trailerRPC.VehicleID = tower->getID();
+        player.sendRPC(trailerRPC);
+    }
+
     streamedPlayers_.add(player.getID(), player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamIn, *this, player);
     respawning = false;
