@@ -46,10 +46,10 @@ struct IPlayerMenuData : public IPlayerData {
 	PROVIDE_UUID(PlayerMenuData_UUID)
 
 	/// Get Player's current menu id
-	virtual uint8_t getMenuId() const = 0;
+	virtual uint8_t getMenuID() const = 0;
 
 	/// Set Player's current menu id
-	virtual void setMenuId(uint8_t id) = 0;
+	virtual void setMenuID(uint8_t id) = 0;
 };
 
 static const UUID MenusPlugin_UUID = UUID(0x621e219eb97ee0b2);
@@ -59,6 +59,6 @@ struct IMenusPlugin : public IPlugin, public IPool<IMenu, MENU_POOL_SIZE> {
 
 	virtual IEventDispatcher<MenuEventHandler> & getEventDispatcher() = 0;
 
-	/// Create a meun
+	/// Create a menu
 	virtual IMenu * create(const String & title, const Vector2 & position, uint8_t columns, float col1Width, float col2Width) = 0;
 };
