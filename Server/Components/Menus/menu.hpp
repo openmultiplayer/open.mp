@@ -5,11 +5,11 @@
 struct PlayerMenuData final : IPlayerMenuData {
 	uint8_t menuId = INVALID_MENU_ID;
 
-	uint8_t getMenuId() const override {
+	uint8_t getMenuID() const override {
 		return menuId;
 	}
 
-	void setMenuId(uint8_t id) override {
+	void setMenuID(uint8_t id) override {
 		menuId = id;
 	}
 
@@ -71,7 +71,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 	}
 
 	void disableMenu() override {
-		menuEnabled = 0;
+		menuEnabled = false;
 		initedFor_.clear();
 	}
 
@@ -126,7 +126,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 		player.sendRPC(playerShowMenu);
 
 		IPlayerMenuData * data = player.queryData<IPlayerMenuData>();
-		data->setMenuId(poolID);
+		data->setMenuID(poolID);
 	}
 
 	void hideForPlayer(IPlayer & player) override {
@@ -135,7 +135,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 		player.sendRPC(playerHideMenu);
 
 		IPlayerMenuData * data = player.queryData<IPlayerMenuData>();
-		data->setMenuId(INVALID_MENU_ID);
+		data->setMenuID(INVALID_MENU_ID);
 	}
 
 	void resetForPlayer(IPlayer & player) override {

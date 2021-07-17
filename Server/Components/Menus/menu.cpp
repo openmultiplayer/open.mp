@@ -22,8 +22,8 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 
 			// Return false if menu id was invalid;
 			IPlayerMenuData * data = peer.queryData<IPlayerMenuData>();
-			if (!self.valid(data->getMenuId()) || data->getMenuId() == INVALID_MENU_ID) {
-				data->setMenuId(INVALID_MENU_ID);
+			if (!self.valid(data->getMenuID()) || data->getMenuID() == INVALID_MENU_ID) {
+				data->setMenuID(INVALID_MENU_ID);
 				return false;
 			}
 
@@ -48,8 +48,8 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 
 			// Return false if menu id was invalid;
 			IPlayerMenuData * data = peer.queryData<IPlayerMenuData>();
-			if (!self.valid(data->getMenuId()) || data->getMenuId() == INVALID_MENU_ID) {
-				data->setMenuId(INVALID_MENU_ID);
+			if (!self.valid(data->getMenuID()) || data->getMenuID() == INVALID_MENU_ID) {
+				data->setMenuID(INVALID_MENU_ID);
 				return false;
 			}
 
