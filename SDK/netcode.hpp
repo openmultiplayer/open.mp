@@ -1918,6 +1918,20 @@ namespace NetCode {
 				
 			}
 		};
+
+		struct AttachTrailer final : NetworkPacketBase<148> {
+			int VehicleID;
+			int TrailerID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(TrailerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
@@ -2253,6 +2267,34 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::VEC3(Velocity));
 				bs.write(NetworkBitStreamValue::VEC3(AngularVelocity));
 				bs.write(NetworkBitStreamValue::FLOAT(Health));
+			}
+		};
+
+		struct PlayerTrailerSync final : NetworkPacketBase<210> {
+			int VehicleID;
+			int PlayerID;
+			Vector3 Position;
+			Vector4 Quat;
+			Vector3 Velocity;
+			Vector3 TurnVelocity;
+
+			bool read(INetworkBitStream& bs) {
+				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
+				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(Quat, { NetworkBitStreamValueType::VEC4 });
+				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
+				CHECKED_READ(TurnVelocity, { NetworkBitStreamValueType::VEC3 });
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::VEC4(Quat));
+				bs.write(NetworkBitStreamValue::VEC3(Velocity));
+				bs.write(NetworkBitStreamValue::VEC3(TurnVelocity));
 			}
 		};
 	}

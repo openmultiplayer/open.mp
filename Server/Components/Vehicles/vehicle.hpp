@@ -31,6 +31,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     std::chrono::milliseconds lastOccupied;
     bool respawning = false;
     Vector3 velocity;
+    IVehicle* trailer = nullptr;
+    std::chrono::seconds trailerUpdateTime;
 
     Vehicle() {
         mods.fill(0);
@@ -83,6 +85,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     /// Update the vehicle's data from an unoccupied sync packet.
     bool updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) override;
+
+    /// Update the vehicle from a trailer sync packet
+    bool updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) override;
 
     /// Sets the vehicle's body colour
     void setColour(int col1, int col2) override;
@@ -173,4 +178,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     /// Set if the vehicle has been occupied.
     void setBeenOccupied(bool occupied) override { this->beenOccupied = occupied; }
+
+    /// Attaches a vehicle as a trailer to this vehicle.
+    void attachTrailer(IVehicle& vehicle) override;
 };
