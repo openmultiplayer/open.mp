@@ -77,6 +77,9 @@ struct IVehicle : public IEntity {
 	/// Update the vehicle from an unoccupied sync packet
 	virtual bool updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) = 0;
 
+	/// Update the vehicle from a trailer sync packet
+	virtual bool updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) = 0;
+
 	/// Sets the current driver of the vehicle
 	virtual void setDriver(IPlayer* player) = 0;
 
@@ -160,6 +163,9 @@ struct IVehicle : public IEntity {
 	
 	/// Set if the vehicle has been occupied.
 	virtual void setBeenOccupied(bool occupied) = 0;
+
+	/// Attaches a vehicle as a trailer to this vehicle.
+	virtual void attachTrailer(IVehicle& trailer) = 0;
 };
 
 /// A vehicle event handler
@@ -176,6 +182,7 @@ struct VehicleEventHandler {
 	virtual void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {}
 	virtual void onSpawn(IVehicle& vehicle) {}
 	virtual bool onUnoccupiedVehicleUpdate(IVehicle& vehicle, IPlayer& player, UnoccupiedVehicleUpdate const updateData) { return true; }
+	virtual bool onTrailerUpdate(IPlayer& player, IVehicle& trailer) { return true; }
 };
 
 /// A vehicle pool
