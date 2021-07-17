@@ -166,6 +166,15 @@ struct IVehicle : public IEntity {
 
 	/// Attaches a vehicle as a trailer to this vehicle.
 	virtual void attachTrailer(IVehicle& trailer) = 0;
+
+	/// Detaches a vehicle from this vehicle.
+	virtual void detachTrailer() = 0;
+
+	/// Checks if the current vehicle is a trailer.
+	virtual bool isTrailer() = 0;
+
+	/// Sets the current vehicle as a trailer internally.
+	virtual void setTower(IVehicle* tower) = 0;
 };
 
 /// A vehicle event handler

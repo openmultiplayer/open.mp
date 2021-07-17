@@ -1932,6 +1932,18 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
 			}
 		};
+
+		struct DetachTrailer final : NetworkPacketBase<149> {
+			int VehicleID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {

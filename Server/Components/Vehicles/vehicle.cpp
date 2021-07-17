@@ -51,7 +51,6 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     rot = vehicleSync.Rotation;
     health = vehicleSync.Health;
     velocity = vehicleSync.Velocity;
-
     if (driver != &player) {
         driver = &player;
         beenOccupied = true;
@@ -66,7 +65,10 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 }
 
 bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) {
-    if (!unoccupiedSync.SeatID) {
+    if (isTrailer() && tower->getDriver() != nullptr && tower->getDriver() != &player) {
+        return false;
+    }
+    else if (!unoccupiedSync.SeatID) {
         float playerDistance = glm::distance(player.getPosition(), pos);
         auto& entries = streamedPlayers_.entries();
         for (IPlayer& comparable : entries) {
@@ -89,9 +91,14 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
             return handler->onUnoccupiedVehicleUpdate(*this, player, data);
         });
 
+    if (tower) {
+        tower->detachTrailer();
+        tower = nullptr;
+    }
     if (allowed) {
         pos = unoccupiedSync.Position;
         velocity = unoccupiedSync.Velocity;
+        angularVelocity = unoccupiedSync.AngularVelocity;
     }
     return allowed;
 }
@@ -103,7 +110,18 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
 
     pos = trailerSync.Position;
     velocity = trailerSync.Velocity;
+    angularVelocity = trailerSync.TurnVelocity;
 
+    IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
+    if (!vehicle) {
+        return false;
+    }
+    else if (tower != vehicle) {
+        tower = vehicle;
+        tower->attachTrailer(*this);
+    }
+    
+    
     auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
     if (now - trailerUpdateTime > std::chrono::seconds(15)) {
         // For some reason if the trailer gets disattached on the recievers side, and not on the driver's side
@@ -366,7 +384,9 @@ void Vehicle::respawn() {
     numberPlate.clear();
     health = 1000.0f;
     driver = nullptr;
-    
+    tower = nullptr;
+    trailer = nullptr;
+
     auto entries = streamedPlayers_.entries();
     for (IPlayer& player : entries) {
         streamOutForPlayer(player);
@@ -393,11 +413,25 @@ std::chrono::milliseconds Vehicle::getLastOccupiedTime() {
 
 void Vehicle::attachTrailer(IVehicle& trailer) {
     this->trailer = &trailer;
+    trailer.setTower(this);
     NetCode::RPC::AttachTrailer trailerRPC;
     trailerRPC.TrailerID = trailer.getID();
     trailerRPC.VehicleID = poolID;
     auto entries = streamedPlayers_.entries();
     for (IPlayer& player : entries) {
         player.sendRPC(trailerRPC);
+    }
+}
+
+void Vehicle::detachTrailer() {
+    if (trailer) {
+        NetCode::RPC::DetachTrailer trailerRPC;
+        trailerRPC.VehicleID = poolID;
+        auto entries = streamedPlayers_.entries();
+        for (IPlayer& player : entries) {
+            player.sendRPC(trailerRPC);
+        }
+        trailer->setTower(nullptr);
+        trailer = nullptr;
     }
 }

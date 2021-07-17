@@ -31,7 +31,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     std::chrono::milliseconds lastOccupied;
     bool respawning = false;
     Vector3 velocity;
+    Vector3 angularVelocity;
     IVehicle* trailer = nullptr;
+    IVehicle* tower = nullptr;
     std::chrono::seconds trailerUpdateTime;
 
     Vehicle() {
@@ -181,4 +183,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     /// Attaches a vehicle as a trailer to this vehicle.
     void attachTrailer(IVehicle& vehicle) override;
+
+    /// Detaches a vehicle from this vehicle.
+    void detachTrailer() override;
+
+    /// Checks if the current vehicle is a trailer.
+    bool isTrailer() override { return tower != nullptr; }
+
+    void setTower(IVehicle* tower) override { this->tower = tower; }
 };
