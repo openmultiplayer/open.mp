@@ -294,7 +294,7 @@ static RakNet::BitStream GetBitStream(RakNet::RPCParameters& rpcParams)
 
 enum LegacyClientVersion {
     LegacyClientVersion_037 = 4057,
-    LegacyClientVersion_03DL = 4061
+    LegacyClientVersion_03DL = 4062
 };
 
 void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra) {
