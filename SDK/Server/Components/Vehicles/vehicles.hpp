@@ -47,6 +47,11 @@ enum VehicleComponentSlot {
 	VehicleComponent_VentLeft = 13,
 };
 
+enum VehicleVelocitySetType : uint8_t {
+	VehicleVelocitySet_Normal = 0,
+	VehicleVelocitySet_Angular
+};
+
 /// A vehicle interface
 struct IVehicle : public IEntity {
 
@@ -180,6 +185,12 @@ struct IVehicle : public IEntity {
 	virtual void addCarriage(IVehicle* carriage, int pos) = 0;
 	virtual void updateCarriage(Vector3 pos, Vector3 veloc) = 0;
 	virtual std::array<IVehicle*, 3> getCarriages() = 0;
+
+	/// Sets the velocity of the vehicle.
+	virtual void setVelocity(Vector3 velocity) = 0;
+
+	/// Gets the current velocity of the vehicle.
+	virtual Vector3 getVelocity() = 0;
 };
 
 /// A vehicle event handler

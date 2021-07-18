@@ -1251,6 +1251,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             int pid = peer.getID();
             Player& player = self.storage.get(pid);
             player.pos_ = vehicleSync.Position;
+            if (player.keys_.keys != vehicleSync.Keys) {
+                self.eventDispatcher.all([&peer, &player, &vehicleSync](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, vehicleSync.Keys, player.keys_.keys);
+                });
+            }
             player.keys_.keys = vehicleSync.Keys;
             player.keys_.leftRight = vehicleSync.LeftRight;
             player.keys_.upDown = vehicleSync.UpDown;
@@ -1307,6 +1312,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 vehicle.setBeenOccupied(true);
             }
             player.pos_ = passengerSync.Position;
+            if (player.keys_.keys != passengerSync.Keys) {
+                self.eventDispatcher.all([&peer, &player, &passengerSync](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, passengerSync.Keys, player.keys_.keys);
+                });
+            }
             player.keys_.keys = passengerSync.Keys;
             player.keys_.leftRight = passengerSync.LeftRight;
             player.keys_.upDown = passengerSync.UpDown;

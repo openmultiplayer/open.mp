@@ -458,3 +458,15 @@ void Vehicle::detachTrailer() {
         trailerOrTower = nullptr;
     }
 }
+
+void Vehicle::setVelocity(Vector3 velocity) {
+    if (!driver) {
+        return;
+    }
+
+    this->velocity = velocity;
+    NetCode::RPC::SetVehicleVelocity velocityRPC;
+    velocityRPC.Type = VehicleVelocitySet_Normal;
+    velocityRPC.Velocity = velocity;
+    driver->sendRPC(velocityRPC);
+}
