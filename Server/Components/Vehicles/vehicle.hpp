@@ -43,6 +43,13 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         carriages.fill(nullptr);
     }
 
+    ~Vehicle() {
+        auto entries = streamedPlayers_.entries();
+        for (IPlayer& player : entries) {
+            streamOutForPlayer(player);
+        }
+    }
+
     virtual int getVirtualWorld() const override {
         return virtualWorld_;
     }
@@ -209,5 +216,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void updateCarriage(Vector3 pos, Vector3 veloc) override {
         this->pos = pos;
         velocity = veloc;
+    }
+    std::array<IVehicle*, 3> getCarriages() override {
+        return carriages;
     }
 };
