@@ -191,6 +191,12 @@ struct IVehicle : public IEntity {
 
 	/// Gets the current velocity of the vehicle.
 	virtual Vector3 getVelocity() = 0;
+
+	/// Sets the angular velocity of the vehicle.
+	virtual void setAngularVelocity(Vector3 velocity) = 0;
+
+	/// Gets the current angular velocity of the vehicle.
+	virtual Vector3 getAngularVelocity() = 0;
 };
 
 /// A vehicle event handler

@@ -228,4 +228,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 getVelocity() override {
         return velocity;
     }
+
+    /// Sets the angular velocity of the vehicle.
+    void setAngularVelocity(Vector3 velocity) override;
+
+    /// Gets the current angular velocity of the vehicle.
+    Vector3 getAngularVelocity() override {
+        return angularVelocity;
+    }
 };

@@ -470,3 +470,15 @@ void Vehicle::setVelocity(Vector3 velocity) {
     velocityRPC.Velocity = velocity;
     driver->sendRPC(velocityRPC);
 }
+
+void Vehicle::setAngularVelocity(Vector3 velocity) {
+    if (!driver) {
+        return;
+    }
+
+    this->angularVelocity = velocity;
+    NetCode::RPC::SetVehicleVelocity velocityRPC;
+    velocityRPC.Type = VehicleVelocitySet_Angular;
+    velocityRPC.Velocity = velocity;
+    driver->sendRPC(velocityRPC);
+}
