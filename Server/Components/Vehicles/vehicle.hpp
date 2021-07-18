@@ -220,4 +220,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     std::array<IVehicle*, 3> getCarriages() override {
         return carriages;
     }
+
+    /// Sets the velocity of the vehicle.
+    void setVelocity(Vector3 velocity) override;
+
+    /// Gets the current velocity of the vehicle.
+    Vector3 getVelocity() override {
+        return velocity;
+    }
 };

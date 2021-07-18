@@ -1948,6 +1948,20 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
 			}
 		};
+
+		struct SetVehicleVelocity final : NetworkPacketBase<91> {
+			uint8_t Type;
+			Vector3 Velocity;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Type));
+				bs.write(NetworkBitStreamValue::VEC3(Velocity));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
