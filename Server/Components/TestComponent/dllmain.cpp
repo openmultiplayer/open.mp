@@ -465,6 +465,13 @@ struct TestComponent :
 			player.setPosition(Vector3(-1938.2583f, 163.6151f, 25.8754f));
 			return true;
 		}
+		else if (message == "/sbin") {
+			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() && player.getState() == PlayerState_Driver) {
+				data->getVehicle()->setAngularVelocity(Vector3(0.0f, 0.0f, 2.0f));
+			}
+			return true;
+		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {
 				obj->startMoving(ObjectMoveData{ Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
