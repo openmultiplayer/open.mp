@@ -2,6 +2,10 @@
 #include <vehicle_components.hpp>
 
 void Vehicle::streamInForPlayer(IPlayer& player) {
+    if (streamedPlayers_.valid(player.getID())) {
+        return;
+    }
+
     NetCode::RPC::StreamInVehicle streamIn;
     streamIn.VehicleID = poolID;
     streamIn.ModelID = spawnData.modelID;

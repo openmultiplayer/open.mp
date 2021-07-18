@@ -349,6 +349,13 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     }
 
     void release(int index) override {
+        Vehicle& vehicle = storage.get(index);
+        if (vehicle.spawnData.modelID == 538 || vehicle.spawnData.modelID == 537) {
+            auto carriages = storage.get(index).getCarriages();
+            for (IVehicle* carriage : carriages) {
+                storage.release(carriage->getID(), false);
+            }
+        }
         storage.release(index, false);
     }
 
