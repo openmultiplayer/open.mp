@@ -520,6 +520,7 @@ struct PlayerEventHandler {
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
+	virtual void onKeyStateChange(IPlayer& player, uint16_t newKeys, uint16_t oldKeys) {}
 };
 
 struct PlayerUpdateEventHandler {

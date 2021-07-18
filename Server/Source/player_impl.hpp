@@ -1002,6 +1002,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             footSync.Rotation *= player.rotTransform_;
             player.pos_ = footSync.Position;
             player.rot_ = footSync.Rotation;
+            if (player.keys_.keys != footSync.Keys) {
+                self.eventDispatcher.all([&peer, &player, &footSync](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, footSync.Keys, player.keys_.keys);
+                });
+            }
+
             player.keys_.keys = footSync.Keys;
             player.keys_.leftRight = footSync.LeftRight;
             player.keys_.upDown = footSync.UpDown;
