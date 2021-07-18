@@ -251,7 +251,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         playerSCMEventHandler(*this),
         vehicleDeathHandler(*this)
 	{
-		preloadModels.fill(0);
+		preloadModels.fill(1);
 	}
 
 	~VehiclePlugin()
@@ -290,7 +290,14 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 	}
 
     IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1) override {
-        return create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay });
+        IVehicle* ret = create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay });
+        if (modelID == 538 || modelID == 537) {
+            int carridgeModel = modelID == 538 ? 570 : 569;
+            ret->addCarriage(create(VehicleSpawnData{ carridgeModel, position, Z, colour1, colour2, respawnDelay }), 0);
+            ret->addCarriage(create(VehicleSpawnData{ carridgeModel, position, Z, colour1, colour2, respawnDelay }), 1);
+            ret->addCarriage(create(VehicleSpawnData{ carridgeModel, position, Z, colour1, colour2, respawnDelay }), 2);
+        }
+        return ret;
     }
 
     IVehicle* create(VehicleSpawnData data) override {

@@ -1192,6 +1192,10 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
+				if (ModelID == 570 || ModelID == 569) {
+					return; // SA:MP Legacy, trains have their carriages already implemented so we just store them, not stream them in.
+				}
+
 				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
 				bs.write(NetworkBitStreamValue::UINT32(ModelID));
 				bs.write(NetworkBitStreamValue::VEC3(Position));
@@ -2148,10 +2152,8 @@ namespace NetCode {
 
 			union {
 				uint32_t AbysmalShit;
-				struct {
-					uint32_t			 HydraThrustAngle;
-					float				 TrainSpeed;
-				};
+				uint32_t HydraThrustAngle;
+				float TrainSpeed;
 			};
 
 			bool read(INetworkBitStream& bs) {
