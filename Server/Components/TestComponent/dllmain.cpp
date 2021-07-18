@@ -812,11 +812,13 @@ struct TestComponent :
 	}
 
 	void onKeyStateChange(IPlayer& player, uint16_t newKeys, uint16_t oldKeys) override {
-		if (player.getState() == PlayerState_Driver) {
-			//IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
-			//vehicle->setVelocity()
+		if ((newKeys & 1) && !(oldKeys & 1) && player.getState() == PlayerState_Driver) {
+			IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
+			Vector3 vel = vehicle->getVelocity();
+			vehicle->setVelocity(Vector3(vel.x * 1.5f, vel.y * 1.5f, 0.0));
 		}
 	}
+
 	TestComponent() :
 		vehicleEventWatcher(*this) {
 
