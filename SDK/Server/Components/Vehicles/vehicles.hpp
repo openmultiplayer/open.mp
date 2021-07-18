@@ -175,6 +175,11 @@ struct IVehicle : public IEntity {
 
 	/// Sets the current vehicle as a trailer internally.
 	virtual void setTower(IVehicle* tower) = 0;
+
+	/// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
+	virtual void addCarriage(IVehicle* carriage, int pos) = 0;
+	virtual void updateCarriage(Vector3 pos, Vector3 veloc) = 0;
+
 };
 
 /// A vehicle event handler

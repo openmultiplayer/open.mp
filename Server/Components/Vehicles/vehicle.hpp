@@ -32,12 +32,15 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     bool respawning = false;
     Vector3 velocity;
     Vector3 angularVelocity;
-    IVehicle* trailer = nullptr;
-    IVehicle* tower = nullptr;
     std::chrono::seconds trailerUpdateTime;
+    bool towing = false;
+    IVehicle* trailerOrTower = nullptr;
+    std::array<IVehicle*, 3> carriages;
+    bool detaching = false;
 
     Vehicle() {
         mods.fill(0);
+        carriages.fill(nullptr);
     }
 
     virtual int getVirtualWorld() const override {
@@ -188,7 +191,23 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void detachTrailer() override;
 
     /// Checks if the current vehicle is a trailer.
-    bool isTrailer() override { return tower != nullptr; }
+    bool isTrailer() override { return !towing && trailerOrTower != nullptr; }
 
-    void setTower(IVehicle* tower) override { this->tower = tower; }
+    void setTower(IVehicle* tower) override {
+        detaching = true;
+        trailerOrTower = tower;
+        towing = false;
+    }
+
+    /// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
+    void addCarriage(IVehicle* carriage, int pos) override {
+        if (spawnData.modelID != 538 && spawnData.modelID != 537) {
+            return;
+        }
+        carriages.at(pos) = carriage;
+    }
+    void updateCarriage(Vector3 pos, Vector3 veloc) override {
+        this->pos = pos;
+        velocity = veloc;
+    }
 };
