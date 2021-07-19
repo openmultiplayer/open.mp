@@ -4,7 +4,7 @@
 
 struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, public PlayerEventHandler {
 	ICore* core;
-    MarkedPoolStorage<Object, IObject, IObjectsPlugin::Cnt> storage;
+    MarkedDynamicPoolStorage<Object, IObject, IObjectsPlugin::Cnt> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
     std::bitset<IObjectsPlugin::Cnt> isPlayerObject;
     bool defCameraCollision = true;
@@ -224,6 +224,9 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     }
 
     void release(int index) override {
+        if (index == 0) {
+            return;
+        }
         storage.release(index, false);
     }
 
@@ -318,12 +321,15 @@ struct PlayerObjectData final : public IPlayerObjectData {
     IPlayer& player_;
     std::bitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
     std::array<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
-    MarkedPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Cnt> storage;
+    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Cnt> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
 
-    PlayerObjectData(ObjectPlugin& plugin, IPlayer& player) : plugin_(plugin), player_(player)
-    {}
+    PlayerObjectData(ObjectPlugin& plugin, IPlayer& player) :
+        plugin_(plugin), player_(player)
+    {
+        storage.claimUnusable(0);
+    }
 
     IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override {
         int freeIdx = storage.findFreeIndex();
@@ -376,6 +382,9 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 
     bool valid(int index) const override {
+        if (index == 0) {
+            return false;
+        }
         return storage.valid(index);
     }
 
@@ -384,6 +393,9 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 
     void release(int index) override {
+        if (index == 0) {
+            return;
+        }
         storage.release(index, false);
     }
 
