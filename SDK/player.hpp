@@ -484,22 +484,30 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @return A pointer to the data or nullptr if not available
 	virtual IPlayerData* queryData(UUID id) const = 0;
 
+	/// Toggle the camera targeting functions for the player
 	virtual void toggleCameraTargeting(bool toggle) = 0;
 
+	/// Get whether the player has camera targeting functions enabled
 	virtual bool hasCameraTargeting() const = 0;
 
+	/// Get the player the player is looking at or nullptr if none
 	virtual IPlayer* getCameraTargetPlayer() = 0;
 
+	/// Get the vehicle the player is looking at or nullptr if none
 	virtual IVehicle* getCameraTargetVehicle() = 0;
 
+	/// Get the object the player is looking at or nullptr if none
 	virtual IObject* getCameraTargetObject() = 0;
 
-	// todo
+	// todo 
+	/// Get the actor the player is looking at or nullptr if none
 	//virtual IActor* getCameraTargetActor() = 0;
 
+	/// Get the player the player is targeting or nullptr if none
 	virtual IPlayer* getTargetPlayer() = 0;
 
 	// todo
+	/// Get the actor the player is targeting or nullptr if none
 	//virtual IActor* getTargetActor() = 0;
 
 	/// Query player data by its type
