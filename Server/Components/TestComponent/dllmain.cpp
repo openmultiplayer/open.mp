@@ -38,7 +38,7 @@ struct TestComponent :
 	void onConnect(IPlayer& player) override {
 		// preload actor animation
 		Animation anim("DANCING");
-		player.applyAnimation(anim, PlayerAnimationSyncType_Sync);
+		player.applyAnimation(anim, PlayerAnimationSyncType_NoSync);
 		player.toggleCameraTargeting(true);
 		IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
 		if (data) {
