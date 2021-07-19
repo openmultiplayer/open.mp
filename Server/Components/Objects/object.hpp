@@ -210,7 +210,7 @@ struct Object final : public BaseObject<IObject> {
 		players_->broadcastRPCToAll(stopMove());
 	}
 
-	bool advance(std::chrono::microseconds elapsed) override {
+	bool advance(std::chrono::microseconds elapsed) {
 		if (anyDelayedProcessing_) {
 			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 			for (IPlayer& player : players_->entries()) {
@@ -246,7 +246,7 @@ struct Object final : public BaseObject<IObject> {
 		return advanceMove(elapsed);
 	}
 
-	void createForPlayer(IPlayer& player) override {
+	void createForPlayer(IPlayer& player) {
 		createObjectForClient(player);
 
 		const int pid = player.getID();
@@ -255,7 +255,7 @@ struct Object final : public BaseObject<IObject> {
 		anyDelayedProcessing_ = true;
 	}
 
-	void destroyForPlayer(IPlayer& player) override {
+	void destroyForPlayer(IPlayer& player) {
 		destroyObjectForClient(player);
 	}
 
@@ -298,7 +298,7 @@ struct Object final : public BaseObject<IObject> {
 	}
 
 	virtual void attachToObject(IObject& object, Vector3 offset, Vector3 rotation, bool syncRotation) override {
-		setAttachmentData(ObjectAttachmentData::Type::Object, object.getID(), offset, rotation, syncRotation);
+		setAttachmentData(ObjectAttachmentData::Type::Object, static_cast<Object&>(object).poolID, offset, rotation, syncRotation);
 		restream();
 	}
 
@@ -314,7 +314,7 @@ struct Object final : public BaseObject<IObject> {
 		attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
 		attachObjectToPlayerRPC.Offset = attachmentData_.offset;
 		attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-		players_->broadcastRPCToStreamed(attachObjectToPlayerRPC, player);
+		player.broadcastRPCToStreamed(attachObjectToPlayerRPC);
 	}
 
 	~Object() {
@@ -370,7 +370,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		player_->sendRPC(stopMove());
 	}
 
-	bool advance(std::chrono::microseconds elapsed) override {
+	bool advance(std::chrono::microseconds elapsed) {
 		if (anyDelayedProcessing_) {
 			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 			if (now >= delayedProcessingTime_) {
@@ -389,7 +389,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		return advanceMove(elapsed);
 	}
 
-	void createForPlayer() override {
+	void createForPlayer() {
 		createObjectForClient(*player_);
 
 		if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
@@ -398,7 +398,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		}
 	}
 
-	void destroyForPlayer() override {
+	void destroyForPlayer() {
 		destroyObjectForClient(*player_);
 	}
 

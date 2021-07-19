@@ -32,7 +32,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
             enterVehicleRPC.PlayerID = peer.getID();
             enterVehicleRPC.VehicleID = onPlayerEnterVehicleRPC.VehicleID;
             enterVehicleRPC.Passenger = onPlayerEnterVehicleRPC.Passenger;
-            self.core->getPlayers().broadcastRPCToStreamed(enterVehicleRPC, peer, true);
+            peer.broadcastRPCToStreamed(enterVehicleRPC, true);
             return true;
         }
     } playerEnterVehicleHandler;
@@ -59,7 +59,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
             NetCode::RPC::ExitVehicle exitVehicleRPC;
             exitVehicleRPC.PlayerID = peer.getID();
             exitVehicleRPC.VehicleID = onPlayerExitVehicleRPC.VehicleID;
-            self.core->getPlayers().broadcastRPCToStreamed(exitVehicleRPC, peer, true);
+            peer.broadcastRPCToStreamed(exitVehicleRPC, true);
             return true;
         }
     } playerExitVehicleHandler;

@@ -62,7 +62,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     void free() override {
         /// Detach player from player labels so they don't try to send an RPC
         for (IPlayerTextLabel& textLabel : storage.entries()) {
-            PlayerTextLabel& lbl = storage.get(textLabel.getID());
+            PlayerTextLabel& lbl = static_cast<PlayerTextLabel&>(textLabel);
             lbl.player = nullptr;
         }
         delete this;
@@ -222,7 +222,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         for (ITextLabel& textLabel : storage.entries()) {
-            const int vw = textLabel.getVirtualWorld();
+            TextLabel& label = static_cast<TextLabel&>(textLabel);
             const TextLabelAttachmentData& data = textLabel.getAttachmentData();
             Vector3 pos;
             if (players->valid(data.playerID)) {
@@ -232,7 +232,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
                 pos = vehicles->get(data.vehicleID).getPosition();
             }
             else {
-                pos = textLabel.getPosition();
+                pos = label.pos;
             }
 
             for (IPlayer& player : players->entries()) {
@@ -241,7 +241,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    player.getVirtualWorld() == vw &&
+                    player.getVirtualWorld() == label.virtualWorld &&
                     glm::dot(dist3D, dist3D) < maxDist;
 
                 const bool isStreamedIn = textLabel.isStreamedInForPlayer(player);
@@ -258,16 +258,18 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
         for (ITextLabel& textLabel : storage.entries()) {
-            if (textLabel.getAttachmentData().playerID == pid) {
-                textLabel.detachFromPlayer(textLabel.getPosition());
+            TextLabel& label = static_cast<TextLabel&>(textLabel);
+            if (label.attachmentData.playerID == pid) {
+                textLabel.detachFromPlayer(label.pos);
             }
         }
         for (IPlayer& player : players->entries()) {
             IPlayerTextLabelData* data = player.queryData<IPlayerTextLabelData>();
             if (data) {
                 for (IPlayerTextLabel& textLabel : data->entries()) {
-                    if (textLabel.getAttachmentData().playerID == pid) {
-                        textLabel.detachFromPlayer(textLabel.getPosition());
+                    PlayerTextLabel& label = static_cast<PlayerTextLabel&>(textLabel);
+                    if (label.attachmentData.playerID == pid) {
+                        textLabel.detachFromPlayer(label.pos);
                     }
                 }
             }
