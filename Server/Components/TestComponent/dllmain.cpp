@@ -10,7 +10,7 @@
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
-	public PickupEventHandler, public TextDrawEventHandler, public ActorEventHandler
+	public PickupEventHandler, public TextDrawEventHandler, public ActorEventHandler, public PlayerUpdateEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -45,6 +45,11 @@ struct TestComponent :
 			IPlayerTextDraw* textdraw = data->create(Vector2(20.f, 420.f), "Welcome to the test omp server");
 			if (textdraw) {
 				textdraw->setLetterColour(Colour::Cyan()).setSelectable(true);
+			}
+
+			IPlayerTextDraw* textdraw2 = data->create(Vector2(400.f, 20.f), "");
+			if (textdraw2) {
+				textdraw2->setLetterColour(Colour::White()).setStyle(TextDrawStyle::TextDrawStyle_FontBeckettRegular);
 			}
 		}
 	}
@@ -326,6 +331,52 @@ struct TestComponent :
 		return "TestComponent";
 	}
 
+	bool onUpdate(IPlayer& player) override {
+		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
+		if (tdData && tdData->valid(1)) {
+			String text;
+
+			String lookAt = "Looking at";
+			IPlayer* lookatPlayer = player.getCameraTargetPlayer();
+			if (lookatPlayer) {
+				lookAt += "~n~Player " + lookatPlayer->getName();
+			}
+			IVehicle* lookAtVehicle = player.getCameraTargetVehicle();
+			if (lookAtVehicle) {
+				lookAt += "~n~Vehicle " + to_string(lookAtVehicle->getID());
+			}
+			IObject* lookAtObject = player.getCameraTargetObject();
+			if (lookAtObject) {
+				lookAt += "~n~Object " + to_string(lookAtObject->getID());
+			}
+			IActor* lookAtActor = player.getCameraTargetActor();
+			if (lookAtActor) {
+				lookAt += "~n~Actor " + to_string(lookAtActor->getID());
+			}
+
+			String aimAt = "Aiming at";
+			IPlayer* targetPlayer = player.getTargetPlayer();
+			if (targetPlayer) {
+				aimAt += "~n~Player " + targetPlayer->getName();
+			}
+			IActor* targetActor = player.getTargetActor();
+			if (targetActor) {
+				aimAt += "~n~Actor " + to_string(targetActor->getID());
+			}
+
+			if (lookatPlayer || lookAtVehicle || lookAtObject || lookAtActor) {
+				text += lookAt + "~n~";
+			}
+
+			if (targetPlayer || targetActor) {
+				text += aimAt + "~n~";
+			}
+
+			tdData->get(1).setText(text);
+		}
+		return true;
+	}
+
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		player.sendClientMessage(Colour::White(), "You have entered checkpoint");
 		IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
@@ -366,6 +417,7 @@ struct TestComponent :
 	void onInit(ICore* core) override {
 		c = core;
 		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
 		
 		classes = c->queryPlugin<IClassesPlugin>();
 		if (classes) {
@@ -481,6 +533,7 @@ struct TestComponent :
 		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
 		if (tdData && tdData->valid(0)) {
 			tdData->get(0).show();
+			tdData->get(1).show();
 		}
 
 		if (skinPreview) {
@@ -575,6 +628,7 @@ struct TestComponent :
 
 	~TestComponent() {
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
 		if (checkpoints) {
 			checkpoints->getCheckpointDispatcher().removeEventHandler(this);
 		}

@@ -110,6 +110,44 @@ IPlayer* Player::getTargetPlayer() {
     return &target;
 }
 
+IActor* Player::getCameraTargetActor() {
+    IActorsPlugin* plugin = pool_->actorsPlugin;
+
+    if (!plugin) {
+        return nullptr;
+    }
+
+    if (!plugin->valid(cameraTargetActor_)) {
+        return nullptr;
+    }
+
+    IActor& target = plugin->get(cameraTargetActor_);
+    if (!target.isStreamedInForPlayer(*this)) {
+        return nullptr;
+    }
+
+    return &target;
+}
+
+IActor* Player::getTargetActor() {
+    IActorsPlugin* plugin = pool_->actorsPlugin;
+
+    if (!plugin) {
+        return nullptr;
+    }
+
+    if (!plugin->valid(targetActor_)) {
+        return nullptr;
+    }
+
+    IActor& target = plugin->get(targetActor_);
+    if (!target.isStreamedInForPlayer(*this)) {
+        return nullptr;
+    }
+
+    return &target;
+}
+
 void Player::setState(PlayerState state) {
     pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
     state_ = state;

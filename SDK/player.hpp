@@ -523,16 +523,14 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the object the player is looking at or nullptr if none
 	virtual IObject* getCameraTargetObject() = 0;
 
-	// todo 
 	/// Get the actor the player is looking at or nullptr if none
-	//virtual IActor* getCameraTargetActor() = 0;
+	virtual IActor* getCameraTargetActor() = 0;
 
 	/// Get the player the player is targeting or nullptr if none
 	virtual IPlayer* getTargetPlayer() = 0;
 
-	// todo
 	/// Get the actor the player is targeting or nullptr if none
-	//virtual IActor* getTargetActor() = 0;
+	virtual IActor* getTargetActor() = 0;
 
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
