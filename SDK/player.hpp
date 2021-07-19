@@ -12,6 +12,11 @@
 #include "types.hpp"
 #include "values.hpp"
 
+struct IVehicle;
+struct IObject;
+struct IPlayerObject;
+struct IActor;
+
 enum PlayerFightingStyle {
 	PlayerFightingStyle_Normal = 4,
 	PlayerFightingStyle_Boxing = 5,
@@ -390,12 +395,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the players which are streamed in for this player
 	virtual const PoolEntryArray<IPlayer>& streamedInPlayers() const = 0;
 
-	/// Update other players' markers for the player
-	/// @param updateRate The rate at which to update in milliseconds
-	/// @param limit Whether the radius should be limited
-	/// @param radius The radius to limit in
-	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
-
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
@@ -485,6 +484,24 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @return A pointer to the data or nullptr if not available
 	virtual IPlayerData* queryData(UUID id) const = 0;
 
+	virtual void toggleCameraTargeting(bool toggle) = 0;
+
+	virtual bool hasCameraTargeting() const = 0;
+
+	virtual IPlayer* getCameraTargetPlayer() = 0;
+
+	virtual IVehicle* getCameraTargetVehicle() = 0;
+
+	virtual IObject* getCameraTargetObject() = 0;
+
+	// todo
+	//virtual IActor* getCameraTargetActor() = 0;
+
+	virtual IPlayer* getTargetPlayer() = 0;
+
+	// todo
+	//virtual IActor* getTargetActor() = 0;
+
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>
@@ -492,13 +509,35 @@ struct IPlayer : public IEntity, public INetworkPeer {
 		static_assert(std::is_base_of<IPlayerData, PlayerDataT>::value, "queryData parameter must inherit from IPlayerData");
 		return static_cast<PlayerDataT*>(queryData(PlayerDataT::IID));
 	}
+
+	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastRPCToStreamed(const Packet& packet, bool skipFrom = false) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : streamedInPlayers()) {
+			if (skipFrom && &player == this) {
+				continue;
+			}
+			player.sendRPC(packet);
+		}
+	}
+
+	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastPacketToStreamed(const Packet& packet, bool skipFrom = true) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : streamedInPlayers()) {
+			if (skipFrom && &player == this) {
+				continue;
+			}
+			player.sendPacket(packet);
+		}
+	}
 };
 
 typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
-
-struct IVehicle;
-struct IObject;
-struct IPlayerObject;
 
 /// A player event handler
 struct PlayerEventHandler {
@@ -543,19 +582,6 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// @param skip The player to exclude from the check
 	virtual bool isNameTaken(const String& name, const OptionalPlayer skip) = 0;
 
-	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
-	/// @param packet The packet to send
-	template<class Packet>
-	inline void broadcastRPCToStreamed(const Packet& packet, const IPlayer& from, bool skipFrom = false) {
-		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : from.streamedInPlayers()) {
-			if (skipFrom && &player == &from) {
-				continue;
-			}
-			player.sendRPC(packet);
-		}
-	}
-
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>
@@ -566,19 +592,6 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 				continue;
 			}
 			player.sendRPC(packet);
-		}
-	}
-
-	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
-/// @param packet The packet to send
-	template<class Packet>
-	inline void broadcastPacketToStreamed(const Packet& packet, const IPlayer& from, bool skipFrom = true) {
-		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : from.streamedInPlayers()) {
-			if (skipFrom && &player == &from) {
-				continue;
-			}
-			player.sendPacket(packet);
 		}
 	}
 
