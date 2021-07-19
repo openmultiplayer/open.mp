@@ -140,14 +140,14 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
                 return false;
             }
 
-            IPlayerTextDrawData* data = peer.queryData<IPlayerTextDrawData>();
-            if (data && data->isSelecting()) {
+            PlayerTextDrawData* data = peer.queryData<PlayerTextDrawData>();
+            if (data && data->selecting) {
                 if (RPC.Invalid) {
                     self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
-                    data->endSelection();
+                    data->selecting = false;
                 }
                 else {
-                    if (RPC.PlayerTextDraw && data->valid(RPC.TextDrawID)) {
+                    if (RPC.PlayerTextDraw && data->storage.valid(RPC.TextDrawID)) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
                         self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.entry);
                     }
