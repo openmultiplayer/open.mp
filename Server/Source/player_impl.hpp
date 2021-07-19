@@ -11,6 +11,7 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/Objects/objects.hpp>
+#include <Server/Components/Actors/actors.hpp>
 #include <glm/glm.hpp>
 #include <regex>
 
@@ -666,7 +667,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     IObject* getCameraTargetObject() override;
 
+    IActor* getCameraTargetActor() override;
+
     IPlayer* getTargetPlayer() override;
+
+    IActor* getTargetActor() override;
 
     ~Player() {
         for (auto& v : playerData_) {
@@ -682,7 +687,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
     IVehiclesPlugin* vehiclesPlugin = nullptr;
     IObjectsPlugin* objectsPlugin = nullptr;
-    // todo actorsplugin
+    IActorsPlugin* actorsPlugin = nullptr;
     int markersShow;
     std::chrono::milliseconds markersUpdateRate;
     bool markersLimit;
@@ -1421,6 +1426,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
         objectsPlugin = core.queryPlugin<IObjectsPlugin>();
+        actorsPlugin = core.queryPlugin<IActorsPlugin>();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
