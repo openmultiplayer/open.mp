@@ -5,6 +5,7 @@
 #include <chrono>
 #include <optional>
 #include <type_traits>
+#include <string_view>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
@@ -88,6 +89,29 @@ enum PlayerBulletHitType : uint8_t {
 	PlayerBulletHitType_Player = 1,
 	PlayerBulletHitType_Vehicle = 2,
 	PlayerBulletHitType_Object = 3,
+};
+
+enum BodyPart {
+	BodyPart_Torso = 3,
+	BodyPart_Groin,
+	BodyPart_LeftArm,
+	BodyPart_RightArm,
+	BodyPart_LeftLeg,
+	BodyPart_RightLeg,
+	BodyPart_Head
+};
+
+static constexpr std::string_view BodyPartString[] = {
+	"invalid",
+	"invalid",
+	"invalid",
+	"torso",
+	"groin",
+	"left arm",
+	"right arm",
+	"left leg",
+	"right leg",
+	"head"
 };
 
 struct PlayerKeyData {
@@ -568,8 +592,8 @@ struct PlayerEventHandler {
 	virtual void onScoreChange(IPlayer& player, int score) {}
 	virtual void onNameChange(IPlayer & player, const String & oldName) {}
 	virtual void onDeath(IPlayer& player, OptionalPlayer killer, int reason) {}
-	virtual void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, unsigned part) {}
-	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
+	virtual void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) {}
+	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
 };
