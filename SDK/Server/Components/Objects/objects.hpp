@@ -144,9 +144,6 @@ struct IBaseObject : public IEntity {
 	/// Stop moving the object prematurely
 	virtual void stopMoving() = 0;
 
-	/// Advance the object in time
-	virtual bool advance(std::chrono::microseconds elapsed) = 0;
-
 	/// Attach the object to a vehicle
 	virtual void attachToVehicle(IVehicle& vehicle, Vector3 offset, Vector3 rotation) = 0;
 
@@ -168,12 +165,6 @@ struct IBaseObject : public IEntity {
 
 /// An object interface
 struct IObject : public IBaseObject {
-	/// Create the global object for a specific player
-	virtual void createForPlayer(IPlayer& player) = 0;
-
-	/// Destroy the global object for a specific player
-	virtual void destroyForPlayer(IPlayer& player) = 0;
-
 	/// Attach the object to a player
 	virtual void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) = 0;
 
@@ -182,11 +173,6 @@ struct IObject : public IBaseObject {
 };
 
 struct IPlayerObject : public IBaseObject {
-	/// Creates the player object for its player
-	virtual void createForPlayer() = 0;
-
-	/// Destroys the player object for its player
-	virtual void destroyForPlayer() = 0;
 };
 
 struct ObjectEventHandler;

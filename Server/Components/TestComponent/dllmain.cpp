@@ -33,6 +33,7 @@ struct TestComponent :
 	}
 
 	void onConnect(IPlayer& player) override {
+		player.toggleCameraTargeting(true);
 		IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
 		if (data) {
 			IPlayerTextDraw* textdraw = data->create(Vector2(20.f, 420.f), "Welcome to the test omp server");
