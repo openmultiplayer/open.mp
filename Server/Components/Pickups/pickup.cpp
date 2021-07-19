@@ -123,17 +123,16 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 
 	void onTick(std::chrono::microseconds elapsed) override {
 		const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-		for (IPickup& pickup : storage.entries()) {
-			const int vw = pickup.getVirtualWorld();
-			Vector3 pos = pickup.getPosition();
+		for (IPickup& p : storage.entries()) {
+			Pickup& pickup = static_cast<Pickup&>(p);
 
 			for (IPlayer& player : players->entries()) {
 				const PlayerState state = player.getState();
-				const Vector3 dist3D = pos - player.getPosition();
+				const Vector3 dist3D = pickup.pos - player.getPosition();
 				const bool shouldBeStreamedIn =
 					state != PlayerState_Spectating &&
 					state != PlayerState_None &&
-					player.getVirtualWorld() == vw &&
+					player.getVirtualWorld() == pickup.virtualWorld &&
 					glm::dot(dist3D, dist3D) < maxDist;
 
 				const bool isStreamedIn = pickup.isStreamedInForPlayer(player);
