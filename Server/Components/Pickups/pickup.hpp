@@ -1,6 +1,5 @@
 #include <sdk.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
-#include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
 struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
@@ -38,7 +37,6 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
 
     void setVirtualWorld(int vw) override {
         virtualWorld = vw;
-        restream();
     }
 
     int getID() const override {
