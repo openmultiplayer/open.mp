@@ -312,6 +312,12 @@ struct TestComponent :
 			}
 		}
 
+		if (message == "/actorvulnerable" && actor) {
+			static bool vuln = false;
+			actor->setInvulnerable(!vuln);
+			vuln = !vuln;
+		}
+
         return false;
 
 	}
