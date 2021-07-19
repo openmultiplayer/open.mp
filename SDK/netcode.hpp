@@ -717,14 +717,10 @@ namespace NetCode {
 
 		struct ApplyPlayerAnimation final : NetworkPacketBase<86> {
 			int PlayerID;
-			NetworkString AnimLib;
-			NetworkString AnimName;
-			float Delta;
-			bool Loop;
-			bool LockX;
-			bool LockY;
-			bool Freeze;
-			uint32_t Time;
+			const Animation& Anim;
+
+			ApplyPlayerAnimation(const Animation& anim) : Anim(anim)
+			{}
 
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -732,14 +728,14 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(AnimLib));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(AnimName));
-				bs.write(NetworkBitStreamValue::FLOAT(Delta));
-				bs.write(NetworkBitStreamValue::BIT(Loop));
-				bs.write(NetworkBitStreamValue::BIT(LockX));
-				bs.write(NetworkBitStreamValue::BIT(LockY));
-				bs.write(NetworkBitStreamValue::BIT(Freeze));
-				bs.write(NetworkBitStreamValue::UINT32(Time));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.lib));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.name));
+				bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
+				bs.write(NetworkBitStreamValue::BIT(Anim.loop));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
+				bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
+				bs.write(NetworkBitStreamValue::UINT32(Anim.time));
 			}
 		};
 
@@ -1718,6 +1714,106 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::BIT(Enabled));
+			}
+		};
+
+		struct ShowActorForPlayer final : NetworkPacketBase<171> {
+			int ActorID;
+			int SkinID;
+			Vector3 Position;
+			float Angle;
+			float Health;
+			bool Invulnerable;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::UINT32(SkinID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+				bs.write(NetworkBitStreamValue::UINT8(Invulnerable));
+			}
+		};
+
+		struct HideActorForPlayer final : NetworkPacketBase<172> {
+			int ActorID;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+			}
+		};
+
+		struct ApplyActorAnimationForPlayer final : NetworkPacketBase<173> {
+			int ActorID;
+			const Animation& Anim;
+
+			ApplyActorAnimationForPlayer(const Animation& anim) : Anim(anim)
+			{}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.lib));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.name));
+				bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
+				bs.write(NetworkBitStreamValue::BIT(Anim.loop));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
+				bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
+				bs.write(NetworkBitStreamValue::UINT32(Anim.time));
+			}
+		};
+
+		struct ClearActorAnimationsForPlayer final : NetworkPacketBase<174> {
+			int ActorID;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+			}
+		};
+
+		struct SetActorFacingAngleForPlayer final : NetworkPacketBase<175> {
+			int ActorID;
+			float Angle;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+			}
+		};
+
+		struct SetActorPosForPlayer final : NetworkPacketBase<176> {
+			int ActorID;
+			Vector3 Pos;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetActorHealthForPlayer final : NetworkPacketBase<178> {
+			int ActorID;
+			float Health;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+			}
+		};
+
+		struct OnPlayerDamageActor final : NetworkPacketBase<177> {
+			bool Unknown;
+			int ActorID;
+			float Damage;
+			uint32_t WeaponID;
+			uint32_t Bodypart;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::BIT>(Unknown);
+				bs.read<NetworkBitStreamValueType::UINT16>(ActorID);
+				bs.read<NetworkBitStreamValueType::FLOAT>(Damage);
+				bs.read<NetworkBitStreamValueType::UINT32>(WeaponID);
+				return bs.read<NetworkBitStreamValueType::UINT32>(Bodypart);
 			}
 		};
 	}

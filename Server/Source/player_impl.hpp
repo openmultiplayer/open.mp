@@ -303,16 +303,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void applyAnimation(const Animation& animation, PlayerAnimationSyncType syncType) override {
-        NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC;
+        NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC(animation);
         applyPlayerAnimationRPC.PlayerID = poolID;
-        applyPlayerAnimationRPC.AnimLib = animation.lib;
-        applyPlayerAnimationRPC.AnimName = animation.name;
-        applyPlayerAnimationRPC.Delta = animation.delta;
-        applyPlayerAnimationRPC.Loop = animation.loop;
-        applyPlayerAnimationRPC.LockX = animation.lockX;
-        applyPlayerAnimationRPC.LockY = animation.lockY;
-        applyPlayerAnimationRPC.Freeze = animation.freeze;
-        applyPlayerAnimationRPC.Time = animation.time;
 
         if (syncType == PlayerAnimationSyncType_NoSync) {
             sendRPC(applyPlayerAnimationRPC);
@@ -746,7 +738,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     from,
                     onPlayerGiveTakeDamageRPC.Damage,
                     onPlayerGiveTakeDamageRPC.WeaponID,
-                    onPlayerGiveTakeDamageRPC.Bodypart
+                    BodyPart(onPlayerGiveTakeDamageRPC.Bodypart)
                 );
             }
             else {
@@ -759,7 +751,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID),
                     onPlayerGiveTakeDamageRPC.Damage,
                     onPlayerGiveTakeDamageRPC.WeaponID,
-                    onPlayerGiveTakeDamageRPC.Bodypart
+                    BodyPart(onPlayerGiveTakeDamageRPC.Bodypart)
                 );
             }
 

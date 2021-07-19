@@ -6,10 +6,11 @@
 #include <Server/Components/TextLabels/textlabels.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Actors/actors.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
-	public PickupEventHandler, public TextDrawEventHandler
+	public PickupEventHandler, public TextDrawEventHandler, public ActorEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -19,6 +20,7 @@ struct TestComponent :
 	IPickupsPlugin * pickups = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
 	ITextDrawsPlugin* tds = nullptr;
+	IActorsPlugin* actors = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -26,6 +28,7 @@ struct TestComponent :
 	ITextDraw* skinPreview = nullptr;
 	ITextDraw* vehiclePreview = nullptr;
 	ITextDraw* sprite = nullptr;
+	IActor* actor = nullptr;
 	bool moved = false;
 
 	UUID getUUID() override {
@@ -33,6 +36,9 @@ struct TestComponent :
 	}
 
 	void onConnect(IPlayer& player) override {
+		// preload actor animation
+		Animation anim("DANCING");
+		player.applyAnimation(anim, PlayerAnimationSyncType_Sync);
 		player.toggleCameraTargeting(true);
 		IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
 		if (data) {
@@ -339,6 +345,18 @@ struct TestComponent :
 		cp->disable(player);
 	}
 
+	void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override {
+		float newHP = actor.getHealth() - amount;
+		actor.setHealth(newHP);
+		if (newHP < 0.f) {
+			player.sendClientMessage(Colour::White(), "aaaaahh you killed the granny");
+			actors->release(actor.getID());
+		}
+		else {
+			player.sendClientMessage(Colour::White(), "aaahhh you shot the granny in the " + String(BodyPartString[part]));
+		}
+	}
+
 	void onInit(ICore* core) override {
 		c = core;
 		c->getPlayers().getEventDispatcher().addEventHandler(this);
@@ -410,6 +428,24 @@ struct TestComponent :
 			if (sprite) {
 				sprite->setStyle(TextDrawStyle_Sprite).setTextSize(Vector2(80.f)).setSelectable(true);
 			}
+		}
+
+		actors = c->queryPlugin<IActorsPlugin>();
+		if (actors) {
+			actors->getEventDispatcher().addEventHandler(this);
+			actor = actors->create(10, Vector3(-5.f, -5.f, 3.4f), 90.f);
+			actor->setInvulnerable(false);
+			actor->setHealth(75.f);
+			Animation anim;
+			anim.lib = "DANCING";
+			anim.name = "dance_loop";
+			anim.delta = 4.1;
+			anim.loop = true;
+			anim.lockX = false;
+			anim.lockY = false;
+			anim.freeze = false;
+			anim.time = 0;
+			actor->applyAnimation(anim);
 		}
 	}
 
@@ -508,11 +544,6 @@ struct TestComponent :
 		player.giveMoney(10000);
 	}
 
-	bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) override {
-		player.sendClientMessage(Colour::White(), "nice miss loser");
-		return true;
-	}
-
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot player " + target.getName());
 		return true;
@@ -549,6 +580,9 @@ struct TestComponent :
 		}
 		if (tds) {
 			tds->getEventDispatcher().removeEventHandler(this);
+		}
+		if (actors) {
+			actors->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;
