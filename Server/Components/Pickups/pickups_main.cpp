@@ -1,6 +1,6 @@
 #include "pickup.hpp"
 
-struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, public PickupEventHandler {
+struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler {
 	ICore * core;
 	MarkedPoolStorage<Pickup, IPickup, IPickupsPlugin::Cnt> storage;
 	DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
