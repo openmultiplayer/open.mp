@@ -84,6 +84,7 @@ namespace RakNet
 		private:
 			struct DataPlusPtr
 			{
+				DataPlusPtr() { readyToRead = false; }
 				SingleProducerConsumerType object;
 
 				// Ready to read is so we can use an equality boolean comparison, in case the writePointer var is trashed while context switching.
@@ -105,9 +106,9 @@ namespace RakNet
 			writePointer=readPointer;
 			readPointer->next = new DataPlusPtr;
 			int listSize;
-
+#ifdef _DEBUG
 			RakAssert(MINIMUM_LIST_SIZE>=3);
-
+#endif
 			for (listSize=2; listSize < MINIMUM_LIST_SIZE; listSize++)
 			{
 				readPointer=readPointer->next;
@@ -164,10 +165,10 @@ namespace RakNet
 		{
 			//	DataPlusPtr *dataContainer = (DataPlusPtr *)structure;
 
-	#ifdef _DEBUG
+#ifdef _DEBUG
 			RakAssert(writePointer->next!=readPointer);
 			RakAssert(writePointer!=writeAheadPointer);
-	#endif
+#endif
 
 			writeCount++;
 			// User is done with the data, allow send by updating the write pointer
@@ -193,19 +194,19 @@ namespace RakNet
 		template <class SingleProducerConsumerType>
 			void SingleProducerConsumer<SingleProducerConsumerType>::CancelReadLock( SingleProducerConsumerType* cancelToLocation )
 		{
-
+#ifdef _DEBUG
 			RakAssert(readPointer!=writePointer);
-
+#endif
 			readAheadPointer=(DataPlusPtr *)cancelToLocation;
 		}
 
 		template <class SingleProducerConsumerType>
 			void SingleProducerConsumer<SingleProducerConsumerType>::ReadUnlock( void )
 		{
-	#ifdef _DEBUG
+#ifdef _DEBUG
 			RakAssert(readAheadPointer!=readPointer); // If hits, then called ReadUnlock before ReadLock
 			RakAssert(readPointer!=writePointer); // If hits, then called ReadUnlock when Read returns 0
-	#endif
+#endif
 			readCount++;
 
 			// Allow writes to this memory block
@@ -231,9 +232,9 @@ namespace RakNet
 			while (listSize-- > MINIMUM_LIST_SIZE)
 			{
 				next=writePointer->next;
-
+#ifdef _DEBUG
 				RakAssert(writePointer!=readPointer);
-
+#endif
 				delete (char*) writePointer;
 				writePointer=next;
 			}
