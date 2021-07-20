@@ -45,7 +45,7 @@ struct ContiguousListSpan {
 		}
 
 		Iterator operator++(int) {
-			pointer tmp = ptr++;
+			pointer tmp = ptr_++;
 			return Iterator(tmp);
 		}
 
@@ -55,7 +55,7 @@ struct ContiguousListSpan {
 		}
 
 		Iterator operator--(int) {
-			pointer tmp = ptr--;
+			pointer tmp = ptr_--;
 			return Iterator(tmp);
 		}
 
