@@ -5,10 +5,12 @@
 
 template <class ToInherit>
 struct VariableStorageBase : public ToInherit {
-	void setString(const String& key, const String& value) override {
+	void setString(const String& k, const String& value) override {
+		std::string key = k.c_str();
 		data_[key].emplace<String>(value);
 	}
-	const unsigned int getString(const String& key, String& out) const override {
+	const unsigned int getString(const String& k, String& out) const override {
+		std::string key = k.c_str();
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return 0;
@@ -20,11 +22,13 @@ struct VariableStorageBase : public ToInherit {
 		return out.length();
 	}
 
-	void setInt(const String& key, int value) override {
+	void setInt(const String& k, int value) override {
+		std::string key = k.c_str();
 		data_[key].emplace<int>(value);
 	}
 
-	int getInt(const String& key) const override {
+	int getInt(const String& k) const override {
+		std::string key = k.c_str();
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return 0;
@@ -35,11 +39,13 @@ struct VariableStorageBase : public ToInherit {
 		return std::get<int>(it->second);
 	}
 
-	void setFloat(const String& key, float value) override {
+	void setFloat(const String& k, float value) override {
+		std::string key = k.c_str();
 		data_[key].emplace<float>(value);
 	}
 
-	float getFloat(const String& key) const override {
+	float getFloat(const String& k) const override {
+		std::string key = k.c_str();
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return 0;
@@ -50,7 +56,8 @@ struct VariableStorageBase : public ToInherit {
 		return std::get<float>(it->second);
 	}
 
-	VariableType getType(const String& key) const override {
+	VariableType getType(const String& k) const override {
+		std::string key = k.c_str();
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return VariableType_None;
@@ -62,12 +69,13 @@ struct VariableStorageBase : public ToInherit {
 		return VariableType(index + 1);
 	}
 
-	bool erase(const String& key) override {
+	bool erase(const String& k) override {
+		std::string key = k.c_str();
 		return data_.erase(key) == 1;
 	}
 
 private:
-	std::unordered_map<String, std::variant<int, String, float>> data_;
+	std::unordered_map<std::string, std::variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
