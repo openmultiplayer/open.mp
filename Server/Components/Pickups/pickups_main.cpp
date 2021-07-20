@@ -117,7 +117,7 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler {
 	}
 
 	/// Get a set of all the available labels
-	const PoolEntryArray<IPickup> & entries() const override {
+	ContiguousRefList<IPickup> entries() override {
 		return storage.entries();
 	}
 

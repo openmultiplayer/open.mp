@@ -9,9 +9,6 @@
 #include "types.hpp"
 #include "entity.hpp"
 
-template <typename T>
-using PoolEntryArray = DynamicArray<std::reference_wrapper<T>>;
-
 /* Interfaces, to be passed around */
 
 template <typename T, size_t Count>
@@ -25,7 +22,7 @@ struct IReadOnlyPool {
     virtual T& get(int index) = 0;
 
     /// Get a set of all the available objects
-    virtual const PoolEntryArray<T>& entries() const = 0;
+    virtual ContiguousRefList<T> entries() = 0;
 
 };
 
@@ -71,6 +68,9 @@ struct ScopedPoolReleaseLock {
     }
 };
 
+template <typename T>
+using DynamicRefArray = std::vector<std::reference_wrapper<T>>;
+
 template <typename T, size_t Size>
 struct UniqueIDArray : public NoCopy {
     int findFreeIndex(int from) const {
@@ -113,13 +113,13 @@ struct UniqueIDArray : public NoCopy {
         return valid_.test(index);
     }
 
-    const PoolEntryArray<T>& entries() const {
-        return entries_;
+    ContiguousRefList<T> entries() {
+        return ContiguousRefList<T>(entries_.data(), entries_.size());
     }
 
 private:
     std::bitset<Size> valid_;
-    PoolEntryArray<T> entries_;
+    DynamicRefArray<T> entries_;
 };
 
 template <typename T>
@@ -139,12 +139,12 @@ struct UniqueEntryArray : public NoCopy {
         entries_.clear();
     }
 
-    const PoolEntryArray<T>& entries() const {
-        return entries_;
+    ContiguousRefList<T> entries() {
+        return ContiguousRefList<T>(entries_.data(), entries_.size());
     }
 
 private:
-    PoolEntryArray<T> entries_;
+    DynamicRefArray<T> entries_;
 };
 
 struct PoolIDProvider {
@@ -199,7 +199,7 @@ struct StaticPoolStorageBase : public NoCopy {
         return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
-    const PoolEntryArray<Interface>& entries() const {
+    const ContiguousRefList<Interface> entries() {
         return allocated_.entries();
     }
 
@@ -270,7 +270,7 @@ struct DynamicPoolStorageBase : public NoCopy {
         return *pool_[index];
     }
 
-    const PoolEntryArray<Interface>& entries() const {
+    ContiguousRefList<Interface> entries() {
         return allocated_.entries();
     }
 

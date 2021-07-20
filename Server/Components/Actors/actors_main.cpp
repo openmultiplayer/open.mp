@@ -120,7 +120,7 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
 	}
 
 	/// Get a set of all the available labels
-	const PoolEntryArray<IActor> & entries() const override {
+	ContiguousRefList<IActor> entries() override {
 		return storage.entries();
 	}
 

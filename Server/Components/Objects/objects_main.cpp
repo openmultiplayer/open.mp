@@ -243,7 +243,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IObject>& entries() const override {
+    ContiguousRefList<IObject> entries() override {
         return storage.entries();
     }
 
@@ -408,7 +408,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IPlayerObject>& entries() const override {
+    ContiguousRefList<IPlayerObject> entries() override {
         return storage.entries();
     }
 
