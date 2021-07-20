@@ -10,12 +10,6 @@ typedef int PickupType;
 
 /// Pickup interace
 struct IPickup : public IEntity {
-	/// Gets pickup's position 
-	virtual Vector3 getPosition() const = 0;
-
-	/// Sets pickup's position and restreams 
-	virtual void setPosition(Vector3 position) = 0;
-
 	/// Sets pickup's type and restreams 
 	virtual void setType(PickupType t) = 0;
 

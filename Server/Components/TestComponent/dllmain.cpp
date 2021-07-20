@@ -6,10 +6,13 @@
 #include <Server/Components/TextLabels/textlabels.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Menus/menus.hpp>
+#include <Server/Components/Actors/actors.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
-	public PickupEventHandler, public TextDrawEventHandler
+	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
+	public PlayerUpdateEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -19,6 +22,8 @@ struct TestComponent :
 	IPickupsPlugin * pickups = nullptr;
 	ITextLabelsPlugin* labels = nullptr;
 	ITextDrawsPlugin* tds = nullptr;
+	IMenusPlugin* menus = nullptr;
+	IActorsPlugin* actors = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -30,6 +35,8 @@ struct TestComponent :
 	IVehicle* trailer = nullptr;
 	IVehicle* train = nullptr;
 
+	IMenu* menu = nullptr;
+	IActor* actor = nullptr;
 	bool moved = false;
 
 	UUID getUUID() override {
@@ -74,11 +81,20 @@ struct TestComponent :
 	} vehicleEventWatcher;
 
 	void onConnect(IPlayer& player) override {
+		// preload actor animation
+		Animation anim("DANCING");
+		player.applyAnimation(anim, PlayerAnimationSyncType_NoSync);
+		player.toggleCameraTargeting(true);
 		IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
 		if (data) {
 			IPlayerTextDraw* textdraw = data->create(Vector2(20.f, 420.f), "Welcome to the test omp server");
 			if (textdraw) {
 				textdraw->setLetterColour(Colour::Cyan()).setSelectable(true);
+			}
+
+			IPlayerTextDraw* textdraw2 = data->create(Vector2(400.f, 20.f), "");
+			if (textdraw2) {
+				textdraw2->setLetterColour(Colour::White()).setStyle(TextDrawStyle::TextDrawStyle_FontBeckettRegular);
 			}
 		}
 	}
@@ -593,11 +609,71 @@ struct TestComponent :
 			}
 		}
 
+		if (message == "/actorvulnerable" && actor) {
+			static bool vuln = false;
+			actor->setInvulnerable(!vuln);
+			vuln = !vuln;
+			return true;
+		}
+
+		if (menus && menu) {
+			if (message == "/menu") {
+				menu->showForPlayer(player);
+				return true;
+			}
+		}
+
         return false;
 	}
 
 	const char* pluginName() override {
 		return "TestComponent";
+	}
+
+	bool onUpdate(IPlayer& player) override {
+		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
+		if (tdData && tdData->valid(1)) {
+			String text;
+
+			String lookAt = "Looking at";
+			IPlayer* lookatPlayer = player.getCameraTargetPlayer();
+			if (lookatPlayer) {
+				lookAt += "~n~Player " + lookatPlayer->getName();
+			}
+			IVehicle* lookAtVehicle = player.getCameraTargetVehicle();
+			if (lookAtVehicle) {
+				lookAt += "~n~Vehicle " + to_string(lookAtVehicle->getID());
+			}
+			IObject* lookAtObject = player.getCameraTargetObject();
+			if (lookAtObject) {
+				lookAt += "~n~Object " + to_string(lookAtObject->getID());
+			}
+			IActor* lookAtActor = player.getCameraTargetActor();
+			if (lookAtActor) {
+				lookAt += "~n~Actor " + to_string(lookAtActor->getID());
+			}
+
+			String aimAt = "Aiming at";
+			IPlayer* targetPlayer = player.getTargetPlayer();
+			if (targetPlayer) {
+				aimAt += "~n~Player " + targetPlayer->getName();
+			}
+			IActor* targetActor = player.getTargetActor();
+			if (targetActor) {
+				aimAt += "~n~Actor " + to_string(targetActor->getID());
+			}
+
+			if (lookatPlayer || lookAtVehicle || lookAtObject || lookAtActor) {
+				text += lookAt + "~n~";
+			}
+
+			if (targetPlayer || targetActor) {
+				text += aimAt + "~n~";
+			}
+
+			tdData->get(1).setText(text);
+		}
+		return true;
 	}
 
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
@@ -632,9 +708,22 @@ struct TestComponent :
 		cp->disable(player);
 	}
 
+	void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override {
+		float newHP = actor.getHealth() - amount;
+		actor.setHealth(newHP);
+		if (newHP < 0.f) {
+			player.sendClientMessage(Colour::White(), "aaaaahh you killed the granny");
+			actors->release(actor.getID());
+		}
+		else {
+			player.sendClientMessage(Colour::White(), "aaahhh you shot the granny in the " + String(BodyPartString[part]));
+		}
+	}
+
 	void onInit(ICore* core) override {
 		c = core;
 		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
 		
 		classes = c->queryPlugin<IClassesPlugin>();
 		if (classes) {
@@ -709,6 +798,33 @@ struct TestComponent :
 				sprite->setStyle(TextDrawStyle_Sprite).setTextSize(Vector2(80.f)).setSelectable(true);
 			}
 		}
+
+		menus = c->queryPlugin<IMenusPlugin>();
+		if (menus) {
+			menus->getEventDispatcher().addEventHandler(this);
+			menu = menus->create("Who's the goat????", { 200.0, 100.0 }, 0, 300.0, 300.0);
+			menu->addMenuItem("eminem", 0);
+			menu->addMenuItem("mj", 0);
+			menu->addMenuItem("snoop", 0);
+		}
+
+		actors = c->queryPlugin<IActorsPlugin>();
+		if (actors) {
+			actors->getEventDispatcher().addEventHandler(this);
+			actor = actors->create(10, Vector3(-5.f, -5.f, 3.4f), 90.f);
+			actor->setInvulnerable(false);
+			actor->setHealth(75.f);
+			Animation anim;
+			anim.lib = "DANCING";
+			anim.name = "dance_loop";
+			anim.delta = 4.1;
+			anim.loop = true;
+			anim.lockX = false;
+			anim.lockY = false;
+			anim.freeze = false;
+			anim.time = 0;
+			actor->applyAnimation(anim);
+		}
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -737,6 +853,7 @@ struct TestComponent :
 		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
 		if (tdData && tdData->valid(0)) {
 			tdData->get(0).show();
+			tdData->get(1).show();
 		}
 
 		if (skinPreview) {
@@ -806,8 +923,18 @@ struct TestComponent :
 		player.giveMoney(10000);
 	}
 
-	bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) override {
-		player.sendClientMessage(Colour::White(), "nice miss loser");
+	bool onPlayerSelectedMenuRow(IPlayer & player, MenuRow row) override {
+		IPlayerMenuData * data = player.queryData<IPlayerMenuData>();
+		if (data->getMenuID() == menu->getID()) {
+			if (row == 1) {
+				player.sendClientMessage(Colour::White(), "Correct! You have received 10k dollas!!!!!");
+				player.giveMoney(10000);
+			}
+			else {
+				player.sendClientMessage(Colour::White(), "Wrong! You just lost 10k dollas!!!!!");
+				player.giveMoney(-10000);
+			}
+		}
 		return true;
 	}
 
@@ -834,12 +961,19 @@ struct TestComponent :
 		return true;
 	}
 
-	void onKeyStateChange(IPlayer& player, uint16_t newKeys, uint16_t oldKeys) override {
-		if ((newKeys & 1) && !(oldKeys & 1) && player.getState() == PlayerState_Driver) {
+	void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) override {
+		if (player.getState() == PlayerState_Driver) {
 			IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
-			Vector3 vel = vehicle->getVelocity();
-			vehicle->setVelocity(Vector3(vel.x * 1.5f, vel.y * 1.5f, 0.0));
+			if ((newKeys & 1) && !(oldKeys & 1)) {
+				Vector3 vel = vehicle->getVelocity();
+				vehicle->setVelocity(Vector3(vel.x * 1.5f, vel.y * 1.5f, 0.0));
+			}
+			else if ((newKeys & 131072)) {
+				vehicle->setPosition(vehicle->getPosition());
+				vehicle->setZAngle(vehicle->getZAngle());
+			}
 		}
+		
 	}
 
 	TestComponent() :
@@ -848,6 +982,7 @@ struct TestComponent :
 	}
 	~TestComponent() {
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
 		if (checkpoints) {
 			checkpoints->getCheckpointDispatcher().removeEventHandler(this);
 		}
@@ -862,6 +997,9 @@ struct TestComponent :
 		}
 		if (vehicles) {
 			vehicles->getEventDispatcher().removeEventHandler(&vehicleEventWatcher);
+		}
+		if (actors) {
+			actors->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;

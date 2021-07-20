@@ -6,28 +6,6 @@
 #include "Server/Components/Objects/objects.hpp"
 #include "vehicle_params.hpp"
 
-/// Helper macro that reads a bit stream value and returns false on fail
-#define CHECKED_READ(output, input) \
-	{ \
-		NetworkBitStreamValue output ## _in input; \
-		if (!bs.read(output ## _in)) { \
-			return false; \
-		} else { \
-			output = std::get<decltype(output)>(output ## _in.data); \
-		} \
-	}
-
-/// Helper macro that reads a bit stream value and returns false on fail
-#define CHECKED_READ_TYPE(output, type, input) \
-	{ \
-		NetworkBitStreamValue output ## _in input; \
-		if (!bs.read(output ## _in)) { \
-			return false; \
-		} else { \
-			output = std::get<type>(output ## _in.data); \
-		} \
-	}
-
 namespace NetCode {
 	namespace RPC {
 		struct Invalid final : NetworkPacketBase<0> {
@@ -50,13 +28,12 @@ namespace NetCode {
 			NetworkString VersionString;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(VersionNumber, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Modded, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(Name, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
-				CHECKED_READ(ChallengeResponse, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Key, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
-				CHECKED_READ(VersionString, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT32>(VersionNumber);
+				bs.read<NetworkBitStreamValueType::UINT8>(Modded);
+				bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Name);
+				bs.read<NetworkBitStreamValueType::UINT32>(ChallengeResponse);
+				bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Key);
+				return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(VersionString);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -76,13 +53,12 @@ namespace NetCode {
 			NetworkString Name;
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(PlayerID, NetworkBitStreamValueType::UINT16);
+				bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
 				uint32_t rgba;
-				bs.read(rgba, NetworkBitStreamValueType::UINT32);
+				bs.read<NetworkBitStreamValueType::UINT32>(rgba);
 				Col = Colour::FromRGBA(rgba);
-				bs.read(IsNPC, NetworkBitStreamValueType::UINT8);
-				bs.read(Name, NetworkBitStreamValueType::DYNAMIC_LEN_STR_8);
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT8>(IsNPC);
+				return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Name);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -98,9 +74,8 @@ namespace NetCode {
 			uint8_t Reason;
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(PlayerID, NetworkBitStreamValueType::UINT16);
-				bs.read(Reason, NetworkBitStreamValueType::UINT8);
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
+				return bs.read<NetworkBitStreamValueType::UINT8>(Reason);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -139,34 +114,33 @@ namespace NetCode {
 			NetworkArray<uint8_t> VehicleModels;
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(EnableZoneNames, NetworkBitStreamValueType::BIT);
-				bs.read(UsePlayerPedAnims, NetworkBitStreamValueType::BIT);
-				bs.read(AllowInteriorWeapons, NetworkBitStreamValueType::BIT);
-				bs.read(UseLimitGlobalChatRadius, NetworkBitStreamValueType::BIT);
-				bs.read(LimitGlobalChatRadius, NetworkBitStreamValueType::FLOAT);
-				bs.read(EnableStuntBonus, NetworkBitStreamValueType::BIT);
-				bs.read(SetNameTagDrawDistance, NetworkBitStreamValueType::FLOAT);
-				bs.read(DisableInteriorEnterExits, NetworkBitStreamValueType::BIT);
-				bs.read(DisableNameTagLOS, NetworkBitStreamValueType::BIT);
-				bs.read(ManualVehicleEngineAndLights, NetworkBitStreamValueType::BIT);
-				bs.read(SetSpawnInfoCount, NetworkBitStreamValueType::UINT32);
-				bs.read(PlayerID, NetworkBitStreamValueType::UINT16);
-				bs.read(ShowNameTags, NetworkBitStreamValueType::BIT);
-				bs.read(ShowPlayerMarkers, NetworkBitStreamValueType::UINT32);
-				bs.read(SetWorldTime, NetworkBitStreamValueType::UINT8);
-				bs.read(SetWeather, NetworkBitStreamValueType::UINT8);
-				bs.read(SetGravity, NetworkBitStreamValueType::FLOAT);
-				bs.read(LanMode, NetworkBitStreamValueType::BIT);
-				bs.read(SetDeathDropAmount, NetworkBitStreamValueType::UINT32);
-				bs.read(Instagib, NetworkBitStreamValueType::BIT);
-				bs.read(OnFootRate, NetworkBitStreamValueType::UINT32);
-				bs.read(InCarRate, NetworkBitStreamValueType::UINT32);
-				bs.read(WeaponRate, NetworkBitStreamValueType::UINT32);
-				bs.read(Multiplier, NetworkBitStreamValueType::UINT32);
-				bs.read(LagCompensation, NetworkBitStreamValueType::UINT32);
-				bs.read(ServerName, NetworkBitStreamValueType::DYNAMIC_LEN_STR_8);
-				bs.read(VehicleModels, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8);
-				return true;
+				bs.read<NetworkBitStreamValueType::BIT>(EnableZoneNames);
+				bs.read<NetworkBitStreamValueType::BIT>(UsePlayerPedAnims);
+				bs.read<NetworkBitStreamValueType::BIT>(AllowInteriorWeapons);
+				bs.read<NetworkBitStreamValueType::BIT>(UseLimitGlobalChatRadius);
+				bs.read<NetworkBitStreamValueType::FLOAT>(LimitGlobalChatRadius);
+				bs.read<NetworkBitStreamValueType::BIT>(EnableStuntBonus);
+				bs.read<NetworkBitStreamValueType::FLOAT>(SetNameTagDrawDistance);
+				bs.read<NetworkBitStreamValueType::BIT>(DisableInteriorEnterExits);
+				bs.read<NetworkBitStreamValueType::BIT>(DisableNameTagLOS);
+				bs.read<NetworkBitStreamValueType::BIT>(ManualVehicleEngineAndLights);
+				bs.read<NetworkBitStreamValueType::UINT32>(SetSpawnInfoCount);
+				bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
+				bs.read<NetworkBitStreamValueType::BIT>(ShowNameTags);
+				bs.read<NetworkBitStreamValueType::UINT32>(ShowPlayerMarkers);
+				bs.read<NetworkBitStreamValueType::UINT8>(SetWorldTime);
+				bs.read<NetworkBitStreamValueType::UINT8>(SetWeather);
+				bs.read<NetworkBitStreamValueType::FLOAT>(SetGravity);
+				bs.read<NetworkBitStreamValueType::BIT>(LanMode);
+				bs.read<NetworkBitStreamValueType::UINT32>(SetDeathDropAmount);
+				bs.read<NetworkBitStreamValueType::BIT>(Instagib);
+				bs.read<NetworkBitStreamValueType::UINT32>(OnFootRate);
+				bs.read<NetworkBitStreamValueType::UINT32>(InCarRate);
+				bs.read<NetworkBitStreamValueType::UINT32>(WeaponRate);
+				bs.read<NetworkBitStreamValueType::UINT32>(Multiplier);
+				bs.read<NetworkBitStreamValueType::UINT32>(LagCompensation);
+				bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(ServerName);
+				return bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8>(VehicleModels);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -204,10 +178,7 @@ namespace NetCode {
 			int Classid;
 
 			bool read(INetworkBitStream& bs) {
-				uint16_t classid;
-				CHECKED_READ(classid, { NetworkBitStreamValueType::UINT16 });
-				Classid = classid;
-				return true;
+				return bs.read<NetworkBitStreamValueType::UINT16>(Classid);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -237,15 +208,14 @@ namespace NetCode {
 			}
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(Selectable, NetworkBitStreamValueType::UINT8);
-				bs.read(TeamID, NetworkBitStreamValueType::UINT8);
-				bs.read(ModelID, NetworkBitStreamValueType::UINT32);
-				bs.read(Unknown1, NetworkBitStreamValueType::UINT8);
-				bs.read(Spawn, NetworkBitStreamValueType::VEC3);
-				bs.read(ZAngle, NetworkBitStreamValueType::FLOAT);
-				bs.read(Weapons, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
-				bs.read(Ammos, NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32);
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT8>(Selectable);
+				bs.read<NetworkBitStreamValueType::UINT8>(TeamID);
+				bs.read<NetworkBitStreamValueType::UINT32>(ModelID);
+				bs.read<NetworkBitStreamValueType::UINT8>(Unknown1);
+				bs.read<NetworkBitStreamValueType::VEC3>(Spawn);
+				bs.read<NetworkBitStreamValueType::FLOAT>(ZAngle);
+				bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32>(Weapons);
+				return bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32>(Ammos);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -294,11 +264,10 @@ namespace NetCode {
 		};
 
 		struct PlayerRequestSpawnResponse final : NetworkPacketBase<129> {
-			uint32_t Allow;
+			bool Allow;
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(Allow, NetworkBitStreamValueType::UINT32);
-				return true;
+				return bs.read<NetworkBitStreamValueType::UINT32>(Allow);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -370,9 +339,8 @@ namespace NetCode {
 			uint32_t Ammo;
 
 			bool read(INetworkBitStream& bs) {
-				bs.read(Weapon, NetworkBitStreamValueType::UINT32);
-				bs.read(Ammo, NetworkBitStreamValueType::UINT32);
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT32>(Weapon);
+				return bs.read<NetworkBitStreamValueType::UINT32>(Ammo);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -393,9 +361,8 @@ namespace NetCode {
 		struct SetPlayerArmedWeapon final : NetworkPacketBase<67> {
 			uint32_t Weapon;
 
-			bool read(INetworkBitStream& bs) {
-				bs.read(Weapon, NetworkBitStreamValueType::UINT32);
-				return true;
+			bool read(INetworkBitStream& bs) { 
+				return bs.read<NetworkBitStreamValueType::UINT32>(Weapon);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -474,8 +441,7 @@ namespace NetCode {
 		struct PlayerRequestChatMessage final : NetworkPacketBase<101> {
 			NetworkString message;
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(message, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_8 });
-				return true;
+				return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(message);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -498,8 +464,7 @@ namespace NetCode {
 		struct PlayerRequestCommandMessage final : NetworkPacketBase<50> {
 			NetworkString message;
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(message, { NetworkBitStreamValueType::DYNAMIC_LEN_STR_32 });
-				return true;
+				return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_32>(message);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -819,14 +784,10 @@ namespace NetCode {
 
 		struct ApplyPlayerAnimation final : NetworkPacketBase<86> {
 			int PlayerID;
-			NetworkString AnimLib;
-			NetworkString AnimName;
-			float Delta;
-			bool Loop;
-			bool LockX;
-			bool LockY;
-			bool Freeze;
-			uint32_t Time;
+			const Animation& Anim;
+
+			ApplyPlayerAnimation(const Animation& anim) : Anim(anim)
+			{}
 
 			bool read(INetworkBitStream& bs) {
 				return false;
@@ -834,14 +795,14 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(AnimLib));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(AnimName));
-				bs.write(NetworkBitStreamValue::FLOAT(Delta));
-				bs.write(NetworkBitStreamValue::BIT(Loop));
-				bs.write(NetworkBitStreamValue::BIT(LockX));
-				bs.write(NetworkBitStreamValue::BIT(LockY));
-				bs.write(NetworkBitStreamValue::BIT(Freeze));
-				bs.write(NetworkBitStreamValue::UINT32(Time));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.lib));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.name));
+				bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
+				bs.write(NetworkBitStreamValue::BIT(Anim.loop));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
+				bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
+				bs.write(NetworkBitStreamValue::UINT32(Anim.time));
 			}
 		};
 
@@ -947,9 +908,25 @@ namespace NetCode {
 			uint16_t KillerID;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(Reason, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(KillerID, { NetworkBitStreamValueType::UINT16 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT8>(Reason);
+				return bs.read<NetworkBitStreamValueType::UINT16>(KillerID);
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct OnPlayerCameraTarget final : NetworkPacketBase<168> {
+			int TargetObjectID;
+			int TargetVehicleID;
+			int TargetPlayerID;
+			int TargetActorID;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT16>(TargetObjectID);
+				bs.read<NetworkBitStreamValueType::UINT16>(TargetVehicleID);
+				bs.read<NetworkBitStreamValueType::UINT16>(TargetPlayerID);
+				return bs.read<NetworkBitStreamValueType::UINT16>(TargetActorID);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1036,18 +1013,22 @@ namespace NetCode {
 		};
 
 		struct SendPlayerScoresAndPings final : NetworkPacketBase<155> {
-			int PlayerID;
-			int32_t Score;
-			uint32_t Ping;
+			const PoolEntryArray<IPlayer>& Players;
+
+			SendPlayerScoresAndPings(const PoolEntryArray<IPlayer>& players) :
+				Players(players)
+			{}
 
 			bool read(INetworkBitStream& bs) {
 				return false;
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-				bs.write(NetworkBitStreamValue::INT32(Score));
-				bs.write(NetworkBitStreamValue::UINT32(Ping));
+				for (IPlayer& player : Players) {
+					bs.write(NetworkBitStreamValue::UINT16(player.getID()));
+					bs.write(NetworkBitStreamValue::INT32(player.getScore()));
+					bs.write(NetworkBitStreamValue::UINT32(player.getPing()));
+				}
 			}
 		};
 
@@ -1145,12 +1126,11 @@ namespace NetCode {
 			uint32_t Bodypart;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(Taking, { NetworkBitStreamValueType::BIT });
-				CHECKED_READ_TYPE(PlayerID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Damage, { NetworkBitStreamValueType::FLOAT });
-				CHECKED_READ(WeaponID, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Bodypart, { NetworkBitStreamValueType::UINT32 });
-				return true;
+				bs.read<NetworkBitStreamValueType::BIT>(Taking);
+				bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
+				bs.read<NetworkBitStreamValueType::FLOAT>(Damage);
+				bs.read<NetworkBitStreamValueType::UINT32>(WeaponID);
+				return bs.read<NetworkBitStreamValueType::UINT32>(Bodypart);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1161,8 +1141,7 @@ namespace NetCode {
 			unsigned Interior;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(Interior, uint8_t, { NetworkBitStreamValueType::UINT8 });
-				return true;
+				return bs.read<NetworkBitStreamValueType::UINT8>(Interior);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1236,9 +1215,8 @@ namespace NetCode {
 			uint8_t Passenger;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Passenger, { NetworkBitStreamValueType::UINT8 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+				return bs.read<NetworkBitStreamValueType::UINT8>(Passenger);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1265,8 +1243,7 @@ namespace NetCode {
 			int VehicleID;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				return true;
+				return bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);;
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1520,11 +1497,10 @@ namespace NetCode {
 			Vector3 Position;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(SelectType, uint32_t, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ_TYPE(ObjectID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ_TYPE(Model, uint32_t, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT32>(SelectType);
+				bs.read<NetworkBitStreamValueType::UINT16>(ObjectID);
+				bs.read<NetworkBitStreamValueType::UINT32>(Model);
+				return bs.read<NetworkBitStreamValueType::VEC3>(Position);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1562,12 +1538,11 @@ namespace NetCode {
 			Vector3 Rotation;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(PlayerObject, { NetworkBitStreamValueType::BIT });
-				CHECKED_READ_TYPE(ObjectID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ_TYPE(Response, uint32_t, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Offset, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Rotation, { NetworkBitStreamValueType::VEC3 });
-				return true;
+				bs.read<NetworkBitStreamValueType::BIT>(PlayerObject);
+				bs.read<NetworkBitStreamValueType::UINT16>(ObjectID);
+				bs.read<NetworkBitStreamValueType::UINT32>(Response);
+				bs.read<NetworkBitStreamValueType::VEC3>(Offset);
+				return bs.read<NetworkBitStreamValueType::VEC3>(Rotation);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1592,17 +1567,17 @@ namespace NetCode {
 			ObjectAttachmentSlotData AttachmentData;
 
 			bool read(INetworkBitStream& bs) {
-				bs.readT<uint32_t>(Response, NetworkBitStreamValueType::UINT32);
-				bs.readT<uint32_t>(Index, NetworkBitStreamValueType::UINT32);
-				bs.readT<uint32_t>(AttachmentData.model, NetworkBitStreamValueType::UINT32);
-				bs.readT<uint32_t>(AttachmentData.bone, NetworkBitStreamValueType::UINT32);
-				bs.read(AttachmentData.offset, NetworkBitStreamValueType::VEC3);
-				bs.read(AttachmentData.rotation, NetworkBitStreamValueType::VEC3);
-				bs.read(AttachmentData.scale, NetworkBitStreamValueType::VEC3);
+				bs.read<NetworkBitStreamValueType::UINT32>(Response);
+				bs.read<NetworkBitStreamValueType::UINT32>(Index);
+				bs.read<NetworkBitStreamValueType::UINT32>(AttachmentData.model);
+				bs.read<NetworkBitStreamValueType::UINT32>(AttachmentData.bone);
+				bs.read<NetworkBitStreamValueType::VEC3>(AttachmentData.offset);
+				bs.read<NetworkBitStreamValueType::VEC3>(AttachmentData.rotation);
+				bs.read<NetworkBitStreamValueType::VEC3>(AttachmentData.scale);
 				uint32_t argb;
-				bs.read(argb, NetworkBitStreamValueType::UINT32);
+				bs.read<NetworkBitStreamValueType::UINT32>(argb);
 				AttachmentData.colour1 = Colour::FromARGB(argb);
-				bool res = bs.read(argb, NetworkBitStreamValueType::UINT32);
+				bool res = bs.read<NetworkBitStreamValueType::UINT32>(argb);
 				AttachmentData.colour2 = Colour::FromARGB(argb);
 				return res;
 			}
@@ -1685,7 +1660,7 @@ namespace NetCode {
 			int PickupID;
 
 			bool read(INetworkBitStream & bs) {
-				return bs.readT<int32_t>(PickupID, NetworkBitStreamValueType::INT32);
+				return bs.read<NetworkBitStreamValueType::INT32>(PickupID);
 			}
 
 			void write(INetworkBitStream & bs) const {
@@ -1790,7 +1765,7 @@ namespace NetCode {
 			int TextDrawID;
 
 			bool read(INetworkBitStream& bs) {
-				bool res = bs.readT<uint16_t>(TextDrawID, NetworkBitStreamValueType::UINT16);
+				bool res = bs.read<NetworkBitStreamValueType::UINT16>(TextDrawID);
 				Invalid = TextDrawID == INVALID_TEXTDRAW;
 				if (!Invalid) {
 					PlayerTextDraw = TextDrawID >= GLOBAL_TEXTDRAW_POOL_SIZE;
@@ -1802,6 +1777,14 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct SetPlayerCameraTargeting final : NetworkPacketBase<170> {
+			bool Enabled;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(Enabled));
 			}
 		};
 
@@ -1841,12 +1824,11 @@ namespace NetCode {
 			uint8_t TyreStatus;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(PanelStatus, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(DoorStatus, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(LightStatus, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(TyreStatus, { NetworkBitStreamValueType::UINT8 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+				bs.read<NetworkBitStreamValueType::UINT32>(PanelStatus);
+				bs.read<NetworkBitStreamValueType::UINT32>(DoorStatus);
+				bs.read<NetworkBitStreamValueType::UINT8>(LightStatus);
+				return bs.read<NetworkBitStreamValueType::UINT8>(TyreStatus);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1866,10 +1848,10 @@ namespace NetCode {
 			uint32_t EventType;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint32_t, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Arg1, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(Arg2, { NetworkBitStreamValueType::UINT32 });
-				CHECKED_READ(EventType, { NetworkBitStreamValueType::UINT32 });
+				bs.read<NetworkBitStreamValueType::UINT32>(VehicleID);
+				bs.read<NetworkBitStreamValueType::UINT32>(Arg1);
+				bs.read<NetworkBitStreamValueType::UINT32>(Arg2);
+				bs.read<NetworkBitStreamValueType::UINT32>(EventType);
 				return true;
 			}
 
@@ -1879,6 +1861,229 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(VehicleID));
 				bs.write(NetworkBitStreamValue::UINT32(Arg1));
 				bs.write(NetworkBitStreamValue::UINT32(Arg2));
+			}
+		};
+
+		struct PlayerInitMenu final : NetworkPacketBase<76> {
+			uint8_t MenuID;
+			bool HasTwoColumns;
+			NetworkString Title;
+			Vector2 Position;
+			float Col1Width;
+			float Col2Width;
+			bool MenuEnabled;
+			std::array<bool, MAX_MENU_ITEMS> RowEnabled;
+			std::array<NetworkString, 2> ColumnHeaders;
+			std::array<uint8_t, 2> ColumnItemCount;
+			std::array<std::array<NetworkString, MAX_MENU_ITEMS>, 2> MenuItems;
+
+			bool read(INetworkBitStream & bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream & bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(MenuID));
+				bs.write(NetworkBitStreamValue::UINT32(HasTwoColumns));
+
+				// Menu title is a fixed size string
+				String menuTitleFixed(Title);
+				menuTitleFixed.resize(MAX_MENU_TEXT_LENGTH);
+				bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(menuTitleFixed)));
+
+				bs.write(NetworkBitStreamValue::VEC2(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Col1Width));
+
+				// Only send this when menu has two columns
+				if (HasTwoColumns) {
+					bs.write(NetworkBitStreamValue::FLOAT(Col2Width));
+				}
+
+				bs.write(NetworkBitStreamValue::UINT32(MenuEnabled));
+				for (bool isRowEnabled : RowEnabled) {
+					bs.write(NetworkBitStreamValue::UINT32(isRowEnabled));
+				}
+
+				// Get first column data
+				uint8_t firstColumnItemCount = ColumnItemCount.at(0);
+				NetworkString firstColumnHeader = ColumnHeaders.at(0);
+				std::array<NetworkString, MAX_MENU_ITEMS> firstColumnItems = MenuItems.at(0);
+
+				// Send first column header as a fixed string
+				String firstColumnHeaderFixed(firstColumnHeader);
+				firstColumnHeaderFixed.resize(MAX_MENU_TEXT_LENGTH);
+				bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(firstColumnHeaderFixed)));
+
+				bs.write(NetworkBitStreamValue::UINT8(firstColumnItemCount));
+				for (uint8_t i = 0; i < firstColumnItemCount; i++) {
+					// Send items/rows of first column as fixed size string
+					String itemTextFixed(firstColumnItems.at(i));
+					itemTextFixed.resize(MAX_MENU_TEXT_LENGTH);
+					bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(itemTextFixed)));
+				}
+
+				if (HasTwoColumns) {
+					// Get second column data
+					uint8_t secondColumnItemCount = ColumnItemCount.at(1);
+					NetworkString secondColumnHeader = ColumnHeaders.at(1);
+					std::array<NetworkString, MAX_MENU_ITEMS> secondColumnItems = MenuItems.at(1);
+
+					// Send second second header as a fixed string
+					String secondColumnHeaderFixed(secondColumnHeader);
+					secondColumnHeaderFixed.resize(MAX_MENU_TEXT_LENGTH);
+					bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(secondColumnHeaderFixed)));
+
+					bs.write(NetworkBitStreamValue::UINT8(secondColumnItemCount));
+					for (uint8_t i = 0; i < secondColumnItemCount; i++) {
+						// Send items/rows of second column as fixed size string
+						String itemTextFixed(secondColumnItems.at(i));
+						itemTextFixed.resize(MAX_MENU_TEXT_LENGTH);
+						bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(itemTextFixed)));
+					}
+				}
+			}
+		};
+	
+		struct PlayerShowMenu final : NetworkPacketBase<77> {
+			uint8_t MenuID;
+
+			bool read(INetworkBitStream & bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream & bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(MenuID));
+			}
+		};
+
+		struct PlayerHideMenu final : NetworkPacketBase<78> {
+			uint8_t MenuID;
+
+			bool read(INetworkBitStream & bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream & bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(MenuID));
+			}
+		};
+
+		struct OnPlayerSelectedMenuRow final : NetworkPacketBase<132> {
+			uint8_t MenuRow;
+
+			bool read(INetworkBitStream & bs) {
+				return bs.read<NetworkBitStreamValueType::UINT8>(MenuRow);
+			}
+
+			void write(INetworkBitStream & bs) const {
+			}
+		};
+
+		struct OnPlayerExitedMenu final : NetworkPacketBase<140> {
+			bool read(INetworkBitStream & bs) {
+				return true;
+			}
+
+			void write(INetworkBitStream & bs) const {
+			}
+		};
+
+		struct ShowActorForPlayer final : NetworkPacketBase<171> {
+			int ActorID;
+			int SkinID;
+			Vector3 Position;
+			float Angle;
+			float Health;
+			bool Invulnerable;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::UINT32(SkinID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+				bs.write(NetworkBitStreamValue::UINT8(Invulnerable));
+			}
+		};
+
+		struct HideActorForPlayer final : NetworkPacketBase<172> {
+			int ActorID;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+			}
+		};
+
+		struct ApplyActorAnimationForPlayer final : NetworkPacketBase<173> {
+			int ActorID;
+			const Animation& Anim;
+
+			ApplyActorAnimationForPlayer(const Animation& anim) : Anim(anim)
+			{}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.lib));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.name));
+				bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
+				bs.write(NetworkBitStreamValue::BIT(Anim.loop));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
+				bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
+				bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
+				bs.write(NetworkBitStreamValue::UINT32(Anim.time));
+			}
+		};
+
+		struct ClearActorAnimationsForPlayer final : NetworkPacketBase<174> {
+			int ActorID;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+			}
+		};
+
+		struct SetActorFacingAngleForPlayer final : NetworkPacketBase<175> {
+			int ActorID;
+			float Angle;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::FLOAT(Angle));
+			}
+		};
+
+		struct SetActorPosForPlayer final : NetworkPacketBase<176> {
+			int ActorID;
+			Vector3 Pos;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+			}
+		};
+
+		struct SetActorHealthForPlayer final : NetworkPacketBase<178> {
+			int ActorID;
+			float Health;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ActorID));
+				bs.write(NetworkBitStreamValue::FLOAT(Health));
+			}
+		};
+
+		struct OnPlayerDamageActor final : NetworkPacketBase<177> {
+			bool Unknown;
+			int ActorID;
+			float Damage;
+			uint32_t WeaponID;
+			uint32_t Bodypart;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::BIT>(Unknown);
+				bs.read<NetworkBitStreamValueType::UINT16>(ActorID);
+				bs.read<NetworkBitStreamValueType::FLOAT>(Damage);
+				bs.read<NetworkBitStreamValueType::UINT32>(WeaponID);
+				return bs.read<NetworkBitStreamValueType::UINT32>(Bodypart);
 			}
 		};
 
@@ -1899,8 +2104,7 @@ namespace NetCode {
 		struct VehicleDeath final : NetworkPacketBase<136> {
 			int VehicleID;
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				return true;
+				return bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -1986,7 +2190,13 @@ namespace NetCode {
 			Vector3 Position;
 			GTAQuat Rotation;
 			Vector2 HealthArmour;
-			uint8_t Weapon;
+			union {
+				uint8_t WeaponAdditionalKey;
+				struct {
+					uint8_t Weapon : 8;
+					uint8_t AdditionalKey : 2;
+				};
+			};
 			uint8_t SpecialAction;
 			Vector3 Velocity;
 			uint16_t AnimationID;
@@ -1994,20 +2204,18 @@ namespace NetCode {
 			PlayerSurfingData SurfingData;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Rotation, {NetworkBitStreamValueType::GTA_QUAT });
-				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
-				CHECKED_READ(Weapon, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(SpecialAction, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
-				if (!bs.read(SurfingData.offset, NetworkBitStreamValueType::VEC3)) {
-					return false;
-				}
+				bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
+				bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
+				bs.read<NetworkBitStreamValueType::UINT16>(Keys);
+				bs.read<NetworkBitStreamValueType::VEC3>(Position);
+				bs.read<NetworkBitStreamValueType::GTA_QUAT>(Rotation);
+				bs.read<NetworkBitStreamValueType::HP_ARMOR_COMPRESSED>(HealthArmour);
+				bs.read<NetworkBitStreamValueType::UINT8>(WeaponAdditionalKey);
+				bs.read<NetworkBitStreamValueType::UINT8>(SpecialAction);
+				bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
+				bs.read<NetworkBitStreamValueType::VEC3>(SurfingData.offset);
 				uint16_t surfingID;
-				CHECKED_READ(surfingID, { NetworkBitStreamValueType::UINT16 });
+				bs.read<NetworkBitStreamValueType::UINT16>(surfingID);
 				SurfingData.ID = surfingID;
 				if (SurfingData.ID < VEHICLE_POOL_SIZE) {
 					SurfingData.type = PlayerSurfingData::Type::Vehicle;
@@ -2019,9 +2227,8 @@ namespace NetCode {
 				else {
 					SurfingData.type = PlayerSurfingData::Type::None;
 				}
-				CHECKED_READ(AnimationID, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(AnimationFlags, { NetworkBitStreamValueType::UINT16 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(AnimationID);
+				return bs.read<NetworkBitStreamValueType::UINT16>(AnimationFlags);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2042,7 +2249,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::VEC3(Position));
 				bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
 				bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(HealthArmour));
-				bs.write(NetworkBitStreamValue::UINT8(Weapon));
+				bs.write(NetworkBitStreamValue::UINT8(WeaponAdditionalKey));
 				bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
 				bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
 
@@ -2083,13 +2290,12 @@ namespace NetCode {
 			uint8_t AspectRatio;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(CamMode, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(CamFrontVector, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(CamPos, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(AimZ, { NetworkBitStreamValueType::FLOAT });
-				CHECKED_READ(ZoomWepState, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(AspectRatio, { NetworkBitStreamValueType::UINT8 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT8>(CamMode);
+				bs.read<NetworkBitStreamValueType::VEC3>(CamFrontVector);
+				bs.read<NetworkBitStreamValueType::VEC3>(CamPos);
+				bs.read<NetworkBitStreamValueType::FLOAT>(AimZ);
+				bs.read<NetworkBitStreamValueType::UINT8>(ZoomWepState);
+				return bs.read<NetworkBitStreamValueType::UINT8>(AspectRatio);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2114,13 +2320,12 @@ namespace NetCode {
 			uint8_t WeaponID;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(HitType, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(HitID, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Origin, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(HitPos, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Offset, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(WeaponID, { NetworkBitStreamValueType::UINT8 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT8>(HitType);
+				bs.read<NetworkBitStreamValueType::UINT16>(HitID);
+				bs.read<NetworkBitStreamValueType::VEC3>(Origin);
+				bs.read<NetworkBitStreamValueType::VEC3>(HitPos);
+				bs.read<NetworkBitStreamValueType::VEC3>(Offset);
+				return bs.read<NetworkBitStreamValueType::UINT8>(WeaponID);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2140,9 +2345,8 @@ namespace NetCode {
 			int32_t DrunkLevel;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(Money, { NetworkBitStreamValueType::INT32 });
-				CHECKED_READ(DrunkLevel, { NetworkBitStreamValueType::INT32 });
-				return true;
+				bs.read<NetworkBitStreamValueType::INT32>(Money);
+				return bs.read<NetworkBitStreamValueType::INT32>(DrunkLevel);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2151,7 +2355,73 @@ namespace NetCode {
 			}
 		};
 
+		struct PlayerWeaponsUpdate final : NetworkPacketBase<204> {
+			int TargetPlayer;
+			int TargetActor;
+			int WeaponDataCount = 0;
+			std::array<std::pair<uint8_t, WeaponSlotData>, MAX_WEAPON_SLOTS> WeaponData;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT16>(TargetPlayer);
+				bool res = bs.read<NetworkBitStreamValueType::UINT16>(TargetActor);
+
+				uint8_t slot;
+				WeaponSlotData data;
+				while (WeaponDataCount < WeaponData.size() && bs.read<NetworkBitStreamValueType::UINT8>(slot)) {
+					if (
+						slot < MAX_WEAPON_SLOTS &&
+						bs.read<NetworkBitStreamValueType::UINT8>(data.id) &&
+						bs.read<NetworkBitStreamValueType::UINT16>(data.ammo)
+						) {
+						WeaponData[WeaponDataCount++] = std::pair<uint8_t, WeaponSlotData>(slot, data);
+					}
+					else { // Malformed packet
+						return false;
+					}
+				}
+				return res;
+			}
+		};
+
 		struct PlayerMarkersSync final : NetworkPacketBase<208> {
+			IPlayerPool& Pool;
+			IPlayer& FromPlayer;
+			bool Limit;
+			float Radius;
+
+			PlayerMarkersSync(IPlayerPool& pool, IPlayer& from, bool limit, float radius) :
+				Pool(pool), FromPlayer(from), Limit(limit), Radius(radius)
+			{}
+
+			void write(INetworkBitStream& bs) const {
+				const int virtualWorld = FromPlayer.getVirtualWorld();
+				const Vector3 pos = FromPlayer.getPosition();
+				const PoolEntryArray<IPlayer>& players = Pool.entries();
+				bs.write(NetworkBitStreamValue::UINT8(NetCode::Packet::PlayerMarkersSync::getID(bs.getNetworkType())));
+				// TODO isNPC
+				bs.write(NetworkBitStreamValue::UINT32(players.size() - 1));
+				for (IPlayer& other : players) {
+					if (&other == &FromPlayer) {
+						continue;
+					}
+
+					const Vector3 otherPos = other.getPosition();
+					const PlayerState otherState = other.getState();
+					bool streamMarker =
+						otherState != PlayerState_None &&
+						otherState != PlayerState_Spectating &&
+						virtualWorld == other.getVirtualWorld() &&
+						(!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
+
+					bs.write(NetworkBitStreamValue::UINT16(other.getID()));
+					bs.write(NetworkBitStreamValue::BIT(streamMarker));
+					if (streamMarker) {
+						bs.write(NetworkBitStreamValue::INT16(otherPos.x));
+						bs.write(NetworkBitStreamValue::INT16(otherPos.y));
+						bs.write(NetworkBitStreamValue::INT16(otherPos.z));
+					}
+				}
+			}
 		};
 
 		struct PlayerVehicleSync final : NetworkPacketBase<200> {
@@ -2185,21 +2455,20 @@ namespace NetCode {
 			};
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ(VehicleID, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Rotation, { NetworkBitStreamValueType::GTA_QUAT });
-				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Health, { NetworkBitStreamValueType::FLOAT });
-				CHECKED_READ(PlayerHealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
-				CHECKED_READ(AdditionalKeyWeapon, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(Siren, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(LandingGear, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(TrailerID, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(AbysmalShit, { NetworkBitStreamValueType::UINT32 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+				bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
+				bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
+				bs.read<NetworkBitStreamValueType::UINT16>(Keys);
+				bs.read<NetworkBitStreamValueType::GTA_QUAT>(Rotation);
+				bs.read<NetworkBitStreamValueType::VEC3>(Position);
+				bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
+				bs.read<NetworkBitStreamValueType::FLOAT>(Health);
+				bs.read<NetworkBitStreamValueType::HP_ARMOR_COMPRESSED>(PlayerHealthArmour);
+				bs.read<NetworkBitStreamValueType::UINT8>(AdditionalKeyWeapon);
+				bs.read<NetworkBitStreamValueType::UINT8>(Siren);
+				bs.read<NetworkBitStreamValueType::UINT8>(LandingGear);
+				bs.read<NetworkBitStreamValueType::UINT16>(TrailerID);
+				return bs.read<NetworkBitStreamValueType::UINT32>(AbysmalShit);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2251,14 +2520,13 @@ namespace NetCode {
 			Vector3 Position;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(DriveBySeatAdditionalKeyWeapon, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(HealthArmour, { NetworkBitStreamValueType::HP_ARMOR_COMPRESSED });
-				CHECKED_READ(LeftRight, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(UpDown, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Keys, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+				bs.read<NetworkBitStreamValueType::UINT16>(DriveBySeatAdditionalKeyWeapon);
+				bs.read<NetworkBitStreamValueType::HP_ARMOR_COMPRESSED>(HealthArmour);
+				bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
+				bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
+				bs.read<NetworkBitStreamValueType::UINT16>(Keys);
+				return bs.read<NetworkBitStreamValueType::VEC3>(Position);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2287,15 +2555,14 @@ namespace NetCode {
 			float Health;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(SeatID, { NetworkBitStreamValueType::UINT8 });
-				CHECKED_READ(Roll, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Rotation, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(AngularVelocity, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Health, { NetworkBitStreamValueType::FLOAT });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+				bs.read<NetworkBitStreamValueType::UINT8>(SeatID);
+				bs.read<NetworkBitStreamValueType::VEC3>(Roll);
+				bs.read<NetworkBitStreamValueType::VEC3>(Rotation);
+				bs.read<NetworkBitStreamValueType::VEC3>(Position);
+				bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
+				bs.read<NetworkBitStreamValueType::VEC3>(AngularVelocity);
+				return bs.read<NetworkBitStreamValueType::FLOAT>(Health);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -2321,12 +2588,11 @@ namespace NetCode {
 			Vector3 TurnVelocity;
 
 			bool read(INetworkBitStream& bs) {
-				CHECKED_READ_TYPE(VehicleID, uint16_t, { NetworkBitStreamValueType::UINT16 });
-				CHECKED_READ(Position, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(Quat, { NetworkBitStreamValueType::VEC4 });
-				CHECKED_READ(Velocity, { NetworkBitStreamValueType::VEC3 });
-				CHECKED_READ(TurnVelocity, { NetworkBitStreamValueType::VEC3 });
-				return true;
+				bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+				bs.read<NetworkBitStreamValueType::VEC3>(Position);
+				bs.read<NetworkBitStreamValueType::VEC4>(Quat);
+				bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
+				return bs.read<NetworkBitStreamValueType::VEC3>(TurnVelocity);
 			}
 
 			void write(INetworkBitStream& bs) const {
