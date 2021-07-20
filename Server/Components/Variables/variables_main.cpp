@@ -67,7 +67,7 @@ struct VariableStorageBase : public ToInherit {
 	}
 
 private:
-	std::unordered_map<String, std::variant<int, String, float>, std::hash<String>, std::equal_to<String>, OmpAllocator<std::pair<const String, std::variant<int, String, float>>>> data_;
+	std::unordered_map<String, std::variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
