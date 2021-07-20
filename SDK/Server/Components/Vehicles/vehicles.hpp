@@ -130,11 +130,14 @@ struct IVehicle : public IEntity {
 	/// Gets the vehicle's Z angle.
 	virtual float getZAngle() = 0;
 
-	// Sets parameters for the vehicle.
-	virtual void setParams(int objective, bool doorsLocked) = 0;
+	// Set the vehicle's parameters.
+	virtual void setParams(VehicleParams params) = 0;
 
-	// Gets the parameters for the vehicle.
-	virtual void getParams(int& objective, bool& doorsLocked) = 0;
+	// Set the vehicle's parameters for a specific player.
+	virtual void setParamsForPlayer(IPlayer& player, VehicleParams params) = 0;
+
+	// Get the vehicle's parameters.
+	virtual VehicleParams const& getParams() = 0;
 
 	/// Sets the vehicle's death state.
 	virtual void setDead(IPlayer& killer) = 0;

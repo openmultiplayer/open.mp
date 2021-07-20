@@ -4,6 +4,7 @@
 #include "network.hpp"
 #include "player.hpp"
 #include "Server/Components/Objects/objects.hpp"
+#include "vehicle_params.hpp"
 
 /// Helper macro that reads a bit stream value and returns false on fail
 #define CHECKED_READ(output, input) \
@@ -1818,22 +1819,6 @@ namespace NetCode {
 			}
 		};
 
-		struct SetVehicleParams final : NetworkPacketBase<161> {
-			int VehicleID;
-			int objective;
-			int doorsLocked;
-
-			bool read(INetworkBitStream& bs) {
-				return false;
-			}
-
-			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-				bs.write(NetworkBitStreamValue::UINT8(objective));
-				bs.write(NetworkBitStreamValue::UINT8(doorsLocked));
-			}
-		};
-
 		struct SetVehiclePosition final : NetworkPacketBase<159> {
 			int VehicleID;
 			Vector3 position;
@@ -1960,6 +1945,35 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT8(Type));
 				bs.write(NetworkBitStreamValue::VEC3(Velocity));
+			}
+		};
+
+		struct SetVehicleParams final : NetworkPacketBase<24> {
+			int VehicleID;
+			VehicleParams params;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(params.engine));
+				bs.write(NetworkBitStreamValue::UINT8(params.lights));
+				bs.write(NetworkBitStreamValue::UINT8(params.alarm));
+				bs.write(NetworkBitStreamValue::UINT8(params.doors));
+				bs.write(NetworkBitStreamValue::UINT8(params.bonnet));
+				bs.write(NetworkBitStreamValue::UINT8(params.boot));
+				bs.write(NetworkBitStreamValue::UINT8(params.objective));
+				bs.write(NetworkBitStreamValue::UINT8(params.siren));
+				bs.write(NetworkBitStreamValue::UINT8(params.doorDriver));
+				bs.write(NetworkBitStreamValue::UINT8(params.doorPassenger));
+				bs.write(NetworkBitStreamValue::UINT8(params.doorBackLeft));
+				bs.write(NetworkBitStreamValue::UINT8(params.doorBackRight));
+				bs.write(NetworkBitStreamValue::UINT8(params.windowDriver));
+				bs.write(NetworkBitStreamValue::UINT8(params.windowPassenger));
+				bs.write(NetworkBitStreamValue::UINT8(params.windowBackLeft));
+				bs.write(NetworkBitStreamValue::UINT8(params.windowBackRight));
 			}
 		};
 	}

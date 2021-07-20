@@ -349,7 +349,23 @@ struct TestComponent :
 				return true;
 			}
 			player.sendClientMessage(Colour::White(), "Veh params set.");
-			data->getVehicle()->setParams(3, true);
+			VehicleParams params;
+			params.alarm = 1;
+			params.bonnet = 1;
+			params.boot = 1;
+			params.doorBackLeft = 1;
+			params.doorBackRight = 1;
+			params.doorDriver = 1;
+			params.doorPassenger = 1;
+			params.engine = 1;
+			params.lights = 1;
+			params.objective = 1;
+			params.siren = 1;
+			params.windowBackLeft = 1;
+			params.windowBackRight = 1;
+			params.windowDriver = 1;
+			params.windowPassenger = 1;
+			data->getVehicle()->setParams(params);
 			return true;
 		}
 
