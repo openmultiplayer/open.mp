@@ -2,6 +2,7 @@
 #include <netcode.hpp>
 #include <chrono>
 #include "vehicle_colours.hpp"
+#include "vehicle_params.hpp"
 
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
@@ -37,6 +38,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     IVehicle* trailerOrTower = nullptr;
     std::array<IVehicle*, 3> carriages;
     bool detaching = false;
+    VehicleParams params;
 
     Vehicle() {
         mods.fill(0);
@@ -153,11 +155,14 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Gets the vehicle's Z angle.
     float getZAngle() override;
 
-	// Set the vehicle's parameters.
-    void setParams(int objective, bool doorsLocked) override;
+    // Set the vehicle's parameters.
+    void setParams(VehicleParams params) override;
 
-	// Get the vehicle's parameters.
-    void getParams(int& objective, bool& doorsLocked) override;
+    // Set the vehicle's parameters for a specific player.
+    void setParamsForPlayer(IPlayer& player, VehicleParams params) override;
+
+    // Get the vehicle's parameters.
+    VehicleParams const& getParams() override { return params; }
 
     /// Sets the vehicle's death state.
     void setDead(IPlayer& killer) override;
@@ -236,4 +241,5 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 getAngularVelocity() override {
         return angularVelocity;
     }
+
 };
