@@ -3,12 +3,20 @@
 #include <string>
 #include <utility>
 #include <chrono>
+#include <optional>
+#include <type_traits>
+#include <string_view>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
 #include "anim.hpp"
 #include "types.hpp"
 #include "values.hpp"
+
+struct IVehicle;
+struct IObject;
+struct IPlayerObject;
+struct IActor;
 
 enum PlayerFightingStyle {
 	PlayerFightingStyle_Normal = 4,
@@ -83,9 +91,32 @@ enum PlayerBulletHitType : uint8_t {
 	PlayerBulletHitType_Object = 3,
 };
 
+enum BodyPart {
+	BodyPart_Torso = 3,
+	BodyPart_Groin,
+	BodyPart_LeftArm,
+	BodyPart_RightArm,
+	BodyPart_LeftLeg,
+	BodyPart_RightLeg,
+	BodyPart_Head
+};
+
+static constexpr std::string_view BodyPartString[] = {
+	"invalid",
+	"invalid",
+	"invalid",
+	"torso",
+	"groin",
+	"left arm",
+	"right arm",
+	"left leg",
+	"right leg",
+	"head"
+};
+
 struct PlayerKeyData {
 	// todo fill with union
-	uint16_t keys;
+	uint32_t keys;
 	uint16_t upDown;
 	uint16_t leftRight;
 };
@@ -388,12 +419,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the players which are streamed in for this player
 	virtual const PoolEntryArray<IPlayer>& streamedInPlayers() const = 0;
 
-	/// Update other players' markers for the player
-	/// @param updateRate The rate at which to update in milliseconds
-	/// @param limit Whether the radius should be limited
-	/// @param radius The radius to limit in
-	virtual void updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) = 0;
-
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
 
@@ -483,6 +508,30 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @return A pointer to the data or nullptr if not available
 	virtual IPlayerData* queryData(UUID id) const = 0;
 
+	/// Toggle the camera targeting functions for the player
+	virtual void toggleCameraTargeting(bool toggle) = 0;
+
+	/// Get whether the player has camera targeting functions enabled
+	virtual bool hasCameraTargeting() const = 0;
+
+	/// Get the player the player is looking at or nullptr if none
+	virtual IPlayer* getCameraTargetPlayer() = 0;
+
+	/// Get the vehicle the player is looking at or nullptr if none
+	virtual IVehicle* getCameraTargetVehicle() = 0;
+
+	/// Get the object the player is looking at or nullptr if none
+	virtual IObject* getCameraTargetObject() = 0;
+
+	/// Get the actor the player is looking at or nullptr if none
+	virtual IActor* getCameraTargetActor() = 0;
+
+	/// Get the player the player is targeting or nullptr if none
+	virtual IPlayer* getTargetPlayer() = 0;
+
+	/// Get the actor the player is targeting or nullptr if none
+	virtual IActor* getTargetActor() = 0;
+
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>
@@ -490,15 +539,40 @@ struct IPlayer : public IEntity, public INetworkPeer {
 		static_assert(std::is_base_of<IPlayerData, PlayerDataT>::value, "queryData parameter must inherit from IPlayerData");
 		return static_cast<PlayerDataT*>(queryData(PlayerDataT::IID));
 	}
+
+	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastRPCToStreamed(const Packet& packet, bool skipFrom = false) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : streamedInPlayers()) {
+			if (skipFrom && &player == this) {
+				continue;
+			}
+			player.sendRPC(packet);
+		}
+	}
+
+	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
+	/// @param packet The packet to send
+	template<class Packet>
+	inline void broadcastPacketToStreamed(const Packet& packet, bool skipFrom = true) {
+		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
+		for (IPlayer& player : streamedInPlayers()) {
+			if (skipFrom && &player == this) {
+				continue;
+			}
+			player.sendPacket(packet);
+		}
+	}
 };
 
-struct IVehicle;
-struct IObject;
-struct IPlayerObject;
+typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
+	virtual void onIncomingConnection(IPlayer& player) { }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, PeerDisconnectReason reason) {}
 	virtual bool onRequestSpawn(IPlayer& player) { return true; }
@@ -515,19 +589,17 @@ struct PlayerEventHandler {
 	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
 	virtual void onNameChange(IPlayer & player, const String & oldName) {}
-	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
-	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, unsigned part) {}
-	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, unsigned part) {}
+	virtual void onDeath(IPlayer& player, OptionalPlayer killer, int reason) {}
+	virtual void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) {}
+	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
-	virtual void onKeyStateChange(IPlayer& player, uint16_t newKeys, uint16_t oldKeys) {}
+	virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) {}
 };
 
 struct PlayerUpdateEventHandler {
 	virtual bool onUpdate(IPlayer& player) { return true; }
 };
-
-typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// A player pool interface
 struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
@@ -539,20 +611,7 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 
 	/// Returns whether a name is taken by any player
 	/// @param skip The player to exclude from the check
-	virtual bool isNameTaken(const String& name, const IPlayer* skip = nullptr) = 0;
-
-	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
-	/// @param packet The packet to send
-	template<class Packet>
-	inline void broadcastRPCToStreamed(const Packet& packet, const IPlayer& from, bool skipFrom = false) {
-		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : from.streamedInPlayers()) {
-			if (skipFrom && &player == &from) {
-				continue;
-			}
-			player.sendRPC(packet);
-		}
-	}
+	virtual bool isNameTaken(const String& name, const OptionalPlayer skip) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
@@ -564,19 +623,6 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 				continue;
 			}
 			player.sendRPC(packet);
-		}
-	}
-
-	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
-/// @param packet The packet to send
-	template<class Packet>
-	inline void broadcastPacketToStreamed(const Packet& packet, const IPlayer& from, bool skipFrom = true) {
-		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : from.streamedInPlayers()) {
-			if (skipFrom && &player == &from) {
-				continue;
-			}
-			player.sendPacket(packet);
 		}
 	}
 

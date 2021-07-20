@@ -101,6 +101,11 @@ struct UniqueIDArray : public NoCopy {
         );
     }
 
+    void clear() {
+        valid_.reset();
+        entries_.clear();
+    }
+
     bool valid(int index) const {
         if (index >= Size) {
             return false;
@@ -117,12 +122,39 @@ private:
     PoolEntryArray<T> entries_;
 };
 
+template <typename T>
+struct UniqueEntryArray : public NoCopy {
+    void add(T& data) {
+        entries_.push_back(data);
+    }
+
+    /// Attempt to remove data for element at index and return the next iterator in the entries list
+    void remove(T& data) {
+        entries_.erase(
+            std::find_if(std::execution::par, entries_.begin(), entries_.end(), [&data](T& i) { return &i == &data; })
+        );
+    }
+
+    void clear() {
+        entries_.clear();
+    }
+
+    const PoolEntryArray<T>& entries() const {
+        return entries_;
+    }
+
+private:
+    PoolEntryArray<T> entries_;
+};
+
 struct PoolIDProvider {
     int poolID;
 };
 
-template <typename Type, typename Interface, int Count>
-struct PoolStorageBase : public NoCopy {
+template <typename Type, typename Interface, size_t Count>
+struct StaticPoolStorageBase : public NoCopy {
+    static const size_t Cnt = Count;
+
     int findFreeIndex(int from = 0) {
         return allocated_.findFreeIndex(from);
     }
@@ -182,15 +214,87 @@ protected:
     UniqueIDArray<Interface, Count> allocated_;
 };
 
-template <typename Type, typename Interface, int Count>
-struct PoolStorage final : public PoolStorageBase<Type, Interface, Count> {
+template <typename Type, typename Interface, size_t Count>
+struct DynamicPoolStorageBase : public NoCopy {
+    static const size_t Cnt = Count;
+
+    int findFreeIndex(int from = 0) {
+        for (int i = from; i < Count; ++i) {
+            if (pool_[i] == nullptr) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    int claim() {
+        const int freeIdx = findFreeIndex();
+        if (freeIdx >= 0) {
+            pool_[freeIdx] = new Type();
+            allocated_.add(*pool_[freeIdx]);
+            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+                pool_[freeIdx]->poolID = freeIdx;
+            }
+        }
+        return freeIdx;
+    }
+
+    int claim(int hint) {
+        assert(hint < Count);
+        if (!valid(hint)) {
+            pool_[hint] = new Type();
+            allocated_.add(*pool_[hint]);
+            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+                pool_[hint]->poolID = hint;
+            }
+            return hint;
+        }
+        else {
+            return claim();
+        }
+    }
+
+    void claimUnusable(int index) {
+        pool_[index] = reinterpret_cast<Type*>(0x01);
+    }
+
+    bool valid(int index) const {
+        if (index >= Count) {
+            return false;
+        }
+        return pool_[index] != nullptr;
+    }
+
+    Type& get(int index) {
+        assert(index < Count);
+        return *pool_[index];
+    }
+
+    const PoolEntryArray<Interface>& entries() const {
+        return allocated_.entries();
+    }
+
+    void remove(int index) {
+        assert(index < Count);
+        allocated_.remove(*pool_[index]);
+        delete pool_[index];
+        pool_[index] = nullptr;
+    }
+
+protected:
+    std::array<Type*, Count> pool_ = { nullptr };
+    UniqueEntryArray<Interface> allocated_;
+};
+
+template <class PoolBase>
+struct ImmediatePoolStorageLifetimeBase final : public PoolBase {
     void release(int index) {
-        PoolStorageBase<Type, Interface, Count>::remove(index);
+        PoolBase::remove(index);
     }
 };
 
-template <typename Type, typename Interface, int Count>
-struct MarkedPoolStorage final : public PoolStorageBase<Type, Interface, Count> {
+template <class PoolBase>
+struct MarkedPoolStorageLifetimeBase final : public PoolBase {
     void lock(int index) {
         // Mark as locked
         marked_.set(index * 2);
@@ -205,18 +309,38 @@ struct MarkedPoolStorage final : public PoolStorageBase<Type, Interface, Count> 
     }
 
     void release(int index, bool force) {
-        assert(index < Count);
+        assert(index < PoolBase::Cnt);
         // If locked, mark for deletion on unlock
         if (marked_.test(index * 2)) {
             marked_.set(index * 2 + 1);
         }
         else { // If not locked, immediately delete
             marked_.reset(index * 2 + 1);
-            PoolStorageBase<Type, Interface, Count>::remove(index);
+            PoolBase::remove(index);
         }
     }
 
 private:
     /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
-    std::bitset<Count * 2> marked_;
+    std::bitset<PoolBase::Cnt * 2> marked_;
 };
+
+/// Pool storage which doesn't mark entries for release but immediately releases
+/// Allocates contents statically
+template <typename Type, typename Interface, size_t Count>
+using PoolStorage = ImmediatePoolStorageLifetimeBase<StaticPoolStorageBase<Type, Interface, Count>>;
+
+/// Pool storage which doesn't mark entries for release but immediately releases
+/// Allocates contents dynamically
+template <typename Type, typename Interface, size_t Count>
+using DynamicPoolStorage = ImmediatePoolStorageLifetimeBase<DynamicPoolStorageBase<Type, Interface, Count>>;
+
+/// Pool storage which marks entries for release if locked
+/// Allocates contents statically
+template <typename Type, typename Interface, size_t Count>
+using MarkedPoolStorage = MarkedPoolStorageLifetimeBase<StaticPoolStorageBase<Type, Interface, Count>>;
+
+/// Pool storage which marks entries for release if locked
+/// Allocates contents dynamically
+template <typename Type, typename Interface, size_t Count>
+using MarkedDynamicPoolStorage = MarkedPoolStorageLifetimeBase<DynamicPoolStorageBase<Type, Interface, Count>>;
