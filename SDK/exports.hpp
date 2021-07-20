@@ -57,4 +57,7 @@ struct OmpAllocator
     void deallocate(T* p, size_t n) noexcept {
         omp_free(p);
     }
+
+    bool operator==(const OmpAllocator<T>&) { return true; }
+    bool operator!=(const OmpAllocator<T>&) { return false; }
 };
