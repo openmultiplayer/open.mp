@@ -103,7 +103,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 
     /// Get a set of all the available labels
-    const PoolEntryArray<IPlayerTextLabel>& entries() const override {
+    ContiguousRefList<IPlayerTextLabel> entries() override {
         return storage.entries();
     }
 };
@@ -215,7 +215,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     }
 
     /// Get a set of all the available labels
-    const PoolEntryArray<ITextLabel>& entries() const override {
+    ContiguousRefList<ITextLabel> entries() override {
         return storage.entries();
     }
 

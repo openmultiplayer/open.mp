@@ -16,7 +16,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     JSON props;
     std::chrono::milliseconds sleepTimer;
     std::map<UUID, IPlugin*> plugins;
-    DynamicArray<INetwork*> networks;
+    std::vector<INetwork*> networks;
 
     Core() :
         players(*this)
@@ -63,8 +63,8 @@ struct Core final : public ICore, public PlayerEventHandler {
         return players;
     }
 
-    DynamicArray<INetwork*>& getNetworks() override {
-        return networks;
+    ContiguousListSpan<INetwork*> getNetworks() override {
+        return ContiguousListSpan<INetwork*>(networks.data(), networks.size());
     }
 
     IEventDispatcher<CoreEventHandler>& getEventDispatcher() override {

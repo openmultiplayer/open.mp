@@ -162,7 +162,7 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 	}
 
 	/// Get a set of all the available labels
-	const PoolEntryArray<IMenu> & entries() const override {
+	ContiguousRefList<IMenu> entries() override {
 		return storage.entries();
 	}
 };
