@@ -417,7 +417,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void streamOutPlayer(IPlayer& other) = 0;
 
 	/// Get the players which are streamed in for this player
-	virtual const PoolEntryArray<IPlayer>& streamedInPlayers() const = 0;
+	virtual ContiguousRefList<IPlayer> streamedInPlayers() = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;

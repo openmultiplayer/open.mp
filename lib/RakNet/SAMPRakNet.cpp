@@ -141,7 +141,7 @@ void
 		return;
 	}
 
-	DynamicArray<INetwork *> & networks = core->getNetworks();
+	ContiguousListSpan<INetwork *> networks = core->getNetworks();
 	for (INetwork * network : networks) {
 		ENetworkType type = network->getNetworkType();
 		if (type == ENetworkType_RakNetLegacy) {

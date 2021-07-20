@@ -116,7 +116,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     /// Get a set of all the available labels
-    const PoolEntryArray<IPlayerTextDraw>& entries() const override {
+    ContiguousRefList<IPlayerTextDraw> entries() override {
         return storage.entries();
     }
 };
@@ -265,7 +265,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         storage.unlock(index);
     }
 
-    const PoolEntryArray<ITextDraw>& entries() const override {
+    ContiguousRefList<ITextDraw> entries() override {
         return storage.entries();
     }
 };
