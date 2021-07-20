@@ -158,7 +158,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IVehicle>& entries() const override {
+    ContiguousRefList<IVehicle> entries() override {
         return storage.entries();
     }
 

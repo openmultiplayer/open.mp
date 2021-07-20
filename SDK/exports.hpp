@@ -34,6 +34,13 @@ template <class T>
 struct OmpAllocator
 {
     using value_type = T;
+    using size_type = std::size_t;
+    using difference_type = std::ptrdiff_t;
+    using propagate_on_container_move_assignment = std::true_type;
+    using is_always_equal = std::true_type;
+
+    template<class U>
+    using rebind = OmpAllocator<U>;
 
     OmpAllocator() = default;
     template <class U> constexpr OmpAllocator(const OmpAllocator <U>&) noexcept {}

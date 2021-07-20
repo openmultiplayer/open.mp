@@ -8,6 +8,7 @@
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <Server/Components/Menus/menus.hpp>
 #include <Server/Components/Actors/actors.hpp>
+#include <Server/Components/Variables/variables.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
@@ -335,6 +336,22 @@ struct TestComponent :
 			}
 		}
 
+		if (message == "/lastcptype") {
+			String type;
+			auto pvars = player.queryData<IPlayerVariableData>();
+			if (pvars) {
+				if (pvars->getType("LASTCPTYPE") == VariableType_String) {
+					pvars->getString("LASTCPTYPE", type);
+				}
+				else {
+					type = "INVALID";
+				}
+			}
+
+			player.sendClientMessage(Colour::White(), "Last checkpoint type: " + type);
+			return true;
+		}
+
         return false;
 
 	}
@@ -398,6 +415,10 @@ struct TestComponent :
 		cp->setNextPosition(Vector3(19.8583f, -15.1157f, 5.1172f));
 		cp->setSize(6.0f);
 		cp->enable(player);
+		auto pvars = player.queryData<IPlayerVariableData>();
+		if (pvars) {
+			pvars->setString("LASTCPTYPE", "Normal");
+		}
 	}
 
 	void onPlayerLeaveCheckpoint(IPlayer& player) override {
@@ -406,6 +427,10 @@ struct TestComponent :
 
 	void onPlayerEnterRaceCheckpoint(IPlayer& player) override {
 		player.sendClientMessage(Colour::White(), "You have entered race checkpoint");
+		auto pvars = player.queryData<IPlayerVariableData>();
+		if (pvars) {
+			pvars->setString("LASTCPTYPE", "Race");
+		}
 	}
 
 	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override {

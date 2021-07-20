@@ -946,9 +946,9 @@ namespace NetCode {
 		};
 
 		struct SendPlayerScoresAndPings final : NetworkPacketBase<155> {
-			const PoolEntryArray<IPlayer>& Players;
+			ContiguousRefList<IPlayer> Players;
 
-			SendPlayerScoresAndPings(const PoolEntryArray<IPlayer>& players) :
+			SendPlayerScoresAndPings(ContiguousRefList<IPlayer> players) :
 				Players(players)
 			{}
 
@@ -2149,7 +2149,7 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 				const int virtualWorld = FromPlayer.getVirtualWorld();
 				const Vector3 pos = FromPlayer.getPosition();
-				const PoolEntryArray<IPlayer>& players = Pool.entries();
+				ContiguousRefList<IPlayer> players = Pool.entries();
 				bs.write(NetworkBitStreamValue::UINT8(NetCode::Packet::PlayerMarkersSync::getID(bs.getNetworkType())));
 				// TODO isNPC
 				bs.write(NetworkBitStreamValue::UINT32(players.size() - 1));

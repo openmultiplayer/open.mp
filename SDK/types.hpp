@@ -21,16 +21,68 @@ typedef uint64_t UUID;
 
 // Use these instead of STL classes when passing them around the SDK
 using String = std::basic_string<char, std::char_traits<char>, OmpAllocator<char>>;
-template <typename Type>
-using DynamicArray = std::vector<Type, OmpAllocator<Type>>;
-template <typename KeyType, typename ValueType>
-using OrderedMap = std::map<KeyType, ValueType, std::less<KeyType>, OmpAllocator<std::pair<const KeyType, ValueType>>>;
-template <typename KeyType, typename ValueType>
-using HashMap = std::unordered_map<KeyType, ValueType, std::hash<KeyType>, std::equal_to<KeyType>, OmpAllocator<std::pair<const KeyType, ValueType>>>;
-template <typename Type>
-using OrderedSet = std::set<Type, std::less<Type>, OmpAllocator<Type>>;
-template <typename Type>
-using HashSet = std::unordered_set<Type, std::hash<Type>, std::equal_to<Type>, OmpAllocator<Type>>;
+
+template <typename T>
+struct ContiguousListSpan {
+	struct Iterator {
+		using iterator_category = std::bidirectional_iterator_tag;
+		using difference_type = std::ptrdiff_t;
+		using value_type = T;
+		using pointer = T*;
+		using reference = T&;
+
+		Iterator(pointer ptr) :
+			ptr_(ptr)
+		{}
+
+		reference operator*() const {
+			return *ptr_;
+		}
+
+		Iterator& operator++() {
+			++ptr_;
+			return *this;
+		}
+
+		Iterator operator++(int) {
+			pointer tmp = ptr_++;
+			return Iterator(tmp);
+		}
+
+		Iterator& operator--() {
+			--ptr_;
+			return *this;
+		}
+
+		Iterator operator--(int) {
+			pointer tmp = ptr_--;
+			return Iterator(tmp);
+		}
+
+		friend bool operator== (const Iterator& a, const Iterator& b) { return a.ptr_ == b.ptr_; };
+		friend bool operator!= (const Iterator& a, const Iterator& b) { return a.ptr_ != b.ptr_; };
+
+	private:
+		pointer ptr_;
+	};
+
+	ContiguousListSpan(T* ptr, size_t size) :
+		ptr_(ptr), size_(size)
+	{}
+
+	Iterator begin() { return Iterator(ptr_); }
+	Iterator end() { return Iterator(ptr_ + size_); }
+	Iterator begin() const { return Iterator(ptr_); }
+	Iterator end() const { return Iterator(ptr_ + size_); }
+	size_t size() const { return size_; }
+
+private:
+	T* ptr_;
+	size_t size_;
+};
+
+template <typename T>
+using ContiguousRefList = ContiguousListSpan<std::reference_wrapper<T>>;
 
 template <typename T>
 inline String to_string(T conv) {
