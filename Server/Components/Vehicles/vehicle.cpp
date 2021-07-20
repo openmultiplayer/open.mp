@@ -40,6 +40,12 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         player.sendRPC(trailerRPC);
     }
 
+    if (params.isSet()) {
+        NetCode::RPC::SetVehicleParams vehicleRPC;
+        vehicleRPC.VehicleID = poolID;
+        vehicleRPC.params = params;
+        player.sendRPC(vehicleRPC);
+    }
     streamedPlayers_.add(player.getID(), player);
     eventDispatcher->dispatch(&VehicleEventHandler::onStreamIn, *this, player);
     respawning = false;
@@ -341,21 +347,27 @@ float Vehicle::getZAngle() {
     return rot.ToEuler().z;
 }
 
-void Vehicle::setParams(int Objective, bool DoorsLocked) {
-    objective = Objective;
-    doorsLocked = DoorsLocked;
-    NetCode::RPC::SetVehicleParams setVehicleParamsRPC;
-    setVehicleParamsRPC.VehicleID = poolID;
-    setVehicleParamsRPC.objective = objective;
-    setVehicleParamsRPC.doorsLocked = doorsLocked;
-	for (IPlayer& player : streamedPlayers_.entries()) {
-        player.sendRPC(setVehicleParamsRPC);
-	}
+// Set the vehicle's parameters.
+void Vehicle::setParams(VehicleParams params) {
+    this->params = params;
+    NetCode::RPC::SetVehicleParams vehicleRPC;
+    vehicleRPC.VehicleID = poolID;
+    vehicleRPC.params = params;
+    for (IPlayer& player : streamedPlayers_.entries()) {
+        player.sendRPC(vehicleRPC);
+    }
 }
 
-void Vehicle::getParams(int& Objective, bool& DoorsLocked) {
-    Objective = objective;
-    DoorsLocked = doorsLocked;
+// Set the vehicle's parameters for a specific player.
+void Vehicle::setParamsForPlayer(IPlayer& player, VehicleParams params) {
+    if (!streamedPlayers_.valid(player.getID())) {
+        return;
+    }
+
+    NetCode::RPC::SetVehicleParams vehicleRPC;
+    vehicleRPC.VehicleID = poolID;
+    vehicleRPC.params = params;
+    player.sendRPC(vehicleRPC);
 }
 
 float Vehicle::getHealth() {
