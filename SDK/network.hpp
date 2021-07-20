@@ -186,9 +186,27 @@ struct NetworkString : NetworkArray<char> {
 		NetworkBitStreamValue res{ NetworkBitStreamValueType::type }; \
 		res.data = dat; \
 		return res; \
-	}
+	} \
+	template <> \
+	struct DataTypeFromNetworkTypeImpl<NetworkBitStreamValueType::type> { \
+		using value = dataType; \
+	};
 
 struct NetworkBitStreamValue {
+	/// Template struct which has the data type for a specific network type
+	/// Specializations are added by NBSVCONS
+	/// @typeparam NetworkType The NetworkBitStreamValueType 
+	template <NetworkBitStreamValueType NetworkType>
+	struct DataTypeFromNetworkTypeImpl
+	{
+		using value = void;
+	};
+
+	/// Template helper struct which has the data type for a specific network type
+	/// @typeparam NetworkType The NetworkBitStreamValueType 
+	template <NetworkBitStreamValueType NetworkType>
+	using DataTypeFromNetworkType = typename DataTypeFromNetworkTypeImpl<NetworkType>::value;
+
 	NetworkBitStreamValueType type; ///< The type of the value
 
 	using Variant = std::variant<
@@ -284,26 +302,29 @@ struct INetworkBitStream {
 	virtual void reset(ENetworkBitStreamReset reset) = 0;
 
 	/// Helper function that reads a bit stream value and sets it to a variable
-	template <typename OutputType, typename T, typename ...Args>
-	bool readT(T& output, Args... args) {
-		NetworkBitStreamValue input{ std::forward<Args>(args)... };
+	template <NetworkBitStreamValueType NetworkType, typename Type, typename ...Args>
+	bool read(Type& output, Args... args) {
+		NetworkBitStreamValue input{ NetworkType, std::forward<Args>(args)... };
 		if (!read(input)) {
 			return false;
 		}
-		output = std::get<OutputType>(input.data);
+		output = std::get<NetworkBitStreamValue::DataTypeFromNetworkType<NetworkType>>(input.data);
 		return true;
 	}
+};
 
-	template <typename T, typename ...Args>
-	bool read(T& output, Args... args) {
-		return readT<T, T, Args...>(output, std::forward<Args>(args)...);
-	}
+enum NewConnectionResult {
+	NewConnectionResult_Ignore, ///< Ignore the result
+	NewConnectionResult_VersionMismatch,
+	NewConnectionResult_BadName,
+	NewConnectionResult_BadMod,
+	NewConnectionResult_NoPlayerSlot,
+	NewConnectionResult_Success
 };
 
 /// An event handler for network events
 struct NetworkEventHandler {
-	virtual IPlayer* onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return nullptr; }
-	virtual bool incomingConnection(IPlayer& peer, const PeerNetworkData& netData) { return true; }
+	virtual std::pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return { NewConnectionResult_Ignore, nullptr }; }
 	virtual void onPeerConnect(IPlayer& peer) { }
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };

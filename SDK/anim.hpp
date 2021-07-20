@@ -1827,4 +1827,10 @@ struct Animation {
 	bool lockY; ///< Same as above but for the Y axis. Should be kept the same as the previous parameter
 	bool freeze; ///< Setting this to 1 will freeze the player at the end of the animation. 0 will not
 	uint32_t time; ///< Timer in milliseconds. For a never-ending loop it should be 0
+
+	Animation() = default;
+
+	Animation(const String& lib) :
+		lib(lib), delta(4.1f), loop(false), lockX(false), lockY(false), freeze(false), time(0)
+	{}
 };

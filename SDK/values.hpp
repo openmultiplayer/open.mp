@@ -11,17 +11,19 @@ constexpr int PLAYER_POOL_SIZE = 1000;
 constexpr int VEHICLE_POOL_SIZE = 2000;
 constexpr int CLASS_POOL_SIZE = 320;
 constexpr int OBJECT_POOL_SIZE = 1000;
-constexpr int MAX_WEAPON_SLOTS = 12;
+constexpr int MAX_WEAPON_SLOTS = 13;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
 constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
+constexpr int MIN_PLAYER_NAME = 3;
 constexpr int MAX_PLAYER_NAME = 24;
 constexpr int MAX_ANIMATIONS = 1813;
 constexpr int MAX_SKILL_LEVEL = 999;
 constexpr int INVALID_VEHICLE_ID = 0xFFFF;
 constexpr int INVALID_OBJECT_ID = 0xFFFF;
 constexpr int INVALID_PLAYER_ID = 0xFFFF;
+constexpr int INVALID_ACTOR_ID = 0xFFFF;
 constexpr float STREAM_DISTANCE = 200.f;
 constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
 constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
@@ -37,6 +39,10 @@ constexpr int MAX_GLOBAL_TEXTDRAWS = 2048;
 constexpr int MAX_PLAYER_TEXTDRAWS = 256;
 constexpr int INVALID_TEXTDRAW = 0xFFFF;
 constexpr int ACTOR_POOL_SIZE = 1000;
+constexpr int MENU_POOL_SIZE = 128;
+constexpr int MAX_MENU_ITEMS = 12;
+constexpr int MAX_MENU_TEXT_LENGTH = 32;
+constexpr int INVALID_MENU_ID = 0xFF;
 
 namespace Config {
 	enum PlayerMarkerMode {
