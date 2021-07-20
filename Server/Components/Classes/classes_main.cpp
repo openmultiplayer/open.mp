@@ -208,7 +208,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         storage.unlock(index);
     }
 
-    const PoolEntryArray<PlayerClass>& entries() const override {
+    ContiguousRefList<PlayerClass> entries() override {
         return storage.entries();
     }
 

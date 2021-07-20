@@ -459,7 +459,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void streamOutPlayer(IPlayer& other) override;
 
-    const PoolEntryArray<IPlayer>& streamedInPlayers() const override {
+    ContiguousRefList<IPlayer> streamedInPlayers() override {
         return streamedPlayers_.entries();
     }
 
@@ -1252,7 +1252,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IPlayer>& entries() const override {
+    ContiguousRefList<IPlayer> entries() override {
         return storage.entries();
     }
 
@@ -1382,7 +1382,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     }
 
     bool isNameTaken(const String& name, const OptionalPlayer skip) override {
-        const PoolEntryArray<IPlayer>& players = storage.entries();
+        ContiguousRefList<IPlayer> players = storage.entries();
         return std::any_of(players.begin(), players.end(),
             [&name, &skip](IPlayer& player) {
                 // Don't check name for player to skip
