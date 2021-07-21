@@ -1,9 +1,8 @@
 #pragma once
 
-#include <mutex>
 #include <cstdarg>
 #include <fstream>
-#include <condition_variable>
+#include <thread>
 #include <events.hpp>
 #include <pool.hpp>
 #include "player_impl.hpp"
@@ -40,7 +39,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         );
 
         std::for_each(plugins.begin(), plugins.end(),
-            [this](const Pair<UUID, IPlugin*>& pair) {
+            [](const Pair<UUID, IPlugin*>& pair) {
                 pair.second->onPostInit();
             }
         );
