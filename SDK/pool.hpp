@@ -5,7 +5,6 @@
 #include <array>
 #include <type_traits>
 #include <cassert>
-#include <execution>
 #include <absl/container/flat_hash_set.h>
 #include "types.hpp"
 #include "entity.hpp"
