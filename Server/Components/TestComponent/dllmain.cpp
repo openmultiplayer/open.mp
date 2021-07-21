@@ -451,12 +451,8 @@ struct TestComponent :
 		}
 	}
 
-	void onInit(ICore* core) override {
-		c = core;
-		c->getPlayers().getEventDispatcher().addEventHandler(this);
-		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-		
-		classes = c->queryPlugin<IClassesPlugin>();
+	/// Use this instead of onInit to make sure all other plugins are initiated before using them
+	void onPostInit() override {
 		if (classes) {
 			auto classid = classes->claim();
 			PlayerClass& testclass = classes->get(classid);
@@ -467,18 +463,15 @@ struct TestComponent :
 			testclass.weapons[5] = { 31, 9999 }; // M4
 		}
 
-		vehicles = c->queryPlugin<IVehiclesPlugin>();
 		if (vehicles) {
 			vehicle = vehicles->create(411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
 			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
 		}
 
-		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
 		if (checkpoints) {
 			checkpoints->getCheckpointDispatcher().addEventHandler(this);
 		}
 
-		objects = c->queryPlugin<IObjectsPlugin>();
 		if (objects) {
 			objects->getEventDispatcher().addEventHandler(this);
 			obj = objects->create(19370, Vector3(4.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f));
@@ -490,15 +483,11 @@ struct TestComponent :
 			}
 		}
 
-		labels = c->queryPlugin<ITextLabelsPlugin>();
-
-		pickups = c->queryPlugin<IPickupsPlugin>();
 		if (pickups) {
 			pickups->getEventDispatcher().addEventHandler(this);
 			pickups->create(1550, 1, { -25.0913, 36.2893, 3.1234 }, 0, false);
 		}
 
-		tds = c->queryPlugin<ITextDrawsPlugin>();
 		if (tds) {
 			tds->getEventDispatcher().addEventHandler(this);
 
@@ -525,7 +514,6 @@ struct TestComponent :
 			}
 		}
 
-		menus = c->queryPlugin<IMenusPlugin>();
 		if (menus) {
 			menus->getEventDispatcher().addEventHandler(this);
 			menu = menus->create("Who's the goat????", { 200.0, 100.0 }, 0, 300.0, 300.0);
@@ -534,7 +522,6 @@ struct TestComponent :
 			menu->addMenuItem("snoop", 0);
 		}
 
-		actors = c->queryPlugin<IActorsPlugin>();
 		if (actors) {
 			actors->getEventDispatcher().addEventHandler(this);
 			actor = actors->create(10, Vector3(-5.f, -5.f, 3.4f), 90.f);
@@ -551,6 +538,22 @@ struct TestComponent :
 			anim.timeData.time = 0;
 			actor->applyAnimation(anim);
 		}
+	}
+
+	void onInit(ICore* core) override {
+		c = core;
+		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
+
+		classes = c->queryPlugin<IClassesPlugin>();
+		vehicles = c->queryPlugin<IVehiclesPlugin>();
+		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
+		objects = c->queryPlugin<IObjectsPlugin>();
+		labels = c->queryPlugin<ITextLabelsPlugin>();
+		pickups = c->queryPlugin<IPickupsPlugin>();
+		tds = c->queryPlugin<ITextDrawsPlugin>();
+		menus = c->queryPlugin<IMenusPlugin>();
+		actors = c->queryPlugin<IActorsPlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
