@@ -28,6 +28,9 @@ struct IPlugin : public IUUIDProvider {
 	/// Called on core initialisation for every plugin
 	virtual void onInit(ICore* c) = 0;
 
+	/// Called when all plugins have been initialised
+	virtual void onPostInit() {}
+
 	/// Frees the plugin data
 	virtual void free() {}
 };

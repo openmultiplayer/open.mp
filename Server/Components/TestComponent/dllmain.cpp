@@ -66,12 +66,12 @@ struct TestComponent :
 			"Kicked"
 		};
 
-		for (IPlayer& other : c->getPlayers().entries()) {
-			other.sendClientMessage(Colour::Yellow(), "Player " + player.getName() + " has left the server, reason: " + reasonStr[reason]);
+		for (IPlayer* other : c->getPlayers().entries()) {
+			other->sendClientMessage(Colour::Yellow(), "Player " + String(player.getName()) + " has left the server, reason: " + reasonStr[reason]);
 		}
 	}
 
-	bool onCommandText(IPlayer& player, String message) override {
+	bool onCommandText(IPlayer& player, StringView message) override {
 
 		if (message == "/kickmeplz") {
 			player.kick();
@@ -79,47 +79,47 @@ struct TestComponent :
 
         if (message == "/setWeather") {
             player.sendClientMessage(Colour::White(), "weather Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getWeather()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getWeather()));
             player.setWeather(15);
             player.sendClientMessage(Colour::White(), "weather After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getWeather()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getWeather()));
             return true;
         }
 
         if (message == "/setWanted") {
             player.sendClientMessage(Colour::White(), "wanted Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getWantedLevel()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getWantedLevel()));
             player.setWantedLevel(4);
             player.sendClientMessage(Colour::White(), "wanted After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getWantedLevel()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getWantedLevel()));
             return true;
         }
 
         if (message == "/setInterior") {
             player.sendClientMessage(Colour::White(), "interior Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getInterior()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getInterior()));
             player.setInterior(14);
             player.sendClientMessage(Colour::White(), "interior After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getInterior()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getInterior()));
             return true;
         }
 
         if (message == "/setDrunk") {
             player.sendClientMessage(Colour::White(), "drunk Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getDrunkLevel()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getDrunkLevel()));
             player.setDrunkLevel(4444);
             player.sendClientMessage(Colour::White(), "drunk After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getDrunkLevel()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getDrunkLevel()));
             return true;
         }
 
         if (message == "/setCameraPos") {
             Vector3 setPos(744.f, 250.f, 525.f);
             player.sendClientMessage(Colour::White(), "camPos Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getCameraPosition().x) + " " + to_string(player.getCameraPosition().y) + " " + to_string(player.getCameraPosition().z));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getCameraPosition().x) + " " + std::to_string(player.getCameraPosition().y) + " " + std::to_string(player.getCameraPosition().z));
             player.setCameraPosition(setPos);
             player.sendClientMessage(Colour::White(), "camPos After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getCameraPosition().x) + " " + to_string(player.getCameraPosition().y) + " " + to_string(player.getCameraPosition().z));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getCameraPosition().x) + " " + std::to_string(player.getCameraPosition().y) + " " + std::to_string(player.getCameraPosition().z));
             return true;
         }
 
@@ -127,52 +127,52 @@ struct TestComponent :
             Vector3 setPos(1445.f, 2005.f, 5535.f);
             Vector4 setHos(144.f, 999.f, 222.f, 92.f);
             player.sendClientMessage(Colour::White(), "setCameraLookAt Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getCameraLookAt().x) + " " + to_string(player.getCameraLookAt().y) + " " + to_string(player.getCameraLookAt().z));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getCameraLookAt().x) + " " + std::to_string(player.getCameraLookAt().y) + " " + std::to_string(player.getCameraLookAt().z));
             player.setCameraLookAt(setPos, 1);
             player.sendClientMessage(Colour::White(), "setCameraLookAt After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getCameraLookAt().x) + " " + to_string(player.getCameraLookAt().y) + " " + to_string(player.getCameraLookAt().z));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getCameraLookAt().x) + " " + std::to_string(player.getCameraLookAt().y) + " " + std::to_string(player.getCameraLookAt().z));
             return true;
         }
 
         if (message == "/setMoney") {
             player.sendClientMessage(Colour::White(), "money Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getMoney()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getMoney()));
             player.setMoney(14000);
             player.sendClientMessage(Colour::White(), "money After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getMoney()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getMoney()));
             return true;
         }
 
         if (message == "/setSkin") {
             player.sendClientMessage(Colour::White(), "skin Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getSkin()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getSkin()));
             player.setSkin(264);
             player.sendClientMessage(Colour::White(), "skin After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getSkin()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getSkin()));
             return true;
         }
 
 		if (message == "/setControllable") {
             player.sendClientMessage(Colour::White(), "controllable Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getControllable()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getControllable()));
             player.setControllable(false);
             player.sendClientMessage(Colour::White(), "controllable After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getControllable()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getControllable()));
             return true;
 		}
 
         if (message == "/setSpectating") {
             player.sendClientMessage(Colour::White(), "spectating Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getState()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getState()));
             player.setSpectating(true);
             player.sendClientMessage(Colour::White(), "spectating After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getState()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getState()));
             return true;
         }
 
         if (message == "/getState") {
             player.sendClientMessage(Colour::White(), "state:");
-            player.sendClientMessage(Colour::White(), to_string(player.getState()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getState()));
             return true;
         }
 
@@ -194,10 +194,10 @@ struct TestComponent :
 
         if (message == "/widescreen") {
             player.sendClientMessage(Colour::White(), "widescreen Before:");
-            player.sendClientMessage(Colour::White(), to_string(player.getWidescreen()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getWidescreen()));
             player.setWidescreen(true);
             player.sendClientMessage(Colour::White(), "widescreen After:");
-            player.sendClientMessage(Colour::White(), to_string(player.getWidescreen()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.getWidescreen()));
             return true;
         }
 
@@ -306,7 +306,7 @@ struct TestComponent :
 		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
 		if (tdData && tdData->valid(0)) {
 			if (message.find("/settextdraw") == 0) {
-				String text = message.substr(message.find_first_of(' '));
+				StringView text = message.substr(message.find_first_of(' '));
 				tdData->get(0).setText(text);
 				return true;
 			}
@@ -341,7 +341,7 @@ struct TestComponent :
 			auto pvars = player.queryData<IPlayerVariableData>();
 			if (pvars) {
 				if (pvars->getType("LASTCPTYPE") == VariableType_String) {
-					pvars->getString("LASTCPTYPE", type);
+					type = pvars->getString("LASTCPTYPE");
 				}
 				else {
 					type = "INVALID";
@@ -368,29 +368,29 @@ struct TestComponent :
 			String lookAt = "Looking at";
 			IPlayer* lookatPlayer = player.getCameraTargetPlayer();
 			if (lookatPlayer) {
-				lookAt += "~n~Player " + lookatPlayer->getName();
+				lookAt += "~n~Player " + String(lookatPlayer->getName());
 			}
 			IVehicle* lookAtVehicle = player.getCameraTargetVehicle();
 			if (lookAtVehicle) {
-				lookAt += "~n~Vehicle " + to_string(lookAtVehicle->getID());
+				lookAt += "~n~Vehicle " + std::to_string(lookAtVehicle->getID());
 			}
 			IObject* lookAtObject = player.getCameraTargetObject();
 			if (lookAtObject) {
-				lookAt += "~n~Object " + to_string(lookAtObject->getID());
+				lookAt += "~n~Object " + std::to_string(lookAtObject->getID());
 			}
 			IActor* lookAtActor = player.getCameraTargetActor();
 			if (lookAtActor) {
-				lookAt += "~n~Actor " + to_string(lookAtActor->getID());
+				lookAt += "~n~Actor " + std::to_string(lookAtActor->getID());
 			}
 
 			String aimAt = "Aiming at";
 			IPlayer* targetPlayer = player.getTargetPlayer();
 			if (targetPlayer) {
-				aimAt += "~n~Player " + targetPlayer->getName();
+				aimAt += "~n~Player " + String(targetPlayer->getName());
 			}
 			IActor* targetActor = player.getTargetActor();
 			if (targetActor) {
-				aimAt += "~n~Actor " + to_string(targetActor->getID());
+				aimAt += "~n~Actor " + std::to_string(targetActor->getID());
 			}
 
 			if (lookatPlayer || lookAtVehicle || lookAtObject || lookAtActor) {
@@ -451,12 +451,8 @@ struct TestComponent :
 		}
 	}
 
-	void onInit(ICore* core) override {
-		c = core;
-		c->getPlayers().getEventDispatcher().addEventHandler(this);
-		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-		
-		classes = c->queryPlugin<IClassesPlugin>();
+	/// Use this instead of onInit to make sure all other plugins are initiated before using them
+	void onPostInit() override {
 		if (classes) {
 			auto classid = classes->claim();
 			PlayerClass& testclass = classes->get(classid);
@@ -467,18 +463,15 @@ struct TestComponent :
 			testclass.weapons[5] = { 31, 9999 }; // M4
 		}
 
-		vehicles = c->queryPlugin<IVehiclesPlugin>();
 		if (vehicles) {
 			vehicle = vehicles->create(411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
 			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
 		}
 
-		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
 		if (checkpoints) {
 			checkpoints->getCheckpointDispatcher().addEventHandler(this);
 		}
 
-		objects = c->queryPlugin<IObjectsPlugin>();
 		if (objects) {
 			objects->getEventDispatcher().addEventHandler(this);
 			obj = objects->create(19370, Vector3(4.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f));
@@ -490,15 +483,11 @@ struct TestComponent :
 			}
 		}
 
-		labels = c->queryPlugin<ITextLabelsPlugin>();
-
-		pickups = c->queryPlugin<IPickupsPlugin>();
 		if (pickups) {
 			pickups->getEventDispatcher().addEventHandler(this);
 			pickups->create(1550, 1, { -25.0913, 36.2893, 3.1234 }, 0, false);
 		}
 
-		tds = c->queryPlugin<ITextDrawsPlugin>();
 		if (tds) {
 			tds->getEventDispatcher().addEventHandler(this);
 
@@ -525,7 +514,6 @@ struct TestComponent :
 			}
 		}
 
-		menus = c->queryPlugin<IMenusPlugin>();
 		if (menus) {
 			menus->getEventDispatcher().addEventHandler(this);
 			menu = menus->create("Who's the goat????", { 200.0, 100.0 }, 0, 300.0, 300.0);
@@ -534,7 +522,6 @@ struct TestComponent :
 			menu->addMenuItem("snoop", 0);
 		}
 
-		actors = c->queryPlugin<IActorsPlugin>();
 		if (actors) {
 			actors->getEventDispatcher().addEventHandler(this);
 			actor = actors->create(10, Vector3(-5.f, -5.f, 3.4f), 90.f);
@@ -543,14 +530,30 @@ struct TestComponent :
 			Animation anim;
 			anim.lib = "DANCING";
 			anim.name = "dance_loop";
-			anim.delta = 4.1;
-			anim.loop = true;
-			anim.lockX = false;
-			anim.lockY = false;
-			anim.freeze = false;
-			anim.time = 0;
+			anim.timeData.delta = 4.1;
+			anim.timeData.loop = true;
+			anim.timeData.lockX = false;
+			anim.timeData.lockY = false;
+			anim.timeData.freeze = false;
+			anim.timeData.time = 0;
 			actor->applyAnimation(anim);
 		}
+	}
+
+	void onInit(ICore* core) override {
+		c = core;
+		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
+
+		classes = c->queryPlugin<IClassesPlugin>();
+		vehicles = c->queryPlugin<IVehiclesPlugin>();
+		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
+		objects = c->queryPlugin<IObjectsPlugin>();
+		labels = c->queryPlugin<ITextLabelsPlugin>();
+		pickups = c->queryPlugin<IPickupsPlugin>();
+		tds = c->queryPlugin<ITextDrawsPlugin>();
+		menus = c->queryPlugin<IMenusPlugin>();
+		actors = c->queryPlugin<IActorsPlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -600,11 +603,11 @@ struct TestComponent :
 	}
 
 	void onTextDrawClick(IPlayer& player, ITextDraw& td) override {
-		player.sendClientMessage(Colour::White(), "Clicked textdraw " + to_string(td.getID()));
+		player.sendClientMessage(Colour::White(), "Clicked textdraw " + std::to_string(td.getID()));
 	}
 
 	void onPlayerTextDrawClick(IPlayer& player, IPlayerTextDraw& td) override {
-		player.sendClientMessage(Colour::White(), "Clicked player textdraw " + to_string(td.getID()));
+		player.sendClientMessage(Colour::White(), "Clicked player textdraw " + std::to_string(td.getID()));
 	}
 
 	void onMoved(IObject& object) override {
@@ -614,12 +617,12 @@ struct TestComponent :
 	}
 
 	void onObjectSelected(IPlayer& player, IObject& object, int model, Vector3 position) override {
-		player.sendClientMessage(Colour::White(), "Selected object " + to_string(object.getID()) + " with model " + to_string(model) + "at position (" + to_string(position.x) + ", " + to_string(position.y) + ", " + to_string(position.z) + ")");
+		player.sendClientMessage(Colour::White(), "Selected object " + std::to_string(object.getID()) + " with model " + std::to_string(model) + "at position (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
 		player.queryData<IPlayerObjectData>()->editObject(object);
 	}
 
 	void onPlayerObjectSelected(IPlayer& player, IPlayerObject& object, int model, Vector3 position) override {
-		player.sendClientMessage(Colour::White(), "Selected player object " + to_string(object.getID()) + " with model " + to_string(model) + "at position (" + to_string(position.x) + ", " + to_string(position.y) + ", " + to_string(position.z) + ")");
+		player.sendClientMessage(Colour::White(), "Selected player object " + std::to_string(object.getID()) + " with model " + std::to_string(model) + "at position (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
 		player.queryData<IPlayerObjectData>()->endObjectEdit();
 	}
 
@@ -665,24 +668,24 @@ struct TestComponent :
 	}
 
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
-		player.sendClientMessage(Colour::White(), "shot player " + target.getName());
+		player.sendClientMessage(Colour::White(), "shot player " + String(target.getName()));
 		return true;
 	}
 
 	bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) override {
-		player.sendClientMessage(Colour::White(), "shot vehicle id " + to_string(target.getID()));
+		player.sendClientMessage(Colour::White(), "shot vehicle id " + std::to_string(target.getID()));
 		vehicles->release(target.getID());
 		return true;
 	}
 
 	bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) override {
-		player.sendClientMessage(Colour::White(), "shot object id " + to_string(target.getID()));
+		player.sendClientMessage(Colour::White(), "shot object id " + std::to_string(target.getID()));
 		objects->release(target.getID());
 		return true;
 	}
 
 	bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override {
-		player.sendClientMessage(Colour::White(), "shot player object id " + to_string(target.getID()));
+		player.sendClientMessage(Colour::White(), "shot player object id " + std::to_string(target.getID()));
 		player.queryData<IPlayerObjectData>()->release(target.getID());
 		return true;
 	}

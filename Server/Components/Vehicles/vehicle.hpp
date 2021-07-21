@@ -4,11 +4,11 @@
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
-    std::array<IPlayer*, MAX_SEATS> passengers;
+    StaticArray<IPlayer*, MAX_SEATS> passengers;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
-    std::bitset<IVehiclesPlugin::Cnt> streamedPlayers_;
-    std::array<int, 14> mods;
+    StaticBitset<IVehiclesPlugin::Cnt> streamedPlayers_;
+    StaticArray<int, 14> mods;
     float health = 1000.0f;
     uint8_t interior = 0;
     uint32_t doorDamage = 0;
@@ -52,7 +52,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         rot = rotation;
     }
 
-    const std::array<IPlayer*, MAX_SEATS>& getPassengers() override {
+    const StaticArray<IPlayer*, MAX_SEATS>& getPassengers() override {
         return passengers;
     }
 

@@ -10,8 +10,8 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 	float drawDist_;
 	bool cameraCol_;
 	ObjectAttachmentData attachmentData_;
-	ObjectMaterialArray materials_;
-	ObjectMaterialArraySlots materialsUsed_;
+	StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS> materials_;
+	StaticBitset<MAX_OBJECT_MATERIAL_SLOTS> materialsUsed_;
 	bool moving_;
 	ObjectMoveData moveData_;
 	float rotSpeed_;
@@ -31,8 +31,17 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 		return attachmentData_;
 	}
 
-	ObjectMaterialArrayPair getMaterialData() const override {
-		return ObjectMaterialArrayPair(std::cref(materialsUsed_), std::cref(materials_));
+	bool getMaterialData(int index, const IObjectMaterial*& out) const override {
+		if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
+			return false;
+		}
+
+		if (!materialsUsed_.test(index)) {
+			return false;
+		}
+
+		out = &materials_[index];
+		return true;
 	}
 
 	int getID() const override {
@@ -67,26 +76,26 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 	}
 
-	void setMtl(int index, int model, const String& txd, const String& texture, Colour colour) {
+	void setMtl(int index, int model, StringView txd, StringView texture, Colour colour) {
 		materialsUsed_.set(index);
-		materials_[index].type = ObjectMaterialData::Type::Default;
-		materials_[index].model = model;
+		materials_[index].data.type = ObjectMaterialData::Type::Default;
+		materials_[index].data.model = model;
 		materials_[index].txdOrText = txd;
 		materials_[index].textureOrFont = texture;
-		materials_[index].materialColour = colour;
+		materials_[index].data.materialColour = colour;
 	}
 
-	void setMtlText(int index, const String& text, int size, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) {
+	void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) {
 		materialsUsed_.set(index);
-		materials_[index].type = ObjectMaterialData::Type::Text;
+		materials_[index].data.type = ObjectMaterialData::Type::Text;
 		materials_[index].txdOrText = text;
-		materials_[index].materialSize = size;
+		materials_[index].data.materialSize = size;
 		materials_[index].textureOrFont = fontFace;
-		materials_[index].fontSize = fontSize;
-		materials_[index].bold = bold;
-		materials_[index].fontColour = fontColour;
-		materials_[index].backgroundColour = backColour;
-		materials_[index].alignment = align;
+		materials_[index].data.fontSize = fontSize;
+		materials_[index].data.bold = bold;
+		materials_[index].data.fontColour = fontColour;
+		materials_[index].data.backgroundColour = backColour;
+		materials_[index].data.alignment = align;
 	}
 
 	void setAttachmentData(ObjectAttachmentData::Type type, int id, Vector3 offset, Vector3 rotation, bool sync) {
@@ -171,27 +180,27 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 struct Object final : public BaseObject<IObject> {
 	IPlayerPool* players_;
-	std::bitset<IPlayerPool::Cnt> delayedProcessing_;
-	std::array<std::chrono::steady_clock::time_point, IPlayerPool::Cnt> delayedProcessingTime_;
+	StaticBitset<IPlayerPool::Cnt> delayedProcessing_;
+	StaticArray<std::chrono::steady_clock::time_point, IPlayerPool::Cnt> delayedProcessingTime_;
 
 	Object() :
 		players_(nullptr)
 	{}
 
 	void restream() {
-		for (IPlayer& player : players_->entries()) {
-			createObjectForClient(player);
+		for (IPlayer* player : players_->entries()) {
+			createObjectForClient(*player);
 		}
 	}
 
-	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Colour colour) override {
+	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
 		if (index < materials_.size()) {
 			setMtl(index, model, txd, texture, colour);
 			restream();
 		}
 	}
 
-	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
+	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
 		if (index < materials_.size()) {
 			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
 			restream();
@@ -213,8 +222,8 @@ struct Object final : public BaseObject<IObject> {
 	bool advance(std::chrono::microseconds elapsed) {
 		if (anyDelayedProcessing_) {
 			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-			for (IPlayer& player : players_->entries()) {
-				const int pid = player.getID();
+			for (IPlayer* player : players_->entries()) {
+				const int pid = player->getID();
 				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
 					delayedProcessing_.reset(pid);
 					anyDelayedProcessing_ = delayedProcessing_.any();
@@ -224,20 +233,20 @@ struct Object final : public BaseObject<IObject> {
 						moveObjectRPC.ObjectID = poolID;
 						moveObjectRPC.CurrentPosition = pos_;
 						moveObjectRPC.MoveData = moveData_;
-						player.sendRPC(moveObjectRPC);
+						player->sendRPC(moveObjectRPC);
 					}
 
 					if (
 						attachmentData_.type == ObjectAttachmentData::Type::Player &&
 						players_->valid(attachmentData_.ID) &&
-						player.isPlayerStreamedIn(players_->get(attachmentData_.ID))
+						player->isPlayerStreamedIn(players_->get(attachmentData_.ID))
 					) {
 						NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
 						attachObjectToPlayerRPC.ObjectID = poolID;
 						attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
 						attachObjectToPlayerRPC.Offset = attachmentData_.offset;
 						attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-						player.sendRPC(attachObjectToPlayerRPC);
+						player->sendRPC(attachObjectToPlayerRPC);
 					}
 				}
 			}
@@ -319,8 +328,8 @@ struct Object final : public BaseObject<IObject> {
 
 	~Object() {
 		if (players_) {
-			for (IPlayer& player : players_->entries()) {
-				destroyForPlayer(player);
+			for (IPlayer* player : players_->entries()) {
+				destroyForPlayer(*player);
 			}
 		}
 	}
@@ -338,7 +347,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		createObjectForClient(*player_);
 	}
 
-	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Colour colour) override {
+	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
 		if (index < materials_.size()) {
 			setMtl(index, model, txd, texture, colour);
 			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
@@ -348,7 +357,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		}
 	}
 
-	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
+	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
 		if (index < materials_.size()) {
 			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
 			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
