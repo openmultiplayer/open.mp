@@ -25,14 +25,14 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 	float col1Width;
 	float col2Width;
 	bool menuEnabled;
-	std::array<bool, MAX_MENU_ITEMS> rowEnabled;
-	std::array<String, 2> columnHeaders;
-	std::array<uint8_t, 2> columnItemCount;
-	std::array<std::array<String, MAX_MENU_ITEMS>, 2> columnMenuItems;
+	StaticArray<bool, MAX_MENU_ITEMS> rowEnabled;
+	StaticArray<String, 2> columnHeaders;
+	StaticArray<uint8_t, 2> columnItemCount;
+	StaticArray<StaticArray<String, MAX_MENU_ITEMS>, 2> columnMenuItems;
 
 	UniqueIDArray<IPlayer, IPlayerPool::Cnt> initedFor_;
 
-	void setColumnHeader(const String & header, MenuColumn column) override {
+	void setColumnHeader(StringView header, MenuColumn column) override {
 		if (column > columnCount) {
 			return;
 		}
@@ -40,7 +40,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 		columnHeaders.at(column) = header;
 	}
 
-	void addMenuItem(const String & itemText, MenuColumn column) override {
+	void addMenuItem(StringView itemText, MenuColumn column) override {
 		if (column > columnCount)
 		{
 			return;
@@ -79,7 +79,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 		NetCode::RPC::PlayerInitMenu playerInitMenu;
 		playerInitMenu.MenuID = poolID;
 		playerInitMenu.HasTwoColumns = columnCount >= 1;
-		playerInitMenu.Title = title;
+		playerInitMenu.Title = StringView(title);
 		playerInitMenu.Position = pos;
 		playerInitMenu.Col1Width = col1Width;
 		playerInitMenu.Col2Width = col2Width;
@@ -87,30 +87,30 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 		playerInitMenu.RowEnabled = rowEnabled;
 
 		for (int i = 0; i < columnHeaders.size(); i++) {
-			playerInitMenu.ColumnHeaders.at(i) = columnHeaders.at(i);
+			playerInitMenu.ColumnHeaders.at(i) = StringView(columnHeaders.at(i));
 		}
 
 		playerInitMenu.ColumnItemCount = columnItemCount;
 
 		for (int column = 0; column < columnMenuItems.size(); column++) {
-			std::array<String, MAX_MENU_ITEMS> singleColumnItems = columnMenuItems.at(column);
+			StaticArray<String, MAX_MENU_ITEMS> singleColumnItems = columnMenuItems.at(column);
 			for (int row = 0; row < singleColumnItems.size(); row++) {
-				playerInitMenu.MenuItems.at(column).at(row) = singleColumnItems.at(row);
+				playerInitMenu.MenuItems.at(column).at(row) = StringView(singleColumnItems.at(row));
 			}
 		}
 
 		playerInitMenu.MenuItems[0] = {
-			columnMenuItems[0][0], columnMenuItems[0][1], columnMenuItems[0][2],
-			columnMenuItems[0][3], columnMenuItems[0][4], columnMenuItems[0][5],
-			columnMenuItems[0][6], columnMenuItems[0][7], columnMenuItems[0][8],
-			columnMenuItems[0][9], columnMenuItems[0][10], columnMenuItems[0][11]
+			StringView(columnMenuItems[0][0]), StringView(columnMenuItems[0][1]), StringView(columnMenuItems[0][2]),
+			StringView(columnMenuItems[0][3]), StringView(columnMenuItems[0][4]), StringView(columnMenuItems[0][5]),
+			StringView(columnMenuItems[0][6]), StringView(columnMenuItems[0][7]), StringView(columnMenuItems[0][8]),
+			StringView(columnMenuItems[0][9]), StringView(columnMenuItems[0][10]), StringView(columnMenuItems[0][11])
 		};
 
 		playerInitMenu.MenuItems[1] = {
-			columnMenuItems[1][0], columnMenuItems[1][1], columnMenuItems[1][2],
-			columnMenuItems[1][3], columnMenuItems[1][4], columnMenuItems[1][5],
-			columnMenuItems[1][6], columnMenuItems[1][7], columnMenuItems[1][8],
-			columnMenuItems[1][9], columnMenuItems[1][10], columnMenuItems[1][11]
+			StringView(columnMenuItems[1][0]), StringView(columnMenuItems[1][1]), StringView(columnMenuItems[1][2]),
+			StringView(columnMenuItems[1][3]), StringView(columnMenuItems[1][4]), StringView(columnMenuItems[1][5]),
+			StringView(columnMenuItems[1][6]), StringView(columnMenuItems[1][7]), StringView(columnMenuItems[1][8]),
+			StringView(columnMenuItems[1][9]), StringView(columnMenuItems[1][10]), StringView(columnMenuItems[1][11])
 		};
 
 		player.sendRPC(playerInitMenu);

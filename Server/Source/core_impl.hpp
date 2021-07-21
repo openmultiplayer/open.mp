@@ -15,8 +15,8 @@ struct Core final : public ICore, public PlayerEventHandler {
     PlayerPool players;
     JSON props;
     std::chrono::milliseconds sleepTimer;
-    std::map<UUID, IPlugin*> plugins;
-    std::vector<INetwork*> networks;
+    FlatHashMap<UUID, IPlugin*> plugins;
+    FlatPtrHashSet<INetwork> networks;
 
     Core() :
         players(*this)
@@ -34,7 +34,7 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     void initiated() {
         std::for_each(plugins.begin(), plugins.end(),
-            [this](const std::pair<UUID, IPlugin*>& pair) {
+            [this](const Pair<UUID, IPlugin*>& pair) {
                 pair.second->onInit(this);
             }
         );
@@ -63,8 +63,8 @@ struct Core final : public ICore, public PlayerEventHandler {
         return players;
     }
 
-    ContiguousListSpan<INetwork*> getNetworks() override {
-        return ContiguousListSpan<INetwork*>(networks.data(), networks.size());
+    const FlatPtrHashSet<INetwork>& getNetworks() override {
+        return networks;
     }
 
     IEventDispatcher<CoreEventHandler>& getEventDispatcher() override {
@@ -101,12 +101,12 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.Multiplier = Config::getOption<int>(props, "multiplier");
         playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
         std::string serverName = Config::getOption<std::string>(props, "server_name");
-        playerInitRPC.ServerName = serverName;
+        playerInitRPC.ServerName = StringView(serverName);
         IClassesPlugin* classes = ICore::queryPlugin<IClassesPlugin>();
         playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesPlugin* vehicles = ICore::queryPlugin<IVehiclesPlugin>();
-        std::array<uint8_t, 212> emptyModel;
+        StaticArray<uint8_t, 212> emptyModel;
         playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
 
         player.sendRPC(playerInitRPC);
@@ -119,7 +119,7 @@ struct Core final : public ICore, public PlayerEventHandler {
                 printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", plugin->pluginName(), res.first->second->pluginName(), plugin->getUUID());
             }
             if (plugin->pluginType() == PluginType::Network) {
-                networks.push_back(static_cast<INetworkPlugin*>(plugin)->getNetwork());
+                networks.insert(static_cast<INetworkPlugin*>(plugin)->getNetwork());
             }
         }
     }

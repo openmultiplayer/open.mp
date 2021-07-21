@@ -3,14 +3,16 @@
 #include <cstdint>
 #include <string>
 #include <vector>
-#include <map>
-#include <unordered_map>
-#include <set>
-#include <unordered_set>
+#include <utility>
+#include <array>
+#include <bitset>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
 #include <nlohmann/json.hpp>
+#include <absl/strings/string_view.h>
+#include <absl/container/flat_hash_set.h>
+#include <absl/container/flat_hash_map.h>
 #include "exports.hpp"
 
 typedef glm::vec2 Vector2;
@@ -19,76 +21,31 @@ typedef glm::vec4 Vector4;
 typedef nlohmann::json JSON;
 typedef uint64_t UUID;
 
-// Use these instead of STL classes when passing them around the SDK
-using String = std::basic_string<char, std::char_traits<char>, OmpAllocator<char>>;
+/// Don't pass String around the SDK, only StringView
+using String = std::string;
+using StringView = absl::string_view;
 
 template <typename T>
-struct ContiguousListSpan {
-	struct Iterator {
-		using iterator_category = std::bidirectional_iterator_tag;
-		using difference_type = std::ptrdiff_t;
-		using value_type = T;
-		using pointer = T*;
-		using reference = T&;
-
-		Iterator(pointer ptr) :
-			ptr_(ptr)
-		{}
-
-		reference operator*() const {
-			return *ptr_;
-		}
-
-		Iterator& operator++() {
-			++ptr_;
-			return *this;
-		}
-
-		Iterator operator++(int) {
-			pointer tmp = ptr_++;
-			return Iterator(tmp);
-		}
-
-		Iterator& operator--() {
-			--ptr_;
-			return *this;
-		}
-
-		Iterator operator--(int) {
-			pointer tmp = ptr_--;
-			return Iterator(tmp);
-		}
-
-		friend bool operator== (const Iterator& a, const Iterator& b) { return a.ptr_ == b.ptr_; };
-		friend bool operator!= (const Iterator& a, const Iterator& b) { return a.ptr_ != b.ptr_; };
-
-	private:
-		pointer ptr_;
-	};
-
-	ContiguousListSpan(T* ptr, size_t size) :
-		ptr_(ptr), size_(size)
-	{}
-
-	Iterator begin() { return Iterator(ptr_); }
-	Iterator end() { return Iterator(ptr_ + size_); }
-	Iterator begin() const { return Iterator(ptr_); }
-	Iterator end() const { return Iterator(ptr_ + size_); }
-	size_t size() const { return size_; }
-
-private:
-	T* ptr_;
-	size_t size_;
-};
+using FlatHashSet = absl::flat_hash_set<T>;
+template <typename K, typename V>
+using FlatHashMap = absl::flat_hash_map<K, V>;
 
 template <typename T>
-using ContiguousRefList = ContiguousListSpan<std::reference_wrapper<T>>;
+using FlatRefHashSet = FlatHashSet<std::reference_wrapper<T>>;
+template <typename T>
+using FlatPtrHashSet = FlatHashSet<T*>;
+
+template <typename T, size_t Size>
+using StaticArray = std::array<T, Size>;
 
 template <typename T>
-inline String to_string(T conv) {
-	const std::string str = std::to_string(conv);
-	return String(str.data(), str.length());
-}
+using DynamicArray = std::vector<T>;
+
+template <size_t Size>
+using StaticBitset = std::bitset<Size>;
+
+template <typename First, typename Second>
+using Pair = std::pair<First, Second>;
 
 struct NoCopy {
 	NoCopy() = default;
