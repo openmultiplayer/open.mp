@@ -1817,10 +1817,8 @@ static const char* AnimationNames[] = {
 	"SAMP:FISHINGIDLE",
 };
 
-/// Holds data to pass when applying an animation to a player
-struct Animation {
-	String lib; ///< The animation library of the animation to apply
-	String name; ///< The name of the animation to apply
+/// Holds trivial animation time data
+struct AnimationTimeData {
 	float delta; ///< The speed to play the animation
 	bool loop; ///< If set to 1, the animation will loop. If set to 0, the animation will play once
 	bool lockX; ///< If set to 0, the player is returned to their old X coordinate once the animation is complete (for animations that move the player such as walking). 1 will not return them to their old position
@@ -1828,9 +1826,47 @@ struct Animation {
 	bool freeze; ///< Setting this to 1 will freeze the player at the end of the animation. 0 will not
 	uint32_t time; ///< Timer in milliseconds. For a never-ending loop it should be 0
 
+	AnimationTimeData() :
+		delta(4.1f), loop(false), lockX(false), lockY(false), freeze(false), time(0)
+	{}
+};
+
+/* Interfaces, to be passed around */
+
+/// Holds data to pass when applying an animation to a player
+struct IAnimation {
+	/// Get the animation's time data
+	virtual const AnimationTimeData& getTimeData() const = 0;
+
+	/// Get the animation's library name
+	virtual StringView getLib() const = 0;
+
+	/// Get the animation's name
+	virtual StringView getName() const = 0;
+};
+
+/* Implementation, NOT to be passed around */
+
+/// Default animation implementation
+struct Animation : IAnimation {
+	String lib; ///< The animation library of the animation to apply
+	String name; ///< The name of the animation to apply
+	AnimationTimeData timeData; ///< The time data of the animation to apply
+
+	const AnimationTimeData& getTimeData() const override{
+		return timeData;
+	}
+
+	StringView getLib() const override {
+		return lib;
+	}
+	StringView getName() const override {
+		return name;
+	}
+
 	Animation() = default;
 
-	Animation(const String& lib) :
-		lib(lib), delta(4.1f), loop(false), lockX(false), lockY(false), freeze(false), time(0)
+	Animation(String lib) :
+		lib(lib)
 	{}
 };

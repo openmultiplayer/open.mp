@@ -16,7 +16,7 @@ void Query::setGameModeName(const std::string & value)
 	gameModeName = value;
 }
 
-std::unordered_map<std::string, std::string> & Query::getRules()
+FlatHashMap<String, String>& Query::getRules()
 {
 	return rules;
 }
@@ -75,16 +75,16 @@ void Query::preparePlayerListForQuery() {
 		return;
 	}
 
-	for (IPlayer& player : core->getPlayers().entries()) {
-		const String& playerName = player.getName();
+	for (IPlayer* player : core->getPlayers().entries()) {
+		StringView playerName = player->getName();
 
 		// Write player name
 		unsigned char playerNameLength = static_cast<unsigned char>(playerName.length());
 		writeToBuffer(playerListBuffer, playerListBufferLength, playerNameLength);
-		writeToBuffer(playerListBuffer, playerName.c_str(), playerListBufferLength, playerNameLength);
+		writeToBuffer(playerListBuffer, playerName.data(), playerListBufferLength, playerNameLength);
 		
 		// Write player score
-		writeToBuffer(playerListBuffer, playerListBufferLength, player.getScore());
+		writeToBuffer(playerListBuffer, playerListBufferLength, player->getScore());
 	}
 }
 

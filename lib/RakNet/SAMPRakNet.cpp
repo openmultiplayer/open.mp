@@ -141,8 +141,8 @@ void
 		return;
 	}
 
-	ContiguousListSpan<INetwork *> networks = core->getNetworks();
-	for (INetwork * network : networks) {
+	const FlatPtrHashSet<INetwork>& networks = core->getNetworks();
+	for (INetwork* network : networks) {
 		ENetworkType type = network->getNetworkType();
 		if (type == ENetworkType_RakNetLegacy) {
 			int outputLength = 0;

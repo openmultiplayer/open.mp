@@ -717,9 +717,9 @@ namespace NetCode {
 
 		struct ApplyPlayerAnimation final : NetworkPacketBase<86> {
 			int PlayerID;
-			const Animation& Anim;
+			const IAnimation& Anim;
 
-			ApplyPlayerAnimation(const Animation& anim) : Anim(anim)
+			ApplyPlayerAnimation(const IAnimation& anim) : Anim(anim)
 			{}
 
 			bool read(INetworkBitStream& bs) {
@@ -728,14 +728,15 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.lib));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.name));
-				bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
-				bs.write(NetworkBitStreamValue::BIT(Anim.loop));
-				bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
-				bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
-				bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
-				bs.write(NetworkBitStreamValue::UINT32(Anim.time));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.getLib()));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.getName()));
+				const AnimationTimeData& data = Anim.getTimeData();
+				bs.write(NetworkBitStreamValue::FLOAT(data.delta));
+				bs.write(NetworkBitStreamValue::BIT(data.loop));
+				bs.write(NetworkBitStreamValue::BIT(data.lockX));
+				bs.write(NetworkBitStreamValue::BIT(data.lockY));
+				bs.write(NetworkBitStreamValue::BIT(data.freeze));
+				bs.write(NetworkBitStreamValue::UINT32(data.time));
 			}
 		};
 
@@ -946,9 +947,9 @@ namespace NetCode {
 		};
 
 		struct SendPlayerScoresAndPings final : NetworkPacketBase<155> {
-			ContiguousRefList<IPlayer> Players;
+			const FlatPtrHashSet<IPlayer>& Players;
 
-			SendPlayerScoresAndPings(ContiguousRefList<IPlayer> players) :
+			SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players) :
 				Players(players)
 			{}
 
@@ -957,10 +958,10 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
-				for (IPlayer& player : Players) {
-					bs.write(NetworkBitStreamValue::UINT16(player.getID()));
-					bs.write(NetworkBitStreamValue::INT32(player.getScore()));
-					bs.write(NetworkBitStreamValue::UINT32(player.getPing()));
+				for (IPlayer* player : Players) {
+					bs.write(NetworkBitStreamValue::UINT16(player->getID()));
+					bs.write(NetworkBitStreamValue::INT32(player->getScore()));
+					bs.write(NetworkBitStreamValue::UINT32(player->getPing()));
 				}
 			}
 		};
@@ -1095,7 +1096,7 @@ namespace NetCode {
 			uint8_t LightDamage;
 			uint8_t TyreDamage;
 			uint8_t Siren;
-			std::array<int, 14> Mods;
+			StaticArray<int, 14> Mods;
 			uint8_t Paintjob;
 			int32_t BodyColour1;
 			int32_t BodyColour2;
@@ -1196,9 +1197,9 @@ namespace NetCode {
 		struct SetPlayerObjectMaterial final : NetworkPacketBase<84> {
 			int ObjectID;
 			int MaterialID;
-			ObjectMaterialData& MaterialData;
+			ObjectMaterial& MaterialData;
 
-			SetPlayerObjectMaterial(ObjectMaterialData& materialData) : MaterialData(materialData)
+			SetPlayerObjectMaterial(ObjectMaterial& materialData) : MaterialData(materialData)
 			{}
 
 			bool read(INetworkBitStream& bs) {
@@ -1207,24 +1208,24 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-				bs.write(NetworkBitStreamValue::UINT8(MaterialData.type));
+				bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.type));
 				bs.write(NetworkBitStreamValue::UINT8(MaterialID));
 
-				if (MaterialData.type == ObjectMaterialData::Type::Default) {
-					bs.write(NetworkBitStreamValue::UINT16(MaterialData.model));
-					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.txdOrText));
-					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.textureOrFont));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.materialColour.ARGB()));
+				if (MaterialData.data.type == ObjectMaterialData::Type::Default) {
+					bs.write(NetworkBitStreamValue::UINT16(MaterialData.data.model));
+					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.txdOrText)));
+					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textureOrFont)));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.materialColour.ARGB()));
 				}
-				else if (MaterialData.type == ObjectMaterialData::Type::Text) {
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.materialSize));
-					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.textureOrFont));
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.fontSize));
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.bold));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.fontColour.ARGB()));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.backgroundColour.ARGB()));
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.alignment));
-					bs.write(NetworkBitStreamValue::COMPRESSED_STR(MaterialData.txdOrText));
+				else if (MaterialData.data.type == ObjectMaterialData::Type::Text) {
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.materialSize));
+					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textureOrFont)));
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.fontSize));
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.bold));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.fontColour.ARGB()));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.backgroundColour.ARGB()));
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.alignment));
+					bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(MaterialData.txdOrText)));
 				}
 			}
 		};
@@ -1237,12 +1238,12 @@ namespace NetCode {
 			float DrawDistance;
 			bool CameraCollision;
 			ObjectAttachmentData AttachmentData;
-			std::array<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS>& Materials;
-			std::bitset<MAX_OBJECT_MATERIAL_SLOTS>& MaterialsUsed;
+			StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS> Materials;
+			StaticBitset<MAX_OBJECT_MATERIAL_SLOTS>& MaterialsUsed;
 
 			CreateObject(
-				std::array<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS>& materials,
-				std::bitset<MAX_OBJECT_MATERIAL_SLOTS>& materialsUsed
+				StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS>& materials,
+				StaticBitset<MAX_OBJECT_MATERIAL_SLOTS>& materialsUsed
 			) :
 				Materials(materials),
 				MaterialsUsed(materialsUsed)
@@ -1271,25 +1272,25 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(MaterialsUsed.count()));
 				for (int i = 0; i < MaterialsUsed.count(); ++i) {
 					if (MaterialsUsed.test(i)) {
-						const ObjectMaterialData& data = Materials[i];
-						bs.write(NetworkBitStreamValue::UINT8(data.type));
+						const ObjectMaterial& data = Materials[i];
+						bs.write(NetworkBitStreamValue::UINT8(data.data.type));
 						bs.write(NetworkBitStreamValue::UINT8(i));
 
-						if (data.type == ObjectMaterialData::Type::Default) {
-							bs.write(NetworkBitStreamValue::UINT16(data.model));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(data.txdOrText));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(data.textureOrFont));
-							bs.write(NetworkBitStreamValue::UINT32(data.materialColour.ARGB()));
+						if (data.data.type == ObjectMaterialData::Type::Default) {
+							bs.write(NetworkBitStreamValue::UINT16(data.data.model));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.txdOrText)));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textureOrFont)));
+							bs.write(NetworkBitStreamValue::UINT32(data.data.materialColour.ARGB()));
 						}
-						else if (data.type == ObjectMaterialData::Type::Text) {
-							bs.write(NetworkBitStreamValue::UINT8(data.materialSize));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(data.textureOrFont));
-							bs.write(NetworkBitStreamValue::UINT8(data.fontSize));
-							bs.write(NetworkBitStreamValue::UINT8(data.bold));
-							bs.write(NetworkBitStreamValue::UINT32(data.fontColour.ARGB()));
-							bs.write(NetworkBitStreamValue::UINT32(data.backgroundColour.ARGB()));
-							bs.write(NetworkBitStreamValue::UINT8(data.alignment));
-							bs.write(NetworkBitStreamValue::COMPRESSED_STR(data.txdOrText));
+						else if (data.data.type == ObjectMaterialData::Type::Text) {
+							bs.write(NetworkBitStreamValue::UINT8(data.data.materialSize));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textureOrFont)));
+							bs.write(NetworkBitStreamValue::UINT8(data.data.fontSize));
+							bs.write(NetworkBitStreamValue::UINT8(data.data.bold));
+							bs.write(NetworkBitStreamValue::UINT32(data.data.fontColour.ARGB()));
+							bs.write(NetworkBitStreamValue::UINT32(data.data.backgroundColour.ARGB()));
+							bs.write(NetworkBitStreamValue::UINT8(data.data.alignment));
+							bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(data.txdOrText)));
 						}
 					}
 				}
@@ -1725,10 +1726,10 @@ namespace NetCode {
 			float Col1Width;
 			float Col2Width;
 			bool MenuEnabled;
-			std::array<bool, MAX_MENU_ITEMS> RowEnabled;
-			std::array<NetworkString, 2> ColumnHeaders;
-			std::array<uint8_t, 2> ColumnItemCount;
-			std::array<std::array<NetworkString, MAX_MENU_ITEMS>, 2> MenuItems;
+			StaticArray<bool, MAX_MENU_ITEMS> RowEnabled;
+			StaticArray<NetworkString, 2> ColumnHeaders;
+			StaticArray<uint8_t, 2> ColumnItemCount;
+			StaticArray<StaticArray<NetworkString, MAX_MENU_ITEMS>, 2> MenuItems;
 
 			bool read(INetworkBitStream & bs) {
 				return false;
@@ -1759,7 +1760,7 @@ namespace NetCode {
 				// Get first column data
 				uint8_t firstColumnItemCount = ColumnItemCount.at(0);
 				NetworkString firstColumnHeader = ColumnHeaders.at(0);
-				std::array<NetworkString, MAX_MENU_ITEMS> firstColumnItems = MenuItems.at(0);
+				StaticArray<NetworkString, MAX_MENU_ITEMS> firstColumnItems = MenuItems.at(0);
 
 				// Send first column header as a fixed string
 				String firstColumnHeaderFixed(firstColumnHeader);
@@ -1778,7 +1779,7 @@ namespace NetCode {
 					// Get second column data
 					uint8_t secondColumnItemCount = ColumnItemCount.at(1);
 					NetworkString secondColumnHeader = ColumnHeaders.at(1);
-					std::array<NetworkString, MAX_MENU_ITEMS> secondColumnItems = MenuItems.at(1);
+					StaticArray<NetworkString, MAX_MENU_ITEMS> secondColumnItems = MenuItems.at(1);
 
 					// Send second second header as a fixed string
 					String secondColumnHeaderFixed(secondColumnHeader);
@@ -1868,21 +1869,22 @@ namespace NetCode {
 
 		struct ApplyActorAnimationForPlayer final : NetworkPacketBase<173> {
 			int ActorID;
-			const Animation& Anim;
+			const IAnimation& Anim;
 
-			ApplyActorAnimationForPlayer(const Animation& anim) : Anim(anim)
+			ApplyActorAnimationForPlayer(const IAnimation& anim) : Anim(anim)
 			{}
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(ActorID));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.lib));
-				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.name));
-				bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
-				bs.write(NetworkBitStreamValue::BIT(Anim.loop));
-				bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
-				bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
-				bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
-				bs.write(NetworkBitStreamValue::UINT32(Anim.time));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.getLib())));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.getName())));
+				const AnimationTimeData& timeData = Anim.getTimeData();
+				bs.write(NetworkBitStreamValue::FLOAT(timeData.delta));
+				bs.write(NetworkBitStreamValue::BIT(timeData.loop));
+				bs.write(NetworkBitStreamValue::BIT(timeData.lockX));
+				bs.write(NetworkBitStreamValue::BIT(timeData.lockY));
+				bs.write(NetworkBitStreamValue::BIT(timeData.freeze));
+				bs.write(NetworkBitStreamValue::UINT32(timeData.time));
 			}
 		};
 
@@ -2112,7 +2114,7 @@ namespace NetCode {
 			int TargetPlayer;
 			int TargetActor;
 			int WeaponDataCount = 0;
-			std::array<std::pair<uint8_t, WeaponSlotData>, MAX_WEAPON_SLOTS> WeaponData;
+			StaticArray<Pair<uint8_t, WeaponSlotData>, MAX_WEAPON_SLOTS> WeaponData;
 
 			bool read(INetworkBitStream& bs) {
 				bs.read<NetworkBitStreamValueType::UINT16>(TargetPlayer);
@@ -2126,7 +2128,7 @@ namespace NetCode {
 						bs.read<NetworkBitStreamValueType::UINT8>(data.id) &&
 						bs.read<NetworkBitStreamValueType::UINT16>(data.ammo)
 						) {
-						WeaponData[WeaponDataCount++] = std::pair<uint8_t, WeaponSlotData>(slot, data);
+						WeaponData[WeaponDataCount++] = Pair<uint8_t, WeaponSlotData>(slot, data);
 					}
 					else { // Malformed packet
 						return false;
@@ -2149,24 +2151,24 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 				const int virtualWorld = FromPlayer.getVirtualWorld();
 				const Vector3 pos = FromPlayer.getPosition();
-				ContiguousRefList<IPlayer> players = Pool.entries();
+				const FlatPtrHashSet<IPlayer>& players = Pool.entries();
 				bs.write(NetworkBitStreamValue::UINT8(NetCode::Packet::PlayerMarkersSync::getID(bs.getNetworkType())));
 				// TODO isNPC
 				bs.write(NetworkBitStreamValue::UINT32(players.size() - 1));
-				for (IPlayer& other : players) {
-					if (&other == &FromPlayer) {
+				for (IPlayer* other : players) {
+					if (other == &FromPlayer) {
 						continue;
 					}
 
-					const Vector3 otherPos = other.getPosition();
-					const PlayerState otherState = other.getState();
+					const Vector3 otherPos = other->getPosition();
+					const PlayerState otherState = other->getState();
 					bool streamMarker =
 						otherState != PlayerState_None &&
 						otherState != PlayerState_Spectating &&
-						virtualWorld == other.getVirtualWorld() &&
+						virtualWorld == other->getVirtualWorld() &&
 						(!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
 
-					bs.write(NetworkBitStreamValue::UINT16(other.getID()));
+					bs.write(NetworkBitStreamValue::UINT16(other->getID()));
 					bs.write(NetworkBitStreamValue::BIT(streamMarker));
 					if (streamMarker) {
 						bs.write(NetworkBitStreamValue::INT16(otherPos.x));

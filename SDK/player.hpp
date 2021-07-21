@@ -101,7 +101,7 @@ enum BodyPart {
 	BodyPart_Head
 };
 
-static constexpr std::string_view BodyPartString[] = {
+static constexpr StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
 	"invalid",
@@ -125,7 +125,7 @@ struct PlayerAnimationData {
 	uint16_t ID;
 	uint16_t flags;
 
-	std::pair<String, String> name() const {
+	Pair<String, String> name() const {
 		if (ID >= GLM_COUNTOF(AnimationNames)) {
 			return { "", "" };
 		}
@@ -172,7 +172,7 @@ struct WeaponSlotData {
 };
 
 /// An array of weapon slots
-typedef std::array<WeaponSlotData, MAX_WEAPON_SLOTS> WeaponSlots;
+typedef StaticArray<WeaponSlotData, MAX_WEAPON_SLOTS> WeaponSlots;
 
 struct PlayerGameData {
 	int versionNumber;
@@ -248,10 +248,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Set the player's name
 	/// @return The player's new name status
-	virtual EPlayerNameStatus setName(const String& name) = 0;
+	virtual EPlayerNameStatus setName(StringView name) = 0;
 
 	/// Get the player's name
-	virtual const String& getName() const = 0;
+	virtual StringView getName() const = 0;
 
 	/// Give a weapon to the player
 	virtual void giveWeapon(WeaponSlotData weapon) = 0;
@@ -269,10 +269,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual uint32_t getArmedWeapon() const = 0;
 
 	/// Set the player's shop name
-	virtual void setShopName(const String& name) = 0;
+	virtual void setShopName(StringView name) = 0;
 
 	/// Get the player's shop name
-	virtual const String& getShopName() const = 0;
+	virtual StringView getShopName() const = 0;
 
 	/// Set the player's drunk level
 	virtual void setDrunkLevel(int level) = 0;
@@ -314,13 +314,13 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param[opt] usePos Whether to play in a radius at a specific position
 	/// @param pos The position to play at
 	/// @param distance The distance to play at
-	virtual void playAudio(const String& url, bool usePos = false, Vector3 pos = Vector3(0.f), float distance = 0.f) = 0;
+	virtual void playAudio(StringView url, bool usePos = false, Vector3 pos = Vector3(0.f), float distance = 0.f) = 0;
 
 	/// Stop playing audio stream for the player
 	virtual void stopAudio() = 0;
 
 	/// Get the player's last played audio URL
-	virtual const String& lastPlayedAudio() const = 0;
+	virtual StringView lastPlayedAudio() const = 0;
 
 	// Create an explosion
 	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
@@ -355,7 +355,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void setTime(std::chrono::hours hr, std::chrono::minutes min) = 0;
 
 	/// Get the player's game time
-	virtual std::pair<std::chrono::hours, std::chrono::minutes> getTime() const = 0;
+	virtual Pair<std::chrono::hours, std::chrono::minutes> getTime() const = 0;
 
 	/// Toggle the player's clock visibility
 	virtual void toggleClock(bool toggle) = 0;
@@ -393,7 +393,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Apply an animation to the player
 	/// @param animation The animation to apply
 	/// @param syncType How to sync the animation
-	virtual void applyAnimation(const Animation& animation, PlayerAnimationSyncType syncType) = 0;
+	virtual void applyAnimation(const IAnimation& animation, PlayerAnimationSyncType syncType) = 0;
 
 	/// Clear the player's animation
 	/// @param syncType How to sync the animation
@@ -417,7 +417,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void streamOutPlayer(IPlayer& other) = 0;
 
 	/// Get the players which are streamed in for this player
-	virtual ContiguousRefList<IPlayer> streamedInPlayers() = 0;
+	virtual const FlatPtrHashSet<IPlayer>& streamedInPlayers() = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
@@ -435,13 +435,13 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual int getSkin() const = 0;
 
 	// Send a message to the player
-	virtual void sendClientMessage(const Colour& colour, const String& message) const = 0;
+	virtual void sendClientMessage(const Colour& colour, StringView message) const = 0;
 
 	// Send a standardly formatted chat message as the player to everyone
-	virtual void sendChatMessage(const String& message) const = 0;
+	virtual void sendChatMessage(StringView message) const = 0;
 
 	// Send a command to server (Player)
-	virtual void sendCommand(const String& message) const = 0;
+	virtual void sendCommand(StringView message) const = 0;
 
 	/// Set the player's weather
 	virtual void setWeather(int weatherID) = 0;
@@ -492,7 +492,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's skill levels
 	/// @note See https://open.mp/docs/scripting/resources/weaponskills
-	virtual const std::array<uint16_t, NUM_SKILL_LEVELS>& getSkillLevels() const = 0;
+	virtual const StaticArray<uint16_t, NUM_SKILL_LEVELS>& getSkillLevels() const = 0;
 
 	/// Get the player's aim data
 	virtual const PlayerAimData& getAimData() const = 0;
@@ -545,11 +545,11 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	template<class Packet>
 	inline void broadcastRPCToStreamed(const Packet& packet, bool skipFrom = false) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : streamedInPlayers()) {
-			if (skipFrom && &player == this) {
+		for (IPlayer* player : streamedInPlayers()) {
+			if (skipFrom && player == this) {
 				continue;
 			}
-			player.sendRPC(packet);
+			player->sendRPC(packet);
 		}
 	}
 
@@ -558,11 +558,11 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	template<class Packet>
 	inline void broadcastPacketToStreamed(const Packet& packet, bool skipFrom = true) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : streamedInPlayers()) {
-			if (skipFrom && &player == this) {
+		for (IPlayer* player : streamedInPlayers()) {
+			if (skipFrom && player == this) {
 				continue;
 			}
-			player.sendPacket(packet);
+			player->sendPacket(packet);
 		}
 	}
 };
@@ -580,15 +580,15 @@ struct PlayerEventHandler {
 	virtual void onSpawn(IPlayer& player) {}
 	virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) {}
 	virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) {}
-	virtual bool onText(IPlayer& player, String message) { return true; }
-	virtual bool onCommandText(IPlayer& player, String message) { return false; }
+	virtual bool onText(IPlayer& player, StringView message) { return true; }
+	virtual bool onCommandText(IPlayer& player, StringView message) { return false; }
 	virtual bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
-	virtual void onNameChange(IPlayer & player, const String & oldName) {}
+	virtual void onNameChange(IPlayer & player, StringView oldName) {}
 	virtual void onDeath(IPlayer& player, OptionalPlayer killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}
@@ -610,18 +610,18 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 
 	/// Returns whether a name is taken by any player
 	/// @param skip The player to exclude from the check
-	virtual bool isNameTaken(const String& name, const OptionalPlayer skip) = 0;
+	virtual bool isNameTaken(StringView name, const OptionalPlayer skip) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>
 	inline void broadcastRPCToAll(const Packet& packet, const OptionalPlayer& skipFrom = OptionalPlayer()) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : entries()) {
-			if (skipFrom && &player == &skipFrom.value().get()) {
+		for (IPlayer* player : entries()) {
+			if (skipFrom && player == &skipFrom.value().get()) {
 				continue;
 			}
-			player.sendRPC(packet);
+			player->sendRPC(packet);
 		}
 	}
 
