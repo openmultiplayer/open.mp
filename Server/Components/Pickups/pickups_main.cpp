@@ -117,30 +117,30 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler {
 	}
 
 	/// Get a set of all the available labels
-	ContiguousRefList<IPickup> entries() override {
+	const FlatPtrHashSet<IPickup>& entries() override {
 		return storage.entries();
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {
 		const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-		for (IPickup& p : storage.entries()) {
-			Pickup& pickup = static_cast<Pickup&>(p);
+		for (IPickup* p : storage.entries()) {
+			Pickup* pickup = static_cast<Pickup*>(p);
 
-			for (IPlayer& player : players->entries()) {
-				const PlayerState state = player.getState();
-				const Vector3 dist3D = pickup.pos - player.getPosition();
+			for (IPlayer* player : players->entries()) {
+				const PlayerState state = player->getState();
+				const Vector3 dist3D = pickup->pos - player->getPosition();
 				const bool shouldBeStreamedIn =
 					state != PlayerState_Spectating &&
 					state != PlayerState_None &&
-					player.getVirtualWorld() == pickup.virtualWorld &&
+					player->getVirtualWorld() == pickup->virtualWorld &&
 					glm::dot(dist3D, dist3D) < maxDist;
 
-				const bool isStreamedIn = pickup.isStreamedInForPlayer(player);
+				const bool isStreamedIn = pickup->isStreamedInForPlayer(*player);
 				if (!isStreamedIn && shouldBeStreamedIn) {
-					pickup.streamInForPlayer(player);
+					pickup->streamInForPlayer(*player);
 				}
 				else if (isStreamedIn && !shouldBeStreamedIn) {
-					pickup.streamOutForPlayer(player);
+					pickup->streamOutForPlayer(*player);
 				}
 			}
 		}

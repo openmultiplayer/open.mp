@@ -19,8 +19,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         RPC.ActorID = poolID;
         RPC.Health = health_;
 
-        for (IPlayer& player : streamedFor_.entries()) {
-            player.sendRPC(RPC);
+        for (IPlayer* player : streamedFor_.entries()) {
+            player->sendRPC(RPC);
         }
     }
 
@@ -37,21 +37,24 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         return invulnerable_;
     }
 
-    void applyAnimation(const Animation& animation) override {
-        animation_ = animation;
-        if (animation.loop || animation.freeze) {
+    void applyAnimation(const IAnimation& animation) override {
+        animation_.lib = animation.getLib();
+        animation_.name = animation.getName();
+        animation_.timeData = animation.getTimeData();
+
+        if (animation_.timeData.loop || animation_.timeData.freeze) {
             animationLoop_ = true;
         }
         else {
             animationLoop_ = false;
-            animation_.time = 0;
+            animation_.timeData.time = 0;
         }
 
         NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation);
         RPC.ActorID = poolID;
 
-        for (IPlayer& player : streamedFor_.entries()) {
-            player.sendRPC(RPC);
+        for (IPlayer* player : streamedFor_.entries()) {
+            player->sendRPC(RPC);
         }
     }
 
@@ -67,15 +70,15 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         NetCode::RPC::ClearActorAnimationsForPlayer RPC;
         RPC.ActorID = poolID;
 
-        for (IPlayer& player : streamedFor_.entries()) {
-            player.sendRPC(RPC);
+        for (IPlayer* player : streamedFor_.entries()) {
+            player->sendRPC(RPC);
         }
     }
 
     void restream() {
-        for (IPlayer& player : streamedFor_.entries()) {
-            streamOutForClient(player);
-            streamInForClient(player);
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player);
+            streamInForClient(*player);
         }
     }
 
@@ -116,8 +119,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         RPC.ActorID = poolID;
         RPC.Pos = position;
 
-        for (IPlayer& player : streamedFor_.entries()) {
-            player.sendRPC(RPC);
+        for (IPlayer* player : streamedFor_.entries()) {
+            player->sendRPC(RPC);
         }
     }
 
@@ -132,8 +135,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         RPC.ActorID = poolID;
         RPC.Angle = angle_;
 
-        for (IPlayer& player : streamedFor_.entries()) {
-            player.sendRPC(RPC);
+        for (IPlayer* player : streamedFor_.entries()) {
+            player->sendRPC(RPC);
         }
     }
 
@@ -170,8 +173,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     }
 
     ~Actor() {
-        for (IPlayer& player : streamedFor_.entries()) {
-            streamOutForClient(player);
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player);
         }
     }
 };

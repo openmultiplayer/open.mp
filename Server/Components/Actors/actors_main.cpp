@@ -120,30 +120,30 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
 	}
 
 	/// Get a set of all the available labels
-	ContiguousRefList<IActor> entries() override {
+	const FlatPtrHashSet<IActor>& entries() override {
 		return storage.entries();
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {
 		const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-		for (IActor& a : storage.entries()) {
-			Actor& actor = static_cast<Actor&>(a);
+		for (IActor* a : storage.entries()) {
+			Actor* actor = static_cast<Actor*>(a);
 
-			for (IPlayer& player : players->entries()) {
-				const PlayerState state = player.getState();
-				const Vector2 dist2D = actor.pos_ - player.getPosition();
+			for (IPlayer* player : players->entries()) {
+				const PlayerState state = player->getState();
+				const Vector2 dist2D = actor->pos_ - player->getPosition();
 				const bool shouldBeStreamedIn =
 					state != PlayerState_Spectating &&
 					state != PlayerState_None &&
-					player.getVirtualWorld() == actor.virtualWorld_ &&
+					player->getVirtualWorld() == actor->virtualWorld_ &&
 					glm::dot(dist2D, dist2D) < maxDist;
 
-				const bool isStreamedIn = actor.isStreamedInForPlayer(player);
+				const bool isStreamedIn = actor->isStreamedInForPlayer(*player);
 				if (!isStreamedIn && shouldBeStreamedIn) {
-					actor.streamInForPlayer(player);
+					actor->streamInForPlayer(*player);
 				}
 				else if (isStreamedIn && !shouldBeStreamedIn) {
-					actor.streamOutForPlayer(player);
+					actor->streamOutForPlayer(*player);
 				}
 			}
 		}

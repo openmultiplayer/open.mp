@@ -310,7 +310,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         query.preparePlayerListForQuery();
     }
 
-    void onNameChange(IPlayer & player, const String & oldName) override {
+    void onNameChange(IPlayer & player, StringView oldName) override {
         query.preparePlayerListForQuery();
     }
 

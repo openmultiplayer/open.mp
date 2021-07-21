@@ -4,6 +4,7 @@ add_library(SDK INTERFACE)
 target_link_libraries(SDK INTERFACE
 	CONAN_PKG::glm
 	CONAN_PKG::nlohmann_json
+	CONAN_PKG::abseil
 )
 
 target_compile_definitions(SDK INTERFACE

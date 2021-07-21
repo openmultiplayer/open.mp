@@ -15,28 +15,28 @@ enum VariableType {
 
 struct IVariableStorageBase {
 	/// Set a variable to a string
-	virtual void setString(const String& key, const String& value) = 0;
+	virtual void setString(StringView key, StringView value) = 0;
 	
 	/// Get a variable as a string
-	virtual const unsigned int getString(const String& key, String& out) const = 0;
+	virtual const StringView getString(StringView key) const = 0;
 
 	/// Set a variable to an int
-	virtual void setInt(const String& key, int value) = 0;
+	virtual void setInt(StringView key, int value) = 0;
 
 	/// Get a variable as an int
-	virtual int getInt(const String& key) const = 0;
+	virtual int getInt(StringView key) const = 0;
 
 	/// Set a variable to a float
-	virtual void setFloat(const String& key, float value) = 0;
+	virtual void setFloat(StringView key, float value) = 0;
 
 	/// Get a variable as a float
-	virtual float getFloat(const String& key) const = 0;
+	virtual float getFloat(StringView key) const = 0;
 
 	/// Get a variable's type
-	virtual VariableType getType(const String& key) const = 0;
+	virtual VariableType getType(StringView key) const = 0;
 
 	/// Erase a variable, freeing its memory
-	virtual bool erase(const String& key) = 0;
+	virtual bool erase(StringView key) = 0;
 };
 
 static const UUID VariablesPlugin_UUID = UUID(0x75e121848bc01fa2);

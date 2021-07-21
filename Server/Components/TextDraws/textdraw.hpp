@@ -20,7 +20,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     bool selectable = false;
     int previewModel = 0;
     GTAQuat previewRotation = GTAQuat(Vector3(0.f));
-    std::pair<int, int> previewVehicleColours = { -1, -1 };
+    Pair<int, int> previewVehicleColours = { -1, -1 };
     float previewZoom = 1.f;
 
     int getID() const override {
@@ -36,11 +36,11 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         return *this;
     }
 
-    void setText(const String& txt) override {
+    void setText(StringView txt) override {
         text = txt;
     }
 
-    const String& getText() const override {
+    StringView getText() const override {
         return text;
     }
 
@@ -176,7 +176,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         return *this;
 	}
 
-    std::pair<int, int> getPreviewVehicleColour() const override {
+    Pair<int, int> getPreviewVehicleColour() const override {
         return previewVehicleColours;
 	}
 
@@ -211,7 +211,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         playerShowTextDrawRPC.Zoom = previewZoom;
         playerShowTextDrawRPC.Color1 = previewVehicleColours.first;
         playerShowTextDrawRPC.Color2 = previewVehicleColours.second;
-        playerShowTextDrawRPC.Text = text;
+        playerShowTextDrawRPC.Text = StringView(text);
         player.sendRPC(playerShowTextDrawRPC);
     }
 
@@ -222,7 +222,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         player.sendRPC(playerHideTextDrawRPC);
     }
 
-    void setTextForClient(IPlayer& player, const String& txt, bool isPlayerTextDraw) {
+    void setTextForClient(IPlayer& player, StringView txt, bool isPlayerTextDraw) {
         NetCode::RPC::PlayerTextDrawSetString playerTextDrawSetStringRPC;
         playerTextDrawSetStringRPC.PlayerTextDraw = isPlayerTextDraw;
         playerTextDrawSetStringRPC.TextDrawID = poolID;
@@ -235,8 +235,8 @@ struct TextDraw final : public TextDrawBase<ITextDraw> {
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> shownFor_;
 
     void restream() override {
-        for (IPlayer& player : shownFor_.entries()) {
-            showForClient(player, false);
+        for (IPlayer* player : shownFor_.entries()) {
+            showForClient(*player, false);
         }
     }
 
@@ -254,16 +254,16 @@ struct TextDraw final : public TextDrawBase<ITextDraw> {
         hideForClient(player, false);
     }
 
-    void setText(const String& txt) override {
+    void setText(StringView txt) override {
         TextDrawBase<ITextDraw>::setText(txt);
-        for (IPlayer& player : shownFor_.entries()) {
-            setTextForClient(player, txt, false);
+        for (IPlayer* player : shownFor_.entries()) {
+            setTextForClient(*player, txt, false);
         }
     }
 
     ~TextDraw() {
-        for (IPlayer& player : shownFor_.entries()) {
-            hideForClient(player, false);
+        for (IPlayer* player : shownFor_.entries()) {
+            hideForClient(*player, false);
         }
     }
 };
@@ -292,7 +292,7 @@ struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
         }
     }
 
-    void setText(const String& txt) override {
+    void setText(StringView txt) override {
         TextDrawBase<IPlayerTextDraw>::setText(txt);
         if (shown) {
             setTextForClient(*player, txt, true);

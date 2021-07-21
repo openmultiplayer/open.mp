@@ -10,7 +10,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         player(player)
     {}
 
-    PlayerTextLabel* createInternal(const String& text, Colour colour, Vector3 pos, float drawDist, bool los) {
+    PlayerTextLabel* createInternal(StringView text, Colour colour, Vector3 pos, float drawDist, bool los) {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -33,7 +33,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return &textLabel;
     }
 
-    IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los) override {
+    IPlayerTextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, bool los) override {
         PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
             created->streamInForClient(player, true);
@@ -41,7 +41,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return created;
     }
 
-    IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los, IPlayer& attach) override {
+    IPlayerTextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, bool los, IPlayer& attach) override {
         PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
             created->attachmentData.playerID = attach.getID();
@@ -50,7 +50,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return created;
     }
 
-    IPlayerTextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, bool los, IVehicle& attach) override {
+    IPlayerTextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, bool los, IVehicle& attach) override {
         PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
             created->attachmentData.vehicleID = attach.getID();
@@ -61,9 +61,9 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
     void free() override {
         /// Detach player from player labels so they don't try to send an RPC
-        for (IPlayerTextLabel& textLabel : storage.entries()) {
-            PlayerTextLabel& lbl = static_cast<PlayerTextLabel&>(textLabel);
-            lbl.player = nullptr;
+        for (IPlayerTextLabel* textLabel : storage.entries()) {
+            PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
+            lbl->player = nullptr;
         }
         delete this;
     }
@@ -103,7 +103,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 
     /// Get a set of all the available labels
-    ContiguousRefList<IPlayerTextLabel> entries() override {
+    const FlatPtrHashSet<IPlayerTextLabel>& entries() override {
         return storage.entries();
     }
 };
@@ -137,7 +137,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return new PlayerTextLabelData(player);
     }
 
-    ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override {
+    ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -160,7 +160,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return &textLabel;
     }
 
-    ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override {
+    ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override {
         ITextLabel* created = create(text, colour, pos, drawDist, vw, los);
         if (created) {
             created->attachToPlayer(attach, pos);
@@ -168,7 +168,7 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return created;
     }
 
-    ITextLabel* create(const String& text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) override {
+    ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) override {
         ITextLabel* created = create(text, colour, pos, drawDist, vw, los);
         if (created) {
             created->attachToVehicle(attach, pos);
@@ -215,15 +215,15 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     }
 
     /// Get a set of all the available labels
-    ContiguousRefList<ITextLabel> entries() override {
+    const FlatPtrHashSet<ITextLabel>& entries() override {
         return storage.entries();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (ITextLabel& textLabel : storage.entries()) {
-            TextLabel& label = static_cast<TextLabel&>(textLabel);
-            const TextLabelAttachmentData& data = textLabel.getAttachmentData();
+        for (ITextLabel* textLabel : storage.entries()) {
+            TextLabel* label = static_cast<TextLabel*>(textLabel);
+            const TextLabelAttachmentData& data = label->attachmentData;
             Vector3 pos;
             if (players->valid(data.playerID)) {
                 pos = players->get(data.playerID).getPosition();
@@ -232,24 +232,24 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
                 pos = vehicles->get(data.vehicleID).getPosition();
             }
             else {
-                pos = label.pos;
+                pos = label->pos;
             }
 
-            for (IPlayer& player : players->entries()) {
-                const PlayerState state = player.getState();
-                const Vector3 dist3D = pos - player.getPosition();
+            for (IPlayer* player : players->entries()) {
+                const PlayerState state = player->getState();
+                const Vector3 dist3D = pos - player->getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    player.getVirtualWorld() == label.virtualWorld &&
+                    player->getVirtualWorld() == label->virtualWorld &&
                     glm::dot(dist3D, dist3D) < maxDist;
 
-                const bool isStreamedIn = textLabel.isStreamedInForPlayer(player);
+                const bool isStreamedIn = textLabel->isStreamedInForPlayer(*player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    textLabel.streamInForPlayer(player);
+                    textLabel->streamInForPlayer(*player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    textLabel.streamOutForPlayer(player);
+                    textLabel->streamOutForPlayer(*player);
                 }
             }
         }
@@ -257,19 +257,19 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
-        for (ITextLabel& textLabel : storage.entries()) {
-            TextLabel& label = static_cast<TextLabel&>(textLabel);
-            if (label.attachmentData.playerID == pid) {
-                textLabel.detachFromPlayer(label.pos);
+        for (ITextLabel* textLabel : storage.entries()) {
+            TextLabel* label = static_cast<TextLabel*>(textLabel);
+            if (label->attachmentData.playerID == pid) {
+                textLabel->detachFromPlayer(label->pos);
             }
         }
-        for (IPlayer& player : players->entries()) {
-            IPlayerTextLabelData* data = player.queryData<IPlayerTextLabelData>();
+        for (IPlayer* player : players->entries()) {
+            IPlayerTextLabelData* data = player->queryData<IPlayerTextLabelData>();
             if (data) {
-                for (IPlayerTextLabel& textLabel : data->entries()) {
-                    PlayerTextLabel& label = static_cast<PlayerTextLabel&>(textLabel);
-                    if (label.attachmentData.playerID == pid) {
-                        textLabel.detachFromPlayer(label.pos);
+                for (IPlayerTextLabel* textLabel : data->entries()) {
+                    PlayerTextLabel* label = static_cast<PlayerTextLabel*>(textLabel);
+                    if (label->attachmentData.playerID == pid) {
+                        textLabel->detachFromPlayer(label->pos);
                     }
                 }
             }
