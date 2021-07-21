@@ -320,7 +320,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     RakNet::BitStream bs = GetBitStream(*rpcParams);
     RakNetLegacyBitStream lbs(bs);
 
-    std::pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
+    Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
     {
         NetCode::RPC::PlayerConnect playerConnectRPC;

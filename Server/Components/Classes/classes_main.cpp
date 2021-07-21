@@ -40,8 +40,8 @@ struct PlayerClassData final : IPlayerClassData {
         }
         else {
             const WeaponSlots& weapons = info.weapons;
-            std::array<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-            std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
+            StaticArray<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+            StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
             NetCode::RPC::SetSpawnInfo setSpawnInfoRPC;
             setSpawnInfoRPC.TeamID = info.team;
             setSpawnInfoRPC.ModelID = info.skin;
@@ -87,8 +87,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                     if (clsData) {
                         const PlayerClass& cls = clsData->getClass();
                         const WeaponSlots& weapons = cls.weapons;
-                        std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-                        std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
+                        StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                        StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
                         NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
                         playerRequestClassResponse.Selectable = true;
                         playerRequestClassResponse.Unknown1 = 0;
@@ -106,8 +106,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                         clsDataCast->cls = cls;
                     }
                     const WeaponSlots& weapons = cls.weapons;
-                    std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-                    std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
+                    StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                    StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
                     NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
@@ -118,8 +118,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                 }
                 else {
                     const WeaponSlots& weapons = defClass.weapons;
-                    std::array<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-                    std::array<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
+                    StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                    StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
                     NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(defClass.team, defClass.skin, defClass.spawn, defClass.angle);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
@@ -130,8 +130,8 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
                 }
             }
             else {
-                std::array<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
-                std::array<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
+                StaticArray<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
+                StaticArray<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
                 NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponseNotAllowed;
                 playerRequestClassResponseNotAllowed.Selectable = false;
                 playerRequestClassResponseNotAllowed.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
@@ -208,7 +208,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         storage.unlock(index);
     }
 
-    ContiguousRefList<PlayerClass> entries() override {
+    const FlatPtrHashSet<PlayerClass>& entries() override {
         return storage.entries();
     }
 
