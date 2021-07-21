@@ -87,14 +87,14 @@ struct NetworkArray {
 	/// Constructor for holding std::array data without copying it or freeing it
 	/// @param array The std::array whose data to hold
 	template <size_t Size>
-	NetworkArray<T>(const std::array<T, Size>& array) :
+	NetworkArray<T>(const StaticArray<T, Size>& array) :
 		selfAllocated(false),
 		count(unsigned(array.size())),
 		data(const_cast<T*>(array.data()))
 	{}
 
 	template <size_t Size>
-	NetworkArray<T>(std::array<T, Size>&& array) = delete;
+	NetworkArray<T>(StaticArray<T, Size>&& array) = delete;
 
 	/// Copy constructor
 	NetworkArray<T>(const NetworkArray<T>& other) {
@@ -153,30 +153,17 @@ struct NetworkString : NetworkArray<char> {
 
 	/// Constructor for holding std::string data without copying it or freeing it
 	/// @param string The std::string whose data to hold
-	NetworkString(const String& str) :
+	NetworkString(StringView str) :
 		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
 	{ }
-
-	/// Constructor for holding std::string data without copying it or freeing it
-	/// @param string The std::string whose data to hold
-	NetworkString(const std::string& str) :
-		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
-	{ }
-
-	/// Disallow move operators
-	NetworkString(String&& str) = delete;
-	NetworkString(std::string&& str) = delete;
-	String& operator=(String&& str) = delete;
-	String& operator=(std::string&& str) = delete;
 
 	/// Conversion operator for copying data to a std::string
 	operator String() const {
 		return String(data, count);
 	}
-
-	/// Conversion operator for copying data to a std::string
-	operator std::string() const {
-		return std::string(data, count);
+	
+	operator StringView() const {
+		return StringView(data, count);
 	}
 };
 
@@ -324,7 +311,7 @@ enum NewConnectionResult {
 
 /// An event handler for network events
 struct NetworkEventHandler {
-	virtual std::pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return { NewConnectionResult_Ignore, nullptr }; }
+	virtual Pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return { NewConnectionResult_Ignore, nullptr }; }
 	virtual void onPeerConnect(IPlayer& peer) { }
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };

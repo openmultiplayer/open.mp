@@ -2,33 +2,29 @@
 #include <sdk.hpp>
 #include <variant>
 #include <unordered_map>
+#include <absl/container/flat_hash_map.h>
 
 template <class ToInherit>
 struct VariableStorageBase : public ToInherit {
-	void setString(const String& k, const String& value) override {
-		std::string key = k.c_str();
+	void setString(StringView key, StringView value) override {
 		data_[key].emplace<String>(value);
 	}
-	const unsigned int getString(const String& k, String& out) const override {
-		std::string key = k.c_str();
+	const StringView getString(StringView key) const override {
 		auto it = data_.find(key);
 		if (it == data_.end()) {
-			return 0;
+			return StringView(nullptr);
 		}
 		if (it->second.index() != 1) {
-			return 0;
+			return StringView(nullptr);
 		}
-		out = std::get<String>(it->second);
-		return out.length();
+		return StringView(std::get<String>(it->second));
 	}
 
-	void setInt(const String& k, int value) override {
-		std::string key = k.c_str();
+	void setInt(StringView key, int value) override {
 		data_[key].emplace<int>(value);
 	}
 
-	int getInt(const String& k) const override {
-		std::string key = k.c_str();
+	int getInt(StringView key) const override {
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return 0;
@@ -39,13 +35,11 @@ struct VariableStorageBase : public ToInherit {
 		return std::get<int>(it->second);
 	}
 
-	void setFloat(const String& k, float value) override {
-		std::string key = k.c_str();
+	void setFloat(StringView key, float value) override {
 		data_[key].emplace<float>(value);
 	}
 
-	float getFloat(const String& k) const override {
-		std::string key = k.c_str();
+	float getFloat(StringView key) const override {
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return 0;
@@ -56,8 +50,7 @@ struct VariableStorageBase : public ToInherit {
 		return std::get<float>(it->second);
 	}
 
-	VariableType getType(const String& k) const override {
-		std::string key = k.c_str();
+	VariableType getType(StringView key) const override {
 		auto it = data_.find(key);
 		if (it == data_.end()) {
 			return VariableType_None;
@@ -69,13 +62,12 @@ struct VariableStorageBase : public ToInherit {
 		return VariableType(index + 1);
 	}
 
-	bool erase(const String& k) override {
-		std::string key = k.c_str();
+	bool erase(StringView key) override {
 		return data_.erase(key) == 1;
 	}
 
 private:
-	std::unordered_map<std::string, std::variant<int, String, float>> data_;
+	absl::flat_hash_map<std::string, std::variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {

@@ -31,7 +31,7 @@ struct ICore {
 	virtual const JSON& getProperties() = 0;
 
 	/// Get a list of available networks
-	virtual ContiguousListSpan<INetwork*> getNetworks() = 0;
+	virtual const FlatPtrHashSet<INetwork>& getNetworks() = 0;
 
 	/// Query a plugin by its ID
 	/// @param id The UUID of the plugin
@@ -50,7 +50,7 @@ struct ICore {
 	template <class Packet>
 	inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		ContiguousListSpan<INetwork*> networks = getNetworks();
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			const int id = Packet::getID(network->getNetworkType());
 			if (id != INVALID_PACKET_ID) {
@@ -63,7 +63,7 @@ struct ICore {
 	template <class Packet>
 	inline void addPerPacketEventHandler(SingleNetworkInOutEventHandler* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		ContiguousListSpan<INetwork*> networks = getNetworks();
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			const int id = Packet::getID(network->getNetworkType());
 			if (id != INVALID_PACKET_ID) {
@@ -76,7 +76,7 @@ struct ICore {
 	template <class Packet, class EventHandlerType>
 	inline void removePerRPCEventHandler(EventHandlerType* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		ContiguousListSpan<INetwork*> networks = getNetworks();
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			const int id = Packet::getID(network->getNetworkType());
 			if (id != INVALID_PACKET_ID) {
@@ -89,7 +89,7 @@ struct ICore {
 	template <class Packet, class EventHandlerType>
 	inline void removePerPacketEventHandler(EventHandlerType* handler) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		ContiguousListSpan<INetwork*> networks = getNetworks();
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			const int id = Packet::getID(network->getNetworkType());
 			if (id != INVALID_PACKET_ID) {
@@ -100,7 +100,7 @@ struct ICore {
 
 	/// Add a network event handler to all available networks' dispatchers
 	inline void addNetworkEventHandler(NetworkEventHandler* handler) {
-		ContiguousListSpan<INetwork*> networks = getNetworks();
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			network->getEventDispatcher().addEventHandler(handler);
 		}
@@ -108,7 +108,7 @@ struct ICore {
 
 	/// Remove a network event handler from all available networks' dispatchers
 	inline void removeNetworkEventHandler(NetworkEventHandler* handler) {
-		ContiguousListSpan<INetwork*> networks = getNetworks();
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			network->getEventDispatcher().removeEventHandler(handler);
 		}

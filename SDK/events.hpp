@@ -63,7 +63,7 @@ struct DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType>,
     }
 
 private:
-    std::unordered_set<EventHandlerType*> handlers;
+    FlatPtrHashSet<EventHandlerType> handlers;
 };
 
 template <class EventHandlerType>
@@ -118,5 +118,5 @@ struct DefaultIndexedEventDispatcher final : public IIndexedEventDispatcher<Even
     }
 
 private:
-    std::vector<std::unordered_set<EventHandlerType*>> handlers;
+    DynamicArray<FlatPtrHashSet<EventHandlerType>> handlers;
 };

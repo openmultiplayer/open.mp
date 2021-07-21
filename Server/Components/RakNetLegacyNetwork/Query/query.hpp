@@ -21,7 +21,7 @@ public:
 
 	void setMaxPlayers(uint16_t value);
 
-	std::unordered_map<std::string, std::string> & getRules();
+	FlatHashMap<String, String>& getRules();
 	template<typename... Args>
 	void setRuleValue(const Args &... args);
 	void removeRule(const std::string & ruleName);
@@ -34,9 +34,9 @@ private:
 	char playerListBuffer[(4 + 24) * 100 + 1]; // 4 bytes for score, 24 bytes for player name, and only writing 100 players to it
 	int playerListBufferLength = 0;
 	uint16_t maxPlayers = 0;
-	std::string serverName = "open.mp server";
-	std::string gameModeName = "Unknown";
-	std::unordered_map<std::string, std::string> rules;
+	String serverName = "open.mp server";
+	String gameModeName = "Unknown";
+	FlatHashMap<String, String> rules;
 
 	template<typename T>
 	void writeToBuffer(char * output, int & offset, T value, size_t size = sizeof(T));
