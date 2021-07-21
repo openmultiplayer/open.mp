@@ -36,7 +36,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 	ICore* core;
     MarkedPoolStorage<Vehicle, IVehicle, VehiclePlugin::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
-	std::array<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
+    StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
 
     IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override {
         return eventDispatcher;
@@ -191,9 +191,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                     enterExitRPC.Arg1 = scmEvent.Arg1;
                     enterExitRPC.Arg2 = scmEvent.Arg2;
                     
-                    for (IPlayer& player : vehicle.streamedPlayers_.entries()) {
-                        if (&player != &peer) {
-                            player.sendRPC(enterExitRPC);
+                    for (IPlayer* player : vehicle.streamedPlayers_.entries()) {
+                        if (player != &peer) {
+                            player->sendRPC(enterExitRPC);
                         } 
                     }
                     break;
@@ -239,8 +239,8 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
-        for (IVehicle& vehicle : entries()) {
-            vehicle.streamOutForPlayer(player);
+        for (IVehicle* vehicle : entries()) {
+            vehicle->streamOutForPlayer(player);
         }
     }
 
@@ -285,7 +285,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 		return "VehiclesPlugin";
 	}
 
-	std::array<uint8_t, MAX_VEHICLE_MODELS>& models() override {
+    StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() override {
 		return preloadModels;
 	}
 
@@ -368,54 +368,54 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IVehicle>& entries() const override {
+    const FlatPtrHashSet<IVehicle>& entries() override {
         return storage.entries();
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
-        for (IVehicle& vehicle : storage.entries()) {
-            const int vw = vehicle.getVirtualWorld();
-            const Vector3 pos = vehicle.getPosition();
+        for (IVehicle* vehicle : storage.entries()) {
             bool occupied = false;
-            for (IPlayer& player : core->getPlayers().entries()) {
-                const PlayerState state = player.getState();
-                const Vector2 dist2D = pos - player.getPosition();
+            const int vw = vehicle->getVirtualWorld();
+            const Vector3 pos = vehicle->getPosition();
+            for (IPlayer* player : core->getPlayers().entries()) {
+                const PlayerState state = player->getState();
+                const Vector2 dist2D = pos - player->getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    player.getVirtualWorld() == vw &&
+                    player->getVirtualWorld() == vw &&
                     glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = vehicle.isStreamedInForPlayer(player);
+                const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    vehicle.streamInForPlayer(player);
-                    ScopedPoolReleaseLock lock(*this, vehicle);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, player);
+                    vehicle->streamInForPlayer(*player);
+                    ScopedPoolReleaseLock lock(*this, *vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, *player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    vehicle.streamOutForPlayer(player);
-                    ScopedPoolReleaseLock lock(*this, vehicle);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, player);
+                    vehicle->streamOutForPlayer(*player);
+                    ScopedPoolReleaseLock lock(*this, *vehicle);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, *player);
                 }
 
-                if (!occupied) {
-                    PlayerState state = player.getState();
+                if (!occupied && isStreamedIn && shouldBeStreamedIn) {
+                    PlayerState state = player->getState();
                     if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
-                        occupied = player.queryData<IPlayerVehicleData>()->getVehicle() == &vehicle;
+                        occupied = player->queryData<IPlayerVehicleData>()->getVehicle() == vehicle;
                     }
                 }
             }
 
-            if (vehicle.isDead() && vehicle.getRespawnDelay() != -1 && !occupied) {
-                if (time - vehicle.getDeathTime() >= std::chrono::milliseconds(vehicle.getRespawnDelay())) {
-                    vehicle.respawn();
+            if (vehicle->isDead() && vehicle->getRespawnDelay() != -1 && !occupied) {
+                if (time - vehicle->getDeathTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
+                    vehicle->respawn();
                 }
             }
-            else if (!occupied && vehicle.hasBeenOccupied() && vehicle.getRespawnDelay() != -1) {
-                if (time - vehicle.getLastOccupiedTime() >= std::chrono::milliseconds(vehicle.getRespawnDelay())) {
-                    vehicle.respawn();
+            else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != -1) {
+                if (time - vehicle->getLastOccupiedTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
+                    vehicle->respawn();
                 }
             }
         }

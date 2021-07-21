@@ -6,7 +6,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
 	ICore* core;
     MarkedDynamicPoolStorage<Object, IObject, IObjectsPlugin::Cnt> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-    std::bitset<IObjectsPlugin::Cnt> isPlayerObject;
+    StaticBitset<IObjectsPlugin::Cnt> isPlayerObject;
     bool defCameraCollision = true;
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInOutEventHandler {
@@ -187,8 +187,8 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         obj.drawDist_ = drawDist;
         obj.cameraCol_ = defCameraCollision;
 
-        for (IPlayer& player : core->getPlayers().entries()) {
-            obj.createForPlayer(player);
+        for (IPlayer* player : core->getPlayers().entries()) {
+            obj.createForPlayer(*player);
         }
 
         return &obj;
@@ -243,37 +243,37 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IObject>& entries() const override {
+    const FlatPtrHashSet<IObject>& entries() override {
         return storage.entries();
     }
 
     void onConnect(IPlayer& player) override {
-        for (IObject& o : storage.entries()) {
-            Object& obj = static_cast<Object&>(o);
-            obj.createForPlayer(player);
+        for (IObject* o : storage.entries()) {
+            Object* obj = static_cast<Object*>(o);
+            obj->createForPlayer(player);
         }
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
         const int pid = player.getID();
-        for (IObject& obj : storage.entries()) {
-            const ObjectAttachmentData& data = obj.getAttachmentData();
+        for (IObject* obj : storage.entries()) {
+            const ObjectAttachmentData& data = obj->getAttachmentData();
             if (data.type == ObjectAttachmentData::Type::Player && data.ID == pid) {
-                obj.resetAttachment();
+                obj->resetAttachment();
             }
         }
     }
 
     void onStreamIn(IPlayer& player, IPlayer& forPlayer) override {
         const int pid = player.getID();
-        for (IObject& object : storage.entries()) {
-            Object& obj = static_cast<Object&>(object);
-            if (obj.attachmentData_.type == ObjectAttachmentData::Type::Player && obj.attachmentData_.ID == pid) {
+        for (IObject* object : storage.entries()) {
+            Object* obj = static_cast<Object*>(object);
+            if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
                 NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-                attachObjectToPlayerRPC.ObjectID = obj.poolID;
-                attachObjectToPlayerRPC.PlayerID = obj.attachmentData_.ID;
-                attachObjectToPlayerRPC.Offset = obj.attachmentData_.offset;
-                attachObjectToPlayerRPC.Rotation = obj.attachmentData_.rotation;
+                attachObjectToPlayerRPC.ObjectID = obj->poolID;
+                attachObjectToPlayerRPC.PlayerID = obj->attachmentData_.ID;
+                attachObjectToPlayerRPC.Offset = obj->attachmentData_.offset;
+                attachObjectToPlayerRPC.Rotation = obj->attachmentData_.rotation;
                 forPlayer.sendRPC(attachObjectToPlayerRPC);
             }
         }
@@ -296,10 +296,10 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     // Pre-spawn so you can safely attach onSpawn
     void preSpawn(IPlayer& player) override {
         const int pid = player.getID();
-        for (IObject& object : storage.entries()) {
-            Object& obj = static_cast<Object&>(object);
-            if (obj.attachmentData_.type == ObjectAttachmentData::Type::Player && obj.attachmentData_.ID == pid) {
-                obj.resetAttachment();
+        for (IObject* object : storage.entries()) {
+            Object* obj = static_cast<Object*>(object);
+            if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
+                obj->resetAttachment();
             }
         }
 
@@ -319,8 +319,8 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
 struct PlayerObjectData final : public IPlayerObjectData {
     ObjectPlugin& plugin_;
     IPlayer& player_;
-    std::bitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
-    std::array<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
+    StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
+    StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
     MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Cnt> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
@@ -408,15 +408,15 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 
     /// Get a set of all the available objects
-    const PoolEntryArray<IPlayerObject>& entries() const override {
+    const FlatPtrHashSet<IPlayerObject>& entries() override {
         return storage.entries();
     }
 
     void free() override {
         /// Detach player from player objects so they don't try to send an RPC
-        for (IPlayerObject& object : storage.entries()) {
-            PlayerObject& obj = static_cast<PlayerObject&>(object);
-            obj.player_ = nullptr;
+        for (IPlayerObject* object : storage.entries()) {
+            PlayerObject* obj = static_cast<PlayerObject*>(object);
+            obj->player_ = nullptr;
         }
         delete this;
     }
@@ -516,22 +516,22 @@ struct PlayerObjectData final : public IPlayerObjectData {
 };
 
 void ObjectPlugin::onTick(std::chrono::microseconds elapsed) {
-    for (IObject& object : storage.entries()) {
-        Object& obj = static_cast<Object&>(object);
-        if (obj.advance(elapsed)) {
-            ScopedPoolReleaseLock lock(*this, obj);
+    for (IObject* object : storage.entries()) {
+        Object* obj = static_cast<Object*>(object);
+        if (obj->advance(elapsed)) {
+            ScopedPoolReleaseLock lock(*this, *obj);
             eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.entry);
         }
     }
 
-    for (IPlayer& player : core->getPlayers().entries()) {
-        IPlayerObjectData* data = player.queryData<IPlayerObjectData>();
+    for (IPlayer* player : core->getPlayers().entries()) {
+        IPlayerObjectData* data = player->queryData<IPlayerObjectData>();
         if (data) {
-            for (IPlayerObject& object : data->entries()) {
-                PlayerObject& obj = static_cast<PlayerObject&>(object);
-                if (obj.advance(elapsed)) {
-                    ScopedPoolReleaseLock lock(*data, obj);
-                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, player, lock.entry);
+            for (IPlayerObject* object : data->entries()) {
+                PlayerObject* obj = static_cast<PlayerObject*>(object);
+                if (obj->advance(elapsed)) {
+                    ScopedPoolReleaseLock lock(*data, *obj);
+                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.entry);
                 }
             }
         }

@@ -10,7 +10,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
-    std::array<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
+    StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
     float health = 1000.0f;
     uint8_t interior = 0;
     uint32_t doorDamage = 0;
@@ -47,8 +47,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     ~Vehicle() {
         auto entries = streamedPlayers_.entries();
-        for (IPlayer& player : entries) {
-            streamOutForPlayer(player);
+        for (IPlayer* player : entries) {
+            streamOutForPlayer(*player);
         }
     }
 
@@ -122,8 +122,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         return driver;
     }
 
-    void setPlate(String plate) override;
-    const String& getPlate() override;
+    void setPlate(StringView plate) override;
+    const StringView getPlate() override;
 
     void setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater = nullptr) override;
     void getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) override;

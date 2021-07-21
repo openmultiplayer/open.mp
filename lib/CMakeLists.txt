@@ -127,3 +127,5 @@ add_conan_lib(CONAN_PKG::glm glm/0.9.9.8)
 # JSON
 # ----
 add_conan_lib(CONAN_PKG::nlohmann_json nlohmann_json/3.9.1)
+
+add_conan_lib(CONAN_PKG::abseil abseil/20210324.2)

@@ -9,7 +9,7 @@ struct IPlayer;
 
 struct VehicleSpawnData {
 	int modelID;
-	glm::vec3 position;
+	Vector3 position;
 	float zRotation;
 	int colour1;
 	int colour2;
@@ -92,10 +92,10 @@ struct IVehicle : public IEntity {
 	virtual IPlayer* getDriver() = 0;
 
 	/// Sets the vehicle's number plate
-	virtual void setPlate(String plate) = 0;
+	virtual void setPlate(StringView plate) = 0;
 
 	/// Get the vehicle's number plate
-	virtual const String& getPlate() = 0;
+	virtual const StringView getPlate() = 0;
 
 	/// Sets the vehicle's damage status
 	virtual void setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater = nullptr) = 0;
@@ -225,7 +225,7 @@ struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, VEHICLE_POOL_SIZ
 	PROVIDE_UUID(VehiclePlugin_UUID)
 
 	/// Get the number of model instances for each model
-	virtual std::array<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
+	virtual StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
 
 	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;

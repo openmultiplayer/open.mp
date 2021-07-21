@@ -12,10 +12,10 @@ typedef uint8_t MenuColumn;
 /// Pickup interace
 struct IMenu : public IIDProvider {
 	/// Sets given column's header title
-	virtual void setColumnHeader(const String & header, MenuColumn column) = 0;
+	virtual void setColumnHeader(StringView header, MenuColumn column) = 0;
 
 	/// Adds an item to given column
-	virtual void addMenuItem(const String & itemText, MenuColumn column) = 0;
+	virtual void addMenuItem(StringView itemText, MenuColumn column) = 0;
 
 	/// Disables a specific row in menu
 	virtual void disableMenuRow(MenuRow row) = 0;
@@ -60,5 +60,5 @@ struct IMenusPlugin : public IPlugin, public IPool<IMenu, MENU_POOL_SIZE> {
 	virtual IEventDispatcher<MenuEventHandler> & getEventDispatcher() = 0;
 
 	/// Create a menu
-	virtual IMenu * create(const String & title, const Vector2 & position, uint8_t columns, float col1Width, float col2Width) = 0;
+	virtual IMenu * create(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width) = 0;
 };

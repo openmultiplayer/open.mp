@@ -5,12 +5,9 @@
 #include <array>
 #include <type_traits>
 #include <cassert>
-#include <execution>
+#include <absl/container/flat_hash_set.h>
 #include "types.hpp"
 #include "entity.hpp"
-
-template <typename T>
-using PoolEntryArray = DynamicArray<std::reference_wrapper<T>>;
 
 /* Interfaces, to be passed around */
 
@@ -25,7 +22,7 @@ struct IReadOnlyPool {
     virtual T& get(int index) = 0;
 
     /// Get a set of all the available objects
-    virtual const PoolEntryArray<T>& entries() const = 0;
+    virtual const FlatPtrHashSet<T>& entries() = 0;
 
 };
 
@@ -90,15 +87,13 @@ struct UniqueIDArray : public NoCopy {
     void add(int index, T& data) {
         assert(index < Size);
         valid_.set(index);
-        entries_.push_back(data);
+        entries_.insert(&data);
     }
 
     /// Attempt to remove data for element at index and return the next iterator in the entries list
     void remove(int index, T& data) {
         valid_.reset(index);
-        entries_.erase(
-            std::find_if(std::execution::par, entries_.begin(), entries_.end(), [&data](T& i) { return &i == &data; })
-        );
+        entries_.erase(&data);
     }
 
     void clear() {
@@ -113,38 +108,36 @@ struct UniqueIDArray : public NoCopy {
         return valid_.test(index);
     }
 
-    const PoolEntryArray<T>& entries() const {
+    const FlatPtrHashSet<T>& entries() {
         return entries_;
     }
 
 private:
-    std::bitset<Size> valid_;
-    PoolEntryArray<T> entries_;
+    StaticBitset<Size> valid_;
+    FlatPtrHashSet<T> entries_;
 };
 
 template <typename T>
 struct UniqueEntryArray : public NoCopy {
     void add(T& data) {
-        entries_.push_back(data);
+        entries_.insert(&data);
     }
 
     /// Attempt to remove data for element at index and return the next iterator in the entries list
     void remove(T& data) {
-        entries_.erase(
-            std::find_if(std::execution::par, entries_.begin(), entries_.end(), [&data](T& i) { return &i == &data; })
-        );
+        entries_.erase(&data);
     }
 
     void clear() {
         entries_.clear();
     }
 
-    const PoolEntryArray<T>& entries() const {
+    const FlatPtrHashSet<T>& entries() {
         return entries_;
     }
 
 private:
-    PoolEntryArray<T> entries_;
+    FlatPtrHashSet<T> entries_;
 };
 
 struct PoolIDProvider {
@@ -199,7 +192,7 @@ struct StaticPoolStorageBase : public NoCopy {
         return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
     }
 
-    const PoolEntryArray<Interface>& entries() const {
+    const FlatPtrHashSet<Interface>& entries() {
         return allocated_.entries();
     }
 
@@ -270,7 +263,7 @@ struct DynamicPoolStorageBase : public NoCopy {
         return *pool_[index];
     }
 
-    const PoolEntryArray<Interface>& entries() const {
+    const FlatPtrHashSet<Interface>& entries() {
         return allocated_.entries();
     }
 
@@ -282,7 +275,7 @@ struct DynamicPoolStorageBase : public NoCopy {
     }
 
 protected:
-    std::array<Type*, Count> pool_ = { nullptr };
+    StaticArray<Type*, Count> pool_ = { nullptr };
     UniqueEntryArray<Interface> allocated_;
 };
 
@@ -322,7 +315,7 @@ struct MarkedPoolStorageLifetimeBase final : public PoolBase {
 
 private:
     /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
-    std::bitset<PoolBase::Cnt * 2> marked_;
+    StaticBitset<PoolBase::Cnt * 2> marked_;
 };
 
 /// Pool storage which doesn't mark entries for release but immediately releases
