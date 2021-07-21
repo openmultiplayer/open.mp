@@ -9,11 +9,12 @@
 #include <Server/Components/Menus/menus.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Variables/variables.hpp>
+#include <Server/Components/Dialogs/dialogs.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
 	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
-	public PlayerUpdateEventHandler
+	public PlayerUpdateEventHandler, public PlayerDialogEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -25,6 +26,7 @@ struct TestComponent :
 	ITextDrawsPlugin* tds = nullptr;
 	IMenusPlugin* menus = nullptr;
 	IActorsPlugin* actors = nullptr;
+	IDialogsPlugin* dialogs = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -336,6 +338,13 @@ struct TestComponent :
 			}
 		}
 
+		if (dialogs) {
+			if (message == "/dialog") {
+				dialogs->show(player, 1, DialogStyle::MSGBOX, "Oben.mb", "It's coming online", "Ok", "Alright");
+				return true;
+			}
+		}
+
 		if (message == "/lastcptype") {
 			String type;
 			auto pvars = player.queryData<IPlayerVariableData>();
@@ -538,6 +547,10 @@ struct TestComponent :
 			anim.timeData.time = 0;
 			actor->applyAnimation(anim);
 		}
+
+		if (dialogs) {
+			dialogs->getEventDispatcher().addEventHandler(this);
+		}
 	}
 
 	void onInit(ICore* core) override {
@@ -554,6 +567,7 @@ struct TestComponent :
 		tds = c->queryPlugin<ITextDrawsPlugin>();
 		menus = c->queryPlugin<IMenusPlugin>();
 		actors = c->queryPlugin<IActorsPlugin>();
+		dialogs = c->queryPlugin<IDialogsPlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -667,6 +681,10 @@ struct TestComponent :
 		return true;
 	}
 
+	void onDialogResponse(IPlayer& player, uint16_t dialogId, uint8_t response, uint16_t listItem, StringView inputText) override {
+		c->printLn("Dialog Response: %s %u %u %u %s", player.getName().data(), dialogId, response, listItem, inputText.data());
+	}
+
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot player " + String(target.getName()));
 		return true;
@@ -707,6 +725,9 @@ struct TestComponent :
 		}
 		if (actors) {
 			actors->getEventDispatcher().removeEventHandler(this);
+		}
+		if (dialogs) {
+			dialogs->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;
