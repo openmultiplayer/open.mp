@@ -12,7 +12,7 @@ void Player::setColour(Colour colour) {
     pool_->broadcastRPCToAll(setPlayerColorRPC);
 }
 
-EPlayerNameStatus Player::setName(const String& name) {
+EPlayerNameStatus Player::setName(StringView name) {
     assert(pool_);
     if (pool_->isNameTaken(name, *this)) {
         return EPlayerNameStatus::Taken;
@@ -26,7 +26,7 @@ EPlayerNameStatus Player::setName(const String& name) {
 
     NetCode::RPC::SetPlayerName setPlayerNameRPC;
     setPlayerNameRPC.PlayerID = poolID;
-    setPlayerNameRPC.Name = name_;
+    setPlayerNameRPC.Name = StringView(name_);
     setPlayerNameRPC.Success = true;
     pool_->broadcastRPCToAll(setPlayerNameRPC);
     return EPlayerNameStatus::Updated;

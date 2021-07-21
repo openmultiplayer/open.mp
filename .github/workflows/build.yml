@@ -66,11 +66,11 @@ jobs:
     - name: Install CMake
       uses: lukka/get-cmake@v3.19.0
 
-    - name: Install gcc/g++-multilib for linux & tbb & set clang
+    - name: Install gcc/g++-multilib for linux & set clang
       run: |
         sudo dpkg --add-architecture i386
         sudo apt-get update -y
-        sudo apt install -y gcc-multilib g++-multilib clang libtbb-dev libtbb-dev:i386
+        sudo apt install -y gcc-multilib g++-multilib clang
         echo "CC=/usr/bin/clang" >> $GITHUB_ENV
         echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
     - name: Install latest conan

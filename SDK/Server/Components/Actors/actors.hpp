@@ -16,10 +16,10 @@ struct IActor : public IEntity {
 	virtual int getSkin() const = 0;
 
 	/// Apply an animation for the actor
-	virtual void applyAnimation(const Animation& animation) = 0;
+	virtual void applyAnimation(const IAnimation& animation) = 0;
 
 	/// Get the actor's applied animation
-	virtual const Animation& getAnimation() const = 0;
+	virtual const IAnimation& getAnimation() const = 0;
 
 	/// Clear the actor's animations
 	virtual void clearAnimations() = 0;
