@@ -9,11 +9,12 @@
 #include <Server/Components/Menus/menus.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Variables/variables.hpp>
+#include <Server/Components/Console/console.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
 	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
-	public PlayerUpdateEventHandler
+	public PlayerUpdateEventHandler, public ConsoleEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -25,6 +26,7 @@ struct TestComponent :
 	ITextDrawsPlugin* tds = nullptr;
 	IMenusPlugin* menus = nullptr;
 	IActorsPlugin* actors = nullptr;
+	IConsolePlugin* console = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -38,6 +40,15 @@ struct TestComponent :
 
 	UUID getUUID() override {
 		return 0xd4a033a9c68adc86;
+	}
+
+	bool onConsoleText(StringView text) override {
+		if (text == "players") {
+			c->printLn("Current players: %u", c->getPlayers().entries().size());
+			return true;
+		}
+
+		return false;
 	}
 
 	void onConnect(IPlayer& player) override {
@@ -538,6 +549,10 @@ struct TestComponent :
 			anim.timeData.time = 0;
 			actor->applyAnimation(anim);
 		}
+
+		if (console) {
+			console->getEventDispatcher().addEventHandler(this);
+		}
 	}
 
 	void onInit(ICore* core) override {
@@ -554,6 +569,7 @@ struct TestComponent :
 		tds = c->queryPlugin<ITextDrawsPlugin>();
 		menus = c->queryPlugin<IMenusPlugin>();
 		actors = c->queryPlugin<IActorsPlugin>();
+		console = c->queryPlugin<IConsolePlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -707,6 +723,9 @@ struct TestComponent :
 		}
 		if (actors) {
 			actors->getEventDispatcher().removeEventHandler(this);
+		}
+		if (console) {
+			console->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;
