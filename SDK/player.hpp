@@ -630,11 +630,11 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	template<class Packet>
 	inline void broadcastPacketToAll(const Packet& packet, const OptionalPlayer& skipFrom = OptionalPlayer()) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer& player : entries()) {
-			if (skipFrom && &player == &skipFrom.value().get()) {
+		for (IPlayer* player : entries()) {
+			if (skipFrom && player == &skipFrom.value().get()) {
 				continue;
 			}
-			player.sendPacket(packet);
+			player->sendPacket(packet);
 		}
 	}
 };
