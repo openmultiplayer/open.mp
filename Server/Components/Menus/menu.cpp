@@ -79,8 +79,8 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 	}
 
 	void onDisconnect(IPlayer & player, PeerDisconnectReason reason) override {
-		for (IMenu & menu : storage.entries()) {
-			menu.resetForPlayer(player);
+		for (IMenu* menu : storage.entries()) {
+			menu->resetForPlayer(player);
 		}
 	}
 
@@ -92,7 +92,7 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 		}
 	}
 
-	IMenu * create(const String & title, const Vector2 & position, uint8_t columns, float col1Width, float col2Width) override {
+	IMenu * create(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width) override {
 		int freeIdx = storage.findFreeIndex();
 		if (freeIdx == -1) {
 			// No free index
@@ -162,7 +162,7 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 	}
 
 	/// Get a set of all the available labels
-	const PoolEntryArray<IMenu> & entries() const override {
+	const FlatPtrHashSet<IMenu>& entries() override {
 		return storage.entries();
 	}
 };

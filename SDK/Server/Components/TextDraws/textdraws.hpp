@@ -33,10 +33,10 @@ struct ITextDrawBase : public IIDProvider {
 	virtual ITextDrawBase& setPosition(Vector2 position) = 0;
 
 	/// Set the textdraw's text
-	virtual void setText(const String& text) = 0;
+	virtual void setText(StringView text) = 0;
 	
 	/// Get the textdraw's text
-	virtual const String& getText() const = 0;
+	virtual StringView getText() const = 0;
 
 	/// Set the letter size
 	virtual ITextDrawBase& setLetterSize(Vector2 size) = 0;
@@ -126,7 +126,7 @@ struct ITextDrawBase : public IIDProvider {
 	virtual ITextDrawBase& setPreviewVehicleColour(int colour1, int colour2) = 0;
 
 	/// Get the textdraw's preview vehicle colours
-	virtual std::pair<int, int> getPreviewVehicleColour() const = 0;
+	virtual Pair<int, int> getPreviewVehicleColour() const = 0;
 
 	/// Set the textdraw's preview zoom factor
 	virtual ITextDrawBase& setPreviewZoom(float zoom) = 0;
@@ -175,7 +175,7 @@ struct ITextDrawsPlugin : public IPlugin, public IPool<ITextDraw, GLOBAL_TEXTDRA
 	virtual IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() = 0;
 
 	/// Create a new textdraw with some text
-	virtual ITextDraw* create(Vector2 position, const String& text) = 0;
+	virtual ITextDraw* create(Vector2 position, StringView text) = 0;
 
 	/// Create a new textdraw with some preview model
 	virtual ITextDraw* create(Vector2 position, int model) = 0;
@@ -196,7 +196,7 @@ struct IPlayerTextDrawData : public IPlayerData, public IPool<IPlayerTextDraw, P
 	virtual void endSelection() = 0;
 
 	/// Create a new textdraw with some text
-	virtual IPlayerTextDraw* create(Vector2 position, const String& text) = 0;
+	virtual IPlayerTextDraw* create(Vector2 position, StringView text) = 0;
 
 	/// Create a new textdraw with some preview model
 	virtual IPlayerTextDraw* create(Vector2 position, int model) = 0;

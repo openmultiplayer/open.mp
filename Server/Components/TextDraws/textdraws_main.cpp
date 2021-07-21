@@ -31,7 +31,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         player.sendRPC(beginTextDrawSelectRPC);
     }
 
-    IPlayerTextDraw* create(Vector2 position, const String& text) override {
+    IPlayerTextDraw* create(Vector2 position, StringView text) override {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -74,9 +74,9 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     void free() override {
-        for (IPlayerTextDraw& textDraw : storage.entries()) {
-            PlayerTextDraw& td = static_cast<PlayerTextDraw&>(textDraw);
-            td.player = nullptr;
+        for (IPlayerTextDraw* textDraw : storage.entries()) {
+            PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
+            td->player = nullptr;
         }
         delete this;
     }
@@ -116,7 +116,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 
     /// Get a set of all the available labels
-    const PoolEntryArray<IPlayerTextDraw>& entries() const override {
+    const FlatPtrHashSet<IPlayerTextDraw>& entries() override {
         return storage.entries();
     }
 };
@@ -187,7 +187,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         return dispatcher;
     }
 
-    ITextDraw* create(Vector2 position, const String& text) override {
+    ITextDraw* create(Vector2 position, StringView text) override {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -265,7 +265,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         storage.unlock(index);
     }
 
-    const PoolEntryArray<ITextDraw>& entries() const override {
+    const FlatPtrHashSet<ITextDraw>& entries() override {
         return storage.entries();
     }
 };

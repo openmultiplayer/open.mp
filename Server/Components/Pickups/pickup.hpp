@@ -11,9 +11,9 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
 
     void restream() {
-        for (IPlayer& player : streamedFor_.entries()) {
-            streamOutForClient(player);
-            streamInForClient(player);
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player);
+            streamInForClient(*player);
         }
     }
 
@@ -90,8 +90,8 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     }
 
     ~Pickup() {
-        for (IPlayer& player : streamedFor_.entries()) {
-            streamOutForClient(player);
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player);
         }
     }
 };

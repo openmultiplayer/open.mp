@@ -31,12 +31,12 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
 
     void setRotation(GTAQuat rotation) override {}
 
-    void setText(const String& txt) override {
+    void setText(StringView txt) override {
         text = txt;
         restream();
     }
 
-    const String& getText() const override {
+    StringView getText() const override {
         return text;
     }
 
@@ -96,7 +96,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         showTextLabelRPC.LOS = testLOS;
         showTextLabelRPC.PlayerAttachID = attachmentData.playerID;
         showTextLabelRPC.VehicleAttachID = attachmentData.vehicleID;
-        showTextLabelRPC.Text = text;
+        showTextLabelRPC.Text = StringView(text);
         player.sendRPC(showTextLabelRPC);
     }
 
@@ -113,9 +113,9 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
 
     void restream() override {
-        for (IPlayer& player : streamedFor_.entries()) {
-            streamOutForClient(player, false);
-            streamInForClient(player, false);
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player, false);
+            streamInForClient(*player, false);
         }
     }
 
@@ -143,8 +143,8 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     }
 
     ~TextLabel() {
-        for (IPlayer& player : streamedFor_.entries()) {
-            streamOutForClient(player, false);
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player, false);
         }
     }
 };

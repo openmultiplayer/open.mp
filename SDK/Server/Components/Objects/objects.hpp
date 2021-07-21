@@ -48,7 +48,9 @@ enum PlayerBone {
 	PlayerBone_Jaw
 };
 
-/// Object material data
+/* Interfaces, to be passed around */
+
+/// Trivial object material data
 struct ObjectMaterialData {
 	enum Type {
 		None,
@@ -57,9 +59,6 @@ struct ObjectMaterialData {
 	};
 
 	Type type; // Shared
-
-	String txdOrText; // Shared
-	String textureOrFont; // Shared
 
 	union {
 		int model; // Default
@@ -79,9 +78,17 @@ struct ObjectMaterialData {
 	Colour backgroundColour; // Text
 };
 
-typedef std::array<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> ObjectMaterialArray;
-typedef std::bitset<MAX_OBJECT_MATERIAL_SLOTS> ObjectMaterialArraySlots;
-typedef std::pair<std::reference_wrapper<const ObjectMaterialArraySlots>, std::reference_wrapper<const ObjectMaterialArray>> ObjectMaterialArrayPair;
+/// Object material data
+struct IObjectMaterial {
+	/// Get various data of the material
+	virtual const ObjectMaterialData& getData() const = 0;
+
+	/// Get the material's TXD name (for type Default) or text (for type Text)
+	virtual StringView getTXDOrText() const = 0;
+
+	/// Get the material's texture name (for type Default) or font name (for type Text)
+	virtual StringView getTextureOrFont() const = 0;
+};
 
 /// Object attachment data
 struct ObjectAttachmentData {
@@ -154,13 +161,13 @@ struct IBaseObject : public IEntity {
 	virtual const ObjectAttachmentData& getAttachmentData() const = 0;
 
 	/// Get the object's material data
-	virtual ObjectMaterialArrayPair getMaterialData() const = 0;
+	virtual bool getMaterialData(int index, const IObjectMaterial*& out) const = 0;
 
 	/// Set the object's material to a texture
-	virtual void setMaterial(int index, int model, const String& txd, const String& texture, Colour colour) = 0;
+	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) = 0;
 
 	/// Set the object's material to some text
-	virtual void setMaterialText(int index, const String& text, int mtlSize, const String& fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) = 0;
+	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) = 0;
 };
 
 /// An object interface
@@ -247,4 +254,25 @@ struct IPlayerObjectData : public IPlayerData, public IPool<IPlayerObject, OBJEC
 
 	/// Edit an attached object in an attachment slot for the player
 	virtual void editAttachedObject(int index) = 0;
+};
+
+/* Implementation, NOT to be passed around */
+
+/// Default object material data implementation
+struct ObjectMaterial : public IObjectMaterial {
+	String txdOrText;
+	String textureOrFont;
+	ObjectMaterialData data;
+
+	const ObjectMaterialData& getData() const override {
+		return data;
+	}
+
+	StringView getTXDOrText() const override {
+		return txdOrText;
+	}
+
+	StringView getTextureOrFont() const override {
+		return textureOrFont;
+	}
 };
