@@ -1943,7 +1943,7 @@ namespace NetCode {
 		};
 
 		struct ShowDialog final : NetworkPacketBase<61> {
-			uint16_t ID;
+			int ID;
 			uint8_t Style;
 			NetworkString Title;
 			NetworkString FirstButton;
