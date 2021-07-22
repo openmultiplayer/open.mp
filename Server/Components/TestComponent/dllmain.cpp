@@ -698,7 +698,7 @@ struct TestComponent :
 	}
 
 	void onDialogResponse(IPlayer& player, uint16_t dialogId, uint8_t response, uint16_t listItem, StringView inputText) override {
-		c->printLn("Dialog Response: %s %u %u %u %s", player.getName().data(), dialogId, response, listItem, inputText.data());
+		player.sendClientMessage(Colour::White(), String("Dialog response" + std::to_string(response)));
 	}
 
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
