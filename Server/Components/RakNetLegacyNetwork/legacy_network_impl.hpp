@@ -135,7 +135,7 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         }
 
         input.allocate(len);
-        return bs.Read(input.data, input.count);
+        return bs.Read(input.data, len);
     }
 
     template <typename T>
@@ -162,8 +162,9 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             return false;
         }
 
-        input.allocate(input.count);
-        return bs.Read(input.data, input.count);
+        const unsigned int len = input.count;
+        input.allocate(len);
+        return bs.Read(input.data, len);
     }
 
     bool read(NetworkBitStreamValue& input) override {
