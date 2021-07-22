@@ -12,6 +12,8 @@
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <Server/Components/Console/console.hpp>
 
+#include "absl/strings/str_format.h"
+
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
 	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
@@ -351,7 +353,8 @@ struct TestComponent :
 
 		if (dialogs) {
 			if (message == "/dialog") {
-				dialogs->show(player, 1, DialogStyle::MSGBOX, "Oben.mb", "It's coming online", "Ok", "Alright");
+				IPlayerDialogData* playerDialog = player.queryData<IPlayerDialogData>();
+				playerDialog->show(player, 1, DialogStyle_MSGBOX, "Oben.mb", "It's coming online", "Ok", "Alright");
 				return true;
 			}
 		}
@@ -697,8 +700,8 @@ struct TestComponent :
 		return true;
 	}
 
-	void onDialogResponse(IPlayer& player, uint16_t dialogId, uint8_t response, uint16_t listItem, StringView inputText) override {
-		player.sendClientMessage(Colour::White(), String("Dialog response" + std::to_string(response)));
+	void onDialogResponse(IPlayer& player, uint16_t dialogId, DialogResponse response, uint16_t listItem, StringView inputText) override {
+		player.sendClientMessage(Colour::White(), absl::StrFormat("Dialog response: %i", response));
 	}
 
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
