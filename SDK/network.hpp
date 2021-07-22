@@ -62,7 +62,7 @@ struct NetworkArray {
 	T* data; ///< The buffer that holds data - can be self-allocated or allocated externally
 
 	/// Default constructor
-	NetworkArray<T>() : selfAllocated(false) {}
+	NetworkArray<T>() : selfAllocated(false), count(0), data(nullptr) {}
 
 	/// Allocate memory and store it in the buffer
 	/// @param cnt The count of the elements to allocate
@@ -157,12 +157,25 @@ struct NetworkString : NetworkArray<char> {
 		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
 	{ }
 
+	void allocate(unsigned int cnt) {
+		// Guarantee null termination
+		if (cnt) {
+			NetworkArray::allocate(cnt + 1);
+			data[cnt] = 0;
+		}
+	}
+
 	/// Conversion operator for copying data to a std::string
 	operator String() const {
 		return String(data, count);
 	}
 	
 	operator StringView() const {
+		// Handle self-allocated data - a trailing 0 is added so remove it
+		if (selfAllocated) {
+			return StringView(data, count-1);
+		}
+		// Handle other cases
 		return StringView(data, count);
 	}
 };
