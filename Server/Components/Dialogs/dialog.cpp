@@ -18,10 +18,6 @@ struct PlayerDialogData final : public IPlayerDialogData {
 		activeId = id;
 	}
 
-	void setActiveID(uint16_t id) override {
-		activeId = id;
-	}
-
 	uint16_t getActiveID() const override {
 		return activeId;
 	}
@@ -46,7 +42,7 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 			}
 
 			// If the dialog id doesn't match what the server is expecting, ignore it
-			IPlayerDialogData* data = peer.queryData<IPlayerDialogData>();
+			PlayerDialogData* data = peer.queryData<PlayerDialogData>();
 			if (!data || data->getActiveID() == DIALOG_INVALID_ID || data->getActiveID() != sendDialogResponse.ID) {
 				return false;
 			}
@@ -59,7 +55,7 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 				sendDialogResponse.ListItem,
 				sendDialogResponse.Text);
 
-			data->setActiveID(DIALOG_INVALID_ID);
+			data->activeId = DIALOG_INVALID_ID;
 			return true;
 		}
 	} dialogResponseHandler;
