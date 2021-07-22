@@ -37,6 +37,7 @@ constexpr int MENU_POOL_SIZE = 128;
 constexpr int MAX_MENU_ITEMS = 12;
 constexpr int MAX_MENU_TEXT_LENGTH = 32;
 constexpr int INVALID_MENU_ID = 0xFF;
+constexpr int DIALOG_INVALID_ID = 0xFFFF;
 
 namespace Config {
 	enum PlayerMarkerMode {
