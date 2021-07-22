@@ -1,5 +1,35 @@
 #include <netcode.hpp>
-#include "dialog.hpp"
+#include <Server/Components/Dialogs/dialogs.hpp>
+
+struct PlayerDialogData final : public IPlayerDialogData {
+	uint16_t activeId = 0xFFFF;
+
+	void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override {
+		NetCode::RPC::ShowDialog showDialog;
+		showDialog.ID = id;
+		showDialog.Style = static_cast<uint8_t>(style);
+		showDialog.Title = caption;
+		showDialog.FirstButton = button1;
+		showDialog.SecondButton = button2;
+		showDialog.Info = info;
+		player.sendRPC(showDialog);
+
+		// set player's active dialog id to keep track of its validity later on response 
+		activeId = id;
+	}
+
+	void setActiveID(uint16_t id) override {
+		activeId = id;
+	}
+
+	uint16_t getActiveID() const override {
+		return activeId;
+	}
+
+	void free() override {
+		delete this;
+	}
+};
 
 struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 	ICore* core;
@@ -17,7 +47,7 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 
 			// If the dialog id doesn't match what the server is expecting, ignore it
 			IPlayerDialogData* data = peer.queryData<IPlayerDialogData>();
-			if (!data || data->getActiveID() != sendDialogResponse.ID) {
+			if (!data || data->getActiveID() == DIALOG_INVALID_ID || data->getActiveID() != sendDialogResponse.ID) {
 				return false;
 			}
 
@@ -25,7 +55,7 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 				&PlayerDialogEventHandler::onDialogResponse,
 				peer,
 				sendDialogResponse.ID,
-				sendDialogResponse.Response,
+				static_cast<DialogResponse>(sendDialogResponse.Response),
 				sendDialogResponse.ListItem,
 				sendDialogResponse.Text);
 
@@ -64,22 +94,6 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 	IEventDispatcher<PlayerDialogEventHandler>& getEventDispatcher() override {
 		return eventDispatcher;
 	}
-
-	void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override {
-		NetCode::RPC::ShowDialog showDialog;
-		showDialog.ID = id;
-		showDialog.Style = static_cast<uint8_t>(style);
-		showDialog.Title = caption;
-		showDialog.FirstButton = button1;
-		showDialog.SecondButton = button2;
-		showDialog.Info = info;
-		player.sendRPC(showDialog);
-
-		// set player's active dialog id to keep track of its validity later on response 
-		IPlayerDialogData* data = player.queryData<IPlayerDialogData>();
-		data->setActiveID(id);
-	}
-
 };
 
 PLUGIN_ENTRY_POINT() {
