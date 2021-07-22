@@ -704,6 +704,10 @@ struct TestComponent :
 		player.sendClientMessage(Colour::White(), absl::StrFormat("Dialog response: %i", response));
 	}
 
+	void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) override {
+		player.setChatBubble("ouch -" + std::to_string(amount), Colour::Yellow(), 50.f, std::chrono::seconds(30));
+	}
+
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {
 		player.sendClientMessage(Colour::White(), "shot player " + String(target.getName()));
 		return true;

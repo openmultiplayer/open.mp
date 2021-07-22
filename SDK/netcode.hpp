@@ -369,6 +369,22 @@ namespace NetCode {
 			}
 		};
 
+		struct SetPlayerChatBubble final : NetworkPacketBase<59> {
+			int PlayerID;
+			Colour Col;
+			float DrawDistance;
+			uint32_t ExpireTime;
+			NetworkString Text;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+				bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
+				bs.write(NetworkBitStreamValue::UINT32(ExpireTime));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Text));
+			}
+		};
+
 		struct PlayerStreamIn final : NetworkPacketBase<32> {
 			int PlayerID;
 			uint8_t Team;
