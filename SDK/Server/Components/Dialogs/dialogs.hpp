@@ -13,8 +13,8 @@ enum DialogStyle {
 };
 
 enum DialogResponse {
-	DialogResponse_Fail = 0,
-	DialogResponse_Success
+	DialogResponse_Right = 0,
+	DialogResponse_Left
 };
 
 static const UUID DialogData_UUID = UUID(0xbc03376aa3591a11);
@@ -24,6 +24,7 @@ struct IPlayerDialogData : public IPlayerData {
 	/// Show a dialog to player
 	virtual void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) = 0;
 
+	/// Get player's active dialog
 	virtual uint16_t getActiveID() const = 0;
 };
 
