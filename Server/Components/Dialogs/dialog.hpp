@@ -3,7 +3,7 @@
 #include <Server/Components/Dialogs/dialogs.hpp>
 
 struct PlayerDialogData final : public IPlayerDialogData {
-	uint16_t id_;
+	uint16_t id_ = 0xFFFF;
 
 	void setActiveID(uint16_t id) override {
 		id_ = id;
