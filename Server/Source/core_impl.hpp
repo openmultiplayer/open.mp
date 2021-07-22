@@ -1,9 +1,8 @@
 #pragma once
 
-#include <mutex>
 #include <cstdarg>
 #include <fstream>
-#include <condition_variable>
+#include <thread>
 #include <events.hpp>
 #include <pool.hpp>
 #include "player_impl.hpp"
@@ -36,6 +35,12 @@ struct Core final : public ICore, public PlayerEventHandler {
         std::for_each(plugins.begin(), plugins.end(),
             [this](const Pair<UUID, IPlugin*>& pair) {
                 pair.second->onInit(this);
+            }
+        );
+
+        std::for_each(plugins.begin(), plugins.end(),
+            [](const Pair<UUID, IPlugin*>& pair) {
+                pair.second->onPostInit();
             }
         );
 
@@ -127,28 +132,15 @@ struct Core final : public ICore, public PlayerEventHandler {
     void run() {
         sleepTimer = std::chrono::milliseconds(Config::getOption<int>(props, "sleep"));
 
-        std::mutex mutex;
-        std::condition_variable seen;
-        auto onTickPrev = std::chrono::system_clock::now();
-
-        auto
-            sawNewCommand = [] { return false; };
-        for (; ; )
+        auto prev = std::chrono::steady_clock::now();
+        for (;;)
         {
-            auto
-                now = std::chrono::system_clock::now();
-            {
-                std::unique_lock<std::mutex>
-                    lk(mutex);
-                if (seen.wait_until(lk, now + sleepTimer, sawNewCommand)) {
-                }
-                else {
-                    auto onTickNow = std::chrono::system_clock::now();
-                    auto us = std::chrono::duration_cast<std::chrono::microseconds>(onTickNow - onTickPrev);
-                    onTickPrev = onTickNow;
-                    eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
-                }
-            }
+            auto now = std::chrono::steady_clock::now();
+            auto us = std::chrono::duration_cast<std::chrono::microseconds>(now - prev);
+            prev = now;
+            eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
+
+            std::this_thread::sleep_until(now + sleepTimer);
         }
     }
 };

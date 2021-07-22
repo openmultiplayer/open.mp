@@ -10,11 +10,12 @@
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Dialogs/dialogs.hpp>
+#include <Server/Components/Console/console.hpp>
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
 	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
-	public PlayerUpdateEventHandler, public PlayerDialogEventHandler
+	public PlayerUpdateEventHandler, public PlayerDialogEventHandler, public ConsoleEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -27,6 +28,7 @@ struct TestComponent :
 	IMenusPlugin* menus = nullptr;
 	IActorsPlugin* actors = nullptr;
 	IDialogsPlugin* dialogs = nullptr;
+	IConsolePlugin* console = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -40,6 +42,15 @@ struct TestComponent :
 
 	UUID getUUID() override {
 		return 0xd4a033a9c68adc86;
+	}
+
+	bool onConsoleText(StringView text) override {
+		if (text == "players") {
+			c->printLn("Current players: %u", c->getPlayers().entries().size());
+			return true;
+		}
+
+		return false;
 	}
 
 	void onConnect(IPlayer& player) override {
@@ -551,6 +562,10 @@ struct TestComponent :
 		if (dialogs) {
 			dialogs->getEventDispatcher().addEventHandler(this);
 		}
+
+		if (console) {
+			console->getEventDispatcher().addEventHandler(this);
+		}
 	}
 
 	void onInit(ICore* core) override {
@@ -568,6 +583,7 @@ struct TestComponent :
 		menus = c->queryPlugin<IMenusPlugin>();
 		actors = c->queryPlugin<IActorsPlugin>();
 		dialogs = c->queryPlugin<IDialogsPlugin>();
+		console = c->queryPlugin<IConsolePlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -728,6 +744,9 @@ struct TestComponent :
 		}
 		if (dialogs) {
 			dialogs->getEventDispatcher().removeEventHandler(this);
+		}
+		if (console) {
+			console->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } plugin;
