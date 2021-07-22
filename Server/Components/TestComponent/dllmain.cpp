@@ -492,7 +492,7 @@ struct TestComponent :
 		}
 
 		if (checkpoints) {
-			checkpoints->getCheckpointDispatcher().addEventHandler(this);
+			checkpoints->getEventDispatcher().addEventHandler(this);
 		}
 
 		if (objects) {
@@ -731,7 +731,7 @@ struct TestComponent :
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
 		c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
 		if (checkpoints) {
-			checkpoints->getCheckpointDispatcher().removeEventHandler(this);
+			checkpoints->getEventDispatcher().removeEventHandler(this);
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
