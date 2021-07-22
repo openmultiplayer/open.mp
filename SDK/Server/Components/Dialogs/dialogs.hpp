@@ -24,9 +24,7 @@ struct IPlayerDialogData : public IPlayerData {
 };
 
 struct PlayerDialogEventHandler {
-	virtual void onDialogResponse(IPlayer& player, uint16_t dialogId, uint8_t response, uint16_t listItem, StringView inputText) {
-		player.queryData<IPlayerDialogData>()->setActiveID(DIALOG_INVALID_ID);
-	}
+	virtual void onDialogResponse(IPlayer& player, uint16_t dialogId, uint8_t response, uint16_t listItem, StringView inputText) {}
 };
 
 static const UUID DialogsPlugin_UUID = UUID(0x44a111350d611dde);
