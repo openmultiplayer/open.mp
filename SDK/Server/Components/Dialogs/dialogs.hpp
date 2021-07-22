@@ -24,7 +24,6 @@ struct IPlayerDialogData : public IPlayerData {
 	/// Show a dialog to player
 	virtual void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) = 0;
 
-	virtual void setActiveID(uint16_t id) = 0;
 	virtual uint16_t getActiveID() const = 0;
 };
 
