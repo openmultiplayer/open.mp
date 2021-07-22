@@ -48,5 +48,5 @@ struct ICheckpointsPlugin : public IPlugin {
 	PROVIDE_UUID(CheckpointsPlugin_UUID)
 
 	// Access to event dispatchers for other components to add handlers to
-	virtual IEventDispatcher<PlayerCheckpointEventHandler>& getCheckpointDispatcher() = 0;
+	virtual IEventDispatcher<PlayerCheckpointEventHandler>& getEventDispatcher() = 0;
 };

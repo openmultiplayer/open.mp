@@ -12,6 +12,7 @@ add_subdirectory(TextDraws)
 add_subdirectory(Actors)
 add_subdirectory(Menus)
 add_subdirectory(Variables)
+add_subdirectory(Dialogs)
 add_subdirectory(Console)
 
 add_subdirectory(TestComponent)

@@ -9,12 +9,15 @@
 #include <Server/Components/Menus/menus.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Variables/variables.hpp>
+#include <Server/Components/Dialogs/dialogs.hpp>
 #include <Server/Components/Console/console.hpp>
+
+#include "absl/strings/str_format.h"
 
 struct TestComponent : 
 	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
 	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
-	public PlayerUpdateEventHandler, public ConsoleEventHandler
+	public PlayerUpdateEventHandler, public PlayerDialogEventHandler, public ConsoleEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
@@ -26,6 +29,7 @@ struct TestComponent :
 	ITextDrawsPlugin* tds = nullptr;
 	IMenusPlugin* menus = nullptr;
 	IActorsPlugin* actors = nullptr;
+	IDialogsPlugin* dialogs = nullptr;
 	IConsolePlugin* console = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
@@ -347,6 +351,14 @@ struct TestComponent :
 			}
 		}
 
+		if (dialogs) {
+			if (message == "/dialog") {
+				IPlayerDialogData* playerDialog = player.queryData<IPlayerDialogData>();
+				playerDialog->show(player, 1, DialogStyle_MSGBOX, "Oben.mb", "It's coming online", "Ok", "Alright");
+				return true;
+			}
+		}
+
 		if (message == "/lastcptype") {
 			String type;
 			auto pvars = player.queryData<IPlayerVariableData>();
@@ -480,7 +492,7 @@ struct TestComponent :
 		}
 
 		if (checkpoints) {
-			checkpoints->getCheckpointDispatcher().addEventHandler(this);
+			checkpoints->getEventDispatcher().addEventHandler(this);
 		}
 
 		if (objects) {
@@ -550,6 +562,10 @@ struct TestComponent :
 			actor->applyAnimation(anim);
 		}
 
+		if (dialogs) {
+			dialogs->getEventDispatcher().addEventHandler(this);
+		}
+
 		if (console) {
 			console->getEventDispatcher().addEventHandler(this);
 		}
@@ -569,6 +585,7 @@ struct TestComponent :
 		tds = c->queryPlugin<ITextDrawsPlugin>();
 		menus = c->queryPlugin<IMenusPlugin>();
 		actors = c->queryPlugin<IActorsPlugin>();
+		dialogs = c->queryPlugin<IDialogsPlugin>();
 		console = c->queryPlugin<IConsolePlugin>();
 	}
 
@@ -683,6 +700,10 @@ struct TestComponent :
 		return true;
 	}
 
+	void onDialogResponse(IPlayer& player, uint16_t dialogId, DialogResponse response, uint16_t listItem, StringView inputText) override {
+		player.sendClientMessage(Colour::White(), absl::StrFormat("Dialog response: %i", response));
+	}
+
 	void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) override {
 		player.setChatBubble("ouch -" + std::to_string(amount), Colour::Yellow(), 50.f, std::chrono::seconds(30));
 	}
@@ -714,7 +735,7 @@ struct TestComponent :
 		c->getPlayers().getEventDispatcher().removeEventHandler(this);
 		c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
 		if (checkpoints) {
-			checkpoints->getCheckpointDispatcher().removeEventHandler(this);
+			checkpoints->getEventDispatcher().removeEventHandler(this);
 		}
 		if (objects) {
 			objects->getEventDispatcher().removeEventHandler(this);
@@ -727,6 +748,9 @@ struct TestComponent :
 		}
 		if (actors) {
 			actors->getEventDispatcher().removeEventHandler(this);
+		}
+		if (dialogs) {
+			dialogs->getEventDispatcher().removeEventHandler(this);
 		}
 		if (console) {
 			console->getEventDispatcher().removeEventHandler(this);
