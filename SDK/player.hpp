@@ -405,19 +405,19 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's surf data
 	virtual PlayerSurfingData getSurfingData() const = 0;
 
-	/// Stream in a player for the current player
+	/// Stream in the player for another player
 	/// @param other The player to stream in
-	virtual void streamInPlayer(IPlayer& other) = 0;
+	virtual void streamInForPlayer(IPlayer& other) = 0;
 
 	/// Check if a player is streamed in for the current player
-	virtual bool isPlayerStreamedIn(const IPlayer& other) const = 0;
+	virtual bool isStreamedInForPlayer(const IPlayer& other) const = 0;
 
 	/// Stream out a player for the current player
 	/// @param other The player to stream out
-	virtual void streamOutPlayer(IPlayer& other) = 0;
+	virtual void streamOutForPlayer(IPlayer& other) = 0;
 
 	/// Get the players which are streamed in for this player
-	virtual const FlatPtrHashSet<IPlayer>& streamedInPlayers() = 0;
+	virtual const FlatPtrHashSet<IPlayer>& streamedForPlayers() = 0;
 
 	/// Get the player's state
 	virtual PlayerState getState() const = 0;
@@ -433,6 +433,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's skin
 	virtual int getSkin() const = 0;
+
+	virtual void setChatBubble(StringView text, const Colour& colour, float drawDist, std::chrono::milliseconds expire) = 0;
 
 	// Send a message to the player
 	virtual void sendClientMessage(const Colour& colour, StringView message) const = 0;
@@ -545,7 +547,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	template<class Packet>
 	inline void broadcastRPCToStreamed(const Packet& packet, bool skipFrom = false) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer* player : streamedInPlayers()) {
+		for (IPlayer* player : streamedForPlayers()) {
 			if (skipFrom && player == this) {
 				continue;
 			}
@@ -558,7 +560,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	template<class Packet>
 	inline void broadcastPacketToStreamed(const Packet& packet, bool skipFrom = true) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-		for (IPlayer* player : streamedInPlayers()) {
+		for (IPlayer* player : streamedForPlayers()) {
 			if (skipFrom && player == this) {
 				continue;
 			}
