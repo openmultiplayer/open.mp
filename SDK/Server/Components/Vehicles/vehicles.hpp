@@ -204,17 +204,17 @@ struct IVehicle : public IEntity {
 
 /// A vehicle event handler
 struct VehicleEventHandler {
-	virtual void onStreamIn(IVehicle& vehicle, IPlayer& player) {}
-	virtual void onStreamOut(IVehicle& vehicle, IPlayer& player) {}
-	virtual void onDeath(IVehicle& vehicle, IPlayer& player) {}
+	virtual void onVehicleStreamIn(IVehicle& vehicle, IPlayer& player) {}
+	virtual void onVehicleStreamOut(IVehicle& vehicle, IPlayer& player) {}
+	virtual void onVehicleDeath(IVehicle& vehicle, IPlayer& player) {}
 	virtual void onPlayerEnterVehicle(IPlayer& player, IVehicle& vehicle, bool passenger) {}
 	virtual void onPlayerExitVehicle(IPlayer& player, IVehicle& vehicle) {}
-	virtual void onDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) {}
-	virtual bool onPaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) { return true; }
-	virtual bool onMod(IPlayer& player, IVehicle& vehicle, int component) { return true; }
-	virtual bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) { return true; }
+	virtual void onVehicleDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) {}
+	virtual bool onVehiclePaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) { return true; }
+	virtual bool onVehicleMod(IPlayer& player, IVehicle& vehicle, int component) { return true; }
+	virtual bool onVehicleRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) { return true; }
 	virtual void onEnterExitModShop(IPlayer& player, bool enterexit, int interiorID) {}
-	virtual void onSpawn(IVehicle& vehicle) {}
+	virtual void onVehicleSpawn(IVehicle& vehicle) {}
 	virtual bool onUnoccupiedVehicleUpdate(IVehicle& vehicle, IPlayer& player, UnoccupiedVehicleUpdate const updateData) { return true; }
 	virtual bool onTrailerUpdate(IPlayer& player, IVehicle& trailer) { return true; }
 };

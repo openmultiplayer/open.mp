@@ -264,7 +264,7 @@ namespace NetCode {
 		};
 
 		struct PlayerRequestSpawnResponse final : NetworkPacketBase<129> {
-			bool Allow;
+			uint32_t Allow;
 
 			bool read(INetworkBitStream& bs) {
 				return bs.read<NetworkBitStreamValueType::UINT32>(Allow);
@@ -367,6 +367,22 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT32(Weapon));
+			}
+		};
+
+		struct SetPlayerChatBubble final : NetworkPacketBase<59> {
+			int PlayerID;
+			Colour Col;
+			float DrawDistance;
+			uint32_t ExpireTime;
+			NetworkString Text;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+				bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
+				bs.write(NetworkBitStreamValue::UINT32(ExpireTime));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Text));
 			}
 		};
 
@@ -2180,6 +2196,61 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(params.windowPassenger));
 				bs.write(NetworkBitStreamValue::UINT8(params.windowBackLeft));
 				bs.write(NetworkBitStreamValue::UINT8(params.windowBackRight));
+			}
+		};
+
+		struct ShowDialog final : NetworkPacketBase<61> {
+			int ID;
+			uint8_t Style;
+			NetworkString Title;
+			NetworkString FirstButton;
+			NetworkString SecondButton;
+			NetworkString Info;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ID));
+				bs.write(NetworkBitStreamValue::UINT8(Style));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Title));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(FirstButton));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(SecondButton));
+				bs.write(NetworkBitStreamValue::COMPRESSED_STR(Info));
+			}
+		};
+
+		struct OnPlayerDialogResponse final : NetworkPacketBase<62> {
+			uint16_t ID;
+			uint8_t Response;
+			uint16_t ListItem;
+			NetworkString Text;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT16>(ID);
+				bs.read<NetworkBitStreamValueType::UINT8>(Response);
+				bs.read<NetworkBitStreamValueType::UINT16>(ListItem);
+				return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Text);
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct SendGameText final : NetworkPacketBase<73> {
+			int Time;
+			int Style;
+			NetworkString Text;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(Style));
+				bs.write(NetworkBitStreamValue::UINT32(Time));
+				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(Text));
 			}
 		};
 	}

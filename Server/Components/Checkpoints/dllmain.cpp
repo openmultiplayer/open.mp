@@ -2,11 +2,11 @@
 #include <sdk.hpp>
 
 struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHandler {
-	DefaultEventDispatcher<PlayerCheckpointEventHandler> checkpointDispatcher;
+	DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
 	ICore* core;
 
-	DefaultEventDispatcher<PlayerCheckpointEventHandler>& getCheckpointDispatcher() override {
-		return checkpointDispatcher;
+	DefaultEventDispatcher<PlayerCheckpointEventHandler>& getEventDispatcher() override {
+		return eventDispatcher;
 	}
 
 	// Set up dummy checkpoint data for when the player connects
@@ -28,7 +28,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 				if (cp->enabled_ && cp->inside_) {
 					cp->inside_ = false;
 					void (PlayerCheckpointEventHandler:: * leaveHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint : &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint;
-					self.checkpointDispatcher.dispatch(
+					self.eventDispatcher.dispatch(
 						leaveHandler,
 						player
 					);
@@ -38,7 +38,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 				if (cp->enabled_ && !cp->inside_) {
 					cp->inside_ = true;
 					void (PlayerCheckpointEventHandler:: * enterHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint : &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint;
-					self.checkpointDispatcher.dispatch(
+					self.eventDispatcher.dispatch(
 						enterHandler,
 						player
 					);

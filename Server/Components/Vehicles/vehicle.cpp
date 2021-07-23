@@ -47,7 +47,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         player.sendRPC(vehicleRPC);
     }
     streamedPlayers_.add(player.getID(), player);
-    eventDispatcher->dispatch(&VehicleEventHandler::onStreamIn, *this, player);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamIn, *this, player);
     respawning = false;
 }
 
@@ -61,10 +61,14 @@ void Vehicle::streamOutForPlayer(IPlayer& player) {
     streamOut.VehicleID = poolID;
     player.sendRPC(streamOut);
     streamedPlayers_.remove(id, player);
-    eventDispatcher->dispatch(&VehicleEventHandler::onStreamOut, *this, player);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamOut, *this, player);
 }
 
 bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
+    if (respawning) {
+        return false;
+    }
+
     pos = vehicleSync.Position;
     rot = vehicleSync.Rotation;
     health = vehicleSync.Health;
@@ -92,7 +96,7 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 }
 
 bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) {
-    if (isTrailer() && trailerOrTower->getDriver() != nullptr && trailerOrTower->getDriver() != &player) {
+    if ((isTrailer() && trailerOrTower->getDriver() != nullptr && trailerOrTower->getDriver() != &player) || respawning) {
         return false;
     }
     else if (!unoccupiedSync.SeatID) {
@@ -217,7 +221,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
     damageStatus.LightStatus = lightDamage;
 
     if (vehicleUpdater) {
-        eventDispatcher->dispatch(&VehicleEventHandler::onDamageStatusUpdate, *this, *vehicleUpdater);
+        eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, *this, *vehicleUpdater);
     }
 
     for (IPlayer* player : streamedPlayers_.entries()) {
@@ -390,8 +394,8 @@ Vector3 Vehicle::getPosition() const {
 
 void Vehicle::setDead(IPlayer& killer) {
     dead = true;
-    timeOfDeath = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
-    eventDispatcher->dispatch(&VehicleEventHandler::onDeath, *this, killer);
+    timeOfDeath = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDeath, *this, killer);
 }
 
 bool Vehicle::isDead() {
@@ -400,14 +404,19 @@ bool Vehicle::isDead() {
 
 void Vehicle::respawn() {
     respawning = true;
+    auto entries = streamedPlayers_.entries();
+    for (IPlayer* player : entries) {
+        streamOutForPlayer(*player);
+    }
+
     dead = false;
     pos = spawnData.position;
     bodyColour1 = -1;
     bodyColour2 = -1;
     rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     beenOccupied = false;
-    lastOccupied = std::chrono::milliseconds(-1);
-    timeOfDeath = std::chrono::milliseconds(-1);
+    lastOccupied = std::chrono::seconds(-1);
+    timeOfDeath = std::chrono::seconds(-1);
     mods.fill(0);
     doorDamage = 0;
     tyreDamage = 0;
@@ -421,12 +430,9 @@ void Vehicle::respawn() {
     towing = false;
     params = VehicleParams{};
 
-    auto entries = streamedPlayers_.entries();
-    for (IPlayer* player : entries) {
-        streamOutForPlayer(*player);
-    }
+   
 
-    eventDispatcher->dispatch(&VehicleEventHandler::onSpawn, *this);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleSpawn, *this);
 }
 
 int Vehicle::getRespawnDelay() {

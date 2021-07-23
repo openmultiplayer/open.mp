@@ -136,7 +136,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 case VehicleSCMEvent_SetPaintjob: {
                     bool allowed = self.eventDispatcher.stopAtFalse(
                         [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
-                            return handler->onPaintJob(peer, vehicle, scmEvent.Arg1);
+                            return handler->onVehiclePaintJob(peer, vehicle, scmEvent.Arg1);
                         });
                     if (allowed) {
                         vehicle.setPaintJob(scmEvent.Arg1);
@@ -151,7 +151,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 
                     bool allowed = self.eventDispatcher.stopAtFalse(
                         [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
-                            return handler->onMod(peer, vehicle, scmEvent.Arg1);
+                            return handler->onVehicleMod(peer, vehicle, scmEvent.Arg1);
                         });
 
                     if (allowed) {
@@ -169,7 +169,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 case VehicleSCMEvent_SetColour: {
                     bool allowed = self.eventDispatcher.stopAtFalse(
                         [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
-                            return handler->onRespray(peer, vehicle, scmEvent.Arg1, scmEvent.Arg2);
+                            return handler->onVehicleRespray(peer, vehicle, scmEvent.Arg1, scmEvent.Arg2);
                         }
                     );
 
@@ -229,8 +229,12 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-            if (data->getVehicle() && data->getVehicle()->getDriver() == &player) {
-                data->getVehicle()->setDriver(nullptr);
+            if (data->getVehicle()) {
+                IVehicle* vehicle = data->getVehicle();
+                vehicle->setBeenOccupied(true);
+                if (vehicle->getDriver() == &player) {
+                    vehicle->setDriver(nullptr);
+                }
             }
 
             data->setVehicle(nullptr);
@@ -374,7 +378,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
 
     void onTick(std::chrono::microseconds elapsed) override {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        auto time = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch());
+        auto time = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
         for (IVehicle* vehicle : storage.entries()) {
             bool occupied = false;
             const int vw = vehicle->getVirtualWorld();
@@ -392,12 +396,12 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                 if (!isStreamedIn && shouldBeStreamedIn) {
                     vehicle->streamInForPlayer(*player);
                     ScopedPoolReleaseLock lock(*this, *vehicle);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamIn, lock.entry, *player);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, *player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
                     vehicle->streamOutForPlayer(*player);
                     ScopedPoolReleaseLock lock(*this, *vehicle);
-                    eventDispatcher.dispatch(&VehicleEventHandler::onStreamOut, lock.entry, *player);
+                    eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, *player);
                 }
 
                 if (!occupied && isStreamedIn && shouldBeStreamedIn) {
@@ -409,12 +413,12 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
             }
 
             if (vehicle->isDead() && vehicle->getRespawnDelay() != -1 && !occupied) {
-                if (time - vehicle->getDeathTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
+                if (time - vehicle->getDeathTime() >= std::chrono::seconds(vehicle->getRespawnDelay())) {
                     vehicle->respawn();
                 }
             }
             else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != -1) {
-                if (time - vehicle->getLastOccupiedTime() >= std::chrono::milliseconds(vehicle->getRespawnDelay())) {
+                if (time - vehicle->getLastOccupiedTime() >= std::chrono::seconds(vehicle->getRespawnDelay())) {
                     vehicle->respawn();
                 }
             }
