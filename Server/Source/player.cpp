@@ -33,7 +33,7 @@ EPlayerNameStatus Player::setName(StringView name) {
 }
 
 void Player::updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) {
-    const std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
     if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastMarkerUpdate_) > updateRate) {
         lastMarkerUpdate_ = now;
         NetCode::Packet::PlayerMarkersSync markersSync(*pool_, *this, limit, radius);
@@ -51,7 +51,7 @@ IPlayer* Player::getCameraTargetPlayer() {
     }
 
     IPlayer& target = pool_->storage.get(targetPlayer_);
-    if (!isPlayerStreamedIn(target)) {
+    if (!target.isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
@@ -103,7 +103,7 @@ IPlayer* Player::getTargetPlayer() {
     }
 
     IPlayer& target = pool_->get(targetPlayer_);
-    if (!isPlayerStreamedIn(target)) {
+    if (!target.isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
@@ -162,29 +162,44 @@ void Player::setScore(int score) {
     }
 }
 
-void Player::streamInPlayer(IPlayer& other) {
-    Player& player = static_cast<Player&>(other);
-    streamedPlayers_.add(player.poolID, other);
-    NetCode::RPC::PlayerStreamIn playerStreamInRPC;
-    playerStreamInRPC.PlayerID = player.poolID;
-    playerStreamInRPC.Skin = player.skin_;
-    playerStreamInRPC.Team = player.team_;
-    playerStreamInRPC.Col = player.colour_;
-    playerStreamInRPC.Pos = player.pos_;
-    playerStreamInRPC.Angle = player.rot_.ToEuler().z;
-    playerStreamInRPC.FightingStyle = player.fightingStyle_;
-    playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(player.skillLevels_);
-    sendRPC(playerStreamInRPC);
+void Player::streamInForPlayer(IPlayer& other) {
+    const int pid = other.getID();
+    if (!streamedFor_.valid(pid)) {
+        streamedFor_.add(pid, other);
+        NetCode::RPC::PlayerStreamIn playerStreamInRPC;
+        playerStreamInRPC.PlayerID = poolID;
+        playerStreamInRPC.Skin = skin_;
+        playerStreamInRPC.Team = team_;
+        playerStreamInRPC.Col = colour_;
+        playerStreamInRPC.Pos = pos_;
+        playerStreamInRPC.Angle = rot_.ToEuler().z;
+        playerStreamInRPC.FightingStyle = fightingStyle_;
+        playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(skillLevels_);
+        other.sendRPC(playerStreamInRPC);
 
-    pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, other, *this);
+        const std::chrono::milliseconds expire = std::chrono::duration_cast<std::chrono::milliseconds>(chatBubbleExpiration_ - std::chrono::steady_clock::now());
+        if (expire.count() > 0) {
+            NetCode::RPC::SetPlayerChatBubble RPC;
+            RPC.PlayerID = poolID;
+            RPC.Col = chatBubble_.colour;
+            RPC.DrawDistance = chatBubble_.drawDist;
+            RPC.ExpireTime = expire.count();
+            RPC.Text = StringView(chatBubble_.text);
+            other.sendRPC(RPC);
+        }
+
+        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
+    }
 }
 
-void Player::streamOutPlayer(IPlayer& other) {
-    Player& player = static_cast<Player&>(other);
-    streamedPlayers_.remove(player.poolID, other);
-    NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
-    playerStreamOutRPC.PlayerID = player.poolID;
-    sendRPC(playerStreamOutRPC);
+void Player::streamOutForPlayer(IPlayer& other) {
+    const int pid = other.getID();
+    if (streamedFor_.valid(pid)) {
+        streamedFor_.remove(pid, other);
+        NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
+        playerStreamOutRPC.PlayerID = poolID;
+        other.sendRPC(playerStreamOutRPC);
 
-    pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, other, *this);
+        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, *this, other);
+    }
 }
