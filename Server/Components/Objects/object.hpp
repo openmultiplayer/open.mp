@@ -238,15 +238,17 @@ struct Object final : public BaseObject<IObject> {
 
 					if (
 						attachmentData_.type == ObjectAttachmentData::Type::Player &&
-						players_->valid(attachmentData_.ID) &&
-						player->isPlayerStreamedIn(players_->get(attachmentData_.ID))
+						players_->valid(attachmentData_.ID)
 					) {
-						NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-						attachObjectToPlayerRPC.ObjectID = poolID;
-						attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
-						attachObjectToPlayerRPC.Offset = attachmentData_.offset;
-						attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-						player->sendRPC(attachObjectToPlayerRPC);
+						IPlayer& other = players_->get(attachmentData_.ID);
+						if (other.isStreamedInForPlayer(*player)) {
+							NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+							attachObjectToPlayerRPC.ObjectID = poolID;
+							attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
+							attachObjectToPlayerRPC.Offset = attachmentData_.offset;
+							attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
+							player->sendRPC(attachObjectToPlayerRPC);
+						}
 					}
 				}
 			}

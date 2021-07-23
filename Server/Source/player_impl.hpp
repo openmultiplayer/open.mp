@@ -17,6 +17,12 @@
 
 struct PlayerPool;
 
+struct PlayerChatBubble {
+    String text;
+    Colour colour;
+    float drawDist;
+};
+
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool* pool_;
     PeerNetworkData netData_;
@@ -29,7 +35,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     FlatHashMap<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Colour colour_;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
+    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
     int virtualWorld_;
     int team_;
     int skin_;
@@ -61,10 +67,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int cutType_;
     Vector4 worldBounds_;
     bool widescreen_;
-    std::chrono::system_clock::time_point lastMarkerUpdate_;
+    std::chrono::steady_clock::time_point lastMarkerUpdate_;
     bool enableCameraTargeting_;
     int cameraTargetPlayer_, cameraTargetVehicle_, cameraTargetObject_, cameraTargetActor_;
     int targetPlayer_, targetActor_;
+    std::chrono::steady_clock::time_point chatBubbleExpiration_;
+    PlayerChatBubble chatBubble_;
 
     Player() :
         pool_(nullptr),
@@ -90,14 +98,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         weather_(0),
         worldBounds_(0.f, 0.f, 0.f, 0.f),
         widescreen_(0),
-        lastMarkerUpdate_(std::chrono::system_clock::now()),
+        lastMarkerUpdate_(std::chrono::steady_clock::now()),
         enableCameraTargeting_(false),
         cameraTargetPlayer_(INVALID_PLAYER_ID),
         cameraTargetVehicle_(INVALID_VEHICLE_ID),
         cameraTargetObject_(INVALID_OBJECT_ID),
         cameraTargetActor_(INVALID_ACTOR_ID),
         targetPlayer_(INVALID_PLAYER_ID),
-        targetActor_(INVALID_ACTOR_ID)
+        targetActor_(INVALID_ACTOR_ID),
+        chatBubbleExpiration_(std::chrono::steady_clock::now())
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -450,17 +459,16 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         playerData_.try_emplace(playerData->getUUID(), playerData);
     }
 
-    void streamInPlayer(IPlayer& other) override;
+    void streamInForPlayer(IPlayer& other) override;
 
-    bool isPlayerStreamedIn(const IPlayer& other) const override {
-        const Player& player = static_cast<const Player&>(other);
-        return streamedPlayers_.valid(player.poolID);
+    bool isStreamedInForPlayer(const IPlayer& other) const override {
+        return streamedFor_.valid(other.getID());
     }
 
-    void streamOutPlayer(IPlayer& other) override;
+    void streamOutForPlayer(IPlayer& other) override;
 
-    const FlatPtrHashSet<IPlayer>& streamedInPlayers() override {
-        return streamedPlayers_.entries();
+    const FlatPtrHashSet<IPlayer>& streamedForPlayers() override {
+        return streamedFor_.entries();
     }
 
     const PeerNetworkData& getNetworkData() const override {
@@ -617,6 +625,21 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return shopName_;
     }
 
+    void setChatBubble(StringView text, const Colour& colour, float drawDist, std::chrono::milliseconds expire) override {
+        chatBubbleExpiration_ = std::chrono::steady_clock::now() + expire;
+        chatBubble_.text = text;
+        chatBubble_.drawDist = drawDist;
+        chatBubble_.colour = colour;
+
+        NetCode::RPC::SetPlayerChatBubble RPC;
+        RPC.PlayerID = poolID;
+        RPC.Col = colour;
+        RPC.DrawDistance = drawDist;
+        RPC.ExpireTime = expire.count();
+        RPC.Text = text;
+        broadcastRPCToStreamed(RPC);
+    }
+
     void sendClientMessage(const Colour& colour, StringView message) const override {
         NetCode::RPC::SendClientMessage sendClientMessage;
         sendClientMessage.Col = colour;
@@ -631,6 +654,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(sendChatMessage);
     }
     
+    void sendGameText(StringView message, int time, int style) const override {
+        NetCode::RPC::SendGameText gameText;
+        gameText.Time = time;
+        gameText.Style = style;
+        gameText.Text = message;
+        sendRPC(gameText);
+    }
+
     int getVirtualWorld() const override {
         return virtualWorld_;
     }
@@ -703,7 +734,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 [&peer](PlayerEventHandler* handler) {
                     return handler->onRequestSpawn(peer);
                 }
-            );
+            ) ? 1 : 0;
 
             peer.sendRPC(playerRequestSpawnResponse);
             return true;
@@ -869,8 +900,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             // Make sure to restream player on spawn
             for (IPlayer* other : self.storage.entries()) {
-                if (&player != other && other->isPlayerStreamedIn(player)) {
-                    other->streamOutPlayer(player);
+                if (&player != other && player.isStreamedInForPlayer(*other)) {
+                    player.streamOutForPlayer(*other);
                 }
             }
 
@@ -1083,7 +1114,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
 
                 Player& targetedplayer = self.storage.get(bulletSync.HitID);
-                if (!player.isPlayerStreamedIn(targetedplayer)) {
+                if (!targetedplayer.isStreamedInForPlayer(player)) {
                     return false;
                 }
             }
@@ -1201,9 +1232,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
+            bool vehicleOk = self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player);
             player.setState(PlayerState_Driver);
 
-            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player)) {
+            if (vehicleOk) {
                 vehicleSync.PlayerID = player.poolID;
 
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
@@ -1251,7 +1283,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         gameData.versionString = playerConnectPacket.VersionString;
 
         player.pool_ = this;
-        player.streamedPlayers_.add(player.poolID, player);
+        player.streamedFor_.add(player.poolID, player);
 
         player.netData_ = netData;
         player.gameData_ = gameData;
@@ -1515,6 +1547,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 reason = PeerDisconnectReason_Kicked;
             }
 
+            for (IPlayer* p : storage.entries()) {
+                if (&peer != p && p->isStreamedInForPlayer(peer)) {
+                    p->streamOutForPlayer(peer);
+                }
+            }
+
             Player& player = static_cast<Player&>(peer);
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = player.poolID;
@@ -1624,12 +1662,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     other->getVirtualWorld() == player->virtualWorld_ &&
                     glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = player->isPlayerStreamedIn(*other);
+                const bool isStreamedIn = other->isStreamedInForPlayer(*player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
-                    player->streamInPlayer(*other);
+                    other->streamInForPlayer(*player);
                 }
                 else if (isStreamedIn && !shouldBeStreamedIn) {
-                    player->streamOutPlayer(*other);
+                    other->streamOutForPlayer(*player);
                 }
             }
         }
