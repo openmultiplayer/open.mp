@@ -703,7 +703,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 };
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public CoreEventHandler {
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
     ICore& core;
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
@@ -1371,13 +1371,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 reason = PeerDisconnectReason_Kicked;
             }
 
+            Player& player = static_cast<Player&>(peer);
             for (IPlayer* p : storage.entries()) {
-                if (&peer != p && p->isStreamedInForPlayer(peer)) {
-                    p->streamOutForPlayer(peer);
+                if (p == &player) {
+                    continue;
+                }
+                Player* other = static_cast<Player*>(p);
+                if (other->streamedFor_.valid(player.poolID)) {
+                    other->streamedFor_.remove(player.poolID, player);
                 }
             }
 
-            Player& player = static_cast<Player&>(peer);
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = player.poolID;
             packet.Reason = reason;
@@ -1406,9 +1410,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerBulletSyncHandler(*this),
         playerVehicleSyncHandler(*this),
         playerWeaponsUpdateHandler(*this)
-    {
-        core.getEventDispatcher().addEventHandler(this);
-    }
+    {}
 
     bool isNameTaken(StringView name, const OptionalPlayer skip) override {
         const FlatPtrHashSet<IPlayer>& players = storage.entries();
@@ -1428,7 +1430,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         );
     }
 
-    void postInit() override {
+    void init(IPluginList& plugins) {
         const JSON& cfg = core.getProperties();
         markersShow = Config::getOption<int>(cfg, "show_player_markers");
         markersLimit = Config::getOption<int>(cfg, "limit_player_markers");
@@ -1453,12 +1455,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
 
-        vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
-        objectsPlugin = core.queryPlugin<IObjectsPlugin>();
-        actorsPlugin = core.queryPlugin<IActorsPlugin>();
+        vehiclesPlugin = plugins.queryPlugin<IVehiclesPlugin>();
+        objectsPlugin = plugins.queryPlugin<IObjectsPlugin>();
+        actorsPlugin = plugins.queryPlugin<IActorsPlugin>();
     }
 
-    void onTick(std::chrono::microseconds elapsed) override {
+    void tick(std::chrono::microseconds elapsed) {
         const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
         for (IPlayer* p : storage.entries()) {
             Player* player = static_cast<Player*>(p);
@@ -1509,6 +1511,5 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
         core.removeNetworkEventHandler(this);
-        core.getEventDispatcher().removeEventHandler(this);
     }
 };

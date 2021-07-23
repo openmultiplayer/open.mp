@@ -78,7 +78,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler {
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
 	}
 
-	void onInit(ICore* core) override {
+	void onLoad(ICore* core) override {
 		this->core = core;
         core->getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);

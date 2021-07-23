@@ -1,6 +1,6 @@
 #include "actor.hpp"
 
-struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
+struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, public PlayerEventHandler {
 	ICore * core;
 	MarkedPoolStorage<Actor, IActor, IActorsPlugin::Cnt> storage;
 	DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
@@ -43,17 +43,29 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
 		playerDamageActorEventHandler(*this)
 	{}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore* core) override {
 		this->core = core;
 		players = &core->getPlayers();
 		core->getEventDispatcher().addEventHandler(this);
+		players->getEventDispatcher().addEventHandler(this);
 		core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
 	}
 
 	~ActorsPlugin() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
+			players->getEventDispatcher().removeEventHandler(this);
 			core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
+		}
+	}
+
+	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+		const int pid = player.getID();
+		for (IActor* a : storage.entries()) {
+			Actor* actor = static_cast<Actor*>(a);
+			if (actor->streamedFor_.valid(pid)) {
+				actor->streamedFor_.remove(pid, player);
+			}
 		}
 	}
 

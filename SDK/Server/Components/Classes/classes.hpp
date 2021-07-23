@@ -25,7 +25,7 @@ struct ClassEventHandler {
 };
 
 static const UUID ClassesPlugin_UUID = UUID(0x8cfb3183976da208);
-struct IClassesPlugin : public IPlugin, IPool<PlayerClass, CLASS_POOL_SIZE> {
+struct IClassesPlugin : public IPoolPlugin<PlayerClass, CLASS_POOL_SIZE> {
 	PROVIDE_UUID(ClassesPlugin_UUID)
 
 	virtual IEventDispatcher<ClassEventHandler>& getEventDispatcher() = 0;
