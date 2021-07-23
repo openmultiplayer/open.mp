@@ -51,7 +51,7 @@ struct IPool : IReadOnlyPool<T, Count> {
 /// A plugin interface which allows for writing a pool plugin
 template <typename T, size_t Count>
 struct IPoolPlugin : public IPlugin, public IPool<T, Count> {
-    /// Return Network plugin type
+    /// Return Pool plugin type
     PluginType pluginType() override { return PluginType::Pool; }
 };
 
