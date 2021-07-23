@@ -11,6 +11,7 @@
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/GangZones/gangzones.hpp>
 
 #include "absl/strings/str_format.h"
 
@@ -31,6 +32,7 @@ struct TestComponent :
 	IActorsPlugin* actors = nullptr;
 	IDialogsPlugin* dialogs = nullptr;
 	IConsolePlugin* console = nullptr;
+	IGangZonesPlugin* gangzones = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -40,6 +42,8 @@ struct TestComponent :
 	ITextDraw* sprite = nullptr;
 	IMenu* menu = nullptr;
 	IActor* actor = nullptr;
+	IGangZone* gz1 = nullptr;
+	IGangZone* gz2 = nullptr;
 	bool moved = false;
 
 	UUID getUUID() override {
@@ -569,6 +573,18 @@ struct TestComponent :
 		if (console) {
 			console->getEventDispatcher().addEventHandler(this);
 		}
+
+		if (gangzones) {
+			GangZonePos pos1, pos2;
+
+			pos1.min = { -18.0f, 58.5f };
+			pos1.max = { 80.0f, 119.5f };
+			gz1 = gangzones->create(pos1);
+
+			pos2.min = { 49.0f, -31.5f };
+			pos2.max = { 110.0f, 29.5f };
+			gz2 = gangzones->create(pos2);
+		}
 	}
 
 	void onInit(ICore* core) override {
@@ -587,6 +603,7 @@ struct TestComponent :
 		actors = c->queryPlugin<IActorsPlugin>();
 		dialogs = c->queryPlugin<IDialogsPlugin>();
 		console = c->queryPlugin<IConsolePlugin>();
+		gangzones = c->queryPlugin<IGangZonesPlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -628,6 +645,15 @@ struct TestComponent :
 
 		if (sprite) {
 			sprite->showForPlayer(player);
+		}
+
+		if (gz1) {
+			gz1->showForPlayer(player, Colour(0xFF, 0x00, 0x00, 0xAA));
+		}
+
+		if (gz2) {
+			gz2->showForPlayer(player, Colour(0x00, 0x00, 0xFF, 0xAA));
+			gz2->flashForPlayer(player, Colour(0x00, 0xFF, 0x00, 0xAA));
 		}
 	}
 
