@@ -14,7 +14,7 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 		return "Pawn";
 	}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		c = core;
 
 		// read values of entry_file and side_scripts from config file
@@ -34,10 +34,6 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 		}
 
 		c->getEventDispatcher().addEventHandler(this);
-	}
-
-	void postInit() override {
-		c->printLn("Server initiated with SDK version %i", c->getVersion());
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {

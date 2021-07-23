@@ -1,6 +1,6 @@
 #include "pickup.hpp"
 
-struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler {
+struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, public PlayerEventHandler {
 	ICore * core;
 	MarkedPoolStorage<Pickup, IPickup, IPickupsPlugin::Cnt> storage;
 	DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
@@ -36,16 +36,18 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler {
 		playerPickUpPickupEventHandler(*this)
 	{}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		this->core = core;
 		players = &core->getPlayers();
 		core->getEventDispatcher().addEventHandler(this);
+		players->getEventDispatcher().addEventHandler(this);
 		core->addPerRPCEventHandler<NetCode::RPC::OnPlayerPickUpPickup>(&playerPickUpPickupEventHandler);
 	}
 
 	~PickupsPlugin() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
+			players->getEventDispatcher().removeEventHandler(this);
 			core->removePerRPCEventHandler<NetCode::RPC::OnPlayerPickUpPickup>(&playerPickUpPickupEventHandler);
 		}
 	}
@@ -70,6 +72,16 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler {
 		pickup.modelId = modelId;
 		pickup.isStatic = isStatic;
 		return &pickup;
+	}
+
+	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+		const int pid = player.getID();
+		for (IPickup* p : storage.entries()) {
+			Pickup* pickup = static_cast<Pickup*>(p);
+			if (pickup->streamedFor_.valid(pid)) {
+				pickup->streamedFor_.remove(pid, player);
+			}
+		}
 	}
 
 	void free() override {

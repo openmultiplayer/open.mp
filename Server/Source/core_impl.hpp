@@ -9,16 +9,53 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 
+struct PluginList : public IPluginList {
+    using IPluginList::queryPlugin;
+
+    PluginList(ICore& core) : core(core)
+    {}
+
+    IPlugin* queryPlugin(UUID id) override {
+        auto it = plugins.find(id);
+        return it == plugins.end() ? nullptr : it->second;
+    }
+
+    void load() {
+        std::for_each(plugins.begin(), plugins.end(),
+            [this](const Pair<UUID, IPlugin*>& pair) {
+                pair.second->onLoad(&core);
+            }
+        );
+    }
+
+    void init() {
+        std::for_each(plugins.begin(), plugins.end(),
+            [this](const Pair<UUID, IPlugin*>& pair) {
+                pair.second->onInit(this);
+            }
+        );
+    }
+
+    auto add(IPlugin* plugin) {
+        return plugins.try_emplace(plugin->getUUID(), plugin);
+    }
+
+private:
+    FlatHashMap<UUID, IPlugin*> plugins;
+    ICore& core;
+};
+
 struct Core final : public ICore, public PlayerEventHandler {
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     JSON props;
     std::chrono::milliseconds sleepTimer;
-    FlatHashMap<UUID, IPlugin*> plugins;
     FlatPtrHashSet<INetwork> networks;
+    PluginList plugins;
 
     Core() :
-        players(*this)
+        players(*this),
+        plugins(*this)
     {
         std::ifstream ifs("config.json");
         if (ifs.good()) {
@@ -32,24 +69,9 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void initiated() {
-        std::for_each(plugins.begin(), plugins.end(),
-            [this](const Pair<UUID, IPlugin*>& pair) {
-                pair.second->onInit(this);
-            }
-        );
-
-        std::for_each(plugins.begin(), plugins.end(),
-            [](const Pair<UUID, IPlugin*>& pair) {
-                pair.second->onPostInit();
-            }
-        );
-
-        eventDispatcher.dispatch(&CoreEventHandler::postInit);
-    }
-
-    IPlugin* queryPlugin(UUID id) override {
-        auto it = plugins.find(id);
-        return it == plugins.end() ? nullptr : it->second;
+        plugins.load();
+        players.init(plugins);
+        plugins.init();
     }
 
     int getVersion() override {
@@ -107,10 +129,10 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
         std::string serverName = Config::getOption<std::string>(props, "server_name");
         playerInitRPC.ServerName = StringView(serverName);
-        IClassesPlugin* classes = ICore::queryPlugin<IClassesPlugin>();
+        IClassesPlugin* classes = plugins.queryPlugin<IClassesPlugin>();
         playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
-        IVehiclesPlugin* vehicles = ICore::queryPlugin<IVehiclesPlugin>();
+        IVehiclesPlugin* vehicles = plugins.queryPlugin<IVehiclesPlugin>();
         StaticArray<uint8_t, 212> emptyModel;
         playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
 
@@ -119,7 +141,7 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     void addPlugins(const std::vector<IPlugin*>& newPlugins) {
         for (auto& plugin : newPlugins) {
-            auto res = plugins.try_emplace(plugin->getUUID(), plugin);
+            auto res = plugins.add(plugin);
             if (!res.second) {
                 printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", plugin->pluginName(), res.first->second->pluginName(), plugin->getUUID());
             }
@@ -138,6 +160,7 @@ struct Core final : public ICore, public PlayerEventHandler {
             auto now = std::chrono::steady_clock::now();
             auto us = std::chrono::duration_cast<std::chrono::microseconds>(now - prev);
             prev = now;
+            players.tick(us);
             eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
 
             std::this_thread::sleep_until(now + sleepTimer);

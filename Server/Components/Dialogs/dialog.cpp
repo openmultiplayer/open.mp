@@ -72,7 +72,7 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 		dialogResponseHandler(*this)
 	{}
 
-	void onInit(ICore* c) override {
+	void onLoad(ICore* c) override {
 		core = c;
 		core->getPlayers().getEventDispatcher().addEventHandler(this);
 		core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDialogResponse>(&dialogResponseHandler);

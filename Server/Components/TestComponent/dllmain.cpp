@@ -479,7 +479,20 @@ struct TestComponent :
 	}
 
 	/// Use this instead of onInit to make sure all other plugins are initiated before using them
-	void onPostInit() override {
+	void onInit(IPluginList* plugins) override {
+		classes = plugins->queryPlugin<IClassesPlugin>();
+		vehicles = plugins->queryPlugin<IVehiclesPlugin>();
+		checkpoints = plugins->queryPlugin<ICheckpointsPlugin>();
+		objects = plugins->queryPlugin<IObjectsPlugin>();
+		labels = plugins->queryPlugin<ITextLabelsPlugin>();
+		pickups = plugins->queryPlugin<IPickupsPlugin>();
+		tds = plugins->queryPlugin<ITextDrawsPlugin>();
+		menus = plugins->queryPlugin<IMenusPlugin>();
+		actors = plugins->queryPlugin<IActorsPlugin>();
+		dialogs = plugins->queryPlugin<IDialogsPlugin>();
+		console = plugins->queryPlugin<IConsolePlugin>();
+		gangzones = plugins->queryPlugin<IGangZonesPlugin>();
+
 		if (classes) {
 			auto classid = classes->claim();
 			PlayerClass& testclass = classes->get(classid);
@@ -587,23 +600,10 @@ struct TestComponent :
 		}
 	}
 
-	void onInit(ICore* core) override {
+	void onLoad(ICore* core) override {
 		c = core;
 		c->getPlayers().getEventDispatcher().addEventHandler(this);
 		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-
-		classes = c->queryPlugin<IClassesPlugin>();
-		vehicles = c->queryPlugin<IVehiclesPlugin>();
-		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
-		objects = c->queryPlugin<IObjectsPlugin>();
-		labels = c->queryPlugin<ITextLabelsPlugin>();
-		pickups = c->queryPlugin<IPickupsPlugin>();
-		tds = c->queryPlugin<ITextDrawsPlugin>();
-		menus = c->queryPlugin<IMenusPlugin>();
-		actors = c->queryPlugin<IActorsPlugin>();
-		dialogs = c->queryPlugin<IDialogsPlugin>();
-		console = c->queryPlugin<IConsolePlugin>();
-		gangzones = c->queryPlugin<IGangZonesPlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {

@@ -9,8 +9,7 @@
 
 /// An event handler for core events
 struct CoreEventHandler {
-	virtual void postInit() {}
-	virtual void onTick(std::chrono::microseconds elapsed) {} // TODO move to a separate handler, called too often
+	virtual void onTick(std::chrono::microseconds elapsed) {}
 };
 
 /// The core interface
@@ -32,19 +31,6 @@ struct ICore {
 
 	/// Get a list of available networks
 	virtual const FlatPtrHashSet<INetwork>& getNetworks() = 0;
-
-	/// Query a plugin by its ID
-	/// @param id The UUID of the plugin
-	/// @return A pointer to the plugin or nullptr if not available
-	virtual IPlugin* queryPlugin(UUID id) = 0;
-
-	/// Query a plugin by its type
-	/// @typeparam PluginT The plugin type, must derive from IPlugin
-	template <class PluginT>
-	PluginT* queryPlugin() {
-		static_assert(std::is_base_of<IPlugin, PluginT>::value, "queryPlugin parameter must inherit from IPlugin");
-		return static_cast<PluginT*>(queryPlugin(PluginT::IID));
-	}
 
 	/// Add a per-RPC event handler for each network for the packet's network ID
 	template <class Packet>

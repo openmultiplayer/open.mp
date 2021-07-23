@@ -26,9 +26,6 @@ struct IMenu : public IIDProvider {
 	/// Initialise menu for a player
 	virtual void initForPlayer(IPlayer & player) = 0;
 
-	/// Reset menu for a player (Unintitialise)
-	virtual void resetForPlayer(IPlayer & player) = 0;
-
 	/// Show menu for a player
 	virtual void showForPlayer(IPlayer & player) = 0;
 
@@ -54,7 +51,7 @@ struct IPlayerMenuData : public IPlayerData {
 
 static const UUID MenusPlugin_UUID = UUID(0x621e219eb97ee0b2);
 
-struct IMenusPlugin : public IPlugin, public IPool<IMenu, MENU_POOL_SIZE> {
+struct IMenusPlugin : public IPoolPlugin<IMenu, MENU_POOL_SIZE> {
 	PROVIDE_UUID(MenusPlugin_UUID);
 
 	virtual IEventDispatcher<MenuEventHandler> & getEventDispatcher() = 0;
