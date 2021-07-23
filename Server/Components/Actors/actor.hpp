@@ -2,6 +2,15 @@
 #include <netcode.hpp>
 #include <Server/Components/Actors/actors.hpp>
 
+struct PlayerActorData final : IPlayerData {
+    PROVIDE_UUID(0xd1bb1d1f96c7e572)
+    uint8_t numStreamed = 0;
+
+    void free() override {
+        delete this;
+    }
+};
+
 struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     int virtualWorld_ = 0;
     int skin_;
@@ -87,13 +96,25 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     }
 
     void streamInForPlayer(IPlayer & player) override {
-        streamedFor_.add(player.getID(), player);
-        streamInForClient(player);
+        const int pid = player.getID();
+        if (!streamedFor_.valid(pid)) {
+            uint8_t& numStreamed = player.queryData<PlayerActorData>()->numStreamed;
+            if (numStreamed <= MAX_STREAMED_ACTORS) {
+                ++numStreamed;
+                streamedFor_.add(pid, player);
+                streamInForClient(player);
+            }
+        }
     }
 
     void streamOutForPlayer(IPlayer & player) override {
-        streamedFor_.remove(player.getID(), player);
-        streamOutForClient(player);
+        const int pid = player.getID();
+        if (streamedFor_.valid(pid)) {
+            uint8_t& numStreamed = player.queryData<PlayerActorData>()->numStreamed;
+            --numStreamed;
+            streamedFor_.remove(pid, player);
+            streamOutForClient(player);
+        }
     }
 
     int getVirtualWorld() const override {

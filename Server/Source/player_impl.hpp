@@ -73,6 +73,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int targetPlayer_, targetActor_;
     std::chrono::steady_clock::time_point chatBubbleExpiration_;
     PlayerChatBubble chatBubble_;
+    uint8_t numStreamed_;
 
     Player() :
         pool_(nullptr),
@@ -106,7 +107,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         cameraTargetActor_(INVALID_ACTOR_ID),
         targetPlayer_(INVALID_PLAYER_ID),
         targetActor_(INVALID_ACTOR_ID),
-        chatBubbleExpiration_(std::chrono::steady_clock::now())
+        chatBubbleExpiration_(std::chrono::steady_clock::now()),
+        numStreamed_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);

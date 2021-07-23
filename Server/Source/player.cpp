@@ -163,36 +163,41 @@ void Player::setScore(int score) {
 void Player::streamInForPlayer(IPlayer& other) {
     const int pid = other.getID();
     if (!streamedFor_.valid(pid)) {
-        streamedFor_.add(pid, other);
-        NetCode::RPC::PlayerStreamIn playerStreamInRPC;
-        playerStreamInRPC.PlayerID = poolID;
-        playerStreamInRPC.Skin = skin_;
-        playerStreamInRPC.Team = team_;
-        playerStreamInRPC.Col = colour_;
-        playerStreamInRPC.Pos = pos_;
-        playerStreamInRPC.Angle = rot_.ToEuler().z;
-        playerStreamInRPC.FightingStyle = fightingStyle_;
-        playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(skillLevels_);
-        other.sendRPC(playerStreamInRPC);
+        uint8_t& numStreamed = static_cast<Player&>(other).numStreamed_;
+        if (numStreamed <= MAX_STREAMED_PLAYERS) {
+            ++numStreamed;
+            streamedFor_.add(pid, other);
+            NetCode::RPC::PlayerStreamIn playerStreamInRPC;
+            playerStreamInRPC.PlayerID = poolID;
+            playerStreamInRPC.Skin = skin_;
+            playerStreamInRPC.Team = team_;
+            playerStreamInRPC.Col = colour_;
+            playerStreamInRPC.Pos = pos_;
+            playerStreamInRPC.Angle = rot_.ToEuler().z;
+            playerStreamInRPC.FightingStyle = fightingStyle_;
+            playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(skillLevels_);
+            other.sendRPC(playerStreamInRPC);
 
-        const std::chrono::milliseconds expire = std::chrono::duration_cast<std::chrono::milliseconds>(chatBubbleExpiration_ - std::chrono::steady_clock::now());
-        if (expire.count() > 0) {
-            NetCode::RPC::SetPlayerChatBubble RPC;
-            RPC.PlayerID = poolID;
-            RPC.Col = chatBubble_.colour;
-            RPC.DrawDistance = chatBubble_.drawDist;
-            RPC.ExpireTime = expire.count();
-            RPC.Text = StringView(chatBubble_.text);
-            other.sendRPC(RPC);
+            const std::chrono::milliseconds expire = std::chrono::duration_cast<std::chrono::milliseconds>(chatBubbleExpiration_ - std::chrono::steady_clock::now());
+            if (expire.count() > 0) {
+                NetCode::RPC::SetPlayerChatBubble RPC;
+                RPC.PlayerID = poolID;
+                RPC.Col = chatBubble_.colour;
+                RPC.DrawDistance = chatBubble_.drawDist;
+                RPC.ExpireTime = expire.count();
+                RPC.Text = StringView(chatBubble_.text);
+                other.sendRPC(RPC);
+            }
+
+            pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
         }
-
-        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
     }
 }
 
 void Player::streamOutForPlayer(IPlayer& other) {
     const int pid = other.getID();
     if (streamedFor_.valid(pid)) {
+        --static_cast<Player&>(other).numStreamed_;
         streamedFor_.remove(pid, other);
         NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
         playerStreamOutRPC.PlayerID = poolID;
