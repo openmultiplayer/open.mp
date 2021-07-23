@@ -17,7 +17,7 @@ struct ConsolePlugin final : public IConsolePlugin, public CoreEventHandler {
 		return "Console";
 	}
 
-	void onInit(ICore* core) override {
+	void onLoad(ICore* core) override {
 		this->core = core;
 		core->getEventDispatcher().addEventHandler(this);
 		consoleThread = std::thread(ThreadProc, this);

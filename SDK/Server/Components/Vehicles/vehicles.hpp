@@ -52,7 +52,7 @@ struct VehicleEventHandler {
 
 /// A vehicle pool
 static const UUID VehiclePlugin_UUID = UUID(0x3f1f62ee9e22ab19);
-struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, VEHICLE_POOL_SIZE> {
+struct IVehiclesPlugin : public IPoolPlugin<IVehicle, VEHICLE_POOL_SIZE> {
 	PROVIDE_UUID(VehiclePlugin_UUID)
 
 	/// Get the number of model instances for each model

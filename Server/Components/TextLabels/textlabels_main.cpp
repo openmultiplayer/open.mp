@@ -118,12 +118,15 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         return "TextLabels";
     }
 
-    void onInit(ICore* core) override {
+    void onLoad(ICore* core) override {
         this->core = core;
-        vehicles = core->queryPlugin<IVehiclesPlugin>();
         players = &core->getPlayers();
         core->getEventDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
+    }
+
+    void onInit(IPluginList* plugins) override {
+        vehicles = plugins->queryPlugin<IVehiclesPlugin>();
     }
 
     ~TextLabelsPlugin() {
@@ -261,6 +264,9 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
             TextLabel* label = static_cast<TextLabel*>(textLabel);
             if (label->attachmentData.playerID == pid) {
                 textLabel->detachFromPlayer(label->pos);
+            }
+            if (label->streamedFor_.valid(pid)) {
+                label->streamedFor_.remove(pid, player);
             }
         }
         for (IPlayer* player : players->entries()) {

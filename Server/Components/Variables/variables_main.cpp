@@ -88,7 +88,7 @@ struct VariablesPlugin final : VariableStorageBase<IVariablesPlugin>, PlayerEven
 		return "Variables";
 	}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		this->core = core;
 		core->getPlayers().getEventDispatcher().addEventHandler(this);
 	}
