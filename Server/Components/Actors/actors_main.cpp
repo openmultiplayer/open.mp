@@ -59,6 +59,10 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, publi
 		}
 	}
 
+	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+		return new PlayerActorData();
+	}
+
 	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
 		const int pid = player.getID();
 		for (IActor* a : storage.entries()) {
