@@ -14,6 +14,6 @@ add_subdirectory(Menus)
 add_subdirectory(Variables)
 add_subdirectory(Dialogs)
 add_subdirectory(Console)
-add_subdirectory(Gangzones)
+add_subdirectory(GangZones)
 
 add_subdirectory(TestComponent)
