@@ -141,7 +141,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerWeatherRPC.WeatherID = WeatherID;
         sendRPC(setPlayerWeatherRPC);
     }
-
+	
 	void setWorldBounds(Vector4 coords) override {
         worldBounds_ = coords;
         NetCode::RPC::SetWorldBounds setWorldBoundsRPC;
@@ -1016,6 +1016,34 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerFootSyncHandler;
 
+    struct PlayerSpectatorHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerSpectatorHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        	NetCode::Packet::PlayerSpectatorSync spectatorSync;
+            if (!spectatorSync.read(bs)) {
+                return false;
+            }
+
+            Player& player = static_cast<Player&>(peer);
+            player.pos_ = spectatorSync.Position;
+            player.keys_.keys = spectatorSync.Keys;
+            player.keys_.leftRight = spectatorSync.LeftRight;
+            player.keys_.upDown = spectatorSync.UpDown;
+
+            player.setState(PlayerState_Spectating);
+
+            if (!player.controllable_) {
+                spectatorSync.Keys = 0;
+                spectatorSync.UpDown = 0;
+                spectatorSync.LeftRight = 0;
+            }
+
+            return true;
+        }
+    } playerSpectatorHandler;
+
     struct PlayerAimSyncHandler : public SingleNetworkInOutEventHandler{
         PlayerPool & self;
         PlayerAimSyncHandler(PlayerPool& self) : self(self) {}
@@ -1401,6 +1429,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerTextRPCHandler(*this),
         playerCommandRPCHandler(*this),
         playerFootSyncHandler(*this),
+	    playerSpectatorHandler(*this),
         playerAimSyncHandler(*this),
         playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
@@ -1447,6 +1476,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
 
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerSpectatorHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);

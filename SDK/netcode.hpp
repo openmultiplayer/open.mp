@@ -527,6 +527,20 @@ namespace NetCode {
 			}
 		};
 
+		struct PlayerSpectateVehicle final : NetworkPacketBase<152> {
+			int TargetVehicleID;
+			int Mode;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(TargetVehicleID));
+				bs.write(NetworkBitStreamValue::UINT16(Mode));
+			}
+		};
+
 		struct SetWorldBounds final : NetworkPacketBase<17> {
 			Vector4 coords;
 
@@ -2121,6 +2135,37 @@ namespace NetCode {
 					bs.write(NetworkBitStreamValue::UINT16(AnimationID));
 					bs.write(NetworkBitStreamValue::UINT16(AnimationFlags));
 				}
+			}
+		};
+
+		struct PlayerSpectatorSync final : NetworkPacketBase<212> {
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			Vector3 Position;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
+				bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
+				bs.read<NetworkBitStreamValueType::UINT16>(Keys);
+				return bs.read<NetworkBitStreamValueType::VEC3>(Position);
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+
+				bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
+				if (LeftRight) {
+					bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(UpDown > 0));
+				if (UpDown) {
+					bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				}
+
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
 			}
 		};
 
