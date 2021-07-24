@@ -14,6 +14,7 @@ struct VehicleSpawnData {
 	int colour1;
 	int colour2;
 	int respawnDelay;
+	bool siren;
 };
 
 struct UnoccupiedVehicleUpdate {
@@ -217,6 +218,7 @@ struct VehicleEventHandler {
 	virtual void onVehicleSpawn(IVehicle& vehicle) {}
 	virtual bool onUnoccupiedVehicleUpdate(IVehicle& vehicle, IPlayer& player, UnoccupiedVehicleUpdate const updateData) { return true; }
 	virtual bool onTrailerUpdate(IPlayer& player, IVehicle& trailer) { return true; }
+	virtual bool onVehicleSirenStateChange(IPlayer& player, IVehicle& vehicle, uint8_t sirenState) { return true; }
 };
 
 /// A vehicle pool
@@ -227,7 +229,7 @@ struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, VEHICLE_POOL_SIZ
 	/// Get the number of model instances for each model
 	virtual StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
 
-	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1) = 0;
+	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1, bool addSiren = false) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
 
 	virtual IEventDispatcher<VehicleEventHandler>& getEventDispatcher() = 0;
