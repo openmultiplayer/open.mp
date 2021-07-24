@@ -4,7 +4,6 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <plugin.hpp>
-#include <variant>
 
 enum VariableType {
 	VariableType_None,

@@ -113,17 +113,22 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsPlugin::Cnt> storage;
     IVehiclesPlugin* vehicles = nullptr;
     IPlayerPool* players = nullptr;
+    StreamConfigHelper streamConfigHelper;
 
     const char* pluginName() override {
         return "TextLabels";
     }
 
-    void onInit(ICore* core) override {
+    void onLoad(ICore* core) override {
         this->core = core;
-        vehicles = core->queryPlugin<IVehiclesPlugin>();
         players = &core->getPlayers();
         core->getEventDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
+        streamConfigHelper = StreamConfigHelper(core->getConfig());
+    }
+
+    void onInit(IPluginList* plugins) override {
+        vehicles = plugins->queryPlugin<IVehiclesPlugin>();
     }
 
     ~TextLabelsPlugin() {
@@ -220,36 +225,39 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
-        const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        for (ITextLabel* textLabel : storage.entries()) {
-            TextLabel* label = static_cast<TextLabel*>(textLabel);
-            const TextLabelAttachmentData& data = label->attachmentData;
-            Vector3 pos;
-            if (players->valid(data.playerID)) {
-                pos = players->get(data.playerID).getPosition();
-            }
-            else if (vehicles && vehicles->valid(data.vehicleID)) {
-                pos = vehicles->get(data.vehicleID).getPosition();
-            }
-            else {
-                pos = label->pos;
-            }
-
-            for (IPlayer* player : players->entries()) {
-                const PlayerState state = player->getState();
-                const Vector3 dist3D = pos - player->getPosition();
-                const bool shouldBeStreamedIn =
-                    state != PlayerState_Spectating &&
-                    state != PlayerState_None &&
-                    player->getVirtualWorld() == label->virtualWorld &&
-                    glm::dot(dist3D, dist3D) < maxDist;
-
-                const bool isStreamedIn = textLabel->isStreamedInForPlayer(*player);
-                if (!isStreamedIn && shouldBeStreamedIn) {
-                    textLabel->streamInForPlayer(*player);
+        const float maxDist = streamConfigHelper.getDistanceSqr();
+        const auto t = std::chrono::steady_clock::now();
+        if (streamConfigHelper.shouldStream(t)) {
+            for (ITextLabel* textLabel : storage.entries()) {
+                TextLabel* label = static_cast<TextLabel*>(textLabel);
+                const TextLabelAttachmentData& data = label->attachmentData;
+                Vector3 pos;
+                if (players->valid(data.playerID)) {
+                    pos = players->get(data.playerID).getPosition();
                 }
-                else if (isStreamedIn && !shouldBeStreamedIn) {
-                    textLabel->streamOutForPlayer(*player);
+                else if (vehicles && vehicles->valid(data.vehicleID)) {
+                    pos = vehicles->get(data.vehicleID).getPosition();
+                }
+                else {
+                    pos = label->pos;
+                }
+
+                for (IPlayer* player : players->entries()) {
+                    const PlayerState state = player->getState();
+                    const Vector3 dist3D = pos - player->getPosition();
+                    const bool shouldBeStreamedIn =
+                        state != PlayerState_Spectating &&
+                        state != PlayerState_None &&
+                        player->getVirtualWorld() == label->virtualWorld &&
+                        glm::dot(dist3D, dist3D) < maxDist;
+
+                    const bool isStreamedIn = textLabel->isStreamedInForPlayer(*player);
+                    if (!isStreamedIn && shouldBeStreamedIn) {
+                        textLabel->streamInForPlayer(*player);
+                    }
+                    else if (isStreamedIn && !shouldBeStreamedIn) {
+                        textLabel->streamOutForPlayer(*player);
+                    }
                 }
             }
         }
@@ -261,6 +269,9 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
             TextLabel* label = static_cast<TextLabel*>(textLabel);
             if (label->attachmentData.playerID == pid) {
                 textLabel->detachFromPlayer(label->pos);
+            }
+            if (label->streamedFor_.valid(pid)) {
+                label->streamedFor_.remove(pid, player);
             }
         }
         for (IPlayer* player : players->entries()) {

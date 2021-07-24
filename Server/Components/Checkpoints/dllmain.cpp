@@ -53,7 +53,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 	{
 	}
 
-	void onInit(ICore* c) override {
+	void onLoad(ICore* c) override {
 		core = c;
 		core->getPlayers().getEventDispatcher().addEventHandler(this);
 		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);

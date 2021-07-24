@@ -73,6 +73,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int targetPlayer_, targetActor_;
     std::chrono::steady_clock::time_point chatBubbleExpiration_;
     PlayerChatBubble chatBubble_;
+    uint8_t numStreamed_;
+    std::chrono::steady_clock::time_point lastGameTimeUpdate_;
 
     Player() :
         pool_(nullptr),
@@ -98,7 +100,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         weather_(0),
         worldBounds_(0.f, 0.f, 0.f, 0.f),
         widescreen_(0),
-        lastMarkerUpdate_(std::chrono::steady_clock::now()),
+        lastMarkerUpdate_(),
         enableCameraTargeting_(false),
         cameraTargetPlayer_(INVALID_PLAYER_ID),
         cameraTargetVehicle_(INVALID_VEHICLE_ID),
@@ -106,7 +108,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         cameraTargetActor_(INVALID_ACTOR_ID),
         targetPlayer_(INVALID_PLAYER_ID),
         targetActor_(INVALID_ACTOR_ID),
-        chatBubbleExpiration_(std::chrono::steady_clock::now())
+        chatBubbleExpiration_(std::chrono::steady_clock::now()),
+        numStreamed_(0),
+        lastGameTimeUpdate_()
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -668,6 +672,16 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void updateMarkers(std::chrono::milliseconds updateRate, bool limit = false, float radius = 200.f);
 
+    void updateGameTime(std::chrono::milliseconds syncRate, std::chrono::steady_clock::time_point time) {
+        auto now = std::chrono::steady_clock::now();
+        if (now - lastGameTimeUpdate_ > syncRate) {
+            lastGameTimeUpdate_ = now;
+            NetCode::RPC::SendGameTimeUpdate RPC;
+            RPC.Time = std::chrono::duration_cast<std::chrono::milliseconds>(time.time_since_epoch()).count();
+            sendRPC(RPC);
+        }
+    }
+
     void toggleCameraTargeting(bool toggle) override {
         cameraTargetPlayer_ = INVALID_PLAYER_ID;
         cameraTargetVehicle_ = INVALID_VEHICLE_ID;
@@ -703,7 +717,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 };
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public CoreEventHandler {
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
     ICore& core;
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
@@ -711,10 +725,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     IVehiclesPlugin* vehiclesPlugin = nullptr;
     IObjectsPlugin* objectsPlugin = nullptr;
     IActorsPlugin* actorsPlugin = nullptr;
-    int markersShow;
-    std::chrono::milliseconds markersUpdateRate;
-    bool markersLimit;
-    float markersLimitRadius;
+    StreamConfigHelper streamConfigHelper;
+    int* markersShow;
+    int* markersUpdateRate;
+    int* markersLimit;
+    float* markersLimitRadius;
+    int* gameTimeUpdateRate;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -903,7 +919,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     struct PlayerTextRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
+        int* limitGlobalChatRadius;
+        float* globalChatRadiusLimit;
+
         PlayerTextRPCHandler(PlayerPool& self) : self(self) {}
+
+        void init(IConfig& config) {
+            limitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
+            globalChatRadiusLimit = config.getFloat("limit_global_chat_radius");
+        }
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::PlayerRequestChatMessage playerChatMessageRequest;
@@ -924,9 +948,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if(send) {
-                const JSON& options = self.core.getProperties();
-                if (Config::getOption<int>(options, "use_limit_global_chat_radius")) {
-                    const float limit = Config::getOption<float>(options, "limit_global_chat_radius");
+                if (*limitGlobalChatRadius) {
+                    const float limit = *globalChatRadiusLimit;
                     const Vector3 pos = peer.getPosition();
                     for (IPlayer* other : self.storage.entries()) {
                         float dist = glm::distance(pos, other->getPosition());
@@ -1371,13 +1394,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 reason = PeerDisconnectReason_Kicked;
             }
 
+            Player& player = static_cast<Player&>(peer);
             for (IPlayer* p : storage.entries()) {
-                if (&peer != p && p->isStreamedInForPlayer(peer)) {
-                    p->streamOutForPlayer(peer);
+                if (p == &player) {
+                    continue;
+                }
+                Player* other = static_cast<Player*>(p);
+                if (other->streamedFor_.valid(player.poolID)) {
+                    --other->numStreamed_;
+                    other->streamedFor_.remove(player.poolID, player);
                 }
             }
 
-            Player& player = static_cast<Player&>(peer);
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = player.poolID;
             packet.Reason = reason;
@@ -1406,9 +1434,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerBulletSyncHandler(*this),
         playerVehicleSyncHandler(*this),
         playerWeaponsUpdateHandler(*this)
-    {
-        core.getEventDispatcher().addEventHandler(this);
-    }
+    {}
 
     bool isNameTaken(StringView name, const OptionalPlayer skip) override {
         const FlatPtrHashSet<IPlayer>& players = storage.entries();
@@ -1428,12 +1454,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         );
     }
 
-    void postInit() override {
-        const JSON& cfg = core.getProperties();
-        markersShow = Config::getOption<int>(cfg, "show_player_markers");
-        markersLimit = Config::getOption<int>(cfg, "limit_player_markers");
-        markersLimitRadius = Config::getOption<float>(cfg, "player_markers_draw_distance");
-        markersUpdateRate = std::chrono::milliseconds(Config::getOption<int>(cfg, "player_markers_update_rate"));
+    void init(IPluginList& plugins) {
+        IConfig& config = core.getConfig();
+        streamConfigHelper = StreamConfigHelper(config);
+        playerTextRPCHandler.init(config);
+        markersShow = config.getInt("show_player_markers");
+        markersLimit = config.getInt("limit_player_markers");
+        markersLimitRadius = config.getFloat("player_markers_draw_distance");
+        markersUpdateRate = config.getInt("player_markers_update_rate");
+        gameTimeUpdateRate = config.getInt("player_time_update_rate");
 
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
@@ -1453,39 +1482,46 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
 
-        vehiclesPlugin = core.queryPlugin<IVehiclesPlugin>();
-        objectsPlugin = core.queryPlugin<IObjectsPlugin>();
-        actorsPlugin = core.queryPlugin<IActorsPlugin>();
+        vehiclesPlugin = plugins.queryPlugin<IVehiclesPlugin>();
+        objectsPlugin = plugins.queryPlugin<IObjectsPlugin>();
+        actorsPlugin = plugins.queryPlugin<IActorsPlugin>();
     }
 
-    void onTick(std::chrono::microseconds elapsed) override {
-        const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
+    void tick(std::chrono::microseconds elapsed) {
+        const float maxDist = streamConfigHelper.getDistanceSqr();
+        const auto t = std::chrono::steady_clock::now();
+        const std::chrono::milliseconds gameTimeUpdateRateMS(*gameTimeUpdateRate);
+        const std::chrono::milliseconds markersUpdateRateMS(*markersUpdateRate);
         for (IPlayer* p : storage.entries()) {
             Player* player = static_cast<Player*>(p);
 
-            if (markersShow == Config::PlayerMarkerMode_Global) {
-                player->updateMarkers(markersUpdateRate, markersLimit, markersLimitRadius);
+            player->updateGameTime(gameTimeUpdateRateMS, t);
+
+            if (*markersShow == PlayerMarkerMode_Global) {
+                player->updateMarkers(markersUpdateRateMS, *markersLimit, *markersLimitRadius);
             }
 
-            for (IPlayer* other : storage.entries()) {
-                if (player == other) {
-                    continue;
-                }
+            if (streamConfigHelper.shouldStream(t)) {
+                for (IPlayer* other : storage.entries()) {
+                    if (player == other) {
+                        continue;
+                    }
 
-                const PlayerState state = other->getState();
-                const Vector2 dist2D = player->pos_ - other->getPosition();
-                const bool shouldBeStreamedIn =
-                    state != PlayerState_Spectating &&
-                    state != PlayerState_None &&
-                    other->getVirtualWorld() == player->virtualWorld_ &&
-                    glm::dot(dist2D, dist2D) < maxDist;
+                    const PlayerState state = other->getState();
+                    const Vector2 dist2D = player->pos_ - other->getPosition();
+                    const bool shouldBeStreamedIn =
+                        state != PlayerState_Spectating &&
+                        state != PlayerState_None &&
+                        other->getVirtualWorld() == player->virtualWorld_ &&
+                        glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = other->isStreamedInForPlayer(*player);
-                if (!isStreamedIn && shouldBeStreamedIn) {
-                    other->streamInForPlayer(*player);
-                }
-                else if (isStreamedIn && !shouldBeStreamedIn) {
-                    other->streamOutForPlayer(*player);
+                    const bool isStreamedIn = other->isStreamedInForPlayer(*player);
+                    if (!isStreamedIn && shouldBeStreamedIn) {
+                        other->streamInForPlayer(*player);
+                    }
+                    else if (isStreamedIn && !shouldBeStreamedIn) {
+                        other->streamOutForPlayer(*player);
+                    }
                 }
             }
         }
@@ -1509,6 +1545,5 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
         core.removeNetworkEventHandler(this);
-        core.getEventDispatcher().removeEventHandler(this);
     }
 };

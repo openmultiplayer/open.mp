@@ -9,7 +9,7 @@ struct GangZonesPlugin final : public IGangZonesPlugin {
 		return "GangZones";
 	}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		this->core = core;
 	}
 

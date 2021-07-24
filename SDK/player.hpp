@@ -569,7 +569,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
-typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
+typedef Optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// A player event handler
 struct PlayerEventHandler {
