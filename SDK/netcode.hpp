@@ -2253,6 +2253,17 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(Text));
 			}
 		};
+
+		struct DisableRemoteVehicleCollisions final : NetworkPacketBase<167> {
+			bool Disable;
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(Disable));
+			}
+		};
 	}
 	namespace Packet {
 		struct PlayerFootSync final : NetworkPacketBase<207> {
