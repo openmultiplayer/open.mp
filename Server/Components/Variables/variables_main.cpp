@@ -67,7 +67,7 @@ struct VariableStorageBase : public ToInherit {
 	}
 
 private:
-	absl::flat_hash_map<std::string, std::variant<int, String, float>> data_;
+	FlatHashMap<String, Variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {

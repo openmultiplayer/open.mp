@@ -195,6 +195,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
 
     ~Actor() {
         for (IPlayer* player : streamedFor_.entries()) {
+            --player->queryData<PlayerActorData>()->numStreamed;
             streamOutForClient(*player);
         }
     }

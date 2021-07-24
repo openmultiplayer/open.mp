@@ -209,7 +209,7 @@ struct NetworkBitStreamValue {
 
 	NetworkBitStreamValueType type; ///< The type of the value
 
-	using Variant = std::variant<
+	using DataVariant = Variant<
 		bool,
 		uint8_t,
 		uint16_t,
@@ -231,7 +231,7 @@ struct NetworkBitStreamValue {
 		GTAQuat
 	>;
 
-	Variant data; ///< The union which holds all possible data types
+	DataVariant data; ///< The union which holds all possible data types
 
 	// Constructors
 	NBSVCONS(BIT, bool);

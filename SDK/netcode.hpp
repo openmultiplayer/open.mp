@@ -514,6 +514,17 @@ namespace NetCode {
 			}
 		};
 
+		struct SendGameTimeUpdate final : NetworkPacketBase<60> {
+			long long Time;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::INT32(Time));
+			}
+		};
 
 		struct SetPlayerWeather final : NetworkPacketBase<152> {
 			uint8_t WeatherID;
