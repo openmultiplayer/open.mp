@@ -52,7 +52,7 @@ struct ActorEventHandler {
 
 static const UUID ActorsPlugin_UUID = UUID(0xc81ca021eae2ad5c);
 
-struct IActorsPlugin : public IPlugin, public IPool<IActor, ACTOR_POOL_SIZE> {
+struct IActorsPlugin : public IPoolPlugin<IActor, ACTOR_POOL_SIZE> {
 	PROVIDE_UUID(ActorsPlugin_UUID);
 
 	/// Get the ActorEventHandler event dispatcher

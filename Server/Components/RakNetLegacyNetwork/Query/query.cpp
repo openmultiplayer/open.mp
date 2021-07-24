@@ -6,12 +6,12 @@ void Query::setMaxPlayers(uint16_t value)
 	maxPlayers = value;
 }
 
-void Query::setServerName(const std::string & value)
+void Query::setServerName(StringView value)
 {
 	serverName = value;
 }
 
-void Query::setGameModeName(const std::string & value)
+void Query::setGameModeName(StringView value)
 {
 	gameModeName = value;
 }
@@ -22,7 +22,7 @@ FlatHashMap<String, String>& Query::getRules()
 }
 
 template<typename... Args>
-void Query::setRuleValue(const Args &... args)
+void Query::setRuleValue(Args... args)
 {
 	std::vector<std::string> ruleData = { args... };
 	int ruleCount = ruleData.size();
@@ -41,7 +41,7 @@ void Query::setRuleValue(const Args &... args)
 	}
 }
 
-void Query::removeRule(const std::string & ruleName)
+void Query::removeRule(StringView ruleName)
 {
 	auto _rule = rules.find(ruleName);
 	if (_rule != rules.end())

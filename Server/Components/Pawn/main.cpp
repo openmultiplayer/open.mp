@@ -14,13 +14,13 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 		return "Pawn";
 	}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		c = core;
 
 		// read values of entry_file and side_scripts from config file
-		const JSON & props = c->getProperties();
-		std::string entryFile = Config::getOption<std::string>(props, "entry_file");
-		std::vector<std::string> sideScripts = Config::getOption<std::vector<std::string>>(props, "side_scripts");
+		IConfig& config = c->getConfig();
+		StringView entryFile = config.getString("entry_file");
+		Span<const StringView> sideScripts = config.getStrings("side_scripts");
 
 		// store core instance and add event handlers
 		PawnManager::Get()->SetServerCoreInstance(c);
@@ -28,16 +28,12 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 		scriptingInstance.addEvents();
 
 		// load scripts
-		PawnManager::Get()->Load(entryFile, true);
+		PawnManager::Get()->Load(String(entryFile), true);
 		for (auto & script : sideScripts) {
-			PawnManager::Get()->Load(script, false);
+			PawnManager::Get()->Load(String(script), false);
 		}
 
 		c->getEventDispatcher().addEventHandler(this);
-	}
-
-	void postInit() override {
-		c->printLn("Server initiated with SDK version %i", c->getVersion());
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {
