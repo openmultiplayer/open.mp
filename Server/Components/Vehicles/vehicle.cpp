@@ -19,7 +19,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     streamIn.LightDamage = lightDamage;
     streamIn.TyreDamage = tyreDamage;
     streamIn.PanelDamage = panelDamage;
-    streamIn.Siren = siren;
+    streamIn.Siren = spawnData.siren;
     streamIn.Mods = mods;
     streamIn.Paintjob = paintJob;
     streamIn.BodyColour1 = bodyColour1;
@@ -80,6 +80,14 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
                 vehicle->updateCarriage(pos, velocity);
             }
         }
+    }
+
+    if (vehicleSync.Siren != sirenState && spawnData.siren) {
+        sirenState = vehicleSync.Siren;
+        params.siren = sirenState != 0;
+        eventDispatcher->stopAtFalse([&player, this](VehicleEventHandler* handler) {
+            return handler->onVehicleSirenStateChange(player, *this, sirenState);
+        });
     }
 
     if (driver != &player) {

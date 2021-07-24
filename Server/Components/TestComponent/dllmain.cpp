@@ -85,6 +85,10 @@ struct TestComponent :
 			player.sendClientMessage(Colour::White(), std::to_string(updateData.position.x) + " " + std::to_string(updateData.position.y) + " " + std::to_string(updateData.position.z));
 			return true;
 		}
+		bool onVehicleSirenStateChange(IPlayer& player, IVehicle& vehicle, uint8_t sirenState) override {
+			player.sendClientMessage(Colour::White(), "onVehicleSirenStateChange(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string((int)sirenState) + ")");
+			return true;
+		}
 	} vehicleEventWatcher;
 
 	void onConnect(IPlayer& player) override {
@@ -515,6 +519,11 @@ struct TestComponent :
 			player.setRemoteVehicleCollisions(false);
 			player.sendClientMessage(Colour::White(), "u a ghost.");
 			return true;
+		}
+		else if (message == "/police") {
+			Vector3 pos = player.getPosition();
+			pos.x -= 3.0f;
+			vehicles->create(411, pos, 0.0f, 1, 1, 1000, true);
 		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {
