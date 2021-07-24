@@ -527,20 +527,6 @@ namespace NetCode {
 			}
 		};
 
-		struct PlayerSpectateVehicle final : NetworkPacketBase<152> {
-			int TargetVehicleID;
-			int Mode;
-
-			bool read(INetworkBitStream& bs) {
-				return false;
-			}
-
-			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(TargetVehicleID));
-				bs.write(NetworkBitStreamValue::UINT16(Mode));
-			}
-		};
-
 		struct SetWorldBounds final : NetworkPacketBase<17> {
 			Vector4 coords;
 
