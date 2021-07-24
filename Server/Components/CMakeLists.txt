@@ -15,5 +15,5 @@ add_subdirectory(Variables)
 add_subdirectory(Dialogs)
 add_subdirectory(Console)
 
-#add_subdirectory(TestComponent)
-add_subdirectory(Rivershell)
+add_subdirectory(TestComponent)
+#add_subdirectory(Rivershell)
