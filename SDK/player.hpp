@@ -537,6 +537,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the actor the player is targeting or nullptr if none
 	virtual IActor* getTargetActor() = 0;
 
+	/// Disable remote vehicle collision detection for this player.
+	virtual void setRemoteVehicleCollisions(bool collide) = 0;
+
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>

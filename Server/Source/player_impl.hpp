@@ -704,6 +704,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     IActor* getTargetActor() override;
 
+    void setRemoteVehicleCollisions(bool collide) override {
+        NetCode::RPC::DisableRemoteVehicleCollisions collisionsRPC;
+        collisionsRPC.Disable = !collide;
+        sendRPC(collisionsRPC);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();

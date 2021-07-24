@@ -54,20 +54,20 @@ struct TestComponent :
 		TestComponent& self;
 		VehicleEventWatcher(TestComponent& self) : self(self) {}
 
-		void onDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) override {
+		void onVehicleDamageStatusUpdate(IVehicle& vehicle, IPlayer& player) override {
 			player.sendClientMessage(Colour::White(), "onDamageStatusUpdate(" + std::to_string(vehicle.getID()) + ", " + std::to_string(player.getID()) + ")");
 		}
 
-		bool onPaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) override {
+		bool onVehiclePaintJob(IPlayer& player, IVehicle& vehicle, int paintJob) override {
 			player.sendClientMessage(Colour::White(), "onPaintJob(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(paintJob) + ")");
 			return true; 
 		}
-		bool onMod(IPlayer& player, IVehicle& vehicle, int component) override {
+		bool onVehicleMod(IPlayer& player, IVehicle& vehicle, int component) override {
 			player.sendClientMessage(Colour::White(), "onMod(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(component) + ")");
 			return true; 
 		}
 
-		bool onRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) override {
+		bool onVehicleRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) override {
 			player.sendClientMessage(Colour::White(), "onRespray(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(colour1) + ", " + std::to_string(colour2) + ")");
 			return true;
 		}
@@ -76,7 +76,7 @@ struct TestComponent :
 			player.sendClientMessage(Colour::White(), "onEnterExitModShop(" + std::to_string(player.getID()) + ", " + std::to_string(enterexit) + ", " + std::to_string(interiorID) + ")");
 		}
 
-		void onSpawn(IVehicle& vehicle) override {
+		void onVehicleSpawn(IVehicle& vehicle) override {
 			
 		}
 
@@ -509,6 +509,11 @@ struct TestComponent :
 			if (data->getVehicle() && player.getState() == PlayerState_Driver) {
 				data->getVehicle()->setAngularVelocity(Vector3(0.0f, 0.0f, 2.0f));
 			}
+			return true;
+		}
+		else if (message == "/collision") {
+			player.setRemoteVehicleCollisions(false);
+			player.sendClientMessage(Colour::White(), "u a ghost.");
 			return true;
 		}
 		if (message == "/moveobj" && obj) {
