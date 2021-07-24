@@ -17,7 +17,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint32_t panelDamage = 0;
     uint8_t lightDamage = 0;
     uint8_t tyreDamage = 0;
-    uint8_t siren = 0;
     uint8_t paintJob;
     int32_t bodyColour1 = -1;
     int32_t bodyColour2 = -1;
@@ -39,6 +38,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     std::array<IVehicle*, 3> carriages;
     bool detaching = false;
     VehicleParams params;
+    uint8_t sirenState = 0;
 
     Vehicle() {
         mods.fill(0);
