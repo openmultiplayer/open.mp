@@ -126,7 +126,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         storage.claimUnusable(0);
     }
 
-    void onInit(ICore* core) override {
+    void onLoad(ICore* core) override {
         this->core = core;
         core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);

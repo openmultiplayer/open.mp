@@ -168,7 +168,7 @@ struct TextDrawEventHandler {
 
 static const UUID TextDrawsPlugin_UUID = UUID(0x9b5dc2b1d15c992a);
 /// The textdraw plugin which is a global textdraw pool
-struct ITextDrawsPlugin : public IPlugin, public IPool<ITextDraw, GLOBAL_TEXTDRAW_POOL_SIZE> {
+struct ITextDrawsPlugin : public IPoolPlugin<ITextDraw, GLOBAL_TEXTDRAW_POOL_SIZE> {
 	PROVIDE_UUID(TextDrawsPlugin_UUID);
 
 	/// Get the textdraw event dispatcher

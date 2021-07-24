@@ -42,7 +42,7 @@ struct GangZoneEventHandler {
 
 static const UUID GangZonePlugin_UUID = UUID(0xb3351d11ee8d8056);
 
-struct IGangZonesPlugin : public IPlugin, public IPool<IGangZone, GANG_ZONE_POOL_SIZE> {
+struct IGangZonesPlugin : public IPoolPlugin<IGangZone, GANG_ZONE_POOL_SIZE> {
 	PROVIDE_UUID(GangZonePlugin_UUID);
 
 	/// Get the event dispatcher
