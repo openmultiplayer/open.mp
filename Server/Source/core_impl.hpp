@@ -45,27 +45,191 @@ private:
     ICore& core;
 };
 
+struct Config final : IConfig {
+    Config(String fname) {
+        std::ifstream ifs(fname);
+        if (ifs.good()) {
+            nlohmann::json props = JSON::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            if (props.is_null() || props.is_discarded() || !props.is_object()) {
+                processed = Defaults;
+            }
+            else {
+                const auto& obj = props.get<nlohmann::json::object_t>();
+                for (const auto& kv : obj) {
+                    const nlohmann::json& v = kv.second;
+                    if (v.is_number_integer()) {
+                        processed[kv.first].emplace<int>(v.get<int>());
+                    }
+                    else if (v.is_boolean()) {
+                        processed[kv.first].emplace<int>(v.get<bool>());
+                    }
+                    else if (v.is_number_float()) {
+                        processed[kv.first].emplace<float>(v.get<float>());
+                    }
+                    else if (v.is_string()) {
+                        processed[kv.first].emplace<String>(v.get<String>());
+                    }
+                    else if (v.is_array()) {
+                        auto& vec = processed[kv.first].emplace<DynamicArray<StringView>>();
+                        ownAllocations.insert(kv.first);
+                        const auto& arr = v.get<nlohmann::json::array_t>();
+                        for (const auto& arrVal : arr) {
+                            if (arrVal.is_string()) {
+                                // Allocate persistent memory for the StringView array
+                                String val = arrVal.get<String>();
+                                char* data = new char[val.length() + 1];
+                                strcpy(data, val.c_str());
+                                vec.emplace_back(StringView(data, val.length()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // Fill any values missing in config with defaults
+        for (const auto& kv : Defaults) {
+            if (processed.find(kv.first) != processed.end()) {
+                continue;
+            }
+
+            processed.emplace(kv.first, kv.second);
+        }
+    }
+
+    ~Config() {
+        // Free strings allocated for the StringView array
+        for (const auto& kv : processed) {
+            if (kv.second.index() == 3 && ownAllocations.find(kv.first) != ownAllocations.end()) {
+                const auto& arr = std::get<DynamicArray<StringView>>(kv.second);
+                for (auto& v : arr) {
+                    delete[] v.data();
+                }
+            }
+        }
+    }
+
+    const StringView getString(StringView key) const override {
+        auto it = processed.find(key);
+        if (it == processed.end()) {
+            return StringView(nullptr);
+        }
+        if (it->second.index() != 1) {
+            return StringView(nullptr);
+        }
+        return StringView(std::get<String>(it->second));
+    }
+
+    int* getInt(StringView key) override {
+        auto it = processed.find(key);
+        if (it == processed.end()) {
+            return nullptr;
+        }
+        if (it->second.index() != 0) {
+            return 0;
+        }
+        return &std::get<int>(it->second);
+    }
+
+    float* getFloat(StringView key) override {
+        auto it = processed.find(key);
+        if (it == processed.end()) {
+            return 0;
+        }
+        if (it->second.index() != 2) {
+            return 0;
+        }
+        return &std::get<float>(it->second);
+    }
+
+    Span<const StringView> getStrings(StringView key) const override {
+        auto it = processed.find(key);
+        if (it == processed.end()) {
+            return Span<StringView>();
+        }
+        if (it->second.index() != 3) {
+            return Span<StringView>();
+        }
+        const DynamicArray<StringView>& vw = std::get<DynamicArray<StringView>>(it->second);
+        return Span<const StringView>(vw.data(), vw.size());
+    }
+
+private:
+    FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
+    FlatHashSet<String> ownAllocations;
+};
+
 struct Core final : public ICore, public PlayerEventHandler {
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
-    JSON props;
     std::chrono::milliseconds sleepTimer;
     FlatPtrHashSet<INetwork> networks;
     PluginList plugins;
+    Config config;
+
+    int* EnableZoneNames;
+    int* UsePlayerPedAnims;
+    int* AllowInteriorWeapons;
+    int* UseLimitGlobalChatRadius;
+    float* LimitGlobalChatRadius;
+    int* EnableStuntBonus;
+    float* SetNameTagDrawDistance;
+    int* DisableInteriorEnterExits;
+    int* DisableNameTagLOS;
+    int* ManualVehicleEngineAndLights;
+    int* ShowNameTags;
+    int* ShowPlayerMarkers;
+    int* SetWorldTime;
+    int* SetWeather;
+    float* SetGravity;
+    int* LanMode;
+    int* SetDeathDropAmount;
+    int* Instagib;
+    int* OnFootRate;
+    int* InCarRate;
+    int* WeaponRate;
+    int* Multiplier;
+    int* LagCompensation;
+    String ServerName;
 
     Core() :
         players(*this),
-        plugins(*this)
+        plugins(*this),
+        config("config.json")
     {
-        std::ifstream ifs("config.json");
-        if (ifs.good()) {
-            props = JSON::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-        }
         players.getEventDispatcher().addEventHandler(this);
+
+        EnableZoneNames = config.getInt("enable_zone_names");
+        UsePlayerPedAnims = config.getInt("use_player_ped_anims");
+        AllowInteriorWeapons = config.getInt("allow_interior_weapons");
+        UseLimitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
+        LimitGlobalChatRadius = config.getFloat("limit_global_chat_radius");
+        EnableStuntBonus = config.getInt("enable_stunt_bonus");
+        SetNameTagDrawDistance = config.getFloat("name_tag_draw_distance");
+        DisableInteriorEnterExits = config.getInt("disable_interior_enter_exits");
+        DisableNameTagLOS = config.getInt("disable_name_tag_los");
+        ManualVehicleEngineAndLights = config.getInt("manual_vehicle_engine_and_lights");
+        ShowNameTags = config.getInt("show_name_tags");
+        ShowPlayerMarkers = config.getInt("show_player_markers");
+        SetWorldTime = config.getInt("world_time");
+        SetWeather = config.getInt("weather");
+        SetGravity = config.getFloat("gravity");
+        LanMode = config.getInt("lan_mode");
+        SetDeathDropAmount = config.getInt("death_drop_amount");
+        Instagib = config.getInt("instagib");
+        OnFootRate = config.getInt("on_foot_rate");
+        InCarRate = config.getInt("in_car_rate");
+        WeaponRate = config.getInt("weapon_rate");
+        Multiplier = config.getInt("multiplier");
+        LagCompensation = config.getInt("lag_compensation");
+        ServerName = config.getString("server_name");
     }
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
+    }
+
+    IConfig& getConfig() override {
+        return config;
     }
 
     void initiated() {
@@ -98,37 +262,32 @@ struct Core final : public ICore, public PlayerEventHandler {
         return eventDispatcher;
     }
 
-    const JSON& getProperties() override {
-        return props;
-    }
-
     void onConnect(IPlayer& player) override {
         NetCode::RPC::PlayerInit playerInitRPC;
-        playerInitRPC.EnableZoneNames = Config::getOption<int>(props, "enable_zone_names");
-        playerInitRPC.UsePlayerPedAnims = Config::getOption<int>(props, "use_player_ped_anims");
-        playerInitRPC.AllowInteriorWeapons = Config::getOption<int>(props, "allow_interior_weapons");
-        playerInitRPC.UseLimitGlobalChatRadius = Config::getOption<int>(props, "use_limit_global_chat_radius");
-        playerInitRPC.LimitGlobalChatRadius = Config::getOption<float>(props, "limit_global_chat_radius");
-        playerInitRPC.EnableStuntBonus = Config::getOption<int>(props, "enable_stunt_bonus");
-        playerInitRPC.SetNameTagDrawDistance = Config::getOption<float>(props, "name_tag_draw_distance");
-        playerInitRPC.DisableInteriorEnterExits = Config::getOption<int>(props, "disable_interior_enter_exits");
-        playerInitRPC.DisableNameTagLOS = Config::getOption<int>(props, "disable_name_tag_los");
-        playerInitRPC.ManualVehicleEngineAndLights = Config::getOption<int>(props, "manual_vehicle_engine_and_lights");
-        playerInitRPC.ShowNameTags = Config::getOption<int>(props, "show_name_tags");
-        playerInitRPC.ShowPlayerMarkers = Config::getOption<int>(props, "show_player_markers");
-        playerInitRPC.SetWorldTime = Config::getOption<int>(props, "world_time");
-        playerInitRPC.SetWeather = Config::getOption<int>(props, "weather");
-        playerInitRPC.SetGravity = Config::getOption<float>(props, "gravity");
-        playerInitRPC.LanMode = Config::getOption<int>(props, "lan_mode");
-        playerInitRPC.SetDeathDropAmount = Config::getOption<int>(props, "death_drop_amount");
-        playerInitRPC.Instagib = Config::getOption<int>(props, "instagib");
-        playerInitRPC.OnFootRate = Config::getOption<int>(props, "on_foot_rate");
-        playerInitRPC.InCarRate = Config::getOption<int>(props, "in_car_rate");
-        playerInitRPC.WeaponRate = Config::getOption<int>(props, "weapon_rate");
-        playerInitRPC.Multiplier = Config::getOption<int>(props, "multiplier");
-        playerInitRPC.LagCompensation = Config::getOption<int>(props, "lag_compensation");
-        std::string serverName = Config::getOption<std::string>(props, "server_name");
-        playerInitRPC.ServerName = StringView(serverName);
+        playerInitRPC.EnableZoneNames = *EnableZoneNames;
+        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
+        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
+        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
+        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
+        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
+        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
+        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
+        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
+        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
+        playerInitRPC.ShowNameTags = *ShowNameTags;
+        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
+        playerInitRPC.SetWorldTime = *SetWorldTime;
+        playerInitRPC.SetWeather = *SetWeather;
+        playerInitRPC.SetGravity = *SetGravity;
+        playerInitRPC.LanMode = *LanMode;
+        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
+        playerInitRPC.Instagib = *Instagib;
+        playerInitRPC.OnFootRate = *OnFootRate;
+        playerInitRPC.InCarRate = *InCarRate;
+        playerInitRPC.WeaponRate = *WeaponRate;
+        playerInitRPC.Multiplier = *Multiplier;
+        playerInitRPC.LagCompensation = *LagCompensation;
+        playerInitRPC.ServerName = StringView(ServerName);
         IClassesPlugin* classes = plugins.queryPlugin<IClassesPlugin>();
         playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
@@ -139,7 +298,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         player.sendRPC(playerInitRPC);
     }
 
-    void addPlugins(const std::vector<IPlugin*>& newPlugins) {
+    void addPlugins(const DynamicArray<IPlugin*>& newPlugins) {
         for (auto& plugin : newPlugins) {
             auto res = plugins.add(plugin);
             if (!res.second) {
@@ -152,7 +311,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void run() {
-        sleepTimer = std::chrono::milliseconds(Config::getOption<int>(props, "sleep"));
+        sleepTimer = std::chrono::milliseconds(*config.getInt("sleep"));
 
         auto prev = std::chrono::steady_clock::now();
         for (;;)
