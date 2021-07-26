@@ -2,8 +2,6 @@
 
 #include <map>
 #include <string>
-#include <variant>
-#include <nlohmann/json.hpp>
 #include "types.hpp"
 
 constexpr int MAX_SEATS = 4;
