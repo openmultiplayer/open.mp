@@ -3,7 +3,6 @@
 #include <string>
 #include <array>
 #include <vector>
-#include <variant>
 #include <cassert>
 #include "plugin.hpp"
 #include "types.hpp"
@@ -308,7 +307,7 @@ struct INetworkBitStream {
 		if (!read(input)) {
 			return false;
 		}
-		output = std::get<NetworkBitStreamValue::DataTypeFromNetworkType<NetworkType>>(input.data);
+		output = absl::get<NetworkBitStreamValue::DataTypeFromNetworkType<NetworkType>>(input.data);
 		return true;
 	}
 };

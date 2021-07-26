@@ -10,11 +10,18 @@ target_compile_definitions(Server PUBLIC
 	WIN32_LEAN_AND_MEAN
 	VC_EXTRALEAN
 	NOGDI
+)
+
+target_compile_definitions(Server PRIVATE
 	OMP_EXPORTS
 )
 
 target_link_libraries(Server PUBLIC
 	SDK
+)
+
+target_link_libraries(Server PRIVATE
+	CONAN_PKG::nlohmann_json
 )
 
 if(MSVC)
