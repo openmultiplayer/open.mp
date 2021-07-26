@@ -5,6 +5,7 @@
 #include <thread>
 #include <events.hpp>
 #include <pool.hpp>
+#include <nlohmann/json.hpp>
 #include "player_impl.hpp"
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
@@ -49,7 +50,7 @@ struct Config final : IConfig {
     Config(String fname) {
         std::ifstream ifs(fname);
         if (ifs.good()) {
-            nlohmann::json props = JSON::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
             if (props.is_null() || props.is_discarded() || !props.is_object()) {
                 processed = Defaults;
             }
