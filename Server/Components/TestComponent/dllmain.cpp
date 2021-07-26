@@ -524,6 +524,18 @@ struct TestComponent :
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
 			vehicles->create(411, pos, 0.0f, 1, 1, 1000, true);
+			return true;
+		}
+		else if (message == "/siren") {
+			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() && player.getState() == PlayerState_Driver) {
+				Vector3 pos, size;
+				vehicles->getModelInfo(data->getVehicle()->getModel(), VehicleModelInfo_FrontSeat, pos);
+				vehicles->getModelInfo(data->getVehicle()->getModel(), VehicleModelInfo_Size, size);
+				pos.z = size.z - 0.65f;
+				objects->create(18646, data->getVehicle()->getPosition(), Vector3(0.0f, 0.0f, 0.0f))->attachToVehicle(*data->getVehicle(), pos, Vector3(0.0f, 0.0f, 0.0f));
+			}
+			return true;
 		}
 		if (message == "/moveobj" && obj) {
 			if (!moved) {

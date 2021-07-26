@@ -242,4 +242,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         return angularVelocity;
     }
 
+    /// Gets the current model ID of the vehicle.
+    int getModel() override{
+        return spawnData.modelID;
+    }
 };
