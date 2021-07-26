@@ -30,6 +30,18 @@ enum VehicleSCMEvent : uint32_t {
 	VehicleSCMEvent_EnterExitModShop
 };
 
+struct VehicleModelInfo {
+	Vector3 Size;
+	Vector3 FrontSeat;
+	Vector3 RearSeat;
+	Vector3 PetrolCap;
+	Vector3 FrontWheel;
+	Vector3 RearWheel;
+	Vector3 MidWheel;
+	float FrontBumperZ;
+	float RearBumperZ;
+};
+
 enum VehicleComponentSlot {
 	VehicleComponent_None = -1,
 	VehicleComponent_Spoiler = 0,
@@ -51,6 +63,18 @@ enum VehicleComponentSlot {
 enum VehicleVelocitySetType : uint8_t {
 	VehicleVelocitySet_Normal = 0,
 	VehicleVelocitySet_Angular
+};
+
+enum VehicleModelInfoType {
+	VehicleModelInfo_Size = 1,
+	VehicleModelInfo_FrontSeat,
+	VehicleModelInfo_RearSeat,
+	VehicleModelInfo_PetrolCap,
+	VehicleModelInfo_WheelsFront,
+	VehicleModelInfo_WheelsRear,
+	VehicleModelInfo_WheelsMid,
+	VehicleModelInfo_FrontBumperZ,
+	VehicleModelInfo_RearBumperZ
 };
 
 /// A vehicle interface
@@ -201,6 +225,9 @@ struct IVehicle : public IEntity {
 
 	/// Gets the current angular velocity of the vehicle.
 	virtual Vector3 getAngularVelocity() = 0;
+
+	/// Gets the current model ID of the vehicle.
+	virtual int getModel() = 0;
 };
 
 /// A vehicle event handler
@@ -231,6 +258,7 @@ struct IVehiclesPlugin : public IPlugin, public IPool<IVehicle, VEHICLE_POOL_SIZ
 
 	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1, bool addSiren = false) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
+	virtual bool getModelInfo(int model, VehicleModelInfoType type, Vector3& out) = 0;
 
 	virtual IEventDispatcher<VehicleEventHandler>& getEventDispatcher() = 0;
 };
