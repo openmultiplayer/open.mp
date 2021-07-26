@@ -12,6 +12,7 @@
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/GangZones/gangzones.hpp>
+#include <Server/Components/Timers/timers.hpp>
 
 #include "absl/strings/str_format.h"
 
@@ -33,6 +34,7 @@ struct TestComponent :
 	IDialogsPlugin* dialogs = nullptr;
 	IConsolePlugin* console = nullptr;
 	IGangZonesPlugin* gangzones = nullptr;
+	ITimersPlugin* timers = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -45,6 +47,31 @@ struct TestComponent :
 	IGangZone* gz1 = nullptr;
 	IGangZone* gz2 = nullptr;
 	bool moved = false;
+
+	struct PlayerPrintMessageTimer final : TimerTimeOutHandler {
+		int playerID; // Use ID in case player has disconnected before the timer times out
+		IPlayerPool& players;
+		String message;
+		int count = 0;
+
+		PlayerPrintMessageTimer(IPlayerPool& players, int id, String message) :
+			playerID(id),
+			players(players),
+			message(message)
+		{}
+
+		/// Print a message 5 times every 5 seconds and destroy the timer
+		void timeout(ITimer& timer) override {
+			if (count++ < 5 && players.valid(playerID)) {
+				IPlayer& player = players.get(playerID);
+				player.sendClientMessage(Colour::Cyan(), message);
+			}
+			else {
+				delete this;
+				timer.kill();
+			}
+		}
+	};
 
 	UUID getUUID() override {
 		return 0xd4a033a9c68adc86;
@@ -75,6 +102,9 @@ struct TestComponent :
 			if (textdraw2) {
 				textdraw2->setLetterColour(Colour::White()).setStyle(TextDrawStyle::TextDrawStyle_FontBeckettRegular);
 			}
+		}
+		if (timers) {
+			timers->create(new PlayerPrintMessageTimer(c->getPlayers(), player.getID(), "five seconds passed wow"), std::chrono::seconds(5), true);
 		}
 	}
 
@@ -492,6 +522,7 @@ struct TestComponent :
 		dialogs = plugins->queryPlugin<IDialogsPlugin>();
 		console = plugins->queryPlugin<IConsolePlugin>();
 		gangzones = plugins->queryPlugin<IGangZonesPlugin>();
+		timers = plugins->queryPlugin<ITimersPlugin>();
 
 		if (classes) {
 			auto classid = classes->claim();
