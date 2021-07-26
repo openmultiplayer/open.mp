@@ -368,7 +368,7 @@ struct TestComponent :
 			auto pvars = player.queryData<IPlayerVariableData>();
 			if (pvars) {
 				if (pvars->getType("LASTCPTYPE") == VariableType_String) {
-					type = pvars->getString("LASTCPTYPE");
+					type = String(pvars->getString("LASTCPTYPE"));
 				}
 				else {
 					type = "INVALID";

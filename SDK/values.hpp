@@ -2,7 +2,6 @@
 
 #include <map>
 #include <string>
-#include <variant>
 #include <nlohmann/json.hpp>
 #include "types.hpp"
 
