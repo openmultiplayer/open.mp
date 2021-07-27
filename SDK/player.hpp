@@ -3,9 +3,7 @@
 #include <string>
 #include <utility>
 #include <chrono>
-#include <optional>
 #include <type_traits>
-#include <string_view>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
@@ -101,7 +99,7 @@ enum BodyPart {
 	BodyPart_Head
 };
 
-static constexpr StringView BodyPartString[] = {
+static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
 	"invalid",
@@ -575,7 +573,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
-typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
+typedef Optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// A player event handler
 struct PlayerEventHandler {

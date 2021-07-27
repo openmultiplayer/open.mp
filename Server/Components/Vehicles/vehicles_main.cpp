@@ -269,7 +269,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->removePerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
 	}
 
-	void onInit(ICore* core) override {
+	void onLoad(ICore* core) override {
 		this->core = core;
         core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);

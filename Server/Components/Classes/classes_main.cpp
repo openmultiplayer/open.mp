@@ -150,9 +150,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 	{
 	}
 
-    // todo move class stuff to onSpawn here instead of player?
-
-    void onInit(ICore* c) override {
+    void onLoad(ICore* c) override {
         core = c;
         core->addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);

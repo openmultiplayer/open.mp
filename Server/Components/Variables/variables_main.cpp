@@ -67,7 +67,7 @@ struct VariableStorageBase : public ToInherit {
 	}
 
 private:
-	absl::flat_hash_map<std::string, std::variant<int, String, float>> data_;
+	FlatHashMap<String, Variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
@@ -88,7 +88,7 @@ struct VariablesPlugin final : VariableStorageBase<IVariablesPlugin>, PlayerEven
 		return "Variables";
 	}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		this->core = core;
 		core->getPlayers().getEventDispatcher().addEventHandler(this);
 	}

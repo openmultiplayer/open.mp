@@ -11,6 +11,8 @@
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/GangZones/gangzones.hpp>
+#include <Server/Components/Timers/timers.hpp>
 
 #include "absl/strings/str_format.h"
 
@@ -31,6 +33,8 @@ struct TestComponent :
 	IActorsPlugin* actors = nullptr;
 	IDialogsPlugin* dialogs = nullptr;
 	IConsolePlugin* console = nullptr;
+	IGangZonesPlugin* gangzones = nullptr;
+	ITimersPlugin* timers = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -44,7 +48,34 @@ struct TestComponent :
 
 	IMenu* menu = nullptr;
 	IActor* actor = nullptr;
+	IGangZone* gz1 = nullptr;
+	IGangZone* gz2 = nullptr;
 	bool moved = false;
+
+	struct PlayerPrintMessageTimer final : TimerTimeOutHandler {
+		int playerID; // Use ID in case player has disconnected before the timer times out
+		IPlayerPool& players;
+		String message;
+		int count = 0;
+
+		PlayerPrintMessageTimer(IPlayerPool& players, int id, String message) :
+			playerID(id),
+			players(players),
+			message(message)
+		{}
+
+		/// Print a message 5 times every 5 seconds and destroy the timer
+		void timeout(ITimer& timer) override {
+			if (count++ < 5 && players.valid(playerID)) {
+				IPlayer& player = players.get(playerID);
+				player.sendClientMessage(Colour::Cyan(), message);
+			}
+			else {
+				delete this;
+				timer.kill();
+			}
+		}
+	};
 
 	UUID getUUID() override {
 		return 0xd4a033a9c68adc86;
@@ -107,6 +138,9 @@ struct TestComponent :
 			if (textdraw2) {
 				textdraw2->setLetterColour(Colour::White()).setStyle(TextDrawStyle::TextDrawStyle_FontBeckettRegular);
 			}
+		}
+		if (timers) {
+			timers->create(new PlayerPrintMessageTimer(c->getPlayers(), player.getID(), "five seconds passed wow"), std::chrono::seconds(5), true);
 		}
 	}
 
@@ -669,7 +703,7 @@ struct TestComponent :
 			auto pvars = player.queryData<IPlayerVariableData>();
 			if (pvars) {
 				if (pvars->getType("LASTCPTYPE") == VariableType_String) {
-					type = pvars->getString("LASTCPTYPE");
+					type = String(pvars->getString("LASTCPTYPE"));
 				}
 				else {
 					type = "INVALID";
@@ -786,7 +820,21 @@ struct TestComponent :
 	}
 
 	/// Use this instead of onInit to make sure all other plugins are initiated before using them
-	void onPostInit() override {
+	void onInit(IPluginList* plugins) override {
+		classes = plugins->queryPlugin<IClassesPlugin>();
+		vehicles = plugins->queryPlugin<IVehiclesPlugin>();
+		checkpoints = plugins->queryPlugin<ICheckpointsPlugin>();
+		objects = plugins->queryPlugin<IObjectsPlugin>();
+		labels = plugins->queryPlugin<ITextLabelsPlugin>();
+		pickups = plugins->queryPlugin<IPickupsPlugin>();
+		tds = plugins->queryPlugin<ITextDrawsPlugin>();
+		menus = plugins->queryPlugin<IMenusPlugin>();
+		actors = plugins->queryPlugin<IActorsPlugin>();
+		dialogs = plugins->queryPlugin<IDialogsPlugin>();
+		console = plugins->queryPlugin<IConsolePlugin>();
+		gangzones = plugins->queryPlugin<IGangZonesPlugin>();
+		timers = plugins->queryPlugin<ITimersPlugin>();
+
 		if (classes) {
 			auto classid = classes->claim();
 			PlayerClass& testclass = classes->get(classid);
@@ -885,24 +933,24 @@ struct TestComponent :
 		if (console) {
 			console->getEventDispatcher().addEventHandler(this);
 		}
+
+		if (gangzones) {
+			GangZonePos pos1, pos2;
+
+			pos1.min = { -18.0f, 58.5f };
+			pos1.max = { 80.0f, 119.5f };
+			gz1 = gangzones->create(pos1);
+
+			pos2.min = { 49.0f, -31.5f };
+			pos2.max = { 110.0f, 29.5f };
+			gz2 = gangzones->create(pos2);
+		}
 	}
 
-	void onInit(ICore* core) override {
+	void onLoad(ICore* core) override {
 		c = core;
 		c->getPlayers().getEventDispatcher().addEventHandler(this);
 		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-
-		classes = c->queryPlugin<IClassesPlugin>();
-		vehicles = c->queryPlugin<IVehiclesPlugin>();
-		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
-		objects = c->queryPlugin<IObjectsPlugin>();
-		labels = c->queryPlugin<ITextLabelsPlugin>();
-		pickups = c->queryPlugin<IPickupsPlugin>();
-		tds = c->queryPlugin<ITextDrawsPlugin>();
-		menus = c->queryPlugin<IMenusPlugin>();
-		actors = c->queryPlugin<IActorsPlugin>();
-		dialogs = c->queryPlugin<IDialogsPlugin>();
-		console = c->queryPlugin<IConsolePlugin>();
 	}
 
 	void onSpawn(IPlayer& player) override {
@@ -944,6 +992,15 @@ struct TestComponent :
 
 		if (sprite) {
 			sprite->showForPlayer(player);
+		}
+
+		if (gz1) {
+			gz1->showForPlayer(player, Colour(0xFF, 0x00, 0x00, 0xAA));
+		}
+
+		if (gz2) {
+			gz2->showForPlayer(player, Colour(0x00, 0x00, 0xFF, 0xAA));
+			gz2->flashForPlayer(player, Colour(0x00, 0xFF, 0x00, 0xAA));
 		}
 	}
 
