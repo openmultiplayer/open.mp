@@ -38,7 +38,7 @@ struct PickupEventHandler {
 
 static const UUID PickupsPlugin_UUID = UUID(0xcf304faa363dd971);
 
-struct IPickupsPlugin : public IPlugin, public IPool<IPickup, PICKUP_POOL_SIZE> {
+struct IPickupsPlugin : public IPoolPlugin<IPickup, PICKUP_POOL_SIZE> {
 	PROVIDE_UUID(PickupsPlugin_UUID);
 
 	virtual IEventDispatcher<PickupEventHandler> & getEventDispatcher() = 0;
