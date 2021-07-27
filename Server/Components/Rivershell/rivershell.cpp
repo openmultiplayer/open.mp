@@ -3,14 +3,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Objects/objects.hpp>
-#include <Server/Components/TextLabels/textlabels.hpp>
-#include <Server/Components/Pickups/pickups.hpp>
-#include <Server/Components/TextDraws/textdraws.hpp>
-#include <Server/Components/Menus/menus.hpp>
-#include <Server/Components/Actors/actors.hpp>
-#include <Server/Components/Variables/variables.hpp>
-#include <future>
-#include <thread>
+#include <Server/Components/Timers/timers.hpp>
 
 #define TEAM_GREEN 1
 #define TEAM_BLUE 2
@@ -20,7 +13,7 @@
 
 struct RivershellPlayerData final : public IPlayerData {
 	static constexpr UUID IID = 0x0e5b18f964deec4e;
-	UUID getUUID() override { 
+	UUID getUUID() override {
 		return 0x0e5b18f964deec4e;
 	}
 
@@ -29,7 +22,7 @@ struct RivershellPlayerData final : public IPlayerData {
 	}
 
 	std::chrono::seconds lastResupplyTime;
-	bool alreadyChosenTeam;
+	bool alreadyBalanceTeam;
 };
 
 struct RivershellMode :
@@ -41,6 +34,7 @@ struct RivershellMode :
 	IClassesPlugin* classes = nullptr;
 	IObjectsPlugin* objects = nullptr;
 	ICheckpointsPlugin* checkpoints = nullptr;
+	ITimersPlugin* timers = nullptr;
 
 	int greenTeamCaps = 0;
 	int blueTeamCaps = 0;
@@ -73,8 +67,216 @@ struct RivershellMode :
 		}
 	}
 
-	/// Use this instead of onInit to make sure all other plugins are initiated before using them
-	void onPostInit() override {
+	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+		return new RivershellPlayerData();
+	}
+
+	struct ForceSpawnTimer final : public TimerTimeOutHandler {
+		IPlayer* targetPlayer = nullptr;
+		ForceSpawnTimer(IPlayer* player) :
+			targetPlayer(player) {
+
+		}
+
+		void timeout(ITimer& timer) override {
+			if (targetPlayer) {
+				NetCode::RPC::PlayerRequestSpawnResponse response;
+				response.Allow = 2;
+				targetPlayer->sendRPC(response);
+			}
+			delete this;
+		}
+	};
+
+	bool moveIfNotBalanced(IPlayer& player, int team) {
+		int greenCount = 5;
+		int blueCount = 0;
+
+		for (IPlayer* player : c->getPlayers().entries()) {
+			if (player->getTeam() == TEAM_GREEN) {
+				greenCount++;
+			}
+			else if (player->getTeam() == TEAM_BLUE) {
+				blueCount++;
+			}
+		}
+
+		player.queryData<RivershellPlayerData>()->alreadyBalanceTeam = true;
+		if (greenCount > blueCount && team == TEAM_GREEN) {
+			player.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(1));
+			player.sendClientMessage(Colour::White(), "You have been moved to the {0000FF}blue{FFFFFF} team for balance.");
+			timers->create(new ForceSpawnTimer(&player), std::chrono::milliseconds(500), false);
+			return true;
+		}
+		else if (blueCount > greenCount && team == TEAM_BLUE) {
+			player.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(1));
+			player.sendClientMessage(Colour::White(), "You have been moved to the {00FF00}green{FFFFFF} team for balance.");
+			timers->create(new ForceSpawnTimer(&player), std::chrono::milliseconds(500), false);
+			return true;
+		}
+
+		return false;
+	}
+
+	void onConnect(IPlayer& player) override {
+		player.sendGameText("~r~open.mp~w~: Rivershell", 2000, 5);
+		player.setColour(Colour(136, 136, 136));
+		player.removeDefaultObjects(9090, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
+		player.removeDefaultObjects(9091, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
+		player.removeDefaultObjects(13483, Vector3(2113.5781f, -96.7344f, 0.9844f), 0.25f);
+		player.removeDefaultObjects(12990, Vector3(2113.5781f, -96.7344f, 0.9844f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2119.8203f, -84.4063f, -0.0703f), 0.25f);
+		player.removeDefaultObjects(1369, Vector3(2104.0156f, -105.2656f, 1.7031f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2122.3750f, -83.3828f, 0.4609f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2119.5313f, -82.8906f, -0.1641f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2120.5156f, -79.0859f, 0.2188f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2119.4688f, -69.7344f, 0.2266f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2119.4922f, -73.6172f, 0.1250f), 0.25f);
+		player.removeDefaultObjects(935, Vector3(2117.8438f, -67.8359f, 0.1328f), 0.25f);
+	}
+
+	bool onPlayerRequestClass(IPlayer& player, unsigned int classId) override {
+		player.queryData<RivershellPlayerData>()->alreadyBalanceTeam = false;
+		player.setPosition(Vector3(1984.4445f, 157.9501f, 55.9384f));
+		player.setCameraLookAt(Vector3(1984.4445f, 157.9501f, 55.9384f), 2);
+		player.setCameraPosition(Vector3(1984.4445f, 160.9501f, 55.9384f));
+		player.setRotation(GTAQuat(0.0f, 0.0f, 0.0f));
+
+		if (classId == 0 || classId == 1) {
+			player.sendGameText("~g~GREEN ~w~TEAM", 1000, 5);
+		}
+		else if (classId == 2 || classId == 3) {
+			player.sendGameText("~b~BLUE ~w~TEAM", 1000, 5);
+		}
+		return true;
+	}
+
+	void onVehicleStreamIn(IVehicle& vehicle, IPlayer& player) override {
+		VehicleParams objective;
+		objective.objective = 1;
+
+		if (&vehicle == blueObjectiveVehicle || &vehicle == greenObjectiveVehicle) {
+			vehicle.setParamsForPlayer(player, objective);
+		}
+	}
+
+	void onSpawn(IPlayer& player) override {
+		if (!player.queryData<RivershellPlayerData>()->alreadyBalanceTeam && moveIfNotBalanced(player, player.getTeam())) {
+			return;
+		}
+		if (player.getTeam() == TEAM_GREEN) {
+			player.sendGameText("Defend the ~g~GREEN ~w~team's ~y~Reefer~n~~w~Capture the ~b~BLUE ~w~team's ~y~Reefer", 6000, 5);
+			player.setColour(Colour(119, 204, 119, 255));
+		}
+		else if (player.getTeam() == TEAM_BLUE) {
+			player.sendGameText("Defend the ~b~BLUE ~w~team's ~y~Reefer~n~~w~Capture the ~g~GREEN ~w~team's ~y~Reefer", 6000, 5);
+			player.setColour(Colour(119, 119, 221, 255));
+		}
+
+		player.setArmour(100.0f);
+		player.setWorldBounds(Vector4(2500.0f, 1850.0f, 631.2963f, -454.9898f));
+	}
+
+	void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
+		if (newState == PlayerState_Driver) {
+			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+			if (data->getVehicle() == greenObjectiveVehicle && player.getTeam() == TEAM_GREEN) {
+				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", 3000, 5);
+
+				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+				cp->setType(CheckpointType::STANDARD);
+				cp->setPosition(Vector3(2135.7368f, -179.8811f, -0.5323f));
+				cp->setSize(10.0f);
+				cp->enable(player);
+			}
+			else if (data->getVehicle() == blueObjectiveVehicle && player.getTeam() == TEAM_BLUE) {
+				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", 3000, 5);
+
+				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+				cp->setType(CheckpointType::STANDARD);
+				cp->setPosition(Vector3(2329.4226f, 532.7426f, 0.5862f));
+				cp->setSize(10.0f);
+				cp->enable(player);
+			}
+		}
+		else if (oldState == PlayerState_Driver) {
+			player.queryData<IPlayerCheckpointData>()->disable(player);
+		}
+	}
+
+	void onPlayerEnterCheckpoint(IPlayer& player) override {
+		if (player.getState() == PlayerState_Driver) {
+			IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
+			NetCode::RPC::SendGameText gameText;
+			gameText.Style = 5;
+			gameText.Time = 3000;
+			if (vehicle == greenObjectiveVehicle && player.getTeam() == TEAM_GREEN) {
+				player.setScore(player.getScore() + 5);
+				if (++greenTeamCaps >= CAPS_TO_WIN) {
+					gameText.Text = StringView("~g~GREEN ~w~team wins!~n~~w~The game will restart");
+					resetGame();
+				}
+				else {
+					gameText.Text = StringView("~g~GREEN ~w~team captured the ~y~boat~w~!");
+
+				}
+				c->getPlayers().broadcastRPCToAll(gameText);
+			}
+			else if (vehicle == blueObjectiveVehicle && player.getTeam() == TEAM_BLUE) {
+				player.setScore(player.getScore() + 5);
+				if (++blueTeamCaps >= CAPS_TO_WIN) {
+					gameText.Text = StringView("~b~BLUE ~w~team wins!~n~~w~The game will restart");
+					resetGame();
+				}
+				else {
+					gameText.Text = StringView("~b~BLUE ~w~team captured the ~y~boat~w~!");
+					greenObjectiveVehicle->respawn();
+				}
+				c->getPlayers().broadcastRPCToAll(gameText);
+			}
+		}
+	}
+
+	void onDeath(IPlayer& player, OptionalPlayer killer, int reason) override {
+		NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+		sendDeathMessageRPC.PlayerID = player.getID();
+		sendDeathMessageRPC.KillerID = INVALID_PLAYER_ID;
+		sendDeathMessageRPC.reason = reason;
+		if (killer) {
+			sendDeathMessageRPC.KillerID = killer->get().getID();
+			c->getPlayers().broadcastRPCToAll(sendDeathMessageRPC);
+
+			if (killer->get().getTeam() != player.getTeam()) {
+				killer->get().setScore(killer->get().getScore() + 1);
+			}
+		}
+		else {
+			c->getPlayers().broadcastRPCToAll(sendDeathMessageRPC);
+		}
+	}
+
+	void onLoad(ICore* core) override {
+		c = core;
+		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
+	}
+
+	void onInit(IPluginList* plugins) override {
+		classes = plugins->queryPlugin<IClassesPlugin>();
+		vehicles = plugins->queryPlugin<IVehiclesPlugin>();
+		objects = plugins->queryPlugin<IObjectsPlugin>();
+		checkpoints = plugins->queryPlugin<ICheckpointsPlugin>();
+		timers = plugins->queryPlugin<ITimersPlugin>();
+		if (classes) {
+			classes->getEventDispatcher().addEventHandler(this);
+		}
+		if (vehicles) {
+			vehicles->getEventDispatcher().addEventHandler(this);
+		}
+		if (checkpoints) {
+			checkpoints->getEventDispatcher().addEventHandler(this);
+		}
+
 		if (classes && vehicles) {
 			auto classid = classes->claim();
 			WeaponSlots weapons;
@@ -98,7 +300,7 @@ struct RivershellMode :
 				green2.angle = 347.1396f;
 				green2.weapons = weapons;
 			}
-			
+
 			// Blue team
 			{
 				classid = classes->claim();
@@ -256,163 +458,7 @@ struct RivershellMode :
 			objects->create(1632, Vector3(2108.98, 46.95, 0.00), Vector3(0.00, 0.00, 529.20));
 			objects->create(1632, Vector3(2100.42, 48.11, 0.00), Vector3(0.00, 0.00, 526.68));
 			objects->create(1632, Vector3(2091.63, 50.02, 0.00), Vector3(0.00, 0.00, 526.80));
-			
-		}
-	}
 
-	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
-		return new RivershellPlayerData();
-	}
-
-	void onConnect(IPlayer& player) override {
-		player.sendGameText("~r~open.mp~w~: Rivershell", 2000, 5);
-		player.setColour(Colour(136, 136, 136));
-		player.removeDefaultObjects(9090, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
-		player.removeDefaultObjects(9091, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
-		player.removeDefaultObjects(13483, Vector3(2113.5781f, -96.7344f, 0.9844f), 0.25f);
-		player.removeDefaultObjects(12990, Vector3(2113.5781f, -96.7344f, 0.9844f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2119.8203f, -84.4063f, -0.0703f), 0.25f);
-		player.removeDefaultObjects(1369, Vector3(2104.0156f, -105.2656f, 1.7031f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2122.3750f, -83.3828f, 0.4609f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2119.5313f, -82.8906f, -0.1641f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2120.5156f, -79.0859f, 0.2188f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2119.4688f, -69.7344f, 0.2266f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2119.4922f, -73.6172f, 0.1250f), 0.25f);
-		player.removeDefaultObjects(935, Vector3(2117.8438f, -67.8359f, 0.1328f), 0.25f);
-	}
-
-	bool onPlayerRequestClass(IPlayer& player, unsigned int classId) override {
-		player.setPosition(Vector3(1984.4445f, 157.9501f, 55.9384f));
-		player.setCameraLookAt(Vector3(1984.4445f, 157.9501f, 55.9384f), 2);
-		player.setCameraPosition(Vector3(1984.4445f, 160.9501f, 55.9384f));
-		player.setRotation(GTAQuat(0.0f, 0.0f, 0.0f));
-
-		if (classId == 0 || classId == 1) {
-			player.sendGameText("~g~GREEN ~w~TEAM", 1000, 5);
-		}
-		else if (classId == 2 || classId == 3) {
-			player.sendGameText("~b~BLUE ~w~TEAM", 1000, 5);
-		}
-		return true;
-	}
-
-	void onVehicleStreamIn(IVehicle& vehicle, IPlayer& player) override {
-		VehicleParams objective;
-		objective.objective = 1;
-		
-		if (&vehicle == blueObjectiveVehicle || &vehicle == greenObjectiveVehicle) {
-			vehicle.setParamsForPlayer(player, objective);
-		}
-	}
-
-	void onSpawn(IPlayer& player) override {
-		if (player.getTeam() == TEAM_GREEN) {
-			player.sendGameText("Defend the ~g~GREEN ~w~team's ~y~Reefer~n~~w~Capture the ~b~BLUE ~w~team's ~y~Reefer", 6000, 5);
-			player.setColour(Colour(119, 204, 119, 255));
-		}
-		else if (player.getTeam() == TEAM_BLUE) {
-			player.sendGameText("Defend the ~b~BLUE ~w~team's ~y~Reefer~n~~w~Capture the ~g~GREEN ~w~team's ~y~Reefer", 6000, 5);
-			player.setColour(Colour(119, 119, 221, 255));
-		}
-
-		player.setArmour(100.0f);
-		player.setWorldBounds(Vector4(2500.0f, 1850.0f, 631.2963f, -454.9898f));
-	}
-
-	void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
-		if (newState == PlayerState_Driver) {
-			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-			if (data->getVehicle() == greenObjectiveVehicle && player.getTeam() == TEAM_GREEN) {
-				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", 3000, 5);
-				
-				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
-				cp->setType(CheckpointType::STANDARD);
-				cp->setPosition(Vector3(2135.7368f, -179.8811f, -0.5323f));
-				cp->setSize(10.0f);
-				cp->enable(player);
-			}
-			else if (data->getVehicle() == blueObjectiveVehicle && player.getTeam() == TEAM_BLUE) {
-				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", 3000, 5);
-
-				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
-				cp->setType(CheckpointType::STANDARD);
-				cp->setPosition(Vector3(2329.4226f, 532.7426f, 0.5862f));
-				cp->setSize(10.0f);
-				cp->enable(player);
-			}
-		}
-		else if (oldState == PlayerState_Driver) {
-			player.queryData<IPlayerCheckpointData>()->disable(player);
-		}
-	}
-
-	void onPlayerEnterCheckpoint(IPlayer& player) override {
-		if (player.getState() == PlayerState_Driver) {
-			IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
-			NetCode::RPC::SendGameText gameText;
-			gameText.Style = 5;
-			gameText.Time = 3000;
-			if (vehicle == greenObjectiveVehicle && player.getTeam() == TEAM_GREEN) {
-				player.setScore(player.getScore() + 5);
-				if (++greenTeamCaps >= CAPS_TO_WIN) {
-					gameText.Text = StringView("~g~GREEN ~w~team wins!~n~~w~The game will restart");
-					resetGame();
-				}
-				else {
-					gameText.Text = StringView("~g~GREEN ~w~team captured the ~y~boat~w~!");
-					
-				}
-				c->getPlayers().broadcastRPCToAll(gameText);
-			}
-			else if (vehicle == blueObjectiveVehicle && player.getTeam() == TEAM_BLUE) {
-				player.setScore(player.getScore() + 5);
-				if (++blueTeamCaps >= CAPS_TO_WIN) {
-					gameText.Text = StringView("~b~BLUE ~w~team wins!~n~~w~The game will restart");
-					resetGame();
-				}
-				else {
-					gameText.Text = StringView("~b~BLUE ~w~team captured the ~y~boat~w~!");
-					greenObjectiveVehicle->respawn();
-				}
-				c->getPlayers().broadcastRPCToAll(gameText);
-			}
-		}
-	}
-
-	void onDeath(IPlayer& player, OptionalPlayer killer, int reason) override {
-		NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-		sendDeathMessageRPC.PlayerID = player.getID();
-		sendDeathMessageRPC.KillerID = INVALID_PLAYER_ID;
-		sendDeathMessageRPC.reason = reason;
-		if (killer) {
-			sendDeathMessageRPC.KillerID = killer->get().getID();
-			c->getPlayers().broadcastRPCToAll(sendDeathMessageRPC);
-
-			if (killer->get().getTeam() != player.getTeam()) {
-				killer->get().setScore(killer->get().getScore() + 1);
-			}
-		}
-		else {
-			c->getPlayers().broadcastRPCToAll(sendDeathMessageRPC);
-		}
-	}
-
-	void onInit(ICore* core) override {
-		c = core;
-		c->getPlayers().getEventDispatcher().addEventHandler(this);
-		classes = c->queryPlugin<IClassesPlugin>();
-		vehicles = c->queryPlugin<IVehiclesPlugin>();
-		objects = c->queryPlugin<IObjectsPlugin>();
-		checkpoints = c->queryPlugin<ICheckpointsPlugin>();
-		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-		if (classes) {
-			classes->getEventDispatcher().addEventHandler(this);
-		}
-		if (vehicles) {
-			vehicles->getEventDispatcher().addEventHandler(this);
-		}
-		if (checkpoints) {
-			checkpoints->getEventDispatcher().addEventHandler(this);
 		}
 	}
 
