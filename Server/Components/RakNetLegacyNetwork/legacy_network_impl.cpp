@@ -425,15 +425,16 @@ void RakNetLegacyNetwork::init(ICore* c) {
     SAMPRakNet::ServerCoreInit(c);
     query = Query(c);
 
-    const JSON& props = core->getProperties();
-    int maxPlayers = Config::getOption<int>(props, "max_players");
-    std::string serverName = Config::getOption<std::string>(props, "server_name");
-    int port = Config::getOption<int>(props, "port");
+    IConfig& config = core->getConfig();
+    int maxPlayers = *config.getInt("max_players");
+    StringView serverName = config.getString("server_name");
+    int port = *config.getInt("port");
+    int sleep = *config.getInt("sleep");
 
     rakNetServer.Start(
         maxPlayers,
         0,
-        Config::getOption<int>(props, "sleep"),
+        sleep,
         port
     );
     rakNetServer.StartOccasionalPing();

@@ -4,7 +4,7 @@
 struct RakNetLegacyNetworkPlugin : INetworkPlugin {
 	RakNetLegacyNetwork legacyNetwork;
 
-	void onInit(ICore* core) override {
+	void onLoad(ICore* core) override {
 		legacyNetwork.init(core);
 	}
 
