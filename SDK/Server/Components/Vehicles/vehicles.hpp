@@ -13,7 +13,7 @@ struct VehicleSpawnData {
 	float zRotation;
 	int colour1;
 	int colour2;
-	int respawnDelay;
+	std::chrono::seconds respawnDelay;
 	bool siren;
 };
 
@@ -104,14 +104,13 @@ struct IVehicle : public IEntity {
 	/// Update the vehicle from a sync packet
 	virtual bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) = 0;
 
+	virtual bool updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player) = 0;
+
 	/// Update the vehicle from an unoccupied sync packet
 	virtual bool updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) = 0;
 
 	/// Update the vehicle from a trailer sync packet
 	virtual bool updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) = 0;
-
-	/// Sets the current driver of the vehicle
-	virtual void setDriver(IPlayer* player) = 0;
 
 	/// Returns the current driver of the vehicle
 	virtual IPlayer* getDriver() = 0;
@@ -164,9 +163,6 @@ struct IVehicle : public IEntity {
 	// Get the vehicle's parameters.
 	virtual VehicleParams const& getParams() = 0;
 
-	/// Sets the vehicle's death state.
-	virtual void setDead(IPlayer& killer) = 0;
-	
 	/// Checks if the vehicle is dead.
 	virtual bool isDead() = 0;
 
@@ -174,16 +170,10 @@ struct IVehicle : public IEntity {
 	virtual void respawn() = 0;
 
 	/// Get the vehicle's respawn delay.
-	virtual int getRespawnDelay() = 0;
+	virtual std::chrono::seconds getRespawnDelay() = 0;
 
 	/// Checks if the vehicle has had any occupants.
 	virtual bool hasBeenOccupied() = 0;
-
-	/// Gets the time the vehicle died.
-	virtual std::chrono::milliseconds getDeathTime() = 0;
-
-	/// Gets the last time the vehicle has been occupied
-	virtual std::chrono::milliseconds getLastOccupiedTime() = 0;
 
 	/// Checks if the vehicle is respawning.
 	virtual bool isRespawning() = 0;
@@ -193,9 +183,6 @@ struct IVehicle : public IEntity {
 
 	// Gets the vehicle's interior.
 	virtual int getInterior() = 0;
-	
-	/// Set if the vehicle has been occupied.
-	virtual void setBeenOccupied(bool occupied) = 0;
 
 	/// Attaches a vehicle as a trailer to this vehicle.
 	virtual void attachTrailer(IVehicle& trailer) = 0;
@@ -205,9 +192,6 @@ struct IVehicle : public IEntity {
 
 	/// Checks if the current vehicle is a trailer.
 	virtual bool isTrailer() = 0;
-
-	/// Sets the current vehicle as a trailer internally.
-	virtual void setTower(IVehicle* tower) = 0;
 
 	/// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
 	virtual void addCarriage(IVehicle* carriage, int pos) = 0;
@@ -256,7 +240,7 @@ struct IVehiclesPlugin : public IPoolPlugin<IVehicle, VEHICLE_POOL_SIZE> {
 	/// Get the number of model instances for each model
 	virtual StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
 
-	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, int respawnDelay = -1, bool addSiren = false) = 0;
+	virtual IVehicle* create(int modelID, glm::vec3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, std::chrono::seconds respawnDelay = std::chrono::seconds(-1), bool addSiren = false) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
 	virtual bool getModelInfo(int model, VehicleModelInfoType type, Vector3& out) = 0;
 
@@ -275,9 +259,4 @@ struct IPlayerVehicleData : public IPlayerData {
 	/// Get the player's seat
 	/// Returns -1 if they aren't in a vehicle.
 	virtual int getSeat() const = 0;
-
-	virtual void setVehicle(IVehicle* vehicle) = 0;
-
-	virtual void setSeat(int seat) = 0;
-
 };
