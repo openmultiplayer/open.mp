@@ -219,6 +219,9 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
             Vehicle* vehicle = static_cast<Vehicle*>(v);
             if (vehicle->streamedFor_.valid(pid)) {
                 vehicle->streamedFor_.remove(pid, player);
+                if (vehicle->driver == &player) {
+                    vehicle->driver = nullptr;
+                }
             }
         }
     }
