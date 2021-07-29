@@ -4,12 +4,34 @@
 #include "vehicle_colours.hpp"
 #include "vehicle_params.hpp"
 
+struct PlayerVehicleData final : public IPlayerVehicleData {
+    IVehicle* vehicle = nullptr;
+    int seat = -1;
+    int numStreamed = 0;
+
+    /// Get the player's vehicle
+    /// Returns nullptr if they aren't in a vehicle
+    IVehicle* getVehicle() override {
+        return vehicle;
+    }
+
+    /// Get the player's seat
+    /// Returns -1 if they aren't in a vehicle.
+    int getSeat() const override {
+        return seat;
+    }
+
+    void free() override {
+        delete this;
+    }
+};
+
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedPlayers_;
+    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
     StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
     float health = 1000.0f;
     uint8_t interior = 0;
@@ -26,19 +48,23 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
-    std::chrono::seconds timeOfDeath;
+    std::chrono::steady_clock::time_point timeOfDeath;
     bool beenOccupied = false;
-    std::chrono::seconds lastOccupied;
+    std::chrono::steady_clock::time_point lastOccupied;
     bool respawning = false;
     Vector3 velocity;
     Vector3 angularVelocity;
-    std::chrono::seconds trailerUpdateTime;
+    std::chrono::steady_clock::time_point trailerUpdateTime;
     bool towing = false;
-    IVehicle* trailerOrTower = nullptr;
+    union {
+        Vehicle* trailer = nullptr;
+        Vehicle* tower;
+    };
     std::array<IVehicle*, 3> carriages;
     bool detaching = false;
     VehicleParams params;
     uint8_t sirenState = 0;
+    IVehiclesPlugin* pool = nullptr;
 
     Vehicle() {
         mods.fill(0);
@@ -46,7 +72,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     }
 
     ~Vehicle() {
-        auto entries = streamedPlayers_.entries();
+        const auto& entries = streamedFor_.entries();
         for (IPlayer* player : entries) {
             streamOutForPlayer(*player);
         }
@@ -77,7 +103,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     }
 
     bool isStreamedInForPlayer(const IPlayer& player) const override {
-        return streamedPlayers_.valid(player.getID());
+        return streamedFor_.valid(player.getID());
     }
 
     void setSpawnData(VehicleSpawnData data) override {
@@ -94,6 +120,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void streamInForPlayer(IPlayer& player) override;
     void streamOutForPlayer(IPlayer& player) override;
 
+    void streamOutForClient(IPlayer& player);
+
     /// Update the vehicle's data from a player sync packet.
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
 
@@ -103,6 +131,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Update the vehicle from a trailer sync packet
     bool updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) override;
 
+    bool updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player) override;
+
     /// Sets the vehicle's body colour
     void setColour(int col1, int col2) override;
 
@@ -111,11 +141,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     /// Gets the vehicle's current health
     float getHealth() override;
-
-    /// Sets the current driver of the vehicle
-    virtual void setDriver(IPlayer* player) override {
-        driver = player;
-    }
 
     /// Returns the current driver of the vehicle
     IPlayer* getDriver() override {
@@ -165,7 +190,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     VehicleParams const& getParams() override { return params; }
 
     /// Sets the vehicle's death state.
-    void setDead(IPlayer& killer) override;
+    void setDead(IPlayer& killer);
 
     /// Checks if the vehicle is dead.
     bool isDead() override;
@@ -174,16 +199,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void respawn() override;
 
     /// Get the vehicle's respawn delay.
-    int getRespawnDelay() override;
+    std::chrono::seconds getRespawnDelay() override;
 
     /// Checks if the vehicle has had any occupants.
     bool hasBeenOccupied() override;
-
-    /// Gets the time the vehicle died.
-    std::chrono::milliseconds getDeathTime() override;
-
-    /// Gets the last time the vehicle has been occupied
-    std::chrono::milliseconds getLastOccupiedTime() override;
 
     bool isRespawning() override { return respawning; }
 
@@ -194,7 +213,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int getInterior() override;
 
     /// Set if the vehicle has been occupied.
-    void setBeenOccupied(bool occupied) override { this->beenOccupied = occupied; lastOccupied = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()); }
+    void setBeenOccupied(bool occupied) { this->beenOccupied = occupied; lastOccupied = std::chrono::steady_clock::now(); }
 
     /// Attaches a vehicle as a trailer to this vehicle.
     void attachTrailer(IVehicle& vehicle) override;
@@ -203,11 +222,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void detachTrailer() override;
 
     /// Checks if the current vehicle is a trailer.
-    bool isTrailer() override { return !towing && trailerOrTower != nullptr; }
+    bool isTrailer() override { return !towing && tower != nullptr; }
 
-    void setTower(IVehicle* tower) override {
+    void setTower(Vehicle* tower) {
         detaching = true;
-        trailerOrTower = tower;
+        this->tower = tower;
         towing = false;
     }
 

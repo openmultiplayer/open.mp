@@ -21,7 +21,7 @@ struct RivershellPlayerData final : public IPlayerData {
 		delete this;
 	}
 
-	std::chrono::seconds lastResupplyTime;
+	std::chrono::steady_clock::time_point lastResupplyTime;
 	bool alreadyBalanceTeam;
 };
 
@@ -58,10 +58,10 @@ struct RivershellMode :
 			vehicles->respawn();
 		}
 
-		auto entries = c->getPlayers().entries();
+		const auto& entries = c->getPlayers().entries();
 		for (IPlayer* player : entries) {
 			player->forceClassSelection();
-			player->queryData<RivershellPlayerData>()->lastResupplyTime = std::chrono::seconds(0);
+			player->queryData<RivershellPlayerData>()->lastResupplyTime = std::chrono::steady_clock::time_point();
 			player->setSpectating(true);
 			player->setSpectating(false);
 		}
@@ -280,7 +280,6 @@ struct RivershellMode :
 		if (classes && vehicles) {
 			auto classid = classes->claim();
 			WeaponSlots weapons;
-			weapons.fill(WeaponSlotData{ 0, 0 });
 			weapons[0] = WeaponSlotData{ 31, 100 };
 			weapons[1] = WeaponSlotData{ 24, 1000 };
 			weapons[2] = WeaponSlotData{ 34, 10 };
@@ -325,50 +324,50 @@ struct RivershellMode :
 			params.setZero();
 			params.objective = 1;
 
-			blueObjectiveVehicle = vehicles->create(453, Vector3(2184.7156f, -188.5401f, -0.0239f), 0.0f, 114, 1, 100);
+			blueObjectiveVehicle = vehicles->create(453, Vector3(2184.7156f, -188.5401f, -0.0239f), 0.0f, 114, 1, std::chrono::seconds(100));
 			blueObjectiveVehicle->setParams(params);
-			greenObjectiveVehicle = vehicles->create(453, Vector3(2380.0542f, 535.2582f, -0.0272f), 178.4999f, 79, 7, 100);
+			greenObjectiveVehicle = vehicles->create(453, Vector3(2380.0542f, 535.2582f, -0.0272f), 178.4999f, 79, 7, std::chrono::seconds(100));
 			blueObjectiveVehicle->setParams(params);
 
 			// Green team boats
-			vehicles->create(473, Vector3(2096.0833f, -168.7771f, 0.3528f), 4.5000f, 114, 1, 100);
-			vehicles->create(473, Vector3(2103.2510f, -168.7598f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2099.4966f, -168.8216f, 0.3528f), 2.8200f, 114, 1, 100);
-			vehicles->create(473, Vector3(2107.1143f, -168.7798f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2111.0674f, -168.7609f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2114.8933f, -168.7898f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2167.2217f, -169.0570f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2170.4294f, -168.9724f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2173.7952f, -168.9217f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2177.0386f, -168.9767f, 0.3528f), 3.1800f, 114, 1, 100);
-			vehicles->create(473, Vector3(2161.5786f, -191.9538f, 0.3528f), 89.1000f, 114, 1, 100);
-			vehicles->create(473, Vector3(2161.6394f, -187.2925f, 0.3528f), 89.1000f, 114, 1, 100);
-			vehicles->create(473, Vector3(2161.7610f, -183.0225f, 0.3528f), 89.1000f, 114, 1, 100);
-			vehicles->create(473, Vector3(2162.0283f, -178.5106f, 0.3528f), 89.1000f, 114, 1, 100);
+			vehicles->create(473, Vector3(2096.0833f, -168.7771f, 0.3528f), 4.5000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2103.2510f, -168.7598f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2099.4966f, -168.8216f, 0.3528f), 2.8200f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2107.1143f, -168.7798f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2111.0674f, -168.7609f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2114.8933f, -168.7898f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2167.2217f, -169.0570f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2170.4294f, -168.9724f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2173.7952f, -168.9217f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2177.0386f, -168.9767f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2161.5786f, -191.9538f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2161.6394f, -187.2925f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2161.7610f, -183.0225f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2162.0283f, -178.5106f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
 
 			// Green team mavericks
-			vehicles->create(487, Vector3(2088.7905f, -227.9593f, 8.3662f), 0.0000f, 114, 1, 100);
-			vehicles->create(487, Vector3(2204.5991f, -225.3703f, 8.2400f), 0.0000f, 114, 1, 100);
+			vehicles->create(487, Vector3(2088.7905f, -227.9593f, 8.3662f), 0.0000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(487, Vector3(2204.5991f, -225.3703f, 8.2400f), 0.0000f, 114, 1, std::chrono::seconds(100));
 
 			// Blue team boats
-			vehicles->create(473, Vector3(2370.3198f, 518.3151f, 0.1240f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2362.6484f, 518.3978f, 0.0598f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2358.6550f, 518.2167f, 0.2730f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2366.5544f, 518.2680f, 0.1080f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2354.6321f, 518.1960f, 0.3597f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2350.7449f, 518.1929f, 0.3597f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2298.8977f, 518.4470f, 0.3597f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2295.6118f, 518.3963f, 0.3597f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2292.3237f, 518.4249f, 0.3597f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2289.0901f, 518.4363f, 0.3597f), 180.3600f, 79, 7, 100);
-			vehicles->create(473, Vector3(2304.8232f, 539.7859f, 0.3597f), 270.5998f, 79, 7, 100);
-			vehicles->create(473, Vector3(2304.6936f, 535.0454f, 0.3597f), 270.5998f, 79, 7, 100);
-			vehicles->create(473, Vector3(2304.8245f, 530.3308f, 0.3597f), 270.5998f, 79, 7, 100);
-			vehicles->create(473, Vector3(2304.8142f, 525.7471f, 0.3597f), 270.5998f, 79, 7, 100);
+			vehicles->create(473, Vector3(2370.3198f, 518.3151f, 0.1240f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2362.6484f, 518.3978f, 0.0598f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2358.6550f, 518.2167f, 0.2730f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2366.5544f, 518.2680f, 0.1080f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2354.6321f, 518.1960f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2350.7449f, 518.1929f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2298.8977f, 518.4470f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2295.6118f, 518.3963f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2292.3237f, 518.4249f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2289.0901f, 518.4363f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2304.8232f, 539.7859f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2304.6936f, 535.0454f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2304.8245f, 530.3308f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2304.8142f, 525.7471f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
 
 			// Blue team mavericks
-			vehicles->create(487, Vector3(2260.2637f, 578.5220f, 8.1223f), 182.3401f, 79, 7, 100);
-			vehicles->create(487, Vector3(2379.9792f, 580.0323f, 8.0178f), 177.9601f, 79, 7, 100);
+			vehicles->create(487, Vector3(2260.2637f, 578.5220f, 8.1223f), 182.3401f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(487, Vector3(2379.9792f, 580.0323f, 8.0178f), 177.9601f, 79, 7, std::chrono::seconds(100));
 
 			objects->create(9090, Vector3(2148.64f, -222.88f, -20.60f), Vector3(0.00f, 0.00f, 179.70));
 			// Green resupply hut
@@ -469,7 +468,7 @@ struct RivershellMode :
 			Vector3 resupply2 = pos - Vector3(2318.73f, 590.96, 6.75);
 			if (glm::dot(resupply1, resupply1) < 2.5f || glm::dot(resupply2, resupply2) < 2.5f) {
 				RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
-				auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+				auto now = std::chrono::steady_clock::now();
 				if (now - data->lastResupplyTime >= std::chrono::seconds(RESUPPLY_COOLDOWN)) {
 					data->lastResupplyTime = now;
 					player.resetWeapons();

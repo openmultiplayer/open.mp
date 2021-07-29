@@ -45,6 +45,7 @@ constexpr int DIALOG_INVALID_ID = 0xFFFF;
 constexpr int GANG_ZONE_POOL_SIZE = 1024;
 constexpr int MAX_STREAMED_PLAYERS = 200;
 constexpr int MAX_STREAMED_ACTORS = 50;
+constexpr int MAX_STREAMED_VEHICLES = 700;
 
 enum PlayerMarkerMode {
     PlayerMarkerMode_Off,

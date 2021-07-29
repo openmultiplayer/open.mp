@@ -1361,13 +1361,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             Player& player = self.storage.get(pid);
             IVehicle& vehicle = self.vehiclesPlugin->get(passengerSync.VehicleID);
             if (vehicle.isRespawning()) return false;
+            vehicle.updateFromPassengerSync(passengerSync, peer);
 
-            if (player.getState() != PlayerState_Passenger) {
-                IPlayerVehicleData* data = peer.queryData<IPlayerVehicleData>();
-                data->setVehicle(&vehicle);
-                data->setSeat(passengerSync.SeatID);
-                vehicle.setBeenOccupied(true);
-            }
             player.pos_ = passengerSync.Position;
             uint32_t newKeys;
             switch (passengerSync.AdditionalKey) {

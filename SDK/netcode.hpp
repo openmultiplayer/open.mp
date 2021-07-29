@@ -236,7 +236,7 @@ namespace NetCode {
 			uint8_t Unknown1;
 			Vector3 Spawn;
 			float ZAngle;
-			NetworkArray<uint8_t> Weapons;
+			NetworkArray<uint32_t> Weapons;
 			NetworkArray<uint32_t> Ammos;
 
 			bool read(INetworkBitStream& bs) {
@@ -249,7 +249,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Unknown1));
 				bs.write(NetworkBitStreamValue::VEC3(Spawn));
 				bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
-				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(Weapons));
+				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Weapons));
 				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
 			}
 		};
