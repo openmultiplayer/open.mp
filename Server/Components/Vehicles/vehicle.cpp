@@ -2,9 +2,16 @@
 #include <vehicle_components.hpp>
 
 void Vehicle::streamInForPlayer(IPlayer& player) {
-    if (streamedPlayers_.valid(player.getID())) {
+    if (streamedFor_.valid(player.getID())) {
         return;
     }
+
+    int& numStreamed = player.queryData<PlayerVehicleData>()->numStreamed;
+    if (numStreamed > MAX_STREAMED_VEHICLES) {
+        return;
+    }
+
+    ++numStreamed;
 
     NetCode::RPC::StreamInVehicle streamIn;
     streamIn.VehicleID = poolID;
@@ -33,10 +40,10 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         player.sendRPC(plateRPC);
     }
 
-    if (trailerOrTower && !towing) {
+    if (tower && !towing) {
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
-        trailerRPC.VehicleID = trailerOrTower->getID();
+        trailerRPC.VehicleID = tower->getID();
         player.sendRPC(trailerRPC);
     }
 
@@ -46,22 +53,34 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
         vehicleRPC.params = params;
         player.sendRPC(vehicleRPC);
     }
-    streamedPlayers_.add(player.getID(), player);
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamIn, *this, player);
+    streamedFor_.add(player.getID(), player);
+
+    ScopedPoolReleaseLock lock(*pool, *this);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
+
     respawning = false;
 }
 
 void Vehicle::streamOutForPlayer(IPlayer& player) {
     int id = player.getID();
-    if (!streamedPlayers_.valid(id)) {
+    if (!streamedFor_.valid(id)) {
         return;
     }
 
+    streamedFor_.remove(id, player);
+    streamOutForClient(player);
+}
+
+void Vehicle::streamOutForClient(IPlayer& player) {
     NetCode::RPC::StreamOutVehicle streamOut;
     streamOut.VehicleID = poolID;
     player.sendRPC(streamOut);
-    streamedPlayers_.remove(id, player);
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamOut, *this, player);
+
+    PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+    --data->numStreamed;
+
+    ScopedPoolReleaseLock lock(*pool, *this);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
 }
 
 bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
@@ -93,23 +112,25 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     if (driver != &player) {
         driver = &player;
         beenOccupied = true;
-        IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-        if (data->getVehicle()) {
-            data->getVehicle()->setDriver(nullptr);
+        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+        Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
+        if (vehicle) {
+            vehicle->driver = nullptr;
         }
-        data->setVehicle(this);
-        data->setSeat(0);
+
+        data->vehicle = this;
+        data->seat = 0;
     }
     return true;
 }
 
 bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) {
-    if ((isTrailer() && trailerOrTower->getDriver() != nullptr && trailerOrTower->getDriver() != &player) || respawning) {
+    if ((isTrailer() && tower->getDriver() != nullptr && tower->getDriver() != &player) || respawning) {
         return false;
     }
     else if (!unoccupiedSync.SeatID) {
         float playerDistance = glm::distance(player.getPosition(), pos);
-        auto& entries = streamedPlayers_.entries();
+        auto& entries = streamedFor_.entries();
         for (IPlayer* comparable : entries) {
             if (comparable == &player) {
                 continue;
@@ -130,9 +151,9 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
             return handler->onUnoccupiedVehicleUpdate(*this, player, data);
         });
 
-    if (trailerOrTower && !towing) {
-        trailerOrTower->detachTrailer();
-        trailerOrTower = nullptr;
+    if (tower && !towing) {
+        tower->detachTrailer();
+        tower = nullptr;
         detaching = true;
     }
     if (allowed) {
@@ -144,7 +165,7 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
 }
 
 bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& trailerSync, IPlayer& player) {
-    if (!streamedPlayers_.valid(player.getID())) {
+    if (!streamedFor_.valid(player.getID())) {
         return false;
     }
 
@@ -156,20 +177,20 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     if (!vehicle) {
         return false;
     }
-    else if (trailerOrTower != vehicle && !detaching) {
-        trailerOrTower = vehicle;
-        trailerOrTower->attachTrailer(*this);
+    else if (tower != vehicle && !detaching) {
+        tower = static_cast<Vehicle*>(vehicle);
+        tower->attachTrailer(*this);
         towing = false;
     }
-    
-    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
+
+    auto now = std::chrono::steady_clock::now();
     if (now - trailerUpdateTime > std::chrono::seconds(15)) {
         // For some reason if the trailer gets disattached on the recievers side, and not on the driver's side
         // SA:MP will fail to reattach it, so we have to call the attach RPC again.
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
         trailerRPC.VehicleID = player.queryData<IPlayerVehicleData>()->getVehicle()->getID();
-        for (IPlayer* otherplayers : streamedPlayers_.entries()) {
+        for (IPlayer* otherplayers : streamedFor_.entries()) {
             if (otherplayers == &player) {
                 continue;
             }
@@ -184,13 +205,24 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     return allowed;
 }
 
+bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player) {
+    if (player.getState() != PlayerState_Passenger) {
+        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+        data->vehicle = this;
+        data->seat = passengerSync.SeatID;
+        setBeenOccupied(true);
+        return true;
+    }
+    return false;
+}
+
 void Vehicle::setPlate(StringView plate) {
     numberPlate = plate;
     NetCode::RPC::SetVehiclePlate plateRPC;
     plateRPC.VehicleID = poolID;
     plateRPC.plate = numberPlate;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(plateRPC);
     }
 }
@@ -210,7 +242,7 @@ void Vehicle::setColour(int col1, int col2) {
     colourRPC.Arg1 = col1;
     colourRPC.Arg2 = col2;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(colourRPC);
     }
 }
@@ -229,10 +261,11 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
     damageStatus.LightStatus = lightDamage;
 
     if (vehicleUpdater) {
-        eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, *this, *vehicleUpdater);
+        ScopedPoolReleaseLock lock(*pool, *this);
+        eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, lock.entry, *vehicleUpdater);
     }
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         if (player != vehicleUpdater) {
             player->sendRPC(damageStatus);
         }
@@ -254,7 +287,7 @@ void Vehicle::setPaintJob(int paintjob) {
     paintRPC.VehicleID = poolID;
     paintRPC.Arg1 = paintjob;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(paintRPC);
     }
 }
@@ -278,7 +311,7 @@ void Vehicle::addComponent(int component) {
     modRPC.VehicleID = poolID;
     modRPC.Arg1 = component;
 
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(modRPC);
     }
 }
@@ -303,14 +336,14 @@ void Vehicle::removeComponent(int component) {
     NetCode::RPC::RemoveVehicleComponent modRPC;
     modRPC.VehicleID = poolID;
     modRPC.Component = component;
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(modRPC);
     }
 }
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID) {
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
-    player.queryData<IPlayerVehicleData>()->setVehicle(this);
+    player.queryData<PlayerVehicleData>()->vehicle = this;
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
     player.sendRPC(putPlayerInVehicleRPC);
@@ -321,7 +354,7 @@ void Vehicle::setHealth(float Health) {
     NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
     setVehicleHealthRPC.VehicleID = poolID;
     setVehicleHealthRPC.health = Health;
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(setVehicleHealthRPC);
     }
 }
@@ -331,7 +364,7 @@ void Vehicle::setInterior(int InteriorID) {
     NetCode::RPC::LinkVehicleToInterior linkVehicleToInteriorRPC;
     linkVehicleToInteriorRPC.VehicleID = poolID;
     linkVehicleToInteriorRPC.InteriorID = InteriorID;
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(linkVehicleToInteriorRPC);
     }
 }
@@ -350,7 +383,7 @@ void Vehicle::setZAngle(float angle) {
     NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
     setVehicleZAngleRPC.VehicleID = poolID;
     setVehicleZAngleRPC.angle = angle;
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(setVehicleZAngleRPC);
     }
 }
@@ -365,14 +398,14 @@ void Vehicle::setParams(VehicleParams params) {
     NetCode::RPC::SetVehicleParams vehicleRPC;
     vehicleRPC.VehicleID = poolID;
     vehicleRPC.params = params;
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(vehicleRPC);
     }
 }
 
 // Set the vehicle's parameters for a specific player.
 void Vehicle::setParamsForPlayer(IPlayer& player, VehicleParams params) {
-    if (!streamedPlayers_.valid(player.getID())) {
+    if (!streamedFor_.valid(player.getID())) {
         return;
     }
 
@@ -391,7 +424,7 @@ void Vehicle::setPosition(Vector3 position) {
     NetCode::RPC::SetVehiclePosition setVehiclePosition;
     setVehiclePosition.VehicleID = poolID;
     setVehiclePosition.position = position;
-    for (IPlayer* player : streamedPlayers_.entries()) {
+    for (IPlayer* player : streamedFor_.entries()) {
         player->sendRPC(setVehiclePosition);
     }
 }
@@ -402,8 +435,9 @@ Vector3 Vehicle::getPosition() const {
 
 void Vehicle::setDead(IPlayer& killer) {
     dead = true;
-    timeOfDeath = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::high_resolution_clock::now().time_since_epoch());
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDeath, *this, killer);
+    timeOfDeath = std::chrono::steady_clock::now();
+    ScopedPoolReleaseLock lock(*pool, *this);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
 }
 
 bool Vehicle::isDead() {
@@ -412,10 +446,11 @@ bool Vehicle::isDead() {
 
 void Vehicle::respawn() {
     respawning = true;
-    auto entries = streamedPlayers_.entries();
+    const auto& entries = streamedFor_.entries();
     for (IPlayer* player : entries) {
-        streamOutForPlayer(*player);
+        streamOutForClient(*player);
     }
+    streamedFor_.clear();
 
     dead = false;
     pos = spawnData.position;
@@ -423,8 +458,8 @@ void Vehicle::respawn() {
     bodyColour2 = -1;
     rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     beenOccupied = false;
-    lastOccupied = std::chrono::seconds(-1);
-    timeOfDeath = std::chrono::seconds(-1);
+    lastOccupied = std::chrono::steady_clock::time_point();
+    timeOfDeath = std::chrono::steady_clock::time_point();
     mods.fill(0);
     doorDamage = 0;
     tyreDamage = 0;
@@ -434,16 +469,16 @@ void Vehicle::respawn() {
     doorsLocked = 0;
     health = 1000.0f;
     driver = nullptr;
-    trailerOrTower = nullptr;
+    trailer = nullptr;
+    tower = nullptr;
     towing = false;
     params = VehicleParams{};
 
-   
-
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleSpawn, *this);
+    ScopedPoolReleaseLock lock(*pool, *this);
+    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
 }
 
-int Vehicle::getRespawnDelay() {
+std::chrono::seconds Vehicle::getRespawnDelay() {
     return spawnData.respawnDelay;
 }
 
@@ -451,37 +486,29 @@ bool Vehicle::hasBeenOccupied() {
     return beenOccupied;
 }
 
-std::chrono::milliseconds Vehicle::getDeathTime() {
-    return timeOfDeath;
-}
-
-std::chrono::milliseconds Vehicle::getLastOccupiedTime() {
-    return lastOccupied;
-}
-
 void Vehicle::attachTrailer(IVehicle& trailer) {
-    trailerOrTower = &trailer;
+    this->trailer = static_cast<Vehicle*>(&trailer);
     towing = true;
-    trailer.setTower(this);
+    this->trailer->setTower(this);
     NetCode::RPC::AttachTrailer trailerRPC;
-    trailerRPC.TrailerID = trailer.getID();
+    trailerRPC.TrailerID = this->trailer->poolID;
     trailerRPC.VehicleID = poolID;
-    auto entries = streamedPlayers_.entries();
+    const auto& entries = streamedFor_.entries();
     for (IPlayer* player : entries) {
         player->sendRPC(trailerRPC);
     }
 }
 
 void Vehicle::detachTrailer() {
-    if (trailerOrTower && towing) {
+    if (trailer && towing) {
         NetCode::RPC::DetachTrailer trailerRPC;
         trailerRPC.VehicleID = poolID;
-        auto entries = streamedPlayers_.entries();
+        const auto& entries = streamedFor_.entries();
         for (IPlayer* player : entries) {
             player->sendRPC(trailerRPC);
         }
-        trailerOrTower->setTower(nullptr);
-        trailerOrTower = nullptr;
+        trailer->setTower(nullptr);
+        trailer = nullptr;
     }
 }
 

@@ -17,5 +17,5 @@ add_subdirectory(Console)
 add_subdirectory(GangZones)
 add_subdirectory(Timers)
 
-add_subdirectory(TestComponent)
-#add_subdirectory(Rivershell)
+#add_subdirectory(TestComponent)
+add_subdirectory(Rivershell)

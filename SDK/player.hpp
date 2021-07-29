@@ -153,6 +153,21 @@ struct WeaponSlotData {
 	uint8_t id;
 	uint32_t ammo;
 
+	WeaponSlotData() :
+		id(0),
+		ammo(0)
+	{}
+
+	WeaponSlotData(uint8_t id) :
+		id(id),
+		ammo(0)
+	{}
+
+	WeaponSlotData(uint8_t id, uint32_t ammo) :
+		id(id),
+		ammo(ammo)
+	{}
+
 	uint8_t slot()
 	{
 		static const uint8_t slots[] = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 10, 10, 10, 10, 8, 8, 8, INVALID_WEAPON_SLOT, INVALID_WEAPON_SLOT, INVALID_WEAPON_SLOT, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 4, 6, 6, 7, 7, 7, 7, 8, 12, 9, 9, 9, 11, 11, 11 };
