@@ -29,6 +29,12 @@ constexpr int TEXT_LABEL_POOL_SIZE = 1024;
 constexpr int PICKUP_POOL_SIZE = 4096;
 constexpr int GLOBAL_TEXTDRAW_POOL_SIZE = 2048;
 constexpr int PLAYER_TEXTDRAW_POOL_SIZE = 256;
+constexpr int MAX_VEHICLE_COMPONENTS = 194;
+constexpr int INVALID_COMPONENT_ID = 0;
+constexpr int MAX_VEHICLE_COMPONENT_SLOT = 14;
+constexpr int MAX_TEXT_LABELS = 1024;
+constexpr int MAX_GLOBAL_TEXTDRAWS = 2048;
+constexpr int MAX_PLAYER_TEXTDRAWS = 256;
 constexpr int INVALID_TEXTDRAW = 0xFFFF;
 constexpr int ACTOR_POOL_SIZE = 1000;
 constexpr int MENU_POOL_SIZE = 128;
@@ -39,6 +45,7 @@ constexpr int DIALOG_INVALID_ID = 0xFFFF;
 constexpr int GANG_ZONE_POOL_SIZE = 1024;
 constexpr int MAX_STREAMED_PLAYERS = 200;
 constexpr int MAX_STREAMED_ACTORS = 50;
+constexpr int MAX_STREAMED_VEHICLES = 700;
 
 enum PlayerMarkerMode {
     PlayerMarkerMode_Off,
