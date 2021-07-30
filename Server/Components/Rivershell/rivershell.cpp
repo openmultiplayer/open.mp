@@ -88,30 +88,30 @@ struct RivershellMode :
 		}
 	};
 
-	bool moveIfNotBalanced(IPlayer& player, int team) {
-		int greenCount = 5;
+	bool moveIfNotBalanced(IPlayer& target, int team) {
+		int greenCount = 0;
 		int blueCount = 0;
 
 		for (IPlayer* player : c->getPlayers().entries()) {
-			if (player->getTeam() == TEAM_GREEN) {
+			if (player->getTeam() == TEAM_GREEN && player->getState() != PlayerState_None && player != &target) {
 				greenCount++;
 			}
-			else if (player->getTeam() == TEAM_BLUE) {
+			else if (player->getTeam() == TEAM_BLUE && player->getState() != PlayerState_None && player != &target) {
 				blueCount++;
 			}
 		}
 
-		player.queryData<RivershellPlayerData>()->alreadyBalanceTeam = true;
+		target.queryData<RivershellPlayerData>()->alreadyBalanceTeam = true;
 		if (greenCount > blueCount && team == TEAM_GREEN) {
-			player.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(1));
-			player.sendClientMessage(Colour::White(), "You have been moved to the {0000FF}blue{FFFFFF} team for balance.");
-			timers->create(new ForceSpawnTimer(&player), std::chrono::milliseconds(500), false);
+			target.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(3));
+			target.sendClientMessage(Colour::White(), "You have been moved to the {0000FF}blue{FFFFFF} team for balance.");
+			timers->create(new ForceSpawnTimer(&target), std::chrono::milliseconds(500), false);
 			return true;
 		}
 		else if (blueCount > greenCount && team == TEAM_BLUE) {
-			player.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(1));
-			player.sendClientMessage(Colour::White(), "You have been moved to the {00FF00}green{FFFFFF} team for balance.");
-			timers->create(new ForceSpawnTimer(&player), std::chrono::milliseconds(500), false);
+			target.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(1));
+			target.sendClientMessage(Colour::White(), "You have been moved to the {00FF00}green{FFFFFF} team for balance.");
+			timers->create(new ForceSpawnTimer(&target), std::chrono::milliseconds(500), false);
 			return true;
 		}
 
@@ -155,7 +155,12 @@ struct RivershellMode :
 		VehicleParams objective;
 		objective.objective = 1;
 
-		if (&vehicle == blueObjectiveVehicle || &vehicle == greenObjectiveVehicle) {
+		if (&vehicle == blueObjectiveVehicle) {
+			objective.doors = player.getTeam() == TEAM_BLUE ? 0 : 1;
+			vehicle.setParamsForPlayer(player, objective);
+		}
+		else if (&vehicle == greenObjectiveVehicle) {
+			objective.doors = player.getTeam() == TEAM_GREEN ? 0 : 1;
 			vehicle.setParamsForPlayer(player, objective);
 		}
 	}
