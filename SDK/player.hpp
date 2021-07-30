@@ -114,7 +114,7 @@ static const StringView BodyPartString[] = {
 
 struct PlayerKeyData {
 	// todo fill with union
-	uint16_t keys;
+	uint32_t keys;
 	uint16_t upDown;
 	uint16_t leftRight;
 };
@@ -152,6 +152,21 @@ struct PlayerSurfingData {
 struct WeaponSlotData {
 	uint8_t id;
 	uint32_t ammo;
+
+	WeaponSlotData() :
+		id(0),
+		ammo(0)
+	{}
+
+	WeaponSlotData(uint8_t id) :
+		id(id),
+		ammo(0)
+	{}
+
+	WeaponSlotData(uint8_t id, uint32_t ammo) :
+		id(id),
+		ammo(ammo)
+	{}
 
 	uint8_t slot()
 	{
@@ -443,6 +458,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	// Send a command to server (Player)
 	virtual void sendCommand(StringView message) const = 0;
 
+	// Send a game text message to the player
+	virtual void sendGameText(StringView message, int time, int style) const = 0;
+
 	/// Set the player's weather
 	virtual void setWeather(int weatherID) = 0;
 
@@ -532,6 +550,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the actor the player is targeting or nullptr if none
 	virtual IActor* getTargetActor() = 0;
 
+	/// Disable remote vehicle collision detection for this player.
+	virtual void setRemoteVehicleCollisions(bool collide) = 0;
+
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>
@@ -594,6 +615,7 @@ struct PlayerEventHandler {
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
+	virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) {}
 };
 
 struct PlayerUpdateEventHandler {

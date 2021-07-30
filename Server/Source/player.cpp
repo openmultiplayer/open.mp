@@ -149,8 +149,10 @@ IActor* Player::getTargetActor() {
 }
 
 void Player::setState(PlayerState state) {
-    pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
-    state_ = state;
+    if (state_ != state) {
+        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
+        state_ = state;
+    }
 }
 
 void Player::setScore(int score) {

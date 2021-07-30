@@ -40,14 +40,14 @@ struct PlayerClassData final : IPlayerClassData {
         }
         else {
             const WeaponSlots& weapons = info.weapons;
-            StaticArray<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+            StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
             StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
             NetCode::RPC::SetSpawnInfo setSpawnInfoRPC;
             setSpawnInfoRPC.TeamID = info.team;
             setSpawnInfoRPC.ModelID = info.skin;
             setSpawnInfoRPC.Spawn = info.spawn;
             setSpawnInfoRPC.ZAngle = info.angle;
-            setSpawnInfoRPC.Weapons = NetworkArray<uint8_t>(weaponIDsArray);
+            setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
             setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
             player.sendRPC(setSpawnInfoRPC);

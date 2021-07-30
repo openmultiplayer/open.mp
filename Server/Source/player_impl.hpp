@@ -658,6 +658,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(sendChatMessage);
     }
     
+    void sendGameText(StringView message, int time, int style) const override {
+        NetCode::RPC::SendGameText gameText;
+        gameText.Time = time;
+        gameText.Style = style;
+        gameText.Text = message;
+        sendRPC(gameText);
+    }
+
     int getVirtualWorld() const override {
         return virtualWorld_;
     }
@@ -710,6 +718,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     IActor* getTargetActor() override;
 
+    void setRemoteVehicleCollisions(bool collide) override {
+        NetCode::RPC::DisableRemoteVehicleCollisions collisionsRPC;
+        collisionsRPC.Disable = !collide;
+        sendRPC(collisionsRPC);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
@@ -742,7 +756,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 [&peer](PlayerEventHandler* handler) {
                     return handler->onRequestSpawn(peer);
                 }
-            );
+            ) ? 1 : 0;
 
             peer.sendRPC(playerRequestSpawnResponse);
             return true;
@@ -1008,7 +1022,28 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             footSync.Rotation *= player.rotTransform_;
             player.pos_ = footSync.Position;
             player.rot_ = footSync.Rotation;
-            player.keys_.keys = footSync.Keys;
+            uint32_t newKeys;
+            switch (footSync.AdditionalKey) {
+            case 1:
+                newKeys = footSync.Keys | 65536; // KEY_YES
+                break;
+            case 2:
+                newKeys = footSync.Keys | 131072; // KEY_NO
+                break;
+            case 3:
+                newKeys = footSync.Keys | 262144; // KEY_CTRL_BACK
+                break;
+            default:
+                newKeys = footSync.Keys;
+                break;
+            }
+            if (player.keys_.keys != newKeys) {
+                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
+                });
+            }
+
+            player.keys_.keys = newKeys;
             player.keys_.leftRight = footSync.LeftRight;
             player.keys_.upDown = footSync.UpDown;
             player.health_ = footSync.HealthArmour.x;
@@ -1199,15 +1234,37 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
 
             Player& player = static_cast<Player&>(peer);
             player.pos_ = vehicleSync.Position;
-            player.keys_.keys = vehicleSync.Keys;
+            uint32_t newKeys;
+            switch (vehicleSync.AdditionalKey) {
+                case 1:
+                    newKeys = vehicleSync.Keys | 65536; // KEY_YES
+                    break;
+                case 2:
+                    newKeys = vehicleSync.Keys | 131072; // KEY_NO
+                    break;
+                case 3:
+                    newKeys = vehicleSync.Keys | 262144; // KEY_CTRL_BACK
+                    break;
+                default:
+                    newKeys = vehicleSync.Keys;
+                    break;
+            }
+
+            if (player.keys_.keys != newKeys) {
+                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
+                });
+            }
+            player.keys_.keys = newKeys;
             player.keys_.leftRight = vehicleSync.LeftRight;
             player.keys_.upDown = vehicleSync.UpDown;
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
+            bool vehicleOk = self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player);
             player.setState(PlayerState_Driver);
 
-            if (self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync)) {
+            if (vehicleOk) {
                 vehicleSync.PlayerID = player.poolID;
 
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
@@ -1288,6 +1345,126 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
 
         return &player;
     }
+
+    struct PlayerPassengerSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerPassengerSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerPassengerSync passengerSync;
+
+            if (!self.vehiclesPlugin || !passengerSync.read(bs) || !self.vehiclesPlugin->valid(passengerSync.VehicleID)) {
+                return false;
+            }
+
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            IVehicle& vehicle = self.vehiclesPlugin->get(passengerSync.VehicleID);
+            if (vehicle.isRespawning()) return false;
+            vehicle.updateFromPassengerSync(passengerSync, peer);
+
+            player.pos_ = passengerSync.Position;
+            uint32_t newKeys;
+            switch (passengerSync.AdditionalKey) {
+            case 1:
+                newKeys = passengerSync.Keys | 65536; // KEY_YES
+                break;
+            case 2:
+                newKeys = passengerSync.Keys | 131072; // KEY_NO
+                break;
+            case 3:
+                newKeys = passengerSync.Keys | 262144; // KEY_CTRL_BACK
+                break;
+            default:
+                newKeys = passengerSync.Keys;
+                break;
+            }
+            if (player.keys_.keys != newKeys) {
+                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
+                });
+            }
+            player.keys_.keys = newKeys;
+            player.keys_.leftRight = passengerSync.LeftRight;
+            player.keys_.upDown = passengerSync.UpDown;
+            player.health_ = passengerSync.HealthArmour.x;
+            player.armour_ = passengerSync.HealthArmour.y;
+            player.armedWeapon_ = passengerSync.WeaponID;
+            player.setState(PlayerState_Passenger);
+
+            passengerSync.PlayerID = pid;
+            bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+                [&peer](PlayerUpdateEventHandler* handler) {
+                    return handler->onUpdate(peer);
+                });
+
+            if (allowedupdate) {
+                player.broadcastPacketToStreamed(passengerSync);
+            }
+            return true;
+        }
+    } playerPassengerSyncHandler;
+
+    struct PlayerUnoccupiedSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerUnoccupiedSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync;
+
+            if (!self.vehiclesPlugin || !unoccupiedSync.read(bs) || !self.vehiclesPlugin->valid(unoccupiedSync.VehicleID)) {
+                return false;
+            }
+
+            Player& player = static_cast<Player&>(peer);
+            IVehicle& vehicle = self.vehiclesPlugin->get(unoccupiedSync.VehicleID);
+
+            if (vehicle.getDriver()) {
+                return false;
+            }
+            else if (!vehicle.isStreamedInForPlayer(peer)) {
+                return false;
+            }
+            else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || peer.queryData<IPlayerVehicleData>()->getVehicle() != &vehicle)) {
+                return false;
+            }
+            
+            if (vehicle.updateFromUnoccupied(unoccupiedSync, peer)) {
+                unoccupiedSync.PlayerID = player.getID();
+                player.broadcastPacketToStreamed(unoccupiedSync);
+            }
+            return true;
+        }
+    } playerUnoccupiedSyncHandler;
+
+    struct PlayerTrailerSyncHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerTrailerSyncHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerTrailerSync trailerSync;
+
+            if (!self.vehiclesPlugin || !trailerSync.read(bs) || !self.vehiclesPlugin->valid(trailerSync.VehicleID)) {
+                return false;
+            }
+            
+            int pid = peer.getID();
+            Player& player = self.storage.get(pid);
+            IVehicle& vehicle = self.vehiclesPlugin->get(trailerSync.VehicleID);
+            PlayerState state = player.getState();
+            if (state != PlayerState_Driver || peer.queryData<IPlayerVehicleData>()->getVehicle() == nullptr) {
+                return false;
+            }
+            else if (vehicle.getDriver() != nullptr) {
+                return false;
+            }
+            
+            if (vehicle.updateFromTrailerSync(trailerSync, peer)) {
+                player.broadcastPacketToStreamed(trailerSync);
+            }
+            return true;
+        }
+    } playerTrailerSyncHandler;
 
     bool valid(int index) const override {
         return storage.valid(index);
@@ -1433,7 +1610,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
         playerVehicleSyncHandler(*this),
-        playerWeaponsUpdateHandler(*this)
+        playerWeaponsUpdateHandler(*this),
+        playerPassengerSyncHandler(*this),
+        playerUnoccupiedSyncHandler(*this),
+        playerTrailerSyncHandler(*this)
     {}
 
     bool isNameTaken(StringView name, const OptionalPlayer skip) override {
@@ -1480,6 +1660,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
 
         vehiclesPlugin = plugins.queryPlugin<IVehiclesPlugin>();
@@ -1543,7 +1726,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
+        core.removePerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
         core.removeNetworkEventHandler(this);
     }
 };
