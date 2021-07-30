@@ -93,10 +93,11 @@ struct RivershellMode :
 		int blueCount = 0;
 
 		for (IPlayer* player : c->getPlayers().entries()) {
-			if (player->getTeam() == TEAM_GREEN && player->getState() != PlayerState_None && player != &target) {
+			bool balanced = player->queryData<RivershellPlayerData>()->alreadyBalanceTeam;
+			if (player->getTeam() == TEAM_GREEN && balanced && player != &target) {
 				greenCount++;
 			}
-			else if (player->getTeam() == TEAM_BLUE && player->getState() != PlayerState_None && player != &target) {
+			else if (player->getTeam() == TEAM_BLUE && balanced && player != &target) {
 				blueCount++;
 			}
 		}
