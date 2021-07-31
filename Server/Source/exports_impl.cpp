@@ -1,5 +1,5 @@
 #include <exports.hpp>
-#include <malloc.h>
+#include <stdlib.h>
 #include <cstddef>
 
 void* omp_malloc(size_t size) {
