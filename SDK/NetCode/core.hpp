@@ -1047,6 +1047,16 @@ namespace NetCode {
 				return bs.read<NetworkBitStreamValueType::VEC3>(Pos);
 			}
 		};
+
+		struct OnPlayerClickPlayer final : NetworkPacketBase<23> {
+			int PlayerID;
+			uint8_t Source;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
+				return bs.read<NetworkBitStreamValueType::UINT8>(Source);
+			}
+		};
 	}
 
 	namespace Packet {
