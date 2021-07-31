@@ -459,7 +459,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void sendCommand(StringView message) const = 0;
 
 	// Send a game text message to the player
-	virtual void sendGameText(StringView message, int time, int style) const = 0;
+	virtual void sendGameText(StringView message, std::chrono::milliseconds time, int style) const = 0;
 
 	/// Set the player's weather
 	virtual void setWeather(int weatherID) = 0;
