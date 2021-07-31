@@ -9,17 +9,27 @@
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
-#include <nlohmann/json.hpp>
 #include <absl/strings/string_view.h>
 #include <absl/container/flat_hash_set.h>
 #include <absl/container/flat_hash_map.h>
+#include <absl/types/span.h>
+#include <absl/types/variant.h>
+#include <absl/types/optional.h>
 #include "exports.hpp"
 
 typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
 typedef glm::vec4 Vector4;
-typedef nlohmann::json JSON;
 typedef uint64_t UUID;
+
+template <typename ...Args>
+using Variant = absl::variant<Args...>;
+
+template <typename T>
+using Optional = absl::optional<T>;
+
+template <typename T>
+using Span = absl::Span<T>;
 
 /// Don't pass String around the SDK, only StringView
 using String = std::string;

@@ -138,12 +138,6 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 		data->setMenuID(INVALID_MENU_ID);
 	}
 
-	void resetForPlayer(IPlayer & player) override {
-		if (initedFor_.valid(player.getID())) {
-			initedFor_.remove(player.getID(), player);
-		}
-	}
-
 	int getID() const override {
 		return poolID;
 	}

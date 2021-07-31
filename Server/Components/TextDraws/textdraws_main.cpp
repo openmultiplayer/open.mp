@@ -166,7 +166,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         playerSelectTextDrawEventHandler(*this)
     {}
 
-    void onInit(ICore* c) override {
+    void onLoad(ICore* c) override {
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);

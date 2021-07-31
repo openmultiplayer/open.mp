@@ -15,5 +15,7 @@ add_subdirectory(Variables)
 add_subdirectory(Dialogs)
 add_subdirectory(Console)
 add_subdirectory(GangZones)
+add_subdirectory(Timers)
 
-add_subdirectory(TestComponent)
+#add_subdirectory(TestComponent)
+add_subdirectory(Rivershell)

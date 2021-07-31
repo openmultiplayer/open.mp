@@ -3,7 +3,6 @@
 #include <string>
 #include <array>
 #include <vector>
-#include <variant>
 #include <cassert>
 #include "plugin.hpp"
 #include "types.hpp"
@@ -209,7 +208,7 @@ struct NetworkBitStreamValue {
 
 	NetworkBitStreamValueType type; ///< The type of the value
 
-	using Variant = std::variant<
+	using DataVariant = Variant<
 		bool,
 		uint8_t,
 		uint16_t,
@@ -231,7 +230,7 @@ struct NetworkBitStreamValue {
 		GTAQuat
 	>;
 
-	Variant data; ///< The union which holds all possible data types
+	DataVariant data; ///< The union which holds all possible data types
 
 	// Constructors
 	NBSVCONS(BIT, bool);
@@ -308,7 +307,7 @@ struct INetworkBitStream {
 		if (!read(input)) {
 			return false;
 		}
-		output = std::get<NetworkBitStreamValue::DataTypeFromNetworkType<NetworkType>>(input.data);
+		output = absl::get<NetworkBitStreamValue::DataTypeFromNetworkType<NetworkType>>(input.data);
 		return true;
 	}
 };
