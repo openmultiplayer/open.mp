@@ -368,7 +368,6 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
                     const PlayerState state = player->getState();
                     const Vector2 dist2D = vehicle->pos - player->getPosition();
                     const bool shouldBeStreamedIn =
-                        state != PlayerState_Spectating &&
                         state != PlayerState_None &&
                         player->getVirtualWorld() == vehicle->virtualWorld_ &&
                         glm::dot(dist2D, dist2D) < maxDist;
