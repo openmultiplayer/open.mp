@@ -4,9 +4,6 @@
 [submodule "lib//pawn-natives"]
 	path = lib//pawn-natives
 	url = https://github.com/openmultiplayer/pawn-natives
-[submodule "lib/pawn-natives"]
-	path = lib/pawn-natives
-	url = https://github.com/openmultiplayer/pawn-natives
 [submodule "lib/cmake-conan"]
 	path = lib/cmake-conan
 	url = https://github.com/openmultiplayer/cmake-conan
