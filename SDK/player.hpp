@@ -106,6 +106,10 @@ enum MapIconStyle {
 	MapIconStyle_GlobalCheckpoint
 };
 
+enum PlayerClickSource {
+	PlayerClickSource_Scoreboard
+};
+
 static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
@@ -643,6 +647,7 @@ struct PlayerEventHandler {
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
 	virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) {}
 	virtual void onClickedMap(IPlayer& player, Vector3 pos) {}
+	virtual void onClickedPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) {}
 };
 
 struct PlayerUpdateEventHandler {
