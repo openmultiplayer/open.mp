@@ -3,7 +3,7 @@ project(open-mp LANGUAGES C CXX VERSION 0.0.1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
+if (NOT (${CMAKE_CXX_COMPILER_ID} STREQUAL Clang OR ${CMAKE_CXX_COMPILER_ID} STREQUAL AppleClang))
 	message(
 		FATAL_ERROR
 		"Clang is the only compiler officially supported for building."
@@ -31,8 +31,8 @@ elseif(UNIX)
 	else()
 		set(CMAKE_CXX_STDLIB "libc++" CACHE STRING "The standard library to use.")
 
-		set(CROSS_BUILD FALSE)
-		set(CROSS_BUILD_ARCH)
+		set(CROSS_BUILD TRUE CACHE BOOL "Whether to cross-build.")
+		set(CROSS_BUILD_ARCH "x86_64")
 
 		set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 		set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -46,7 +46,7 @@ elseif(UNIX)
 
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)
-		set(CMAKE_CXX_FLAGS "-march=${CROSS_BUILD_ARCH} ${CMAKE_CXX_FLAGS}")
+		set(CMAKE_CXX_FLAGS "-march=x86-64 ${CMAKE_CXX_FLAGS}")
 		message("Generating cross-build project for ${CROSS_BUILD_ARCH}.")
 	else()
 		set(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
