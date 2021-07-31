@@ -1190,7 +1190,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         PlayerSpectatorHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-        	NetCode::Packet::PlayerSpectatorSync spectatorSync;
+            NetCode::Packet::PlayerSpectatorSync spectatorSync;
             if (!spectatorSync.read(bs)) {
                 return false;
             }
@@ -1747,7 +1747,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         playerTextRPCHandler(*this),
         playerCommandRPCHandler(*this),
         playerFootSyncHandler(*this),
-	    playerSpectatorHandler(*this),
+        playerSpectatorHandler(*this),
         playerAimSyncHandler(*this),
         playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
