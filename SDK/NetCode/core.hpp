@@ -989,6 +989,64 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(Text));
 			}
 		};
+
+		struct SetPlayerGravity final : NetworkPacketBase<146> {
+			float Gravity;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::FLOAT(Gravity));
+			}
+		};
+
+		struct SetPlayerMapIcon final : NetworkPacketBase<56> {
+			int IconID;
+			Vector3 Pos;
+			uint8_t Type;
+			Colour Col;
+			uint8_t Style;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(IconID));
+				bs.write(NetworkBitStreamValue::VEC3(Pos));
+				bs.write(NetworkBitStreamValue::UINT8(Type));
+				bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+				bs.write(NetworkBitStreamValue::UINT8(Style));
+			}
+		};
+
+		struct RemovePlayerMapIcon final : NetworkPacketBase<144> {
+			int IconID;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(IconID));
+			}
+		};
+
+		struct ShowPlayerNameTagForPlayer final : NetworkPacketBase<80> {
+			int PlayerID;
+			bool Show;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(Show));
+			}
+		};
+
+		struct EnableStuntBonusForPlayer final : NetworkPacketBase<104> {
+			bool Enable;
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(Enable));
+			}
+		};
+
+		struct OnPlayerClickMap final : NetworkPacketBase<119> {
+			Vector3 Pos;
+
+			bool read(INetworkBitStream& bs) {
+				return bs.read<NetworkBitStreamValueType::VEC3>(Pos);
+			}
+		};
 	}
 
 	namespace Packet {

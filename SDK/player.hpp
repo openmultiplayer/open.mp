@@ -99,6 +99,13 @@ enum BodyPart {
 	BodyPart_Head
 };
 
+enum MapIconStyle {
+	MapIconStyle_Local,
+	MapIconStyle_Global,
+	MapIconStyle_LocalCheckpoint,
+	MapIconStyle_GlobalCheckpoint
+};
+
 static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
@@ -368,6 +375,18 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's money
 	virtual int getMoney() = 0;
 
+	/// Set a map icon for the player
+	virtual void setMapIcon(int id, Vector3 pos, int type, MapIconStyle style, Colour colour = Colour::White()) = 0;
+
+	/// Unset a map icon for the player
+	virtual void unsetMapIcon(int id) = 0;
+
+	/// Toggle stunt bonus for the player
+	virtual void toggleStuntBonus(bool toggle) = 0;
+
+	/// Toggle another player's name tag for the player
+	virtual void toggleOtherNameTag(IPlayer& other, bool toggle) = 0;
+
 	/// Set the player's game time
 	/// @param hr The hours from 0 to 23
 	/// @param min The minutes from 0 to 59
@@ -408,6 +427,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	
 	/// Get the player's armour
 	virtual float getArmour() const = 0;
+
+	/// Set the player's gravity
+	virtual void setGravity(float gravity) = 0;
 
 	/// Apply an animation to the player
 	/// @param animation The animation to apply
@@ -620,6 +642,7 @@ struct PlayerEventHandler {
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
 	virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) {}
+	virtual void onClickedMap(IPlayer& player, Vector3 pos) {}
 };
 
 struct PlayerUpdateEventHandler {
@@ -647,7 +670,11 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// sendGameText for all players
 	virtual void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) = 0;
 
+	/// sendDeathMessage for all players
 	virtual void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
+
+	/// createExplosion for all players
+	virtual void createExplosionForAll(Vector3 vec, int type, float radius) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
