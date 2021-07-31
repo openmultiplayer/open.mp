@@ -770,8 +770,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void spectatePlayer(IPlayer& target, PlayerSpectateMode mode) override {
-        setState(PlayerState_Spectating);
-
         // Set virtual world and interior to target's, consider this as a samp bug fix,
         // since in samp you have to do this manually yourself then call spectate functions
         setVirtualWorld(target.getVirtualWorld());
@@ -786,8 +784,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) override {
-        setState(PlayerState_Spectating);
-
         // Set virtual world and interior to target's, consider this as a samp bug fix,
         // since in samp you have to do this manually yourself then call spectate functions
         setVirtualWorld(target.getVirtualWorld());
