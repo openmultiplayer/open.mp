@@ -164,6 +164,28 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 		return "Classes";
 	}
 
+    PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override {
+        int freeIdx = storage.findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        int cid = storage.claim(freeIdx);
+        if (cid == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        PlayerClass& cls = storage.get(cid);
+        cls.skin = skin;
+        cls.team = team;
+        cls.spawn = spawn;
+        cls.angle = angle;
+        cls.weapons = weapons;
+        return &cls;
+    }
+
 	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
 		return new PlayerClassData(player, inClassRequest, skipDefaultClassRequest);
 	}
