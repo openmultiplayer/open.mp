@@ -8,6 +8,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     MarkedPoolStorage<Vehicle, IVehicle, VehiclePlugin::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
+    StreamConfigHelper streamConfigHelper;
 
     IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override {
         return eventDispatcher;
@@ -257,6 +258,7 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
         core->addPerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
         core->addPerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
         storage.claimUnusable(0);
+        streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override {
@@ -356,44 +358,46 @@ struct VehiclePlugin final : public IVehiclesPlugin, public CoreEventHandler, pu
     }
 
     void onTick(std::chrono::microseconds elapsed) override {
-        const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-        auto time = std::chrono::steady_clock::now();
-        for (IVehicle* v : storage.entries()) {
-            Vehicle* vehicle = static_cast<Vehicle*>(v);
-            bool occupied = false;
-            for (IPlayer* player : core->getPlayers().entries()) {
-                const PlayerState state = player->getState();
-                const Vector2 dist2D = vehicle->pos - player->getPosition();
-                const bool shouldBeStreamedIn =
-                    state != PlayerState_Spectating &&
-                    state != PlayerState_None &&
-                    player->getVirtualWorld() == vehicle->virtualWorld_ &&
-                    glm::dot(dist2D, dist2D) < maxDist;
+        const float maxDist = streamConfigHelper.getDistanceSqr();
+        const auto time = std::chrono::steady_clock::now();
+        if (streamConfigHelper.shouldStream(time)) {
+            for (IVehicle* v : storage.entries()) {
+                Vehicle* vehicle = static_cast<Vehicle*>(v);
+                bool occupied = false;
+                for (IPlayer* player : core->getPlayers().entries()) {
+                    const PlayerState state = player->getState();
+                    const Vector2 dist2D = vehicle->pos - player->getPosition();
+                    const bool shouldBeStreamedIn =
+                        state != PlayerState_Spectating &&
+                        state != PlayerState_None &&
+                        player->getVirtualWorld() == vehicle->virtualWorld_ &&
+                        glm::dot(dist2D, dist2D) < maxDist;
 
-                const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
-                if (!isStreamedIn && shouldBeStreamedIn) {
-                    vehicle->streamInForPlayer(*player);
-                }
-                else if (isStreamedIn && !shouldBeStreamedIn) {
-                    vehicle->streamOutForPlayer(*player);
-                }
+                    const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
+                    if (!isStreamedIn && shouldBeStreamedIn) {
+                        vehicle->streamInForPlayer(*player);
+                    }
+                    else if (isStreamedIn && !shouldBeStreamedIn) {
+                        vehicle->streamOutForPlayer(*player);
+                    }
 
-                if (!occupied && isStreamedIn && shouldBeStreamedIn) {
-                    PlayerState state = player->getState();
-                    if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
-                        occupied = player->queryData<IPlayerVehicleData>()->getVehicle() == vehicle;
+                    if (!occupied && isStreamedIn && shouldBeStreamedIn) {
+                        PlayerState state = player->getState();
+                        if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
+                            occupied = player->queryData<IPlayerVehicleData>()->getVehicle() == vehicle;
+                        }
                     }
                 }
-            }
 
-            if (vehicle->isDead() && vehicle->getRespawnDelay() != std::chrono::seconds(-1) && !occupied) {
-                if (time - vehicle->timeOfDeath >= std::chrono::seconds(vehicle->getRespawnDelay())) {
-                    vehicle->respawn();
+                if (vehicle->isDead() && vehicle->getRespawnDelay() != std::chrono::seconds(-1) && !occupied) {
+                    if (time - vehicle->timeOfDeath >= std::chrono::seconds(vehicle->getRespawnDelay())) {
+                        vehicle->respawn();
+                    }
                 }
-            }
-            else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != std::chrono::seconds(-1)) {
-                if (time - vehicle->lastOccupied >= std::chrono::seconds(vehicle->getRespawnDelay())) {
-                    vehicle->respawn();
+                else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != std::chrono::seconds(-1)) {
+                    if (time - vehicle->lastOccupied >= std::chrono::seconds(vehicle->getRespawnDelay())) {
+                        vehicle->respawn();
+                    }
                 }
             }
         }
