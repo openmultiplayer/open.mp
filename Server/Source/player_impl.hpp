@@ -1841,7 +1841,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
 
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerSpectatorHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerSpectatorSync>(&playerSpectatorHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
