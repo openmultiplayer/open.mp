@@ -228,9 +228,7 @@ struct RivershellMode :
 					greenObjectiveVehicle->respawn();
 
 				}
-				for (IPlayer* player : c->getPlayers().entries()) {
-					player->sendGameText(gameText, std::chrono::seconds(3), 5);
-				}
+				c->getPlayers().sendGameTextToAll(gameText, std::chrono::seconds(3), 5);
 			}
 			else if (vehicle == blueObjectiveVehicle && player.getTeam() == Team_Blue) {
 				StringView gameText;
@@ -243,28 +241,17 @@ struct RivershellMode :
 					gameText = "~b~BLUE ~w~team captured the ~y~boat~w~!";
 					blueObjectiveVehicle->respawn();
 				}
-				for (IPlayer* player : c->getPlayers().entries()) {
-					player->sendGameText(gameText, std::chrono::seconds(3), 5);
-				}
+				c->getPlayers().sendGameTextToAll(gameText, std::chrono::seconds(3), 5);
 			}
 		}
 	}
 
 	void onDeath(IPlayer& player, OptionalPlayer killer, int reason) override {
-		NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-		sendDeathMessageRPC.PlayerID = player.getID();
-		sendDeathMessageRPC.KillerID = INVALID_PLAYER_ID;
-		sendDeathMessageRPC.reason = reason;
+		c->getPlayers().sendDeathMessageToAll(player, killer, reason);
 		if (killer) {
-			sendDeathMessageRPC.KillerID = killer->get().getID();
-			c->getPlayers().broadcastRPCToAll(sendDeathMessageRPC);
-
 			if (killer->get().getTeam() != player.getTeam()) {
 				killer->get().setScore(killer->get().getScore() + 1);
 			}
-		}
-		else {
-			c->getPlayers().broadcastRPCToAll(sendDeathMessageRPC);
 		}
 	}
 

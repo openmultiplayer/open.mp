@@ -169,11 +169,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(createExplosionRPC);
     }
 
-    void sendDeathMessage(int PlayerID, int KillerID, int reason) override {
+    void sendDeathMessage(IPlayer& player, OptionalPlayer killer, int weapon) override {
         NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-        sendDeathMessageRPC.PlayerID = PlayerID;
-        sendDeathMessageRPC.KillerID = KillerID;
-        sendDeathMessageRPC.reason = reason;
+        sendDeathMessageRPC.PlayerID = player.getID();
+        sendDeathMessageRPC.HasKiller = killer.has_value();
+        if (killer) {
+            sendDeathMessageRPC.KillerID = killer->get().getID();
+        }
+        sendDeathMessageRPC.reason = weapon;
         sendRPC(sendDeathMessageRPC);
     }
 
@@ -431,6 +434,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void setColour(Colour colour) override;
+
+    void setOtherColour(IPlayer& other, Colour colour) override {
+        NetCode::RPC::SetPlayerColor RPC;
+        RPC.PlayerID = other.getID();
+        RPC.Col = colour;
+        sendRPC(RPC);
+    }
 
     virtual void setWantedLevel(unsigned level) override {
         wantedLevel_ = level;
@@ -973,10 +983,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                     }
                 }
                 else {
-                    NetCode::RPC::PlayerChatMessage playerChatMessage;
-                    playerChatMessage.PlayerID = peer.getID();
-                    playerChatMessage.message = StringView(filteredMessage);
-                    self.broadcastRPCToAll(playerChatMessage);
+                    self.sendChatMessageToAll(peer, filteredMessage);
                 }
             }
 
@@ -1632,6 +1639,39 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 );
             }
         );
+    }
+
+    void sendClientMessageToAll(const Colour& colour, StringView message) override {
+        NetCode::RPC::SendClientMessage RPC;
+        RPC.Col = colour;
+        RPC.Message = NetworkString(message);
+        broadcastRPCToAll(RPC);
+    }
+
+    void sendChatMessageToAll(IPlayer& from, StringView message) override {
+        NetCode::RPC::PlayerChatMessage RPC;
+        RPC.PlayerID = from.getID();
+        RPC.message = message;
+        broadcastRPCToAll(RPC);
+    }
+
+    void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) override {
+        NetCode::RPC::SendGameText RPC;
+        RPC.Text = NetworkString(message);
+        RPC.Time = time.count();
+        RPC.Style = style;
+        broadcastRPCToAll(RPC);
+    }
+
+    void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) override {
+        NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+        sendDeathMessageRPC.PlayerID = player.getID();
+        sendDeathMessageRPC.HasKiller = killer.has_value();
+        if (killer) {
+            sendDeathMessageRPC.KillerID = killer->get().getID();
+        }
+        sendDeathMessageRPC.reason = weapon;
+        broadcastRPCToAll(sendDeathMessageRPC);
     }
 
     void init(IPluginList& plugins) {
