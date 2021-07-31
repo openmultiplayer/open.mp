@@ -834,6 +834,28 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         }
     } onPlayerClickMapRPCHandler;
 
+    struct OnPlayerClickPlayerRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        OnPlayerClickPlayerRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::OnPlayerClickPlayer onPlayerClickPlayerRPC;
+            if (!onPlayerClickPlayerRPC.read(bs)) {
+                return false;
+            }
+
+            if (self.storage.valid(onPlayerClickPlayerRPC.PlayerID)) {
+                self.eventDispatcher.dispatch(
+                    &PlayerEventHandler::onClickedPlayer,
+                    peer,
+                    self.storage.get(onPlayerClickPlayerRPC.PlayerID),
+                    PlayerClickSource(onPlayerClickPlayerRPC.Source)
+                );
+            }
+            return true;
+        }
+    } onPlayerClickPlayerRPCHandler;
+
     struct PlayerGiveTakeDamageRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
         PlayerGiveTakeDamageRPCHandler(PlayerPool& self) : self(self) {}
@@ -1656,6 +1678,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         playerRequestSpawnRPCHandler(*this),
         playerRequestScoresAndPingsRPCHandler(*this),
         onPlayerClickMapRPCHandler(*this),
+        onPlayerClickPlayerRPCHandler(*this),
         playerGiveTakeDamageRPCHandler(*this),
         playerInteriorChangeRPCHandler(*this),
         playerDeathRPCHandler(*this),
@@ -1754,6 +1777,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
 
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
@@ -1822,6 +1846,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
 
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
