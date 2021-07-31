@@ -263,6 +263,27 @@ struct Core final : public ICore, public PlayerEventHandler {
         return eventDispatcher;
     }
 
+    void setGravity(float gravity) override {
+        *SetGravity = gravity;
+        NetCode::RPC::SetPlayerGravity RPC;
+        RPC.Gravity = gravity;
+        players.broadcastRPCToAll(RPC);
+    }
+
+    void setWeather(int weather) override {
+        *SetWeather = weather;
+        NetCode::RPC::SetPlayerWeather RPC;
+        RPC.WeatherID = weather;
+        players.broadcastRPCToAll(RPC);
+    }
+
+    void toggleStuntBonus(bool toggle) override {
+        *EnableStuntBonus = toggle;
+        NetCode::RPC::EnableStuntBonusForPlayer RPC;
+        RPC.Enable = toggle;
+        players.broadcastRPCToAll(RPC);
+    }
+
     void onConnect(IPlayer& player) override {
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = *EnableZoneNames;

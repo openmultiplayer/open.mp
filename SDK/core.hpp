@@ -45,6 +45,15 @@ struct ICore {
 	/// Get a list of available networks
 	virtual const FlatPtrHashSet<INetwork>& getNetworks() = 0;
 
+	/// Set server gravity
+	virtual void setGravity(float gravity) = 0;
+
+	/// Set server weather
+	virtual void setWeather(int weather) = 0;
+
+	/// Toggle server stunt bonus
+	virtual void toggleStuntBonus(bool toggle) = 0;
+
 	/// Add a per-RPC event handler for each network for the packet's network ID
 	template <class Packet>
 	inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler) {
