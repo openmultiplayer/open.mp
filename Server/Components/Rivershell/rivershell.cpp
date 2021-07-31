@@ -5,17 +5,18 @@
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Timers/timers.hpp>
 
-#define TEAM_GREEN 1
-#define TEAM_BLUE 2
+enum Team {
+	Team_Green = 1,
+	Team_Blue = 2,
 
-#define CAPS_TO_WIN 1
-#define RESUPPLY_COOLDOWN 30
+	Team_Num
+};
+
+static constexpr int CAPS_TO_WIN = 5;
+static constexpr std::chrono::seconds RESUPPLY_COOLDOWN = std::chrono::seconds(30);
 
 struct RivershellPlayerData final : public IPlayerData {
-	static constexpr UUID IID = 0x0e5b18f964deec4e;
-	UUID getUUID() override {
-		return 0x0e5b18f964deec4e;
-	}
+	PROVIDE_UUID(0x0e5b18f964deec4e);
 
 	void free() override {
 		delete this;
@@ -41,6 +42,8 @@ struct RivershellMode :
 
 	IVehicle* greenObjectiveVehicle = nullptr;
 	IVehicle* blueObjectiveVehicle = nullptr;
+
+	PlayerClass* teamClasses[Team_Num][2] = { { nullptr } };
 
 	UUID getUUID() override {
 		return 0x5ea395b11220dc50;
@@ -94,23 +97,23 @@ struct RivershellMode :
 
 		for (IPlayer* player : c->getPlayers().entries()) {
 			bool balanced = player->queryData<RivershellPlayerData>()->alreadyBalanceTeam;
-			if (player->getTeam() == TEAM_GREEN && balanced && player != &target) {
+			if (player->getTeam() == Team_Green && balanced && player != &target) {
 				greenCount++;
 			}
-			else if (player->getTeam() == TEAM_BLUE && balanced && player != &target) {
+			else if (player->getTeam() == Team_Blue && balanced && player != &target) {
 				blueCount++;
 			}
 		}
 
 		target.queryData<RivershellPlayerData>()->alreadyBalanceTeam = true;
-		if (greenCount > blueCount && team == TEAM_GREEN) {
-			target.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(3));
+		if (greenCount > blueCount && team == Team_Green) {
+			target.queryData<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Blue][0]);
 			target.sendClientMessage(Colour::White(), "You have been moved to the {0000FF}blue{FFFFFF} team for balance.");
 			timers->create(new ForceSpawnTimer(&target), std::chrono::milliseconds(500), false);
 			return true;
 		}
-		else if (blueCount > greenCount && team == TEAM_BLUE) {
-			target.queryData<IPlayerClassData>()->setSpawnInfo(classes->get(1));
+		else if (blueCount > greenCount && team == Team_Blue) {
+			target.queryData<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Green][0]);
 			target.sendClientMessage(Colour::White(), "You have been moved to the {00FF00}green{FFFFFF} team for balance.");
 			timers->create(new ForceSpawnTimer(&target), std::chrono::milliseconds(500), false);
 			return true;
@@ -120,7 +123,7 @@ struct RivershellMode :
 	}
 
 	void onConnect(IPlayer& player) override {
-		player.sendGameText("~r~open.mp~w~: Rivershell", 2000, 5);
+		player.sendGameText("~r~open.mp~w~: Rivershell", std::chrono::seconds(2), 5);
 		player.setColour(Colour(136, 136, 136));
 		player.removeDefaultObjects(9090, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
 		player.removeDefaultObjects(9091, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
@@ -144,10 +147,10 @@ struct RivershellMode :
 		player.setRotation(GTAQuat(0.0f, 0.0f, 0.0f));
 
 		if (classId == 0 || classId == 1) {
-			player.sendGameText("~g~GREEN ~w~TEAM", 1000, 5);
+			player.sendGameText("~g~GREEN ~w~TEAM", std::chrono::seconds(1), 5);
 		}
 		else if (classId == 2 || classId == 3) {
-			player.sendGameText("~b~BLUE ~w~TEAM", 1000, 5);
+			player.sendGameText("~b~BLUE ~w~TEAM", std::chrono::seconds(1), 5);
 		}
 		return true;
 	}
@@ -157,11 +160,11 @@ struct RivershellMode :
 		objective.objective = 1;
 
 		if (&vehicle == blueObjectiveVehicle) {
-			objective.doors = player.getTeam() == TEAM_BLUE ? 0 : 1;
+			objective.doors = player.getTeam() == Team_Blue ? 0 : 1;
 			vehicle.setParamsForPlayer(player, objective);
 		}
 		else if (&vehicle == greenObjectiveVehicle) {
-			objective.doors = player.getTeam() == TEAM_GREEN ? 0 : 1;
+			objective.doors = player.getTeam() == Team_Green ? 0 : 1;
 			vehicle.setParamsForPlayer(player, objective);
 		}
 	}
@@ -170,12 +173,12 @@ struct RivershellMode :
 		if (!player.queryData<RivershellPlayerData>()->alreadyBalanceTeam && moveIfNotBalanced(player, player.getTeam())) {
 			return;
 		}
-		if (player.getTeam() == TEAM_GREEN) {
-			player.sendGameText("Defend the ~g~GREEN ~w~team's ~y~Reefer~n~~w~Capture the ~b~BLUE ~w~team's ~y~Reefer", 6000, 5);
+		if (player.getTeam() == Team_Green) {
+			player.sendGameText("Defend the ~g~GREEN ~w~team's ~y~Reefer~n~~w~Capture the ~b~BLUE ~w~team's ~y~Reefer", std::chrono::seconds(6), 5);
 			player.setColour(Colour(119, 204, 119, 255));
 		}
-		else if (player.getTeam() == TEAM_BLUE) {
-			player.sendGameText("Defend the ~b~BLUE ~w~team's ~y~Reefer~n~~w~Capture the ~g~GREEN ~w~team's ~y~Reefer", 6000, 5);
+		else if (player.getTeam() == Team_Blue) {
+			player.sendGameText("Defend the ~b~BLUE ~w~team's ~y~Reefer~n~~w~Capture the ~g~GREEN ~w~team's ~y~Reefer", std::chrono::seconds(6), 5);
 			player.setColour(Colour(119, 119, 221, 255));
 		}
 
@@ -186,8 +189,8 @@ struct RivershellMode :
 	void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
 		if (newState == PlayerState_Driver) {
 			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
-			if (data->getVehicle() == greenObjectiveVehicle && player.getTeam() == TEAM_GREEN) {
-				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", 3000, 5);
+			if (data->getVehicle() == greenObjectiveVehicle && player.getTeam() == Team_Green) {
+				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", std::chrono::seconds(3), 5);
 
 				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 				cp->setType(CheckpointType::STANDARD);
@@ -195,8 +198,8 @@ struct RivershellMode :
 				cp->setSize(10.0f);
 				cp->enable(player);
 			}
-			else if (data->getVehicle() == blueObjectiveVehicle && player.getTeam() == TEAM_BLUE) {
-				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", 3000, 5);
+			else if (data->getVehicle() == blueObjectiveVehicle && player.getTeam() == Team_Blue) {
+				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", std::chrono::seconds(3), 5);
 
 				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 				cp->setType(CheckpointType::STANDARD);
@@ -213,32 +216,36 @@ struct RivershellMode :
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
 		if (player.getState() == PlayerState_Driver) {
 			IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
-			NetCode::RPC::SendGameText gameText;
-			gameText.Style = 5;
-			gameText.Time = 3000;
-			if (vehicle == greenObjectiveVehicle && player.getTeam() == TEAM_GREEN) {
+			if (vehicle == greenObjectiveVehicle && player.getTeam() == Team_Green) {
+				StringView gameText;
 				player.setScore(player.getScore() + 5);
 				if (++greenTeamCaps >= CAPS_TO_WIN) {
-					gameText.Text = StringView("~g~GREEN ~w~team wins!~n~~w~The game will restart");
+					gameText = "~g~GREEN ~w~team wins!~n~~w~The game will restart";
 					resetGame();
 				}
 				else {
-					gameText.Text = StringView("~g~GREEN ~w~team captured the ~y~boat~w~!");
+					gameText = "~g~GREEN ~w~team captured the ~y~boat~w~!";
+					greenObjectiveVehicle->respawn();
 
 				}
-				c->getPlayers().broadcastRPCToAll(gameText);
+				for (IPlayer* player : c->getPlayers().entries()) {
+					player->sendGameText(gameText, std::chrono::seconds(3), 5);
+				}
 			}
-			else if (vehicle == blueObjectiveVehicle && player.getTeam() == TEAM_BLUE) {
+			else if (vehicle == blueObjectiveVehicle && player.getTeam() == Team_Blue) {
+				StringView gameText;
 				player.setScore(player.getScore() + 5);
 				if (++blueTeamCaps >= CAPS_TO_WIN) {
-					gameText.Text = StringView("~b~BLUE ~w~team wins!~n~~w~The game will restart");
+					gameText = "~b~BLUE ~w~team wins!~n~~w~The game will restart";
 					resetGame();
 				}
 				else {
-					gameText.Text = StringView("~b~BLUE ~w~team captured the ~y~boat~w~!");
-					greenObjectiveVehicle->respawn();
+					gameText = "~b~BLUE ~w~team captured the ~y~boat~w~!";
+					blueObjectiveVehicle->respawn();
 				}
-				c->getPlayers().broadcastRPCToAll(gameText);
+				for (IPlayer* player : c->getPlayers().entries()) {
+					player->sendGameText(gameText, std::chrono::seconds(3), 5);
+				}
 			}
 		}
 	}
@@ -283,57 +290,26 @@ struct RivershellMode :
 			checkpoints->getEventDispatcher().addEventHandler(this);
 		}
 
-		if (classes && vehicles) {
-			auto classid = classes->claim();
+		if (classes && vehicles && objects) {
 			WeaponSlots weapons;
 			weapons[0] = WeaponSlotData{ 31, 100 };
 			weapons[1] = WeaponSlotData{ 24, 1000 };
 			weapons[2] = WeaponSlotData{ 34, 10 };
 			// Green team
 			{
-				PlayerClass& playerClass = classes->get(classid);
-				playerClass.skin = 162;
-				playerClass.team = TEAM_GREEN;
-				playerClass.spawn = Vector3(2117.0129f, -224.4389f, 8.15f);
-				playerClass.weapons = weapons;
-
-				classid = classes->claim();
-				PlayerClass& green2 = classes->get(classid);
-				green2.skin = 157;
-				green2.team = TEAM_GREEN;
-				green2.spawn = Vector3(2148.6606f, -224.3336f, 8.15f);
-				green2.angle = 347.1396f;
-				green2.weapons = weapons;
+				teamClasses[Team_Green][0] = classes->create(162, Team_Green, Vector3(2117.0129f, -224.4389f, 8.15f), 0.f, weapons);
+				teamClasses[Team_Green][1] = classes->create(157, Team_Green, Vector3(2148.6606f, -224.3336f, 8.15f), 347.1396f, weapons);
 			}
 
 			// Blue team
 			{
-				classid = classes->claim();
-				PlayerClass& playerClass = classes->get(classid);
-				playerClass.skin = 154;
-				playerClass.team = TEAM_BLUE;
-				playerClass.spawn = Vector3(2352.9873f, 580.3051f, 7.7813f);
-				playerClass.angle = 178.1424f;
-				playerClass.weapons = weapons;
-
-				classid = classes->claim();
-				PlayerClass& blue2 = classes->get(classid);
-				blue2.skin = 138;
-				blue2.team = TEAM_GREEN;
-				blue2.spawn = Vector3(2281.1504f, 567.6248f, 7.7813f);
-				blue2.angle = 163.7289f;
-				blue2.weapons = weapons;
+				teamClasses[Team_Blue][0] = classes->create(154, Team_Blue, Vector3(2352.9873f, 580.3051f, 7.7813f), 178.1424f, weapons);
+				teamClasses[Team_Blue][1] = classes->create(138, Team_Blue, Vector3(2281.1504f, 567.6248f, 7.7813f), 163.7289f, weapons);
 			}
 
 			// Objectives
-			VehicleParams params;
-			params.setZero();
-			params.objective = 1;
-
 			blueObjectiveVehicle = vehicles->create(453, Vector3(2184.7156f, -188.5401f, -0.0239f), 0.0f, 114, 1, std::chrono::seconds(100));
-			blueObjectiveVehicle->setParams(params);
 			greenObjectiveVehicle = vehicles->create(453, Vector3(2380.0542f, 535.2582f, -0.0272f), 178.4999f, 79, 7, std::chrono::seconds(100));
-			blueObjectiveVehicle->setParams(params);
 
 			// Green team boats
 			vehicles->create(473, Vector3(2096.0833f, -168.7771f, 0.3528f), 4.5000f, 114, 1, std::chrono::seconds(100));
@@ -475,7 +451,7 @@ struct RivershellMode :
 			if (glm::dot(resupply1, resupply1) < 2.5f || glm::dot(resupply2, resupply2) < 2.5f) {
 				RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
 				auto now = std::chrono::steady_clock::now();
-				if (now - data->lastResupplyTime >= std::chrono::seconds(RESUPPLY_COOLDOWN)) {
+				if (now - data->lastResupplyTime >= RESUPPLY_COOLDOWN) {
 					data->lastResupplyTime = now;
 					player.resetWeapons();
 					player.giveWeapon(WeaponSlotData{ 31, 100 });
@@ -483,7 +459,7 @@ struct RivershellMode :
 					player.giveWeapon(WeaponSlotData{ 34, 10 });
 					player.setHealth(100.0f);
 					player.setArmour(100.0f);
-					player.sendGameText("~w~Resupplied!", 2000, 5);
+					player.sendGameText("~w~Resupplied!", std::chrono::seconds(2), 5);
 					player.playSound(1150, Vector3(0.0f, 0.0f, 0.0f));
 				}
 			}

@@ -658,9 +658,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(sendChatMessage);
     }
     
-    void sendGameText(StringView message, int time, int style) const override {
+    void sendGameText(StringView message, std::chrono::milliseconds time, int style) const override {
         NetCode::RPC::SendGameText gameText;
-        gameText.Time = time;
+        gameText.Time = time.count();
         gameText.Style = style;
         gameText.Text = message;
         sendRPC(gameText);
@@ -1675,6 +1675,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         const auto t = std::chrono::steady_clock::now();
         const std::chrono::milliseconds gameTimeUpdateRateMS(*gameTimeUpdateRate);
         const std::chrono::milliseconds markersUpdateRateMS(*markersUpdateRate);
+        const bool shouldStream = streamConfigHelper.shouldStream(t);
         for (IPlayer* p : storage.entries()) {
             Player* player = static_cast<Player*>(p);
 
@@ -1684,7 +1685,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 player->updateMarkers(markersUpdateRateMS, *markersLimit, *markersLimitRadius);
             }
 
-            if (streamConfigHelper.shouldStream(t)) {
+            if (shouldStream) {
                 for (IPlayer* other : storage.entries()) {
                     if (player == other) {
                         continue;
