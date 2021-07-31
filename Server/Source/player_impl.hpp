@@ -153,6 +153,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(setWorldBoundsRPC);
     }
 
+    void toggleStuntBonus(bool toggle) override {
+        NetCode::RPC::EnableStuntBonusForPlayer RPC;
+        RPC.Enable = toggle;
+        sendRPC(RPC);
+    }
+
     Vector4 getWorldBounds() const override {
         return worldBounds_;
     }
@@ -169,11 +175,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(createExplosionRPC);
     }
 
-    void sendDeathMessage(int PlayerID, int KillerID, int reason) override {
+    void sendDeathMessage(IPlayer& player, OptionalPlayer killer, int weapon) override {
         NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-        sendDeathMessageRPC.PlayerID = PlayerID;
-        sendDeathMessageRPC.KillerID = KillerID;
-        sendDeathMessageRPC.reason = reason;
+        sendDeathMessageRPC.PlayerID = player.getID();
+        sendDeathMessageRPC.HasKiller = killer.has_value();
+        if (killer) {
+            sendDeathMessageRPC.KillerID = killer->get().getID();
+        }
+        sendDeathMessageRPC.reason = weapon;
         sendRPC(sendDeathMessageRPC);
     }
 
@@ -366,6 +375,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return armour_;
     }
 
+    void setGravity(float gravity) override {
+        NetCode::RPC::SetPlayerGravity RPC;
+        RPC.Gravity = gravity;
+        sendRPC(RPC);
+    }
+
     void setAction(PlayerSpecialAction action) override {
         action_ = action;
         NetCode::RPC::SetPlayerSpecialAction setPlayerSpecialActionRPC;
@@ -431,6 +446,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void setColour(Colour colour) override;
+
+    void setOtherColour(IPlayer& other, Colour colour) override {
+        NetCode::RPC::SetPlayerColor RPC;
+        RPC.PlayerID = other.getID();
+        RPC.Col = colour;
+        sendRPC(RPC);
+    }
 
     virtual void setWantedLevel(unsigned level) override {
         wantedLevel_ = level;
@@ -568,6 +590,29 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     const PlayerBulletData& getBulletData() const override {
         return bulletData_;
+    }
+
+    void setMapIcon(int id, Vector3 pos, int type, MapIconStyle style, Colour colour) override {
+        NetCode::RPC::SetPlayerMapIcon RPC;
+        RPC.IconID = id;
+        RPC.Pos = pos;
+        RPC.Type = type;
+        RPC.Style = style;
+        RPC.Col = colour;
+        sendRPC(RPC);
+    }
+
+    void unsetMapIcon(int id) override {
+        NetCode::RPC::RemovePlayerMapIcon RPC;
+        RPC.IconID = id;
+        sendRPC(RPC);
+    }
+
+    void toggleOtherNameTag(IPlayer& other, bool toggle) override {
+        NetCode::RPC::ShowPlayerNameTagForPlayer RPC;
+        RPC.PlayerID = other.getID();
+        RPC.Show = toggle;
+        sendRPC(RPC);
     }
 
     void giveWeapon(WeaponSlotData weapon) override {
@@ -774,6 +819,43 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         }
     } playerRequestScoresAndPingsRPCHandler;
 
+    struct OnPlayerClickMapRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        OnPlayerClickMapRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::OnPlayerClickMap onPlayerClickMapRPC;
+            if (!onPlayerClickMapRPC.read(bs)) {
+                return false;
+            }
+
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onClickedMap, peer, onPlayerClickMapRPC.Pos);
+            return true;
+        }
+    } onPlayerClickMapRPCHandler;
+
+    struct OnPlayerClickPlayerRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        OnPlayerClickPlayerRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::OnPlayerClickPlayer onPlayerClickPlayerRPC;
+            if (!onPlayerClickPlayerRPC.read(bs)) {
+                return false;
+            }
+
+            if (self.storage.valid(onPlayerClickPlayerRPC.PlayerID)) {
+                self.eventDispatcher.dispatch(
+                    &PlayerEventHandler::onClickedPlayer,
+                    peer,
+                    self.storage.get(onPlayerClickPlayerRPC.PlayerID),
+                    PlayerClickSource(onPlayerClickPlayerRPC.Source)
+                );
+            }
+            return true;
+        }
+    } onPlayerClickPlayerRPCHandler;
+
     struct PlayerGiveTakeDamageRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
         PlayerGiveTakeDamageRPCHandler(PlayerPool& self) : self(self) {}
@@ -973,10 +1055,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                     }
                 }
                 else {
-                    NetCode::RPC::PlayerChatMessage playerChatMessage;
-                    playerChatMessage.PlayerID = peer.getID();
-                    playerChatMessage.message = StringView(filteredMessage);
-                    self.broadcastRPCToAll(playerChatMessage);
+                    self.sendChatMessageToAll(peer, filteredMessage);
                 }
             }
 
@@ -1598,6 +1677,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core(core),
         playerRequestSpawnRPCHandler(*this),
         playerRequestScoresAndPingsRPCHandler(*this),
+        onPlayerClickMapRPCHandler(*this),
+        onPlayerClickPlayerRPCHandler(*this),
         playerGiveTakeDamageRPCHandler(*this),
         playerInteriorChangeRPCHandler(*this),
         playerDeathRPCHandler(*this),
@@ -1634,6 +1715,47 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         );
     }
 
+    void sendClientMessageToAll(const Colour& colour, StringView message) override {
+        NetCode::RPC::SendClientMessage RPC;
+        RPC.Col = colour;
+        RPC.Message = NetworkString(message);
+        broadcastRPCToAll(RPC);
+    }
+
+    void sendChatMessageToAll(IPlayer& from, StringView message) override {
+        NetCode::RPC::PlayerChatMessage RPC;
+        RPC.PlayerID = from.getID();
+        RPC.message = message;
+        broadcastRPCToAll(RPC);
+    }
+
+    void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) override {
+        NetCode::RPC::SendGameText RPC;
+        RPC.Text = NetworkString(message);
+        RPC.Time = time.count();
+        RPC.Style = style;
+        broadcastRPCToAll(RPC);
+    }
+
+    void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) override {
+        NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+        sendDeathMessageRPC.PlayerID = player.getID();
+        sendDeathMessageRPC.HasKiller = killer.has_value();
+        if (killer) {
+            sendDeathMessageRPC.KillerID = killer->get().getID();
+        }
+        sendDeathMessageRPC.reason = weapon;
+        broadcastRPCToAll(sendDeathMessageRPC);
+    }
+
+    void createExplosionForAll(Vector3 vec, int type, float radius) override {
+        NetCode::RPC::CreateExplosion createExplosionRPC;
+        createExplosionRPC.vec = vec;
+        createExplosionRPC.type = type;
+        createExplosionRPC.radius = radius;
+        broadcastRPCToAll(createExplosionRPC);
+    }
+
     void init(IPluginList& plugins) {
         IConfig& config = core.getConfig();
         streamConfigHelper = StreamConfigHelper(config);
@@ -1654,6 +1776,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
 
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
@@ -1721,6 +1845,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
 
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
