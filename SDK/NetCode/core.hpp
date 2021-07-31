@@ -1086,6 +1086,34 @@ namespace NetCode {
 			void write(INetworkBitStream& bs) const {
 			}
 		};
+
+		struct PlayerSpectatePlayer final : NetworkPacketBase<126> {
+			int PlayerID;
+			PlayerSpectateMode SpecCamMode;
+
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
+			}
+		};
+
+		struct PlayerSpectateVehicle final : NetworkPacketBase<127> {
+			bool VehicleID;
+			PlayerSpectateMode SpecCamMode;
+
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
+			}
+		};
 	}
 
 	namespace Packet {

@@ -769,6 +769,38 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(collisionsRPC);
     }
 
+    void spectatePlayer(IPlayer& target, PlayerSpectateMode mode) override {
+        setState(PlayerState_Spectating);
+
+        // Set virtual world and interior to target's, consider this as a samp bug fix,
+        // since in samp you have to do this manually yourself then call spectate functions
+        setVirtualWorld(target.getVirtualWorld());
+        setInterior(target.getInterior());
+
+        setPosition(target.getPosition());
+
+        NetCode::RPC::PlayerSpectatePlayer rpc;
+        rpc.PlayerID = target.getID();
+        rpc.SpecCamMode = mode;
+        sendRPC(rpc);
+    }
+
+    void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) override {
+        setState(PlayerState_Spectating);
+
+        // Set virtual world and interior to target's, consider this as a samp bug fix,
+        // since in samp you have to do this manually yourself then call spectate functions
+        setVirtualWorld(target.getVirtualWorld());
+        setInterior(target.getInterior());
+
+        setPosition(target.getPosition());
+
+        NetCode::RPC::PlayerSpectateVehicle rpc;
+        rpc.VehicleID = target.getID();
+        rpc.SpecCamMode = mode;
+        sendRPC(rpc);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
