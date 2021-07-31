@@ -1,5 +1,7 @@
 #pragma once
 
+#include <types.hpp>
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
     #include <Windows.h>
     #define PLUGIN_OPEN(path) LoadLibrary(path)
@@ -14,8 +16,8 @@
 
 
 
-std::vector<IPlugin*> loadPlugins(Core &core, const std::filesystem::path &path) {
-    std::vector<IPlugin*> res;
+DynamicArray<IPlugin*> loadPlugins(Core &core, const std::filesystem::path &path) {
+    DynamicArray<IPlugin*> res;
     std::filesystem::create_directory(path);
     for (auto& p : std::filesystem::directory_iterator(path)) {
         auto ext = p.path().extension();

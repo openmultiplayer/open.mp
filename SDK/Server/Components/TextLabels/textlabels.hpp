@@ -69,7 +69,7 @@ struct IPlayerTextLabel : public ITextLabelBase {
 
 static const UUID TextLabelsPlugin_UUID = UUID(0xa0c57ea80a009742);
 /// The text label plugin which is a global text label pool
-struct ITextLabelsPlugin : public IPlugin, public IPool<ITextLabel, TEXT_LABEL_POOL_SIZE> {
+struct ITextLabelsPlugin : public IPoolPlugin<ITextLabel, TEXT_LABEL_POOL_SIZE> {
 	PROVIDE_UUID(TextLabelsPlugin_UUID);
 
 	/// Create a text label

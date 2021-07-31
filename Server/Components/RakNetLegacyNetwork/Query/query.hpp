@@ -23,11 +23,11 @@ public:
 
 	FlatHashMap<String, String>& getRules();
 	template<typename... Args>
-	void setRuleValue(const Args &... args);
-	void removeRule(const std::string & ruleName);
+	void setRuleValue(Args... args);
+	void removeRule(StringView ruleName);
 
-	void setServerName(const std::string & value);
-	void setGameModeName(const std::string & value);
+	void setServerName(StringView value);
+	void setGameModeName(StringView value);
 
 private:
 	ICore * core = nullptr;

@@ -3,9 +3,7 @@
 #include <string>
 #include <utility>
 #include <chrono>
-#include <optional>
 #include <type_traits>
-#include <string_view>
 #include "network.hpp"
 #include "entity.hpp"
 #include "pool.hpp"
@@ -101,7 +99,18 @@ enum BodyPart {
 	BodyPart_Head
 };
 
-static constexpr StringView BodyPartString[] = {
+enum MapIconStyle {
+	MapIconStyle_Local,
+	MapIconStyle_Global,
+	MapIconStyle_LocalCheckpoint,
+	MapIconStyle_GlobalCheckpoint
+};
+
+enum PlayerClickSource {
+	PlayerClickSource_Scoreboard
+};
+
+static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
 	"invalid",
@@ -116,7 +125,7 @@ static constexpr StringView BodyPartString[] = {
 
 struct PlayerKeyData {
 	// todo fill with union
-	uint16_t keys;
+	uint32_t keys;
 	uint16_t upDown;
 	uint16_t leftRight;
 };
@@ -154,6 +163,21 @@ struct PlayerSurfingData {
 struct WeaponSlotData {
 	uint8_t id;
 	uint32_t ammo;
+
+	WeaponSlotData() :
+		id(0),
+		ammo(0)
+	{}
+
+	WeaponSlotData(uint8_t id) :
+		id(id),
+		ammo(0)
+	{}
+
+	WeaponSlotData(uint8_t id, uint32_t ammo) :
+		id(id),
+		ammo(ammo)
+	{}
 
 	uint8_t slot()
 	{
@@ -207,6 +231,9 @@ struct IPlayerData : public IUUIDProvider {
 };
 
 struct IPlayerPool;
+struct IPlayer;
+
+typedef Optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// The player's name status returned when updating their name
 enum EPlayerNameStatus {
@@ -286,6 +313,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's colour
 	virtual const Colour& getColour() const = 0;
 
+	/// Set another player's colour for this player
+	virtual void setOtherColour(IPlayer& other, Colour colour) = 0;
+
 	/// Set whether the player is controllable
 	virtual void setControllable(bool controllable) = 0;
 
@@ -326,7 +356,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
 
 	// Send Death message
-	virtual void sendDeathMessage(int PlayerID, int KillerID, int reason) = 0;
+	virtual void sendDeathMessage(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
 
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
@@ -348,6 +378,18 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's money
 	virtual int getMoney() = 0;
+
+	/// Set a map icon for the player
+	virtual void setMapIcon(int id, Vector3 pos, int type, MapIconStyle style, Colour colour = Colour::White()) = 0;
+
+	/// Unset a map icon for the player
+	virtual void unsetMapIcon(int id) = 0;
+
+	/// Toggle stunt bonus for the player
+	virtual void toggleStuntBonus(bool toggle) = 0;
+
+	/// Toggle another player's name tag for the player
+	virtual void toggleOtherNameTag(IPlayer& other, bool toggle) = 0;
 
 	/// Set the player's game time
 	/// @param hr The hours from 0 to 23
@@ -389,6 +431,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	
 	/// Get the player's armour
 	virtual float getArmour() const = 0;
+
+	/// Set the player's gravity
+	virtual void setGravity(float gravity) = 0;
 
 	/// Apply an animation to the player
 	/// @param animation The animation to apply
@@ -444,6 +489,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	// Send a command to server (Player)
 	virtual void sendCommand(StringView message) const = 0;
+
+	// Send a game text message to the player
+	virtual void sendGameText(StringView message, std::chrono::milliseconds time, int style) const = 0;
 
 	/// Set the player's weather
 	virtual void setWeather(int weatherID) = 0;
@@ -534,6 +582,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the actor the player is targeting or nullptr if none
 	virtual IActor* getTargetActor() = 0;
 
+	/// Disable remote vehicle collision detection for this player.
+	virtual void setRemoteVehicleCollisions(bool collide) = 0;
+
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>
@@ -569,8 +620,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
-typedef std::optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
-
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
@@ -596,6 +645,9 @@ struct PlayerEventHandler {
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
+	virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) {}
+	virtual void onClickedMap(IPlayer& player, Vector3 pos) {}
+	virtual void onClickedPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) {}
 };
 
 struct PlayerUpdateEventHandler {
@@ -613,6 +665,21 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// Returns whether a name is taken by any player
 	/// @param skip The player to exclude from the check
 	virtual bool isNameTaken(StringView name, const OptionalPlayer skip) = 0;
+
+	/// sendClientMessage for all players
+	virtual void sendClientMessageToAll(const Colour& colour, StringView message) = 0;
+
+	/// sendChatMessage for all players
+	virtual void sendChatMessageToAll(IPlayer& from, StringView message) = 0;
+
+	/// sendGameText for all players
+	virtual void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) = 0;
+
+	/// sendDeathMessage for all players
+	virtual void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
+
+	/// createExplosion for all players
+	virtual void createExplosionForAll(Vector3 vec, int type, float radius) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
