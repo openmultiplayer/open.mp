@@ -273,7 +273,7 @@ struct TestComponent :
         }
 
         if (message == "/senddeathmessage") {
-            player.sendDeathMessage(player.getID(), 1, 2);
+            player.sendDeathMessage(player, nullptr, 2);
             return true;
         }
 
