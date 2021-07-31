@@ -776,6 +776,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setInterior(target.getInterior());
 
         setPosition(target.getPosition());
+        target.streamInForPlayer(*this);
 
         NetCode::RPC::PlayerSpectatePlayer rpc;
         rpc.PlayerID = target.getID();
@@ -790,6 +791,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setInterior(target.getInterior());
 
         setPosition(target.getPosition());
+        target.streamInForPlayer(*this);
 
         NetCode::RPC::PlayerSpectateVehicle rpc;
         rpc.VehicleID = target.getID();
