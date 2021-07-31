@@ -1,6 +1,6 @@
 #pragma once
 
-#include "NetCode/acotr.hpp"
+#include "NetCode/actor.hpp"
 #include "NetCode/checkpoint.hpp"
 #include "NetCode/class.hpp"
 #include "NetCode/core.hpp"
