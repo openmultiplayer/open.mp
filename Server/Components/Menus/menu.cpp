@@ -70,7 +70,7 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 		playerExitedMenuEventHandler(*this)
 	{}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore * core) override {
 		this->core = core;
 		players = &core->getPlayers();
 		players->getEventDispatcher().addEventHandler(this);
@@ -78,9 +78,13 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 		core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitedMenu>(&playerExitedMenuEventHandler);
 	}
 
-	void onDisconnect(IPlayer & player, PeerDisconnectReason reason) override {
-		for (IMenu* menu : storage.entries()) {
-			menu->resetForPlayer(player);
+	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+		const int pid = player.getID();
+		for (IMenu* m : storage.entries()) {
+			Menu* menu = static_cast<Menu*>(m);
+			if (menu->initedFor_.valid(pid)) {
+				menu->initedFor_.remove(pid, player);
+			}
 		}
 	}
 

@@ -25,8 +25,12 @@ struct ClassEventHandler {
 };
 
 static const UUID ClassesPlugin_UUID = UUID(0x8cfb3183976da208);
-struct IClassesPlugin : public IPlugin, IPool<PlayerClass, CLASS_POOL_SIZE> {
+struct IClassesPlugin : public IPoolPlugin<PlayerClass, CLASS_POOL_SIZE> {
 	PROVIDE_UUID(ClassesPlugin_UUID)
 
 	virtual IEventDispatcher<ClassEventHandler>& getEventDispatcher() = 0;
+
+	/// Attempt to create a new class from params
+	/// @return A pointer to the new class or nullptr if unable to create
+	virtual PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) = 0;
 };

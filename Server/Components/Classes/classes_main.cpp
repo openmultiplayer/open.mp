@@ -40,14 +40,14 @@ struct PlayerClassData final : IPlayerClassData {
         }
         else {
             const WeaponSlots& weapons = info.weapons;
-            StaticArray<uint8_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+            StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
             StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
             NetCode::RPC::SetSpawnInfo setSpawnInfoRPC;
             setSpawnInfoRPC.TeamID = info.team;
             setSpawnInfoRPC.ModelID = info.skin;
             setSpawnInfoRPC.Spawn = info.spawn;
             setSpawnInfoRPC.ZAngle = info.angle;
-            setSpawnInfoRPC.Weapons = NetworkArray<uint8_t>(weaponIDsArray);
+            setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
             setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
             player.sendRPC(setSpawnInfoRPC);
@@ -150,9 +150,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 	{
 	}
 
-    // todo move class stuff to onSpawn here instead of player?
-
-    void onInit(ICore* c) override {
+    void onLoad(ICore* c) override {
         core = c;
         core->addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
@@ -165,6 +163,28 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
 	const char* pluginName() override {
 		return "Classes";
 	}
+
+    PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override {
+        int freeIdx = storage.findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        int cid = storage.claim(freeIdx);
+        if (cid == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        PlayerClass& cls = storage.get(cid);
+        cls.skin = skin;
+        cls.team = team;
+        cls.spawn = spawn;
+        cls.angle = angle;
+        cls.weapons = weapons;
+        return &cls;
+    }
 
 	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
 		return new PlayerClassData(player, inClassRequest, skipDefaultClassRequest);

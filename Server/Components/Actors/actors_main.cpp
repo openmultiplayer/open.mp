@@ -1,10 +1,11 @@
 #include "actor.hpp"
 
-struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
+struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, public PlayerEventHandler {
 	ICore * core;
 	MarkedPoolStorage<Actor, IActor, IActorsPlugin::Cnt> storage;
 	DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
 	IPlayerPool* players;
+	StreamConfigHelper streamConfigHelper;
 
 	struct PlayerDamageActorEventHandler : public SingleNetworkInOutEventHandler {
 		ActorsPlugin & self;
@@ -43,17 +44,34 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
 		playerDamageActorEventHandler(*this)
 	{}
 
-	void onInit(ICore * core) override {
+	void onLoad(ICore* core) override {
 		this->core = core;
 		players = &core->getPlayers();
 		core->getEventDispatcher().addEventHandler(this);
+		players->getEventDispatcher().addEventHandler(this);
 		core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
+		streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
 
 	~ActorsPlugin() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
+			players->getEventDispatcher().removeEventHandler(this);
 			core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
+		}
+	}
+
+	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+		return new PlayerActorData();
+	}
+
+	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+		const int pid = player.getID();
+		for (IActor* a : storage.entries()) {
+			Actor* actor = static_cast<Actor*>(a);
+			if (actor->streamedFor_.valid(pid)) {
+				actor->streamedFor_.remove(pid, player);
+			}
 		}
 	}
 
@@ -125,25 +143,28 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler {
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {
-		const float maxDist = STREAM_DISTANCE * STREAM_DISTANCE;
-		for (IActor* a : storage.entries()) {
-			Actor* actor = static_cast<Actor*>(a);
+		const float maxDist = streamConfigHelper.getDistanceSqr();
+		const auto t = std::chrono::steady_clock::now();
+		if (streamConfigHelper.shouldStream(t)) {
+			for (IActor* a : storage.entries()) {
+				Actor* actor = static_cast<Actor*>(a);
 
-			for (IPlayer* player : players->entries()) {
-				const PlayerState state = player->getState();
-				const Vector2 dist2D = actor->pos_ - player->getPosition();
-				const bool shouldBeStreamedIn =
-					state != PlayerState_Spectating &&
-					state != PlayerState_None &&
-					player->getVirtualWorld() == actor->virtualWorld_ &&
-					glm::dot(dist2D, dist2D) < maxDist;
+				for (IPlayer* player : players->entries()) {
+					const PlayerState state = player->getState();
+					const Vector2 dist2D = actor->pos_ - player->getPosition();
+					const bool shouldBeStreamedIn =
+						state != PlayerState_Spectating &&
+						state != PlayerState_None &&
+						player->getVirtualWorld() == actor->virtualWorld_ &&
+						glm::dot(dist2D, dist2D) < maxDist;
 
-				const bool isStreamedIn = actor->isStreamedInForPlayer(*player);
-				if (!isStreamedIn && shouldBeStreamedIn) {
-					actor->streamInForPlayer(*player);
-				}
-				else if (isStreamedIn && !shouldBeStreamedIn) {
-					actor->streamOutForPlayer(*player);
+					const bool isStreamedIn = actor->isStreamedInForPlayer(*player);
+					if (!isStreamedIn && shouldBeStreamedIn) {
+						actor->streamInForPlayer(*player);
+					}
+					else if (isStreamedIn && !shouldBeStreamedIn) {
+						actor->streamOutForPlayer(*player);
+					}
 				}
 			}
 		}

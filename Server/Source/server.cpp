@@ -9,7 +9,7 @@ struct IUnknown;
 int main()
 {
     Core* core = new Core();
-    std::vector<IPlugin*> plugins = loadPlugins(*core, "components");
+    DynamicArray<IPlugin*> plugins = loadPlugins(*core, "components");
     core->printLn("Loaded %i plugin(s)", plugins.size());
     core->addPlugins(plugins);
     core->initiated();
