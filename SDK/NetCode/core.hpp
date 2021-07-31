@@ -338,6 +338,7 @@ namespace NetCode {
 		};
 
 		struct SendDeathMessage final : NetworkPacketBase<55> {
+			bool HasKiller;
 			int KillerID;
 			int PlayerID;
 			int reason;
@@ -347,7 +348,7 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::UINT16(KillerID));
+				bs.write(NetworkBitStreamValue::UINT16(HasKiller ? KillerID : INVALID_PLAYER_ID));
 				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
 				bs.write(NetworkBitStreamValue::UINT8(reason));
 			}

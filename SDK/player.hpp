@@ -220,6 +220,9 @@ struct IPlayerData : public IUUIDProvider {
 };
 
 struct IPlayerPool;
+struct IPlayer;
+
+typedef Optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
 
 /// The player's name status returned when updating their name
 enum EPlayerNameStatus {
@@ -299,6 +302,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's colour
 	virtual const Colour& getColour() const = 0;
 
+	/// Set another player's colour for this player
+	virtual void setOtherColour(IPlayer& other, Colour colour) = 0;
+
 	/// Set whether the player is controllable
 	virtual void setControllable(bool controllable) = 0;
 
@@ -339,7 +345,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
 
 	// Send Death message
-	virtual void sendDeathMessage(int PlayerID, int KillerID, int reason) = 0;
+	virtual void sendDeathMessage(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
 
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
@@ -588,8 +594,6 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	}
 };
 
-typedef Optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
-
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
@@ -633,6 +637,17 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// Returns whether a name is taken by any player
 	/// @param skip The player to exclude from the check
 	virtual bool isNameTaken(StringView name, const OptionalPlayer skip) = 0;
+
+	/// sendClientMessage for all players
+	virtual void sendClientMessageToAll(const Colour& colour, StringView message) = 0;
+
+	/// sendChatMessage for all players
+	virtual void sendChatMessageToAll(IPlayer& from, StringView message) = 0;
+
+	/// sendGameText for all players
+	virtual void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) = 0;
+
+	virtual void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
