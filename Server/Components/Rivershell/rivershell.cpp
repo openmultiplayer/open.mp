@@ -12,7 +12,7 @@ enum Team {
 	Team_Num
 };
 
-static constexpr int CAPS_TO_WIN = 3;
+static constexpr int CAPS_TO_WIN = 5;
 static constexpr std::chrono::seconds RESUPPLY_COOLDOWN = std::chrono::seconds(30);
 
 struct RivershellPlayerData final : public IPlayerData {
@@ -241,7 +241,7 @@ struct RivershellMode :
 				}
 				else {
 					gameText = "~b~BLUE ~w~team captured the ~y~boat~w~!";
-					greenObjectiveVehicle->respawn();
+					blueObjectiveVehicle->respawn();
 				}
 				for (IPlayer* player : c->getPlayers().entries()) {
 					player->sendGameText(gameText, std::chrono::seconds(3), 5);
