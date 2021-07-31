@@ -273,7 +273,7 @@ struct TestComponent :
         }
 
         if (message == "/senddeathmessage") {
-            player.sendDeathMessage(player, nullptr, 2);
+            player.sendDeathMessage(player, OptionalPlayer(), 2);
             return true;
         }
 
@@ -509,7 +509,17 @@ struct TestComponent :
 		else if (message == "/carrespawn" && vehicles) {
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
-			vehicles->create(411, pos, 0.0f, 1, 1, 1000);
+
+			VehicleSpawnData veh;
+			veh.modelID = 411;
+			veh.position = pos;
+			veh.zRotation = 0.0f;
+			veh.colour1 = 1;
+			veh.colour2 = 1;
+			veh.respawnDelay = std::chrono::seconds(1000);
+			veh.siren = false;
+
+			vehicles->create(veh);
 			player.sendClientMessage(Colour::White(), "Enter the vehicle, move it a little, then exit.");
 			return true;
 		}
@@ -557,7 +567,17 @@ struct TestComponent :
 		else if (message == "/police") {
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
-			vehicles->create(411, pos, 0.0f, 1, 1, 1000, true);
+
+			VehicleSpawnData veh;
+			veh.modelID = 411;
+			veh.position = pos;
+			veh.zRotation = 0.0f;
+			veh.colour1 = 1;
+			veh.colour2 = 1;
+			veh.respawnDelay = std::chrono::seconds(1000);
+			veh.siren = true;
+
+			vehicles->create(veh);
 			return true;
 		}
 		else if (message == "/siren") {
@@ -588,6 +608,22 @@ struct TestComponent :
 
 		if (message == "/createobj") {
 			objects->create(1340, Vector3(0.f, -2.f, 3.f), Vector3(0.f), 10.f);
+			return true;
+		}
+
+		if (message == "/spec") {
+			IPlayer* target = &c->getPlayers().get(1);
+			if (target) {
+				player.spectatePlayer(*target, PlayerSpectateMode_Normal);
+			}
+			return true;
+		}
+
+		if (message == "/specveh" && vehicles) {
+			IVehicle* target = &vehicles->get(1);
+			if (target) {
+				player.spectateVehicle(*target, PlayerSpectateMode_Normal);
+			}
 			return true;
 		}
 
