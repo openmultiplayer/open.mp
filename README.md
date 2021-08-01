@@ -13,7 +13,7 @@
 
 ## Tools
 
-* [CMake 3.11+](https://cmake.org/)
+* [CMake 3.19+](https://cmake.org/)
 * [Conan 1.33+](https://conan.io/)
 
 ## Tools on Windows
