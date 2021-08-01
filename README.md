@@ -1,6 +1,6 @@
 # open.mp
 
-![status](https://github.com/AmyrAhmady/oben.mb/workflows/Build/badge.svg)
+![status](https://github.com/openmultiplayer/open.mp/workflows/Build/badge.svg)
 
 ## Structure
 
