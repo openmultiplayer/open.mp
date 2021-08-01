@@ -74,9 +74,12 @@ SCRIPT_API(SetCameraBehindPlayer, bool(IPlayer& player))
 	return true;
 }
 
-SCRIPT_API(CreateExplosion, bool(IPlayer& player, Vector3 vec, int type, float radius))
+SCRIPT_API(CreateExplosion, bool(Vector3 vec, int type, float radius))
 {
-	player.createExplosion(vec, type, radius);
+	for(IPlayer* player : PawnManager::Get()->players->entries()) {
+		player->createExplosion(vec, type, radius);
+	}
+
 	return true;
 }
 
