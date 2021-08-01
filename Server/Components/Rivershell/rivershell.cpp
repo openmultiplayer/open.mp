@@ -454,6 +454,49 @@ struct RivershellMode :
 		return true;
 	}
 
+	bool onCommandText(IPlayer& player, StringView cmdtext) override {
+		if (cmdtext.find("/spec ") != cmdtext.npos) {
+			char cmd[20];
+			int targetid;
+			sscanf(cmdtext.data(), "%s %i", cmd, &targetid);
+
+			if (!c->getPlayers().valid(targetid)) {
+				player.sendClientMessage(Colour(-1, -1, -1, -1), "ID is invalid");
+				return true;
+			}
+
+			player.setSpectating(true);
+			IPlayer* target = &c->getPlayers().get(targetid);
+			if (target) {
+				player.spectatePlayer(*target, PlayerSpectateMode_Normal);
+			}
+			return true;
+		}
+
+		if (cmdtext.find("/specveh ") != cmdtext.npos && vehicles) {
+			char cmd[20];
+			int targetid;
+			sscanf(cmdtext.data(), "%s %i", cmd, &targetid);
+
+			if (!vehicles->valid(targetid)) {
+				player.sendClientMessage(Colour(-1, -1, -1, -1), "ID is invalid");
+				return true;
+			}
+
+			player.setSpectating(true);
+			IVehicle* target = &vehicles->get(targetid);
+			if (target) {
+				player.spectateVehicle(*target, PlayerSpectateMode_Normal);
+			}
+			return true;
+		}
+
+		if (cmdtext == "/specoff") {
+			player.setSpectating(false);
+			return true;
+		}
+	}
+
 	RivershellMode() {
 
 	}

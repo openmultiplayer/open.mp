@@ -106,23 +106,5 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(Allow));
 			}
 		};
-
-		struct PlayerSpawn final : NetworkPacketBase<52> {
-			bool read(INetworkBitStream& bs) {
-				return true;
-			}
-
-			void write(INetworkBitStream& bs) const {
-			}
-		};
-
-		struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
-			bool read(INetworkBitStream& bs) {
-				return false;
-			}
-
-			void write(INetworkBitStream& bs) const {
-			}
-		};
 	}
 }
