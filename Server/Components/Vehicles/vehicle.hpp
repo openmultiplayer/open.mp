@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 #include <chrono>
@@ -26,6 +28,8 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
     }
 };
 
+struct VehiclesPlugin;
+
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     GTAQuat rot;
@@ -43,7 +47,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int32_t bodyColour1 = -1;
     int32_t bodyColour2 = -1;
     IPlayer* driver = nullptr;
-    DefaultEventDispatcher<VehicleEventHandler>* eventDispatcher;
     String numberPlate = "XYZSR998";
     uint8_t objective;
     uint8_t doorsLocked;
@@ -64,7 +67,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     bool detaching = false;
     VehicleParams params;
     uint8_t sirenState = 0;
-    IVehiclesPlugin* pool = nullptr;
+    VehiclesPlugin* pool = nullptr;
 
     Vehicle() {
         mods.fill(0);
