@@ -51,13 +51,13 @@ void Query::removeRule(StringView ruleName)
 }
 
 template<typename T>
-void Query::writeToBuffer(char * output, int & offset, T value, unsigned int size)
+void Query::writeToBuffer(char * output, int & offset, T value, size_t size)
 {
 	*reinterpret_cast<T *>(&output[offset]) = value;
 	offset += size;
 }
 
-void Query::writeToBuffer(char * output, char const * src, int & offset, unsigned int size)
+void Query::writeToBuffer(char * output, char const * src, int & offset, size_t size)
 {
 	memcpy(&output[offset], src, size);
 	offset += size;
