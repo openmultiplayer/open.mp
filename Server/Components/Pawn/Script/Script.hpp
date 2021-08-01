@@ -194,6 +194,16 @@ private:
 	}
 
 	template <typename ... T>
+	inline int PushOne(StringView const & arg, T ... args)
+	{
+		int
+			ret = PushOne(args...);
+		if (ret == AMX_ERR_NONE)
+			return PushString(nullptr, nullptr, arg.data(), false, false);
+		return ret;
+	}
+
+	template <typename ... T>
 	inline int PushOne(std::string const & arg, T ... args)
 	{
 		int
