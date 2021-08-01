@@ -110,6 +110,12 @@ enum PlayerClickSource {
 	PlayerClickSource_Scoreboard
 };
 
+enum PlayerSpectateMode {
+	PlayerSpectateMode_Normal = 1,
+	PlayerSpectateMode_Fixed,
+	PlayerSpectateMode_Side
+};
+
 static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
@@ -408,7 +414,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Toggle widescreen for player
 	virtual void setWidescreen(bool enable) = 0;
 
-	// Get widescreen status from player
+	/// Get widescreen status from player
 	virtual bool getWidescreen() const = 0;
 
 	/// Set the transform applied to player rotation
@@ -481,16 +487,16 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	virtual void setChatBubble(StringView text, const Colour& colour, float drawDist, std::chrono::milliseconds expire) = 0;
 
-	// Send a message to the player
+	/// Send a message to the player
 	virtual void sendClientMessage(const Colour& colour, StringView message) const = 0;
 
-	// Send a standardly formatted chat message as the player to everyone
+	/// Send a standardly formatted chat message as the player to everyone
 	virtual void sendChatMessage(StringView message) const = 0;
 
-	// Send a command to server (Player)
+	/// Send a command to server (Player)
 	virtual void sendCommand(StringView message) const = 0;
 
-	// Send a game text message to the player
+	/// Send a game text message to the player
 	virtual void sendGameText(StringView message, std::chrono::milliseconds time, int style) const = 0;
 
 	/// Set the player's weather
@@ -499,10 +505,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's weather
 	virtual int getWeather() const = 0;
 
-	// Set world bounds
+	/// Set world bounds
 	virtual void setWorldBounds(Vector4 coords) = 0;
 
-	// Get world bounds
+	/// Get world bounds
 	virtual Vector4 getWorldBounds() const = 0;
 
 	/// Set the player's fighting style
@@ -584,6 +590,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Disable remote vehicle collision detection for this player.
 	virtual void setRemoteVehicleCollisions(bool collide) = 0;
+
+	/// Make player spectate another player
+	virtual void spectatePlayer(IPlayer& target, PlayerSpectateMode mode) = 0;
+
+	/// Make player spectate a vehicle
+	virtual void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) = 0;
 
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData

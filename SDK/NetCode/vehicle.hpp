@@ -334,17 +334,6 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(params.windowBackRight));
 			}
 		};
-
-		struct DisableRemoteVehicleCollisions final : NetworkPacketBase<167> {
-			bool Disable;
-			bool read(INetworkBitStream& bs) const {
-				return false;
-			}
-
-			void write(INetworkBitStream& bs) const {
-				bs.write(NetworkBitStreamValue::BIT(Disable));
-			}
-		};
 	}
 
 	namespace Packet {

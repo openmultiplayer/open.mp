@@ -145,7 +145,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerWeatherRPC.WeatherID = WeatherID;
         sendRPC(setPlayerWeatherRPC);
     }
-
+	
 	void setWorldBounds(Vector4 coords) override {
         worldBounds_ = coords;
         NetCode::RPC::SetWorldBounds setWorldBoundsRPC;
@@ -769,6 +769,36 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(collisionsRPC);
     }
 
+    void spectatePlayer(IPlayer& target, PlayerSpectateMode mode) override {
+        // Set virtual world and interior to target's, consider this as a samp bug fix,
+        // since in samp you have to do this manually yourself then call spectate functions
+        setVirtualWorld(target.getVirtualWorld());
+        setInterior(target.getInterior());
+
+        setPosition(target.getPosition());
+        target.streamInForPlayer(*this);
+
+        NetCode::RPC::PlayerSpectatePlayer rpc;
+        rpc.PlayerID = target.getID();
+        rpc.SpecCamMode = mode;
+        sendRPC(rpc);
+    }
+
+    void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) override {
+        // Set virtual world and interior to target's, consider this as a samp bug fix,
+        // since in samp you have to do this manually yourself then call spectate functions
+        setVirtualWorld(target.getVirtualWorld());
+        setInterior(target.getInterior());
+
+        setPosition(target.getPosition());
+        target.streamInForPlayer(*this);
+
+        NetCode::RPC::PlayerSpectateVehicle rpc;
+        rpc.VehicleID = target.getID();
+        rpc.SpecCamMode = mode;
+        sendRPC(rpc);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
@@ -1152,6 +1182,34 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             return true;
         }
     } playerFootSyncHandler;
+
+    struct PlayerSpectatorHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        PlayerSpectatorHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::Packet::PlayerSpectatorSync spectatorSync;
+            if (!spectatorSync.read(bs)) {
+                return false;
+            }
+
+            Player& player = static_cast<Player&>(peer);
+            player.pos_ = spectatorSync.Position;
+            player.keys_.keys = spectatorSync.Keys;
+            player.keys_.leftRight = spectatorSync.LeftRight;
+            player.keys_.upDown = spectatorSync.UpDown;
+
+            player.setState(PlayerState_Spectating);
+
+            if (!player.controllable_) {
+                spectatorSync.Keys = 0;
+                spectatorSync.UpDown = 0;
+                spectatorSync.LeftRight = 0;
+            }
+
+            return true;
+        }
+    } playerSpectatorHandler;
 
     struct PlayerAimSyncHandler : public SingleNetworkInOutEventHandler{
         PlayerPool & self;
@@ -1687,6 +1745,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         playerTextRPCHandler(*this),
         playerCommandRPCHandler(*this),
         playerFootSyncHandler(*this),
+        playerSpectatorHandler(*this),
         playerAimSyncHandler(*this),
         playerStatsSyncHandler(*this),
         playerBulletSyncHandler(*this),
@@ -1780,6 +1839,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
 
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+        core.addPerPacketEventHandler<NetCode::Packet::PlayerSpectatorSync>(&playerSpectatorHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);

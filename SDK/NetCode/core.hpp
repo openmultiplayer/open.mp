@@ -1057,6 +1057,63 @@ namespace NetCode {
 				return bs.read<NetworkBitStreamValueType::UINT8>(Source);
 			}
 		};
+
+		struct DisableRemoteVehicleCollisions final : NetworkPacketBase<167> {
+			bool Disable;
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(Disable));
+			}
+		};
+
+		struct PlayerSpawn final : NetworkPacketBase<52> {
+			bool read(INetworkBitStream& bs) {
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct PlayerSpectatePlayer final : NetworkPacketBase<126> {
+			int PlayerID;
+			PlayerSpectateMode SpecCamMode;
+
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+				bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
+			}
+		};
+
+		struct PlayerSpectateVehicle final : NetworkPacketBase<127> {
+			bool VehicleID;
+			PlayerSpectateMode SpecCamMode;
+
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+				bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
+			}
+		};
 	}
 
 	namespace Packet {
@@ -1299,6 +1356,37 @@ namespace NetCode {
 						bs.write(NetworkBitStreamValue::INT16(otherPos.z));
 					}
 				}
+			}
+		};
+
+		struct PlayerSpectatorSync final : NetworkPacketBase<212> {
+			uint16_t LeftRight;
+			uint16_t UpDown;
+			uint16_t Keys;
+			Vector3 Position;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
+				bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
+				bs.read<NetworkBitStreamValueType::UINT16>(Keys);
+				return bs.read<NetworkBitStreamValueType::VEC3>(Position);
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+
+				bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
+				if (LeftRight) {
+					bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+				}
+
+				bs.write(NetworkBitStreamValue::BIT(UpDown > 0));
+				if (UpDown) {
+					bs.write(NetworkBitStreamValue::UINT16(UpDown));
+				}
+
+				bs.write(NetworkBitStreamValue::UINT16(Keys));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
 			}
 		};
 	}
