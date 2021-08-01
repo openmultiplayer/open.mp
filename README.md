@@ -13,12 +13,12 @@
 
 ## Tools
 
-- [CMake 3.11+](https://cmake.org/)
-- [Conan 1.33+](https://conan.io/)
+* [CMake 3.11+](https://cmake.org/)
+* [Conan 1.33+](https://conan.io/)
 
 ## Tools on Windows
 
-- [Visual Studio 2019+](https://www.visualstudio.com/)
+* [Visual Studio 2019+](https://www.visualstudio.com/)
 
 Visual Studio needs the `Desktop development with C++` workload with the `MSVC v142`, `Windows 10 SDK` and `C++ Clang tools for Windows` components.
 
