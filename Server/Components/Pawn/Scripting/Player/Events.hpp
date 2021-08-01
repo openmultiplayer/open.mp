@@ -7,4 +7,7 @@ struct PlayerEvents : public PlayerEventHandler, public Singleton<PlayerEvents>{
 	void onConnect(IPlayer & player) {
 		PawnManager::Get()->CallAll("OnPlayerConnect", player.getID());
 	}
+	bool onCommandText(IPlayer& player, StringView cmdtext) {
+		return PawnManager::Get()->CallAll("OnPlayerCommandText", player.getID(), cmdtext);
+	}
 };
