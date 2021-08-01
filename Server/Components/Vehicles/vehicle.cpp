@@ -1,4 +1,5 @@
 #include "vehicle.hpp"
+#include "vehicles_impl.hpp"
 #include <vehicle_components.hpp>
 
 void Vehicle::streamInForPlayer(IPlayer& player) {
@@ -56,7 +57,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     streamedFor_.add(player.getID(), player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
 
     respawning = false;
 }
@@ -80,7 +81,7 @@ void Vehicle::streamOutForClient(IPlayer& player) {
     --data->numStreamed;
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
 }
 
 bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
@@ -104,7 +105,7 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     if (vehicleSync.Siren != sirenState && spawnData.siren) {
         sirenState = vehicleSync.Siren;
         params.siren = sirenState != 0;
-        eventDispatcher->stopAtFalse([&player, this](VehicleEventHandler* handler) {
+        pool->eventDispatcher.stopAtFalse([&player, this](VehicleEventHandler* handler) {
             return handler->onVehicleSirenStateChange(player, *this, sirenState);
         });
     }
@@ -147,7 +148,7 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
 
     UnoccupiedVehicleUpdate data = UnoccupiedVehicleUpdate{ unoccupiedSync.SeatID, unoccupiedSync.Position, unoccupiedSync.Velocity };
     bool allowed = 
-        eventDispatcher->stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
+        pool->eventDispatcher.stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
             return handler->onUnoccupiedVehicleUpdate(*this, player, data);
         });
 
@@ -198,7 +199,7 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
         }
         trailerUpdateTime = now;
     }
-    bool allowed = eventDispatcher->stopAtFalse([&player, this](VehicleEventHandler* handler) {
+    bool allowed = pool->eventDispatcher.stopAtFalse([&player, this](VehicleEventHandler* handler) {
             return handler->onTrailerUpdate(player, *this);
         }
     );
@@ -262,7 +263,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
 
     if (vehicleUpdater) {
         ScopedPoolReleaseLock lock(*pool, *this);
-        eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, lock.entry, *vehicleUpdater);
+        pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, lock.entry, *vehicleUpdater);
     }
 
     for (IPlayer* player : streamedFor_.entries()) {
@@ -437,7 +438,7 @@ void Vehicle::setDead(IPlayer& killer) {
     dead = true;
     timeOfDeath = std::chrono::steady_clock::now();
     ScopedPoolReleaseLock lock(*pool, *this);
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
 }
 
 bool Vehicle::isDead() {
@@ -475,7 +476,7 @@ void Vehicle::respawn() {
     params = VehicleParams{};
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    eventDispatcher->dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
 }
 
 std::chrono::seconds Vehicle::getRespawnDelay() {
