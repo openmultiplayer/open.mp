@@ -495,6 +495,8 @@ struct RivershellMode :
 			player.setSpectating(false);
 			return true;
 		}
+
+		return false;
 	}
 
 	RivershellMode() {
