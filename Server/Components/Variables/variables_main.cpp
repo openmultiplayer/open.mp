@@ -12,10 +12,10 @@ struct VariableStorageBase : public ToInherit {
 	const StringView getString(StringView key) const override {
 		auto it = data_.find(key);
 		if (it == data_.end()) {
-			return StringView(nullptr);
+			return StringView();
 		}
 		if (it->second.index() != 1) {
-			return StringView(nullptr);
+			return StringView();
 		}
 		return StringView(std::get<String>(it->second));
 	}
