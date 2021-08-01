@@ -430,12 +430,14 @@ void RakNetLegacyNetwork::init(ICore* c) {
     StringView serverName = config.getString("server_name");
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
+    StringView bind = config.getString("bind");
 
     rakNetServer.Start(
         maxPlayers,
         0,
         sleep,
-        port
+        port,
+        bind.data()
     );
     rakNetServer.StartOccasionalPing();
 

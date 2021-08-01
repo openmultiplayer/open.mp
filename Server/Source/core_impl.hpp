@@ -112,10 +112,10 @@ struct Config final : IConfig {
     const StringView getString(StringView key) const override {
         auto it = processed.find(key);
         if (it == processed.end()) {
-            return StringView(nullptr);
+            return StringView();
         }
         if (it->second.index() != 1) {
-            return StringView(nullptr);
+            return StringView();
         }
         return StringView(std::get<String>(it->second));
     }
