@@ -285,6 +285,12 @@ SCRIPT_API(GetPlayerInterior, int(IPlayer& player))
 	return player.getInterior();
 }
 
+SCRIPT_API(SetPlayerPos, bool(IPlayer& player, Vector3 vec))
+{
+	player.setPosition(vec);
+	return true;
+}
+
 SCRIPT_API(GetPlayerPos, bool(IPlayer& player, Vector3& pos))
 {
 	pos = player.getPosition();
