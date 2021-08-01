@@ -1,5 +1,3 @@
-#pragma once
-
 #include <sdk.hpp>
 
 static const uint16_t vehicleIndexes[212 + 1] = {
