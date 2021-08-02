@@ -290,7 +290,7 @@ struct RivershellMode :
 			}
 		}
 		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
-		data->lastKiller = &killer->get();
+		data->lastKiller = killer ? &killer->get() : nullptr;
 		data->lastDeath = std::chrono::steady_clock::now();
 	}
 
