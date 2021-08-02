@@ -196,7 +196,7 @@ struct IVehicle : public IEntity {
 	/// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
 	virtual void addCarriage(IVehicle* carriage, int pos) = 0;
 	virtual void updateCarriage(Vector3 pos, Vector3 veloc) = 0;
-	virtual std::array<IVehicle*, 3> getCarriages() = 0;
+	virtual StaticArray<IVehicle*, 3> getCarriages() = 0;
 
 	/// Sets the velocity of the vehicle.
 	virtual void setVelocity(Vector3 velocity) = 0;
