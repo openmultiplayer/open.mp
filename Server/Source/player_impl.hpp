@@ -775,7 +775,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setVirtualWorld(target.getVirtualWorld());
         setInterior(target.getInterior());
 
-        setPosition(target.getPosition());
+        pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 
         NetCode::RPC::PlayerSpectatePlayer rpc;
@@ -790,7 +790,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setVirtualWorld(target.getVirtualWorld());
         setInterior(target.getInterior());
 
-        setPosition(target.getPosition());
+        pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 
         NetCode::RPC::PlayerSpectateVehicle rpc;
