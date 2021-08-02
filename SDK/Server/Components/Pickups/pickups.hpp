@@ -4,7 +4,7 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <netcode.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 
 typedef int PickupType;
 
@@ -36,10 +36,9 @@ struct PickupEventHandler {
 	virtual void onPlayerPickUpPickup(IPlayer & player, IPickup & pickup) {}
 };
 
-static const UUID PickupsPlugin_UUID = UUID(0xcf304faa363dd971);
-
-struct IPickupsPlugin : public IPoolPlugin<IPickup, PICKUP_POOL_SIZE> {
-	PROVIDE_UUID(PickupsPlugin_UUID);
+static const UUID PickupsComponent_UUID = UUID(0xcf304faa363dd971);
+struct IPickupsComponent : public IPoolComponent<IPickup, PICKUP_POOL_SIZE> {
+	PROVIDE_UUID(PickupsComponent_UUID);
 
 	virtual IEventDispatcher<PickupEventHandler> & getEventDispatcher() = 0;
 

@@ -5,7 +5,7 @@
 #include <atomic>
 #include <iostream>
 
-struct ConsolePlugin final : public IConsolePlugin, public CoreEventHandler {
+struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler {
 	ICore* core = nullptr;
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
 	std::thread consoleThread;
@@ -13,7 +13,7 @@ struct ConsolePlugin final : public IConsolePlugin, public CoreEventHandler {
 	std::atomic_bool newCmd;
 	String cmd;
 
-	const char* pluginName() override {
+	StringView componentName() override {
 		return "Console";
 	}
 
@@ -23,17 +23,17 @@ struct ConsolePlugin final : public IConsolePlugin, public CoreEventHandler {
 		consoleThread = std::thread(ThreadProc, this);
 	}
 
-	static void ThreadProc(ConsolePlugin* plugin) {
+	static void ThreadProc(ConsoleComponent* component) {
 		String line;
 		for (;;) {
 			std::getline(std::cin, line);
-			std::scoped_lock<std::mutex> lock(plugin->cmdMutex);
-			plugin->cmd = line;
-			plugin->newCmd = true;
+			std::scoped_lock<std::mutex> lock(component->cmdMutex);
+			component->cmd = line;
+			component->newCmd = true;
 		}
 	}
 
-	~ConsolePlugin() {
+	~ConsoleComponent() {
 		consoleThread.join();
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
@@ -56,8 +56,8 @@ struct ConsolePlugin final : public IConsolePlugin, public CoreEventHandler {
 			eventDispatcher.dispatch(&ConsoleEventHandler::onConsoleText, command);
 		}
 	}
-} plugin;
+} component;
 
-PLUGIN_ENTRY_POINT() {
-	return &plugin;
+COMPONENT_ENTRY_POINT() {
+	return &component;
 }

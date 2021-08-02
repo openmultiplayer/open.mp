@@ -3,7 +3,7 @@
 #include <types.hpp>
 #include <values.hpp>
 #include <player.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 
 enum VariableType {
 	VariableType_None,
@@ -38,12 +38,12 @@ struct IVariableStorageBase {
 	virtual bool erase(StringView key) = 0;
 };
 
-static const UUID VariablesPlugin_UUID = UUID(0x75e121848bc01fa2);
-struct IVariablesPlugin : public IPlugin, public IVariableStorageBase {
-	PROVIDE_UUID(VariablesPlugin_UUID);
+static const UUID VariablesComponent_UUID = UUID(0x75e121848bc01fa2);
+struct IVariablesComponent : public IComponent, public IVariableStorageBase {
+	PROVIDE_UUID(VariablesComponent_UUID);
 };
 
-static const UUID PlayerVariableDataPlugin_UUID = UUID(0x12debbc8a3bd23ad);
+static const UUID PlayerVariableData_UUID = UUID(0x12debbc8a3bd23ad);
 struct IPlayerVariableData : public IPlayerData, public IVariableStorageBase {
-	PROVIDE_UUID(PlayerVariableDataPlugin_UUID);
+	PROVIDE_UUID(PlayerVariableData_UUID);
 };

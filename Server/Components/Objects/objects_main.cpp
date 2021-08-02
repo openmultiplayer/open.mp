@@ -2,16 +2,16 @@
 #include <netcode.hpp>
 #include "object.hpp"
 
-struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, public PlayerEventHandler {
+struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
 	ICore* core;
-    MarkedDynamicPoolStorage<Object, IObject, IObjectsPlugin::Cnt> storage;
+    MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Cnt> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-    StaticBitset<IObjectsPlugin::Cnt> isPlayerObject;
+    StaticBitset<IObjectsComponent::Cnt> isPlayerObject;
     bool defCameraCollision = true;
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInOutEventHandler {
-        ObjectPlugin& self;
-        PlayerSelectObjectEventHandler(ObjectPlugin& self) : self(self) {}
+        ObjectComponent& self;
+        PlayerSelectObjectEventHandler(ObjectComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::OnPlayerSelectObject onPlayerSelectObjectRPC;
@@ -48,8 +48,8 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     } playerSelectObjectEventHandler;
 
     struct PlayerEditObjectEventHandler : public SingleNetworkInOutEventHandler {
-        ObjectPlugin& self;
-        PlayerEditObjectEventHandler(ObjectPlugin& self) : self(self) {}
+        ObjectComponent& self;
+        PlayerEditObjectEventHandler(ObjectComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::OnPlayerEditObject onPlayerEditObjectRPC;
@@ -92,8 +92,8 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
     } playerEditObjectEventHandler;
 
     struct PlayerEditAttachedObjectEventHandler : public SingleNetworkInOutEventHandler {
-        ObjectPlugin& self;
-        PlayerEditAttachedObjectEventHandler(ObjectPlugin& self) : self(self) {}
+        ObjectComponent& self;
+        PlayerEditAttachedObjectEventHandler(ObjectComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::OnPlayerEditAttachedObject onPlayerEditAttachedObjectRPC;
@@ -118,7 +118,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         }
     } playerEditAttachedObjectEventHandler;
 
-    ObjectPlugin() :
+    ObjectComponent() :
         playerSelectObjectEventHandler(*this),
         playerEditObjectEventHandler(*this),
         playerEditAttachedObjectEventHandler(*this)
@@ -135,7 +135,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEditAttachedObject>(&playerEditAttachedObjectEventHandler);
     }
 
-	~ObjectPlugin()
+	~ObjectComponent()
 	{
         core->getEventDispatcher().removeEventHandler(this);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
@@ -154,7 +154,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
         return defCameraCollision;
     }
 
-    const char* pluginName() override {
+    StringView componentName() override {
         return "Objects";
     }
 
@@ -317,7 +317,7 @@ struct ObjectPlugin final : public IObjectsPlugin, public CoreEventHandler, publ
 };
 
 struct PlayerObjectData final : public IPlayerObjectData {
-    ObjectPlugin& plugin_;
+    ObjectComponent& component_;
     IPlayer& player_;
     StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
     StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
@@ -325,8 +325,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
     bool inObjectSelection_;
     bool inObjectEdit_;
 
-    PlayerObjectData(ObjectPlugin& plugin, IPlayer& player) :
-        plugin_(plugin), player_(player)
+    PlayerObjectData(ObjectComponent& component, IPlayer& player) :
+        component_(component), player_(player)
     {
         storage.claimUnusable(0);
     }
@@ -334,7 +334,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx != -1) {
-            if (!plugin_.storage.valid(freeIdx)) {
+            if (!component_.storage.valid(freeIdx)) {
                 break;
             }
 
@@ -352,7 +352,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
             return nullptr;
         }
 
-        plugin_.isPlayerObject.set(objid);
+        component_.isPlayerObject.set(objid);
 
         PlayerObject& obj = storage.get(objid);
         obj.player_ = &player_;
@@ -360,7 +360,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         obj.rot_ = rotation;
         obj.model_ = modelID;
         obj.drawDist_ = drawDist;
-        obj.cameraCol_ = plugin_.defCameraCollision;
+        obj.cameraCol_ = component_.defCameraCollision;
 
         obj.createForPlayer();
 
@@ -515,7 +515,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 };
 
-void ObjectPlugin::onTick(std::chrono::microseconds elapsed) {
+void ObjectComponent::onTick(std::chrono::microseconds elapsed) {
     for (IObject* object : storage.entries()) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed)) {
@@ -538,10 +538,10 @@ void ObjectPlugin::onTick(std::chrono::microseconds elapsed) {
     }
 }
 
-IPlayerData* ObjectPlugin::onPlayerDataRequest(IPlayer& player) {
+IPlayerData* ObjectComponent::onPlayerDataRequest(IPlayer& player) {
     return new PlayerObjectData(*this, player);
 }
 
-PLUGIN_ENTRY_POINT() {
-	return new ObjectPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new ObjectComponent();
 }

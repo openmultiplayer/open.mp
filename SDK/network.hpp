@@ -4,7 +4,7 @@
 #include <array>
 #include <vector>
 #include <cassert>
-#include "plugin.hpp"
+#include "component.hpp"
 #include "types.hpp"
 #include "events.hpp"
 #include "exports.hpp"
@@ -414,12 +414,12 @@ struct INetwork {
 	virtual void disconnect(const INetworkPeer& peer) = 0;
 };
 
-/// A plugin interface which allows for writing a network plugin
-struct INetworkPlugin : public IPlugin {
-	/// Return Network plugin type
-	PluginType pluginType() override { return PluginType::Network; }
+/// A component interface which allows for writing a network component
+struct INetworkComponent : public IComponent {
+	/// Return Network component type
+	ComponentType componentType() override { return ComponentType::Network; }
 
-	/// Return the network provided by the plugin
+	/// Return the network provided by the component
 	virtual INetwork* getNetwork() = 0;
 };
 

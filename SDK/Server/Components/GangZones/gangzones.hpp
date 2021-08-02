@@ -4,7 +4,7 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <netcode.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 #include <anim.hpp>
 
 struct GangZonePos {
@@ -40,10 +40,10 @@ struct IGangZone : public IIDProvider {
 struct GangZoneEventHandler {
 };
 
-static const UUID GangZonePlugin_UUID = UUID(0xb3351d11ee8d8056);
+static const UUID GangZoneComponent_UUID = UUID(0xb3351d11ee8d8056);
 
-struct IGangZonesPlugin : public IPoolPlugin<IGangZone, GANG_ZONE_POOL_SIZE> {
-	PROVIDE_UUID(GangZonePlugin_UUID);
+struct IGangZonesComponent : public IPoolComponent<IGangZone, GANG_ZONE_POOL_SIZE> {
+	PROVIDE_UUID(GangZoneComponent_UUID);
 
 	/// Get the event dispatcher
 	virtual IEventDispatcher<GangZoneEventHandler>& getEventDispatcher() = 0;

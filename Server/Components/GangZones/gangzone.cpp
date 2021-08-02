@@ -1,11 +1,11 @@
 #include "gangzone.hpp"
 
-struct GangZonesPlugin final : public IGangZonesPlugin {
+struct GangZonesComponent final : public IGangZonesComponent {
 	ICore * core;
-	MarkedPoolStorage<GangZone, IGangZone, IGangZonesPlugin::Cnt> storage;
+	MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Cnt> storage;
 	DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
-	const char * pluginName() override {
+	StringView componentName() override {
 		return "GangZones";
 	}
 
@@ -79,6 +79,6 @@ struct GangZonesPlugin final : public IGangZonesPlugin {
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new GangZonesPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new GangZonesComponent();
 }

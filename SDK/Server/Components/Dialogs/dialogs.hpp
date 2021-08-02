@@ -32,9 +32,9 @@ struct PlayerDialogEventHandler {
 	virtual void onDialogResponse(IPlayer& player, uint16_t dialogId, DialogResponse response, uint16_t listItem, StringView inputText) {}
 };
 
-static const UUID DialogsPlugin_UUID = UUID(0x44a111350d611dde);
-struct IDialogsPlugin : public IPlugin {
-	PROVIDE_UUID(DialogsPlugin_UUID);
+static const UUID DialogsComponent_UUID = UUID(0x44a111350d611dde);
+struct IDialogsComponent : public IComponent {
+	PROVIDE_UUID(DialogsComponent_UUID);
 
 	/// Access to event dispatchers for other components to add handlers to
 	virtual IEventDispatcher<PlayerDialogEventHandler>& getEventDispatcher() = 0;

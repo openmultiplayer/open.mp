@@ -63,16 +63,16 @@ IVehicle* Player::getCameraTargetVehicle() {
         return nullptr;
     }
 
-    IVehiclesPlugin* plugin = pool_->vehiclesPlugin;
-    if (!plugin) {
+    IVehiclesComponent* component = pool_->vehiclesComponent;
+    if (!component) {
         return nullptr;
     }
 
-    if (!plugin->valid(cameraTargetVehicle_)) {
+    if (!component->valid(cameraTargetVehicle_)) {
         return nullptr;
     }
 
-    IVehicle& target = plugin->get(cameraTargetVehicle_);
+    IVehicle& target = component->get(cameraTargetVehicle_);
     if (!target.isStreamedInForPlayer(*this)) {
         return nullptr;
     }
@@ -85,16 +85,16 @@ IObject* Player::getCameraTargetObject() {
         return nullptr;
     }
 
-    IObjectsPlugin* plugin = pool_->objectsPlugin;
-    if (!plugin) {
+    IObjectsComponent* component = pool_->objectsComponent;
+    if (!component) {
         return nullptr;
     }
 
-    if (!plugin->valid(cameraTargetObject_)) {
+    if (!component->valid(cameraTargetObject_)) {
         return nullptr;
     }
 
-    return &plugin->get(cameraTargetObject_);
+    return &component->get(cameraTargetObject_);
 }
 
 IPlayer* Player::getTargetPlayer() {
@@ -111,17 +111,17 @@ IPlayer* Player::getTargetPlayer() {
 }
 
 IActor* Player::getCameraTargetActor() {
-    IActorsPlugin* plugin = pool_->actorsPlugin;
+    IActorsComponent* component = pool_->actorsComponent;
 
-    if (!plugin) {
+    if (!component) {
         return nullptr;
     }
 
-    if (!plugin->valid(cameraTargetActor_)) {
+    if (!component->valid(cameraTargetActor_)) {
         return nullptr;
     }
 
-    IActor& target = plugin->get(cameraTargetActor_);
+    IActor& target = component->get(cameraTargetActor_);
     if (!target.isStreamedInForPlayer(*this)) {
         return nullptr;
     }
@@ -130,17 +130,17 @@ IActor* Player::getCameraTargetActor() {
 }
 
 IActor* Player::getTargetActor() {
-    IActorsPlugin* plugin = pool_->actorsPlugin;
+    IActorsComponent* component = pool_->actorsComponent;
 
-    if (!plugin) {
+    if (!component) {
         return nullptr;
     }
 
-    if (!plugin->valid(targetActor_)) {
+    if (!component->valid(targetActor_)) {
         return nullptr;
     }
 
-    IActor& target = plugin->get(targetActor_);
+    IActor& target = component->get(targetActor_);
     if (!target.isStreamedInForPlayer(*this)) {
         return nullptr;
     }

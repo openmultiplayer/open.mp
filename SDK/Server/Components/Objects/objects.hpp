@@ -185,9 +185,9 @@ struct IPlayerObject : public IBaseObject {
 struct ObjectEventHandler;
 
 /// An object pool
-static const UUID ObjectsPlugin_UUID = UUID(0x59f8415f72da6160);
-struct IObjectsPlugin : public IPoolPlugin<IObject, OBJECT_POOL_SIZE> {
-	PROVIDE_UUID(ObjectsPlugin_UUID)
+static const UUID ObjectsComponent_UUID = UUID(0x59f8415f72da6160);
+struct IObjectsComponent : public IPoolComponent<IObject, OBJECT_POOL_SIZE> {
+	PROVIDE_UUID(ObjectsComponent_UUID)
 
 	/// Get the object event dispatcher
 	virtual IEventDispatcher<ObjectEventHandler>& getEventDispatcher() = 0;

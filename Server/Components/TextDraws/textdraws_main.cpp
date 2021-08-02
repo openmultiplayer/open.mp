@@ -121,18 +121,18 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 };
 
-struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandler {
+struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsPlugin::Cnt> storage;
+    MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsComponent::Cnt> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
-    const char* pluginName() override {
+    StringView componentName() override {
         return "TextLabels";
     }
 
     struct PlayerSelectTextDrawEventHandler : public SingleNetworkInOutEventHandler {
-        TextDrawsPlugin& self;
-        PlayerSelectTextDrawEventHandler(TextDrawsPlugin& self) : self(self) {}
+        TextDrawsComponent& self;
+        PlayerSelectTextDrawEventHandler(TextDrawsComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::OnPlayerSelectTextDraw RPC;
@@ -162,7 +162,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         }
     } playerSelectTextDrawEventHandler;
 
-    TextDrawsPlugin() :
+    TextDrawsComponent() :
         playerSelectTextDrawEventHandler(*this)
     {}
 
@@ -172,7 +172,7 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);
     }
 
-    ~TextDrawsPlugin() {
+    ~TextDrawsComponent() {
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);
@@ -270,6 +270,6 @@ struct TextDrawsPlugin final : public ITextDrawsPlugin, public PlayerEventHandle
     }
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new TextDrawsPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new TextDrawsComponent();
 }

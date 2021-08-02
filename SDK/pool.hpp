@@ -48,11 +48,11 @@ struct IPool : IReadOnlyPool<T, Count> {
     virtual void unlock(int index) = 0;
 };
 
-/// A plugin interface which allows for writing a pool plugin
+/// A component interface which allows for writing a pool component
 template <typename T, size_t Count>
-struct IPoolPlugin : public IPlugin, public IPool<T, Count> {
-    /// Return Pool plugin type
-    PluginType pluginType() override { return PluginType::Pool; }
+struct IPoolComponent : public IComponent, public IPool<T, Count> {
+    /// Return Pool component type
+    ComponentType componentType() override { return ComponentType::Pool; }
 };
 
 /* Implementation, NOT to be passed around */
