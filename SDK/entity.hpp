@@ -3,7 +3,7 @@
 #include <set>
 #include "types.hpp"
 #include "events.hpp"
-#include "plugin.hpp"
+#include "component.hpp"
 #include "gtaquat.hpp"
 
 /// An interface for ID providers

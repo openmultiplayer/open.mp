@@ -30,15 +30,15 @@ struct RivershellPlayerData final : public IPlayerData {
 };
 
 struct RivershellMode :
-	public IPlugin, public PlayerEventHandler, public ClassEventHandler, public VehicleEventHandler,
+	public IComponent, public PlayerEventHandler, public ClassEventHandler, public VehicleEventHandler,
 	public PlayerCheckpointEventHandler, public PlayerUpdateEventHandler
 {
 	ICore* c = nullptr;
-	IVehiclesPlugin* vehicles = nullptr;
-	IClassesPlugin* classes = nullptr;
-	IObjectsPlugin* objects = nullptr;
-	ICheckpointsPlugin* checkpoints = nullptr;
-	ITimersPlugin* timers = nullptr;
+	IVehiclesComponent* vehicles = nullptr;
+	IClassesComponent* classes = nullptr;
+	IObjectsComponent* objects = nullptr;
+	ICheckpointsComponent* checkpoints = nullptr;
+	ITimersComponent* timers = nullptr;
 
 	int greenTeamCaps = 0;
 	int blueTeamCaps = 0;
@@ -52,7 +52,7 @@ struct RivershellMode :
 		return 0x5ea395b11220dc50;
 	}
 
-	const char* pluginName() override {
+	StringView componentName() override {
 		return "Rivershell";
 	}
 
@@ -300,12 +300,12 @@ struct RivershellMode :
 		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
 	}
 
-	void onInit(IPluginList* plugins) override {
-		classes = plugins->queryPlugin<IClassesPlugin>();
-		vehicles = plugins->queryPlugin<IVehiclesPlugin>();
-		objects = plugins->queryPlugin<IObjectsPlugin>();
-		checkpoints = plugins->queryPlugin<ICheckpointsPlugin>();
-		timers = plugins->queryPlugin<ITimersPlugin>();
+	void onInit(IComponentList* components) override {
+		classes = components->queryComponent<IClassesComponent>();
+		vehicles = components->queryComponent<IVehiclesComponent>();
+		objects = components->queryComponent<IObjectsComponent>();
+		checkpoints = components->queryComponent<ICheckpointsComponent>();
+		timers = components->queryComponent<ITimersComponent>();
 		if (classes) {
 			classes->getEventDispatcher().addEventHandler(this);
 		}
@@ -519,8 +519,8 @@ struct RivershellMode :
 			checkpoints->getEventDispatcher().removeEventHandler(this);
 		}
 	}
-} plugin;
+} component;
 
-PLUGIN_ENTRY_POINT() {
-	return &plugin;
+COMPONENT_ENTRY_POINT() {
+	return &component;
 }

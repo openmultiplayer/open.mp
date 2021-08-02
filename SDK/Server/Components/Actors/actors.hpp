@@ -4,7 +4,7 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <netcode.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 #include <anim.hpp>
 
 /// Actor interace
@@ -50,10 +50,9 @@ struct ActorEventHandler {
 	virtual void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) {}
 };
 
-static const UUID ActorsPlugin_UUID = UUID(0xc81ca021eae2ad5c);
-
-struct IActorsPlugin : public IPoolPlugin<IActor, ACTOR_POOL_SIZE> {
-	PROVIDE_UUID(ActorsPlugin_UUID);
+static const UUID ActorsComponent_UUID = UUID(0xc81ca021eae2ad5c);
+struct IActorsComponent : public IPoolComponent<IActor, ACTOR_POOL_SIZE> {
+	PROVIDE_UUID(ActorsComponent_UUID);
 
 	/// Get the ActorEventHandler event dispatcher
 	virtual IEventDispatcher<ActorEventHandler>& getEventDispatcher() = 0;

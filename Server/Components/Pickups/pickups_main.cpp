@@ -1,15 +1,15 @@
 #include "pickup.hpp"
 
-struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, public PlayerEventHandler {
+struct PickupsComponent final : public IPickupsComponent, public CoreEventHandler, public PlayerEventHandler {
 	ICore * core;
-	MarkedPoolStorage<Pickup, IPickup, IPickupsPlugin::Cnt> storage;
+	MarkedPoolStorage<Pickup, IPickup, IPickupsComponent::Cnt> storage;
 	DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
 	IPlayerPool * players = nullptr;
 	StreamConfigHelper streamConfigHelper;
 
 	struct PlayerPickUpPickupEventHandler : public SingleNetworkInOutEventHandler {
-		PickupsPlugin & self;
-		PlayerPickUpPickupEventHandler(PickupsPlugin & self) : self(self) {}
+		PickupsComponent & self;
+		PlayerPickUpPickupEventHandler(PickupsComponent & self) : self(self) {}
 
 		bool received(IPlayer & peer, INetworkBitStream & bs) override {
 			NetCode::RPC::OnPlayerPickUpPickup onPlayerPickUpPickupRPC;
@@ -29,11 +29,11 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 		}
 	} playerPickUpPickupEventHandler;
 
-	const char * pluginName() override {
+	StringView componentName() override {
 		return "Pickups";
 	}
 
-	PickupsPlugin() :
+	PickupsComponent() :
 		playerPickUpPickupEventHandler(*this)
 	{}
 
@@ -46,7 +46,7 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 		streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
 
-	~PickupsPlugin() {
+	~PickupsComponent() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
 			players->getEventDispatcher().removeEventHandler(this);
@@ -164,6 +164,6 @@ struct PickupsPlugin final : public IPickupsPlugin, public CoreEventHandler, pub
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new PickupsPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new PickupsComponent();
 }

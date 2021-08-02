@@ -5,7 +5,7 @@
 #include "events.hpp"
 #include "network.hpp"
 #include "player.hpp"
-#include "plugin.hpp"
+#include "component.hpp"
 
 /// An event handler for core events
 struct CoreEventHandler {

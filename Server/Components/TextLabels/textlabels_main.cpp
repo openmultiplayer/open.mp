@@ -4,7 +4,7 @@
 
 struct PlayerTextLabelData final : IPlayerTextLabelData {
     IPlayer& player;
-    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, ITextLabelsPlugin::Cnt> storage;
+    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, ITextLabelsComponent::Cnt> storage;
 
     PlayerTextLabelData(IPlayer& player) :
         player(player)
@@ -108,14 +108,14 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 };
 
-struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandler, public PlayerEventHandler {
+struct TextLabelsComponent final : public ITextLabelsComponent, public CoreEventHandler, public PlayerEventHandler {
     ICore* core;
-    MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsPlugin::Cnt> storage;
-    IVehiclesPlugin* vehicles = nullptr;
+    MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsComponent::Cnt> storage;
+    IVehiclesComponent* vehicles = nullptr;
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;
 
-    const char* pluginName() override {
+    StringView componentName() override {
         return "TextLabels";
     }
 
@@ -127,11 +127,11 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
-    void onInit(IPluginList* plugins) override {
-        vehicles = plugins->queryPlugin<IVehiclesPlugin>();
+    void onInit(IComponentList* components) override {
+        vehicles = components->queryComponent<IVehiclesComponent>();
     }
 
-    ~TextLabelsPlugin() {
+    ~TextLabelsComponent() {
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
@@ -288,6 +288,6 @@ struct TextLabelsPlugin final : public ITextLabelsPlugin, public CoreEventHandle
     }
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new TextLabelsPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new TextLabelsComponent();
 }

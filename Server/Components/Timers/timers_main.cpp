@@ -1,10 +1,10 @@
 #include <sdk.hpp>
 #include "timer.hpp"
 
-struct ConsolePlugin final : public ITimersPlugin, public CoreEventHandler {
+struct ConsoleComponent final : public ITimersComponent, public CoreEventHandler {
 	ICore* core = nullptr;
 
-	const char* pluginName() override {
+	StringView componentName() override {
 		return "Timers";
 	}
 
@@ -13,7 +13,7 @@ struct ConsolePlugin final : public ITimersPlugin, public CoreEventHandler {
 		core->getEventDispatcher().addEventHandler(this);
 	}
 
-	~ConsolePlugin() {
+	~ConsoleComponent() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
 		}
@@ -59,8 +59,8 @@ struct ConsolePlugin final : public ITimersPlugin, public CoreEventHandler {
 	}
 
 	FlatPtrHashSet<Timer> timers;
-} plugin;
+} component;
 
-PLUGIN_ENTRY_POINT() {
-	return &plugin;
+COMPONENT_ENTRY_POINT() {
+	return &component;
 }

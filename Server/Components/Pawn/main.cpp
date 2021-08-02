@@ -3,14 +3,14 @@
 #include "Manager/Manager.hpp"
 #include "Scripting/Impl.hpp"
 
-struct PawnPlugin : public IPlugin, public CoreEventHandler {
+struct PawnComponent : public IComponent, public CoreEventHandler {
 	ICore * c = nullptr;
 
 	UUID getUUID() override {
 		return 0x78906cd9f19c36a6;
 	}
 
-	const char * pluginName() override {
+	StringView componentName() override {
 		return "Pawn";
 	}
 
@@ -39,13 +39,13 @@ struct PawnPlugin : public IPlugin, public CoreEventHandler {
 	void onTick(std::chrono::microseconds elapsed) override {
 	}
 
-	~PawnPlugin() {
+	~PawnComponent() {
 		if (c) {
 			c->getEventDispatcher().removeEventHandler(this);
 		}
 	}
-} plugin;
+} component;
 
-PLUGIN_ENTRY_POINT() {
-	return &plugin;
+COMPONENT_ENTRY_POINT() {
+	return &component;
 }

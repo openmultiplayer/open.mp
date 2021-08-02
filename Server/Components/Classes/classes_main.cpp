@@ -59,16 +59,16 @@ struct PlayerClassData final : IPlayerClassData {
 	}
 };
 
-struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
-    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesPlugin::Cnt> storage;
+struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
+    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesComponent::Cnt> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
 	ICore* core;
 
     struct PlayerRequestClassHandler : public SingleNetworkInOutEventHandler {
-        ClassesPlugin& self;
-        PlayerRequestClassHandler(ClassesPlugin& self) : self(self) {}
+        ClassesComponent& self;
+        PlayerRequestClassHandler(ClassesComponent& self) : self(self) {}
 	        bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::PlayerRequestClass playerRequestClassPacket;
             if (!playerRequestClassPacket.read(bs)) {
@@ -145,7 +145,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         }
     } onPlayerRequestClassHandler;
 
-	ClassesPlugin() :
+	ClassesComponent() :
         onPlayerRequestClassHandler(*this)
 	{
 	}
@@ -160,7 +160,7 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         return eventDispatcher;
     }
 
-	const char* pluginName() override {
+    StringView componentName() override {
 		return "Classes";
 	}
 
@@ -232,12 +232,12 @@ struct ClassesPlugin final : public IClassesPlugin, public PlayerEventHandler {
         return storage.entries();
     }
 
-	~ClassesPlugin() {
+	~ClassesComponent() {
         core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
 		core->getPlayers().getEventDispatcher().removeEventHandler(this);
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new ClassesPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new ClassesComponent();
 }
