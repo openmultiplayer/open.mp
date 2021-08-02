@@ -27,13 +27,13 @@ struct PlayerDialogData final : public IPlayerDialogData {
 	}
 };
 
-struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
+struct DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
 	ICore* core;
 	DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;
 
 	struct DialogResponseHandler : public SingleNetworkInOutEventHandler {
-		DialogsPlugin& self;
-		DialogResponseHandler(DialogsPlugin& self) : self(self) {}
+		DialogsComponent& self;
+		DialogResponseHandler(DialogsComponent& self) : self(self) {}
 
 		bool received(IPlayer& peer, INetworkBitStream& bs) override {
 			NetCode::RPC::OnPlayerDialogResponse sendDialogResponse;
@@ -64,11 +64,11 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 		return new PlayerDialogData();
 	}
 
-	const char* pluginName() override {
+	StringView componentName() override {
 		return "Dialogs";
 	}
 
-	DialogsPlugin() :
+	DialogsComponent() :
 		dialogResponseHandler(*this)
 	{}
 
@@ -82,7 +82,7 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 		delete this;
 	}
 
-	~DialogsPlugin() {
+	~DialogsComponent() {
 		core->getPlayers().getEventDispatcher().removeEventHandler(this);
 		core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDialogResponse>(&dialogResponseHandler);
 	}
@@ -92,6 +92,6 @@ struct DialogsPlugin final : public IDialogsPlugin, public PlayerEventHandler {
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new DialogsPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new DialogsComponent();
 }

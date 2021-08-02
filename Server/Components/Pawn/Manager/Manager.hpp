@@ -133,8 +133,8 @@ private:
 		id_ = 0;
 
 	friend cell AMX_NATIVE_CALL pawn_Script_CallAll(AMX * amx, cell const * params);
-	friend int PluginCallGM(char * name);
-	friend int PluginCallFS(char * name);
+	friend int ComponentCallGM(char * name);
+	friend int ComponentCallFS(char * name);
 
 	void Spawn(std::string const & name);
 	bool OnServerCommand(std::string const & cmd, std::string const & args);

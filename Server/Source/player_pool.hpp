@@ -7,9 +7,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
-    IVehiclesPlugin* vehiclesPlugin = nullptr;
-    IObjectsPlugin* objectsPlugin = nullptr;
-    IActorsPlugin* actorsPlugin = nullptr;
+    IVehiclesComponent* vehiclesComponent = nullptr;
+    IObjectsComponent* objectsComponent = nullptr;
+    IActorsComponent* actorsComponent = nullptr;
     StreamConfigHelper streamConfigHelper;
     int* markersShow;
     int* markersUpdateRate;
@@ -520,8 +520,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 }
                 break;
             case PlayerBulletHitType_Vehicle:
-                if (self.vehiclesPlugin && self.vehiclesPlugin->valid(player.bulletData_.hitID)) {
-                    ScopedPoolReleaseLock lock(*self.vehiclesPlugin, player.bulletData_.hitID);
+                if (self.vehiclesComponent && self.vehiclesComponent->valid(player.bulletData_.hitID)) {
+                    ScopedPoolReleaseLock lock(*self.vehiclesComponent, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &lock](PlayerEventHandler* handler) {
                             return handler->onShotVehicle(player, lock.entry, player.bulletData_);
@@ -529,8 +529,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 }
                 break;
             case PlayerBulletHitType_Object:
-                if (self.objectsPlugin && self.objectsPlugin->valid(player.bulletData_.hitID)) {
-                    ScopedPoolReleaseLock lock(*self.objectsPlugin, player.bulletData_.hitID);
+                if (self.objectsComponent && self.objectsComponent->valid(player.bulletData_.hitID)) {
+                    ScopedPoolReleaseLock lock(*self.objectsComponent, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &lock](PlayerEventHandler* handler) {
                             return handler->onShotObject(player, lock.entry, player.bulletData_);
@@ -564,7 +564,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::Packet::PlayerVehicleSync vehicleSync;
 
-            if (!self.vehiclesPlugin || !vehicleSync.read(bs) || !self.vehiclesPlugin->valid(vehicleSync.VehicleID)) {
+            if (!self.vehiclesComponent || !vehicleSync.read(bs) || !self.vehiclesComponent->valid(vehicleSync.VehicleID)) {
                 return false;
             }
 
@@ -597,7 +597,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
-            bool vehicleOk = self.vehiclesPlugin->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player);
+            bool vehicleOk = self.vehiclesComponent->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player);
             player.setState(PlayerState_Driver);
 
             if (vehicleOk) {
@@ -689,13 +689,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::Packet::PlayerPassengerSync passengerSync;
 
-            if (!self.vehiclesPlugin || !passengerSync.read(bs) || !self.vehiclesPlugin->valid(passengerSync.VehicleID)) {
+            if (!self.vehiclesComponent || !passengerSync.read(bs) || !self.vehiclesComponent->valid(passengerSync.VehicleID)) {
                 return false;
             }
 
             int pid = peer.getID();
             Player& player = self.storage.get(pid);
-            IVehicle& vehicle = self.vehiclesPlugin->get(passengerSync.VehicleID);
+            IVehicle& vehicle = self.vehiclesComponent->get(passengerSync.VehicleID);
             if (vehicle.isRespawning()) return false;
             vehicle.updateFromPassengerSync(passengerSync, peer);
 
@@ -748,12 +748,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync;
 
-            if (!self.vehiclesPlugin || !unoccupiedSync.read(bs) || !self.vehiclesPlugin->valid(unoccupiedSync.VehicleID)) {
+            if (!self.vehiclesComponent || !unoccupiedSync.read(bs) || !self.vehiclesComponent->valid(unoccupiedSync.VehicleID)) {
                 return false;
             }
 
             Player& player = static_cast<Player&>(peer);
-            IVehicle& vehicle = self.vehiclesPlugin->get(unoccupiedSync.VehicleID);
+            IVehicle& vehicle = self.vehiclesComponent->get(unoccupiedSync.VehicleID);
 
             if (vehicle.getDriver()) {
                 return false;
@@ -780,13 +780,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::Packet::PlayerTrailerSync trailerSync;
 
-            if (!self.vehiclesPlugin || !trailerSync.read(bs) || !self.vehiclesPlugin->valid(trailerSync.VehicleID)) {
+            if (!self.vehiclesComponent || !trailerSync.read(bs) || !self.vehiclesComponent->valid(trailerSync.VehicleID)) {
                 return false;
             }
 
             int pid = peer.getID();
             Player& player = self.storage.get(pid);
-            IVehicle& vehicle = self.vehiclesPlugin->get(trailerSync.VehicleID);
+            IVehicle& vehicle = self.vehiclesComponent->get(trailerSync.VehicleID);
             PlayerState state = player.getState();
             if (state != PlayerState_Driver || peer.queryData<IPlayerVehicleData>()->getVehicle() == nullptr) {
                 return false;
@@ -1014,7 +1014,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         broadcastRPCToAll(createExplosionRPC);
     }
 
-    void init(IPluginList& plugins) {
+    void init(IComponentList& components) {
         IConfig& config = core.getConfig();
         streamConfigHelper = StreamConfigHelper(config);
         playerTextRPCHandler.init(config);
@@ -1048,9 +1048,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         core.addPerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
 
-        vehiclesPlugin = plugins.queryPlugin<IVehiclesPlugin>();
-        objectsPlugin = plugins.queryPlugin<IObjectsPlugin>();
-        actorsPlugin = plugins.queryPlugin<IActorsPlugin>();
+        vehiclesComponent = components.queryComponent<IVehiclesComponent>();
+        objectsComponent = components.queryComponent<IObjectsComponent>();
+        actorsComponent = components.queryComponent<IActorsComponent>();
     }
 
     void tick(std::chrono::microseconds elapsed) {

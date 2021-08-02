@@ -1,8 +1,8 @@
 #include "menu.hpp"
 
-struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public PlayerEventHandler {
+struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
 	ICore * core;
-	MarkedPoolStorage<Menu, IMenu, IMenusPlugin::Cnt> storage;
+	MarkedPoolStorage<Menu, IMenu, IMenusComponent::Cnt> storage;
 	DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
 	IPlayerPool * players = nullptr;
 
@@ -11,8 +11,8 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 	}
 
 	struct PlayerSelectedMenuRowEventHandler : public SingleNetworkInOutEventHandler {
-		MenusPlugin & self;
-		PlayerSelectedMenuRowEventHandler(MenusPlugin & self) : self(self) {}
+		MenusComponent & self;
+		PlayerSelectedMenuRowEventHandler(MenusComponent & self) : self(self) {}
 
 		bool received(IPlayer & peer, INetworkBitStream & bs) override {
 			NetCode::RPC::OnPlayerSelectedMenuRow onPlayerSelectedMenuRow;
@@ -37,8 +37,8 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 	} playerSelectedMenuRowEventHandler;
 
 	struct PlayerExitedMenuEventHandler : public SingleNetworkInOutEventHandler {
-		MenusPlugin & self;
-		PlayerExitedMenuEventHandler(MenusPlugin & self) : self(self) {}
+		MenusComponent & self;
+		PlayerExitedMenuEventHandler(MenusComponent & self) : self(self) {}
 
 		bool received(IPlayer & peer, INetworkBitStream & bs) override {
 			NetCode::RPC::OnPlayerExitedMenu onPlayerExitedMenu;
@@ -61,11 +61,11 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 		}
 	} playerExitedMenuEventHandler;
 
-	const char * pluginName() override {
+	StringView componentName() override {
 		return "Menus";
 	}
 
-	MenusPlugin() :
+	MenusComponent() :
 		playerSelectedMenuRowEventHandler(*this),
 		playerExitedMenuEventHandler(*this)
 	{}
@@ -88,7 +88,7 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 		}
 	}
 
-	~MenusPlugin() {
+	~MenusComponent() {
 		if (core) {
 			players->getEventDispatcher().removeEventHandler(this);
 			core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectedMenuRow>(&playerSelectedMenuRowEventHandler);
@@ -171,6 +171,6 @@ struct MenusPlugin final : public IMenusPlugin, public MenuEventHandler, public 
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new MenusPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new MenusComponent();
 }

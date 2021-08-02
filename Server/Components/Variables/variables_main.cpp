@@ -77,14 +77,14 @@ struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
 	}
 };
 
-struct VariablesPlugin final : VariableStorageBase<IVariablesPlugin>, PlayerEventHandler {
+struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, PlayerEventHandler {
 	ICore* core;
 
 	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
 		return new PlayerVariableData();
 	}
 
-	const char * pluginName() override {
+	StringView componentName() override {
 		return "Variables";
 	}
 
@@ -93,13 +93,13 @@ struct VariablesPlugin final : VariableStorageBase<IVariablesPlugin>, PlayerEven
 		core->getPlayers().getEventDispatcher().addEventHandler(this);
 	}
 
-	~VariablesPlugin() {
+	~VariablesComponent() {
 		if (core) {
 			core->getPlayers().getEventDispatcher().removeEventHandler(this);
 		}
 	}
-} plugin;
+} component;
 
-PLUGIN_ENTRY_POINT() {
-	return &plugin;
+COMPONENT_ENTRY_POINT() {
+	return &component;
 }

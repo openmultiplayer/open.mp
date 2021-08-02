@@ -1,4 +1,4 @@
-#include <plugin.hpp>
+#include <component.hpp>
 #include <types.hpp>
 #include <events.hpp>
 #include <chrono>
@@ -24,9 +24,9 @@ struct TimerTimeOutHandler {
 	virtual void timeout(ITimer& timer) = 0;
 };
 
-static const UUID TimersPlugin_UUID = UUID(0x2ad8124c5ea257a3);
-struct ITimersPlugin : public IPlugin {
-	PROVIDE_UUID(TimersPlugin_UUID);
+static const UUID TimersComponent_UUID = UUID(0x2ad8124c5ea257a3);
+struct ITimersComponent : public IComponent {
+	PROVIDE_UUID(TimersComponent_UUID);
 
 	/// Create a new timer handled by a handler which times out after a certain time
 	/// @param handler The handler which handlers time out
