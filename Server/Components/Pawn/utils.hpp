@@ -437,7 +437,7 @@ namespace utils {
 		return PawnManager::Get()->IDFromAMX(amx);
 	}
 
-	inline int PluginCallGM(char * name)
+	inline int ComponentCallGM(char * name)
 	{
 		int
 			fail = AMX_ERR_NONE;
@@ -463,7 +463,7 @@ namespace utils {
 		return fail;
 	}
 
-	inline int PluginCallFS(char * name)
+	inline int ComponentCallFS(char * name)
 	{
 		int
 			fail = AMX_ERR_NONE;

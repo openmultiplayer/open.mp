@@ -4,7 +4,7 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <netcode.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 
 typedef uint8_t MenuRow;
 typedef uint8_t MenuColumn;
@@ -49,10 +49,9 @@ struct IPlayerMenuData : public IPlayerData {
 	virtual void setMenuID(uint8_t id) = 0;
 };
 
-static const UUID MenusPlugin_UUID = UUID(0x621e219eb97ee0b2);
-
-struct IMenusPlugin : public IPoolPlugin<IMenu, MENU_POOL_SIZE> {
-	PROVIDE_UUID(MenusPlugin_UUID);
+static const UUID MenusComponent_UUID = UUID(0x621e219eb97ee0b2);
+struct IMenusComponent : public IPoolComponent<IMenu, MENU_POOL_SIZE> {
+	PROVIDE_UUID(MenusComponent_UUID);
 
 	virtual IEventDispatcher<MenuEventHandler> & getEventDispatcher() = 0;
 

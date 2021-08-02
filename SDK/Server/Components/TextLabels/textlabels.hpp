@@ -4,7 +4,7 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <netcode.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 
 struct IVehicle;
 
@@ -67,10 +67,10 @@ struct IPlayerTextLabel : public ITextLabelBase {
 
 };
 
-static const UUID TextLabelsPlugin_UUID = UUID(0xa0c57ea80a009742);
-/// The text label plugin which is a global text label pool
-struct ITextLabelsPlugin : public IPoolPlugin<ITextLabel, TEXT_LABEL_POOL_SIZE> {
-	PROVIDE_UUID(TextLabelsPlugin_UUID);
+static const UUID TextLabelsComponent_UUID = UUID(0xa0c57ea80a009742);
+/// The text label component which is a global text label pool
+struct ITextLabelsComponent : public IPoolComponent<ITextLabel, TEXT_LABEL_POOL_SIZE> {
+	PROVIDE_UUID(TextLabelsComponent_UUID);
 
 	/// Create a text label
 	virtual ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) = 0;

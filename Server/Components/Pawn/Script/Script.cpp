@@ -293,7 +293,7 @@ native Player_SetPosution(Player:p, Float:x, Float:y, Float:z);
 ```
 
 It could be that the function hasn't been written yet, in which case contact the author or the
-plugin you think it should be in (this is often obvious from the module name at the start of the
+component you think it should be in (this is often obvious from the module name at the start of the
 function name).  If you aren't sure, ask on forums or other chat systems.
 
 Finally, it could be that the function has been removed.  This should be done with deprecation
@@ -303,7 +303,7 @@ first - check any warnings when compiling your code for messages like below and 
 warning 234: function is deprecated (symbol "AddPlayerClass") Use `Class_Add` instead.
 ```
 
-Also check changelogs and plugin code - it could have been removed without warning, but this is bad.
+Also check changelogs and component code - it could have been removed without warning, but this is bad.
 )";
 
 	case AMX_ERR_INDEX:        // invalid index parameter (bad entry point)
