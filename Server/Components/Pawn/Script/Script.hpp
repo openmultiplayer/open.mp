@@ -214,7 +214,7 @@ private:
 	}
 
 	template <typename U, size_t N, typename ... T>
-	inline int PushOne(std::array<U, N> const & arg, T ... args)
+	inline int PushOne(StaticArray<U, N> const & arg, T ... args)
 	{
 		int
 			ret = PushOne(args...);
