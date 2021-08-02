@@ -1102,7 +1102,7 @@ namespace NetCode {
 		};
 
 		struct PlayerSpectateVehicle final : NetworkPacketBase<127> {
-			bool VehicleID;
+			int VehicleID;
 			PlayerSpectateMode SpecCamMode;
 
 			bool read(INetworkBitStream& bs) const {
