@@ -5,9 +5,9 @@
 #include "vehicle.hpp"
 #include "vehicle_components.hpp"
 
-struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, public PlayerEventHandler {
+struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler {
     ICore* core;
-    MarkedPoolStorage<Vehicle, IVehicle, IVehiclesPlugin::Cnt> storage;
+    MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
     StreamConfigHelper streamConfigHelper;
@@ -17,8 +17,8 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
     }
 
     struct PlayerEnterVehicleHandler : public SingleNetworkInOutEventHandler {
-        VehiclesPlugin& self;
-        PlayerEnterVehicleHandler(VehiclesPlugin& self) : self(self) {}
+        VehiclesComponent& self;
+        PlayerEnterVehicleHandler(VehiclesComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
@@ -46,8 +46,8 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
     } playerEnterVehicleHandler;
 
     struct PlayerExitVehicleHandler : public SingleNetworkInOutEventHandler {
-        VehiclesPlugin& self;
-        PlayerExitVehicleHandler(VehiclesPlugin& self) : self(self) {}
+        VehiclesComponent& self;
+        PlayerExitVehicleHandler(VehiclesComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
@@ -73,8 +73,8 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
     } playerExitVehicleHandler;
 
     struct PlayerUpdateVehicleDamageStatus : public SingleNetworkInOutEventHandler {
-        VehiclesPlugin& self;
-        PlayerUpdateVehicleDamageStatus(VehiclesPlugin& self) : self(self) {}
+        VehiclesComponent& self;
+        PlayerUpdateVehicleDamageStatus(VehiclesComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
@@ -92,8 +92,8 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
     } vehicleDamageStatusHandler;
 
     struct PlayerSCMEventHandler : public SingleNetworkInOutEventHandler {
-        VehiclesPlugin& self;
-        PlayerSCMEventHandler(VehiclesPlugin& self) : self(self) {}
+        VehiclesComponent& self;
+        PlayerSCMEventHandler(VehiclesComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::SCMEvent scmEvent;
@@ -178,8 +178,8 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
     } playerSCMEventHandler;
 
     struct VehicleDeathHandler final : public SingleNetworkInOutEventHandler {
-        VehiclesPlugin& self;
-        VehicleDeathHandler(VehiclesPlugin& self) : self(self) {}
+        VehiclesComponent& self;
+        VehicleDeathHandler(VehiclesComponent& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::VehicleDeath vehicleDeath;
@@ -229,7 +229,7 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
         }
     }
 
-    VehiclesPlugin() :
+    VehiclesComponent() :
         playerEnterVehicleHandler(*this),
         playerExitVehicleHandler(*this),
         vehicleDamageStatusHandler(*this),
@@ -239,7 +239,7 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
         preloadModels.fill(1);
     }
 
-    ~VehiclesPlugin()
+    ~VehiclesComponent()
     {
         core->getEventDispatcher().removeEventHandler(this);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
@@ -267,8 +267,8 @@ struct VehiclesPlugin final : public IVehiclesPlugin, public CoreEventHandler, p
         return new PlayerVehicleData();
     }
 
-    const char* pluginName() override {
-        return "VehiclesPlugin";
+    StringView componentName() override {
+        return "VehiclesComponent";
     }
 
     StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() override {

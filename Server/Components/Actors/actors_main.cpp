@@ -1,15 +1,15 @@
 #include "actor.hpp"
 
-struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, public PlayerEventHandler {
+struct ActorsComponent final : public IActorsComponent, public CoreEventHandler, public PlayerEventHandler {
 	ICore * core;
-	MarkedPoolStorage<Actor, IActor, IActorsPlugin::Cnt> storage;
+	MarkedPoolStorage<Actor, IActor, IActorsComponent::Cnt> storage;
 	DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
 	IPlayerPool* players;
 	StreamConfigHelper streamConfigHelper;
 
 	struct PlayerDamageActorEventHandler : public SingleNetworkInOutEventHandler {
-		ActorsPlugin & self;
-		PlayerDamageActorEventHandler(ActorsPlugin& self) : self(self) {}
+		ActorsComponent & self;
+		PlayerDamageActorEventHandler(ActorsComponent& self) : self(self) {}
 
 		bool received(IPlayer & peer, INetworkBitStream & bs) override {
 			NetCode::RPC::OnPlayerDamageActor onPlayerDamageActorRPC;
@@ -35,11 +35,11 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, publi
 		}
 	} playerDamageActorEventHandler;
 
-	const char * pluginName() override {
+	StringView componentName() override {
 		return "Actors";
 	}
 
-	ActorsPlugin() :
+	ActorsComponent() :
 		players(nullptr),
 		playerDamageActorEventHandler(*this)
 	{}
@@ -53,7 +53,7 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, publi
 		streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
 
-	~ActorsPlugin() {
+	~ActorsComponent() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
 			players->getEventDispatcher().removeEventHandler(this);
@@ -171,6 +171,6 @@ struct ActorsPlugin final : public IActorsPlugin, public CoreEventHandler, publi
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new ActorsPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new ActorsComponent();
 }

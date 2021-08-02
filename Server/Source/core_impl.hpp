@@ -10,39 +10,39 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 
-struct PluginList : public IPluginList {
-    using IPluginList::queryPlugin;
+struct ComponentList : public IComponentList {
+    using IComponentList::queryComponent;
 
-    PluginList(ICore& core) : core(core)
+    ComponentList(ICore& core) : core(core)
     {}
 
-    IPlugin* queryPlugin(UUID id) override {
-        auto it = plugins.find(id);
-        return it == plugins.end() ? nullptr : it->second;
+    IComponent* queryComponent(UUID id) override {
+        auto it = components.find(id);
+        return it == components.end() ? nullptr : it->second;
     }
 
     void load() {
-        std::for_each(plugins.begin(), plugins.end(),
-            [this](const Pair<UUID, IPlugin*>& pair) {
+        std::for_each(components.begin(), components.end(),
+            [this](const Pair<UUID, IComponent*>& pair) {
                 pair.second->onLoad(&core);
             }
         );
     }
 
     void init() {
-        std::for_each(plugins.begin(), plugins.end(),
-            [this](const Pair<UUID, IPlugin*>& pair) {
+        std::for_each(components.begin(), components.end(),
+            [this](const Pair<UUID, IComponent*>& pair) {
                 pair.second->onInit(this);
             }
         );
     }
 
-    auto add(IPlugin* plugin) {
-        return plugins.try_emplace(plugin->getUUID(), plugin);
+    auto add(IComponent* component) {
+        return components.try_emplace(component->getUUID(), component);
     }
 
 private:
-    FlatHashMap<UUID, IPlugin*> plugins;
+    FlatHashMap<UUID, IComponent*> components;
     ICore& core;
 };
 
@@ -164,7 +164,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     PlayerPool players;
     std::chrono::milliseconds sleepTimer;
     FlatPtrHashSet<INetwork> networks;
-    PluginList plugins;
+    ComponentList components;
     Config config;
 
     int* EnableZoneNames;
@@ -194,7 +194,7 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     Core() :
         players(*this),
-        plugins(*this),
+        components(*this),
         config("config.json")
     {
         players.getEventDispatcher().addEventHandler(this);
@@ -234,9 +234,9 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void initiated() {
-        plugins.load();
-        players.init(plugins);
-        plugins.init();
+        components.load();
+        players.init(components);
+        components.init();
     }
 
     int getVersion() override {
@@ -310,24 +310,24 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.Multiplier = *Multiplier;
         playerInitRPC.LagCompensation = *LagCompensation;
         playerInitRPC.ServerName = StringView(ServerName);
-        IClassesPlugin* classes = plugins.queryPlugin<IClassesPlugin>();
+        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
         playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
-        IVehiclesPlugin* vehicles = plugins.queryPlugin<IVehiclesPlugin>();
+        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
         StaticArray<uint8_t, 212> emptyModel;
         playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
 
         player.sendRPC(playerInitRPC);
     }
 
-    void addPlugins(const DynamicArray<IPlugin*>& newPlugins) {
-        for (auto& plugin : newPlugins) {
-            auto res = plugins.add(plugin);
+    void addComponents(const DynamicArray<IComponent*>& newComponents) {
+        for (auto& component : newComponents) {
+            auto res = components.add(component);
             if (!res.second) {
-                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", plugin->pluginName(), res.first->second->pluginName(), plugin->getUUID());
+                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName(), res.first->second->componentName(), component->getUUID());
             }
-            if (plugin->pluginType() == PluginType::Network) {
-                networks.insert(static_cast<INetworkPlugin*>(plugin)->getNetwork());
+            if (component->componentType() == ComponentType::Network) {
+                networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
             }
         }
     }

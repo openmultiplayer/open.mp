@@ -4,7 +4,7 @@
 #include <values.hpp>
 #include <player.hpp>
 #include <netcode.hpp>
-#include <plugin.hpp>
+#include <component.hpp>
 
 /// Text draw's text alignment
 enum TextDrawAlignment {
@@ -166,10 +166,10 @@ struct TextDrawEventHandler {
 	virtual void onPlayerTextDrawClick(IPlayer& player, IPlayerTextDraw& td) {}
 };
 
-static const UUID TextDrawsPlugin_UUID = UUID(0x9b5dc2b1d15c992a);
-/// The textdraw plugin which is a global textdraw pool
-struct ITextDrawsPlugin : public IPoolPlugin<ITextDraw, GLOBAL_TEXTDRAW_POOL_SIZE> {
-	PROVIDE_UUID(TextDrawsPlugin_UUID);
+static const UUID TextDrawsComponent_UUID = UUID(0x9b5dc2b1d15c992a);
+/// The textdraw component which is a global textdraw pool
+struct ITextDrawsComponent : public IPoolComponent<ITextDraw, GLOBAL_TEXTDRAW_POOL_SIZE> {
+	PROVIDE_UUID(TextDrawsComponent_UUID);
 
 	/// Get the textdraw event dispatcher
 	virtual IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() = 0;
