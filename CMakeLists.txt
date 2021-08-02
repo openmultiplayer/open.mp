@@ -51,6 +51,7 @@ elseif(UNIX)
 	else()
 		set(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
 		set(CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}")
+		set(CMAKE_SIZEOF_VOID_P 4)
 		message("Generating x86 project")
 	endif()
 	# Clang or Apple Clang
