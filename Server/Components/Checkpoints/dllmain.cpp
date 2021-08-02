@@ -1,7 +1,7 @@
 #include "checkpoint.hpp"
 #include <sdk.hpp>
 
-struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHandler {
+struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
 	DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
 	ICore* core;
 
@@ -15,8 +15,8 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 	}
 
 	struct PlayerCheckpointActionHandler : public PlayerUpdateEventHandler {
-		CheckpointsPlugin& self;
-		PlayerCheckpointActionHandler(CheckpointsPlugin& self) : self(self) {}
+		CheckpointsComponent& self;
+		PlayerCheckpointActionHandler(CheckpointsComponent& self) : self(self) {}
 
 		bool onUpdate(IPlayer& player) override {
 			PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
@@ -48,7 +48,7 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 		}
 	} playerCheckpointActionHandler;
 
-	CheckpointsPlugin() :
+	CheckpointsComponent() :
 		playerCheckpointActionHandler(*this)
 	{
 	}
@@ -59,20 +59,20 @@ struct CheckpointsPlugin final : public ICheckpointsPlugin, public PlayerEventHa
 		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
 	}
 
-	const char* pluginName() override {
-		return "CheckpointPlugin";
+	StringView componentName() override {
+		return "CheckpointComponent";
 	}
 
 	void free() override {
 		delete this;
 	}
 
-	~CheckpointsPlugin() {
+	~CheckpointsComponent() {
 		core->getPlayers().getEventDispatcher().removeEventHandler(this);
 		core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new CheckpointsPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new CheckpointsComponent();
 }

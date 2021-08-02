@@ -17,24 +17,24 @@
 #include "absl/strings/str_format.h"
 
 struct TestComponent : 
-	public IPlugin, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
+	public IComponent, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler,
 	public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler,
 	public PlayerUpdateEventHandler, public PlayerDialogEventHandler, public ConsoleEventHandler
 {
 	ICore* c = nullptr;
-	ICheckpointsPlugin* checkpoints = nullptr;
-	IClassesPlugin* classes = nullptr;
-	IVehiclesPlugin* vehicles = nullptr;
-	IObjectsPlugin* objects = nullptr;
-	IPickupsPlugin * pickups = nullptr;
-	ITextLabelsPlugin* labels = nullptr;
-	ITextDrawsPlugin* tds = nullptr;
-	IMenusPlugin* menus = nullptr;
-	IActorsPlugin* actors = nullptr;
-	IDialogsPlugin* dialogs = nullptr;
-	IConsolePlugin* console = nullptr;
-	IGangZonesPlugin* gangzones = nullptr;
-	ITimersPlugin* timers = nullptr;
+	ICheckpointsComponent* checkpoints = nullptr;
+	IClassesComponent* classes = nullptr;
+	IVehiclesComponent* vehicles = nullptr;
+	IObjectsComponent* objects = nullptr;
+	IPickupsComponent * pickups = nullptr;
+	ITextLabelsComponent* labels = nullptr;
+	ITextDrawsComponent* tds = nullptr;
+	IMenusComponent* menus = nullptr;
+	IActorsComponent* actors = nullptr;
+	IDialogsComponent* dialogs = nullptr;
+	IConsoleComponent* console = nullptr;
+	IGangZonesComponent* gangzones = nullptr;
+	ITimersComponent* timers = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -753,7 +753,7 @@ struct TestComponent :
         return false;
 	}
 
-	const char* pluginName() override {
+	const char* componentName() override {
 		return "TestComponent";
 	}
 
@@ -855,21 +855,21 @@ struct TestComponent :
 		}
 	}
 
-	/// Use this instead of onInit to make sure all other plugins are initiated before using them
-	void onInit(IPluginList* plugins) override {
-		classes = plugins->queryPlugin<IClassesPlugin>();
-		vehicles = plugins->queryPlugin<IVehiclesPlugin>();
-		checkpoints = plugins->queryPlugin<ICheckpointsPlugin>();
-		objects = plugins->queryPlugin<IObjectsPlugin>();
-		labels = plugins->queryPlugin<ITextLabelsPlugin>();
-		pickups = plugins->queryPlugin<IPickupsPlugin>();
-		tds = plugins->queryPlugin<ITextDrawsPlugin>();
-		menus = plugins->queryPlugin<IMenusPlugin>();
-		actors = plugins->queryPlugin<IActorsPlugin>();
-		dialogs = plugins->queryPlugin<IDialogsPlugin>();
-		console = plugins->queryPlugin<IConsolePlugin>();
-		gangzones = plugins->queryPlugin<IGangZonesPlugin>();
-		timers = plugins->queryPlugin<ITimersPlugin>();
+	/// Use this instead of onInit to make sure all other components are initiated before using them
+	void onInit(IComponentList* components) override {
+		classes = components->queryComponent<IClassesComponent>();
+		vehicles = components->queryComponent<IVehiclesComponent>();
+		checkpoints = components->queryComponent<ICheckpointsComponent>();
+		objects = components->queryComponent<IObjectsComponent>();
+		labels = components->queryComponent<ITextLabelsComponent>();
+		pickups = components->queryComponent<IPickupsComponent>();
+		tds = components->queryComponent<ITextDrawsComponent>();
+		menus = components->queryComponent<IMenusComponent>();
+		actors = components->queryComponent<IActorsComponent>();
+		dialogs = components->queryComponent<IDialogsComponent>();
+		console = components->queryComponent<IConsoleComponent>();
+		gangzones = components->queryComponent<IGangZonesComponent>();
+		timers = components->queryComponent<ITimersComponent>();
 
 		if (classes) {
 			auto classid = classes->claim();
@@ -1187,8 +1187,8 @@ struct TestComponent :
 			console->getEventDispatcher().removeEventHandler(this);
 		}
 	}
-} plugin;
+} component;
 
-PLUGIN_ENTRY_POINT() {
-	return &plugin;
+COMPONENT_ENTRY_POINT() {
+	return &component;
 }

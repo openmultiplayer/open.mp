@@ -43,9 +43,9 @@ struct PlayerCheckpointEventHandler {
 	virtual void onPlayerLeaveRaceCheckpoint(IPlayer& player) {}
 };
 
-static const UUID CheckpointsPlugin_UUID = UUID(0x44a937350d611dde);
-struct ICheckpointsPlugin : public IPlugin {
-	PROVIDE_UUID(CheckpointsPlugin_UUID)
+static const UUID CheckpointsComponent_UUID = UUID(0x44a937350d611dde);
+struct ICheckpointsComponent : public IComponent {
+	PROVIDE_UUID(CheckpointsComponent_UUID)
 
 	// Access to event dispatchers for other components to add handlers to
 	virtual IEventDispatcher<PlayerCheckpointEventHandler>& getEventDispatcher() = 0;

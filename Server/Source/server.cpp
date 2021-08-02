@@ -1,17 +1,16 @@
 #include <iostream>
 #include <filesystem>
-struct IUnknown;
-#include "core_impl.hpp"
 #include <nlohmann/json.hpp>
 #include <sdk.hpp>
-#include "pluginloader.hpp"
+#include "core_impl.hpp"
+#include "component_loader.hpp"
 
 int main()
 {
     Core* core = new Core();
-    DynamicArray<IPlugin*> plugins = loadPlugins(*core, "components");
-    core->printLn("Loaded %i plugin(s)", plugins.size());
-    core->addPlugins(plugins);
+    DynamicArray<IComponent*> components = loadComponents(*core, "components");
+    core->printLn("Loaded %i component(s)", components.size());
+    core->addComponents(components);
     core->initiated();
     core->run();
 }

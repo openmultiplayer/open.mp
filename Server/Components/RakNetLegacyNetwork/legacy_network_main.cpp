@@ -1,7 +1,7 @@
 #include <sdk.hpp>
 #include "legacy_network_impl.hpp"
 
-struct RakNetLegacyNetworkPlugin : INetworkPlugin {
+struct RakNetLegacyNetworkComponent : INetworkComponent {
 	RakNetLegacyNetwork legacyNetwork;
 
 	void onLoad(ICore* core) override {
@@ -12,8 +12,8 @@ struct RakNetLegacyNetworkPlugin : INetworkPlugin {
 		return &legacyNetwork;
 	}
 
-	const char* pluginName() override {
-		return "RakNetLegacyNetworkPlugin";
+	StringView componentName() override {
+		return "RakNetLegacyNetworkComponent";
 	}
 
 	UUID getUUID() override {
@@ -21,6 +21,6 @@ struct RakNetLegacyNetworkPlugin : INetworkPlugin {
 	}
 };
 
-PLUGIN_ENTRY_POINT() {
-	return new RakNetLegacyNetworkPlugin();
+COMPONENT_ENTRY_POINT() {
+	return new RakNetLegacyNetworkComponent();
 }

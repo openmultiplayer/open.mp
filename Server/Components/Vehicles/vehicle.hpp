@@ -28,7 +28,7 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
     }
 };
 
-struct VehiclesPlugin;
+struct VehiclesComponent;
 
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 pos;
@@ -67,7 +67,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     bool detaching = false;
     VehicleParams params;
     uint8_t sirenState = 0;
-    VehiclesPlugin* pool = nullptr;
+    VehiclesComponent* pool = nullptr;
 
     Vehicle() {
         mods.fill(0);
