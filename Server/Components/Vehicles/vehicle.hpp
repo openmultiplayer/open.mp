@@ -63,7 +63,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         Vehicle* trailer = nullptr;
         Vehicle* tower;
     };
-    std::array<IVehicle*, 3> carriages;
+    StaticArray<IVehicle*, 3> carriages;
     bool detaching = false;
     VehicleParams params;
     uint8_t sirenState = 0;
@@ -244,7 +244,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         this->pos = pos;
         velocity = veloc;
     }
-    std::array<IVehicle*, 3> getCarriages() override {
+    StaticArray<IVehicle*, 3> getCarriages() override {
         return carriages;
     }
 
