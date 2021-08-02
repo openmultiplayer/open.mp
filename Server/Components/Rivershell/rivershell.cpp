@@ -14,6 +14,7 @@ enum Team {
 
 static constexpr int CAPS_TO_WIN = 5;
 static constexpr std::chrono::seconds RESUPPLY_COOLDOWN = std::chrono::seconds(30);
+static constexpr std::chrono::seconds RESPAWN_COOLDOWN = std::chrono::seconds(20);
 
 struct RivershellPlayerData final : public IPlayerData {
 	PROVIDE_UUID(0x0e5b18f964deec4e);
@@ -24,6 +25,8 @@ struct RivershellPlayerData final : public IPlayerData {
 
 	std::chrono::steady_clock::time_point lastResupplyTime;
 	bool alreadyBalanceTeam;
+	IPlayer* lastKiller = nullptr;
+	std::chrono::steady_clock::time_point lastDeath;
 };
 
 struct RivershellMode :
@@ -67,6 +70,31 @@ struct RivershellMode :
 			player->queryData<RivershellPlayerData>()->lastResupplyTime = std::chrono::steady_clock::time_point();
 			player->setSpectating(true);
 			player->setSpectating(false);
+		}
+	}
+
+	void handleSpectating(IPlayer& player) {
+		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
+		if (data->lastKiller) {
+			PlayerState state = data->lastKiller->getState();
+			if (state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger) {
+				if (state == PlayerState_Driver || state == PlayerState_Passenger) {
+					player.spectateVehicle(*data->lastKiller->queryData<IPlayerVehicleData>()->getVehicle(), PlayerSpectateMode_Normal);
+				}
+				else {
+					player.spectatePlayer(*data->lastKiller, PlayerSpectateMode_Normal);
+				}
+				return;
+			}
+		}
+
+		if (player.getTeam() == Team_Green) {
+			player.setCameraPosition(Vector3(2221.5820f, -273.9985f, 61.7806f));
+			player.setCameraLookAt(Vector3(2220.9978f, -273.1861f, 61.4606f), 2);
+		}
+		else if(player.getTeam() == Team_Blue) {
+			player.setCameraPosition(Vector3(2274.8467f, 591.3257f, 30.1311f));
+			player.setCameraLookAt(Vector3(2275.0503f, 590.3463f, 29.9460f), 2);
 		}
 	}
 
@@ -170,7 +198,15 @@ struct RivershellMode :
 	}
 
 	void onSpawn(IPlayer& player) override {
-		if (!player.queryData<RivershellPlayerData>()->alreadyBalanceTeam && moveIfNotBalanced(player, player.getTeam())) {
+		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
+		if (std::chrono::steady_clock::now() - data->lastDeath < RESPAWN_COOLDOWN) {
+			player.sendClientMessage(Colour(255, 170, 238), "Waiting to respawn...");
+			player.setSpectating(true);
+			handleSpectating(player);
+			return;
+		}
+
+		if (!data->alreadyBalanceTeam && moveIfNotBalanced(player, player.getTeam())) {
 			return;
 		}
 		if (player.getTeam() == Team_Green) {
@@ -253,6 +289,9 @@ struct RivershellMode :
 				killer->get().setScore(killer->get().getScore() + 1);
 			}
 		}
+		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
+		data->lastKiller = killer ? &killer->get() : nullptr;
+		data->lastDeath = std::chrono::steady_clock::now();
 	}
 
 	void onLoad(ICore* core) override {
@@ -451,52 +490,16 @@ struct RivershellMode :
 				}
 			}
 		}
+
+		else if (player.getState() == PlayerState_Spectating) {
+			RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
+			if (std::chrono::steady_clock::now() - data->lastDeath > RESPAWN_COOLDOWN) {
+				player.setSpectating(false);
+				return true;
+			}
+			handleSpectating(player);
+		}
 		return true;
-	}
-
-	bool onCommandText(IPlayer& player, StringView cmdtext) override {
-		if (cmdtext.find("/spec ") != cmdtext.npos) {
-			char cmd[20];
-			int targetid;
-			sscanf(cmdtext.data(), "%s %i", cmd, &targetid);
-
-			if (!c->getPlayers().valid(targetid)) {
-				player.sendClientMessage(Colour(-1, -1, -1, -1), "ID is invalid");
-				return true;
-			}
-
-			player.setSpectating(true);
-			IPlayer* target = &c->getPlayers().get(targetid);
-			if (target) {
-				player.spectatePlayer(*target, PlayerSpectateMode_Normal);
-			}
-			return true;
-		}
-
-		if (cmdtext.find("/specveh ") != cmdtext.npos && vehicles) {
-			char cmd[20];
-			int targetid;
-			sscanf(cmdtext.data(), "%s %i", cmd, &targetid);
-
-			if (!vehicles->valid(targetid)) {
-				player.sendClientMessage(Colour(-1, -1, -1, -1), "ID is invalid");
-				return true;
-			}
-
-			player.setSpectating(true);
-			IVehicle* target = &vehicles->get(targetid);
-			if (target) {
-				player.spectateVehicle(*target, PlayerSpectateMode_Normal);
-			}
-			return true;
-		}
-
-		if (cmdtext == "/specoff") {
-			player.setSpectating(false);
-			return true;
-		}
-
-		return false;
 	}
 
 	RivershellMode() {

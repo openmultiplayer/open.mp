@@ -403,6 +403,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 spectatorSync.LeftRight = 0;
             }
 
+            self.playerUpdateDispatcher.stopAtFalse([&peer](PlayerUpdateEventHandler* handler) {
+                return handler->onUpdate(peer);
+            });
             return true;
         }
     } playerSpectatorHandler;
