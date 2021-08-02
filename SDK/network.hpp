@@ -83,8 +83,8 @@ struct NetworkArray {
 		data(data)
 	{ }
 
-	/// Constructor for holding std::array data without copying it or freeing it
-	/// @param array The std::array whose data to hold
+	/// Constructor for holding StaticArray data without copying it or freeing it
+	/// @param array The StaticArray whose data to hold
 	template <size_t Size>
 	NetworkArray<T>(const StaticArray<T, Size>& array) :
 		selfAllocated(false),
