@@ -273,7 +273,7 @@ struct TestComponent :
         }
 
         if (message == "/senddeathmessage") {
-            player.sendDeathMessage(player, OptionalPlayer(), 2);
+            player.sendDeathMessage(player, nullptr, 2);
             return true;
         }
 
@@ -1113,7 +1113,7 @@ struct TestComponent :
 		player.sendClientMessage(Colour::White(), absl::StrFormat("Dialog response: %i", response));
 	}
 
-	void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) override {
+	void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override {
 		player.setChatBubble("ouch -" + std::to_string(amount), Colour::Yellow(), 50.f, std::chrono::seconds(30));
 	}
 
