@@ -45,8 +45,8 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 	}
 
 	~PawnComponent() {
-		if (c) {
-			c->getEventDispatcher().removeEventHandler(this);
+		if (core) {
+			core->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } component;
