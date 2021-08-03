@@ -29,6 +29,7 @@
 	#define EXECUTABLE_EXT
 #endif
 
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 //Returns the last Win32 error, in string format. Returns an empty string if there is no error.
 std::string GetLastErrorAsString()
 {
@@ -53,6 +54,7 @@ std::string GetLastErrorAsString()
 
 	return message;
 }
+#endif
 
 void RunProcess(StringView exe, StringView args) {
 	auto exePath = std::filesystem::path(exe);
@@ -63,6 +65,6 @@ void RunProcess(StringView exe, StringView args) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 	ShellExecute(nullptr, "open", exePath.string().c_str(), args.data(), nullptr, FALSE);
 #else
-	system((exePath.string() + " " + args).c_str());
+	system((exePath.string() + " " + args.data()).c_str());
 #endif
 }
