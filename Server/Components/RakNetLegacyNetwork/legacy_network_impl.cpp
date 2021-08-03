@@ -68,7 +68,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork() :
     RPCHOOK(51);
     RPCHOOK(52);
     RPCHOOK(53);
-    RPCHOOK(54);
+    rakNetServer.RegisterAsRemoteProcedureCall(NetCode::RPC::NPCConnect::getID(ENetworkType_RakNetLegacy), &RakNetLegacyNetwork::OnNPCConnect, this);
     RPCHOOK(55);
     RPCHOOK(56);
     RPCHOOK(57);
@@ -297,47 +297,41 @@ enum LegacyClientVersion {
     LegacyClientVersion_03DL = 4062
 };
 
-void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra) {
-    RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
+IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, uint32_t challenge, StringView name) {
     const RakNet::PlayerID rid = rpcParams->sender;
 
-    if (network->playerFromRID.find(rpcParams->sender) != network->playerFromRID.end()) {
+    if (playerFromRID.find(rpcParams->sender) != playerFromRID.end()) {
         // Connection already exists
-        return;
+        return nullptr;
     }
 
     char cIP[22];
     unsigned short cPort;
-    network->rakNetServer.GetPlayerIPFromID(rpcParams->sender, cIP, &cPort);
+    rakNetServer.GetPlayerIPFromID(rpcParams->sender, cIP, &cPort);
 
     PeerNetworkData netData;
     netData.networkID.address = rid.binaryAddress;
     netData.networkID.port = rid.port;
-    netData.network = network;
+    netData.network = this;
     netData.IP = cIP;
     netData.port = cPort;
 
-    RakNet::BitStream bs = GetBitStream(*rpcParams);
-    RakNetLegacyBitStream lbs(bs);
+    Pair<NewConnectionResult, IPlayer*> newConnectionResult{ NewConnectionResult_Ignore, nullptr };
 
-    Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
-
-    {
-        NetCode::RPC::PlayerConnect playerConnectRPC;
-        playerConnectRPC.read(lbs);
-
-        if (playerConnectRPC.VersionNumber != LegacyClientVersion_037 || SAMPRakNet::GetToken() != (playerConnectRPC.ChallengeResponse ^ LegacyClientVersion_037)) {
-            if (playerConnectRPC.VersionNumber != LegacyClientVersion_03DL || SAMPRakNet::GetToken() != (playerConnectRPC.ChallengeResponse ^ LegacyClientVersion_03DL)) {
-                newConnectionResult.first = NewConnectionResult_VersionMismatch;
-            }
+    if (version != LegacyClientVersion_037 || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_037)) {
+        if (version != LegacyClientVersion_03DL || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_03DL)) {
+            newConnectionResult.first = NewConnectionResult_VersionMismatch;
         }
     }
 
-    network->networkEventDispatcher.anyTrue(
-        [&netData, &lbs, &newConnectionResult](NetworkEventHandler* handler) {
-            lbs.reset(BSResetRead);
-            return (newConnectionResult = handler->onPeerRequest(netData, lbs)).first == NewConnectionResult_Success;
-        }
+    PeerRequestParams params;
+    params.version = version;
+    params.name = name;
+    params.bot = isNPC;
+    networkEventDispatcher.anyTrue(
+            [&netData, &params, &newConnectionResult](NetworkEventHandler* handler) {
+                return (newConnectionResult = handler->onPeerRequest(netData, params)).first == NewConnectionResult_Success;
+            }
     );
 
     if (newConnectionResult.first != NewConnectionResult_Success) {
@@ -345,31 +339,84 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             // Entry denied, send reason and disconnect
             RakNet::BitStream bss;
             bss.Write(uint8_t(newConnectionResult.first));
-            network->rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
-            network->rakNetServer.Kick(rid);
+            rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+            rakNetServer.Kick(rid);
         }
-        return;
+        return nullptr;
     }
 
     IPlayer& player = *newConnectionResult.second;
-    network->playerFromRID.emplace(rid, player);
+    playerFromRID.emplace(rid, player);
 
-    network->inOutEventDispatcher.all(
-        [&player, &lbs](NetworkInOutEventHandler* handler) {
-            lbs.reset(BSResetRead);
-            handler->receivedRPC(player, NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy), lbs);
+    return newConnectionResult.second;
+}
+
+void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra) {
+    RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
+    SAMPRakNet::RemoteSystemData remoteSystemData = network->rakNetServer.GetSAMPDataFromPlayerID(rpcParams->sender);
+    if (remoteSystemData.authType == SAMPRakNet::AuthType_Player) {
+        RakNet::BitStream bs = GetBitStream(*rpcParams);
+        RakNetLegacyBitStream lbs(bs);
+        NetCode::RPC::PlayerConnect playerConnectRPC;
+        if (playerConnectRPC.read(lbs)) {
+            IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, playerConnectRPC.VersionNumber, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
+            if (newPeer) {
+                network->inOutEventDispatcher.all(
+                    [newPeer, &lbs](NetworkInOutEventHandler* handler) {
+                        lbs.reset(BSResetRead);
+                        handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy), lbs);
+                    }
+                );
+
+                network->rpcInOutEventDispatcher.all(
+                    NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy),
+                    [newPeer, &lbs](SingleNetworkInOutEventHandler* handler) {
+                        lbs.reset(BSResetRead);
+                        handler->received(*newPeer, lbs);
+                    }
+                );
+
+                network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
+                return;
+            }
         }
-    );
+    }
 
-    network->rpcInOutEventDispatcher.all(
-        NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy),
-        [&player, &lbs](SingleNetworkInOutEventHandler* handler) {
-            lbs.reset(BSResetRead);
-            handler->received(player, lbs);
+    network->rakNetServer.Kick(rpcParams->sender);
+}
+
+void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra) {
+    RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
+    SAMPRakNet::RemoteSystemData remoteSystemData = network->rakNetServer.GetSAMPDataFromPlayerID(rpcParams->sender);
+    if (remoteSystemData.authType == SAMPRakNet::AuthType_NPC) {
+        RakNet::BitStream bs = GetBitStream(*rpcParams);
+        RakNetLegacyBitStream lbs(bs);
+        NetCode::RPC::NPCConnect NPCConnectRPC;
+        if (NPCConnectRPC.read(lbs)) {
+            IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, NPCConnectRPC.VersionNumber, NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
+            if (newPeer) {
+                network->inOutEventDispatcher.all(
+                    [newPeer, &lbs](NetworkInOutEventHandler* handler) {
+                        lbs.reset(BSResetRead);
+                        handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::getID(ENetworkType_RakNetLegacy), lbs);
+                    }
+                );
+
+                network->rpcInOutEventDispatcher.all(
+                    NetCode::RPC::NPCConnect::getID(ENetworkType_RakNetLegacy),
+                    [newPeer, &lbs](SingleNetworkInOutEventHandler* handler) {
+                        lbs.reset(BSResetRead);
+                        handler->received(*newPeer, lbs);
+                    }
+                );
+
+                network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
+                return;
+            }
         }
-    );
+    }
 
-    network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, player);
+    network->rakNetServer.Kick(rpcParams->sender);
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason) {
@@ -423,6 +470,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
     SAMPRakNet::ServerCoreInit(c);
+    SAMPRakNet::SetToken(rand());
     query = Query(c);
 
     IConfig& config = core->getConfig();

@@ -321,9 +321,15 @@ enum NewConnectionResult {
 	NewConnectionResult_Success
 };
 
+struct PeerRequestParams {
+	uint32_t version;
+	bool bot;
+	StringView name;
+};
+
 /// An event handler for network events
 struct NetworkEventHandler {
-	virtual Pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) { return { NewConnectionResult_Ignore, nullptr }; }
+	virtual Pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, const PeerRequestParams& params) { return { NewConnectionResult_Ignore, nullptr }; }
 	virtual void onPeerConnect(IPlayer& peer) { }
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };
