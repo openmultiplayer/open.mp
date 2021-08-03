@@ -26,6 +26,7 @@ constexpr float STREAM_DISTANCE = 200.f;
 constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
 constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
 constexpr int TEXT_LABEL_POOL_SIZE = 1024;
+constexpr int INVALID_TEXT_LABEL_ID = 0xFFFF;
 constexpr int PICKUP_POOL_SIZE = 4096;
 constexpr int GLOBAL_TEXTDRAW_POOL_SIZE = 2048;
 constexpr int PLAYER_TEXTDRAW_POOL_SIZE = 256;
