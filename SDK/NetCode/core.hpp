@@ -44,6 +44,20 @@ namespace NetCode {
 			}
 		};
 
+		struct NPCConnect final : NetworkPacketBase<54> {
+			uint32_t VersionNumber;
+			uint8_t Modded;
+			NetworkString Name;
+			uint32_t ChallengeResponse;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT32>(VersionNumber);
+				bs.read<NetworkBitStreamValueType::UINT8>(Modded);
+				bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Name);
+				return bs.read<NetworkBitStreamValueType::UINT32>(ChallengeResponse);
+			}
+		};
+
 		struct PlayerJoin final : NetworkPacketBase<137> {
 			int PlayerID;
 			Colour Col;

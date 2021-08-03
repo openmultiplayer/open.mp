@@ -9,6 +9,7 @@
 #include "player_pool.hpp"
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include "util.hpp"
 
 struct ComponentList : public IComponentList {
     using IComponentList::queryComponent;
@@ -235,7 +236,7 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     void initiated() {
         components.load();
-        players.init(components);
+        players.init(components); // Players must ALWAYS be initialised before components
         components.init();
     }
 
@@ -318,6 +319,17 @@ struct Core final : public ICore, public PlayerEventHandler {
         playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
 
         player.sendRPC(playerInitRPC);
+    }
+
+    void connectBot(StringView name, StringView script) override {
+        StringView bind = config.getString("bind");
+        int port = *config.getInt("port");
+        StringView password = config.getString("password");
+        std::string args = "-h " + (bind.empty() ? "127.0.0.1" : std::string(bind)) + " -p " + std::to_string(port) + " -n " + std::string(name) + " -m " + std::string(script);
+        if (!password.empty()) {
+            args += " -z " + std::string(password);
+        }
+        RunProcess(config.getString("samp-npc"), args);
     }
 
     void addComponents(const DynamicArray<IComponent*>& newComponents) {
