@@ -8,6 +8,10 @@
 #include "Impl.hpp"
 #include "../Manager/Manager.hpp"
 
+/// Macro to define a script param for a pool entry
+/// Example with IPlayer from the players pool:
+/// Using IPlayer& in a script function throws an exception if the player with the specified ID doesn't exist
+/// Using IPlayer* in a script function makes the IPlayer entry optional and is nullptr if the player with the specified ID doesn't exist
 #define POOL_PARAM(type, poolPtr) \
 	template <> \
 	struct ParamLookup<type> { \
@@ -82,6 +86,11 @@
 		ParamCast() = delete; \
 	};
 
+/// Macro to define a script param for a player pool entry
+/// Always throws if the player ID specified in the first parameter is invalid as it's required to get the IPlayerObjectData pool
+/// Example with IPlayerObject from the IPlayerObjectData pool:
+/// Using IPlayerObject& in a script function throws an exception if the object with the specified ID doesn't exist
+/// Using IPlayerObject* in a script function makes the IPlayerObject entry optional and is nullptr if the object with the specified ID doesn't exist
 #define PLAYER_POOL_PARAM(type, dataType) \
 	template <> \
 	struct ParamLookup<type> { \
