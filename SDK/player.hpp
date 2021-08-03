@@ -239,8 +239,6 @@ struct IPlayerData : public IUUIDProvider {
 struct IPlayerPool;
 struct IPlayer;
 
-typedef Optional<std::reference_wrapper<IPlayer>> OptionalPlayer;
-
 /// The player's name status returned when updating their name
 enum EPlayerNameStatus {
 	Updated, ///< The name has successfully been updated
@@ -362,7 +360,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void createExplosion(Vector3 vec, int type, float radius) = 0;
 
 	// Send Death message
-	virtual void sendDeathMessage(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
+	virtual void sendDeathMessage(IPlayer& player, IPlayer* killer, int weapon) = 0;
 
 	/// Remove default map objects with a model in a radius at a specific position
 	/// @param model The object model to remove
@@ -652,8 +650,8 @@ struct PlayerEventHandler {
 	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
 	virtual void onNameChange(IPlayer & player, StringView oldName) {}
-	virtual void onDeath(IPlayer& player, OptionalPlayer killer, int reason) {}
-	virtual void onTakeDamage(IPlayer& player, OptionalPlayer from, float amount, unsigned weapon, BodyPart part) {}
+	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
+	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) {}
 	virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) {}
@@ -674,9 +672,9 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// Returns a dispatcher to the PlayerUpdateEvent.
 	virtual IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() = 0;
 
-	/// Returns whether a name is taken by any player
+	/// Returns whether a name is taken by any player excluding one player
 	/// @param skip The player to exclude from the check
-	virtual bool isNameTaken(StringView name, const OptionalPlayer skip) = 0;
+	virtual bool isNameTaken(StringView name, const IPlayer* skip) = 0;
 
 	/// sendClientMessage for all players
 	virtual void sendClientMessageToAll(const Colour& colour, StringView message) = 0;
@@ -688,7 +686,7 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	virtual void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) = 0;
 
 	/// sendDeathMessage for all players
-	virtual void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) = 0;
+	virtual void sendDeathMessageToAll(IPlayer& player, IPlayer* killer, int weapon) = 0;
 
 	/// createExplosion for all players
 	virtual void createExplosionForAll(Vector3 vec, int type, float radius) = 0;
@@ -696,10 +694,10 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>
-	inline void broadcastRPCToAll(const Packet& packet, const OptionalPlayer& skipFrom = OptionalPlayer()) {
+	inline void broadcastRPCToAll(const Packet& packet, const IPlayer* skipFrom = nullptr) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		for (IPlayer* player : entries()) {
-			if (skipFrom && player == &skipFrom.value().get()) {
+			if (player == skipFrom) {
 				continue;
 			}
 			player->sendRPC(packet);
@@ -709,10 +707,10 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// Attempt to broadcast a packet derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>
-	inline void broadcastPacketToAll(const Packet& packet, const OptionalPlayer& skipFrom = OptionalPlayer()) {
+	inline void broadcastPacketToAll(const Packet& packet, const IPlayer* skipFrom = nullptr) {
 		static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
 		for (IPlayer* player : entries()) {
-			if (skipFrom && player == &skipFrom.value().get()) {
+			if (player == skipFrom) {
 				continue;
 			}
 			player->sendPacket(packet);
