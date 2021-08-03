@@ -42,8 +42,8 @@ extern "C"
 
 PawnScript::PawnScript(int id, std::string const & path, ICore * core)
 	:
-	id_(id),
-	serverCore(core)
+	serverCore(core),
+	id_(id)
 {
 	int err = aux_LoadProgram(&amx_, const_cast<char *>(path.c_str()), nullptr);
 	switch (err)
