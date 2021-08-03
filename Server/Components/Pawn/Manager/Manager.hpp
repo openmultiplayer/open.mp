@@ -20,12 +20,17 @@ public:
 	std::map<std::string, std::unique_ptr<PawnScript>> scripts_;
 	std::string entryScript = "";
 	ICore * serverCore;
+	IComponentList* components;
 
 	PawnManager();
 	~PawnManager();
 
 	void SetServerCoreInstance(ICore * core) {
 		serverCore = core;
+	};
+
+	void SetComponentList(IComponentList* cl) {
+		components = cl;
 	};
 
 	void printPawnLog(const std::string & type, const std::string & message) {
