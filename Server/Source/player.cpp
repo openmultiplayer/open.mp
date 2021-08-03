@@ -14,7 +14,7 @@ void Player::setColour(Colour colour) {
 
 EPlayerNameStatus Player::setName(StringView name) {
     assert(pool_);
-    if (pool_->isNameTaken(name, *this)) {
+    if (pool_->isNameTaken(name, this)) {
         return EPlayerNameStatus::Taken;
     }
     else if (name.length() > MAX_PLAYER_NAME) {
