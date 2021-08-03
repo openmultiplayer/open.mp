@@ -88,5 +88,7 @@ static const FlatHashMap<String, Variant<int, String, float, DynamicArray<String
     { "side_scripts", DynamicArray<StringView> {} },
     { "player_time_update_rate", 30000 },
     { "stream_rate", 1000 },
-    { "stream_distance", 200.f }
+    { "stream_distance", 200.f },
+    { "npc_exe", "samp-npc" },
+    { "maxnpc", 0 }
 };
