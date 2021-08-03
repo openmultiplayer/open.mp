@@ -175,12 +175,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(createExplosionRPC);
     }
 
-    void sendDeathMessage(IPlayer& player, OptionalPlayer killer, int weapon) override {
+    void sendDeathMessage(IPlayer& player, IPlayer* killer, int weapon) override {
         NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-        sendDeathMessageRPC.PlayerID = player.getID();
-        sendDeathMessageRPC.HasKiller = killer.has_value();
+        sendDeathMessageRPC.PlayerID = static_cast<Player&>(player).poolID;
+        sendDeathMessageRPC.HasKiller = killer != nullptr;
         if (killer) {
-            sendDeathMessageRPC.KillerID = killer->get().getID();
+            sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
         }
         sendDeathMessageRPC.reason = weapon;
         sendRPC(sendDeathMessageRPC);
@@ -449,7 +449,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setOtherColour(IPlayer& other, Colour colour) override {
         NetCode::RPC::SetPlayerColor RPC;
-        RPC.PlayerID = other.getID();
+        RPC.PlayerID = static_cast<Player&>(other).poolID;
         RPC.Col = colour;
         sendRPC(RPC);
     }
@@ -488,7 +488,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void streamInForPlayer(IPlayer& other) override;
 
     bool isStreamedInForPlayer(const IPlayer& other) const override {
-        return streamedFor_.valid(other.getID());
+        return streamedFor_.valid(static_cast<const Player&>(other).poolID);
     }
 
     void streamOutForPlayer(IPlayer& other) override;
@@ -610,7 +610,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void toggleOtherNameTag(IPlayer& other, bool toggle) override {
         NetCode::RPC::ShowPlayerNameTagForPlayer RPC;
-        RPC.PlayerID = other.getID();
+        RPC.PlayerID = static_cast<Player&>(other).poolID;
         RPC.Show = toggle;
         sendRPC(RPC);
     }
@@ -779,7 +779,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         target.streamInForPlayer(*this);
 
         NetCode::RPC::PlayerSpectatePlayer rpc;
-        rpc.PlayerID = target.getID();
+        rpc.PlayerID = static_cast<Player&>(target).poolID;
         rpc.SpecCamMode = mode;
         sendRPC(rpc);
     }

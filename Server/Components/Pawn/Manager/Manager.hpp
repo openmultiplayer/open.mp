@@ -4,7 +4,21 @@
 
 */
 
-#include "sdk.hpp"
+#include <sdk.hpp>
+#include <Server/Components/Actors/actors.hpp>
+#include <Server/Components/Checkpoints/checkpoints.hpp>
+#include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/Console/console.hpp>
+#include <Server/Components/Dialogs/dialogs.hpp>
+#include <Server/Components/GangZones/gangzones.hpp>
+#include <Server/Components/Menus/menus.hpp>
+#include <Server/Components/Objects/objects.hpp>
+#include <Server/Components/Pickups/pickups.hpp>
+#include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/Timers/timers.hpp>
+#include <Server/Components/Variables/variables.hpp>
+#include <Server/Components/Vehicles/vehicles.hpp>
 
 #include <string>
 #include <map>
@@ -19,22 +33,28 @@ class PawnManager : public Singleton<PawnManager>
 public:
 	std::map<std::string, std::unique_ptr<PawnScript>> scripts_;
 	std::string entryScript = "";
-	ICore * serverCore;
-	IComponentList* components;
+	ICore* core = nullptr;
+	IPlayerPool* players = nullptr;
+	IActorsComponent* actors = nullptr;
+	ICheckpointsComponent* checkpoints = nullptr;
+	IClassesComponent* classes = nullptr;
+	IConsoleComponent* console = nullptr;
+	IDialogsComponent* dialogs = nullptr;
+	IGangZonesComponent* gangzones = nullptr;
+	IMenusComponent* menus = nullptr;
+	IObjectsComponent* objects = nullptr;
+	IPickupsComponent* pickups = nullptr;
+	ITextDrawsComponent* textdraws = nullptr;
+	ITextLabelsComponent* textlabels = nullptr;
+	ITimersComponent* timers = nullptr;
+	IVariablesComponent* vars = nullptr;
+	IVehiclesComponent* vehicles = nullptr;
 
 	PawnManager();
 	~PawnManager();
 
-	void SetServerCoreInstance(ICore * core) {
-		serverCore = core;
-	};
-
-	void SetComponentList(IComponentList* cl) {
-		components = cl;
-	};
-
 	void printPawnLog(const std::string & type, const std::string & message) {
-		serverCore->printLn("[PAWN-LOG] %s: %s", type.c_str(), message.c_str());
+		core->printLn("[PAWN-LOG] %s: %s", type.c_str(), message.c_str());
 	}
 
 	void OnScriptInit(const std::string & script);
