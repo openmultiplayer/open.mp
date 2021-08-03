@@ -115,5 +115,5 @@ SCRIPT_API(IsActorInvulnerable, bool(IActor* actor))
 
 SCRIPT_API(IsValidActor, bool(IActor* actor))
 {
-	return !!actor;
+	return true;
 }
