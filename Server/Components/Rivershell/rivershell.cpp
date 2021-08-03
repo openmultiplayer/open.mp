@@ -282,15 +282,15 @@ struct RivershellMode :
 		}
 	}
 
-	void onDeath(IPlayer& player, OptionalPlayer killer, int reason) override {
+	void onDeath(IPlayer& player, IPlayer* killer, int reason) override {
 		c->getPlayers().sendDeathMessageToAll(player, killer, reason);
 		if (killer) {
-			if (killer->get().getTeam() != player.getTeam()) {
-				killer->get().setScore(killer->get().getScore() + 1);
+			if (killer->getTeam() != player.getTeam()) {
+				killer->setScore(killer->getScore() + 1);
 			}
 		}
 		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
-		data->lastKiller = killer ? &killer->get() : nullptr;
+		data->lastKiller = killer;
 		data->lastDeath = std::chrono::steady_clock::now();
 	}
 
