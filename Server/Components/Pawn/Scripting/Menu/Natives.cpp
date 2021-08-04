@@ -16,12 +16,8 @@ SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, const Vec
 
 SCRIPT_API(DestroyMenu, bool(IMenu& menu))
 {
-	IMenusComponent* component = PawnManager::Get()->menus;
-	if (component) {
-		component->release(menu.getID());
-		return true;
-	}
-	return false;
+	PawnManager::Get()->menus->release(menu.getID());
+	return true;
 }
 
 SCRIPT_API(AddMenuItem, bool(IMenu& menu, uint8_t column, const std::string& text))

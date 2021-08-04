@@ -16,12 +16,8 @@ SCRIPT_API(Create3DTextLabel, int(const std::string& text, uint32_t colour, cons
 
 SCRIPT_API(Delete3DTextLabel, bool(ITextLabel& textlabel))
 {
-	ITextLabelsComponent* component = PawnManager::Get()->textlabels;
-	if (component) {
-		component->release(textlabel.getID());
-		return true;
-	}
-	return false;
+	PawnManager::Get()->textlabels->release(textlabel.getID());
+	return true;
 }
 
 SCRIPT_API(Attach3DTextLabelToPlayer, bool(ITextLabel& textlabel, IPlayer* player, const Vector3& offset))
