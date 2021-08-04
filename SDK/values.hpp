@@ -48,6 +48,7 @@ constexpr int GANG_ZONE_POOL_SIZE = 1024;
 constexpr int MAX_STREAMED_PLAYERS = 200;
 constexpr int MAX_STREAMED_ACTORS = 50;
 constexpr int MAX_STREAMED_VEHICLES = 700;
+constexpr int NO_TEAM = 255;
 
 enum PlayerMarkerMode {
     PlayerMarkerMode_Off,
