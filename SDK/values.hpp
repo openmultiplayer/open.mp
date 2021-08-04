@@ -26,6 +26,7 @@ constexpr float STREAM_DISTANCE = 200.f;
 constexpr int MAX_ATTACHED_OBJECT_SLOTS = 10;
 constexpr int MAX_OBJECT_MATERIAL_SLOTS = 16;
 constexpr int TEXT_LABEL_POOL_SIZE = 1024;
+constexpr int INVALID_TEXT_LABEL_ID = 0xFFFF;
 constexpr int PICKUP_POOL_SIZE = 4096;
 constexpr int GLOBAL_TEXTDRAW_POOL_SIZE = 2048;
 constexpr int PLAYER_TEXTDRAW_POOL_SIZE = 256;
@@ -42,10 +43,12 @@ constexpr int MAX_MENU_ITEMS = 12;
 constexpr int MAX_MENU_TEXT_LENGTH = 32;
 constexpr int INVALID_MENU_ID = 0xFF;
 constexpr int DIALOG_INVALID_ID = 0xFFFF;
+constexpr int INVALID_GANG_ZONE_ID = -1;
 constexpr int GANG_ZONE_POOL_SIZE = 1024;
 constexpr int MAX_STREAMED_PLAYERS = 200;
 constexpr int MAX_STREAMED_ACTORS = 50;
 constexpr int MAX_STREAMED_VEHICLES = 700;
+constexpr int NO_TEAM = 255;
 
 enum PlayerMarkerMode {
     PlayerMarkerMode_Off,
