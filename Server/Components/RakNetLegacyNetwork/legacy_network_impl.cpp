@@ -328,11 +328,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
     params.version = version;
     params.name = name;
     params.bot = isNPC;
-    networkEventDispatcher.anyTrue(
-            [&netData, &params, &newConnectionResult](NetworkEventHandler* handler) {
-                return (newConnectionResult = handler->onPeerRequest(netData, params)).first == NewConnectionResult_Success;
-            }
-    );
+    newConnectionResult = core->getPlayers().requestPlayer(netData, params);
 
     if (newConnectionResult.first != NewConnectionResult_Success) {
         if (newConnectionResult.first != NewConnectionResult_Ignore) {

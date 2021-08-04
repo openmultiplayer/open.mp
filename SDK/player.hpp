@@ -686,6 +686,9 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	/// createExplosion for all players
 	virtual void createExplosionForAll(Vector3 vec, int type, float radius) = 0;
 
+	/// Request a new player with the given network parameters
+	virtual Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) = 0;
+
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
 	template<class Packet>

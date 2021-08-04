@@ -817,7 +817,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         return playerUpdateDispatcher;
     }
 
-    Pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, const PeerRequestParams& params) override {
+    Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override {
         if (params.bot) {
             if (numBots >= maxBots) {
                 return { NewConnectionResult_NoPlayerSlot, nullptr };
