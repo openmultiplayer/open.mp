@@ -1,10 +1,10 @@
 #include "sdk.hpp"
 #include <iostream>
-#include "Types.hpp"
+#include "../Types.hpp"
 
 SCRIPT_API(GangZoneCreate, int(const Vector2& min, const Vector2& max))
 {
-	IGangZonesComponent* component = PawnManager::Get()->components->queryComponent<IGangZonesComponent>();
+	IGangZonesComponent* component = PawnManager::Get()->gangzones;
 	if (component) {
 		GangZonePos pos;
 		pos.min = min;
@@ -18,72 +18,72 @@ SCRIPT_API(GangZoneCreate, int(const Vector2& min, const Vector2& max))
 	return INVALID_GANG_ZONE_ID;
 }
 
-SCRIPT_API(GangZoneDestroy, bool(IGangZone* gangzone))
+SCRIPT_API(GangZoneDestroy, bool(IGangZone& gangzone))
 {
-	IGangZonesComponent* component = PawnManager::Get()->components->queryComponent<IGangZonesComponent>();
+	IGangZonesComponent* component = PawnManager::Get()->gangzones;
 	if (component) {
-		component->release(gangzone->getID());
+		component->release(gangzone.getID());
 		return true;
 	}
 	return false;
 }
 
-SCRIPT_API(GangZoneShowForPlayer, bool(IPlayer* player, IGangZone* gangzone, uint32_t colour))
+SCRIPT_API(GangZoneShowForPlayer, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))
 {
-	gangzone->showForPlayer(*player, Colour::FromRGBA(colour));
+	gangzone.showForPlayer(player, Colour::FromRGBA(colour));
 	return false;
 }
 
-SCRIPT_API(GangZoneShowForAll, bool(IGangZone* gangzone, uint32_t colour))
+SCRIPT_API(GangZoneShowForAll, bool(IGangZone& gangzone, uint32_t colour))
 {
-	IPlayerPool& pool = PawnManager::Get()->serverCore->getPlayers();
-	for (IPlayer* player : pool.entries()) {
-		gangzone->showForPlayer(*player, Colour::FromRGBA(colour));
+	IPlayerPool* pool = PawnManager::Get()->players;
+	for (IPlayer* player : pool->entries()) {
+		gangzone.showForPlayer(*player, Colour::FromRGBA(colour));
 	}
 	return false;
 }
 
-SCRIPT_API(GangZoneHideForPlayer, bool(IPlayer* player, IGangZone* gangzone))
+SCRIPT_API(GangZoneHideForPlayer, bool(IPlayer& player, IGangZone& gangzone))
 {
-	gangzone->hideForPlayer(*player);
+	gangzone.hideForPlayer(player);
 	return false;
 }
 
-SCRIPT_API(GangZoneHideForAll, bool(IGangZone* gangzone))
+SCRIPT_API(GangZoneHideForAll, bool(IGangZone& gangzone))
 {
-	IPlayerPool& pool = PawnManager::Get()->serverCore->getPlayers();
-	for (IPlayer* player : pool.entries()) {
-		gangzone->hideForPlayer(*player);
+	IPlayerPool* pool = PawnManager::Get()->players;
+	for (IPlayer* player : pool->entries()) {
+		gangzone.hideForPlayer(*player);
 	}
 	return false;
 }
 
-SCRIPT_API(GangZoneFlashForPlayer, bool(IPlayer* player, IGangZone* gangzone, uint32_t colour))
+SCRIPT_API(GangZoneFlashForPlayer, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))
 {
-	gangzone->flashForPlayer(*player, Colour::FromRGBA(colour));
+	gangzone.flashForPlayer(player, Colour::FromRGBA(colour));
 	return false;
 }
 
-SCRIPT_API(GangZoneFlashForAll, bool(IGangZone* gangzone, uint32_t colour))
+SCRIPT_API(GangZoneFlashForAll, bool(IGangZone& gangzone, uint32_t colour))
 {
-	IPlayerPool& pool = PawnManager::Get()->serverCore->getPlayers();
-	for (IPlayer* player : pool.entries()) {
-		gangzone->flashForPlayer(*player, Colour::FromRGBA(colour));
+	IPlayerPool* pool = PawnManager::Get()->players;
+	for (IPlayer* player : pool->entries()) {
+		gangzone.flashForPlayer(*player, Colour::FromRGBA(colour));
 	}
 	return false;
 }
 
-SCRIPT_API(GangZoneStopFlashForPlayer, bool(IPlayer* player, IGangZone* gangzone))
+SCRIPT_API(GangZoneStopFlashForPlayer, bool(IPlayer& player, IGangZone& gangzone))
 {
-	gangzone->stopFlashForPlayer(*player);
+	gangzone.stopFlashForPlayer(player);
 	return false;
 }
 
-SCRIPT_API(GangZoneStopFlashForAll, bool(IGangZone* gangzone))
+SCRIPT_API(GangZoneStopFlashForAll, bool(IGangZone& gangzone))
 {
-	IPlayerPool& pool = PawnManager::Get()->serverCore->getPlayers();
-	for (IPlayer* player : pool.entries()) {
-		gangzone->stopFlashForPlayer(*player);
+	IPlayerPool* pool = PawnManager::Get()->players;
+	for (IPlayer* player : pool->entries()) {
+		gangzone.stopFlashForPlayer(*player);
 	}
 	return false;
 }
