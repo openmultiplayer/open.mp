@@ -20,12 +20,8 @@ SCRIPT_API(GangZoneCreate, int(const Vector2& min, const Vector2& max))
 
 SCRIPT_API(GangZoneDestroy, bool(IGangZone& gangzone))
 {
-	IGangZonesComponent* component = PawnManager::Get()->gangzones;
-	if (component) {
-		component->release(gangzone.getID());
-		return true;
-	}
-	return false;
+	PawnManager::Get()->gangzones->release(gangzone.getID());
+	return true;
 }
 
 SCRIPT_API(GangZoneShowForPlayer, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))

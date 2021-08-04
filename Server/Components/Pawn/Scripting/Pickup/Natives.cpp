@@ -29,9 +29,6 @@ SCRIPT_API(AddStaticPickup, int(int model, int type, const Vector3& position, in
 SCRIPT_API(DestroyPickup, bool(IPickup& pickup))
 {
 	IPickupsComponent* component = PawnManager::Get()->pickups;
-	if (component) {
-		component->release(pickup.getID());
-		return true;
-	}
-	return false;
+	component->release(pickup.getID());
+	return true;
 }
