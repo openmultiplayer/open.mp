@@ -17,8 +17,7 @@ SCRIPT_API(AddPlayerClass, bool(
 			WeaponSlotData{weapon3, weapon3_ammo}
 		};
 
-		// NO_TEAM is 255
-		PlayerClass* _class = component->create(modelid, 255, position, angle, slots);
+		PlayerClass* _class = component->create(modelid, NO_TEAM, position, angle, slots);
 		if (_class) {
 			return true;
 		}
