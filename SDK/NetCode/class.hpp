@@ -23,7 +23,7 @@ namespace NetCode {
 			uint8_t TeamID;
 			uint32_t ModelID;
 			uint8_t Unknown1;
-			glm::vec3 Spawn;
+			Vector3 Spawn;
 			float ZAngle;
 			NetworkArray<uint32_t> Weapons;
 			NetworkArray<uint32_t> Ammos;
