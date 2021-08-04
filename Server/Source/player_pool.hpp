@@ -835,7 +835,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             }
         }
 
-        if (isNameTaken(name, nullptr)) {
+        if (isNameTaken(params.name, nullptr)) {
             return { NewConnectionResult_BadName, nullptr };
         }
 
