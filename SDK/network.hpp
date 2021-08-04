@@ -329,7 +329,6 @@ struct PeerRequestParams {
 
 /// An event handler for network events
 struct NetworkEventHandler {
-	virtual Pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, const PeerRequestParams& params) { return { NewConnectionResult_Ignore, nullptr }; }
 	virtual void onPeerConnect(IPlayer& peer) { }
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };

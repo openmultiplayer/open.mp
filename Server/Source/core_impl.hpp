@@ -238,6 +238,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
+        connectBot("bote", "at400_ls");
     }
 
     int getVersion() override {
@@ -329,7 +330,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         if (!password.empty()) {
             args += " -z " + std::string(password);
         }
-        RunProcess(config.getString("samp-npc"), args);
+        RunProcess(config.getString("npc_exe"), args);
     }
 
     void addComponents(const DynamicArray<IComponent*>& newComponents) {
