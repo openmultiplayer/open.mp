@@ -23,7 +23,8 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		Span<const StringView> sideScripts = config.getStrings("side_scripts");
 
 		// store core instance and add event handlers
-		PawnManager::Get()->SetServerCoreInstance(c);
+		PawnManager::Get()->core = core;
+		PawnManager::Get()->players = &core->getPlayers();
 		Scripting scriptingInstance = Scripting(core);
 		scriptingInstance.addEvents();
 
@@ -34,6 +35,23 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		}
 
 		c->getEventDispatcher().addEventHandler(this);
+	}
+
+	void onInit(IComponentList* components) override {
+		PawnManager::Get()->actors = components->queryComponent<IActorsComponent>();
+		PawnManager::Get()->checkpoints = components->queryComponent<ICheckpointsComponent>();
+		PawnManager::Get()->classes = components->queryComponent<IClassesComponent>();
+		PawnManager::Get()->console = components->queryComponent<IConsoleComponent>();
+		PawnManager::Get()->dialogs = components->queryComponent<IDialogsComponent>();
+		PawnManager::Get()->gangzones = components->queryComponent<IGangZonesComponent>();
+		PawnManager::Get()->menus = components->queryComponent<IMenusComponent>();
+		PawnManager::Get()->objects = components->queryComponent<IObjectsComponent>();
+		PawnManager::Get()->pickups = components->queryComponent<IPickupsComponent>();
+		PawnManager::Get()->textdraws = components->queryComponent<ITextDrawsComponent>();
+		PawnManager::Get()->textlabels = components->queryComponent<ITextLabelsComponent>();
+		PawnManager::Get()->timers = components->queryComponent<ITimersComponent>();
+		PawnManager::Get()->vars = components->queryComponent<IVariablesComponent>();
+		PawnManager::Get()->vehicles = components->queryComponent<IVehiclesComponent>();
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {

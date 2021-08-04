@@ -94,9 +94,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
 
             bool pidValid = self.storage.valid(onPlayerGiveTakeDamageRPC.PlayerID);
             if (onPlayerGiveTakeDamageRPC.Taking) {
-                OptionalPlayer from;
+                IPlayer* from = nullptr;
                 if (pidValid) {
-                    from.emplace(self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID));
+                    from = &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID);
                 }
                 self.eventDispatcher.dispatch(
                     &PlayerEventHandler::onTakeDamage,
@@ -156,9 +156,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             Player& player = static_cast<Player&>(peer);
             player.setState(PlayerState_Wasted);
 
-            OptionalPlayer killer;
+            IPlayer* killer = nullptr;
             if (self.storage.valid(onPlayerDeathRPC.KillerID)) {
-                killer.emplace(self.storage.get(onPlayerDeathRPC.KillerID));
+                killer = &self.storage.get(onPlayerDeathRPC.KillerID);
             }
             self.eventDispatcher.dispatch(
                 &PlayerEventHandler::onDeath,
@@ -169,7 +169,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
 
             NetCode::RPC::PlayerDeath playerDeathRPC;
             playerDeathRPC.PlayerID = player.poolID;
-            self.broadcastRPCToAll(playerDeathRPC, peer);
+            self.broadcastRPCToAll(playerDeathRPC, &peer);
 
             return true;
         }
@@ -693,8 +693,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 return false;
             }
 
-            int pid = peer.getID();
-            Player& player = self.storage.get(pid);
+            Player& player = static_cast<Player&>(peer);
             IVehicle& vehicle = self.vehiclesComponent->get(passengerSync.VehicleID);
             if (vehicle.isRespawning()) return false;
             vehicle.updateFromPassengerSync(passengerSync, peer);
@@ -728,7 +727,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             player.armedWeapon_ = passengerSync.WeaponID;
             player.setState(PlayerState_Passenger);
 
-            passengerSync.PlayerID = pid;
+            passengerSync.PlayerID = player.poolID;
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                 [&peer](PlayerUpdateEventHandler* handler) {
                     return handler->onUpdate(peer);
@@ -766,7 +765,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             }
 
             if (vehicle.updateFromUnoccupied(unoccupiedSync, peer)) {
-                unoccupiedSync.PlayerID = player.getID();
+                unoccupiedSync.PlayerID = player.poolID;
                 player.broadcastPacketToStreamed(unoccupiedSync);
             }
             return true;
@@ -784,8 +783,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 return false;
             }
 
-            int pid = peer.getID();
-            Player& player = self.storage.get(pid);
+            Player& player = static_cast<Player&>(peer);
             IVehicle& vehicle = self.vehiclesComponent->get(trailerSync.VehicleID);
             PlayerState state = player.getState();
             if (state != PlayerState_Driver || peer.queryData<IPlayerVehicleData>()->getVehicle() == nullptr) {
@@ -840,7 +838,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             }
         }
 
-        if (isNameTaken(name, OptionalPlayer())) {
+        if (isNameTaken(name, nullptr)) {
             return { NewConnectionResult_BadName, nullptr };
         }
 
@@ -955,12 +953,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         playerTrailerSyncHandler(*this)
     {}
 
-    bool isNameTaken(StringView name, const OptionalPlayer skip) override {
+    bool isNameTaken(StringView name, const IPlayer* skip) override {
         const FlatPtrHashSet<IPlayer>& players = storage.entries();
         return std::any_of(players.begin(), players.end(),
             [&name, &skip](IPlayer* player) {
                 // Don't check name for player to skip
-                if (skip.has_value() && player == &skip.value().get()) {
+                if (player == skip) {
                     return false;
                 }
                 StringView otherName = player->getName();
@@ -982,7 +980,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
 
     void sendChatMessageToAll(IPlayer& from, StringView message) override {
         NetCode::RPC::PlayerChatMessage RPC;
-        RPC.PlayerID = from.getID();
+        RPC.PlayerID = static_cast<Player&>(from).poolID;
         RPC.message = message;
         broadcastRPCToAll(RPC);
     }
@@ -995,12 +993,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         broadcastRPCToAll(RPC);
     }
 
-    void sendDeathMessageToAll(IPlayer& player, OptionalPlayer killer, int weapon) override {
+    void sendDeathMessageToAll(IPlayer& player, IPlayer* killer, int weapon) override {
         NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-        sendDeathMessageRPC.PlayerID = player.getID();
-        sendDeathMessageRPC.HasKiller = killer.has_value();
+        sendDeathMessageRPC.PlayerID = static_cast<Player&>(player).poolID;
+        sendDeathMessageRPC.HasKiller = killer != nullptr;
         if (killer) {
-            sendDeathMessageRPC.KillerID = killer->get().getID();
+            sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
         }
         sendDeathMessageRPC.reason = weapon;
         broadcastRPCToAll(sendDeathMessageRPC);
