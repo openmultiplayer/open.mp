@@ -110,11 +110,11 @@ void PawnManager::Spawn(std::string const & name)
 
 	std::string canon;
 	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, serverCore);
+	std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
 
 	if (!ptr.get()->IsLoaded())
 	{
-		PawnManager::Get()->serverCore->printLn("Unable to load script %s\n\n", name.c_str());
+		PawnManager::Get()->core->printLn("Unable to load script %s\n\n", name.c_str());
 		return;
 	}
 
@@ -138,7 +138,7 @@ void PawnManager::Spawn(std::string const & name)
 	if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE)
 	{
 		// If there's no `main` ignore it for now.
-		PawnManager::Get()->serverCore->printLn(aux_StrError(err));
+		PawnManager::Get()->core->printLn(aux_StrError(err));
 	}
 	// TODO: `AMX_EXEC_CONT` support.
 	// Assume that all initialisation and header mangling is now complete, and that it is safe to
