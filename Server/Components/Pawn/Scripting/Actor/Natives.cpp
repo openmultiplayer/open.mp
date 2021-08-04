@@ -16,12 +16,8 @@ SCRIPT_API(CreateActor, int(int modelid, const Vector3& position, float rotation
 
 SCRIPT_API(DestroyActor, bool(IActor& actor))
 {
-	IActorsComponent* component = PawnManager::Get()->actors;
-	if (component) {
-		component->release(actor.getID());
-		return true;
-	}
-	return false;
+	PawnManager::Get()->actors->release(actor.getID());
+	return true;
 }
 
 SCRIPT_API(IsActorStreamedIn, bool(IActor& actor, IPlayer& player))
