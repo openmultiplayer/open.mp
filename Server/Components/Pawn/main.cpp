@@ -16,27 +16,9 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 
 	void onLoad(ICore * c) override {
 		core = c;
-	}
-
-	void onInit(IComponentList* components) override {
-		// read values of entry_file and side_scripts from config file
-		IConfig& config = core->getConfig();
-		StringView entryFile = config.getString("entry_file");
-		Span<const StringView> sideScripts = config.getStrings("side_scripts");
-
 		// store core instance and add event handlers
 		PawnManager::Get()->core = core;
 		PawnManager::Get()->players = &core->getPlayers();
-		Scripting scriptingInstance = Scripting(core);
-		scriptingInstance.addEvents();
-
-		// load scripts
-		PawnManager::Get()->Load(String(entryFile), true);
-		for (auto& script : sideScripts) {
-			PawnManager::Get()->Load(String(script), false);
-		}
-
-		core->getEventDispatcher().addEventHandler(this);
 	}
 
 	void onInit(IComponentList* components) override {
@@ -54,6 +36,22 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		PawnManager::Get()->timers = components->queryComponent<ITimersComponent>();
 		PawnManager::Get()->vars = components->queryComponent<IVariablesComponent>();
 		PawnManager::Get()->vehicles = components->queryComponent<IVehiclesComponent>();
+
+		// read values of entry_file and side_scripts from config file
+		IConfig& config = core->getConfig();
+		StringView entryFile = config.getString("entry_file");
+		Span<const StringView> sideScripts = config.getStrings("side_scripts");
+
+		Scripting scriptingInstance = Scripting(core);
+		scriptingInstance.addEvents();
+
+		// load scripts
+		PawnManager::Get()->Load(String(entryFile), true);
+		for (auto& script : sideScripts) {
+			PawnManager::Get()->Load(String(script), false);
+		}
+
+		core->getEventDispatcher().addEventHandler(this);
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {
