@@ -345,4 +345,6 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     PlayerFromRIDMap playerFromRID;
     RakNet::BitStream wbs;
     RakNetLegacyBitStream wlbs;
+    std::chrono::milliseconds cookieSeedTime;
+    std::chrono::steady_clock::time_point lastCookieSeed;
 };
