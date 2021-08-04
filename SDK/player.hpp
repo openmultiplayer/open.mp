@@ -204,14 +204,6 @@ struct WeaponSlotData {
 /// An array of weapon slots
 typedef StaticArray<WeaponSlotData, MAX_WEAPON_SLOTS> WeaponSlots;
 
-struct PlayerGameData {
-	int versionNumber;
-	char modded;
-	unsigned int challengeResponse;
-	String key;
-	String versionString;
-};
-
 struct PlayerAimData {
 	uint8_t CamMode;
 	Vector3 CamFrontVector;
@@ -256,8 +248,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player pool that the player is stored in
 	virtual IPlayerPool* getPool() const = 0;
 
-	/// Get the player's game data
-	virtual const PlayerGameData& getGameData() const = 0;
+	/// Get the player's client version
+	virtual uint32_t getClientVersion() const = 0;
 
 	/// Set the player's position with the proper Z coordinate for the map
 	virtual void setPositionFindZ(Vector3 pos) = 0;
@@ -595,6 +587,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Make player spectate a vehicle
 	virtual void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) = 0;
 
+	/// Get whether the player is a bot (NPC)
+	virtual bool isBot() const = 0;
+
 	/// Query player data by its type
 	/// @typeparam PlayerDataT The data type, must derive from IPlayerData
 	template <class PlayerDataT>
@@ -690,6 +685,9 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 
 	/// createExplosion for all players
 	virtual void createExplosionForAll(Vector3 vec, int type, float radius) = 0;
+
+	/// Request a new player with the given network parameters
+	virtual Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) = 0;
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
 	/// @param packet The packet to send
