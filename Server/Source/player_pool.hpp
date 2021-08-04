@@ -16,6 +16,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
     int* markersLimit;
     float* markersLimitRadius;
     int* gameTimeUpdateRate;
+    int numBots = 0;
+    int maxBots = 0;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
@@ -637,22 +639,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         }
     } playerWeaponsUpdateHandler;
 
-    [[nodiscard]] IPlayer* initPlayer(int pid, const PeerNetworkData& netData, const NetCode::RPC::PlayerConnect& playerConnectPacket) {
+    [[nodiscard]] IPlayer* initPlayer(int pid, const PeerNetworkData& netData, const PeerRequestParams& params) {
         Player& player = storage.get(pid);
-
-        PlayerGameData gameData;
-        gameData.versionNumber = playerConnectPacket.VersionNumber;
-        gameData.modded = playerConnectPacket.Modded;
-        gameData.challengeResponse = playerConnectPacket.ChallengeResponse;
-        gameData.key = playerConnectPacket.Key;
-        gameData.versionString = playerConnectPacket.VersionString;
 
         player.pool_ = this;
         player.streamedFor_.add(player.poolID, player);
 
         player.netData_ = netData;
-        player.gameData_ = gameData;
-        player.name_ = playerConnectPacket.Name;
+        player.version_ = params.version;
+        player.name_ = params.name;
+        player.isBot_ = params.bot;
 
         // Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846)
         static constexpr uint32_t colours[] = {
@@ -821,24 +817,25 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         return playerUpdateDispatcher;
     }
 
-    Pair<NewConnectionResult, IPlayer*> onPeerRequest(const PeerNetworkData& netData, INetworkBitStream& bs) override {
-        NetCode::RPC::PlayerConnect playerConnectPacket;
-        if (!playerConnectPacket.read(bs)) {
-            return { NewConnectionResult_Ignore, nullptr };
+    Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override {
+        if (params.bot) {
+            if (numBots >= maxBots) {
+                return { NewConnectionResult_NoPlayerSlot, nullptr };
+            }
+            ++numBots;
         }
 
-        StringView name = playerConnectPacket.Name;
-        if (name.length() < MIN_PLAYER_NAME || name.length() > MAX_PLAYER_NAME) {
+        if (params.name.length() < MIN_PLAYER_NAME || params.name.length() > MAX_PLAYER_NAME) {
             return { NewConnectionResult_BadName, nullptr };
         }
-        for (char chr : name) {
+        for (char chr : params.name) {
             if (!std::isalnum(chr) && chr != ']' && chr != '[' && chr != '_' && chr != '$' &&
                 chr != '=' && chr != '(' && chr != ')' && chr != '@' && chr != '.') {
                 return { NewConnectionResult_BadName, nullptr };
             }
         }
 
-        if (isNameTaken(name, nullptr)) {
+        if (isNameTaken(params.name, nullptr)) {
             return { NewConnectionResult_BadName, nullptr };
         }
 
@@ -854,7 +851,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             return { NewConnectionResult_NoPlayerSlot, nullptr };;
         }
 
-        return { NewConnectionResult_Success, initPlayer(pid, netData, playerConnectPacket) };
+        return { NewConnectionResult_Success, initPlayer(pid, netData, params) };
     }
 
     void onPeerConnect(IPlayer& peer) override {
@@ -923,6 +920,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             broadcastRPCToAll(packet);
 
             eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
+
+            if (player.isBot_) {
+                --numBots;
+            }
 
             storage.release(player.poolID);
         }
@@ -1021,6 +1022,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         markersLimitRadius = config.getFloat("player_markers_draw_distance");
         markersUpdateRate = config.getInt("player_markers_update_rate");
         gameTimeUpdateRate = config.getInt("player_time_update_rate");
+        maxBots = *config.getInt("maxnpc");
 
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);

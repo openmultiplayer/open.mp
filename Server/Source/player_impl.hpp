@@ -26,7 +26,7 @@ struct PlayerChatBubble {
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool* pool_;
     PeerNetworkData netData_;
-    PlayerGameData gameData_;
+    uint32_t version_;
     Vector3 pos_;
     Vector3 cameraPos_;
     Vector3 cameraLookAt_;
@@ -75,6 +75,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerChatBubble chatBubble_;
     uint8_t numStreamed_;
     std::chrono::steady_clock::time_point lastGameTimeUpdate_;
+    bool isBot_;
 
     Player() :
         pool_(nullptr),
@@ -110,10 +111,19 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         targetActor_(INVALID_ACTOR_ID),
         chatBubbleExpiration_(std::chrono::steady_clock::now()),
         numStreamed_(0),
-        lastGameTimeUpdate_()
+        lastGameTimeUpdate_(),
+        isBot_(false)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
+    }
+
+    uint32_t getClientVersion() const override {
+        return version_;
+    }
+
+    bool isBot() const override {
+        return isBot_;
     }
 
     void setState(PlayerState state);
@@ -499,10 +509,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     const PeerNetworkData& getNetworkData() const override {
         return netData_;
-    }
-
-    const PlayerGameData& getGameData() const override {
-        return gameData_;
     }
 
     void setFightingStyle(PlayerFightingStyle style) override {

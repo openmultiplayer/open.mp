@@ -299,6 +299,9 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     }
 
     static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
+    static void OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra);
+
+    IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, uint32_t challenge, StringView name);
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
     int handleQuery(const char * buffer, char * output) override;
