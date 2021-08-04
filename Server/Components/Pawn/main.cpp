@@ -4,7 +4,7 @@
 #include "Scripting/Impl.hpp"
 
 struct PawnComponent : public IComponent, public CoreEventHandler {
-	ICore * c = nullptr;
+	ICore * core = nullptr;
 
 	UUID getUUID() override {
 		return 0x78906cd9f19c36a6;
@@ -14,27 +14,11 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		return "Pawn";
 	}
 
-	void onLoad(ICore * core) override {
-		c = core;
-
-		// read values of entry_file and side_scripts from config file
-		IConfig& config = c->getConfig();
-		StringView entryFile = config.getString("entry_file");
-		Span<const StringView> sideScripts = config.getStrings("side_scripts");
-
+	void onLoad(ICore * c) override {
+		core = c;
 		// store core instance and add event handlers
 		PawnManager::Get()->core = core;
 		PawnManager::Get()->players = &core->getPlayers();
-		Scripting scriptingInstance = Scripting(core);
-		scriptingInstance.addEvents();
-
-		// load scripts
-		PawnManager::Get()->Load(String(entryFile), true);
-		for (auto & script : sideScripts) {
-			PawnManager::Get()->Load(String(script), false);
-		}
-
-		c->getEventDispatcher().addEventHandler(this);
 	}
 
 	void onInit(IComponentList* components) override {
@@ -52,14 +36,30 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		PawnManager::Get()->timers = components->queryComponent<ITimersComponent>();
 		PawnManager::Get()->vars = components->queryComponent<IVariablesComponent>();
 		PawnManager::Get()->vehicles = components->queryComponent<IVehiclesComponent>();
+
+		// read values of entry_file and side_scripts from config file
+		IConfig& config = core->getConfig();
+		StringView entryFile = config.getString("entry_file");
+		Span<const StringView> sideScripts = config.getStrings("side_scripts");
+
+		Scripting scriptingInstance = Scripting(core);
+		scriptingInstance.addEvents();
+
+		// load scripts
+		PawnManager::Get()->Load(String(entryFile), true);
+		for (auto& script : sideScripts) {
+			PawnManager::Get()->Load(String(script), false);
+		}
+
+		core->getEventDispatcher().addEventHandler(this);
 	}
 
 	void onTick(std::chrono::microseconds elapsed) override {
 	}
 
 	~PawnComponent() {
-		if (c) {
-			c->getEventDispatcher().removeEventHandler(this);
+		if (core) {
+			core->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 } component;
