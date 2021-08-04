@@ -185,7 +185,7 @@ namespace pawn_natives
 
 	// Disable the value version.
 	template <>
-	class ParamCast<glm::vec3>
+	class ParamCast<Vector3>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -193,7 +193,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec3 &>
+	class ParamCast<Vector3 *>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -201,7 +201,15 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec3 const &>
+	class ParamCast<Vector3 const *>
+	{
+	public:
+		ParamCast(AMX*, cell*, int) = delete;
+		ParamCast() = delete;
+	};
+
+	template <>
+	class ParamCast<Vector3 const &>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -214,22 +222,22 @@ namespace pawn_natives
 		{
 		}
 
-		operator glm::vec3 const & () const
+		operator Vector3 const & () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 3;
 
-		using type = glm::vec3 const &;
+		using type = Vector3 const &;
 
 	private:
-		glm::vec3
+		Vector3
 			value_;
 	};
 
 	template <>
-	class ParamCast<glm::vec3 *>
+	class ParamCast<Vector3 &>
 	{
 	public:
 		ParamCast(AMX * amx, cell * params, int idx)
@@ -250,17 +258,17 @@ namespace pawn_natives
 			*z_ = amx_ftoc(value_.z);
 		}
 
-		operator glm::vec3 * ()
+		operator Vector3 & ()
 		{
-			return &value_;
+			return value_;
 		}
 
 		static constexpr int Size = 3;
 
-		using type = glm::vec3 *;
+		using type = Vector3 &;
 
 	private:
-		glm::vec3
+		Vector3
 			value_;
 
 		cell
@@ -270,7 +278,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec2>
+	class ParamCast<Vector2>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -278,7 +286,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec2 &>
+	class ParamCast<Vector2 *>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -286,7 +294,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec2 const &>
+	class ParamCast<Vector2 const &>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -299,22 +307,22 @@ namespace pawn_natives
 		{
 		}
 
-		operator glm::vec2 const & () const
+		operator Vector2 const & () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 2;
 
-		using type = glm::vec2 const &;
+		using type = Vector2 const &;
 
 	private:
-		glm::vec2
+		Vector2
 			value_;
 	};
 
 	template <>
-	class ParamCast<glm::vec2 *>
+	class ParamCast<Vector2 &>
 	{
 	public:
 		ParamCast(AMX * amx, cell * params, int idx)
@@ -332,17 +340,17 @@ namespace pawn_natives
 			*y_ = amx_ftoc(value_.y);
 		}
 
-		operator glm::vec2 * ()
+		operator Vector2 & ()
 		{
-			return &value_;
+			return value_;
 		}
 
 		static constexpr int Size = 2;
 
-		using type = glm::vec2 *;
+		using type = Vector2 &;
 
 	private:
-		glm::vec2
+		Vector2
 			value_;
 
 		cell
@@ -351,7 +359,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec4>
+	class ParamCast<Vector4>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -359,7 +367,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec4 &>
+	class ParamCast<Vector4 *>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -367,7 +375,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::vec4 const &>
+	class ParamCast<Vector4 const &>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -380,22 +388,22 @@ namespace pawn_natives
 		{
 		}
 
-		operator glm::vec4 const & () const
+		operator Vector4 const & () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 4;
 
-		using type = glm::vec4 const &;
+		using type = Vector4 const &;
 
 	private:
-		glm::vec4
+		Vector4
 			value_;
 	};
 
 	template <>
-	class ParamCast<glm::vec4 *>
+	class ParamCast<Vector4 &>
 	{
 	public:
 		ParamCast(AMX * amx, cell * params, int idx)
@@ -419,17 +427,17 @@ namespace pawn_natives
 			*w_ = amx_ftoc(value_.w);
 		}
 
-		operator glm::vec4 * ()
+		operator Vector4 & ()
 		{
-			return &value_;
+			return value_;
 		}
 
 		static constexpr int Size = 4;
 
-		using type = glm::vec4 *;
+		using type = Vector4 &;
 
 	private:
-		glm::vec4
+		Vector4
 			value_;
 
 		cell
@@ -440,7 +448,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::quat>
+	class ParamCast<GTAQuat>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -448,7 +456,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::quat &>
+	class ParamCast<GTAQuat *>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -456,12 +464,12 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<glm::quat const &>
+	class ParamCast<GTAQuat const &>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
 			:
-			value_{ amx_ctof(params[idx + 0]), amx_ctof(params[idx + 1]), amx_ctof(params[idx + 2]), amx_ctof(params[idx + 3]) }
+			value_(amx_ctof(params[idx + 0]), amx_ctof(params[idx + 1]), amx_ctof(params[idx + 2]), amx_ctof(params[idx + 3]))
 		{
 		}
 
@@ -469,22 +477,22 @@ namespace pawn_natives
 		{
 		}
 
-		operator glm::quat const & () const
+		operator GTAQuat const & () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 4;
 
-		using type = glm::quat const &;
+		using type = GTAQuat const &;
 
 	private:
-		glm::quat
+		GTAQuat
 			value_;
 	};
 
 	template <>
-	class ParamCast<glm::quat *>
+	class ParamCast<GTAQuat &>
 	{
 	public:
 		ParamCast(AMX * amx, cell * params, int idx)
@@ -493,32 +501,32 @@ namespace pawn_natives
 			amx_GetAddr(amx, params[idx + 1], &x_);
 			amx_GetAddr(amx, params[idx + 2], &y_);
 			amx_GetAddr(amx, params[idx + 3], &z_);
-			value_.w = amx_ctof(*w_);
-			value_.x = amx_ctof(*x_);
-			value_.y = amx_ctof(*y_);
-			value_.z = amx_ctof(*z_);
+			value_.q.w = amx_ctof(*w_);
+			value_.q.x = amx_ctof(*x_);
+			value_.q.y = amx_ctof(*y_);
+			value_.q.z = amx_ctof(*z_);
 		}
 
 		~ParamCast()
 		{
 			// Write the value back in to memory.
-			*w_ = amx_ftoc(value_.w);
-			*x_ = amx_ftoc(value_.x);
-			*y_ = amx_ftoc(value_.y);
-			*z_ = amx_ftoc(value_.z);
+			*w_ = amx_ftoc(value_.q.w);
+			*x_ = amx_ftoc(value_.q.x);
+			*y_ = amx_ftoc(value_.q.y);
+			*z_ = amx_ftoc(value_.q.z);
 		}
 
-		operator glm::quat * ()
+		operator GTAQuat & ()
 		{
-			return &value_;
+			return value_;
 		}
 
 		static constexpr int Size = 4;
 
-		using type = glm::quat *;
+		using type = GTAQuat &;
 
 	private:
-		glm::quat
+		GTAQuat
 			value_;
 
 		cell

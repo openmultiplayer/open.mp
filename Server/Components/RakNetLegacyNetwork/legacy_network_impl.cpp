@@ -466,7 +466,9 @@ void RakNetLegacyNetwork::init(ICore* c) {
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
     SAMPRakNet::ServerCoreInit(c);
-    SAMPRakNet::SetToken(rand());
+    SAMPRakNet::SeedToken();
+    lastCookieSeed = std::chrono::steady_clock::now();
+    SAMPRakNet::SeedCookie();
     query = Query(c);
 
     IConfig& config = core->getConfig();
@@ -475,6 +477,8 @@ void RakNetLegacyNetwork::init(ICore* c) {
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
+    cookieSeedTime = std::chrono::milliseconds(*config.getInt("connseedtime"));
+    SAMPRakNet::SetTimeout(*config.getInt("playertimeout"));
 
     rakNetServer.Start(
         maxPlayers,
@@ -518,6 +522,12 @@ void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
             }
         }
         rakNetServer.DeallocatePacket(pkt);
+    }
+
+    auto now = std::chrono::steady_clock::now();
+    if (now - lastCookieSeed > cookieSeedTime) {
+        SAMPRakNet::SeedCookie();
+        lastCookieSeed = now;
     }
 }
 

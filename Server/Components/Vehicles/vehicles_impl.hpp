@@ -275,7 +275,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return preloadModels;
     }
 
-    IVehicle* create(int modelID, glm::vec3 position, float Z, int colour1, int colour2, std::chrono::seconds respawnDelay, bool addSiren) override {
+    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, std::chrono::seconds respawnDelay, bool addSiren) override {
         IVehicle* ret = create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;
