@@ -67,9 +67,9 @@ SCRIPT_API(SetActorPos, bool(IActor& actor, const Vector3& position))
 	return true;
 }
 
-SCRIPT_API(GetActorPos, bool(IActor& actor, Vector3* position))
+SCRIPT_API(GetActorPos, bool(IActor& actor, Vector3& position))
 {
-	*position = actor.getPosition();
+	position = actor.getPosition();
 	return true;
 }
 
