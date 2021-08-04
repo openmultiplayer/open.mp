@@ -238,7 +238,6 @@ struct Core final : public ICore, public PlayerEventHandler {
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
-        connectBot("bote", "at400_ls");
     }
 
     int getVersion() override {
