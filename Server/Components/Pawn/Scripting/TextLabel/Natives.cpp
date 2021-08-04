@@ -20,21 +20,15 @@ SCRIPT_API(Delete3DTextLabel, bool(ITextLabel& textlabel))
 	return true;
 }
 
-SCRIPT_API(Attach3DTextLabelToPlayer, bool(ITextLabel& textlabel, IPlayer* player, const Vector3& offset))
+SCRIPT_API(Attach3DTextLabelToPlayer, bool(ITextLabel& textlabel, IPlayer& player, const Vector3& offset))
 {
-	if (player) {
-		textlabel.attachToPlayer(*player, offset);
-		return true;
-	}
-	return false;
+	textlabel.attachToPlayer(player, offset);
+	return true;
 }
 
-SCRIPT_API(Attach3DTextLabelToVehicle, bool(ITextLabel& textlabel, IVehicle* vehicle, const Vector3& offset))
+SCRIPT_API(Attach3DTextLabelToVehicle, bool(ITextLabel& textlabel, IVehicle& vehicle, const Vector3& offset))
 {
-	if (vehicle) {
-		textlabel.attachToVehicle(*vehicle, offset);
-		return true;
-	}
+	textlabel.attachToVehicle(vehicle, offset);
 	return true;
 }
 
@@ -70,12 +64,8 @@ SCRIPT_API(CreatePlayer3DTextLabel, int(IPlayer& player, const std::string& text
 
 SCRIPT_API(DeletePlayer3DTextLabel, bool(IPlayer& player, IPlayerTextLabel& textlabel))
 {
-	IPlayerTextLabelData* labelData = player.queryData<IPlayerTextLabelData>();
-	if (labelData) {
-		labelData->release(textlabel.getID());
-		return true;
-	}
-	return false;
+	player.queryData<IPlayerTextLabelData>()->release(textlabel.getID());
+	return true;
 }
 
 SCRIPT_API(UpdatePlayer3DTextLabelText, bool(IPlayer& player, IPlayerTextLabel& textlabel, uint32_t colour, const std::string& text))
