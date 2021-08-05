@@ -135,6 +135,13 @@
 	}; \
  \
 	template <> \
+	class ParamCast<type const *> { \
+	public: \
+		ParamCast(AMX* amx, cell* params, int idx) = delete; \
+		ParamCast() = delete; \
+	}; \
+ \
+	template <> \
 	class ParamCast<type&> { \
 	public: \
 		ParamCast(AMX* amx, cell* params, int idx) : \
@@ -183,9 +190,9 @@ namespace pawn_natives
 	PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
 	PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 
-	// Disable the value version.
+	// Disable the ref version.
 	template <>
-	class ParamCast<Vector3>
+	class ParamCast<Vector3 const &>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -209,7 +216,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<Vector3 const &>
+	class ParamCast<Vector3>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -222,14 +229,14 @@ namespace pawn_natives
 		{
 		}
 
-		operator Vector3 const & () const
+		operator Vector3 () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 3;
 
-		using type = Vector3 const &;
+		using type = Vector3;
 
 	private:
 		Vector3
@@ -278,7 +285,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<Vector2>
+	class ParamCast<Vector2 const &>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -294,7 +301,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<Vector2 const &>
+	class ParamCast<Vector2>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -307,14 +314,14 @@ namespace pawn_natives
 		{
 		}
 
-		operator Vector2 const & () const
+		operator Vector2 () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 2;
 
-		using type = Vector2 const &;
+		using type = Vector2;
 
 	private:
 		Vector2
@@ -359,7 +366,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<Vector4>
+	class ParamCast<Vector4 const &>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -375,7 +382,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<Vector4 const &>
+	class ParamCast<Vector4>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -388,14 +395,14 @@ namespace pawn_natives
 		{
 		}
 
-		operator Vector4 const & () const
+		operator Vector4 () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 4;
 
-		using type = Vector4 const &;
+		using type = Vector4;
 
 	private:
 		Vector4
@@ -448,7 +455,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<GTAQuat>
+	class ParamCast<GTAQuat const &>
 	{
 	public:
 		ParamCast(AMX *, cell *, int) = delete;
@@ -464,7 +471,7 @@ namespace pawn_natives
 	};
 
 	template <>
-	class ParamCast<GTAQuat const &>
+	class ParamCast<GTAQuat>
 	{
 	public:
 		ParamCast([[maybe_unused]] AMX * amx, cell * params, int idx)
@@ -477,14 +484,14 @@ namespace pawn_natives
 		{
 		}
 
-		operator GTAQuat const & () const
+		operator GTAQuat () const
 		{
 			return value_;
 		}
 
 		static constexpr int Size = 4;
 
-		using type = GTAQuat const &;
+		using type = GTAQuat;
 
 	private:
 		GTAQuat
