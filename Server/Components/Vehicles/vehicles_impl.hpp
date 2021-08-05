@@ -275,7 +275,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         return preloadModels;
     }
 
-    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, std::chrono::seconds respawnDelay, bool addSiren) override {
+    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override {
         IVehicle* ret = create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;
@@ -358,7 +358,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         return storage.entries();
     }
 
-    bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
+    bool onUpdate(IPlayer& player, TimePoint now) override {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (IVehicle* v : storage.entries()) {
@@ -386,13 +386,13 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                     }
                 }
 
-                if (vehicle->isDead() && vehicle->getRespawnDelay() != std::chrono::seconds(-1) && !occupied) {
-                    if (now - vehicle->timeOfDeath >= std::chrono::seconds(vehicle->getRespawnDelay())) {
+                if (vehicle->isDead() && vehicle->getRespawnDelay() != Seconds(-1) && !occupied) {
+                    if (now - vehicle->timeOfDeath >= vehicle->getRespawnDelay()) {
                         vehicle->respawn();
                     }
                 }
-                else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != std::chrono::seconds(-1)) {
-                    if (now - vehicle->lastOccupied >= std::chrono::seconds(vehicle->getRespawnDelay())) {
+                else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != Seconds(-1)) {
+                    if (now - vehicle->lastOccupied >= vehicle->getRespawnDelay()) {
                         vehicle->respawn();
                     }
                 }
