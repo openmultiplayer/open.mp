@@ -725,7 +725,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         virtualWorld_ = vw;
     }
 
-    void setTransform(const GTAQuat& tm) override {
+    void setTransform(GTAQuat tm) override {
         rotTransform_ = tm;
     }
 
