@@ -9,7 +9,7 @@
 
 /// An event handler for core events
 struct CoreEventHandler {
-	virtual void onTick(std::chrono::microseconds elapsed) = 0;
+	virtual void onTick(Microseconds elapsed) = 0;
 };
 
 struct IConfig {
@@ -141,8 +141,8 @@ struct StreamConfigHelper {
 		rate(config.getInt("stream_rate"))
 	{}
 
-	bool shouldStream(int pid, std::chrono::steady_clock::time_point now) {
-		if (now - last[pid] > std::chrono::milliseconds(*rate)) {
+	bool shouldStream(int pid, TimePoint now) {
+		if (now - last[pid] > Milliseconds(*rate)) {
 			last[pid] = now;
 			return true;
 		}
@@ -152,5 +152,5 @@ struct StreamConfigHelper {
 private:
 	float* distance;
 	int* rate;
-	StaticArray<std::chrono::steady_clock::time_point, IPlayerPool::Cnt> last;
+	StaticArray<TimePoint, IPlayerPool::Cnt> last;
 };
