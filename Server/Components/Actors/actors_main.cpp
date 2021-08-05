@@ -1,6 +1,6 @@
 #include "actor.hpp"
 
-struct ActorsComponent final : public IActorsComponent, public CoreEventHandler, public PlayerEventHandler {
+struct ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
 	ICore * core;
 	MarkedPoolStorage<Actor, IActor, IActorsComponent::Cnt> storage;
 	DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
@@ -47,15 +47,15 @@ struct ActorsComponent final : public IActorsComponent, public CoreEventHandler,
 	void onLoad(ICore* core) override {
 		this->core = core;
 		players = &core->getPlayers();
-		core->getEventDispatcher().addEventHandler(this);
 		players->getEventDispatcher().addEventHandler(this);
+		players->getPlayerUpdateDispatcher().addEventHandler(this);
 		core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
 		streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
 
 	~ActorsComponent() {
 		if (core) {
-			core->getEventDispatcher().removeEventHandler(this);
+			players->getPlayerUpdateDispatcher().removeEventHandler(this);
 			players->getEventDispatcher().removeEventHandler(this);
 			core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
 		}
@@ -142,32 +142,31 @@ struct ActorsComponent final : public IActorsComponent, public CoreEventHandler,
 		return storage.entries();
 	}
 
-	void onTick(std::chrono::microseconds elapsed) override {
+	bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
 		const float maxDist = streamConfigHelper.getDistanceSqr();
-		const auto t = std::chrono::steady_clock::now();
-		if (streamConfigHelper.shouldStream(t)) {
+		if (streamConfigHelper.shouldStream(player.getID(), now)) {
 			for (IActor* a : storage.entries()) {
 				Actor* actor = static_cast<Actor*>(a);
 
-				for (IPlayer* player : players->entries()) {
-					const PlayerState state = player->getState();
-					const Vector2 dist2D = actor->pos_ - player->getPosition();
-					const bool shouldBeStreamedIn =
-						state != PlayerState_Spectating &&
-						state != PlayerState_None &&
-						player->getVirtualWorld() == actor->virtualWorld_ &&
-						glm::dot(dist2D, dist2D) < maxDist;
+				const PlayerState state = player.getState();
+				const Vector2 dist2D = actor->pos_ - player.getPosition();
+				const bool shouldBeStreamedIn =
+					state != PlayerState_Spectating &&
+					state != PlayerState_None &&
+					player.getVirtualWorld() == actor->virtualWorld_ &&
+					glm::dot(dist2D, dist2D) < maxDist;
 
-					const bool isStreamedIn = actor->isStreamedInForPlayer(*player);
-					if (!isStreamedIn && shouldBeStreamedIn) {
-						actor->streamInForPlayer(*player);
-					}
-					else if (isStreamedIn && !shouldBeStreamedIn) {
-						actor->streamOutForPlayer(*player);
-					}
+				const bool isStreamedIn = actor->isStreamedInForPlayer(player);
+				if (!isStreamedIn && shouldBeStreamedIn) {
+					actor->streamInForPlayer(player);
+				}
+				else if (isStreamedIn && !shouldBeStreamedIn) {
+					actor->streamOutForPlayer(player);
 				}
 			}
 		}
+
+		return true;
 	}
 };
 
