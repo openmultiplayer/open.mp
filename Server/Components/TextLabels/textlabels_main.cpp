@@ -108,7 +108,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 };
 
-struct TextLabelsComponent final : public ITextLabelsComponent, public CoreEventHandler, public PlayerEventHandler {
+struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core;
     MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsComponent::Cnt> storage;
     IVehiclesComponent* vehicles = nullptr;
@@ -122,7 +122,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public CoreEvent
     void onLoad(ICore* core) override {
         this->core = core;
         players = &core->getPlayers();
-        core->getEventDispatcher().addEventHandler(this);
+        players->getPlayerUpdateDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
@@ -133,7 +133,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public CoreEvent
 
     ~TextLabelsComponent() {
         if (core) {
-            core->getEventDispatcher().removeEventHandler(this);
+            players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
         }
     }
@@ -224,10 +224,9 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public CoreEvent
         return storage.entries();
     }
 
-    void onTick(std::chrono::microseconds elapsed) override {
+    bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
         const float maxDist = streamConfigHelper.getDistanceSqr();
-        const auto t = std::chrono::steady_clock::now();
-        if (streamConfigHelper.shouldStream(t)) {
+        if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (ITextLabel* textLabel : storage.entries()) {
                 TextLabel* label = static_cast<TextLabel*>(textLabel);
                 const TextLabelAttachmentData& data = label->attachmentData;
@@ -242,25 +241,25 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public CoreEvent
                     pos = label->pos;
                 }
 
-                for (IPlayer* player : players->entries()) {
-                    const PlayerState state = player->getState();
-                    const Vector3 dist3D = pos - player->getPosition();
-                    const bool shouldBeStreamedIn =
-                        state != PlayerState_Spectating &&
-                        state != PlayerState_None &&
-                        player->getVirtualWorld() == label->virtualWorld &&
-                        glm::dot(dist3D, dist3D) < maxDist;
+                const PlayerState state = player.getState();
+                const Vector3 dist3D = pos - player.getPosition();
+                const bool shouldBeStreamedIn =
+                    state != PlayerState_Spectating &&
+                    state != PlayerState_None &&
+                    player.getVirtualWorld() == label->virtualWorld &&
+                    glm::dot(dist3D, dist3D) < maxDist;
 
-                    const bool isStreamedIn = textLabel->isStreamedInForPlayer(*player);
-                    if (!isStreamedIn && shouldBeStreamedIn) {
-                        textLabel->streamInForPlayer(*player);
-                    }
-                    else if (isStreamedIn && !shouldBeStreamedIn) {
-                        textLabel->streamOutForPlayer(*player);
-                    }
+                const bool isStreamedIn = textLabel->isStreamedInForPlayer(player);
+                if (!isStreamedIn && shouldBeStreamedIn) {
+                    textLabel->streamInForPlayer(player);
+                }
+                else if (isStreamedIn && !shouldBeStreamedIn) {
+                    textLabel->streamOutForPlayer(player);
                 }
             }
         }
+
+        return true;
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
