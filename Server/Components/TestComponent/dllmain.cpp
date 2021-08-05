@@ -757,7 +757,7 @@ struct TestComponent :
 		return "TestComponent";
 	}
 
-	bool onUpdate(IPlayer& player) override {
+	bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
 		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
 		if (tdData && tdData->valid(1)) {
 			String text;

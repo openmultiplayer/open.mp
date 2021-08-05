@@ -656,7 +656,7 @@ struct PlayerEventHandler {
 };
 
 struct PlayerUpdateEventHandler {
-	virtual bool onUpdate(IPlayer& player) { return true; }
+	virtual bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) = 0;
 };
 
 /// A player pool interface
