@@ -408,7 +408,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual bool getWidescreen() const = 0;
 
 	/// Set the transform applied to player rotation
-	virtual void setTransform(const GTAQuat& tm) = 0;
+	virtual void setTransform(GTAQuat tm) = 0;
 
 	/// Set the player's health
 	virtual void setHealth(float health) = 0;
