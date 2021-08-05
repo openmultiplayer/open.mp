@@ -3,7 +3,7 @@
 #include "Server/Components/TextDraws/textdraws.hpp"
 #include "../Types.hpp"
 
-SCRIPT_API(TextDrawCreate, int(const Vector2& position, const std::string& text))
+SCRIPT_API(TextDrawCreate, int(Vector2 position, const std::string& text))
 {
     ITextDrawsComponent* component = PawnManager::Get()->textdraws;
     if (component) {
@@ -21,13 +21,13 @@ SCRIPT_API(TextDrawDestroy, bool(ITextDraw& textdraw))
     return true;
 }
 
-SCRIPT_API(TextDrawLetterSize, bool(ITextDraw& textdraw, const Vector2& size))
+SCRIPT_API(TextDrawLetterSize, bool(ITextDraw& textdraw, Vector2 size))
 {
     textdraw.setLetterSize(size);
     return true;
 }
 
-SCRIPT_API(TextDrawTextSize, bool(ITextDraw& textdraw, const Vector2& size))
+SCRIPT_API(TextDrawTextSize, bool(ITextDraw& textdraw, Vector2 size))
 {
     textdraw.setTextSize(size);
     return true;
@@ -135,7 +135,7 @@ SCRIPT_API(TextDrawSetPreviewModel, bool(ITextDraw& textdraw, int model))
     return true;
 }
 
-SCRIPT_API(TextDrawSetPreviewRot, bool(ITextDraw& textdraw, const Vector3& rotation, float zoom))
+SCRIPT_API(TextDrawSetPreviewRot, bool(ITextDraw& textdraw, Vector3 rotation, float zoom))
 {
     textdraw.setPreviewRotation(GTAQuat(rotation));
     textdraw.setPreviewZoom(zoom);
