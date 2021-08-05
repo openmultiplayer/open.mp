@@ -3,7 +3,7 @@
 #include "Server/Components/TextDraws/textdraws.hpp"
 #include "../Types.hpp"
 
-SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, const Vector2& position, const std::string& text))
+SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, Vector2 position, const std::string& text))
 {
     IPlayerTextDrawData* playerTextDraws = player.queryData<IPlayerTextDrawData>();
     if (playerTextDraws) {
@@ -25,13 +25,13 @@ SCRIPT_API(PlayerTextDrawDestroy, bool(IPlayer& player, IPlayerTextDraw& textdra
     return false;
 }
 
-SCRIPT_API(PlayerTextDrawLetterSize, bool(IPlayer& player, IPlayerTextDraw& textdraw, const Vector2& size))
+SCRIPT_API(PlayerTextDrawLetterSize, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector2 size))
 {
     textdraw.setLetterSize(size);
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawTextSize, bool(IPlayer& player, IPlayerTextDraw& textdraw, const Vector2& size))
+SCRIPT_API(PlayerTextDrawTextSize, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector2 size))
 {
     textdraw.setTextSize(size);
     return true;
@@ -121,7 +121,7 @@ SCRIPT_API(PlayerTextDrawSetPreviewModel, bool(IPlayer& player, IPlayerTextDraw&
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawSetPreviewRot, bool(IPlayer& player, IPlayerTextDraw& textdraw, const Vector3& rotation, float zoom))
+SCRIPT_API(PlayerTextDrawSetPreviewRot, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector3 rotation, float zoom))
 {
     textdraw.setPreviewRotation(GTAQuat(rotation));
     textdraw.setPreviewZoom(zoom);
