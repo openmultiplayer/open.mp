@@ -5,6 +5,8 @@
 #include <vector>
 #include <utility>
 #include <array>
+#include <queue>
+#include <stack>
 #include <bitset>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
@@ -50,6 +52,12 @@ using StaticArray = std::array<T, Size>;
 
 template <typename T>
 using DynamicArray = std::vector<T>;
+
+template <typename T>
+using Queue = std::queue<T>;
+
+template <typename T>
+using Stack = std::stack<T>;
 
 template <size_t Size>
 using StaticBitset = std::bitset<Size>;
