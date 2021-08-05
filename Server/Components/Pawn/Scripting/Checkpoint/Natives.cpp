@@ -3,7 +3,7 @@
 #include <iostream>
 #include "../Types.hpp"
 
-SCRIPT_API(SetPlayerCheckpoint, bool(IPlayer& player, const Vector3& position, float size))
+SCRIPT_API(SetPlayerCheckpoint, bool(IPlayer& player, Vector3 position, float size))
 {
 	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 	if (cp) {
@@ -35,7 +35,7 @@ SCRIPT_API(IsPlayerInCheckpoint, bool(IPlayer& player))
 	return false;
 }
 
-SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayer& player, int type, const Vector3& position, const Vector3& nextPosition, float size))
+SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayer& player, int type, Vector3 position, Vector3 nextPosition, float size))
 {
 	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 	if (cp && type >= 0 && type <= 8) {

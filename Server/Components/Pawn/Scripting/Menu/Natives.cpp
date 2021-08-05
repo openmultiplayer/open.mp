@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../Types.hpp"
 
-SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, const Vector2& position, float col1Width, float col2Width))
+SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, Vector2 position, float col1Width, float col2Width))
 {
 	IMenusComponent* component = PawnManager::Get()->menus;
 	if (component) {

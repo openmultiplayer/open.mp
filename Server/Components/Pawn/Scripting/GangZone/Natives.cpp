@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../Types.hpp"
 
-SCRIPT_API(GangZoneCreate, int(const Vector2& min, const Vector2& max))
+SCRIPT_API(GangZoneCreate, int(Vector2 min, Vector2 max))
 {
 	IGangZonesComponent* component = PawnManager::Get()->gangzones;
 	if (component) {

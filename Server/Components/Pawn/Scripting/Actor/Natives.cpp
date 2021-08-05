@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../Types.hpp"
 
-SCRIPT_API(CreateActor, int(int modelid, const Vector3& position, float rotation))
+SCRIPT_API(CreateActor, int(int modelid, Vector3 position, float rotation))
 {
 	IActorsComponent* component = PawnManager::Get()->actors;
 	if (component) {
@@ -61,7 +61,7 @@ SCRIPT_API(ClearActorAnimations, bool(IActor& actor))
 	return true;
 }
 
-SCRIPT_API(SetActorPos, bool(IActor& actor, const Vector3& position))
+SCRIPT_API(SetActorPos, bool(IActor& actor, Vector3 position))
 {
 	actor.setPosition(position);
 	return true;
@@ -79,9 +79,9 @@ SCRIPT_API(SetActorFacingAngle, bool(IActor& actor, float angle))
 	return true;
 }
 
-SCRIPT_API(GetActorFacingAngle, bool(IActor& actor, float* angle))
+SCRIPT_API(GetActorFacingAngle, bool(IActor& actor, float& angle))
 {
-	*angle = actor.getRotation().ToEuler().z;
+	angle = actor.getRotation().ToEuler().z;
 	return true;
 }
 
@@ -91,9 +91,9 @@ SCRIPT_API(SetActorHealth, bool(IActor& actor, float health))
 	return true;
 }
 
-SCRIPT_API(GetActorHealth, bool(IActor& actor, float* health))
+SCRIPT_API(GetActorHealth, bool(IActor& actor, float& health))
 {
-	*health = actor.getHealth();
+	health = actor.getHealth();
 	return true;
 }
 

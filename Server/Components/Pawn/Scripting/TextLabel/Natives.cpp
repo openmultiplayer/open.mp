@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../Types.hpp"
 
-SCRIPT_API(Create3DTextLabel, int(const std::string& text, uint32_t colour, const Vector3& position, float drawDistance, int virtualWorld, bool los))
+SCRIPT_API(Create3DTextLabel, int(const std::string& text, uint32_t colour, Vector3 position, float drawDistance, int virtualWorld, bool los))
 {
 	ITextLabelsComponent* component = PawnManager::Get()->textlabels;
 	if (component) {
@@ -20,13 +20,13 @@ SCRIPT_API(Delete3DTextLabel, bool(ITextLabel& textlabel))
 	return true;
 }
 
-SCRIPT_API(Attach3DTextLabelToPlayer, bool(ITextLabel& textlabel, IPlayer& player, const Vector3& offset))
+SCRIPT_API(Attach3DTextLabelToPlayer, bool(ITextLabel& textlabel, IPlayer& player, Vector3 offset))
 {
 	textlabel.attachToPlayer(player, offset);
 	return true;
 }
 
-SCRIPT_API(Attach3DTextLabelToVehicle, bool(ITextLabel& textlabel, IVehicle& vehicle, const Vector3& offset))
+SCRIPT_API(Attach3DTextLabelToVehicle, bool(ITextLabel& textlabel, IVehicle& vehicle, Vector3 offset))
 {
 	textlabel.attachToVehicle(vehicle, offset);
 	return true;
@@ -39,7 +39,7 @@ SCRIPT_API(Update3DTextLabelText, bool(ITextLabel& textlabel, uint32_t colour, c
 	return true;
 }
 
-SCRIPT_API(CreatePlayer3DTextLabel, int(IPlayer& player, const std::string& text, uint32_t colour, const Vector3& position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
+SCRIPT_API(CreatePlayer3DTextLabel, int(IPlayer& player, const std::string& text, uint32_t colour, Vector3 position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
 {
 	IPlayerTextLabelData* labelData = player.queryData<IPlayerTextLabelData>();
 	if (labelData) {

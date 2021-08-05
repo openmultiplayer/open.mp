@@ -2,7 +2,7 @@
 #include <iostream>
 #include "../Types.hpp"
 
-SCRIPT_API(CreatePickup, int(int model, int type, const Vector3& position, int virtualWorld))
+SCRIPT_API(CreatePickup, int(int model, int type, Vector3 position, int virtualWorld))
 {
 	IPickupsComponent* component = PawnManager::Get()->pickups;
 	if (component) {
@@ -14,7 +14,7 @@ SCRIPT_API(CreatePickup, int(int model, int type, const Vector3& position, int v
 	return -1;
 }
 
-SCRIPT_API(AddStaticPickup, int(int model, int type, const Vector3& position, int virtualWorld))
+SCRIPT_API(AddStaticPickup, int(int model, int type, Vector3 position, int virtualWorld))
 {
 	IPickupsComponent* component = PawnManager::Get()->pickups;
 	if (component) {
