@@ -4,12 +4,14 @@
 
 ## Structure
 
-* `SDK/` - Core SDK headers (stable between versions)
-* `SDK/NetCode/` - Netcode headers (RPC and packet read/write structures, NOT stable between versions)
-* `SDK/Server/Components/*/` - Components/plug-in SDK headers (stable between versions)
-* `lib/` - Various submodules and CMake helpers for Conan
-* `Server/Source/` - Core server implementation (NOT stable between versions, do NOT use headers outside the Source folder)
-* `Server/Components/*/` - Components/plug-in implementation (NOT stable between versions, do NOT use headers outside the component's folder)
+| Path | Content |
+| ---- | ------- |
+| `SDK/` | Core SDK headers (stable between versions) |
+| `SDK/NetCode/` | Netcode headers (RPC and packet read/write structures, NOT stable between versions) |
+| `SDK/Server/Components/*/` | Components/plug-in SDK headers (stable between versions) |
+| `lib/` | Various submodules and CMake helpers for Conan |
+| `Server/Source/` | Core server implementation (NOT stable between versions, do NOT use headers outside the Source folder) |
+| `Server/Components/*/` | Components/plug-in implementation (NOT stable between versions, do NOT use headers outside the component's folder) |
 
 ## Tools
 
