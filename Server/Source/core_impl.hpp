@@ -353,7 +353,6 @@ struct Core final : public ICore, public PlayerEventHandler {
             auto now = std::chrono::steady_clock::now();
             auto us = std::chrono::duration_cast<std::chrono::microseconds>(now - prev);
             prev = now;
-            players.tick(us);
             eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
 
             std::this_thread::sleep_until(now + sleepTimer);
