@@ -9,7 +9,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     Colour letterColour = Colour(0xE1, 0xE1, 0xE1);
     Vector2 letterSize = Vector2(0.48f, 1.12f);
     Vector2 textSize = Vector2(1280.f);
-    TextDrawAlignment alignment = TextDrawAlignment_Default;
+    TextDrawAlignmentTypes alignment = TextDrawAlignment_Default;
     bool box = false;
     bool proportional = true;
     Colour boxColour = Colour(0x80, 0x80, 0x80, 0x80);
@@ -71,12 +71,12 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         return textSize;
 	}
 
-    T& setAlignment(TextDrawAlignment align) override{
+    T& setAlignment(TextDrawAlignmentTypes align) override{
         alignment = align;
         return *this;
 	}
 
-    TextDrawAlignment getAlignment() const override {
+    TextDrawAlignmentTypes getAlignment() const override {
         return alignment;
 	}
 

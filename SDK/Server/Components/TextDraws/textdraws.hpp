@@ -7,7 +7,7 @@
 #include <component.hpp>
 
 /// Text draw's text alignment
-enum TextDrawAlignment {
+enum TextDrawAlignmentTypes {
 	TextDrawAlignment_Default,
 	TextDrawAlignment_Left,
 	TextDrawAlignment_Center,
@@ -51,10 +51,10 @@ struct ITextDrawBase : public IIDProvider {
 	virtual Vector2 getTextSize() const = 0;
 
 	/// Set the text alignment
-	virtual ITextDrawBase& setAlignment(TextDrawAlignment alignment) = 0;
+	virtual ITextDrawBase& setAlignment(TextDrawAlignmentTypes alignment) = 0;
 
 	/// Get the text alignment
-	virtual TextDrawAlignment getAlignment() const = 0;
+	virtual TextDrawAlignmentTypes getAlignment() const = 0;
 
 	/// Set the letters' colour
 	virtual ITextDrawBase& setLetterColour(Colour colour) = 0;
