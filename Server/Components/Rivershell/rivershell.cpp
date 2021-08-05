@@ -469,7 +469,7 @@ struct RivershellMode :
 		}
 	}
 
-	bool onUpdate(IPlayer& player) override {
+	bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
 		if (player.getState() == PlayerState_OnFoot) {
 			const Vector3 pos = player.getPosition();
 			Vector3 resupply1 = pos - Vector3(2140.83f, -235.13f, 7.13f);
