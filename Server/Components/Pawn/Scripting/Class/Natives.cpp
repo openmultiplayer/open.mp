@@ -4,7 +4,7 @@
 #include "../Types.hpp"
 
 SCRIPT_API(AddPlayerClass, bool(
-	int modelid, const Vector3& position, float angle,
+	int modelid, Vector3 position, float angle,
 	uint8_t weapon1, uint8_t weapon1_ammo, uint8_t weapon2, uint8_t weapon2_ammo, uint8_t weapon3, uint8_t weapon3_ammo
 	))
 {
@@ -26,7 +26,7 @@ SCRIPT_API(AddPlayerClass, bool(
 }
 
 SCRIPT_API(AddPlayerClassEx, bool(
-	int teamid, int modelid, const Vector3& position, float angle,
+	int teamid, int modelid, Vector3 position, float angle,
 	uint8_t weapon1, uint8_t weapon1_ammo, uint8_t weapon2, uint8_t weapon2_ammo, uint8_t weapon3, uint8_t weapon3_ammo
 	))
 {
@@ -48,7 +48,7 @@ SCRIPT_API(AddPlayerClassEx, bool(
 }
 
 SCRIPT_API(SetSpawnInfo, bool(
-	IPlayer& player, int team, int skin, const Vector3& position, float angle,
+	IPlayer& player, int team, int skin, Vector3 position, float angle,
 	uint8_t weapon1, uint8_t weapon1_ammo, uint8_t weapon2, uint8_t weapon2_ammo, uint8_t weapon3, uint8_t weapon3_ammo
 	))
 {

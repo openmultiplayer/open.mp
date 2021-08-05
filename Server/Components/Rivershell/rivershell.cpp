@@ -471,7 +471,7 @@ struct RivershellMode :
 
 	bool onUpdate(IPlayer& player) override {
 		if (player.getState() == PlayerState_OnFoot) {
-			const Vector3& pos = player.getPosition();
+			const Vector3 pos = player.getPosition();
 			Vector3 resupply1 = pos - Vector3(2140.83f, -235.13f, 7.13f);
 			Vector3 resupply2 = pos - Vector3(2318.73f, 590.96, 6.75);
 			if (glm::dot(resupply1, resupply1) < 2.5f || glm::dot(resupply2, resupply2) < 2.5f) {
