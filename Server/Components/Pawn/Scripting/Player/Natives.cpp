@@ -110,9 +110,9 @@ SCRIPT_API(SetPlayerHealth, bool(IPlayer& player, float health))
 	return true;
 }
 
-SCRIPT_API(GetPlayerHealth, bool(IPlayer& player, float* health))
+SCRIPT_API(GetPlayerHealth, bool(IPlayer& player, float& health))
 {
-	*health = player.getHealth();
+	health = player.getHealth();
 	return true;
 }
 
@@ -122,9 +122,9 @@ SCRIPT_API(SetPlayerArmour, bool(IPlayer& player, float armour))
 	return true;
 }
 
-SCRIPT_API(GetPlayerArmour, bool(IPlayer& player, float* armour))
+SCRIPT_API(GetPlayerArmour, bool(IPlayer& player, float& armour))
 {
-	*armour = player.getArmour();
+	armour = player.getArmour();
 	return true;
 }
 
@@ -217,11 +217,11 @@ SCRIPT_API(SetPlayerTime, bool(IPlayer& player, int hour, int minute))
 	return true;
 }
 
-SCRIPT_API(GetPlayerTime, bool(IPlayer& player, int* hour, int* minute))
+SCRIPT_API(GetPlayerTime, bool(IPlayer& player, int& hour, int& minute))
 {
 	std::pair<std::chrono::hours, std::chrono::minutes> data = player.getTime();
-	*hour = data.first.count();
-	*minute = data.second.count();
+	hour = data.first.count();
+	minute = data.second.count();
 	return true;
 }
 
@@ -253,7 +253,7 @@ SCRIPT_API(GetPlayerFightingStyle, int(IPlayer& player))
 	return player.getFightingStyle();
 }
 
-SCRIPT_API(SetPlayerVelocity, bool(IPlayer& player, const Vector3 & velocity))
+SCRIPT_API(SetPlayerVelocity, bool(IPlayer& player, Vector3 velocity))
 {
 	player.setVelocity(velocity);
 	return true;
@@ -271,7 +271,7 @@ SCRIPT_API(GetPlayerCameraPos, bool(IPlayer& player, Vector3& pos))
 	return true;
 }
 
-SCRIPT_API(GetPlayerDistanceFromPoint, float(IPlayer& player, const Vector3 & pos))
+SCRIPT_API(GetPlayerDistanceFromPoint, float(IPlayer& player, Vector3 pos))
 {
 	Vector3 playerCoords = player.getPosition();
 	return glm::distance(playerCoords, pos);
@@ -303,7 +303,7 @@ SCRIPT_API(IsPlayerStreamedIn, bool(IPlayer& player, IPlayer& other))
 	return player.isStreamedInForPlayer(other);
 }
 
-SCRIPT_API(PlayerPlaySound, bool(IPlayer& player, uint32_t sound, const Vector3& pos))
+SCRIPT_API(PlayerPlaySound, bool(IPlayer& player, uint32_t sound, Vector3 pos))
 {
 	player.playSound(sound, pos);
 	return true;
