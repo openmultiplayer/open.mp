@@ -305,7 +305,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
     int handleQuery(const char * buffer, char * output) override;
-    void onTick(std::chrono::microseconds elapsed) override;
+    void onTick(Microseconds elapsed) override;
     void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason);
@@ -345,6 +345,6 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     PlayerFromRIDMap playerFromRID;
     RakNet::BitStream wbs;
     RakNetLegacyBitStream wlbs;
-    std::chrono::milliseconds cookieSeedTime;
-    std::chrono::steady_clock::time_point lastCookieSeed;
+    Milliseconds cookieSeedTime;
+    TimePoint lastCookieSeed;
 };

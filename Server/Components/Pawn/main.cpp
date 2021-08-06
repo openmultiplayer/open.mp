@@ -54,7 +54,7 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		core->getEventDispatcher().addEventHandler(this);
 	}
 
-	void onTick(std::chrono::microseconds elapsed) override {
+	void onTick(Microseconds elapsed) override {
 	}
 
 	~PawnComponent() {

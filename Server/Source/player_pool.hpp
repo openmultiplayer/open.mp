@@ -2,7 +2,7 @@
 
 #include "player_impl.hpp"
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler {
     ICore& core;
     PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
@@ -369,9 +369,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 footSync.LeftRight = 0;
             }
 
+            TimePoint now = Time::now();
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-                [&peer](PlayerUpdateEventHandler* handler) {
-                    return handler->onUpdate(peer);
+                [&peer, now](PlayerUpdateEventHandler* handler) {
+                    return handler->onUpdate(peer, now);
                 });
 
             if (allowedupdate) {
@@ -405,8 +406,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
                 spectatorSync.LeftRight = 0;
             }
 
-            self.playerUpdateDispatcher.stopAtFalse([&peer](PlayerUpdateEventHandler* handler) {
-                return handler->onUpdate(peer);
+            TimePoint now = Time::now();
+            self.playerUpdateDispatcher.stopAtFalse([&peer, now](PlayerUpdateEventHandler* handler) {
+                return handler->onUpdate(peer, now);
             });
             return true;
         }
@@ -605,9 +607,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             if (vehicleOk) {
                 vehicleSync.PlayerID = player.poolID;
 
+                TimePoint now = Time::now();
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-                    [&peer](PlayerUpdateEventHandler* handler) {
-                        return handler->onUpdate(peer);
+                    [&peer, now](PlayerUpdateEventHandler* handler) {
+                        return handler->onUpdate(peer, now);
                     });
 
                 if (allowedupdate) {
@@ -723,13 +726,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
             player.armedWeapon_ = passengerSync.WeaponID;
             player.setState(PlayerState_Passenger);
 
-            passengerSync.PlayerID = player.poolID;
+            TimePoint now = Time::now();
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-                [&peer](PlayerUpdateEventHandler* handler) {
-                    return handler->onUpdate(peer);
+                [&peer, now](PlayerUpdateEventHandler* handler) {
+                    return handler->onUpdate(peer, now);
                 });
 
             if (allowedupdate) {
+                passengerSync.PlayerID = player.poolID;
                 player.broadcastPacketToStreamed(passengerSync);
             }
             return true;
@@ -986,7 +990,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         broadcastRPCToAll(RPC);
     }
 
-    void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) override {
+    void sendGameTextToAll(StringView message, Milliseconds time, int style) override {
         NetCode::RPC::SendGameText RPC;
         RPC.Text = NetworkString(message);
         RPC.Time = time.count();
@@ -1024,6 +1028,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         gameTimeUpdateRate = config.getInt("player_time_update_rate");
         maxBots = *config.getInt("maxnpc");
 
+        playerUpdateDispatcher.addEventHandler(this);
         core.addNetworkEventHandler(this);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
@@ -1053,48 +1058,49 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler {
         actorsComponent = components.queryComponent<IActorsComponent>();
     }
 
-    void tick(std::chrono::microseconds elapsed) {
+    bool onUpdate(IPlayer& p, TimePoint now) override {
+        Player& player = static_cast<Player&>(p);
         const float maxDist = streamConfigHelper.getDistanceSqr();
-        const auto t = std::chrono::steady_clock::now();
-        const std::chrono::milliseconds gameTimeUpdateRateMS(*gameTimeUpdateRate);
-        const std::chrono::milliseconds markersUpdateRateMS(*markersUpdateRate);
-        const bool shouldStream = streamConfigHelper.shouldStream(t);
-        for (IPlayer* p : storage.entries()) {
-            Player* player = static_cast<Player*>(p);
+        const Milliseconds gameTimeUpdateRateMS(*gameTimeUpdateRate);
+        const Milliseconds markersUpdateRateMS(*markersUpdateRate);
+        const bool shouldStream = streamConfigHelper.shouldStream(player.poolID, now);
 
-            player->updateGameTime(gameTimeUpdateRateMS, t);
+        player.updateGameTime(gameTimeUpdateRateMS, now);
 
-            if (*markersShow == PlayerMarkerMode_Global) {
-                player->updateMarkers(markersUpdateRateMS, *markersLimit, *markersLimitRadius);
-            }
+        if (*markersShow == PlayerMarkerMode_Global) {
+            player.updateMarkers(markersUpdateRateMS, *markersLimit, *markersLimitRadius, now);
+        }
 
-            if (shouldStream) {
-                for (IPlayer* other : storage.entries()) {
-                    if (player == other) {
-                        continue;
-                    }
+        if (shouldStream) {
+            for (IPlayer* other : storage.entries()) {
+                if (&player == other) {
+                    continue;
+                }
 
-                    const PlayerState state = other->getState();
-                    const Vector2 dist2D = player->pos_ - other->getPosition();
-                    const bool shouldBeStreamedIn =
-                        state != PlayerState_Spectating &&
-                        state != PlayerState_None &&
-                        other->getVirtualWorld() == player->virtualWorld_ &&
-                        glm::dot(dist2D, dist2D) < maxDist;
+                const PlayerState state = other->getState();
+                const Vector2 dist2D = player.pos_ - other->getPosition();
+                const bool shouldBeStreamedIn =
+                    state != PlayerState_Spectating &&
+                    state != PlayerState_None &&
+                    other->getVirtualWorld() == player.virtualWorld_ &&
+                    glm::dot(dist2D, dist2D) < maxDist;
 
-                    const bool isStreamedIn = other->isStreamedInForPlayer(*player);
-                    if (!isStreamedIn && shouldBeStreamedIn) {
-                        other->streamInForPlayer(*player);
-                    }
-                    else if (isStreamedIn && !shouldBeStreamedIn) {
-                        other->streamOutForPlayer(*player);
-                    }
+                const bool isStreamedIn = other->isStreamedInForPlayer(player);
+                if (!isStreamedIn && shouldBeStreamedIn) {
+                    other->streamInForPlayer(player);
+                }
+                else if (isStreamedIn && !shouldBeStreamedIn) {
+                    other->streamOutForPlayer(player);
                 }
             }
         }
+
+        return true;
     }
 
     ~PlayerPool() {
+        playerUpdateDispatcher.removeEventHandler(this);
+
         core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestChatMessage>(&playerTextRPCHandler);
