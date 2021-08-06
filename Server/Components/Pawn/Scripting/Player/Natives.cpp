@@ -106,3 +106,233 @@ SCRIPT_API(ToggleWidescreen, bool(IPlayer& player, bool enable))
 	player.setWidescreen(enable);
 	return true;
 }
+
+SCRIPT_API(SetPlayerHealth, bool(IPlayer& player, float health))
+{
+	player.setHealth(health);
+	return true;
+}
+
+SCRIPT_API(GetPlayerHealth, bool(IPlayer& player, float& health))
+{
+	health = player.getHealth();
+	return true;
+}
+
+SCRIPT_API(SetPlayerArmour, bool(IPlayer& player, float armour))
+{
+	player.setArmour(armour);
+	return true;
+}
+
+SCRIPT_API(GetPlayerArmour, bool(IPlayer& player, float& armour))
+{
+	armour = player.getArmour();
+	return true;
+}
+
+SCRIPT_API(SetPlayerTeam, bool(IPlayer& player, int teamid))
+{
+	player.setTeam(teamid);
+	return true;
+}
+
+SCRIPT_API(GetPlayerTeam, int(IPlayer& player))
+{
+	return player.getTeam();
+}
+
+SCRIPT_API(SetPlayerScore, bool(IPlayer& player, int score))
+{
+	player.setScore(score);
+	return true;
+}
+
+SCRIPT_API(GetPlayerScore, int(IPlayer& player))
+{
+	return player.getScore();
+}
+
+SCRIPT_API(GetPlayerSkin, int(IPlayer& player))
+{
+	return player.getSkin();
+}
+
+SCRIPT_API(SetPlayerColor, bool(IPlayer& player, uint32_t colour))
+{
+	player.setColour(Colour::FromRGBA(colour));
+	return true;
+}
+
+SCRIPT_API(GetPlayerColor, int(IPlayer& player))
+{
+	return player.getColour().RGBA();
+}
+
+SCRIPT_API(GetPlayerDrunkLevel, int(IPlayer& player))
+{
+	return player.getDrunkLevel();
+}
+
+SCRIPT_API(GivePlayerWeapon, bool(IPlayer& player, uint8_t weaponid, uint8_t ammo))
+{
+	WeaponSlotData data;
+	data.id = weaponid;
+	data.ammo = ammo;
+	player.giveWeapon(data);
+	return true;
+}
+
+SCRIPT_API(GetPlayerMoney, int(IPlayer& player)) {
+	return player.getMoney();
+}
+
+SCRIPT_API(ResetPlayerMoney, bool(IPlayer& player))
+{
+	player.resetMoney();
+	return true;
+}
+
+SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
+{
+	player.setName(name);
+	return true;
+}
+
+SCRIPT_API(GetPlayerState, int(IPlayer& player))
+{
+	return player.getState();
+}
+
+SCRIPT_API(GetPlayerPing, int(IPlayer& player))
+{
+	return player.getPing();
+}
+
+SCRIPT_API(GetPlayerWeapon, int(IPlayer& player))
+{
+	return player.getArmedWeapon();
+}
+
+SCRIPT_API(SetPlayerTime, bool(IPlayer& player, int hour, int minute))
+{
+	player.setTime(std::chrono::hours(hour), std::chrono::minutes(minute));
+	return true;
+}
+
+SCRIPT_API(GetPlayerTime, bool(IPlayer& player, int& hour, int& minute))
+{
+	std::pair<std::chrono::hours, std::chrono::minutes> data = player.getTime();
+	hour = data.first.count();
+	minute = data.second.count();
+	return true;
+}
+
+SCRIPT_API(TogglePlayerClock, bool(IPlayer& player, bool toggle))
+{
+	player.toggleClock(toggle);
+	return true;
+}
+
+SCRIPT_API(ForceClassSelection, bool(IPlayer& player))
+{
+	player.forceClassSelection();
+	return true;
+}
+
+SCRIPT_API(GetPlayerWantedLevel, int(IPlayer& player))
+{
+	return player.getWantedLevel();
+}
+
+SCRIPT_API(SetPlayerFightingStyle, bool(IPlayer& player, int style))
+{
+	player.setFightingStyle(PlayerFightingStyle(style));
+	return true;
+}
+
+SCRIPT_API(GetPlayerFightingStyle, int(IPlayer& player))
+{
+	return player.getFightingStyle();
+}
+
+SCRIPT_API(SetPlayerVelocity, bool(IPlayer& player, Vector3 velocity))
+{
+	player.setVelocity(velocity);
+	return true;
+}
+
+SCRIPT_API(GetPlayerVelocity, bool(IPlayer& player, Vector3& velocity))
+{
+	velocity = player.getVelocity();
+	return true;
+}
+
+SCRIPT_API(GetPlayerCameraPos, bool(IPlayer& player, Vector3& pos))
+{
+	pos = player.getCameraPosition();
+	return true;
+}
+
+SCRIPT_API(GetPlayerDistanceFromPoint, float(IPlayer& player, Vector3 pos))
+{
+	Vector3 playerCoords = player.getPosition();
+	return glm::distance(playerCoords, pos);
+}
+
+SCRIPT_API(GetPlayerInterior, int(IPlayer& player))
+{
+	return player.getInterior();
+}
+
+SCRIPT_API(GetPlayerPos, bool(IPlayer& player, Vector3& pos))
+{
+	pos = player.getPosition();
+	return true;
+}
+
+SCRIPT_API(GetPlayerVirtualWorld, int(IPlayer& player))
+{
+	return player.getVirtualWorld();
+}
+
+SCRIPT_API(IsPlayerNPC, bool(IPlayer& player))
+{
+	return player.isBot();
+}
+
+SCRIPT_API(IsPlayerStreamedIn, bool(IPlayer& player, IPlayer& other))
+{
+	return player.isStreamedInForPlayer(other);
+}
+
+SCRIPT_API(PlayerPlaySound, bool(IPlayer& player, uint32_t sound, Vector3 pos))
+{
+	player.playSound(sound, pos);
+	return true;
+}
+
+SCRIPT_API(PlayerSpectatePlayer, bool(IPlayer& player, IPlayer& target, int mode))
+{
+	player.spectatePlayer(target, PlayerSpectateMode(mode));
+	return true;
+}
+
+SCRIPT_API(PlayerSpectateVehicle, bool(IPlayer& player, IVehicle& target, int mode))
+{
+	player.spectateVehicle(target, PlayerSpectateMode(mode));
+	return true;
+}
+
+SCRIPT_API(SetPlayerVirtualWorld, bool(IPlayer& player, int vw))
+{
+	player.setVirtualWorld(vw);
+	return true;
+}
+
+SCRIPT_API(SetPlayerWorldBounds, bool(IPlayer& player, float xMax, float xMin, float yMax, float yMin))
+{
+	Vector4 coords = { xMax, xMin, yMax, yMin };
+	player.setWorldBounds(coords);
+	return true;
+}
