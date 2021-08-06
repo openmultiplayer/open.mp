@@ -11,6 +11,18 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include "util.hpp"
 
+// Provide automatic Defaults → JSON conversion in Config
+namespace nlohmann {
+    template <typename ...Args>
+    struct adl_serializer<std::variant<Args...>> {
+        static void to_json(json& j, std::variant<Args...> const& v) {
+            std::visit([&](auto&& value) {
+                j = std::forward<decltype(value)>(value);
+            }, v);
+        }
+    };
+}
+
 struct ComponentList : public IComponentList {
     using IComponentList::queryComponent;
 
@@ -51,7 +63,12 @@ struct Config final : IConfig {
     Config(String fname) {
         std::ifstream ifs(fname);
         if (ifs.good()) {
-            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            nlohmann::json props;
+            try {
+                props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            }
+            catch(std::ios_base::failure) {}  // Is a directory?
+
             if (props.is_null() || props.is_discarded() || !props.is_object()) {
                 processed = Defaults;
             }
@@ -86,6 +103,18 @@ struct Config final : IConfig {
                         }
                     }
                 }
+            }
+        }
+        else {
+            // Create config file if it doesn't exist
+            std::ofstream ofs(fname);
+            nlohmann::json json;
+
+            if(ofs.good()) {
+                for (const auto& kv : Defaults) {
+                    json[kv.first] = kv.second;
+                }
+                ofs << json.dump(4) << std::endl;
             }
         }
         // Fill any values missing in config with defaults
