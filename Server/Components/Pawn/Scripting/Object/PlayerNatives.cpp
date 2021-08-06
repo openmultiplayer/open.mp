@@ -21,16 +21,13 @@ SCRIPT_API(DestroyPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 	return true;
 }
 
-SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& object, IVehicle* vehicle, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& object, IVehicle& vehicle, Vector3 offset, Vector3 rotation))
 {
-	if (vehicle) {
-		object.attachToVehicle(*vehicle, offset, rotation);
-		return true;
-	}
-	return false;
+	object.attachToVehicle(vehicle, offset, rotation);
+	return true;
 }
 
-SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& object, IPlayer* playerAttachedTo, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& object, IPlayer& playerAttachedTo, Vector3 offset, Vector3 rotation))
 {
 	PawnManager::Get()->core->printLn("This native was removed from sa-mp, we do not support it either (yet)");
 	return false;
