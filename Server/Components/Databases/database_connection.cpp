@@ -10,7 +10,7 @@ void DatabaseConnection::setDatabaseConnectionHandle(sqlite3* databaseConnection
 /// Closes this database
 /// @returns "true" if connection has been successfully closed, otherwise "false"
 bool DatabaseConnection::close() {
-	bool ret(databaseConnectionHandle);
+	bool ret(databaseConnectionHandle!=nullptr);
 	if (ret) {
 		sqlite3_close(databaseConnectionHandle);
 		databaseConnectionHandle = nullptr;
@@ -20,9 +20,8 @@ bool DatabaseConnection::close() {
 
 /// Executes the specified query
 /// @param query Query to execute
-/// @param outResultSetID Result set ID (out)
 /// @returns Result set
-IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query, int* outResultSetID) {
+IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query) {
 	IDatabaseResultSet* ret(nullptr);
 	int result_set_index(resultSets.claim());
 	// TODO: Handle invalid indices properly
@@ -34,17 +33,14 @@ IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query, int* outR
 			ret = nullptr;
 		}
 	}
-	if (outResultSetID) {
-		*outResultSetID = result_set_index + 1;
-	}
 	return ret;
 }
 
 /// Frees the specified result set
-/// @param resultSetID Result set ID
+/// @param resultSet Result set
 /// @returns "true" if result set has been successfully freed, otherwise "false"
-bool DatabaseConnection::freeResultSet(int resultSetID) {
-	int result_set_index(resultSetID - 1);
+bool DatabaseConnection::freeResultSet(IDatabaseResultSet& resultSet) {
+	const int result_set_index(static_cast<DatabaseResultSet&>(resultSet).poolID);
 	bool ret(resultSets.valid(result_set_index));
 	if (ret) {
 		resultSets.remove(result_set_index);

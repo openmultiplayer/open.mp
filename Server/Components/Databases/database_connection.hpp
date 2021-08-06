@@ -5,7 +5,14 @@
 
 #include "database_result_set.hpp"
 
-struct DatabaseConnection final : public IDatabaseConnection, public NoCopy {
+struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
+	DatabaseConnection() {
+		resultSets.claimUnusable(0);
+	}
+
+	int getID() const override {
+		return poolID;
+	}
 
 	/// Sets the database connection handle
 	/// TODO: This should be possble at construction only
@@ -20,14 +27,12 @@ struct DatabaseConnection final : public IDatabaseConnection, public NoCopy {
 	/// @param query Query to execute
 	/// @param outResultSetID Result set ID (out)
 	/// @returns Result set
-	IDatabaseResultSet* executeQuery(StringView query, int* outResultSetID = nullptr) override;
+	IDatabaseResultSet* executeQuery(StringView query) override;
 
 	/// Frees the specified result set
-	/// @param resultSetID Result set ID
+	/// @param resultSet Result set
 	/// @returns "true" if result set has been successfully freed, otherwise "false"
-	bool freeResultSet(int resultSetID) override;
-
-private:
+	bool freeResultSet(IDatabaseResultSet& resultSet) override;
 
 	/// Gets invoked when a query step has been performed
 	/// @param userData User data
@@ -42,5 +47,5 @@ private:
 
 	/// Result sets
 	/// TODO: Replace with a pool type that grows dynamically
-	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, static_cast<std::size_t>(1024)> resultSets;
+	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 1024> resultSets;
 };

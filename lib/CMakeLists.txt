@@ -139,4 +139,10 @@ add_conan_lib(CONAN_PKG::glm glm/0.9.9.8)
 # ----
 add_conan_lib(CONAN_PKG::nlohmann_json nlohmann_json/3.9.1)
 
+# Abseil
+# ------
 add_conan_lib(CONAN_PKG::abseil abseil/20210324.2)
+
+# SQLite 3
+# --------
+add_conan_lib(CONAN_PKG::sqlite3 sqlite3/3.36.0)
