@@ -467,7 +467,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     core->getPlayers().getEventDispatcher().addEventHandler(this);
     SAMPRakNet::ServerCoreInit(c);
     SAMPRakNet::SeedToken();
-    lastCookieSeed = std::chrono::steady_clock::now();
+    lastCookieSeed = Time::now();
     SAMPRakNet::SeedCookie();
     query = Query(c);
 
@@ -477,7 +477,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
-    cookieSeedTime = std::chrono::milliseconds(*config.getInt("connseedtime"));
+    cookieSeedTime = Milliseconds(*config.getInt("connseedtime"));
     SAMPRakNet::SetTimeout(*config.getInt("playertimeout"));
 
     rakNetServer.Start(
@@ -494,7 +494,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     query.setServerName(serverName);
 }
 
-void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
+void RakNetLegacyNetwork::onTick(Microseconds elapsed) {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
         auto pos = playerFromRID.find(pkt->playerId);
         if (pos != playerFromRID.end()) {
@@ -524,7 +524,7 @@ void RakNetLegacyNetwork::onTick(std::chrono::microseconds elapsed) {
         rakNetServer.DeallocatePacket(pkt);
     }
 
-    auto now = std::chrono::steady_clock::now();
+    auto now = Time::now();
     if (now - lastCookieSeed > cookieSeedTime) {
         SAMPRakNet::SeedCookie();
         lastCookieSeed = now;
