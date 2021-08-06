@@ -1,12 +1,5 @@
 #include "database_connection.hpp"
 
-/// Sets the database connection handle
-/// TODO: This should be possble at construction only
-/// @param databaseConnectionHandle Database connection handle
-void DatabaseConnection::setDatabaseConnectionHandle(sqlite3* databaseConnectionHandle) {
-	this->databaseConnectionHandle = databaseConnectionHandle;
-}
-
 /// Closes this database
 /// @returns "true" if connection has been successfully closed, otherwise "false"
 bool DatabaseConnection::close() {
