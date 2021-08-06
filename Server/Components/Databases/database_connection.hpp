@@ -14,11 +14,6 @@ struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvi
 		return poolID;
 	}
 
-	/// Sets the database connection handle
-	/// TODO: This should be possble at construction only
-	/// @param databaseConnectionHandle Database connection handle
-	void setDatabaseConnectionHandle(sqlite3* databaseConnectionHandle);
-
 	/// Closes this database connection
 	/// @returns "true" if connection has been successfully closed, otherwise "false"
 	bool close() override;
@@ -34,6 +29,14 @@ struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvi
 	/// @returns "true" if result set has been successfully freed, otherwise "false"
 	bool freeResultSet(IDatabaseResultSet& resultSet) override;
 
+	/// Database connection handle
+	sqlite3* databaseConnectionHandle;
+
+	/// Result sets
+	/// TODO: Replace with a pool type that grows dynamically
+	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 1024> resultSets;
+
+private:
 	/// Gets invoked when a query step has been performed
 	/// @param userData User data
 	/// @param fieldCount Field count
@@ -41,11 +44,4 @@ struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvi
 	/// @param fieldNames Field names
 	/// @returns Query step result
 	static int queryStepExecuted(void* userData, int fieldCount, char** values, char** fieldNames);
-
-	/// Database connection handle
-	sqlite3* databaseConnectionHandle;
-
-	/// Result sets
-	/// TODO: Replace with a pool type that grows dynamically
-	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 1024> resultSets;
 };
