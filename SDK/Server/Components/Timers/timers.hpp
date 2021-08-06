@@ -8,13 +8,13 @@ struct ITimer {
 	virtual bool running() const = 0;
 
 	/// Get the remaining time until time out
-	virtual std::chrono::milliseconds remaining() const = 0;
+	virtual Milliseconds remaining() const = 0;
 
 	/// Get whether the timer is repeating
 	virtual bool repeating() const = 0;
 
 	/// Get the timer's interval
-	virtual std::chrono::milliseconds interval() const = 0;
+	virtual Milliseconds interval() const = 0;
 
 	/// Immediately kill the timer
 	virtual void kill() = 0;
@@ -32,5 +32,5 @@ struct ITimersComponent : public IComponent {
 	/// @param handler The handler which handlers time out
 	/// @param interval The time after which the timer will time out
 	/// @param repeating Whether the timer repeats when it times out
-	virtual ITimer* create(TimerTimeOutHandler* handler, std::chrono::milliseconds interval, bool repeating) = 0;
+	virtual ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) = 0;
 };

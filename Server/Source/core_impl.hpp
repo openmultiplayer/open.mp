@@ -163,7 +163,7 @@ private:
 struct Core final : public ICore, public PlayerEventHandler {
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
-    std::chrono::milliseconds sleepTimer;
+    Milliseconds sleepTimer;
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
@@ -345,15 +345,14 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void run() {
-        sleepTimer = std::chrono::milliseconds(*config.getInt("sleep"));
+        sleepTimer = Milliseconds(*config.getInt("sleep"));
 
-        auto prev = std::chrono::steady_clock::now();
+        TimePoint prev = Time::now();
         for (;;)
         {
-            auto now = std::chrono::steady_clock::now();
-            auto us = std::chrono::duration_cast<std::chrono::microseconds>(now - prev);
+            const TimePoint now = Time::now();
+            Microseconds us = duration_cast<Microseconds>(now - prev);
             prev = now;
-            players.tick(us);
             eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
 
             std::this_thread::sleep_until(now + sleepTimer);

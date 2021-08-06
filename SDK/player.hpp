@@ -390,10 +390,10 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's game time
 	/// @param hr The hours from 0 to 23
 	/// @param min The minutes from 0 to 59
-	virtual void setTime(std::chrono::hours hr, std::chrono::minutes min) = 0;
+	virtual void setTime(Hours hr, Minutes min) = 0;
 
 	/// Get the player's game time
-	virtual Pair<std::chrono::hours, std::chrono::minutes> getTime() const = 0;
+	virtual Pair<Hours, Minutes> getTime() const = 0;
 
 	/// Toggle the player's clock visibility
 	virtual void toggleClock(bool toggle) = 0;
@@ -408,7 +408,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual bool getWidescreen() const = 0;
 
 	/// Set the transform applied to player rotation
-	virtual void setTransform(const GTAQuat& tm) = 0;
+	virtual void setTransform(GTAQuat tm) = 0;
 
 	/// Set the player's health
 	virtual void setHealth(float health) = 0;
@@ -475,7 +475,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's skin
 	virtual int getSkin() const = 0;
 
-	virtual void setChatBubble(StringView text, const Colour& colour, float drawDist, std::chrono::milliseconds expire) = 0;
+	virtual void setChatBubble(StringView text, const Colour& colour, float drawDist, Milliseconds expire) = 0;
 
 	/// Send a message to the player
 	virtual void sendClientMessage(const Colour& colour, StringView message) const = 0;
@@ -487,7 +487,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void sendCommand(StringView message) const = 0;
 
 	/// Send a game text message to the player
-	virtual void sendGameText(StringView message, std::chrono::milliseconds time, int style) const = 0;
+	virtual void sendGameText(StringView message, Milliseconds time, int style) const = 0;
 
 	/// Set the player's weather
 	virtual void setWeather(int weatherID) = 0;
@@ -656,7 +656,7 @@ struct PlayerEventHandler {
 };
 
 struct PlayerUpdateEventHandler {
-	virtual bool onUpdate(IPlayer& player) { return true; }
+	virtual bool onUpdate(IPlayer& player, TimePoint now) = 0;
 };
 
 /// A player pool interface
@@ -678,7 +678,7 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	virtual void sendChatMessageToAll(IPlayer& from, StringView message) = 0;
 
 	/// sendGameText for all players
-	virtual void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) = 0;
+	virtual void sendGameTextToAll(StringView message, Milliseconds time, int style) = 0;
 
 	/// sendDeathMessage for all players
 	virtual void sendDeathMessageToAll(IPlayer& player, IPlayer* killer, int weapon) = 0;
