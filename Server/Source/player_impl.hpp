@@ -55,7 +55,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     bool controllable_;
     uint32_t lastPlayedSound_;
     int money_;
-    std::chrono::minutes time_;
+    Minutes time_;
     bool clockToggled_;
     PlayerBulletData bulletData_;
     String shopName_;
@@ -67,14 +67,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int cutType_;
     Vector4 worldBounds_;
     bool widescreen_;
-    std::chrono::steady_clock::time_point lastMarkerUpdate_;
+    TimePoint lastMarkerUpdate_;
     bool enableCameraTargeting_;
     int cameraTargetPlayer_, cameraTargetVehicle_, cameraTargetObject_, cameraTargetActor_;
     int targetPlayer_, targetActor_;
-    std::chrono::steady_clock::time_point chatBubbleExpiration_;
+    TimePoint chatBubbleExpiration_;
     PlayerChatBubble chatBubble_;
     uint8_t numStreamed_;
-    std::chrono::steady_clock::time_point lastGameTimeUpdate_;
+    TimePoint lastGameTimeUpdate_;
     bool isBot_;
 
     Player() :
@@ -109,7 +109,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         cameraTargetActor_(INVALID_ACTOR_ID),
         targetPlayer_(INVALID_PLAYER_ID),
         targetActor_(INVALID_ACTOR_ID),
-        chatBubbleExpiration_(std::chrono::steady_clock::now()),
+        chatBubbleExpiration_(Time::now()),
         numStreamed_(0),
         lastGameTimeUpdate_(),
         isBot_(false)
@@ -240,16 +240,16 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return money_;
     }
 
-    virtual void setTime(std::chrono::hours hr, std::chrono::minutes min) override {
-        time_ = std::chrono::duration_cast<std::chrono::minutes>(hr) + min;
+    virtual void setTime(Hours hr, Minutes min) override {
+        time_ = duration_cast<Minutes>(hr) + min;
         NetCode::RPC::SetPlayerTime setPlayerTimeRPC;
         setPlayerTimeRPC.Hour = hr.count();
         setPlayerTimeRPC.Minute = min.count();
         sendRPC(setPlayerTimeRPC);
     }
 
-    virtual Pair<std::chrono::hours, std::chrono::minutes> getTime() const override {
-        std::chrono::hours hr = std::chrono::duration_cast<std::chrono::hours>(time_);
+    virtual Pair<Hours, Minutes> getTime() const override {
+        Hours hr = duration_cast<Hours>(time_);
         return { hr, time_ - hr };
     }
 
@@ -680,8 +680,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return shopName_;
     }
 
-    void setChatBubble(StringView text, const Colour& colour, float drawDist, std::chrono::milliseconds expire) override {
-        chatBubbleExpiration_ = std::chrono::steady_clock::now() + expire;
+    void setChatBubble(StringView text, const Colour& colour, float drawDist, Milliseconds expire) override {
+        chatBubbleExpiration_ = Time::now() + expire;
         chatBubble_.text = text;
         chatBubble_.drawDist = drawDist;
         chatBubble_.colour = colour;
@@ -709,7 +709,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(sendChatMessage);
     }
     
-    void sendGameText(StringView message, std::chrono::milliseconds time, int style) const override {
+    void sendGameText(StringView message, Milliseconds time, int style) const override {
         NetCode::RPC::SendGameText gameText;
         gameText.Time = time.count();
         gameText.Style = style;
@@ -729,14 +729,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rotTransform_ = tm;
     }
 
-    void updateMarkers(std::chrono::milliseconds updateRate, bool limit = false, float radius = 200.f);
+    void updateMarkers(Milliseconds updateRate, bool limit, float radius, TimePoint now);
 
-    void updateGameTime(std::chrono::milliseconds syncRate, std::chrono::steady_clock::time_point time) {
-        auto now = std::chrono::steady_clock::now();
+    void updateGameTime(Milliseconds syncRate, TimePoint now) {
         if (now - lastGameTimeUpdate_ > syncRate) {
             lastGameTimeUpdate_ = now;
             NetCode::RPC::SendGameTimeUpdate RPC;
-            RPC.Time = std::chrono::duration_cast<std::chrono::milliseconds>(time.time_since_epoch()).count();
+            RPC.Time = duration_cast<Milliseconds>(now.time_since_epoch()).count();
             sendRPC(RPC);
         }
     }
