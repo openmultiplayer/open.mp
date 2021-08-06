@@ -51,13 +51,13 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
-    std::chrono::steady_clock::time_point timeOfDeath;
+    TimePoint timeOfDeath;
     bool beenOccupied = false;
-    std::chrono::steady_clock::time_point lastOccupied;
+    TimePoint lastOccupied;
     bool respawning = false;
     Vector3 velocity;
     Vector3 angularVelocity;
-    std::chrono::steady_clock::time_point trailerUpdateTime;
+    TimePoint trailerUpdateTime;
     bool towing = false;
     union {
         Vehicle* trailer = nullptr;
@@ -202,7 +202,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void respawn() override;
 
     /// Get the vehicle's respawn delay.
-    std::chrono::seconds getRespawnDelay() override;
+    Seconds getRespawnDelay() override;
 
     /// Checks if the vehicle has had any occupants.
     bool hasBeenOccupied() override;
@@ -216,7 +216,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int getInterior() override;
 
     /// Set if the vehicle has been occupied.
-    void setBeenOccupied(bool occupied) { this->beenOccupied = occupied; lastOccupied = std::chrono::steady_clock::now(); }
+    void setBeenOccupied(bool occupied) { this->beenOccupied = occupied; lastOccupied = Time::now(); }
 
     /// Attaches a vehicle as a trailer to this vehicle.
     void attachTrailer(IVehicle& vehicle) override;

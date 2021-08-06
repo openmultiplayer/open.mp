@@ -369,7 +369,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 footSync.LeftRight = 0;
             }
 
-            auto now = std::chrono::steady_clock::now();
+            TimePoint now = Time::now();
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                 [&peer, now](PlayerUpdateEventHandler* handler) {
                     return handler->onUpdate(peer, now);
@@ -406,7 +406,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 spectatorSync.LeftRight = 0;
             }
 
-            auto now = std::chrono::steady_clock::now();
+            TimePoint now = Time::now();
             self.playerUpdateDispatcher.stopAtFalse([&peer, now](PlayerUpdateEventHandler* handler) {
                 return handler->onUpdate(peer, now);
             });
@@ -607,7 +607,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (vehicleOk) {
                 vehicleSync.PlayerID = player.poolID;
 
-                auto now = std::chrono::steady_clock::now();
+                TimePoint now = Time::now();
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                     [&peer, now](PlayerUpdateEventHandler* handler) {
                         return handler->onUpdate(peer, now);
@@ -726,7 +726,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.armedWeapon_ = passengerSync.WeaponID;
             player.setState(PlayerState_Passenger);
 
-            auto now = std::chrono::steady_clock::now();
+            TimePoint now = Time::now();
             bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
                 [&peer, now](PlayerUpdateEventHandler* handler) {
                     return handler->onUpdate(peer, now);
@@ -990,7 +990,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         broadcastRPCToAll(RPC);
     }
 
-    void sendGameTextToAll(StringView message, std::chrono::milliseconds time, int style) override {
+    void sendGameTextToAll(StringView message, Milliseconds time, int style) override {
         NetCode::RPC::SendGameText RPC;
         RPC.Text = NetworkString(message);
         RPC.Time = time.count();
@@ -1058,17 +1058,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         actorsComponent = components.queryComponent<IActorsComponent>();
     }
 
-    bool onUpdate(IPlayer& p, std::chrono::steady_clock::time_point now) override {
+    bool onUpdate(IPlayer& p, TimePoint now) override {
         Player& player = static_cast<Player&>(p);
         const float maxDist = streamConfigHelper.getDistanceSqr();
-        const std::chrono::milliseconds gameTimeUpdateRateMS(*gameTimeUpdateRate);
-        const std::chrono::milliseconds markersUpdateRateMS(*markersUpdateRate);
+        const Milliseconds gameTimeUpdateRateMS(*gameTimeUpdateRate);
+        const Milliseconds markersUpdateRateMS(*markersUpdateRate);
         const bool shouldStream = streamConfigHelper.shouldStream(player.poolID, now);
 
         player.updateGameTime(gameTimeUpdateRateMS, now);
 
         if (*markersShow == PlayerMarkerMode_Global) {
-            player.updateMarkers(markersUpdateRateMS, *markersLimit, *markersLimitRadius);
+            player.updateMarkers(markersUpdateRateMS, *markersLimit, *markersLimitRadius, now);
         }
 
         if (shouldStream) {
