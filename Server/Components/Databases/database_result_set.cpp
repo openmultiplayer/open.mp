@@ -35,11 +35,10 @@ std::size_t DatabaseResultSet::getRowCount() const {
 /// Selects next row
 /// @returns "true" if next row has been selected successfully, otherwise "false"
 bool DatabaseResultSet::selectNextRow() {
-	bool ret(!rows.empty());
-	if (ret) {
+	if (!rows.empty()) {
 		rows.pop();
 	}
-	return ret;
+	return !rows.empty();
 }
 
 /// Gets the number of fields

@@ -21,9 +21,9 @@ void DatabasesComponent::onLoad(ICore* c) {}
 
 /// Opens a new database connection
 /// @param path Path to the database
-/// @param outDatabaseConnectionID Database connection index (out)
+/// @param outDatabaseConnectionID Database connection ID (out)
 /// @returns Database if successful, otherwise "nullptr"
-IDatabaseConnection* DatabasesComponent::open(StringView path, int* outDatabaseConnectionIndex) {
+IDatabaseConnection* DatabasesComponent::open(StringView path, int* outDatabaseConnectionID) {
 	DatabaseConnection* ret(nullptr);
 	int database_connection_index(databaseConnections.findFreeIndex());
 	// TODO: Properly handle invalid indices
@@ -42,8 +42,21 @@ IDatabaseConnection* DatabasesComponent::open(StringView path, int* outDatabaseC
 			}
 		}
 	}
-	if (outDatabaseConnectionIndex) {
-		*outDatabaseConnectionIndex = database_connection_index;
+	if (outDatabaseConnectionID) {
+		*outDatabaseConnectionID = database_connection_index + 1;
+	}
+	return ret;
+}
+
+/// Closes the specified database connection
+/// @param databaseConnectionID Database connection ID
+/// @returns "true" if database connection has been successfully closed, otherwise "false"
+bool DatabasesComponent::close(int databaseConnectionID) {
+	int database_connection_index(databaseConnectionID - 1);
+	bool ret(databaseConnections.valid(database_connection_index));
+	if (ret) {
+		databaseConnections.get(database_connection_index).close();
+		databaseConnections.remove(database_connection_index);
 	}
 	return ret;
 }
