@@ -337,7 +337,7 @@ PawnPlugin::PawnPlugin(std::string const & path, ICore * core)
 			}
 		}
 #else
-		failmsg_ = dlerror();
+		failMsg_ = dlerror();
 #endif
 		if (failMsg_.empty())
 		{
