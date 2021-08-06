@@ -44,28 +44,28 @@ struct DatabasesTestComponent final : public IComponent, public NoCopy {
 	void onInit(IComponentList* components) override {
 		IDatabasesComponent* databases_component(components->queryComponent<IDatabasesComponent>());
 		if (databases_component) {
-			int database_connection_id;
-			IDatabaseConnection* database_connection(databases_component->open(testDatabaseFilePath, &database_connection_id));
+			IDatabaseConnection* database_connection(databases_component->open(testDatabaseFilePath));
 			if (database_connection) {
+				const int database_connection_id = database_connection->getID();
 				if (database_connection_id != 1) {
 					core->printLn("[ERROR] Connection ID: %d (0x%x). Expected it to be \"1\".", database_connection_id, database_connection_id);
-					databases_component->close(database_connection_id);
+					databases_component->close(*database_connection);
 					return;
 				}
 				core->printLn("Database connection ID: %d (0x%x)", database_connection_id, database_connection_id);
 				core->printLn("Database connection pointer: 0x%x", database_connection);
-				int result_set_id;
-				IDatabaseResultSet* result_set(database_connection->executeQuery(testQuery, &result_set_id));
+				IDatabaseResultSet* result_set(database_connection->executeQuery(testQuery));
 				if (result_set) {
+					const int result_set_id = result_set->getID();
 					if (result_set_id != 1) {
 						core->printLn("[ERROR] Result set ID: %d (0x%x). Expected it to be \"1\".", result_set_id, result_set_id);
-						databases_component->close(database_connection_id);
+						databases_component->close(*database_connection);
 						return;
 					}
 					std::size_t row_count(result_set->getRowCount());
 					if (row_count != static_cast<std::size_t>(2)) {
 						core->printLn("[ERROR] Row count: %d (0x%x). Expected it to be \"2\".", row_count, row_count);
-						databases_component->close(database_connection_id);
+						databases_component->close(*database_connection);
 						return;
 					}
 					core->printLn("Result set ID: %d (0x%x)", result_set_id, result_set_id);
@@ -74,129 +74,129 @@ struct DatabasesTestComponent final : public IComponent, public NoCopy {
 					int field_count(result_set->getFieldCount());
 					if (field_count != static_cast<std::size_t>(3)) {
 						core->printLn("[ERROR] Field count: %d (0x%x). Expected it to be \"3\".", field_count, field_count);
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					core->printLn("Field count: %d", field_count);
 					if (!validateFieldName(result_set, 0, "test_string")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldName(result_set, 1, "test_integer")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldName(result_set, 2, "test_float")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldString(result_set, 0, "Hello world!")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldStringByName(result_set, "test_string", "Hello world!")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldInteger(result_set, 1, 69)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldIntegerByName(result_set, "test_integer", 69)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldFloat(result_set, 2, 420.69)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldFloatByName(result_set, "test_float", 420.69)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!result_set->selectNextRow()) {
 						core->printLn("[ERROR] result_set->selectNextRow() returned \"false\".");
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldName(result_set, 0, "test_string")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldName(result_set, 1, "test_integer")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldName(result_set, 2, "test_float")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldString(result_set, 0, "Another test!")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldStringByName(result_set, "test_string", "Another test!")) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldInteger(result_set, 1, 1337)) {
-						databases_component->close(database_connection_id);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldIntegerByName(result_set, "test_integer", 1337)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldFloat(result_set, 2, 1.5)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (!validateFieldFloatByName(result_set, "test_float", 1.5)) {
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					if (result_set->selectNextRow()) {
 						core->printLn("[ERROR] result_set->selectNextRow() returned \"true\".");
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					std::size_t open_database_result_set_count(databases_component->getOpenDatabaseResultSetCount());
-					if (open_database_result_set_count != static_cast<std::size_t>(0 /*1*/)) {
-						core->printLn("[ERROR] databases_component->getOpenDatabaseResultSetCount() returned \"%d\". Expected it to be \"0\"", open_database_result_set_count);
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+					if (open_database_result_set_count != static_cast<std::size_t>(1)) {
+						core->printLn("[ERROR] databases_component->getOpenDatabaseResultSetCount() returned \"%d\". Expected it to be \"1\"", open_database_result_set_count);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
-					if (!database_connection->freeResultSet(result_set_id)) {
-						core->printLn("[ERROR] result_set->freeResultSet(result_set_id) returned \"false\".");
-						databases_component->close(database_connection_id);
+					if (!database_connection->freeResultSet(*result_set)) {
+						core->printLn("[ERROR] result_set->freeResultSet(*result_set) returned \"false\".");
+						databases_component->close(*database_connection);
 						return;
 					}
 					open_database_result_set_count = databases_component->getOpenDatabaseResultSetCount();
 					if (open_database_result_set_count != static_cast<std::size_t>(0)) {
 						core->printLn("[ERROR] databases_component->getOpenDatabaseResultSetCount() returned \"%d\". Expected it to be \"0\"", open_database_result_set_count);
-						database_connection->freeResultSet(result_set_id);
-						databases_component->close(database_connection_id);
+						database_connection->freeResultSet(*result_set);
+						databases_component->close(*database_connection);
 						return;
 					}
 					result_set = nullptr;
@@ -204,22 +204,20 @@ struct DatabasesTestComponent final : public IComponent, public NoCopy {
 				else {
 					core->printLn("Failed to execute query \"%s\"", testQuery);
 				}
-				std::size_t open_database_connection_count(databases_component->getOpenDatabaseResultSetCount());
-				if (open_database_connection_count != static_cast<std::size_t>(0 /*1*/)) {
-					core->printLn("[ERROR] databases_component->getOpenDatabaseResultSetCount() returned \"%d\". Expected it to be \"0\"", open_database_connection_count);
-					database_connection->freeResultSet(result_set_id);
-					databases_component->close(database_connection_id);
+				std::size_t open_database_connection_count(databases_component->getOpenConnectionCount());
+				if (open_database_connection_count != static_cast<std::size_t>(1)) {
+					core->printLn("[ERROR] databases_component->getOpenDatabaseResultSetCount() returned \"%d\". Expected it to be \"1\"", open_database_connection_count);
+					databases_component->close(*database_connection);
 					return;
 				}
-				if (!databases_component->close(database_connection_id)) {
-					core->printLn("[ERROR] databases_component->close(database_connection_id) returned \"false\".");
+				if (!databases_component->close(*database_connection)) {
+					core->printLn("[ERROR] databases_component->close(*database_connection) returned \"false\".");
 					return;
 				}
-				open_database_connection_count = databases_component->getOpenDatabaseResultSetCount();
+				open_database_connection_count = databases_component->getOpenConnectionCount();
 				if (open_database_connection_count != static_cast<std::size_t>(0)) {
 					core->printLn("[ERROR] databases_component->getOpenDatabaseResultSetCount() returned \"%d\". Expected it to be \"0\"", open_database_connection_count);
-					database_connection->freeResultSet(result_set_id);
-					databases_component->close(database_connection_id);
+					databases_component->close(*database_connection);
 					return;
 				}
 			}

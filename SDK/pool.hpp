@@ -139,7 +139,7 @@ struct UniqueEntryArray : public NoCopy {
         entries_.clear();
     }
 
-    const FlatPtrHashSet<T>& entries() {
+    const FlatPtrHashSet<T>& entries() const {
         return entries_;
     }
 
@@ -200,6 +200,10 @@ struct StaticPoolStorageBase : public NoCopy {
     }
 
     const FlatPtrHashSet<Interface>& entries() {
+        return allocated_.entries();
+    }
+
+    const FlatPtrHashSet<Interface>& entries() const {
         return allocated_.entries();
     }
 
@@ -270,7 +274,7 @@ struct DynamicPoolStorageBase : public NoCopy {
         return *pool_[index];
     }
 
-    const FlatPtrHashSet<Interface>& entries() {
+    const FlatPtrHashSet<Interface>& entries() const {
         return allocated_.entries();
     }
 

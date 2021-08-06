@@ -2,7 +2,10 @@
 
 #include "database_result_set_row.hpp"
 
-struct DatabaseResultSet final : public IDatabaseResultSet, public NoCopy {
+struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
+	int getID() const override {
+		return poolID;
+	}
 
 	/// Adds a row
 	/// @param fieldCount Field count
@@ -57,8 +60,6 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public NoCopy {
 	/// @param fieldName Field name
 	/// @returns Floating point number
 	double getFieldFloatByName(StringView fieldName) const override;
-
-private:
 
 	/// Rows
 	Queue<DatabaseResultSetRow> rows;

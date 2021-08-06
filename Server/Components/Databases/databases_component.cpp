@@ -21,9 +21,8 @@ void DatabasesComponent::onLoad(ICore* c) {}
 
 /// Opens a new database connection
 /// @param path Path to the database
-/// @param outDatabaseConnectionID Database connection ID (out)
 /// @returns Database if successful, otherwise "nullptr"
-IDatabaseConnection* DatabasesComponent::open(StringView path, int* outDatabaseConnectionID) {
+IDatabaseConnection* DatabasesComponent::open(StringView path) {
 	DatabaseConnection* ret(nullptr);
 	int database_connection_index(databaseConnections.findFreeIndex());
 	// TODO: Properly handle invalid indices
@@ -42,17 +41,14 @@ IDatabaseConnection* DatabasesComponent::open(StringView path, int* outDatabaseC
 			}
 		}
 	}
-	if (outDatabaseConnectionID) {
-		*outDatabaseConnectionID = database_connection_index + 1;
-	}
 	return ret;
 }
 
 /// Closes the specified database connection
-/// @param databaseConnectionID Database connection ID
+/// @param databaseConnection Database connection
 /// @returns "true" if database connection has been successfully closed, otherwise "false"
-bool DatabasesComponent::close(int databaseConnectionID) {
-	int database_connection_index(databaseConnectionID - 1);
+bool DatabasesComponent::close(IDatabaseConnection& connection) {
+	int database_connection_index(static_cast<DatabaseConnection&>(connection).poolID);
 	bool ret(databaseConnections.valid(database_connection_index));
 	if (ret) {
 		databaseConnections.get(database_connection_index).close();
@@ -64,21 +60,33 @@ bool DatabasesComponent::close(int databaseConnectionID) {
 /// Gets the number of open database connections
 /// @returns Number of open database connections
 std::size_t DatabasesComponent::getOpenConnectionCount() const {
-	// TODO: Implement .count() for pools first
-	return static_cast<std::size_t>(0);
+	std::size_t res = 0;
+	for (IDatabaseConnection* c : databaseConnections.entries()) {
+		DatabaseConnection* connection = static_cast<DatabaseConnection*>(c);
+		if (connection->databaseConnectionHandle) {
+			++res;
+		}
+	}
+	return res;
 }
 
 /// Gets the number of open database result sets
 /// @returns Number of open database result sets
 std::size_t DatabasesComponent::getOpenDatabaseResultSetCount() const {
-	// TODO: Implement const version of .entries() for pools first
-	return static_cast<std::size_t>(0);
+	std::size_t res = 0;
+	for (IDatabaseConnection* connection : databaseConnections.entries()) {
+		res += static_cast<DatabaseConnection*>(connection)->resultSets.entries().size();
+	}
+	return res;
 }
 
 /// Check if an index is claimed
 /// @param index Index
 /// @returns "true" if entry is valid, otherwise "false"
 bool DatabasesComponent::valid(int index) const {
+	if (index == 0) {
+		return false;
+	}
 	return databaseConnections.valid(index);
 }
 

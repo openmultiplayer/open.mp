@@ -44,7 +44,7 @@ struct IDatabaseResultSetRow {
 	virtual double getFieldFloatByName(StringView fieldName) const = 0;
 };
 
-struct IDatabaseResultSet {
+struct IDatabaseResultSet : public IIDProvider {
 
 	/// Gets the number of rows
 	/// @returns Number of rows
@@ -94,7 +94,7 @@ struct IDatabaseResultSet {
 	virtual double getFieldFloatByName(StringView fieldName) const = 0;
 };
 
-struct IDatabaseConnection {
+struct IDatabaseConnection : public IIDProvider {
 
 	/// Closes this database connection
 	/// @returns "true" if connection has been successfully closed, otherwise "false"
@@ -102,14 +102,13 @@ struct IDatabaseConnection {
 
 	/// Executes the specified query
 	/// @param query Query to execute
-	/// @param outResultSetID Result set ID (out)
 	/// @returns Result set
-	virtual IDatabaseResultSet* executeQuery(StringView query, int* outResultSetID = nullptr) = 0;
+	virtual IDatabaseResultSet* executeQuery(StringView query) = 0;
 
 	/// Frees the specified result set
-	/// @param resultSetID Result set ID
+	/// @param resultSet Result set
 	/// @returns "true" if result set has been successfully freed, otherwise "false"
-	virtual bool freeResultSet(int resultSetID) = 0;
+	virtual bool freeResultSet(IDatabaseResultSet& resultSet) = 0;
 };
 
 static const UUID DatabasesComponent_UUID = UUID(0x80092e7eb5821a96 /*0x80092e7eb5821a969640def7747a231a*/);
@@ -118,14 +117,13 @@ struct IDatabasesComponent : public IPoolComponent<IDatabaseConnection, 1024> {
 
 	/// Opens a new database connection
 	/// @param path Path to the database
-	/// @param outDatabaseConnectionID Database connection index (out)
 	/// @returns Database if successful, otherwise "nullptr"
-	virtual IDatabaseConnection* open(StringView path, int* outDatabaseConnectionID = nullptr) = 0;
+	virtual IDatabaseConnection* open(StringView path) = 0;
 
 	/// Closes the specified database connection
-	/// @param databaseConnectionID Database connection ID
+	/// @param connection Database connection
 	/// @returns "true" if database connection has been successfully closed, otherwise "false"
-	virtual bool close(int databaseConnectionID) = 0;
+	virtual bool close(IDatabaseConnection& connection) = 0;
 
 	/// Gets the number of open database connections
 	/// @returns Number of open database connections

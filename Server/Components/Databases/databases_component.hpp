@@ -3,6 +3,9 @@
 #include "database_connection.hpp"
 
 struct DatabasesComponent final : public IDatabasesComponent, public PoolIDProvider, public NoCopy {
+	DatabasesComponent() {
+		databaseConnections.claimUnusable(0);
+	}
 
 	/// Gets the component name
 	/// @returns Component name
@@ -21,12 +24,11 @@ struct DatabasesComponent final : public IDatabasesComponent, public PoolIDProvi
 	/// @param path Path to the database
 	/// @param outDatabaseConnectionID Database connection ID (out)
 	/// @returns Database if successful, otherwise "nullptr"
-	IDatabaseConnection* open(StringView path, int* outDatabaseConnectionID = nullptr) override;
+	IDatabaseConnection* open(StringView path) override;
 
 	/// Closes the specified database connection
-	/// @param databaseConnectionID Database connection ID
 	/// @returns "true" if database connection has been successfully closed, otherwise "false"
-	bool close(int databaseConnectionID) override;
+	bool close(IDatabaseConnection& connection) override;
 
 	/// Gets the number of open database connections
 	/// @returns Number of open database connections
