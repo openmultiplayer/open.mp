@@ -18,14 +18,14 @@ struct DatabaseConnection final : public IDatabaseConnection, public NoCopy {
 
 	/// Executes the specified query
 	/// @param query Query to execute
-	/// @param outResultSetIndex Result set index (out)
+	/// @param outResultSetID Result set ID (out)
 	/// @returns Result set
-	IDatabaseResultSet* executeQuery(StringView query, int* outResultSetIndex) override;
+	IDatabaseResultSet* executeQuery(StringView query, int* outResultSetID = nullptr) override;
 
 	/// Frees the specified result set
 	/// @param resultSetID Result set ID
 	/// @returns "true" if result set has been successfully freed, otherwise "false"
-	bool freeResultSet(int resultSetIndex) override;
+	bool freeResultSet(int resultSetID) override;
 
 private:
 

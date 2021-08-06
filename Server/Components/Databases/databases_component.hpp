@@ -19,9 +19,14 @@ struct DatabasesComponent final : public IDatabasesComponent, public PoolIDProvi
 
 	/// Opens a new database connection
 	/// @param path Path to the database
-	/// @param outDatabaseConnectionID Database connection index (out)
+	/// @param outDatabaseConnectionID Database connection ID (out)
 	/// @returns Database if successful, otherwise "nullptr"
-	IDatabaseConnection* open(StringView path, int* outDatabaseConnectionIndex = nullptr) override;
+	IDatabaseConnection* open(StringView path, int* outDatabaseConnectionID = nullptr) override;
+
+	/// Closes the specified database connection
+	/// @param databaseConnectionID Database connection ID
+	/// @returns "true" if database connection has been successfully closed, otherwise "false"
+	bool close(int databaseConnectionID) override;
 
 	/// Gets the number of open database connections
 	/// @returns Number of open database connections

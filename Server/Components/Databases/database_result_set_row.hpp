@@ -3,7 +3,7 @@
 #include <types.hpp>
 #include <Server/Components/Databases/databases.hpp>
 
-struct DatabaseResultSetRow final : public IDatabaseResultSetRow, public NoCopy {
+struct DatabaseResultSetRow final : public IDatabaseResultSetRow {
 
 	/// Adds a new field
 	/// @param fieldName Field name
@@ -56,5 +56,5 @@ private:
 	DynamicArray<Pair<String, String>> fields;
 
 	/// Field name to field index lookup
-	FlatHashMap<StringView, std::size_t> fieldNameToFieldIndexLookup;
+	FlatHashMap<String, std::size_t> fieldNameToFieldIndexLookup;
 };
