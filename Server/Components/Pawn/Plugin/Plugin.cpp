@@ -312,7 +312,7 @@ PawnPlugin::PawnPlugin(std::string const & path, ICore * core)
 #ifdef WIN32
 	pluginHandle_ = LoadLibraryA(path.c_str());
 #else
-	pluginHandle_ = dlopen(path, RTLD_LAZY);
+	pluginHandle_ = dlopen(path.c_str(), RTLD_LAZY);
 #endif // WIN32
 
 	if (pluginHandle_ == nullptr)
