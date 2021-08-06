@@ -20,31 +20,22 @@ SCRIPT_API(DestroyObject, bool(IObject& object))
 	return true;
 }
 
-SCRIPT_API(AttachObjectToVehicle, bool(IObject& object, IVehicle* vehicle, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachObjectToVehicle, bool(IObject& object, IVehicle& vehicle, Vector3 offset, Vector3 rotation))
 {
-	if (vehicle) {
-		object.attachToVehicle(*vehicle, offset, rotation);
-		return true;
-	}
-	return false;
+	object.attachToVehicle(vehicle, offset, rotation);
+	return true;
 }
 
-SCRIPT_API(AttachObjectToObject, bool(IObject& object, IObject* objAttachedTo, Vector3 offset, Vector3 rotation, bool syncRotation))
+SCRIPT_API(AttachObjectToObject, bool(IObject& object, IObject& objAttachedTo, Vector3 offset, Vector3 rotation, bool syncRotation))
 {
-	if (objAttachedTo) {
-		object.attachToObject(*objAttachedTo, offset, rotation, syncRotation);
-		return true;
-	}
-	return false;
+	object.attachToObject(objAttachedTo, offset, rotation, syncRotation);
+	return true;
 }
 
-SCRIPT_API(AttachObjectToPlayer, bool(IObject& object, IPlayer* player, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachObjectToPlayer, bool(IObject& object, IPlayer& player, Vector3 offset, Vector3 rotation))
 {
-	if (player) {
-		object.attachToPlayer(*player, offset, rotation);
-		return true;
-	}
-	return false;
+	object.attachToPlayer(player, offset, rotation);
+	return true;
 }
 
 SCRIPT_API(SetObjectPos, bool(IObject& object, Vector3 position))
