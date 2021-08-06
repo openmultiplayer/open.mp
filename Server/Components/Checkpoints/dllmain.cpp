@@ -18,7 +18,7 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 		CheckpointsComponent& self;
 		PlayerCheckpointActionHandler(CheckpointsComponent& self) : self(self) {}
 
-		bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
+		bool onUpdate(IPlayer& player, TimePoint now) override {
 			PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
 			const float radius = cp->type_ == CheckpointType::STANDARD ? cp->size_ / 2 : cp->size_;
 			const float maxDistance = radius * radius;
