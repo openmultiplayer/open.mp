@@ -5,9 +5,6 @@
 #include <iostream>
 #include <amx/amx.h>
 
-#include <pawn-natives/NativeFunc.hpp>
-#include <pawn-natives/NativesMain.hpp>
-
 extern "C"
 {
 #if defined _UNICODE
@@ -459,6 +456,7 @@ namespace utils {
 			err = cur.second->Exec(&ret, idx);
 			if (err != AMX_ERR_NONE)
 				fail = err;
+			break;
 		}
 		return fail;
 	}
@@ -495,7 +493,7 @@ namespace utils {
 #include <Shlwapi.h>
 #pragma comment(lib, "Shlwapi.lib")
 
-	bool Canonicalise(std::string const & path, std::string & result)
+	inline bool Canonicalise(std::string const & path, std::string & result)
 	{
 		// To be compatible with Linux.
 		result.clear();
@@ -505,7 +503,7 @@ namespace utils {
 		return ret;
 	}
 
-	bool GetCurrentWorkingDirectory(std::string & result)
+	inline bool GetCurrentWorkingDirectory(std::string & result)
 	{
 		result.clear();
 		result.resize(FILENAME_MAX);
@@ -520,7 +518,7 @@ namespace utils {
 #include <cstring>
 #include <unistd.h>
 
-	bool Canonicalise(std::string const & path, std::string & result)
+	inline bool Canonicalise(std::string const & path, std::string & result)
 	{
 		char * canon = realpath(path.c_str(), nullptr);
 		if (canon)
@@ -531,7 +529,7 @@ namespace utils {
 		return (canon != nullptr);
 	}
 
-	bool GetCurrentWorkingDirectory(std::string & result)
+	inline bool GetCurrentWorkingDirectory(std::string & result)
 	{
 		result.clear();
 		result.resize(FILENAME_MAX);
