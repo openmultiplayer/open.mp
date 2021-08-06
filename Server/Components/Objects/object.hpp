@@ -145,11 +145,10 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 		return stopObjectRPC;
 	}
 
-	bool advanceMove(std::chrono::microseconds elapsed) {
-		using float_seconds = std::chrono::duration<float>;
+	bool advanceMove(Microseconds elapsed) {
 		if (moving_) {
 			const float remainingDistance = glm::distance(pos_, moveData_.targetPos);
-			const float travelledDistance = std::chrono::duration_cast<float_seconds>(elapsed).count() * moveData_.speed;
+			const float travelledDistance = duration_cast<RealSeconds>(elapsed).count() * moveData_.speed;
 
 			if (travelledDistance >= remainingDistance) {
 				moving_ = false;
@@ -165,7 +164,7 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 				if (!std::isnan(rotSpeed_)) {
 					const float remainingRotation = glm::distance(rot_, moveData_.targetRot);
-					const float travelledRotation = std::chrono::duration_cast<float_seconds>(elapsed).count() * rotSpeed_;
+					const float travelledRotation = duration_cast<RealSeconds>(elapsed).count() * rotSpeed_;
 					if (travelledRotation > std::numeric_limits<float>::epsilon()) {
 						const float rotationRatio = remainingRotation / travelledRotation;
 						rot_ += (moveData_.targetRot - rot_) / rotationRatio;
@@ -181,7 +180,7 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 struct Object final : public BaseObject<IObject> {
 	IPlayerPool* players_;
 	StaticBitset<IPlayerPool::Cnt> delayedProcessing_;
-	StaticArray<std::chrono::steady_clock::time_point, IPlayerPool::Cnt> delayedProcessingTime_;
+	StaticArray<TimePoint, IPlayerPool::Cnt> delayedProcessingTime_;
 
 	Object() :
 		players_(nullptr)
@@ -219,9 +218,8 @@ struct Object final : public BaseObject<IObject> {
 		players_->broadcastRPCToAll(stopMove());
 	}
 
-	bool advance(std::chrono::microseconds elapsed) {
+	bool advance(Microseconds elapsed, TimePoint now) {
 		if (anyDelayedProcessing_) {
-			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 			for (IPlayer* player : players_->entries()) {
 				const int pid = player->getID();
 				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
@@ -262,7 +260,7 @@ struct Object final : public BaseObject<IObject> {
 
 		const int pid = player.getID();
 		delayedProcessing_.set(pid);
-		delayedProcessingTime_[pid] = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
 		anyDelayedProcessing_ = true;
 	}
 
@@ -339,7 +337,7 @@ struct Object final : public BaseObject<IObject> {
 
 struct PlayerObject final : public BaseObject<IPlayerObject> {
 	IPlayer* player_;
-	std::chrono::steady_clock::time_point delayedProcessingTime_;
+	TimePoint delayedProcessingTime_;
 
 	PlayerObject() :
 		player_(nullptr)
@@ -381,9 +379,8 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		player_->sendRPC(stopMove());
 	}
 
-	bool advance(std::chrono::microseconds elapsed) {
+	bool advance(Microseconds elapsed, TimePoint now) {
 		if (anyDelayedProcessing_) {
-			std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
 			if (now >= delayedProcessingTime_) {
 				anyDelayedProcessing_ = false;
 
@@ -404,7 +401,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		createObjectForClient(*player_);
 
 		if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
-			delayedProcessingTime_ = std::chrono::steady_clock::now() + std::chrono::seconds(1);
+			delayedProcessingTime_ = Time::now() + Seconds(1);
 			anyDelayedProcessing_ = true;
 		}
 	}

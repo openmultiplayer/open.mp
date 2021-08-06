@@ -184,8 +184,8 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
         towing = false;
     }
 
-    auto now = std::chrono::steady_clock::now();
-    if (now - trailerUpdateTime > std::chrono::seconds(15)) {
+    const TimePoint now = Time::now();
+    if (now - trailerUpdateTime > Seconds(15)) {
         // For some reason if the trailer gets disattached on the recievers side, and not on the driver's side
         // SA:MP will fail to reattach it, so we have to call the attach RPC again.
         NetCode::RPC::AttachTrailer trailerRPC;
@@ -436,7 +436,7 @@ Vector3 Vehicle::getPosition() const {
 
 void Vehicle::setDead(IPlayer& killer) {
     dead = true;
-    timeOfDeath = std::chrono::steady_clock::now();
+    timeOfDeath = Time::now();
     ScopedPoolReleaseLock lock(*pool, *this);
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
 }
@@ -459,8 +459,8 @@ void Vehicle::respawn() {
     bodyColour2 = -1;
     rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     beenOccupied = false;
-    lastOccupied = std::chrono::steady_clock::time_point();
-    timeOfDeath = std::chrono::steady_clock::time_point();
+    lastOccupied = TimePoint();
+    timeOfDeath = TimePoint();
     mods.fill(0);
     doorDamage = 0;
     tyreDamage = 0;
@@ -479,7 +479,7 @@ void Vehicle::respawn() {
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
 }
 
-std::chrono::seconds Vehicle::getRespawnDelay() {
+Seconds Vehicle::getRespawnDelay() {
     return spawnData.respawnDelay;
 }
 

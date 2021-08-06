@@ -313,7 +313,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     }
 
-    void onTick(std::chrono::microseconds elapsed) override;
+    void onTick(Microseconds elapsed) override;
 };
 
 struct PlayerObjectData final : public IPlayerObjectData {
@@ -515,10 +515,12 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 };
 
-void ObjectComponent::onTick(std::chrono::microseconds elapsed) {
+void ObjectComponent::onTick(Microseconds elapsed) {
+    const TimePoint now = Time::now();
+
     for (IObject* object : storage.entries()) {
         Object* obj = static_cast<Object*>(object);
-        if (obj->advance(elapsed)) {
+        if (obj->advance(elapsed, now)) {
             ScopedPoolReleaseLock lock(*this, *obj);
             eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.entry);
         }
@@ -529,7 +531,7 @@ void ObjectComponent::onTick(std::chrono::microseconds elapsed) {
         if (data) {
             for (IPlayerObject* object : data->entries()) {
                 PlayerObject* obj = static_cast<PlayerObject*>(object);
-                if (obj->advance(elapsed)) {
+                if (obj->advance(elapsed, now)) {
                     ScopedPoolReleaseLock lock(*data, *obj);
                     eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.entry);
                 }

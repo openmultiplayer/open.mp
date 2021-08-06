@@ -44,7 +44,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 		return eventDispatcher;
 	}
 
-	void onTick(std::chrono::microseconds elapsed) override {
+	void onTick(Microseconds elapsed) override {
 		bool expected = true;
 		if (newCmd.compare_exchange_weak(expected, false)) {
 			cmdMutex.lock();
