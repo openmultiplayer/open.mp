@@ -135,7 +135,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
 		return storage.entries();
 	}
 
-	bool onUpdate(IPlayer& player, std::chrono::steady_clock::time_point now) override {
+	bool onUpdate(IPlayer& player, TimePoint now) override {
 		const float maxDist = streamConfigHelper.getDistanceSqr();
 		if (streamConfigHelper.shouldStream(player.getID(), now)) {
 			for (IPickup* p : storage.entries()) {

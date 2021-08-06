@@ -32,9 +32,8 @@ EPlayerNameStatus Player::setName(StringView name) {
     return EPlayerNameStatus::Updated;
 }
 
-void Player::updateMarkers(std::chrono::milliseconds updateRate, bool limit, float radius) {
-    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
-    if (std::chrono::duration_cast<std::chrono::milliseconds>(now - lastMarkerUpdate_) > updateRate) {
+void Player::updateMarkers(Milliseconds updateRate, bool limit, float radius, TimePoint now) {
+    if (duration_cast<Milliseconds>(now - lastMarkerUpdate_) > updateRate) {
         lastMarkerUpdate_ = now;
         NetCode::Packet::PlayerMarkersSync markersSync(*pool_, *this, limit, radius);
         sendPacket(markersSync);
@@ -180,7 +179,7 @@ void Player::streamInForPlayer(IPlayer& other) {
             playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(skillLevels_);
             other.sendRPC(playerStreamInRPC);
 
-            const std::chrono::milliseconds expire = std::chrono::duration_cast<std::chrono::milliseconds>(chatBubbleExpiration_ - std::chrono::steady_clock::now());
+            const Milliseconds expire = duration_cast<Milliseconds>(chatBubbleExpiration_ - Time::now());
             if (expire.count() > 0) {
                 NetCode::RPC::SetPlayerChatBubble RPC;
                 RPC.PlayerID = poolID;
