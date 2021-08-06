@@ -9,7 +9,7 @@ bool DatabaseResultSetRow::addField(StringView fieldName, StringView value) {
 	if (ret) {
 		std::size_t index(fields.size());
 		fields.push_back(std::make_pair(String(fieldName), String(value)));
-		fieldNameToFieldIndexLookup.insert_or_assign(fields.back().first, index);
+		fieldNameToFieldIndexLookup.insert(std::make_pair(String(fieldName), index));
 	}
 	return ret;
 }
@@ -52,7 +52,7 @@ double DatabaseResultSetRow::getFieldFloat(std::size_t fieldIndex) const {
 /// @param fieldName Field name
 /// @returns String
 StringView DatabaseResultSetRow::getFieldStringByName(StringView fieldName) const {
-	const FlatHashMap<StringView, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(fieldName));
+	const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(fieldName));
 	return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? StringView() : fields[field_name_to_field_index_iterator->second].second;
 }
 
@@ -60,7 +60,7 @@ StringView DatabaseResultSetRow::getFieldStringByName(StringView fieldName) cons
 /// @param fieldName Field name
 /// @returns Integer
 long DatabaseResultSetRow::getFieldIntegerByName(StringView fieldName) const {
-	const FlatHashMap<StringView, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(fieldName));
+	const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(fieldName));
 	return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0L : std::atol(fields[field_name_to_field_index_iterator->second].second.c_str());
 }
 
@@ -68,6 +68,6 @@ long DatabaseResultSetRow::getFieldIntegerByName(StringView fieldName) const {
 /// @param fieldName Field name
 /// @returns Floating point number
 double DatabaseResultSetRow::getFieldFloatByName(StringView fieldName) const {
-	const FlatHashMap<StringView, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(fieldName));
+	const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(fieldName));
 	return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0.0 : std::atof(fields[field_name_to_field_index_iterator->second].second.c_str());
 }

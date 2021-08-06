@@ -102,14 +102,14 @@ struct IDatabaseConnection {
 
 	/// Executes the specified query
 	/// @param query Query to execute
-	/// @param outResultSetIndex Result set index (out)
+	/// @param outResultSetID Result set ID (out)
 	/// @returns Result set
-	virtual IDatabaseResultSet* executeQuery(StringView query, int* outResultSetIndex = nullptr) = 0;
+	virtual IDatabaseResultSet* executeQuery(StringView query, int* outResultSetID = nullptr) = 0;
 
 	/// Frees the specified result set
-	/// @param resultSetID Result set index
+	/// @param resultSetID Result set ID
 	/// @returns "true" if result set has been successfully freed, otherwise "false"
-	virtual bool freeResultSet(int resultSetIndex) = 0;
+	virtual bool freeResultSet(int resultSetID) = 0;
 };
 
 static const UUID DatabasesComponent_UUID = UUID(0x80092e7eb5821a96 /*0x80092e7eb5821a969640def7747a231a*/);
@@ -121,6 +121,11 @@ struct IDatabasesComponent : public IPoolComponent<IDatabaseConnection, 1024> {
 	/// @param outDatabaseConnectionID Database connection index (out)
 	/// @returns Database if successful, otherwise "nullptr"
 	virtual IDatabaseConnection* open(StringView path, int* outDatabaseConnectionID = nullptr) = 0;
+
+	/// Closes the specified database connection
+	/// @param databaseConnectionID Database connection ID
+	/// @returns "true" if database connection has been successfully closed, otherwise "false"
+	virtual bool close(int databaseConnectionID) = 0;
 
 	/// Gets the number of open database connections
 	/// @returns Number of open database connections

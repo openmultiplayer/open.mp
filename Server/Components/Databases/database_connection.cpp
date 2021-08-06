@@ -20,9 +20,9 @@ bool DatabaseConnection::close() {
 
 /// Executes the specified query
 /// @param query Query to execute
-/// @param outResultSetIndex Result set index (out)
+/// @param outResultSetID Result set ID (out)
 /// @returns Result set
-IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query, int* outResultSetIndex) {
+IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query, int* outResultSetID) {
 	IDatabaseResultSet* ret(nullptr);
 	int result_set_index(resultSets.claim());
 	// TODO: Handle invalid indices properly
@@ -34,19 +34,20 @@ IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query, int* outR
 			ret = nullptr;
 		}
 	}
-	if (outResultSetIndex) {
-		*outResultSetIndex = result_set_index;
+	if (outResultSetID) {
+		*outResultSetID = result_set_index + 1;
 	}
 	return ret;
 }
 
 /// Frees the specified result set
-/// @param resultSetID Result set index
+/// @param resultSetID Result set ID
 /// @returns "true" if result set has been successfully freed, otherwise "false"
-bool DatabaseConnection::freeResultSet(int resultSetIndex) {
-	bool ret(resultSets.valid(resultSetIndex));
+bool DatabaseConnection::freeResultSet(int resultSetID) {
+	int result_set_index(resultSetID - 1);
+	bool ret(resultSets.valid(result_set_index));
 	if (ret) {
-		resultSets.remove(resultSetIndex);
+		resultSets.remove(result_set_index);
 	}
 	return ret;
 }
@@ -58,5 +59,5 @@ bool DatabaseConnection::freeResultSet(int resultSetIndex) {
 /// @param fieldNames Field names
 /// @returns Query step result
 int DatabaseConnection::queryStepExecuted(void* userData, int fieldCount, char** values, char** fieldNames) {
-	return reinterpret_cast<DatabaseResultSet*>(userData)->addRow(fieldCount, values, fieldNames) ? SQLITE_OK : SQLITE_ABORT;
+	return reinterpret_cast<DatabaseResultSet*>(userData)->addRow(fieldCount, fieldNames, values) ? SQLITE_OK : SQLITE_ABORT;
 }
