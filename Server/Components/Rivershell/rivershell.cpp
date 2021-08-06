@@ -13,8 +13,8 @@ enum Team {
 };
 
 static constexpr int CAPS_TO_WIN = 5;
-static constexpr std::chrono::seconds RESUPPLY_COOLDOWN = std::chrono::seconds(30);
-static constexpr std::chrono::seconds RESPAWN_COOLDOWN = std::chrono::seconds(20);
+static constexpr Seconds RESUPPLY_COOLDOWN = Seconds(30);
+static constexpr Seconds RESPAWN_COOLDOWN = Seconds(20);
 
 struct RivershellPlayerData final : public IPlayerData {
 	PROVIDE_UUID(0x0e5b18f964deec4e);
@@ -23,10 +23,10 @@ struct RivershellPlayerData final : public IPlayerData {
 		delete this;
 	}
 
-	std::chrono::steady_clock::time_point lastResupplyTime;
+	TimePoint lastResupplyTime;
 	bool alreadyBalanceTeam;
 	IPlayer* lastKiller = nullptr;
-	std::chrono::steady_clock::time_point lastDeath;
+	TimePoint lastDeath;
 };
 
 struct RivershellMode :
@@ -67,7 +67,7 @@ struct RivershellMode :
 		const auto& entries = c->getPlayers().entries();
 		for (IPlayer* player : entries) {
 			player->forceClassSelection();
-			player->queryData<RivershellPlayerData>()->lastResupplyTime = std::chrono::steady_clock::time_point();
+			player->queryData<RivershellPlayerData>()->lastResupplyTime = TimePoint();
 			player->setSpectating(true);
 			player->setSpectating(false);
 		}
@@ -137,13 +137,13 @@ struct RivershellMode :
 		if (greenCount > blueCount && team == Team_Green) {
 			target.queryData<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Blue][0]);
 			target.sendClientMessage(Colour::White(), "You have been moved to the {0000FF}blue{FFFFFF} team for balance.");
-			timers->create(new ForceSpawnTimer(&target), std::chrono::milliseconds(500), false);
+			timers->create(new ForceSpawnTimer(&target), Milliseconds(500), false);
 			return true;
 		}
 		else if (blueCount > greenCount && team == Team_Blue) {
 			target.queryData<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Green][0]);
 			target.sendClientMessage(Colour::White(), "You have been moved to the {00FF00}green{FFFFFF} team for balance.");
-			timers->create(new ForceSpawnTimer(&target), std::chrono::milliseconds(500), false);
+			timers->create(new ForceSpawnTimer(&target), Milliseconds(500), false);
 			return true;
 		}
 
@@ -151,7 +151,7 @@ struct RivershellMode :
 	}
 
 	void onConnect(IPlayer& player) override {
-		player.sendGameText("~r~open.mp~w~: Rivershell", std::chrono::seconds(2), 5);
+		player.sendGameText("~r~open.mp~w~: Rivershell", Seconds(2), 5);
 		player.setColour(Colour(136, 136, 136));
 		player.removeDefaultObjects(9090, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
 		player.removeDefaultObjects(9091, Vector3(2317.0859f, 572.2656f, -20.9688f), 10.0f);
@@ -175,10 +175,10 @@ struct RivershellMode :
 		player.setRotation(GTAQuat(0.0f, 0.0f, 0.0f));
 
 		if (classId == 0 || classId == 1) {
-			player.sendGameText("~g~GREEN ~w~TEAM", std::chrono::seconds(1), 5);
+			player.sendGameText("~g~GREEN ~w~TEAM", Seconds(1), 5);
 		}
 		else if (classId == 2 || classId == 3) {
-			player.sendGameText("~b~BLUE ~w~TEAM", std::chrono::seconds(1), 5);
+			player.sendGameText("~b~BLUE ~w~TEAM", Seconds(1), 5);
 		}
 		return true;
 	}
@@ -199,7 +199,7 @@ struct RivershellMode :
 
 	void onSpawn(IPlayer& player) override {
 		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
-		if (std::chrono::steady_clock::now() - data->lastDeath < RESPAWN_COOLDOWN) {
+		if (Time::now() - data->lastDeath < RESPAWN_COOLDOWN) {
 			player.sendClientMessage(Colour(255, 170, 238), "Waiting to respawn...");
 			player.setSpectating(true);
 			handleSpectating(player);
@@ -210,11 +210,11 @@ struct RivershellMode :
 			return;
 		}
 		if (player.getTeam() == Team_Green) {
-			player.sendGameText("Defend the ~g~GREEN ~w~team's ~y~Reefer~n~~w~Capture the ~b~BLUE ~w~team's ~y~Reefer", std::chrono::seconds(6), 5);
+			player.sendGameText("Defend the ~g~GREEN ~w~team's ~y~Reefer~n~~w~Capture the ~b~BLUE ~w~team's ~y~Reefer", Seconds(6), 5);
 			player.setColour(Colour(119, 204, 119, 255));
 		}
 		else if (player.getTeam() == Team_Blue) {
-			player.sendGameText("Defend the ~b~BLUE ~w~team's ~y~Reefer~n~~w~Capture the ~g~GREEN ~w~team's ~y~Reefer", std::chrono::seconds(6), 5);
+			player.sendGameText("Defend the ~b~BLUE ~w~team's ~y~Reefer~n~~w~Capture the ~g~GREEN ~w~team's ~y~Reefer", Seconds(6), 5);
 			player.setColour(Colour(119, 119, 221, 255));
 		}
 
@@ -226,7 +226,7 @@ struct RivershellMode :
 		if (newState == PlayerState_Driver) {
 			IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
 			if (data->getVehicle() == greenObjectiveVehicle && player.getTeam() == Team_Green) {
-				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", std::chrono::seconds(3), 5);
+				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", Seconds(3), 5);
 
 				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 				cp->setType(CheckpointType::STANDARD);
@@ -235,7 +235,7 @@ struct RivershellMode :
 				cp->enable(player);
 			}
 			else if (data->getVehicle() == blueObjectiveVehicle && player.getTeam() == Team_Blue) {
-				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", std::chrono::seconds(3), 5);
+				player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", Seconds(3), 5);
 
 				IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 				cp->setType(CheckpointType::STANDARD);
@@ -264,7 +264,7 @@ struct RivershellMode :
 					greenObjectiveVehicle->respawn();
 
 				}
-				c->getPlayers().sendGameTextToAll(gameText, std::chrono::seconds(3), 5);
+				c->getPlayers().sendGameTextToAll(gameText, Seconds(3), 5);
 			}
 			else if (vehicle == blueObjectiveVehicle && player.getTeam() == Team_Blue) {
 				StringView gameText;
@@ -277,7 +277,7 @@ struct RivershellMode :
 					gameText = "~b~BLUE ~w~team captured the ~y~boat~w~!";
 					blueObjectiveVehicle->respawn();
 				}
-				c->getPlayers().sendGameTextToAll(gameText, std::chrono::seconds(3), 5);
+				c->getPlayers().sendGameTextToAll(gameText, Seconds(3), 5);
 			}
 		}
 	}
@@ -291,7 +291,7 @@ struct RivershellMode :
 		}
 		RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
 		data->lastKiller = killer;
-		data->lastDeath = std::chrono::steady_clock::now();
+		data->lastDeath = Time::now();
 	}
 
 	void onLoad(ICore* core) override {
@@ -334,48 +334,48 @@ struct RivershellMode :
 			}
 
 			// Objectives
-			blueObjectiveVehicle = vehicles->create(453, Vector3(2184.7156f, -188.5401f, -0.0239f), 0.0f, 114, 1, std::chrono::seconds(100));
-			greenObjectiveVehicle = vehicles->create(453, Vector3(2380.0542f, 535.2582f, -0.0272f), 178.4999f, 79, 7, std::chrono::seconds(100));
+			blueObjectiveVehicle = vehicles->create(453, Vector3(2184.7156f, -188.5401f, -0.0239f), 0.0f, 114, 1, Seconds(100));
+			greenObjectiveVehicle = vehicles->create(453, Vector3(2380.0542f, 535.2582f, -0.0272f), 178.4999f, 79, 7, Seconds(100));
 
 			// Green team boats
-			vehicles->create(473, Vector3(2096.0833f, -168.7771f, 0.3528f), 4.5000f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2103.2510f, -168.7598f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2099.4966f, -168.8216f, 0.3528f), 2.8200f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2107.1143f, -168.7798f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2111.0674f, -168.7609f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2114.8933f, -168.7898f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2167.2217f, -169.0570f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2170.4294f, -168.9724f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2173.7952f, -168.9217f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2177.0386f, -168.9767f, 0.3528f), 3.1800f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2161.5786f, -191.9538f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2161.6394f, -187.2925f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2161.7610f, -183.0225f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2162.0283f, -178.5106f, 0.3528f), 89.1000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2096.0833f, -168.7771f, 0.3528f), 4.5000f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2103.2510f, -168.7598f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2099.4966f, -168.8216f, 0.3528f), 2.8200f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2107.1143f, -168.7798f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2111.0674f, -168.7609f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2114.8933f, -168.7898f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2167.2217f, -169.0570f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2170.4294f, -168.9724f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2173.7952f, -168.9217f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2177.0386f, -168.9767f, 0.3528f), 3.1800f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2161.5786f, -191.9538f, 0.3528f), 89.1000f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2161.6394f, -187.2925f, 0.3528f), 89.1000f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2161.7610f, -183.0225f, 0.3528f), 89.1000f, 114, 1, Seconds(100));
+			vehicles->create(473, Vector3(2162.0283f, -178.5106f, 0.3528f), 89.1000f, 114, 1, Seconds(100));
 
 			// Green team mavericks
-			vehicles->create(487, Vector3(2088.7905f, -227.9593f, 8.3662f), 0.0000f, 114, 1, std::chrono::seconds(100));
-			vehicles->create(487, Vector3(2204.5991f, -225.3703f, 8.2400f), 0.0000f, 114, 1, std::chrono::seconds(100));
+			vehicles->create(487, Vector3(2088.7905f, -227.9593f, 8.3662f), 0.0000f, 114, 1, Seconds(100));
+			vehicles->create(487, Vector3(2204.5991f, -225.3703f, 8.2400f), 0.0000f, 114, 1, Seconds(100));
 
 			// Blue team boats
-			vehicles->create(473, Vector3(2370.3198f, 518.3151f, 0.1240f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2362.6484f, 518.3978f, 0.0598f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2358.6550f, 518.2167f, 0.2730f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2366.5544f, 518.2680f, 0.1080f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2354.6321f, 518.1960f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2350.7449f, 518.1929f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2298.8977f, 518.4470f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2295.6118f, 518.3963f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2292.3237f, 518.4249f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2289.0901f, 518.4363f, 0.3597f), 180.3600f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2304.8232f, 539.7859f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2304.6936f, 535.0454f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2304.8245f, 530.3308f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(473, Vector3(2304.8142f, 525.7471f, 0.3597f), 270.5998f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(473, Vector3(2370.3198f, 518.3151f, 0.1240f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2362.6484f, 518.3978f, 0.0598f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2358.6550f, 518.2167f, 0.2730f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2366.5544f, 518.2680f, 0.1080f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2354.6321f, 518.1960f, 0.3597f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2350.7449f, 518.1929f, 0.3597f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2298.8977f, 518.4470f, 0.3597f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2295.6118f, 518.3963f, 0.3597f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2292.3237f, 518.4249f, 0.3597f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2289.0901f, 518.4363f, 0.3597f), 180.3600f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2304.8232f, 539.7859f, 0.3597f), 270.5998f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2304.6936f, 535.0454f, 0.3597f), 270.5998f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2304.8245f, 530.3308f, 0.3597f), 270.5998f, 79, 7, Seconds(100));
+			vehicles->create(473, Vector3(2304.8142f, 525.7471f, 0.3597f), 270.5998f, 79, 7, Seconds(100));
 
 			// Blue team mavericks
-			vehicles->create(487, Vector3(2260.2637f, 578.5220f, 8.1223f), 182.3401f, 79, 7, std::chrono::seconds(100));
-			vehicles->create(487, Vector3(2379.9792f, 580.0323f, 8.0178f), 177.9601f, 79, 7, std::chrono::seconds(100));
+			vehicles->create(487, Vector3(2260.2637f, 578.5220f, 8.1223f), 182.3401f, 79, 7, Seconds(100));
+			vehicles->create(487, Vector3(2379.9792f, 580.0323f, 8.0178f), 177.9601f, 79, 7, Seconds(100));
 
 			objects->create(9090, Vector3(2148.64f, -222.88f, -20.60f), Vector3(0.00f, 0.00f, 179.70));
 			// Green resupply hut
@@ -469,14 +469,13 @@ struct RivershellMode :
 		}
 	}
 
-	bool onUpdate(IPlayer& player) override {
+	bool onUpdate(IPlayer& player, TimePoint now) override {
 		if (player.getState() == PlayerState_OnFoot) {
-			const Vector3& pos = player.getPosition();
+			const Vector3 pos = player.getPosition();
 			Vector3 resupply1 = pos - Vector3(2140.83f, -235.13f, 7.13f);
 			Vector3 resupply2 = pos - Vector3(2318.73f, 590.96, 6.75);
 			if (glm::dot(resupply1, resupply1) < 2.5f || glm::dot(resupply2, resupply2) < 2.5f) {
 				RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
-				auto now = std::chrono::steady_clock::now();
 				if (now - data->lastResupplyTime >= RESUPPLY_COOLDOWN) {
 					data->lastResupplyTime = now;
 					player.resetWeapons();
@@ -485,7 +484,7 @@ struct RivershellMode :
 					player.giveWeapon(WeaponSlotData{ 34, 10 });
 					player.setHealth(100.0f);
 					player.setArmour(100.0f);
-					player.sendGameText("~w~Resupplied!", std::chrono::seconds(2), 5);
+					player.sendGameText("~w~Resupplied!", Seconds(2), 5);
 					player.playSound(1150, Vector3(0.0f, 0.0f, 0.0f));
 				}
 			}
@@ -493,7 +492,7 @@ struct RivershellMode :
 
 		else if (player.getState() == PlayerState_Spectating) {
 			RivershellPlayerData* data = player.queryData<RivershellPlayerData>();
-			if (std::chrono::steady_clock::now() - data->lastDeath > RESPAWN_COOLDOWN) {
+			if (now - data->lastDeath > RESPAWN_COOLDOWN) {
 				player.setSpectating(false);
 				return true;
 			}

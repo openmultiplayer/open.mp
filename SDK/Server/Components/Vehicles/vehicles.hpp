@@ -13,7 +13,7 @@ struct VehicleSpawnData {
 	float zRotation;
 	int colour1;
 	int colour2;
-	std::chrono::seconds respawnDelay;
+	Seconds respawnDelay;
 	bool siren;
 };
 
@@ -170,7 +170,7 @@ struct IVehicle : public IEntity {
 	virtual void respawn() = 0;
 
 	/// Get the vehicle's respawn delay.
-	virtual std::chrono::seconds getRespawnDelay() = 0;
+	virtual Seconds getRespawnDelay() = 0;
 
 	/// Checks if the vehicle has had any occupants.
 	virtual bool hasBeenOccupied() = 0;
@@ -240,7 +240,7 @@ struct IVehiclesComponent : public IPoolComponent<IVehicle, VEHICLE_POOL_SIZE> {
 	/// Get the number of model instances for each model
 	virtual StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
 
-	virtual IVehicle* create(int modelID, Vector3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, std::chrono::seconds respawnDelay = std::chrono::seconds(-1), bool addSiren = false) = 0;
+	virtual IVehicle* create(int modelID, Vector3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, Seconds respawnDelay = Seconds(-1), bool addSiren = false) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
 	virtual bool getModelInfo(int model, VehicleModelInfoType type, Vector3& out) = 0;
 

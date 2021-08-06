@@ -140,7 +140,7 @@ struct TestComponent :
 			}
 		}
 		if (timers) {
-			timers->create(new PlayerPrintMessageTimer(c->getPlayers(), player.getID(), "five seconds passed wow"), std::chrono::seconds(5), true);
+			timers->create(new PlayerPrintMessageTimer(c->getPlayers(), player.getID(), "five seconds passed wow"), Seconds(5), true);
 		}
 	}
 
@@ -516,7 +516,7 @@ struct TestComponent :
 			veh.zRotation = 0.0f;
 			veh.colour1 = 1;
 			veh.colour2 = 1;
-			veh.respawnDelay = std::chrono::seconds(1000);
+			veh.respawnDelay = Seconds(1000);
 			veh.siren = false;
 
 			vehicles->create(veh);
@@ -574,7 +574,7 @@ struct TestComponent :
 			veh.zRotation = 0.0f;
 			veh.colour1 = 1;
 			veh.colour2 = 1;
-			veh.respawnDelay = std::chrono::seconds(1000);
+			veh.respawnDelay = Seconds(1000);
 			veh.siren = true;
 
 			vehicles->create(veh);
@@ -757,7 +757,7 @@ struct TestComponent :
 		return "TestComponent";
 	}
 
-	bool onUpdate(IPlayer& player) override {
+	bool onUpdate(IPlayer& player, TimePoint now) override {
 		IPlayerTextDrawData* tdData = player.queryData<IPlayerTextDrawData>();
 		if (tdData && tdData->valid(1)) {
 			String text;
@@ -1114,7 +1114,7 @@ struct TestComponent :
 	}
 
 	void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override {
-		player.setChatBubble("ouch -" + std::to_string(amount), Colour::Yellow(), 50.f, std::chrono::seconds(30));
+		player.setChatBubble("ouch -" + std::to_string(amount), Colour::Yellow(), 50.f, Seconds(30));
 	}
 
 	bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override {

@@ -6,6 +6,7 @@
 #include <utility>
 #include <array>
 #include <bitset>
+#include <chrono>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
 #include <glm/vec4.hpp>
@@ -21,6 +22,16 @@ typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
 typedef glm::vec4 Vector4;
 typedef uint64_t UUID;
+typedef std::chrono::steady_clock Time;
+typedef std::chrono::steady_clock::time_point TimePoint;
+typedef std::chrono::nanoseconds Nanoseconds;
+typedef std::chrono::microseconds Microseconds;
+typedef std::chrono::milliseconds Milliseconds;
+typedef std::chrono::seconds Seconds;
+typedef std::chrono::minutes Minutes;
+typedef std::chrono::hours Hours;
+typedef std::chrono::duration<float> RealSeconds;
+using std::chrono::duration_cast;
 
 template <typename ...Args>
 using Variant = absl::variant<Args...>;

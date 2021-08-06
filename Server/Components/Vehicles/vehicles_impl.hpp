@@ -5,7 +5,7 @@
 #include "vehicle.hpp"
 #include "vehicle_components.hpp"
 
-struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler {
+struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core;
     MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Cnt> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
@@ -241,7 +241,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
     ~VehiclesComponent()
     {
-        core->getEventDispatcher().removeEventHandler(this);
+        core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
@@ -252,7 +252,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
     void onLoad(ICore* core) override {
         this->core = core;
-        core->getEventDispatcher().addEventHandler(this);
+        core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
@@ -275,7 +275,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return preloadModels;
     }
 
-    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, std::chrono::seconds respawnDelay, bool addSiren) override {
+    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override {
         IVehicle* ret = create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;
@@ -358,49 +358,48 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return storage.entries();
     }
 
-    void onTick(std::chrono::microseconds elapsed) override {
+    bool onUpdate(IPlayer& player, TimePoint now) override {
         const float maxDist = streamConfigHelper.getDistanceSqr();
-        const auto time = std::chrono::steady_clock::now();
-        if (streamConfigHelper.shouldStream(time)) {
+        if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (IVehicle* v : storage.entries()) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
                 bool occupied = false;
-                for (IPlayer* player : core->getPlayers().entries()) {
-                    const PlayerState state = player->getState();
-                    const Vector2 dist2D = vehicle->pos - player->getPosition();
-                    const bool shouldBeStreamedIn =
-                        state != PlayerState_None &&
-                        player->getVirtualWorld() == vehicle->virtualWorld_ &&
-                        glm::dot(dist2D, dist2D) < maxDist;
+                const PlayerState state = player.getState();
+                const Vector2 dist2D = vehicle->pos - player.getPosition();
+                const bool shouldBeStreamedIn =
+                    state != PlayerState_None &&
+                    player.getVirtualWorld() == vehicle->virtualWorld_ &&
+                    glm::dot(dist2D, dist2D) < maxDist;
 
-                    const bool isStreamedIn = vehicle->isStreamedInForPlayer(*player);
-                    if (!isStreamedIn && shouldBeStreamedIn) {
-                        vehicle->streamInForPlayer(*player);
-                    }
-                    else if (isStreamedIn && !shouldBeStreamedIn) {
-                        vehicle->streamOutForPlayer(*player);
-                    }
+                const bool isStreamedIn = vehicle->isStreamedInForPlayer(player);
+                if (!isStreamedIn && shouldBeStreamedIn) {
+                    vehicle->streamInForPlayer(player);
+                }
+                else if (isStreamedIn && !shouldBeStreamedIn) {
+                    vehicle->streamOutForPlayer(player);
+                }
 
-                    if (!occupied && isStreamedIn && shouldBeStreamedIn) {
-                        PlayerState state = player->getState();
-                        if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
-                            occupied = player->queryData<IPlayerVehicleData>()->getVehicle() == vehicle;
-                        }
+                if (!occupied && isStreamedIn && shouldBeStreamedIn) {
+                    PlayerState state = player.getState();
+                    if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
+                        occupied = player.queryData<IPlayerVehicleData>()->getVehicle() == vehicle;
                     }
                 }
 
-                if (vehicle->isDead() && vehicle->getRespawnDelay() != std::chrono::seconds(-1) && !occupied) {
-                    if (time - vehicle->timeOfDeath >= std::chrono::seconds(vehicle->getRespawnDelay())) {
+                if (vehicle->isDead() && vehicle->getRespawnDelay() != Seconds(-1) && !occupied) {
+                    if (now - vehicle->timeOfDeath >= vehicle->getRespawnDelay()) {
                         vehicle->respawn();
                     }
                 }
-                else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != std::chrono::seconds(-1)) {
-                    if (time - vehicle->lastOccupied >= std::chrono::seconds(vehicle->getRespawnDelay())) {
+                else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != Seconds(-1)) {
+                    if (now - vehicle->lastOccupied >= vehicle->getRespawnDelay()) {
                         vehicle->respawn();
                     }
                 }
             }
         }
+
+        return true;
     }
 
     const StaticArray<VehicleModelInfo, MAX_VEHICLE_MODELS> allModelInfo = { {

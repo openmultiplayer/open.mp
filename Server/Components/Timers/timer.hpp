@@ -3,15 +3,15 @@
 struct Timer final : public ITimer {
 	bool running_;
 	const bool repeating_;
-	const std::chrono::milliseconds interval_;
-	std::chrono::steady_clock::time_point timeout_;
+	const Milliseconds interval_;
+	TimePoint timeout_;
 	TimerTimeOutHandler* const handler_;
 
-	Timer(TimerTimeOutHandler* handler, std::chrono::milliseconds interval, bool repeating) :
+	Timer(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) :
 		running_(true),
 		repeating_(repeating),
 		interval_(interval),
-		timeout_(std::chrono::steady_clock::now() + interval),
+		timeout_(Time::now() + interval),
 		handler_(handler)
 	{}
 
@@ -19,15 +19,15 @@ struct Timer final : public ITimer {
 		return running_;
 	}
 
-	std::chrono::milliseconds remaining() const override {
-		return std::chrono::duration_cast<std::chrono::milliseconds>(timeout_ - std::chrono::steady_clock::now());
+	Milliseconds remaining() const override {
+		return duration_cast<Milliseconds>(timeout_ - Time::now());
 	}
 
 	bool repeating() const override {
 		return repeating_;
 	}
 
-	std::chrono::milliseconds interval() const override {
+	Milliseconds interval() const override {
 		return interval_;
 	}
 
