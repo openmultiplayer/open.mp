@@ -63,7 +63,12 @@ struct Config final : IConfig {
     Config(String fname) {
         std::ifstream ifs(fname);
         if (ifs.good()) {
-            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            nlohmann::json props;
+            try {
+                props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            }
+            catch(std::ios_base::failure) {}  // Is a directory?
+
             if (props.is_null() || props.is_discarded() || !props.is_object()) {
                 processed = Defaults;
             }
