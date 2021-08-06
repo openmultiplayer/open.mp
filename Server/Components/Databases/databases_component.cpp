@@ -37,7 +37,7 @@ IDatabaseConnection* DatabasesComponent::open(StringView path) {
 			}
 			else {
 				ret = &databaseConnections.get(database_connection_index);
-				ret->setDatabaseConnectionHandle(database_connection_handle);
+				ret->databaseConnectionHandle = database_connection_handle;
 			}
 		}
 	}
