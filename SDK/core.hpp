@@ -34,6 +34,9 @@ struct ICore {
 	/// Print a new line to console
 	virtual void printLn(const char* fmt, ...) = 0;
 
+	/// Print a new line to console (receives va_list instead)
+	virtual void vprintLn(const char* fmt, va_list args) = 0;
+
 	/// Get the player pool
 	virtual IPlayerPool& getPlayers() = 0;
 
