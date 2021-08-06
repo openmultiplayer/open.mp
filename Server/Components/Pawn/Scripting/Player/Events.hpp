@@ -10,7 +10,7 @@ struct PlayerEvents : public PlayerEventHandler, public Singleton<PlayerEvents>{
 
 	void onSpawn(IPlayer& player) {
 		PawnManager::Get()->CallAll("OnPlayerSpawn", player.getID());
-  }
+	}
 
 	bool onCommandText(IPlayer& player, StringView cmdtext) {
 		return PawnManager::Get()->CallAll("OnPlayerCommandText", player.getID(), cmdtext);
