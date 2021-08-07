@@ -94,12 +94,10 @@ public:
 			ret = 0;
 		int
 			err = CallChecked(idx, ret, args...);
+		// Step 1: Try call a crashdetect-like callback, but don't get caught in a loop.
 
-		if (err != AMX_ERR_NONE)
-		{
-			// Step 1: Try call a crashdetect-like callback, but don't get caught in a loop.
-
-			// Step 2: Print it.
+		// Step 2: Print it.
+		if (err != AMX_ERR_NONE) {
 			serverCore->printLn(aux_StrError(err));
 		}
 		return ret;
