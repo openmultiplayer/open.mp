@@ -122,6 +122,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 	endif()
 
 	set_property(TARGET pawn-runtime PROPERTY FOLDER "lib")
+	set_property(TARGET pawn-runtime PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
 
 # RakNet
