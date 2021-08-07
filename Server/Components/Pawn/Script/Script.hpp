@@ -97,7 +97,9 @@ public:
 		// Step 1: Try call a crashdetect-like callback, but don't get caught in a loop.
 
 		// Step 2: Print it.
-		serverCore->printLn(aux_StrError(err));
+		if (err != AMX_ERR_NONE) {
+			serverCore->printLn(aux_StrError(err));
+		}
 		return ret;
 	}
 
