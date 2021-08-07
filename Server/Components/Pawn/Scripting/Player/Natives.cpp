@@ -205,6 +205,12 @@ SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
 	return true;
 }
 
+SCRIPT_API(GetPlayerName, bool(IPlayer& player, std::string& name))
+{
+	name = player.getName();
+	return true;
+}
+
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
 {
 	return player.getState();
