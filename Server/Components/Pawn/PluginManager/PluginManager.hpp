@@ -10,7 +10,7 @@
 class PawnPluginManager : public Singleton<PawnPluginManager>
 {
 public:
-	std::map<std::string, std::unique_ptr<PawnPlugin>> plugins_;
+	FlatHashMap<StringView, std::unique_ptr<PawnPlugin>> plugins_;
 	ICore* core = nullptr;
 
 	PawnPluginManager();
