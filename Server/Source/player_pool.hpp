@@ -998,9 +998,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         broadcastRPCToAll(RPC);
     }
 
-    void sendDeathMessageToAll(IPlayer& player, IPlayer* killer, int weapon) override {
+    void sendDeathMessageToAll(IPlayer* killer, IPlayer& killee, int weapon) override {
         NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
-        sendDeathMessageRPC.PlayerID = static_cast<Player&>(player).poolID;
+        sendDeathMessageRPC.PlayerID = static_cast<Player&>(killee).poolID;
         sendDeathMessageRPC.HasKiller = killer != nullptr;
         if (killer) {
             sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
