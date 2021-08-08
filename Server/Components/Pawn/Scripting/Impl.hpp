@@ -13,8 +13,8 @@ class Scripting;
 #include <glm/glm.hpp>
 #include <glm/gtc/quaternion.hpp>
 
-#define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp::scripting, name, prototype)
-#define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp::scripting, name, prototype)
+#define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp_scripting, name, prototype)
+#define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp_scripting, name, prototype)
 
 #include "Player/Events.hpp"
 
