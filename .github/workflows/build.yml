@@ -28,7 +28,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: windows-latest
+    runs-on: [self-hosted, Windows]
 
     steps:
     - uses: actions/checkout@v2
@@ -53,7 +53,7 @@ jobs:
         cd build
         cmake --build . --config Debug
   build-linux:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux]
 
     steps:
     - uses: actions/checkout@v2
