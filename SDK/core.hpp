@@ -45,6 +45,9 @@ struct ICore {
 	/// Get a list of available networks
 	virtual const FlatPtrHashSet<INetwork>& getNetworks() = 0;
 
+	/// Get tick count
+	virtual unsigned getTickCount() const = 0;
+
 	/// Set server gravity
 	virtual void setGravity(float gravity) = 0;
 

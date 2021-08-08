@@ -289,6 +289,10 @@ struct Core final : public ICore, public PlayerEventHandler {
         return networks;
     }
 
+    unsigned getTickCount() const override {
+        return utils::GetTickCount();
+    }
+
     IEventDispatcher<CoreEventHandler>& getEventDispatcher() override {
         return eventDispatcher;
     }
@@ -358,7 +362,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         if (!password.empty()) {
             args += " -z " + std::string(password);
         }
-        RunProcess(config.getString("npc_exe"), args);
+        utils::RunProcess(config.getString("npc_exe"), args);
     }
 
     void addComponents(const DynamicArray<IComponent*>& newComponents) {
