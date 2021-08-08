@@ -1,5 +1,7 @@
 #include "sdk.hpp"
 #include <iostream>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include <cmath>
 #include "../Types.hpp"
 
@@ -20,23 +22,22 @@ SCRIPT_API(VectorSize, float(Vector3 vector))
 
 SCRIPT_API(asin, float(float value))
 {
-	
-	return std::asin(value) * 180 / PI;
+	return std::asin(value) * 180 / M_PI;
 }
 
 SCRIPT_API(acos, float(float value))
 {
-	return std::acos(value) * 180 / PI;
+	return std::acos(value) * 180 / M_PI;
 }
 
 SCRIPT_API(atan, float(float value))
 {
-	return std::atan(value) * 180 / PI;
+	return std::atan(value) * 180 / M_PI;
 }
 
 SCRIPT_API(atan2, float(float x, float y))
 {
-	return std::atan2(x, y) * 180 / PI;
+	return std::atan2(x, y) * 180 / M_PI;
 }
 
 SCRIPT_API(GetPlayerPoolSize, int())

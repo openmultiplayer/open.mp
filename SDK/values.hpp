@@ -4,8 +4,6 @@
 #include <string>
 #include "types.hpp"
 
-constexpr double PI = 3.1415926535897932384626433832795;
-
 constexpr int MAX_SEATS = 4;
 constexpr int PLAYER_POOL_SIZE = 1000;
 constexpr int VEHICLE_POOL_SIZE = 2000;
