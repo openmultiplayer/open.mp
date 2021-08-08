@@ -2,6 +2,23 @@
 
 DatabasesComponent databaseComponent;
 
+DatabasesComponent::DatabasesComponent() {
+	databaseConnections.claimUnusable(0);
+	databaseResultSets.claimUnusable(0);
+}
+
+/// Creates a  result set
+/// @returns Result set if successful, otherwise "nullptr"
+IDatabaseResultSet* DatabasesComponent::createResultSet() {
+	IDatabaseResultSet* ret(nullptr);
+	int result_set_index(databaseResultSets.claim());
+	/// TODO: Handle invalid indices properly
+	if (result_set_index >= 0) {
+		ret = &databaseResultSets.get(result_set_index);
+	}
+	return ret;
+}
+
 /// Gets the component name
 /// @returns Component name
 StringView DatabasesComponent::componentName() {
@@ -11,7 +28,7 @@ StringView DatabasesComponent::componentName() {
 /// Gets the component type
 /// @returns Component type
 ComponentType DatabasesComponent::componentType() {
-	return ComponentType::Pool;
+	return ComponentType::Other;
 }
 
 /// Called for every component after components have been loaded
@@ -37,6 +54,7 @@ IDatabaseConnection* DatabasesComponent::open(StringView path) {
 			}
 			else {
 				ret = &databaseConnections.get(database_connection_index);
+				ret->parentDatabasesComponent = this;
 				ret->databaseConnectionHandle = database_connection_handle;
 			}
 		}
@@ -48,7 +66,7 @@ IDatabaseConnection* DatabasesComponent::open(StringView path) {
 /// @param databaseConnection Database connection
 /// @returns "true" if database connection has been successfully closed, otherwise "false"
 bool DatabasesComponent::close(IDatabaseConnection& connection) {
-	int database_connection_index(static_cast<DatabaseConnection&>(connection).poolID);
+	int database_connection_index(connection.getID());
 	bool ret(databaseConnections.valid(database_connection_index));
 	if (ret) {
 		databaseConnections.get(database_connection_index).close();
@@ -57,84 +75,56 @@ bool DatabasesComponent::close(IDatabaseConnection& connection) {
 	return ret;
 }
 
-/// Gets the number of open database connections
-/// @returns Number of open database connections
-std::size_t DatabasesComponent::getOpenConnectionCount() const {
-	std::size_t res = 0;
-	for (IDatabaseConnection* c : databaseConnections.entries()) {
-		DatabaseConnection* connection = static_cast<DatabaseConnection*>(c);
-		if (connection->databaseConnectionHandle) {
-			++res;
-		}
+/// Frees the specified result set
+/// @param resultSet Result set
+/// @returns "true" if result set has been successfully freed, otherwise "false"
+bool DatabasesComponent::freeResultSet(IDatabaseResultSet& resultSet) {
+	int database_result_set_index(resultSet.getID());
+	bool ret(databaseResultSets.valid(database_result_set_index));
+	if (ret) {
+		databaseResultSets.remove(database_result_set_index);
 	}
-	return res;
+	return ret;
 }
 
-/// Gets the number of open database result sets
-/// @returns Number of open database result sets
-std::size_t DatabasesComponent::getOpenDatabaseResultSetCount() const {
-	std::size_t res = 0;
-	for (IDatabaseConnection* connection : databaseConnections.entries()) {
-		res += static_cast<DatabaseConnection*>(connection)->resultSets.entries().size();
-	}
-	return res;
+/// Gets the number of database connections
+/// @returns Number of database connections
+std::size_t DatabasesComponent::getDatabaseConnectionCount() const {
+	return databaseConnections.entries().size();
 }
 
-/// Check if an index is claimed
-/// @param index Index
-/// @returns "true" if entry is valid, otherwise "false"
-bool DatabasesComponent::valid(int index) const {
-	if (index == 0) {
-		return false;
-	}
-	return databaseConnections.valid(index);
+/// Is database connection ID valid
+/// @param databaseConnectionID Database connection ID
+/// @returns "true" if database connection ID is valid, otherwise "false"
+bool DatabasesComponent::isDatabaseConnectionIDValid(int databaseConnectionID) const {
+	return databaseConnections.valid(databaseConnectionID);
 }
 
-/// Get the object at an index
-IDatabaseConnection& DatabasesComponent::get(int index) {
-	return databaseConnections.get(index);
+/// Gets a database connection by ID
+/// @param databaseConnectionID Database connection ID
+/// @returns Database connection
+IDatabaseConnection& DatabasesComponent::getDatabaseConnectionByID(int databaseConnectionID) {
+	return databaseConnections.get(databaseConnectionID);
 }
 
-/// Get a set of all the available objects
-const FlatPtrHashSet<IDatabaseConnection>& DatabasesComponent::entries() {
-	return databaseConnections.entries();
+/// Gets the number of database result sets
+/// @returns Number of result sets
+std::size_t DatabasesComponent::getDatabaseResultSetCount() const {
+	return databaseResultSets.entries().size();
 }
 
-/// Finds the first free index
-/// @returns Free index or -1 if no index is available to use
-int DatabasesComponent::findFreeIndex() {
-	return databaseConnections.findFreeIndex();
+/// Is database result set ID valid
+/// @param databaseResultSetID Database result set ID
+/// @returns "true" if database result set ID is valid, otherwise "false"
+bool DatabasesComponent::isDatabaseResultSetIDValid(int databaseResultSetID) const {
+	return databaseResultSets.valid(databaseResultSetID);
 }
 
-/// Claims the first free index
-/// @returns Claimed index or -1 if no index is available to use
-int DatabasesComponent::claim() {
-	return databaseConnections.claim();
-}
-
-/// Attempts to claim the index at hint and if unavailable, claim the first available index
-/// @param hint Hint index
-/// @returns Claimed index or -1 if no index is available to use
-int DatabasesComponent::claim(int hint) {
-	return databaseConnections.claim(hint);
-}
-
-/// Releases the object at the specified index
-/// @param index Index
-void DatabasesComponent::release(int index) {
-	databaseConnections.release(index, true);
-}
-
-/// Locks an entry at index to postpone release until unlocked
-/// @param index Index
-void DatabasesComponent::lock(int index) {
-	databaseConnections.lock(index);
-}
-
-/// Unlocks an entry at index and release it if needed
-/// @param index Index
-void DatabasesComponent::unlock(int index) {
-	databaseConnections.unlock(index);
+/// Gets a database result set by ID
+/// @param databaseResultSetID Database result set ID
+/// @returns Database result set
+IDatabaseResultSet& DatabasesComponent::getDatabaseResultSetByID(int databaseResultSetID) {
+	return databaseResultSets.get(databaseResultSetID);
 }
 
 COMPONENT_ENTRY_POINT() {

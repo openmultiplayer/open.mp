@@ -15,6 +15,11 @@ struct DatabaseResultSetRow final : public IDatabaseResultSetRow {
 	/// @returns Number of fields
 	std::size_t getFieldCount() const override;
 
+	/// Is field name available
+	/// @param fieldName Field name
+	/// @returns "true" if field name is available, otherwise "false"
+	bool isFieldNameAvailable(StringView fieldName) const override;
+
 	/// Gets the name of the field by the specified field index
 	/// @param fieldIndex Field index
 	/// @returns Name of the field
