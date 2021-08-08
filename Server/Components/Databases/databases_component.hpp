@@ -2,10 +2,13 @@
 
 #include "database_connection.hpp"
 
-struct DatabasesComponent final : public IDatabasesComponent, public PoolIDProvider, public NoCopy {
-	DatabasesComponent() {
-		databaseConnections.claimUnusable(0);
-	}
+struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
+
+	DatabasesComponent();
+
+	/// Creates a result set
+	/// @returns Result set if successful, otherwise "nullptr"
+	IDatabaseResultSet* createResultSet();
 
 	/// Gets the component name
 	/// @returns Component name
@@ -30,53 +33,46 @@ struct DatabasesComponent final : public IDatabasesComponent, public PoolIDProvi
 	/// @returns "true" if database connection has been successfully closed, otherwise "false"
 	bool close(IDatabaseConnection& connection) override;
 
-	/// Gets the number of open database connections
-	/// @returns Number of open database connections
-	std::size_t getOpenConnectionCount() const override;
+	/// Frees the specified result set
+	/// @param resultSet Result set
+	/// @returns "true" if result set has been successfully freed, otherwise "false"
+	bool freeResultSet(IDatabaseResultSet& resultSet) override;
 
-	/// Gets the number of open database result sets
-	/// @returns Number of open database result sets
-	std::size_t getOpenDatabaseResultSetCount() const override;
+	/// Gets the number of database connections
+	/// @returns Number of database connections
+	std::size_t getDatabaseConnectionCount() const override;
 
-	/// Check if an index is claimed
-	/// @param index Index
-	/// @returns "true" if entry is valid, otherwise "false"
-	bool valid(int index) const override;
+	/// Is database connection ID valid
+	/// @param databaseConnectionID Database connection ID
+	/// @returns "true" if database connection ID is valid, otherwise "false"
+	bool isDatabaseConnectionIDValid(int databaseConnectionID) const override;
 
-	/// Get the object at an index
-	IDatabaseConnection& get(int index) override;
+	/// Gets a database connection by ID
+	/// @param databaseConnectionID Database connection ID
+	/// @returns Database connection
+	IDatabaseConnection& getDatabaseConnectionByID(int databaseConnectionID) override;
 
-	/// Get a set of all the available objects
-	const FlatPtrHashSet<IDatabaseConnection>& entries() override;
+	/// Gets the number of database result sets
+	/// @returns Number of result sets
+	std::size_t getDatabaseResultSetCount() const override;
 
-	/// Finds the first free index
-	/// @returns Free index or -1 if no index is available to use
-	int findFreeIndex() override;
+	/// Is database result set ID valid
+	/// @param databaseResultSetID Database result set ID
+	/// @returns "true" if database result set ID is valid, otherwise "false"
+	bool isDatabaseResultSetIDValid(int databaseResultSetID) const override;
 
-	/// Claims the first free index
-	/// @returns Claimed index or -1 if no index is available to use
-	int claim() override;
-
-	/// Attempts to claim the index at hint and if unavailable, claim the first available index
-	/// @param hint Hint index
-	/// @returns Claimed index or -1 if no index is available to use
-	int claim(int hint) override;
-
-	/// Releases the object at the specified index
-	/// @param index Index
-	void release(int index) override;
-
-	/// Locks an entry at index to postpone release until unlocked
-	/// @param index Index
-	void lock(int index) override;
-
-	/// Unlocks an entry at index and release it if needed
-	/// @param index Index
-	void unlock(int index) override;
+	/// Gets a database result set by ID
+	/// @param databaseResultSetID Database result set ID
+	/// @returns Database result set
+	IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) override;
 
 private:
 
 	/// Database connections
 	/// TODO: Replace with a pool type that grows dynamically
-	MarkedDynamicPoolStorage<DatabaseConnection, IDatabaseConnection, IDatabasesComponent::Cnt> databaseConnections;
+	DynamicPoolStorage<DatabaseConnection, IDatabaseConnection, 1025> databaseConnections;
+
+	/// Database result sets
+	/// TODO: Replace with a pool type that grows dynamically
+	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 2049> databaseResultSets;
 };
