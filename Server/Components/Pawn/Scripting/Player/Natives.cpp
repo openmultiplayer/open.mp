@@ -89,7 +89,7 @@ SCRIPT_API(CreateExplosion, bool(Vector3 vec, int type, float radius))
 	return true;
 }
 
-SCRIPT_API(PlayAudioStreamForPlayer, bool(IPlayer& player, std::string const& url, Vector3 pos, bool usePos, float distance))
+SCRIPT_API(PlayAudioStreamForPlayer, bool(IPlayer& player, std::string const& url, Vector3 pos, float distance, bool usePos))
 {
 	player.playAudio(url, usePos, pos, distance);
 	return true;
