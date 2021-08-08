@@ -82,10 +82,7 @@ SCRIPT_API(CreateExplosionForPlayer, bool(IPlayer& player, Vector3 vec, int type
 
 SCRIPT_API(CreateExplosion, bool(Vector3 vec, int type, float radius))
 {
-	for(IPlayer* player : PawnManager::Get()->players->entries()) {
-		player->createExplosion(vec, type, radius);
-	}
-
+	PawnManager::Get()->players->createExplosionForAll(vec, type, radius);
 	return true;
 }
 
