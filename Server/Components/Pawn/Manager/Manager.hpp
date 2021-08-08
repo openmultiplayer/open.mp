@@ -9,6 +9,7 @@
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/Databases/databases.hpp>
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <Server/Components/GangZones/gangzones.hpp>
 #include <Server/Components/Menus/menus.hpp>
@@ -39,6 +40,7 @@ public:
 	ICheckpointsComponent* checkpoints = nullptr;
 	IClassesComponent* classes = nullptr;
 	IConsoleComponent* console = nullptr;
+	IDatabasesComponent* databases = nullptr;
 	IDialogsComponent* dialogs = nullptr;
 	IGangZonesComponent* gangzones = nullptr;
 	IMenusComponent* menus = nullptr;

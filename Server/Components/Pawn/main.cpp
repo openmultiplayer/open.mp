@@ -26,6 +26,7 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		PawnManager::Get()->checkpoints = components->queryComponent<ICheckpointsComponent>();
 		PawnManager::Get()->classes = components->queryComponent<IClassesComponent>();
 		PawnManager::Get()->console = components->queryComponent<IConsoleComponent>();
+		PawnManager::Get()->databases = components->queryComponent<IDatabasesComponent>();
 		PawnManager::Get()->dialogs = components->queryComponent<IDialogsComponent>();
 		PawnManager::Get()->gangzones = components->queryComponent<IGangZonesComponent>();
 		PawnManager::Get()->menus = components->queryComponent<IMenusComponent>();
