@@ -121,8 +121,8 @@ void PawnManager::Spawn(std::string const & name)
 	PawnScript & script = *ptr;
 
 	scripts_.emplace(name, std::move(ptr));
-	script.Register("Script_Call", &utils::pawn_Script_Call);
-	script.Register("Script_CallAll", &utils::pawn_Script_CallAll);
+	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
+	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
 	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
 	script.Register("format", &utils::pawn_format);
 	script.Register("Script_GetID", &utils::pawn_Script_GetID);
