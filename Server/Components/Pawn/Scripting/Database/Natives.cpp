@@ -2,34 +2,21 @@
 #include "../Types.hpp"
 
 SCRIPT_API(db_open, int(const std::string& name)) {
-	int ret(0);
-	IDatabasesComponent* databases_component(PawnManager::Get()->databases);
-	if (databases_component) {
-		IDatabaseConnection* database_connection(databases_component->open(name));
-		if (database_connection) {
-			ret = database_connection->getID();
-		}
-	}
-	return ret;
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(name));
+	return database_connection ? database_connection->getID() : 0;
 }
 
 SCRIPT_API(db_close, int(IDatabaseConnection& db)) {
-	IDatabasesComponent* databases_component(PawnManager::Get()->databases);
-	return (databases_component && databases_component->close(db)) ? 1 : 0;
+	return PawnManager::Get()->databases->close(db) ? 1 : 0;
 }
 
 SCRIPT_API(db_query, int(IDatabaseConnection& db, const std::string& query)) {
-	int ret(0);
-	IDatabaseResultSet* result_set(db.executeQuery(query));
-	if (result_set) {
-		ret = result_set->getID();
-	}
-	return ret;
+	IDatabaseResultSet* database_result_set(db.executeQuery(query));
+	return database_result_set ? database_result_set->getID() : 0;
 }
 
 SCRIPT_API(db_free_result, int(IDatabaseResultSet& dbresult)) {
-	IDatabasesComponent* databases_component(PawnManager::Get()->databases);
-	return (databases_component && databases_component->freeResultSet(dbresult)) ? 1 : 0;
+	return PawnManager::Get()->databases->freeResultSet(dbresult) ? 1 : 0;
 }
 
 SCRIPT_API(db_num_rows, int(IDatabaseResultSet& dbresult)) {
@@ -96,11 +83,9 @@ SCRIPT_API(db_get_result_mem_handle, int(IDatabaseResultSet& dbresult)) {
 }
 
 SCRIPT_API(db_debug_openfiles, int()) {
-	IDatabasesComponent* databases_component(PawnManager::Get()->databases);
-	return databases_component ? static_cast<int>(databases_component->getDatabaseConnectionCount()) : 0;
+	return static_cast<int>(PawnManager::Get()->databases->getDatabaseConnectionCount());
 }
 
 SCRIPT_API(db_debug_openresults, int()) {
-	IDatabasesComponent* databases_component(PawnManager::Get()->databases);
-	return databases_component ? static_cast<int>(databases_component->getDatabaseResultSetCount()) : 0;
+	return static_cast<int>(PawnManager::Get()->databases->getDatabaseResultSetCount());
 }
