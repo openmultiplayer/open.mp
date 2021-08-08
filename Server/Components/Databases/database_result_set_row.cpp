@@ -20,6 +20,13 @@ std::size_t DatabaseResultSetRow::getFieldCount() const {
 	return fields.size();
 }
 
+/// Is field name available
+/// @param fieldName Field name
+/// @returns "true" if field name is available, otherwise "false"
+bool DatabaseResultSetRow::isFieldNameAvailable(StringView fieldName) const {
+	return fieldNameToFieldIndexLookup.contains(fieldName);
+}
+
 /// Gets the name of the field by the specified field index
 /// @param fieldIndex Field index
 /// @returns Name of the field
