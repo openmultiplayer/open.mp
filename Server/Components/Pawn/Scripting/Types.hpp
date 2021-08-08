@@ -190,6 +190,143 @@ namespace pawn_natives
 	PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
 	PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 
+
+	// Database IDatabaseConnection param lookups
+	template <>
+	struct ParamLookup<IDatabaseConnection> {
+		static IDatabaseConnection& ValReq(cell ref) {
+			IDatabasesComponent* databases_component = PawnManager::Get()->databases;
+			if (databases_component && databases_component->isDatabaseConnectionIDValid(static_cast<int>(ref))) {
+				return databases_component->getDatabaseConnectionByID(static_cast<int>(ref));
+			}
+			throw pawn_natives::ParamCastFailure();
+		}
+
+		static IDatabaseConnection* Val(cell ref) {
+			IDatabasesComponent* databases_component = PawnManager::Get()->databases;
+			IDatabaseConnection* connection = nullptr;
+			if (databases_component && databases_component->isDatabaseConnectionIDValid(static_cast<int>(ref))) {
+				connection = &databases_component->getDatabaseConnectionByID(static_cast<int>(ref));
+			}
+			return connection;
+		}
+	};
+
+	template <>
+	class ParamCast<IDatabaseConnection&> {
+	public:
+		ParamCast(AMX* amx, cell* params, int idx) :
+			value_(ParamLookup<IDatabaseConnection>::ValReq(params[idx]))
+		{} 
+
+		~ParamCast()
+		{}
+
+		ParamCast(ParamCast<IDatabaseConnection&> const&) = delete;
+		ParamCast(ParamCast<IDatabaseConnection&>&&) = delete;
+
+		operator IDatabaseConnection& () {
+			return value_;
+		}
+
+		static constexpr int Size = 1;
+
+	private:
+		IDatabaseConnection& value_;
+	};
+
+	template <>
+	class ParamCast<IDatabaseConnection*> {
+	public:
+		ParamCast(AMX* amx, cell* params, int idx)
+		{
+			value_ = ParamLookup<IDatabaseConnection>::Val(params[idx]);
+		}
+
+		~ParamCast()
+		{}
+
+		ParamCast(ParamCast<IDatabaseConnection*> const&) = delete;
+		ParamCast(ParamCast<IDatabaseConnection*>&&) = delete;
+
+		operator IDatabaseConnection* () {
+			return value_;
+		}
+
+		static constexpr int Size = 1;
+
+	private:
+		IDatabaseConnection* value_;
+	};
+
+	// Database IDatabaseResultSet param lookups
+	template <>
+	struct ParamLookup<IDatabaseResultSet> {
+		static IDatabaseResultSet& ValReq(cell ref) {
+			IDatabasesComponent* databases_component = PawnManager::Get()->databases;
+			if (databases_component && databases_component->isDatabaseResultSetIDValid(static_cast<int>(ref))) {
+				return databases_component->getDatabaseResultSetByID(static_cast<int>(ref));
+			}
+			throw pawn_natives::ParamCastFailure();
+		}
+
+		static IDatabaseResultSet* Val(cell ref) {
+			IDatabasesComponent* databases_component = PawnManager::Get()->databases;
+			IDatabaseResultSet* resultSet = nullptr;
+			if (databases_component && databases_component->isDatabaseResultSetIDValid(static_cast<int>(ref))) {
+				resultSet = &databases_component->getDatabaseResultSetByID(static_cast<int>(ref));
+			}
+			return resultSet;
+		}
+	};
+
+	template <>
+	class ParamCast<IDatabaseResultSet&> {
+	public:
+		ParamCast(AMX* amx, cell* params, int idx) :
+			value_(ParamLookup<IDatabaseResultSet>::ValReq(params[idx]))
+		{}
+
+		~ParamCast()
+		{}
+
+		ParamCast(ParamCast<IDatabaseResultSet&> const&) = delete;
+		ParamCast(ParamCast<IDatabaseResultSet&>&&) = delete;
+
+		operator IDatabaseResultSet& () {
+			return value_;
+		}
+
+		static constexpr int Size = 1;
+
+	private:
+		IDatabaseResultSet& value_;
+	};
+
+	template <>
+	class ParamCast<IDatabaseResultSet*> {
+	public:
+		ParamCast(AMX* amx, cell* params, int idx)
+		{
+			value_ = ParamLookup<IDatabaseResultSet>::Val(params[idx]);
+		}
+
+		~ParamCast()
+		{}
+
+		ParamCast(ParamCast<IDatabaseResultSet*> const&) = delete;
+		ParamCast(ParamCast<IDatabaseResultSet*>&&) = delete;
+
+		operator IDatabaseResultSet* () {
+			return value_;
+		}
+
+		static constexpr int Size = 1;
+
+	private:
+		IDatabaseResultSet* value_;
+	};
+
 	// Disable the ref version.
 	template <>
 	class ParamCast<Vector3 const &>
