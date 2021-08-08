@@ -283,7 +283,7 @@ struct RivershellMode :
 	}
 
 	void onDeath(IPlayer& player, IPlayer* killer, int reason) override {
-		c->getPlayers().sendDeathMessageToAll(player, killer, reason);
+		c->getPlayers().sendDeathMessageToAll(killer, player, reason);
 		if (killer) {
 			if (killer->getTeam() != player.getTeam()) {
 				killer->setScore(killer->getScore() + 1);

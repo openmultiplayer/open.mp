@@ -681,7 +681,7 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
 	virtual void sendGameTextToAll(StringView message, Milliseconds time, int style) = 0;
 
 	/// sendDeathMessage for all players
-	virtual void sendDeathMessageToAll(IPlayer& player, IPlayer* killer, int weapon) = 0;
+	virtual void sendDeathMessageToAll(IPlayer* killer, IPlayer& killee, int weapon) = 0;
 
 	/// createExplosion for all players
 	virtual void createExplosionForAll(Vector3 vec, int type, float radius) = 0;
