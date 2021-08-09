@@ -118,6 +118,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         skillLevels_.fill(MAX_SKILL_LEVEL);
     }
 
+    void ban(StringView reason) override;
+
     uint32_t getClientVersion() const override {
         return version_;
     }

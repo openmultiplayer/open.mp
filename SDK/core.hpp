@@ -24,6 +24,45 @@ struct IConfig {
 
 	/// Get a list of strings
 	virtual Span<const StringView> getStrings(StringView key) const = 0;
+
+	/// Get the number of bans
+	virtual size_t getBansCount() const = 0;
+
+	/// Get a list of banned addresses
+	virtual const IBanEntry& getBan(size_t index) const = 0;
+
+	/// Add a ban
+	virtual void addBan(const IBanEntry& entry) = 0;
+
+	/// Remove a ban
+	virtual void removeBan(size_t index) = 0;
+
+	/// Write bans to file
+	virtual void writeBans() const = 0;
+
+};
+
+/// Used for filling config parameters by Config components
+struct IEarlyConfig : public IConfig {
+	virtual void setString(StringView key, StringView value) = 0;
+
+	virtual void setInt(StringView key, int value) = 0;
+
+	virtual void setFloat(StringView key, float value) = 0;
+
+	virtual void setStrings(StringView key, Span<const StringView> value) = 0;
+};
+
+/// A component interface which allows for adding to the configuration
+struct IConfigProviderComponent : public IComponent {
+	/// Return Pool component type
+	ComponentType componentType() override { return ComponentType::ConfigProvider; }
+
+	/// We probably won't need onLoad, override it implicitly
+	void onLoad(ICore* core) override {}
+
+	/// Fill a configuration object with custom configuration
+	virtual bool configure(IEarlyConfig& config) = 0;
 };
 
 /// The core interface

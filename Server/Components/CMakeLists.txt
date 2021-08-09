@@ -11,13 +11,17 @@ add_subdirectory(GangZones)
 add_subdirectory(Menus)
 add_subdirectory(Objects)
 add_subdirectory(Pickups)
-add_subdirectory(RakNetLegacyNetwork)
 add_subdirectory(TextDraws)
 add_subdirectory(TextLabels)
 add_subdirectory(Timers)
 add_subdirectory(Variables)
 add_subdirectory(Vehicles)
 
+# Legacy
+add_subdirectory(LegacyNetwork)
+add_subdirectory(LegacyConfig)
+
+# Test
 #add_subdirectory(DatabasesTest)
 #add_subdirectory(TestComponent)
 add_subdirectory(Rivershell)
