@@ -62,11 +62,14 @@ private:
 
 struct Config final : IEarlyConfig {
     static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
+    static constexpr const char* ConfigFileName = "config.json";
+    static constexpr const char* BansFileName = "bans.json";
 
     Config() {
         {
-            std::ifstream ifs("config.json");
+            std::ifstream ifs(ConfigFileName);
             if (ifs.good()) {
+                nlohmann::json props;
                 try {
                     props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
                 }
@@ -109,7 +112,7 @@ struct Config final : IEarlyConfig {
             }
             else {
                 // Create config file if it doesn't exist
-                std::ofstream ofs(fname);
+                std::ofstream ofs(ConfigFileName);
                 nlohmann::json json;
 
                 if (ofs.good()) {
@@ -129,7 +132,7 @@ struct Config final : IEarlyConfig {
             }
         }
         {
-            std::ifstream ifs("bans.json");
+            std::ifstream ifs(BansFileName);
             if (ifs.good()) {
                 nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
                 if (!props.is_null() && !props.is_discarded() && props.is_array()) {
@@ -152,7 +155,7 @@ struct Config final : IEarlyConfig {
                                     address,
                                     arrVal["player"].get<String>(),
                                     arrVal["reason"].get<String>(),
-                                    std::chrono::system_clock::from_time_t(t)
+                                    WorldTime::from_time_t(t)
                                 )
                             );
                         }
@@ -262,13 +265,13 @@ struct Config final : IEarlyConfig {
                 obj["player"] = entry.getPlayerName();
                 obj["reason"] = entry.getReason();
                 char iso8601[28] = { 0 };
-                std::time_t now = std::chrono::system_clock::to_time_t(entry.time);
+                std::time_t now = WorldTime::to_time_t(entry.time);
                 std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::gmtime(&now));
                 obj["time"] = iso8601;
                 top.push_back(obj);
             }
         }
-        std::ofstream file("bans.json");
+        std::ofstream file(BansFileName);
         if (file.good()) {
             file << top.dump(4);
         }
