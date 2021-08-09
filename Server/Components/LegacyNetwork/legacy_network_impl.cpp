@@ -4,6 +4,9 @@
 #include <netcode.hpp>
 #include <raknet/PacketEnumerations.h>
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib/httplib.h>
+
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
 RakNetLegacyNetwork::RakNetLegacyNetwork() :
@@ -305,10 +308,6 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
         return nullptr;
     }
 
-    char cIP[22];
-    unsigned short cPort;
-    rakNetServer.GetPlayerIPFromID(rpcParams->sender, cIP, &cPort);
-
     PeerNetworkData netData{};
     netData.networkID.address.ipv6 = false;
     netData.networkID.address.v4 = rid.binaryAddress;
@@ -488,6 +487,34 @@ void RakNetLegacyNetwork::init(ICore* c) {
     StringView bind = config.getString("bind");
     cookieSeedTime = Milliseconds(*config.getInt("cookie_reseed_time"));
     SAMPRakNet::SetTimeout(*config.getInt("player_timeout"));
+
+    if (*config.getInt("announce")) {
+        const String get = "/0.3.7/announce/" + std::to_string(port);
+        {
+            httplib::Client request("http://server.sa-mp.com");
+            request.set_follow_location(true);
+            request.set_connection_timeout(Seconds(5));
+            request.set_read_timeout(Seconds(5));
+            request.set_write_timeout(Seconds(5));
+            const httplib::Result res = request.Get(get.c_str());
+            if (!res || res.value().status != 200) {
+                core->printLn("Failed to announce legacy network to SA-MP list");
+            }
+        }
+
+        {
+            httplib::Client request("https://api.open.mp");
+            request.enable_server_certificate_verification(true);
+            request.set_follow_location(true);
+            request.set_connection_timeout(Seconds(5));
+            request.set_read_timeout(Seconds(5));
+            request.set_write_timeout(Seconds(5));
+            const httplib::Result res = request.Get(get.c_str());
+            if (!res || res.value().status != 200) {
+                core->printLn("Failed to announce legacy network to open.mp list");
+            }
+        }
+    }
 
     for (size_t i = 0; i < config.getBansCount(); ++i) {
         ban(config.getBan(i));
