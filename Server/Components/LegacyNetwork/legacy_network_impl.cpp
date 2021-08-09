@@ -309,12 +309,11 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
     unsigned short cPort;
     rakNetServer.GetPlayerIPFromID(rpcParams->sender, cIP, &cPort);
 
-    PeerNetworkData netData;
-    netData.networkID.address = rid.binaryAddress;
+    PeerNetworkData netData{};
+    netData.networkID.address.ipv6 = false;
+    netData.networkID.address.v4 = rid.binaryAddress;
     netData.networkID.port = rid.port;
     netData.network = this;
-    netData.IP = cIP;
-    netData.port = cPort;
 
     Pair<NewConnectionResult, IPlayer*> newConnectionResult{ NewConnectionResult_Ignore, nullptr };
 
@@ -461,6 +460,16 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     }
 }
 
+void RakNetLegacyNetwork::ban(const IBanEntry& entry) {
+    // Only support ipv4
+    if (!entry.address.ipv6) {
+        char out[16]{ 0 };
+        if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
+            rakNetServer.AddToBanList(out);
+        }
+    }
+}
+
 void RakNetLegacyNetwork::init(ICore* c) {
     core = c;
     core->getEventDispatcher().addEventHandler(this);
@@ -477,8 +486,12 @@ void RakNetLegacyNetwork::init(ICore* c) {
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
-    cookieSeedTime = Milliseconds(*config.getInt("connseedtime"));
-    SAMPRakNet::SetTimeout(*config.getInt("playertimeout"));
+    cookieSeedTime = Milliseconds(*config.getInt("cookie_reseed_time"));
+    SAMPRakNet::SetTimeout(*config.getInt("player_timeout"));
+
+    for (size_t i = 0; i < config.getBansCount(); ++i) {
+        ban(config.getBan(i));
+    }
 
     rakNetServer.Start(
         maxPlayers,

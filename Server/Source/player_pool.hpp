@@ -1026,7 +1026,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         markersLimitRadius = config.getFloat("player_markers_draw_distance");
         markersUpdateRate = config.getInt("player_markers_update_rate");
         gameTimeUpdateRate = config.getInt("player_time_update_rate");
-        maxBots = *config.getInt("maxnpc");
+        maxBots = *config.getInt("max_bots");
 
         playerUpdateDispatcher.addEventHandler(this);
         core.addNetworkEventHandler(this);

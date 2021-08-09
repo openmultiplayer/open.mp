@@ -248,7 +248,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         }
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
-        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        const RakNet::PlayerID rid{ unsigned(nid.address.v4), nid.port };
         rakNetServer.Kick(rid);
     }
 
@@ -260,7 +260,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         const PeerNetworkData::NetworkID& nid = netData.networkID;
-        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        const RakNet::PlayerID rid{ unsigned(nid.address.v4), nid.port };
         return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
 
@@ -289,7 +289,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         const PeerNetworkData::NetworkID& nid = netData.networkID;
-        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        const RakNet::PlayerID rid{ unsigned(nid.address.v4), nid.port };
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
@@ -333,9 +333,11 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         }
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
-        const RakNet::PlayerID rid{ unsigned(nid.address), nid.port };
+        const RakNet::PlayerID rid{ unsigned(nid.address.v4), nid.port };
         return rakNetServer.GetLastPing(rid);
     }
+
+    void ban(const IBanEntry& entry) override;
 
     typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
 

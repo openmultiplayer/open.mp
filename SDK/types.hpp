@@ -26,6 +26,8 @@ typedef glm::vec4 Vector4;
 typedef uint64_t UUID;
 typedef std::chrono::steady_clock Time;
 typedef std::chrono::steady_clock::time_point TimePoint;
+typedef std::chrono::system_clock WorldTime;
+typedef std::chrono::system_clock::time_point WorldTimePoint;
 typedef std::chrono::nanoseconds Nanoseconds;
 typedef std::chrono::microseconds Microseconds;
 typedef std::chrono::milliseconds Milliseconds;
