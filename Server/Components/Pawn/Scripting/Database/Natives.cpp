@@ -6,8 +6,8 @@ SCRIPT_API(db_open, int(const std::string& name)) {
 	return database_connection ? database_connection->getID() : 0;
 }
 
-SCRIPT_API(db_close, int(IDatabaseConnection& db)) {
-	return PawnManager::Get()->databases->close(db) ? 1 : 0;
+SCRIPT_API(db_close, bool(IDatabaseConnection& db)) {
+	return PawnManager::Get()->databases->close(db);
 }
 
 SCRIPT_API(db_query, int(IDatabaseConnection& db, const std::string& query)) {
@@ -15,47 +15,47 @@ SCRIPT_API(db_query, int(IDatabaseConnection& db, const std::string& query)) {
 	return database_result_set ? database_result_set->getID() : 0;
 }
 
-SCRIPT_API(db_free_result, int(IDatabaseResultSet& dbresult)) {
-	return PawnManager::Get()->databases->freeResultSet(dbresult) ? 1 : 0;
+SCRIPT_API(db_free_result, bool(IDatabaseResultSet& dbresult)) {
+	return PawnManager::Get()->databases->freeResultSet(dbresult);
 }
 
 SCRIPT_API(db_num_rows, int(IDatabaseResultSet& dbresult)) {
 	return static_cast<int>(dbresult.getRowCount());
 }
 
-SCRIPT_API(db_next_row, int(IDatabaseResultSet& dbresult)) {
-	return dbresult.selectNextRow() ? 1 : 0;
+SCRIPT_API(db_next_row, bool(IDatabaseResultSet& dbresult)) {
+	return dbresult.selectNextRow();
 }
 
 SCRIPT_API(db_num_fields, int(IDatabaseResultSet& dbresult)) {
 	return static_cast<int>(dbresult.getFieldCount());
 }
 
-SCRIPT_API(db_field_name, int(IDatabaseResultSet& dbresult, int field, std::string& result)) {
+SCRIPT_API(db_field_name, bool(IDatabaseResultSet& dbresult, int field, std::string& result)) {
 	bool ret(false);
 	if ((field >= 0) && (field < dbresult.getFieldCount())) {
 		result = dbresult.getFieldName(static_cast<std::size_t>(field));
 		ret = true;
 	}
-	return ret ? 1 : 0;
+	return ret;
 }
 
-SCRIPT_API(db_get_field, int(IDatabaseResultSet& dbresult, int field, std::string& result)) {
+SCRIPT_API(db_get_field, bool(IDatabaseResultSet& dbresult, int field, std::string& result)) {
 	bool ret(false);
 	if ((field >= 0) && (field < dbresult.getFieldCount())) {
 		result = dbresult.getFieldString(static_cast<std::size_t>(field));
 		ret = true;
 	}
-	return ret ? 1 : 0;
+	return ret;
 }
 
-SCRIPT_API(db_get_field_assoc, int(IDatabaseResultSet& dbresult, const std::string& field, std::string& result)) {
+SCRIPT_API(db_get_field_assoc, bool(IDatabaseResultSet& dbresult, const std::string& field, std::string& result)) {
 	bool ret(false);
 	if (dbresult.isFieldNameAvailable(field)) {
 		result = dbresult.getFieldStringByName(field);
 		ret = true;
 	}
-	return ret ? 1 : 0;
+	return ret;
 }
 
 SCRIPT_API(db_get_field_int, int(IDatabaseResultSet& dbresult, int field)) {
