@@ -4,6 +4,7 @@
 */
 
 #include "Manager.hpp"
+#include "../PluginManager/PluginManager.hpp"
 #include "../utils.hpp"
 
 #ifdef WIN32
@@ -42,6 +43,7 @@ PawnManager::~PawnManager()
 	for (auto & cur : scripts_)
 	{
 		cur.second->Call("OnScriptExit", cur.second->GetID());
+		PawnPluginManager::Get()->AmxUnload(cur.second->GetAMX());
 	}
 }
 
@@ -129,6 +131,8 @@ void PawnManager::Spawn(std::string const & name)
 
 	pawn_natives::AmxLoad(script.GetAMX());
 
+	PawnPluginManager::Get()->AmxLoad(script.GetAMX());
+
 	OnScriptInit(name);
 
 	CheckNatives(script);
@@ -183,6 +187,7 @@ void PawnManager::Reload(std::string const & name)
 
 		script.Call("OnScriptExit");
 		OnScriptExit(name);
+		PawnPluginManager::Get()->AmxUnload(script.GetAMX());
 		scripts_.erase(pos);
 	}
 	Spawn(name);
@@ -199,6 +204,7 @@ void PawnManager::Unload(std::string const & name)
 	auto & script = *pos->second;
 	script.Call("OnScriptExit");
 	OnScriptExit(name);
+	PawnPluginManager::Get()->AmxUnload(script.GetAMX());
 	scripts_.erase(pos);
 }
 
