@@ -388,7 +388,7 @@ struct PeerAddress {
 
 struct IBanEntry {
 	PeerAddress address; ///< The banned address
-	std::chrono::system_clock::time_point time; ///< The time when the ban was issued
+	WorldTimePoint time; ///< The time when the ban was issued
 
 	/// Get the banned player's name
 	virtual StringView getPlayerName() const = 0;
@@ -396,7 +396,7 @@ struct IBanEntry {
 	/// Get the ban reason
 	virtual StringView getReason() const = 0;
 
-	IBanEntry(PeerAddress address, std::chrono::system_clock::time_point time = std::chrono::system_clock::now()) :
+	IBanEntry(PeerAddress address, WorldTimePoint time = WorldTime::now()) :
 		address(address),
 		time(time)
 	{}
@@ -578,7 +578,7 @@ struct BanEntry final : public IBanEntry {
 	String playerName;
 	String reason;
 
-	BanEntry(PeerAddress address, StringView playerName, StringView reason, std::chrono::system_clock::time_point time = std::chrono::system_clock::now()) :
+	BanEntry(PeerAddress address, StringView playerName, StringView reason, WorldTimePoint time = WorldTime::now()) :
 		IBanEntry(address, time),
 		playerName(playerName),
 		reason(reason)
