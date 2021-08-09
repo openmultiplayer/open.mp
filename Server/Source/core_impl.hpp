@@ -141,7 +141,7 @@ struct Config final : IEarlyConfig {
                             std::tm time = {};
                             std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
                             time_t t =
-#if 1
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
                                 _mkgmtime(&time);
 #else
                                 timegm(&time);
