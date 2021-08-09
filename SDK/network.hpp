@@ -370,6 +370,52 @@ std::true_type is_network_packet_impl(NetworkPacketBase<PacketIDs...> const vola
 template <typename T>
 using is_network_packet = decltype(is_network_packet_impl(std::declval<T&>()));
 
+/// A peer address with support for IPv4 and IPv6
+struct PeerAddress {
+	bool ipv6;          ///< True if IPv6 is used, false otherwise
+	union {
+		uint64_t v4;    ///< The IPv4 address
+		uint16_t v6[8]; ///< The IPv6 address segments
+	};
+
+	/// Get an address from string
+	/// @param[in,out] out The address to fill - needs its ipv6 set to know which type of address to get
+	static OMP_API bool FromString(PeerAddress& out, StringView string);
+
+	/// Get a string from an address
+	static OMP_API bool ToString(const PeerAddress& in, char* buf, size_t len);
+};
+
+struct IBanEntry {
+	PeerAddress address; ///< The banned address
+	std::chrono::system_clock::time_point time; ///< The time when the ban was issued
+
+	/// Get the banned player's name
+	virtual StringView getPlayerName() const = 0;
+
+	/// Get the ban reason
+	virtual StringView getReason() const = 0;
+
+	IBanEntry(PeerAddress address, std::chrono::system_clock::time_point time = std::chrono::system_clock::now()) :
+		address(address),
+		time(time)
+	{}
+
+	bool operator<(const IBanEntry& other) const {
+		return
+			address.v4 < other.address.v4 &&
+			address.v6[4] < other.address.v6[4] && address.v6[5] < other.address.v6[5] &&
+			address.v6[6] < other.address.v6[6] && address.v6[7] < other.address.v6[7];
+	}
+
+	bool operator==(const IBanEntry& other) const {
+		return
+			address.v4 == other.address.v4 &&
+			address.v6[4] == other.address.v6[4] && address.v6[5] == other.address.v6[5] &&
+			address.v6[6] == other.address.v6[6] && address.v6[7] == other.address.v6[7];
+	}
+};
+
 /// A network interface for various network-related functions
 struct INetwork {
 	/// Get the network type of the network
@@ -417,6 +463,8 @@ struct INetwork {
 
 	/// Disconnect the peer from the network
 	virtual void disconnect(const INetworkPeer& peer) = 0;
+
+	virtual void ban(const IBanEntry& entry) = 0;
 };
 
 /// A component interface which allows for writing a network component
@@ -432,14 +480,12 @@ struct INetworkComponent : public IComponent {
 struct PeerNetworkData {
 	/// Peer network ID
 	struct NetworkID {
-		uint64_t address; ///< The peer's address
+		PeerAddress address; ///< The peer's address
 		unsigned short port; ///< The peer's port
 	};
 
 	INetwork* network; ///< The network associated with the peer
 	NetworkID networkID; ///< The peer's network ID
-	String IP; ///< The peer's IP as a string
-	unsigned short port; ///< The peer's port number
 };
 
 /// A network peer interface
@@ -526,4 +572,25 @@ struct Network : public INetwork, public NoCopy {
     IIndexedEventDispatcher<SingleNetworkInOutEventHandler>& getPerPacketInOutEventDispatcher() override {
         return packetInOutEventDispatcher;
     }
+};
+
+struct BanEntry final : public IBanEntry {
+	String playerName;
+	String reason;
+
+	BanEntry(PeerAddress address, StringView playerName, StringView reason, std::chrono::system_clock::time_point time = std::chrono::system_clock::now()) :
+		IBanEntry(address, time),
+		playerName(playerName),
+		reason(reason)
+	{}
+
+	/// Get the banned player's name
+	virtual StringView getPlayerName() const override {
+		return playerName;
+	}
+
+	/// Get the ban reason
+	virtual StringView getReason() const override {
+		return reason;
+	}
 };
