@@ -92,8 +92,7 @@ static const FlatHashMap<String, Variant<int, String, float, DynamicArray<String
     { "player_time_update_rate", 30000 },
     { "stream_rate", 1000 },
     { "stream_distance", 200.f },
-    { "npc_exe", "samp-npc" },
-    { "maxnpc", 0 },
-    { "connseedtime", 300000 },
-    { "playertimeout", 10000 }
+    { "max_bots", 0 },
+    { "cookie_reseed_time", 300000 },
+    { "player_timeout", 10000 }
 };
