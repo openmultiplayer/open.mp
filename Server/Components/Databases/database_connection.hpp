@@ -5,14 +5,21 @@
 
 #include "database_result_set.hpp"
 
-struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
-	DatabaseConnection() {
-		resultSets.claimUnusable(0);
-	}
+struct DatabasesComponent;
 
-	int getID() const override {
-		return poolID;
-	}
+struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
+
+	/// Parent databases component
+	DatabasesComponent* parentDatabasesComponent;
+
+	/// Database connection handle
+	sqlite3* databaseConnectionHandle;
+
+	DatabaseConnection();
+
+	/// Gets its pool element ID
+	/// @return Pool element ID
+	int getID() const override;
 
 	/// Closes this database connection
 	/// @returns "true" if connection has been successfully closed, otherwise "false"
@@ -24,19 +31,8 @@ struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvi
 	/// @returns Result set
 	IDatabaseResultSet* executeQuery(StringView query) override;
 
-	/// Frees the specified result set
-	/// @param resultSet Result set
-	/// @returns "true" if result set has been successfully freed, otherwise "false"
-	bool freeResultSet(IDatabaseResultSet& resultSet) override;
-
-	/// Database connection handle
-	sqlite3* databaseConnectionHandle;
-
-	/// Result sets
-	/// TODO: Replace with a pool type that grows dynamically
-	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 1024> resultSets;
-
 private:
+
 	/// Gets invoked when a query step has been performed
 	/// @param userData User data
 	/// @param fieldCount Field count
