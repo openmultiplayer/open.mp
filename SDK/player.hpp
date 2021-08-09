@@ -245,6 +245,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Kick the player
 	virtual void kick() = 0;
 
+	virtual void ban(StringView reason = StringView()) = 0;
+
 	/// Get the player pool that the player is stored in
 	virtual IPlayerPool* getPool() const = 0;
 

@@ -3,6 +3,7 @@
 #include <cstdarg>
 #include <fstream>
 #include <thread>
+#include <sstream>
 #include <events.hpp>
 #include <pool.hpp>
 #include <nlohmann/json.hpp>
@@ -59,71 +60,105 @@ private:
     ICore& core;
 };
 
-struct Config final : IConfig {
-    Config(String fname) {
-        std::ifstream ifs(fname);
-        if (ifs.good()) {
-            nlohmann::json props;
-            try {
-                props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-            }
-            catch(std::ios_base::failure) {}  // Is a directory?
+struct Config final : IEarlyConfig {
+    static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 
-            if (props.is_null() || props.is_discarded() || !props.is_object()) {
-                processed = Defaults;
-            }
-            else {
-                const auto& obj = props.get<nlohmann::json::object_t>();
-                for (const auto& kv : obj) {
-                    const nlohmann::json& v = kv.second;
-                    if (v.is_number_integer()) {
-                        processed[kv.first].emplace<int>(v.get<int>());
-                    }
-                    else if (v.is_boolean()) {
-                        processed[kv.first].emplace<int>(v.get<bool>());
-                    }
-                    else if (v.is_number_float()) {
-                        processed[kv.first].emplace<float>(v.get<float>());
-                    }
-                    else if (v.is_string()) {
-                        processed[kv.first].emplace<String>(v.get<String>());
-                    }
-                    else if (v.is_array()) {
-                        auto& vec = processed[kv.first].emplace<DynamicArray<StringView>>();
-                        ownAllocations.insert(kv.first);
-                        const auto& arr = v.get<nlohmann::json::array_t>();
-                        for (const auto& arrVal : arr) {
-                            if (arrVal.is_string()) {
-                                // Allocate persistent memory for the StringView array
-                                String val = arrVal.get<String>();
-                                char* data = new char[val.length() + 1];
-                                strcpy(data, val.c_str());
-                                vec.emplace_back(StringView(data, val.length()));
+    Config() {
+        {
+            std::ifstream ifs("config.json");
+            if (ifs.good()) {
+                try {
+                    props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+                }
+                catch (std::ios_base::failure) {}  // Is a directory?
+                if (props.is_null() || props.is_discarded() || !props.is_object()) {
+                    processed = Defaults;
+                }
+                else {
+                    const auto& obj = props.get<nlohmann::json::object_t>();
+                    for (const auto& kv : obj) {
+                        const nlohmann::json& v = kv.second;
+                        if (v.is_number_integer()) {
+                            processed[kv.first].emplace<int>(v.get<int>());
+                        }
+                        else if (v.is_boolean()) {
+                            processed[kv.first].emplace<int>(v.get<bool>());
+                        }
+                        else if (v.is_number_float()) {
+                            processed[kv.first].emplace<float>(v.get<float>());
+                        }
+                        else if (v.is_string()) {
+                            processed[kv.first].emplace<String>(v.get<String>());
+                        }
+                        else if (v.is_array()) {
+                            auto& vec = processed[kv.first].emplace<DynamicArray<StringView>>();
+                            ownAllocations.insert(kv.first);
+                            const auto& arr = v.get<nlohmann::json::array_t>();
+                            for (const auto& arrVal : arr) {
+                                if (arrVal.is_string()) {
+                                    // Allocate persistent memory for the StringView array
+                                    String val = arrVal.get<String>();
+                                    char* data = new char[val.length() + 1];
+                                    strcpy(data, val.c_str());
+                                    vec.emplace_back(StringView(data, val.length()));
+                                }
                             }
                         }
                     }
                 }
             }
-        }
-        else {
-            // Create config file if it doesn't exist
-            std::ofstream ofs(fname);
-            nlohmann::json json;
+            else {
+                // Create config file if it doesn't exist
+                std::ofstream ofs(fname);
+                nlohmann::json json;
 
-            if(ofs.good()) {
-                for (const auto& kv : Defaults) {
-                    json[kv.first] = kv.second;
+                if (ofs.good()) {
+                    for (const auto& kv : Defaults) {
+                        json[kv.first] = kv.second;
+                    }
+                    ofs << json.dump(4) << std::endl;
                 }
-                ofs << json.dump(4) << std::endl;
+            }
+            // Fill any values missing in config with defaults
+            for (const auto& kv : Defaults) {
+                if (processed.find(kv.first) != processed.end()) {
+                    continue;
+                }
+
+                processed.emplace(kv.first, kv.second);
             }
         }
-        // Fill any values missing in config with defaults
-        for (const auto& kv : Defaults) {
-            if (processed.find(kv.first) != processed.end()) {
-                continue;
-            }
+        {
+            std::ifstream ifs("bans.json");
+            if (ifs.good()) {
+                nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+                if (!props.is_null() && !props.is_discarded() && props.is_array()) {
+                    const auto& arr = props.get<nlohmann::json::array_t>();
+                    for (const auto& arrVal : arr) {
+                        PeerAddress address;
+                        address.ipv6 = arrVal["ipv6"].get<bool>();
+                        if (PeerAddress::FromString(address, arrVal["address"].get<String>())) {
+                            std::tm time = {};
+                            std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
+                            time_t t =
+#if 1
+                                _mkgmtime(&time);
+#else
+                                timegm(&time);
+#endif
 
-            processed.emplace(kv.first, kv.second);
+                            bans.emplace_back(
+                                BanEntry(
+                                    address,
+                                    arrVal["player"].get<String>(),
+                                    arrVal["reason"].get<String>(),
+                                    std::chrono::system_clock::from_time_t(t)
+                                )
+                            );
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -184,7 +219,76 @@ struct Config final : IConfig {
         return Span<const StringView>(vw.data(), vw.size());
     }
 
+    void setString(StringView key, StringView value) override {
+        processed[key] = String(value);
+    }
+
+    void setInt(StringView key, int value) override {
+        processed[key] = value;
+    }
+
+    void setFloat(StringView key, float value) override {
+        processed[key] = value;
+    }
+
+    void setStrings(StringView key, Span<const StringView> value) override {
+        ownAllocations.insert(String(key));
+        DynamicArray<StringView>& vec = processed[key].emplace<DynamicArray<StringView>>();
+        for (const StringView v : value) {
+            // Allocate persistent memory for the StringView array
+            String val(v);
+            char* data = new char[val.length() + 1];
+            strcpy(data, val.c_str());
+            vec.emplace_back(StringView(data, val.length()));
+        }
+    }
+
+    void addBan(const IBanEntry& entry) override {
+        bans.emplace_back(BanEntry(entry.address, entry.getPlayerName(), entry.getReason()));
+    }
+
+    void removeBan(size_t index) override {
+        bans.erase(bans.begin() + index);
+    }
+
+    void writeBans() const override {
+        nlohmann::json top = nlohmann::json::array();
+        for (const IBanEntry& entry : bans) {
+            nlohmann::json obj;
+            char address[40] = { 0 };
+            if (PeerAddress::ToString(entry.address, address, sizeof(address))) {
+                obj["ipv6"] = entry.address.ipv6;
+                obj["address"] = address;
+                obj["player"] = entry.getPlayerName();
+                obj["reason"] = entry.getReason();
+                char iso8601[28] = { 0 };
+                std::time_t now = std::chrono::system_clock::to_time_t(entry.time);
+                std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::gmtime(&now));
+                obj["time"] = iso8601;
+                top.push_back(obj);
+            }
+        }
+        std::ofstream file("bans.json");
+        if (file.good()) {
+            file << top.dump(4);
+        }
+    }
+
+    size_t getBansCount() const override {
+        return bans.size();
+    }
+
+    const IBanEntry& getBan(size_t index) const override {
+        return bans[index];
+    }
+
+    void optimiseBans() {
+        std::sort(bans.begin(), bans.end());
+        bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
+    }
+
 private:
+    DynamicArray<BanEntry> bans;
     FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
     FlatHashSet<String> ownAllocations;
 };
@@ -224,8 +328,7 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     Core() :
         players(*this),
-        components(*this),
-        config("config.json")
+        components(*this)
     {
         players.getEventDispatcher().addEventHandler(this);
 
@@ -264,6 +367,8 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void initiated() {
+        config.optimiseBans();
+        config.writeBans();
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
@@ -362,17 +467,20 @@ struct Core final : public ICore, public PlayerEventHandler {
         if (!password.empty()) {
             args += " -z " + std::string(password);
         }
-        utils::RunProcess(config.getString("npc_exe"), args);
+        utils::RunProcess(config.getString("bot_exe"), args);
     }
 
     void addComponents(const DynamicArray<IComponent*>& newComponents) {
         for (auto& component : newComponents) {
             auto res = components.add(component);
             if (!res.second) {
-                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName(), res.first->second->componentName(), component->getUUID());
+                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUUID());
             }
             if (component->componentType() == ComponentType::Network) {
                 networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
+            }
+            else if (component->componentType() == ComponentType::ConfigProvider) {
+                static_cast<IConfigProviderComponent*>(component)->configure(config);
             }
         }
     }
