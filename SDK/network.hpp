@@ -374,9 +374,28 @@ using is_network_packet = decltype(is_network_packet_impl(std::declval<T&>()));
 struct PeerAddress {
 	bool ipv6;          ///< True if IPv6 is used, false otherwise
 	union {
-		uint64_t v4;    ///< The IPv4 address
-		uint16_t v6[8]; ///< The IPv6 address segments
+		uint32_t v4;    ///< The IPv4 address
+		union {
+			uint16_t segments[8]; ///< The IPv6 address segments
+			uint8_t bytes[16]; ///< The IPv6 address bytes
+		} v6;
 	};
+
+	bool operator<(const PeerAddress& other) const {
+		return ipv6 < other.ipv6 &&
+			v4 < other.v4 &&
+			v6.segments[2] < other.v6.segments[2] && v6.segments[3] < other.v6.segments[3] &&
+			v6.segments[4] < other.v6.segments[4] && v6.segments[5] < other.v6.segments[5] &&
+			v6.segments[6] < other.v6.segments[6] && v6.segments[7] < other.v6.segments[7];
+	}
+
+	bool operator==(const PeerAddress& other) const {
+		return ipv6 == other.ipv6&&
+			v4 == other.v4 &&
+			v6.segments[2] == other.v6.segments[2] && v6.segments[3] == other.v6.segments[3] &&
+			v6.segments[4] == other.v6.segments[4] && v6.segments[5] == other.v6.segments[5] &&
+			v6.segments[6] == other.v6.segments[6] && v6.segments[7] == other.v6.segments[7];
+	}
 
 	/// Get an address from string
 	/// @param[in,out] out The address to fill - needs its ipv6 set to know which type of address to get
@@ -402,17 +421,11 @@ struct IBanEntry {
 	{}
 
 	bool operator<(const IBanEntry& other) const {
-		return
-			address.v4 < other.address.v4 &&
-			address.v6[4] < other.address.v6[4] && address.v6[5] < other.address.v6[5] &&
-			address.v6[6] < other.address.v6[6] && address.v6[7] < other.address.v6[7];
+		return address < other.address;
 	}
 
 	bool operator==(const IBanEntry& other) const {
-		return
-			address.v4 == other.address.v4 &&
-			address.v6[4] == other.address.v6[4] && address.v6[5] == other.address.v6[5] &&
-			address.v6[6] == other.address.v6[6] && address.v6[7] == other.address.v6[7];
+		return address == other.address;
 	}
 };
 
