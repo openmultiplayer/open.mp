@@ -12,6 +12,9 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include "util.hpp"
 
+#define CPPHTTPLIB_OPENSSL_SUPPORT
+#include <httplib/httplib.h>
+
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
     template <typename ...Args>
@@ -475,6 +478,65 @@ struct Core final : public ICore, public PlayerEventHandler {
             args += " -z " + std::string(password);
         }
         utils::RunProcess(config.getString("bot_exe"), args);
+    }
+
+    void requestHTTP(HTTPResponseHandler& handler, HTTPRequestType type, StringView url, StringView data) override {
+        constexpr StringView http = "http://";
+        constexpr StringView https = "https://";
+
+        // Deconstruct because a certain someone decided it would be a good idea to have http:// be optional
+        StringView urlNoPrefix = url;
+        bool secure = false;
+        int idx;
+        if ((idx = url.find(http)) == 0) {
+            urlNoPrefix = url.substr(http.size());
+            secure = false;
+        }
+        else if ((idx = url.find(https)) == 0) {
+            urlNoPrefix = url.substr(https.size());
+            secure = true;
+        }
+
+        // Deconstruct further
+        StringView domain = urlNoPrefix;
+        StringView path = "/";
+        if ((idx = urlNoPrefix.find_first_of('/')) != -1) {
+            domain = urlNoPrefix.substr(0, idx - 1);
+            path = urlNoPrefix.substr(idx);
+        }
+
+        // Reconstruct
+        String domainStr = String(secure ? https : http) + String(urlNoPrefix);
+
+        // Set up request
+        httplib::Client request(domainStr.c_str());
+        request.enable_server_certificate_verification(true);
+        request.set_follow_location(true);
+        request.set_connection_timeout(Seconds(5));
+        request.set_read_timeout(Seconds(5));
+        request.set_write_timeout(Seconds(5));
+
+        // Run request
+        httplib::Result res(nullptr, httplib::Error::Canceled);
+        switch (type) {
+        case HTTPRequestType_Get:
+            res = request.Get(path.data());
+            break;
+        case HTTPRequestType_Post:
+            res = request.Post(path.data(), String(data), "application/x-www-form-urlencoded");
+            break;
+        case HTTPRequestType_Head:
+            res = request.Head(path.data());
+            break;
+        }
+
+        // Call handler
+        if (res) {
+            handler.onHTTPResponse(res.value().status, res.value().body);
+        }
+        else {
+            handler.onHTTPResponse(int(res.error()), StringView());
+        }
     }
 
     void addComponents(const DynamicArray<IComponent*>& newComponents) {

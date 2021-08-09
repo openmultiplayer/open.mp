@@ -147,3 +147,11 @@ add_conan_lib(CONAN_PKG::abseil abseil/20210324.2)
 # SQLite 3
 # --------
 add_conan_lib(CONAN_PKG::sqlite3 sqlite3/3.36.0)
+
+# cpp-httplib
+# ---
+add_conan_lib(CONAN_PKG::cpp-httplib cpp-httplib/0.9.0)
+
+# OpenSSL
+# -------
+add_conan_lib_opt(CONAN_PKG::openssl openssl/1.1.1k openssl:shared=False)

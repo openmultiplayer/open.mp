@@ -348,7 +348,7 @@ PawnPlugin::PawnPlugin(std::string const & path, ICore * core)
 	}
 
 	// First, get the plugin's features.
-	unsigned int flags_;
+	unsigned int flags_ = 0;
 	supports_f Supports_ = FindSym<supports_f>(pluginHandle_, "Supports");
 	if (Supports_)
 	{
