@@ -3,16 +3,17 @@
 #include "database_result_set_row.hpp"
 
 struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
-	int getID() const override {
-		return poolID;
-	}
-
+	
 	/// Adds a row
 	/// @param fieldCount Field count
 	/// @param values Field values
 	/// @param fieldNames Field names
 	/// @returns "true" if row has been successfully added, otherwise "false"
 	bool addRow(int fieldCount, char** values, char** fieldNames);
+
+	/// Gets its pool element ID
+	/// @return Pool element ID
+	int getID() const override;
 
 	/// Gets the number of rows
 	/// @returns Number of rows
@@ -25,6 +26,11 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
 	/// Gets the number of fields
 	/// @returns Number of fields
 	std::size_t getFieldCount() const override;
+
+	/// Is field name available
+	/// @param fieldName Field name
+	/// @returns "true" if field name is available, otherwise "false"
+	bool isFieldNameAvailable(StringView fieldName) const override;
 
 	/// Gets the name of the field by the specified field index
 	/// @param fieldIndex Field index
