@@ -14,6 +14,7 @@ enum ComponentType {
 	Other,
 	Network,
 	Pool,
+	ConfigProvider,
 };
 
 struct ICore;
