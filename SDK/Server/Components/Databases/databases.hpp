@@ -8,6 +8,11 @@ struct IDatabaseResultSetRow {
 	/// @returns Number of fields
 	virtual std::size_t getFieldCount() const = 0;
 
+	/// Is field name available
+	/// @param fieldName Field name
+	/// @returns "true" if field name is available, otherwise "false"
+	virtual bool isFieldNameAvailable(StringView fieldName) const = 0;
+
 	/// Gets the name of the field by the specified field index
 	/// @param fieldIndex Field index
 	/// @returns Name of the field
@@ -58,6 +63,11 @@ struct IDatabaseResultSet : public IIDProvider {
 	/// @returns Number of fields
 	virtual std::size_t getFieldCount() const = 0;
 
+	/// Is field name available
+	/// @param fieldName Field name
+	/// @returns "true" if field name is available, otherwise "false"
+	virtual bool isFieldNameAvailable(StringView fieldName) const = 0;
+
 	/// Gets the name of the field by the specified field index
 	/// @param fieldIndex Field index
 	/// @returns Name of the field
@@ -104,15 +114,10 @@ struct IDatabaseConnection : public IIDProvider {
 	/// @param query Query to execute
 	/// @returns Result set
 	virtual IDatabaseResultSet* executeQuery(StringView query) = 0;
-
-	/// Frees the specified result set
-	/// @param resultSet Result set
-	/// @returns "true" if result set has been successfully freed, otherwise "false"
-	virtual bool freeResultSet(IDatabaseResultSet& resultSet) = 0;
 };
 
 static const UUID DatabasesComponent_UUID = UUID(0x80092e7eb5821a96 /*0x80092e7eb5821a969640def7747a231a*/);
-struct IDatabasesComponent : public IPoolComponent<IDatabaseConnection, 1024> {
+struct IDatabasesComponent : public IComponent {
 	PROVIDE_UUID(DatabasesComponent_UUID);
 
 	/// Opens a new database connection
@@ -125,11 +130,36 @@ struct IDatabasesComponent : public IPoolComponent<IDatabaseConnection, 1024> {
 	/// @returns "true" if database connection has been successfully closed, otherwise "false"
 	virtual bool close(IDatabaseConnection& connection) = 0;
 
-	/// Gets the number of open database connections
-	/// @returns Number of open database connections
-	virtual std::size_t getOpenConnectionCount() const = 0;
+	/// Frees the specified result set
+	/// @param resultSet Result set
+	/// @returns "true" if result set has been successfully freed, otherwise "false"
+	virtual bool freeResultSet(IDatabaseResultSet& resultSet) = 0;
 
-	/// Gets the number of open database result sets
-	/// @returns Number of open database result sets
-	virtual std::size_t getOpenDatabaseResultSetCount() const = 0;
+	/// Gets the number of database connections
+	/// @returns Number of database connections
+	virtual std::size_t getDatabaseConnectionCount() const = 0;
+
+	/// Is database connection ID valid
+	/// @param databaseConnectionID Database connection ID
+	/// @returns "true" if database connection ID is valid, otherwise "false"
+	virtual bool isDatabaseConnectionIDValid(int databaseConnectionID) const = 0;
+
+	/// Gets a database connection by ID
+	/// @param databaseConnectionID Database connection ID
+	/// @returns Database connection
+	virtual IDatabaseConnection& getDatabaseConnectionByID(int databaseConnectionID) = 0;
+
+	/// Gets the number of database result sets
+	/// @returns Number of result sets
+	virtual std::size_t getDatabaseResultSetCount() const = 0;
+
+	/// Is database result set ID valid
+	/// @param databaseResultSetID Database result set ID
+	/// @returns "true" if database result set ID is valid, otherwise "false"
+	virtual bool isDatabaseResultSetIDValid(int databaseResultSetID) const = 0;
+
+	/// Gets a database result set by ID
+	/// @param databaseResultSetID Database result set ID
+	/// @returns Database result set
+	virtual IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) = 0;
 };

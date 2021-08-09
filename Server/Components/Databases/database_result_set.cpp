@@ -26,6 +26,12 @@ bool DatabaseResultSet::addRow(int fieldCount, char** fieldNames, char** values)
 	return ret;
 }
 
+/// Gets its pool element ID
+/// @return Pool element ID
+int DatabaseResultSet::getID() const {
+	return poolID;
+}
+
 /// Gets the number of rows
 /// @returns Number of rows
 std::size_t DatabaseResultSet::getRowCount() const {
@@ -45,6 +51,13 @@ bool DatabaseResultSet::selectNextRow() {
 /// @returns Number of fields
 std::size_t DatabaseResultSet::getFieldCount() const {
 	return rows.empty() ? static_cast<std::size_t>(0) : rows.front().getFieldCount();
+}
+
+/// Is field name available
+/// @param fieldName Field name
+/// @returns "true" if field name is available, otherwise "false"
+bool DatabaseResultSet::isFieldNameAvailable(StringView fieldName) const {
+	return !rows.empty() && rows.front().isFieldNameAvailable(fieldName);
 }
 
 /// Gets the name of the field by the specified field index
