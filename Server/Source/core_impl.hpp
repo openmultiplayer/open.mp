@@ -384,8 +384,12 @@ struct Core final : public ICore, public PlayerEventHandler {
     void printLn(const char* fmt, ...) override {
         va_list args;
         va_start(args, fmt);
-        vprintf(fmt, args);
+        vprintLn(fmt, args);
         va_end(args);
+    }
+
+    void vprintLn(const char* fmt, va_list args) override {
+        vprintf(fmt, args);
         printf("\r\n");
     }
 
