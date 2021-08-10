@@ -491,18 +491,6 @@ void RakNetLegacyNetwork::init(ICore* c) {
     if (*config.getInt("announce")) {
         const String get = "/0.3.7/announce/" + std::to_string(port);
         {
-            httplib::Client request("http://server.sa-mp.com");
-            request.set_follow_location(true);
-            request.set_connection_timeout(Seconds(5));
-            request.set_read_timeout(Seconds(5));
-            request.set_write_timeout(Seconds(5));
-            const httplib::Result res = request.Get(get.c_str());
-            if (!res || res.value().status != 200) {
-                core->printLn("Failed to announce legacy network to SA-MP list");
-            }
-        }
-
-        {
             httplib::Client request("https://api.open.mp");
             request.enable_server_certificate_verification(true);
             request.set_follow_location(true);
