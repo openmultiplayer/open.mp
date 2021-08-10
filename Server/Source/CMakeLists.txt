@@ -22,6 +22,8 @@ target_link_libraries(Server PUBLIC
 
 target_link_libraries(Server PRIVATE
 	CONAN_PKG::nlohmann_json
+	CONAN_PKG::cpp-httplib
+	CONAN_PKG::openssl
 )
 
 if(MSVC)
