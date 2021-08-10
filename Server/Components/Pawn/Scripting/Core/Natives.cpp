@@ -35,9 +35,9 @@ SCRIPT_API(atan, float(float value))
 	return std::atan(value) * 180 / M_PI;
 }
 
-SCRIPT_API(atan2, float(float x, float y))
+SCRIPT_API(atan2, float(float y, float x))
 {
-	return std::atan2(x, y) * 180 / M_PI;
+	return std::atan2(y, x) * 180 / M_PI;
 }
 
 SCRIPT_API(GetPlayerPoolSize, int())
