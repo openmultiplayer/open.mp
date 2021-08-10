@@ -7,6 +7,16 @@
 #include "player.hpp"
 #include "component.hpp"
 
+enum HTTPRequestType {
+	HTTPRequestType_Get,
+	HTTPRequestType_Post,
+	HTTPRequestType_Head
+};
+
+struct HTTPResponseHandler {
+	virtual void onHTTPResponse(int status, StringView body) = 0;
+};
+
 /// An event handler for core events
 struct CoreEventHandler {
 	virtual void onTick(Microseconds elapsed) = 0;
@@ -103,6 +113,13 @@ struct ICore {
 	/// @param name The bot name (player name)
 	/// @param script The bot script to execute
 	virtual void connectBot(StringView name, StringView script) = 0;
+
+	/// Launch an HTTP request and read the response
+	/// @param handler The handler that will handle the response
+	/// @param type The request type
+	/// @param url The URL
+	/// @param[opt] data The POST data
+	virtual void requestHTTP(HTTPResponseHandler& handler, HTTPRequestType type, StringView url, StringView data = StringView()) = 0;
 
 	/// Add a per-RPC event handler for each network for the packet's network ID
 	template <class Packet>
