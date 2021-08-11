@@ -95,5 +95,6 @@ static const FlatHashMap<String, Variant<int, String, float, DynamicArray<String
     { "max_bots", 0 },
     { "cookie_reseed_time", 300000 },
     { "player_timeout", 10000 },
-    { "announce", true }
+    { "announce", true },
+    { "logging", true }
 };
