@@ -446,6 +446,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         removeBuildingForPlayerRPC.ModelID = model;
         removeBuildingForPlayerRPC.Position = pos;
         removeBuildingForPlayerRPC.Radius = radius;
+        sendRPC(removeBuildingForPlayerRPC);
     }
 
     void forceClassSelection() override {
