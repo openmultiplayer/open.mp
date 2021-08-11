@@ -87,6 +87,20 @@ namespace utils {
 		return 0;
 	}
 
+	static int stream_putstr(void* dest, const TCHAR* str)
+	{
+		String* out = reinterpret_cast<String*>(dest);
+		(*out) += str;
+		return 0;
+	}
+
+	static int stream_putchar(void* dest, TCHAR ch)
+	{
+		String* out = reinterpret_cast<String*>(dest);
+		(*out) += ch;
+		return 0;
+	}
+
 	inline cell AMX_NATIVE_CALL pawn_format(AMX * amx, cell const * params)
 	{
 		int
@@ -124,6 +138,42 @@ namespace utils {
 		cstr = amx_Address(amx, params[1]);
 		amx_SetString(cstr, (char *)output, false, sizeof(TCHAR) > 1, gLen);
 		free(output);
+		return 1;
+	}
+
+	inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
+	{
+		int
+			num = params[0] / sizeof(cell);
+		cell*
+			cstr;
+		AMX_FMTINFO
+			info;
+		memset(&info, 0, sizeof info);
+
+		if (num < 1)
+		{
+			PawnManager::Get()->core->printLn("Incorrect parameters given to `printf`: %u < %u", num, 1);
+			return 0;
+		}
+
+		String out;
+
+		info.params = params + 2;
+		info.numparams = num - 1;
+		info.skip = 0;
+		info.length = INT_MAX;  // Max. length of the string.
+		info.f_putstr = stream_putstr;
+		info.f_putchar = stream_putchar;
+		info.user = &out;
+
+		cstr = amx_Address(amx, params[1]);
+		amx_printstring(amx, cstr, &info);
+
+		if (!out.empty()) {
+			PawnManager::Get()->core->printLn("%s", out.c_str());
+		}
+
 		return 1;
 	}
 
