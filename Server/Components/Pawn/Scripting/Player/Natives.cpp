@@ -9,7 +9,7 @@ SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, std::string
 }
 
 SCRIPT_API(SetPlayerCameraPos, bool(IPlayer& player, Vector3 vec))
-{	
+{
 	player.setCameraPosition(vec);
 	return true;
 }
@@ -367,7 +367,7 @@ SCRIPT_API(GetPlayerLastShotVectors, bool(IPlayer& player, Vector3& origin, Vect
 }
 
 SCRIPT_API(GetPlayerCameraTargetPlayer, int(IPlayer& player))
-{	
+{
 	IPlayer* target = player.getCameraTargetPlayer();
 	if (target)
 	{
@@ -420,7 +420,6 @@ SCRIPT_API(PutPlayerInVehicle, bool(IPlayer& player, IVehicle& vehicle, int seat
 
 SCRIPT_API(RemoveBuildingForPlayer, bool(IPlayer& player, uint32_t model, Vector3 pos, float radius))
 {
-	//Not working.
 	player.removeDefaultObjects(model, pos, radius);
 	return true;
 }
@@ -450,7 +449,7 @@ SCRIPT_API(ResetPlayerWeapons, bool(IPlayer& player))
 }
 
 SCRIPT_API(SetPlayerAmmo, bool(IPlayer& player, uint8_t id, uint32_t ammo))
-{	
+{
 	WeaponSlotData data;
 	data.id = id;
 	data.ammo = ammo;
@@ -506,8 +505,8 @@ SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool toggle))
 	return true;
 }
 
-SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string & animlib, const std::string & animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
-{	
+SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
+{
 	Animation data;
 	data.lib = animlib;
 	data.name = animname;
@@ -524,7 +523,7 @@ SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string & animlib, co
 SCRIPT_API(GetAnimationName, bool(IPlayer& player, std::string& lib, std::string& name))
 {
 	PlayerAnimationData data = player.getAnimationData();
-	std::pair<String, String > anim = data.name();
+	Pair<String, String> anim = data.name();
 	lib = anim.first;
 	name = anim.second;
 	return true;
