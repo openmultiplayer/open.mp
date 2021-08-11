@@ -351,3 +351,181 @@ SCRIPT_API(SetPlayerWorldBounds, bool(IPlayer& player, float xMax, float xMin, f
 	player.setWorldBounds(coords);
 	return true;
 }
+
+SCRIPT_API(ClearAnimations, bool(IPlayer& player, int syncType))
+{
+	player.clearAnimations(PlayerAnimationSyncType(syncType));
+	return true;
+}
+
+SCRIPT_API(GetPlayerLastShotVectors, bool(IPlayer& player, Vector3& origin, Vector3& hitPos))
+{
+	PlayerBulletData data = player.getBulletData();
+	origin = data.origin;
+	hitPos = data.hitPos;
+	return true;
+}
+
+SCRIPT_API(GetPlayerCameraTargetPlayer, int(IPlayer& player))
+{	
+	IPlayer* target = player.getCameraTargetPlayer();
+	if (target)
+	{
+		return target->getID();
+	}
+	return INVALID_PLAYER_ID;
+}
+
+SCRIPT_API(GetPlayerCameraTargetActor, int(IPlayer& player))
+{
+	IActor* target = player.getCameraTargetActor();
+	if (target)
+	{
+		return target->getID();
+	}
+	return INVALID_ACTOR_ID;
+
+}
+
+SCRIPT_API(GetPlayerCameraTargetObject, int(IPlayer& player))
+{
+	IObject* target = player.getCameraTargetObject();
+	if (target)
+	{
+		return target->getID();
+	}
+	return INVALID_OBJECT_ID;
+}
+
+SCRIPT_API(GetPlayerCameraTargetVehicle, int(IPlayer& player))
+{
+	IVehicle* target = player.getCameraTargetVehicle();
+	if (target)
+	{
+		return target->getID();
+	}
+	return INVALID_VEHICLE_ID;
+}
+
+SCRIPT_API(IsPlayerConnected, bool(IPlayer& player))
+{
+	return true;
+}
+
+SCRIPT_API(PutPlayerInVehicle, bool(IPlayer& player, IVehicle& vehicle, int seatID))
+{
+	vehicle.putPlayer(player, seatID);
+	return true;
+}
+
+SCRIPT_API(RemoveBuildingForPlayer, bool(IPlayer& player, uint32_t model, Vector3 pos, float radius))
+{
+	//Not working.
+	player.removeDefaultObjects(model, pos, radius);
+	return true;
+}
+
+SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player, IVehicle& vehicle))
+{
+	vehicle.removePlayer(player);
+	return true;
+}
+
+SCRIPT_API(RemovePlayerMapIcon, bool(IPlayer& player, int iconID))
+{
+	player.unsetMapIcon(iconID);
+	return true;
+}
+
+SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, int style, uint32_t colour))
+{
+	player.setMapIcon(iconID, pos, type, MapIconStyle(style), Colour::FromRGBA(colour));
+	return true;
+}
+
+SCRIPT_API(ResetPlayerWeapons, bool(IPlayer& player))
+{
+	player.resetWeapons();
+	return true;
+}
+
+SCRIPT_API(SetPlayerAmmo, bool(IPlayer& player, uint8_t id, uint32_t ammo))
+{	
+	WeaponSlotData data;
+	data.id = id;
+	data.ammo = ammo;
+	player.setWeaponAmmo(data);
+	return true;
+}
+
+SCRIPT_API(SetPlayerArmedWeapon, bool(IPlayer& player, uint8_t weapon))
+{
+	player.setArmedWeapon(weapon);
+	return true;
+}
+
+SCRIPT_API(SetPlayerChatBubble, bool(IPlayer& player, std::string& text, uint32_t colour, float drawdistance, int expiretime))
+{
+	player.setChatBubble(text, Colour::FromRGBA(colour), drawdistance, std::chrono::milliseconds(expiretime));
+	return true;
+}
+
+SCRIPT_API(SetPlayerPosFindz, bool(IPlayer& player, Vector3 pos))
+{
+	player.setPositionFindZ(pos);
+	return true;
+}
+
+SCRIPT_API(SetPlayerSkillLevel, bool(IPlayer& player, uint8_t weapon, int level))
+{
+	player.setSkillLevel(PlayerWeaponSkill(weapon), level);
+	return true;
+}
+
+SCRIPT_API(SetPlayerSpecialAction, bool(IPlayer& player, uint32_t action))
+{
+	player.setAction(PlayerSpecialAction(action));
+	return true;
+}
+
+SCRIPT_API(ShowPlayerNameTagForPlayer, bool(IPlayer& player, IPlayer& other, bool toggle))
+{
+	player.toggleOtherNameTag(other, toggle);
+	return true;
+}
+
+SCRIPT_API(TogglePlayerControllable, bool(IPlayer& player, bool toggle))
+{
+	player.setControllable(toggle);
+	return true;
+}
+
+SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool toggle))
+{
+	player.setSpectating(toggle);
+	return true;
+}
+
+SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string & animlib, const std::string & animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
+{	
+	Animation data;
+	data.lib = animlib;
+	data.name = animname;
+	data.timeData.delta = delta;
+	data.timeData.loop = loop;
+	data.timeData.lockX = lockX;
+	data.timeData.lockY = lockY;
+	data.timeData.freeze = freeze;
+	data.timeData.time = time;
+	player.applyAnimation(data, PlayerAnimationSyncType(sync));
+	return true;
+}
+
+SCRIPT_API(GetAnimationName, bool(IPlayer& player, std::string& lib, std::string& name))
+{
+	PlayerAnimationData data = player.getAnimationData();
+	std::pair<String, String > anim = data.name();
+	lib = anim.first;
+	name = anim.second;
+	return true;
+}
