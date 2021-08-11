@@ -2,7 +2,6 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <cmath>
 #include "../Types.hpp"
 
 SCRIPT_API(GetTickCount, int())
@@ -79,4 +78,8 @@ SCRIPT_API(GetActorPoolSize, int())
 		return highestID;
 	}
 	return -1;
+}
+
+SCRIPT_API(print, void(const std::string& text)) {
+	PawnManager::Get()->core->printLn("%s", text.c_str());
 }
