@@ -43,7 +43,7 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 
 		// read values of plugins, entry_file and side_scripts from config file
 		IConfig& config = core->getConfig();
-		Span<const StringView> plugins = config.getStrings("plugins");
+		Span<const StringView> plugins = config.getStrings("legacy_plugins");
 		StringView entryFile = config.getString("entry_file");
 		Span<const StringView> sideScripts = config.getStrings("side_scripts");
 

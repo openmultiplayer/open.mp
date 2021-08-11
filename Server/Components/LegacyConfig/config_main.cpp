@@ -155,17 +155,23 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 				String listStr = right;
 				DynamicArray<String> storage;
 				DynamicArray<StringView> list;
-				for (int i = listStr.find_first_of(' '); i != -1;) {
-					int next = listStr.find_first_of(' ', i + 1);
+				int i = listStr.find_first_of(' ');
+				if (i != -1) {
+					for (; i != -1;) {
+						int next = listStr.find_first_of(' ', i + 1);
 
-					if (next != -1) {
-						storage.emplace_back(listStr.substr(i + 1, next - i - 1));
-					}
-					else {
-						storage.emplace_back(listStr.substr(i + 1));
-					}
+						if (next != -1) {
+							storage.emplace_back(listStr.substr(i + 1, next - i - 1));
+						}
+						else {
+							storage.emplace_back(listStr.substr(i + 1));
+						}
 
-					i = next;
+						i = next;
+					}
+				}
+				else {
+					storage.emplace_back(listStr.substr(i + 1));
 				}
 				for (int i = 0; i < storage.size(); ++i) {
 					list.emplace_back(storage[i]);
