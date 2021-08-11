@@ -100,6 +100,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 	target_compile_definitions(pawn-runtime
 		PRIVATE
 			-DFLOATPOINT
+			-DAMX_STRING_LIB
 	)
 
 	if(UNIX)
