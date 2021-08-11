@@ -63,8 +63,9 @@ private:
     ICore& core;
 };
 
+static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
+
 struct Config final : IEarlyConfig {
-    static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
@@ -306,6 +307,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
+    FILE* logFile;
 
     int* EnableZoneNames;
     int* UsePlayerPedAnims;
@@ -334,9 +336,14 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     Core() :
         players(*this),
-        components(*this)
+        components(*this),
+        logFile(nullptr)
     {
         players.getEventDispatcher().addEventHandler(this);
+
+        if (*config.getInt("logging")) {
+            logFile = ::fopen("log.txt", "w");
+        }
 
         EnableZoneNames = config.getInt("enable_zone_names");
         UsePlayerPedAnims = config.getInt("use_player_ped_anims");
@@ -366,6 +373,9 @@ struct Core final : public ICore, public PlayerEventHandler {
 
     ~Core() {
         players.getEventDispatcher().removeEventHandler(this);
+        if (logFile) {
+            fclose(logFile);
+        }
     }
 
     IConfig& getConfig() override {
@@ -392,8 +402,67 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void vprintLn(const char* fmt, va_list args) override {
-        vprintf(fmt, args);
-        printf("\r\n");
+        vlogLn(LogLevel::Message, fmt, args);
+    }
+
+    virtual void logLn(LogLevel level, const char* fmt, ...) override {
+        va_list args;
+        va_start(args, fmt);
+        vlogLn(level, fmt, args);
+        va_end(args);
+    }
+
+    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args) {
+        fputs("[", stream);
+        fputs(iso8601, stream);
+        fputs("]", stream);
+        fputs(prefix, stream);
+        vfprintf(stream, fmt, args);
+        fputs("\n", stream);
+    }
+
+    virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override {
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+        if (level == LogLevel::Debug) {
+            char debugStr[4096] = { 0 };
+            const int written = vsnprintf(debugStr, sizeof(debugStr)-1, fmt, args);
+            debugStr[written] = '\n';
+            OutputDebugString(debugStr);
+        }
+#endif
+#ifndef _DEBUG
+        if (level == LogLevel::Debug) {
+            return;
+        }
+#endif
+        const char* prefix = nullptr;
+        switch (level) {
+        case LogLevel::Debug:
+            prefix = " [Debug] ";
+            break;
+        case LogLevel::Message:
+            prefix = " [Info] ";
+            break;
+        case LogLevel::Warning:
+            prefix = " [Warning] ";
+            break;
+        case LogLevel::Error:
+            prefix = " [Error] ";
+        }
+
+        char iso8601[28] = { 0 };
+        std::time_t now = WorldTime::to_time_t(WorldTime::now());
+        std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::gmtime(&now));
+
+        FILE* stream = stdout;
+        if (level == LogLevel::Error) {
+            stream = stderr;
+        }
+        logToStream(stream, iso8601, prefix, fmt, args);
+        if (logFile) {
+            logToStream(logFile, iso8601, prefix, fmt, args);
+            fflush(logFile);
+        }
     }
 
     IPlayerPool& getPlayers() override {
