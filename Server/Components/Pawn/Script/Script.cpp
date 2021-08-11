@@ -68,13 +68,12 @@ PawnScript::PawnScript(int id, std::string const & path, ICore * core)
 		loaded_ = true;
 		break;
 	default:
-		serverCore->printLn(aux_StrError(err));
+		serverCore->printLn("%s", aux_StrError(err));
 		return;
 	}
 
 	if (loaded_) {
 		amx_ArgsInit(&amx_);
-		amx_ConsoleInit(&amx_);
 		amx_CoreInit(&amx_);
 		amx_FileInit(&amx_);
 		amx_StringInit(&amx_);
@@ -94,7 +93,6 @@ PawnScript:: ~PawnScript()
 		amx_StringCleanup(&amx_);
 		amx_FileCleanup(&amx_);
 		amx_CoreCleanup(&amx_);
-		amx_ConsoleCleanup(&amx_);
 		amx_ArgsCleanup(&amx_);
 		aux_FreeProgram(&amx_);
 	}

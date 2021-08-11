@@ -98,7 +98,7 @@ public:
 
 		// Step 2: Print it.
 		if (err != AMX_ERR_NONE) {
-			serverCore->printLn(aux_StrError(err));
+			serverCore->printLn("%s", aux_StrError(err));
 		}
 		return ret;
 	}
