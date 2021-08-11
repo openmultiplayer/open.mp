@@ -127,6 +127,7 @@ void PawnManager::Spawn(std::string const & name)
 	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
 	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
 	script.Register("format", &utils::pawn_format);
+	script.Register("printf", &utils::pawn_printf);
 	script.Register("Script_GetID", &utils::pawn_Script_GetID);
 
 	pawn_natives::AmxLoad(script.GetAMX());
@@ -142,7 +143,7 @@ void PawnManager::Spawn(std::string const & name)
 	if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE)
 	{
 		// If there's no `main` ignore it for now.
-		PawnManager::Get()->core->printLn(aux_StrError(err));
+		PawnManager::Get()->core->printLn("%s", aux_StrError(err));
 	}
 	// TODO: `AMX_EXEC_CONT` support.
 	// Assume that all initialisation and header mangling is now complete, and that it is safe to
