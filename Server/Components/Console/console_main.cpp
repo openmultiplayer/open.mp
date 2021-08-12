@@ -34,7 +34,9 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	}
 
 	~ConsoleComponent() {
-		consoleThread.join();
+		if (consoleThread.joinable()) {
+			consoleThread.join();
+		}
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
 		}
