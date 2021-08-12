@@ -26,6 +26,7 @@ int main(int argc, char** argv)
     )
     ;
     options.parse_positional("script");
+    options.show_positional_help();
 
     auto result = options.parse(argc, argv);
 
