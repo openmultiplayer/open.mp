@@ -34,7 +34,7 @@ struct IVariableStorageBase {
 	/// Get a variable's type
 	virtual VariableType getType(StringView key) const = 0;
 
-	/// Erase a variable, freeing its memory
+	/// Erase a variable by setting its type to None and freeing its memory if it's a string
 	virtual bool erase(StringView key) = 0;
 };
 
