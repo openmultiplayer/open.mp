@@ -506,16 +506,18 @@ struct RivershellMode :
 	}
 
 	~RivershellMode() {
-		c->getPlayers().getEventDispatcher().removeEventHandler(this);
-		c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
-		if (classes) {
-			classes->getEventDispatcher().removeEventHandler(this);
-		}
-		if (vehicles) {
-			vehicles->getEventDispatcher().removeEventHandler(this);
-		}
-		if (checkpoints) {
-			checkpoints->getEventDispatcher().removeEventHandler(this);
+		if (c) {
+			c->getPlayers().getEventDispatcher().removeEventHandler(this);
+			c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
+			if (classes) {
+				classes->getEventDispatcher().removeEventHandler(this);
+			}
+			if (vehicles) {
+				vehicles->getEventDispatcher().removeEventHandler(this);
+			}
+			if (checkpoints) {
+				checkpoints->getEventDispatcher().removeEventHandler(this);
+			}
 		}
 	}
 } component;
