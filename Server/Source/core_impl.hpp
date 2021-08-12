@@ -114,18 +114,6 @@ struct Config final : IEarlyConfig {
                     }
                 }
             }
-            else {
-                // Create config file if it doesn't exist
-                std::ofstream ofs(ConfigFileName);
-                nlohmann::json json;
-
-                if (ofs.good()) {
-                    for (const auto& kv : Defaults) {
-                        json[kv.first] = kv.second;
-                    }
-                    ofs << json.dump(4) << std::endl;
-                }
-            }
             // Fill any values missing in config with defaults
             for (const auto& kv : Defaults) {
                 if (processed.find(kv.first) != processed.end()) {
@@ -292,6 +280,26 @@ struct Config final : IEarlyConfig {
     void optimiseBans() {
         std::sort(bans.begin(), bans.end());
         bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
+    }
+
+    static bool writeDefault() {
+        // Creates default config.json file if it doesn't exist
+        // Returns true if a config file was written, false otherwise
+        std::ifstream ifs(ConfigFileName);
+        if(ifs.good()) {
+            return false;
+        }
+
+        std::ofstream ofs(ConfigFileName);
+        nlohmann::json json;
+
+        if (ofs.good()) {
+            for (const auto& kv : Defaults) {
+                json[kv.first] = kv.second;
+            }
+            ofs << json.dump(4) << std::endl;
+        }
+        return true;
     }
 
 private:
