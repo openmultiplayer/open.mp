@@ -156,3 +156,7 @@ add_conan_lib(CONAN_PKG::cpp-httplib cpp-httplib/0.9.0)
 # OpenSSL
 # -------
 add_conan_lib_opt(CONAN_PKG::openssl openssl/1.1.1k openssl:shared=False)
+
+# cxxopts
+# ----
+add_conan_lib(CONAN_PKG::cxxopts cxxopts/2.2.1)
