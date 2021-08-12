@@ -63,7 +63,12 @@ struct VariableStorageBase : public ToInherit {
 	}
 
 	bool erase(StringView key) override {
-		return data_.erase(key) == 1;
+		auto it = data_.find(key);
+		if (it == data_.end()) {
+			return false;
+		}
+		it->second = Variant<int, String, float>();
+		return true;
 	}
 
 private:
