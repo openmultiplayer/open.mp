@@ -36,6 +36,12 @@ struct IVariableStorageBase {
 
 	/// Erase a variable by setting its type to None and freeing its memory if it's a string
 	virtual bool erase(StringView key) = 0;
+
+	/// Get variable name (key) by index
+	virtual bool getKeyAtIndex(int index, String& key) const = 0;
+
+	/// Get variables map size 
+	virtual int size() const = 0;
 };
 
 static const UUID VariablesComponent_UUID = UUID(0x75e121848bc01fa2);
