@@ -463,7 +463,7 @@ SCRIPT_API(SetPlayerArmedWeapon, bool(IPlayer& player, uint8_t weapon))
 	return true;
 }
 
-SCRIPT_API(SetPlayerChatBubble, bool(IPlayer& player, std::string& text, uint32_t colour, float drawdistance, int expiretime))
+SCRIPT_API(SetPlayerChatBubble, bool(IPlayer& player, const std::string& text, uint32_t colour, float drawdistance, int expiretime))
 {
 	player.setChatBubble(text, Colour::FromRGBA(colour), drawdistance, std::chrono::milliseconds(expiretime));
 	return true;
