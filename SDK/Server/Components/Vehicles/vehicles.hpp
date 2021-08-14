@@ -95,6 +95,9 @@ struct IVehicle : public IEntity {
 	/// Set the vehicle's colour
 	virtual void setColour(int col1, int col2) = 0;
 
+	/// Get the vehicle's colour
+	virtual Pair<int, int> getColour() const = 0;
+
 	/// Set the vehicle's health
 	virtual void setHealth(float Health) = 0;
 
