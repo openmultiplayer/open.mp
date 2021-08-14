@@ -116,6 +116,11 @@ enum PlayerSpectateMode {
 	PlayerSpectateMode_Side
 };
 
+enum PlayerCameraCutType {
+	PlayerCameraCutType_Cut,
+	PlayerCameraCutType_Move
+};
+
 static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
@@ -256,20 +261,26 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's position with the proper Z coordinate for the map
 	virtual void setPositionFindZ(Vector3 pos) = 0;
 
-	// Set the player's camera position
+	/// Set the player's camera position
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
-	// Get the player's camera position
+	/// Get the player's camera position
 	virtual Vector3 getCameraPosition() = 0;
 
-	// Set the direction a player's camera looks at
+	/// Set the direction a player's camera looks at
 	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
 
-	// Get the direction a player's camera looks at
+	/// Get the direction a player's camera looks at
 	virtual Vector3 getCameraLookAt() = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;
+
+	/// Interpolate camera position
+	virtual void interpolateCameraPosition(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) = 0;
+
+	/// Interpolate camera look at
+	virtual void interpolateCameraLookAt(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) = 0;
 
 	/// Set the player's name
 	/// @return The player's new name status

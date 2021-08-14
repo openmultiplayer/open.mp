@@ -571,6 +571,26 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(setPlayerCameraBehindPlayerRPC);
     }
 
+    void interpolateCameraPosition(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) override {
+        NetCode::RPC::InterpolateCamera rpc;
+        rpc.PosSet = true;
+        rpc.From = from;
+        rpc.To = to;
+        rpc.Time = time;
+        rpc.Cut = cutType;
+        sendRPC(rpc);
+    }
+
+    void interpolateCameraLookAt(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) override {
+        NetCode::RPC::InterpolateCamera rpc;
+        rpc.PosSet = false;
+        rpc.From = from;
+        rpc.To = to;
+        rpc.Time = time;
+        rpc.Cut = cutType;
+        sendRPC(rpc);
+    }
+
     void setPositionFindZ(Vector3 position) override {
         pos_ = position;
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
