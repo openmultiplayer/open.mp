@@ -144,3 +144,8 @@ SCRIPT_API(SetObjectMaterialText, bool(
 	object.setMaterialText(materialindex, text, materialsize, fontface, fontsize, bold, Colour::FromARGB(fontcolor), Colour::FromARGB(backcolor), ObjectMaterialTextAlign(textalignment));
 	return true;
 }
+
+SCRIPT_API(SetObjectsDefaultCameraCol, bool(bool disable))
+{
+	throw pawn_natives::NotImplemented();
+}
