@@ -154,7 +154,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     const StringView getPlate() override;
 
     void setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater = nullptr) override;
-    void getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) override;
+    void getDamageStatus(int& PanelStatus, int& DoorStatus, int& LightStatus, int& TyreStatus) override;
 
     /// Sets the vehicle's paintjob
     void setPaintJob(int paintjob) override;
@@ -218,6 +218,17 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Set if the vehicle has been occupied.
     void setBeenOccupied(bool occupied) { this->beenOccupied = occupied; lastOccupied = Time::now(); }
 
+    void repair() override {
+        setHealth(1000.f);
+        setDamageStatus(0, 0, 0, 0);
+        params.bonnet = 0;
+        params.boot = 0;
+        params.doorDriver = -1;
+        params.doorPassenger = -1;
+        params.doorBackLeft = -1;
+        params.doorBackRight = -1;
+    }
+
     /// Attaches a vehicle as a trailer to this vehicle.
     void attachTrailer(IVehicle& vehicle) override;
 
@@ -225,7 +236,15 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void detachTrailer() override;
 
     /// Checks if the current vehicle is a trailer.
-    bool isTrailer() override { return !towing && tower != nullptr; }
+    bool isTrailer() const override { return !towing && tower != nullptr; }
+
+    /// Get the current vehicle's attached trailer.
+    IVehicle* getTrailer() const override {
+        if (!towing) {
+            return nullptr;
+        }
+        return trailer;
+    }
 
     void setTower(Vehicle* tower) {
         detaching = true;
