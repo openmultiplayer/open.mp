@@ -62,12 +62,6 @@ SCRIPT_API(SetPlayerCameraLookAt, bool(IPlayer& player, Vector3 vec, int cutType
 	return true;
 }
 
-SCRIPT_API(SendCommand, bool(IPlayer& player, std::string const& msg))
-{
-	player.sendCommand(msg);
-	return true;
-}
-
 SCRIPT_API(SetCameraBehindPlayer, bool(IPlayer& player))
 {
 	player.setCameraBehind();
@@ -140,9 +134,12 @@ SCRIPT_API(SetPlayerTeam, bool(IPlayer& player, int teamid))
 	return true;
 }
 
-SCRIPT_API(GetPlayerTeam, int(IPlayer& player))
+SCRIPT_API(GetPlayerTeam, int(IPlayer* player))
 {
-	return player.getTeam();
+	if(player == nullptr)
+		return -1;
+
+	return player->getTeam();
 }
 
 SCRIPT_API(SetPlayerScore, bool(IPlayer& player, int score))
