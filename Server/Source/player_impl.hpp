@@ -591,6 +591,18 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(rpc);
     }
 
+    void attachCameraToObject(IObject& object) override {
+        NetCode::RPC::AttachCameraToObject rpc;
+        rpc.ObjectID = object.getID();
+        sendRPC(rpc);
+    }
+
+    void attachCameraToObject(IPlayerObject& object) override {
+        NetCode::RPC::AttachCameraToObject rpc;
+        rpc.ObjectID = object.getID();
+        sendRPC(rpc);
+    }
+
     void setPositionFindZ(Vector3 position) override {
         pos_ = position;
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;

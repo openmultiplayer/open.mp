@@ -282,6 +282,12 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Interpolate camera look at
 	virtual void interpolateCameraLookAt(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) = 0;
 
+	/// Attach player's camera to an object
+	virtual void attachCameraToObject(IObject& object) = 0;
+
+	/// Attach player's camera to a player object
+	virtual void attachCameraToObject(IPlayerObject& object) = 0;
+
 	/// Set the player's name
 	/// @return The player's new name status
 	virtual EPlayerNameStatus setName(StringView name) = 0;
