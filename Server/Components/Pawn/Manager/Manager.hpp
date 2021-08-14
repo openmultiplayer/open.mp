@@ -35,6 +35,7 @@ public:
 	FlatHashMap<String, std::unique_ptr<PawnScript>> scripts_;
 	std::string entryScript = "";
 	ICore* core = nullptr;
+	IConfig* config = nullptr;
 	IPlayerPool* players = nullptr;
 	IActorsComponent* actors = nullptr;
 	ICheckpointsComponent* checkpoints = nullptr;

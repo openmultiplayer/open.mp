@@ -273,7 +273,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
     }
 }
 
-void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) {
+void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, int& LightStatus, int& TyreStatus) {
     PanelStatus = panelDamage;
     DoorStatus = doorDamage;
     LightStatus = lightDamage;
@@ -380,7 +380,8 @@ void Vehicle::removePlayer(IPlayer& player) {
 }
 
 void Vehicle::setZAngle(float angle) {
-    rot.q.z = angle;
+    const Vector3 euler = rot.ToEuler();
+    rot = GTAQuat(euler.x, euler.y, angle);
     NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
     setVehicleZAngleRPC.VehicleID = poolID;
     setVehicleZAngleRPC.angle = angle;
