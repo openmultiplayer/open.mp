@@ -805,3 +805,47 @@ SCRIPT_API(AllowPlayerTeleport, bool(IPlayer& player, bool allow))
 	PawnManager::Get()->core->logLn(LogLevel::Warning, "AllowPlayerTeleport: This function is deprecated");
 	return true;
 }
+
+SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(GetPlayerCameraZoom, float(IPlayer& player))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(SelectTextDraw, bool(IPlayer& player, int hoverColour))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(SendClientCheck, bool(IPlayer& player, int type, int memoryAddress, int memoryOffset, int byteCount))
+{
+	throw pawn_natives::NotImplemented();
+}
+SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(StartRecordingPlayerData, bool(IPlayer& player, int recordType, std::string const& recordFile))
+{
+	throw pawn_natives::NotImplemented();
+}
+
+SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
+{
+	throw pawn_natives::NotImplemented();
+}
