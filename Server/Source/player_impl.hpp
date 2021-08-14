@@ -318,7 +318,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return lastPlayedSound_;
     }
 
-    virtual void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override {
+    void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override {
         lastPlayedAudio_ = url;
         NetCode::RPC::PlayAudioStreamForPlayer playAudioStreamRPC;
         playAudioStreamRPC.URL = url;
@@ -326,6 +326,42 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         playAudioStreamRPC.Position = pos;
         playAudioStreamRPC.Distance = distance;
         sendRPC(playAudioStreamRPC);
+    }
+
+    bool playerCrimeReport(IPlayer& suspect, int crime) override {
+        PlayerState	suspectState = suspect.getState();
+        IVehicle* vehicle = nullptr;
+        IPlayerVehicleData* data = suspect.queryData<IPlayerVehicleData>();
+        if (data) {
+            vehicle = data->getVehicle();
+        }
+
+        if ((suspectState == PlayerState_Passenger || suspectState == PlayerState_Driver) && vehicle) {
+            Pair<int, int> colours = vehicle->getColour();
+            NetCode::RPC::PlayCrimeReport rpc;
+            rpc.Suspect = suspect.getID();
+            rpc.InVehicle = 1;
+            rpc.VehicleModel = vehicle->getModel();
+            rpc.VehicleColour = colours.first;
+            rpc.CrimeID = crime;
+            rpc.Position = vehicle->getPosition();
+            sendRPC(rpc);
+            return true;
+        }
+        else if (suspectState == PlayerState_Spawned || suspectState == PlayerState_OnFoot) {
+            NetCode::RPC::PlayCrimeReport rpc;
+            rpc.Suspect = suspect.getID();
+            rpc.InVehicle = 0;
+            rpc.VehicleModel = 0;
+            rpc.VehicleColour = 0;
+            rpc.CrimeID = crime;
+            rpc.Position = suspect.getPosition();
+            sendRPC(rpc);
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     virtual void stopAudio() override {
@@ -689,6 +725,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         }
     }
 
+    WeaponSlots getWeapons() override {
+        return weapons_;
+    }
+
     void resetWeapons() override {
         weapons_.fill({ 0, 0 });
         sendRPC(NetCode::RPC::ResetPlayerWeapons());
@@ -702,6 +742,16 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     uint32_t getArmedWeapon() const override {
         return armedWeapon_;
+    }
+
+    uint32_t getArmedWeaponAmmo() const override {
+        WeaponSlotData weapon;
+        for (WeaponSlotData it : weapons_) {
+            if (it.id == armedWeapon_) {
+                weapon = it;
+            }
+        }
+        return weapon.ammo;
     }
 
     void setShopName(StringView name) override {

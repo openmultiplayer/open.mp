@@ -301,6 +301,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's ammo for a weapon
 	virtual void setWeaponAmmo(WeaponSlotData data) = 0;
 
+	/// Get player's weapons
+	virtual WeaponSlots getWeapons() = 0;
+
 	/// Reset the player's weapons
 	virtual void resetWeapons() = 0;
 
@@ -309,6 +312,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's currently armed weapon
 	virtual uint32_t getArmedWeapon() const = 0;
+
+	/// Get the player's currently armed weapon ammo
+	virtual uint32_t getArmedWeaponAmmo() const = 0;
 
 	/// Set the player's shop name
 	virtual void setShopName(StringView name) = 0;
@@ -360,6 +366,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param pos The position to play at
 	/// @param distance The distance to play at
 	virtual void playAudio(StringView url, bool usePos = false, Vector3 pos = Vector3(0.f), float distance = 0.f) = 0;
+
+	virtual bool playerCrimeReport(IPlayer& suspect, int crime) = 0;
 
 	/// Stop playing audio stream for the player
 	virtual void stopAudio() = 0;
