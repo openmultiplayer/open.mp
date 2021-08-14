@@ -19,6 +19,7 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		core = c;
 		// store core instance and add event handlers
 		PawnManager::Get()->core = core;
+		PawnManager::Get()->config = &core->getConfig();
 		PawnManager::Get()->players = &core->getPlayers();
 
 		PawnPluginManager::Get()->core = core;
