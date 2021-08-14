@@ -679,4 +679,10 @@ namespace pawn_natives
 			* y_,
 			* z_;
 	};
+
+	class NotImplemented: public std::logic_error
+	{
+	public:
+		NotImplemented() : std::logic_error{"Pawn native not yet implemented."} {}
+	};
 }
