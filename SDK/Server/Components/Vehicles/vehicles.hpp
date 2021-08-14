@@ -125,7 +125,7 @@ struct IVehicle : public IEntity {
 	virtual void setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater = nullptr) = 0;
 
 	/// Gets the vehicle's damage status
-	virtual void getDamageStatus(int& PanelStatus, int& DoorStatus, uint8_t& LightStatus, uint8_t& TyreStatus) = 0;
+	virtual void getDamageStatus(int& PanelStatus, int& DoorStatus, int& LightStatus, int& TyreStatus) = 0;
 
 	/// Sets the vehicle's paintjob
 	virtual void setPaintJob(int paintjob) = 0;
@@ -191,7 +191,13 @@ struct IVehicle : public IEntity {
 	virtual void detachTrailer() = 0;
 
 	/// Checks if the current vehicle is a trailer.
-	virtual bool isTrailer() = 0;
+	virtual bool isTrailer() const = 0;
+
+	/// Get the current vehicle's attached trailer.
+	virtual IVehicle* getTrailer() const = 0;
+
+	/// Fully repair the vehicle.
+	virtual void repair() = 0;
 
 	/// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
 	virtual void addCarriage(IVehicle* carriage, int pos) = 0;
@@ -242,7 +248,6 @@ struct IVehiclesComponent : public IPoolComponent<IVehicle, VEHICLE_POOL_SIZE> {
 
 	virtual IVehicle* create(int modelID, Vector3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, Seconds respawnDelay = Seconds(-1), bool addSiren = false) = 0;
 	virtual IVehicle* create(VehicleSpawnData data) = 0;
-	virtual bool getModelInfo(int model, VehicleModelInfoType type, Vector3& out) = 0;
 
 	virtual IEventDispatcher<VehicleEventHandler>& getEventDispatcher() = 0;
 };
