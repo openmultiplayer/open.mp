@@ -1142,7 +1142,7 @@ namespace NetCode {
 			union {
 				uint8_t WeaponAdditionalKey;
 				struct {
-					uint8_t Weapon : 8;
+					uint8_t Weapon : 6;
 					uint8_t AdditionalKey : 2;
 				};
 			};
