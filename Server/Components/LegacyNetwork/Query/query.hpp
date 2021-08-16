@@ -16,18 +16,55 @@ public:
 	~Query()
 	{}
 
-	int handleQuery(char const * buffer, char * output);
+	int handleQuery(char const * buffer, char * output, uint32_t address);
 	void preparePlayerListForQuery();
 
-	void setMaxPlayers(uint16_t value);
+	void setMaxPlayers(uint16_t value) {
+		maxPlayers = value;
+	}
 
-	FlatHashMap<String, String>& getRules();
+	void setPassworded(bool value) {
+		passworded = value;
+	}
+
+	void setLogQueries(bool value) {
+		logQueries = value;
+	}
+
 	template<typename... Args>
-	void setRuleValue(Args... args);
-	void removeRule(StringView ruleName);
+	void setRuleValue(Args... args) {
+		std::vector<std::string> ruleData = { args... };
+		int ruleCount = ruleData.size();
+		if (ruleCount % 2)
+		{
+			ruleCount--;
+		}
 
-	void setServerName(StringView value);
-	void setGameModeName(StringView value);
+		for (int index = 0; index < ruleCount; index += 2)
+		{
+			const std::string
+				& ruleName = ruleData[index];
+			const std::string
+				& ruleValue = ruleData[index + 1];
+			rules[ruleName] = ruleValue;
+		}
+	}
+
+	void removeRule(StringView ruleName) {
+		auto _rule = rules.find(ruleName);
+		if (_rule != rules.end())
+		{
+			rules.erase(ruleName);
+		}
+	}
+
+	void setServerName(StringView value) {
+		serverName = value;
+	}
+
+	void setGameModeName(StringView value) {
+		gameModeName = value;
+	}
 
 private:
 	ICore * core = nullptr;
@@ -36,7 +73,9 @@ private:
 	uint16_t maxPlayers = 0;
 	String serverName = "open.mp server";
 	String gameModeName = "Unknown";
+	bool passworded = false;
 	FlatHashMap<String, String> rules;
+	bool logQueries = false;
 
 	template<typename T>
 	void writeToBuffer(char * output, int & offset, T value, size_t size = sizeof(T));

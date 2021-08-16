@@ -466,11 +466,6 @@ struct INetwork {
 	/// Get a new bit stream for writing
 	virtual INetworkBitStream& writeBitStream() = 0;
 
-	/// For handling query, returns output buffer size
-	// @param buffer Buffer passed to handler, in case there's already a data needed to be written into output or contains pre-processing data
-	// @param output Output buffer to write data into and use in network layer
-	virtual int handleQuery(const char * buffer, char * output) = 0;
-
 	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
 	virtual unsigned getPing(const INetworkPeer& peer) = 0;
 

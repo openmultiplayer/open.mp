@@ -473,11 +473,10 @@ void RakNetLegacyNetwork::init(ICore* c) {
     core = c;
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
-    SAMPRakNet::ServerCoreInit(c);
+    SAMPRakNet::Init(core);
     SAMPRakNet::SeedToken();
     lastCookieSeed = Time::now();
     SAMPRakNet::SeedCookie();
-    query = Query(c);
 
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
@@ -487,6 +486,41 @@ void RakNetLegacyNetwork::init(ICore* c) {
     StringView bind = config.getString("bind");
     cookieSeedTime = Milliseconds(*config.getInt("cookie_reseed_time"));
     SAMPRakNet::SetTimeout(*config.getInt("player_timeout"));
+    SAMPRakNet::SetLogCookies(*config.getInt("logging_cookies"));
+    query = Query(c);
+    query.setLogQueries(*config.getInt("logging_queries"));
+    if (*config.getInt("enable_query")) {
+        SAMPRakNet::SetQuery(&query);
+    }
+
+    StringView hostName = config.getString("server_name");
+    if (!hostName.empty()) {
+        query.setServerName(hostName);
+    }
+    StringView language = config.getString("language");
+    if (!language.empty()) {
+        query.setRuleValue("language", String(language));
+    }
+    StringView modeName = config.getString("mode_name");
+    if (!modeName.empty()) {
+        query.setGameModeName(modeName);
+    }
+    StringView mapName = config.getString("map_name");
+    if (!mapName.empty()) {
+        query.setRuleValue("mapname", String(mapName));
+    }
+    StringView website = config.getString("website");
+    if (!website.empty()) {
+        query.setRuleValue("weburl", String(website));
+    }
+    query.setRuleValue("version", "0.3.7-R2 open.mp");
+
+    StringView password = config.getString("password");
+    query.setPassworded(!password.empty());
+    rakNetServer.SetPassword(password.data());
+
+    int mtu = *config.getInt("network_mtu");
+    rakNetServer.SetMTUSize(mtu);
 
     if (*config.getInt("announce")) {
         const String get = "/0.3.7/announce/" + std::to_string(port);
@@ -557,9 +591,4 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed) {
         SAMPRakNet::SeedCookie();
         lastCookieSeed = now;
     }
-}
-
-int RakNetLegacyNetwork::handleQuery(const char * buffer, char * output) {
-    int outputLength = query.handleQuery(buffer, output);
-    return outputLength;
 }
