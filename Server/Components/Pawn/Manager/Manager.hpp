@@ -71,6 +71,100 @@ public:
 	void Unload(std::string const & name);
 
 	template <typename ... T>
+	cell CallAllInSidesFirst(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second.get()->Call(name, args...);
+			}
+		}
+
+		if (scripts_.find(entryScript) != scripts_.end()) {
+			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
+	cell CallAllInSidesFirstWhile0(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second.get()->Call(name, args...);
+				if (ret) {
+					break;
+				}
+			}
+		}
+
+		if (scripts_.find(entryScript) != scripts_.end()) {
+			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
+	cell CallAllInSidesFirstWhile1(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second.get()->Call(name, args...);
+				if (!ret) {
+					break;
+				}
+			}
+		}
+
+		if (scripts_.find(entryScript) != scripts_.end()) {
+			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
+	cell CallAllInEntryFirst(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		if (scripts_.find(entryScript) != scripts_.end()) {
+			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		}
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second.get()->Call(name, args...);
+			}
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
 	cell CallAll(char const * name, T ... args)
 	{
 		cell
