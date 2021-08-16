@@ -52,6 +52,8 @@ struct IConfig {
 
 };
 
+struct ICore;
+
 /// Used for filling config parameters by Config components
 struct IEarlyConfig : public IConfig {
 	virtual void setString(StringView key, StringView value) = 0;
@@ -61,6 +63,8 @@ struct IEarlyConfig : public IConfig {
 	virtual void setFloat(StringView key, float value) = 0;
 
 	virtual void setStrings(StringView key, Span<const StringView> value) = 0;
+
+	virtual ICore& getCore() = 0;
 };
 
 /// A component interface which allows for adding to the configuration
