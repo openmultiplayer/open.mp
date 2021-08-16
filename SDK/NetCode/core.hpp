@@ -449,7 +449,6 @@ namespace NetCode {
 			Vector3 Pos;
 			uint8_t cutType;
 
-
 			bool read(INetworkBitStream& bs) {
 				return false;
 			}
@@ -465,6 +464,38 @@ namespace NetCode {
 			}
 
 			void write(INetworkBitStream& bs) const {
+			}
+		};
+
+		struct InterpolateCamera final : NetworkPacketBase<82> {
+			bool PosSet;
+			Vector3	From;
+			Vector3	To;
+			int Time;
+			int Cut;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::BIT(PosSet));
+				bs.write(NetworkBitStreamValue::VEC3(From));
+				bs.write(NetworkBitStreamValue::VEC3(To));
+				bs.write(NetworkBitStreamValue::UINT32(Time));
+				bs.write(NetworkBitStreamValue::UINT8(Cut));
+			}
+		};
+
+		struct AttachCameraToObject final : NetworkPacketBase<81> {
+			int ObjectID;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(ObjectID));
 			}
 		};
 
@@ -803,6 +834,28 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::VEC3(Position));
 				bs.write(NetworkBitStreamValue::FLOAT(Distance));
 				bs.write(NetworkBitStreamValue::UINT8(Usepos));
+			}
+		};
+
+		struct PlayCrimeReport final : NetworkPacketBase<112> {
+			int Suspect;
+			int InVehicle;
+			int VehicleModel;
+			int VehicleColour;
+			int CrimeID;
+			Vector3 Position;
+
+			bool read(INetworkBitStream& bs) {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT16(Suspect));
+				bs.write(NetworkBitStreamValue::UINT32(InVehicle));
+				bs.write(NetworkBitStreamValue::UINT32(VehicleModel));
+				bs.write(NetworkBitStreamValue::UINT32(VehicleColour));
+				bs.write(NetworkBitStreamValue::UINT32(CrimeID));
+				bs.write(NetworkBitStreamValue::VEC3(Position));
 			}
 		};
 

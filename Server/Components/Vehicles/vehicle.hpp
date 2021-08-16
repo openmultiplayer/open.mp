@@ -139,6 +139,9 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Sets the vehicle's body colour
     void setColour(int col1, int col2) override;
 
+    /// Get the vehicle's body colour
+    Pair<int, int> getColour() const override;
+
     /// Sets the vehicle's health
     void setHealth(float Health) override;
 

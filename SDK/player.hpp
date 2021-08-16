@@ -116,6 +116,11 @@ enum PlayerSpectateMode {
 	PlayerSpectateMode_Side
 };
 
+enum PlayerCameraCutType {
+	PlayerCameraCutType_Cut,
+	PlayerCameraCutType_Move
+};
+
 static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
@@ -256,20 +261,32 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's position with the proper Z coordinate for the map
 	virtual void setPositionFindZ(Vector3 pos) = 0;
 
-	// Set the player's camera position
+	/// Set the player's camera position
 	virtual void setCameraPosition(Vector3 pos) = 0;
 
-	// Get the player's camera position
+	/// Get the player's camera position
 	virtual Vector3 getCameraPosition() = 0;
 
-	// Set the direction a player's camera looks at
+	/// Set the direction a player's camera looks at
 	virtual void setCameraLookAt(Vector3 pos, int cutType) = 0;
 
-	// Get the direction a player's camera looks at
+	/// Get the direction a player's camera looks at
 	virtual Vector3 getCameraLookAt() = 0;
 
 	/// Sets the camera to a place behind the player
 	virtual void setCameraBehind() = 0;
+
+	/// Interpolate camera position
+	virtual void interpolateCameraPosition(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) = 0;
+
+	/// Interpolate camera look at
+	virtual void interpolateCameraLookAt(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) = 0;
+
+	/// Attach player's camera to an object
+	virtual void attachCameraToObject(IObject& object) = 0;
+
+	/// Attach player's camera to a player object
+	virtual void attachCameraToObject(IPlayerObject& object) = 0;
 
 	/// Set the player's name
 	/// @return The player's new name status
@@ -284,6 +301,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's ammo for a weapon
 	virtual void setWeaponAmmo(WeaponSlotData data) = 0;
 
+	/// Get player's weapons
+	virtual WeaponSlots getWeapons() = 0;
+
 	/// Reset the player's weapons
 	virtual void resetWeapons() = 0;
 
@@ -292,6 +312,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's currently armed weapon
 	virtual uint32_t getArmedWeapon() const = 0;
+
+	/// Get the player's currently armed weapon ammo
+	virtual uint32_t getArmedWeaponAmmo() const = 0;
 
 	/// Set the player's shop name
 	virtual void setShopName(StringView name) = 0;
@@ -343,6 +366,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// @param pos The position to play at
 	/// @param distance The distance to play at
 	virtual void playAudio(StringView url, bool usePos = false, Vector3 pos = Vector3(0.f), float distance = 0.f) = 0;
+
+	virtual bool playerCrimeReport(IPlayer& suspect, int crime) = 0;
 
 	/// Stop playing audio stream for the player
 	virtual void stopAudio() = 0;

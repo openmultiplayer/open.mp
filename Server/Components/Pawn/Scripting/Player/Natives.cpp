@@ -525,3 +525,283 @@ SCRIPT_API(GetAnimationName, bool(IPlayer& player, std::string& lib, std::string
 	name = anim.second;
 	return true;
 }
+
+SCRIPT_API(EditAttachedObject, bool(IPlayer& player, int index))
+{
+	IPlayerObjectData* data = player.queryData<IPlayerObjectData>();
+	if (data) {
+		data->editAttachedObject(index);
+	}
+	return true;
+}
+
+SCRIPT_API(EnablePlayerCameraTarget, bool(IPlayer& player, bool enable))
+{
+	player.toggleCameraTargeting(enable);
+	return true;
+}
+
+SCRIPT_API(EnableStuntBonusForPlayer, bool(IPlayer& player, bool enable))
+{
+	player.toggleStuntBonus(enable);
+	return true;
+}
+
+SCRIPT_API(EnableStuntBonusForAll, bool(bool enable))
+{
+	IPlayerPool* pool = PawnManager::Get()->players;
+	for (IPlayer* player : pool->entries()) {
+		player->toggleStuntBonus(enable);
+	}
+	return true;
+}
+
+SCRIPT_API(GetPlayerAmmo, int(IPlayer& player))
+{
+	return player.getArmedWeaponAmmo();
+}
+
+SCRIPT_API(GetPlayerAnimationIndex, int(IPlayer& player))
+{
+	return player.getAnimationData().ID;
+}
+
+SCRIPT_API(GetPlayerFacingAngle, bool(IPlayer& player, float& angle))
+{
+	GTAQuat quat = player.getRotation();
+	angle = quat.ToEuler().z;
+	return true;
+}
+
+SCRIPT_API(GetPlayerIp, bool(IPlayer& player, std::string& ip))
+{
+	PeerNetworkData data = player.getNetworkData();
+	if (!data.networkID.address.ipv6) {
+		char out[16]{ 0 };
+		if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
+			ip = out;
+			return true;
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
+{
+	return player.getAction();
+}
+
+SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
+{
+	IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+	if (data) {
+		IVehicle* vehicle = data->getVehicle();
+		if (vehicle) {
+			return vehicle->getID();
+		}
+	}
+	return 0;
+}
+
+SCRIPT_API(GetPlayerVehicleSeat, int(IPlayer& player))
+{
+	IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+	if (data) {
+		return data->getSeat();
+	}
+	return -1;
+}
+
+SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
+{
+	WeaponSlots weapons = player.getWeapons();
+	WeaponSlotData weapon = weapons[slot];
+	weaponid = weapon.id;
+	ammo = weapon.ammo;
+	return true;
+}
+
+SCRIPT_API(GetPlayerWeaponState, int(IPlayer& player))
+{
+	PlayerAimData data = player.getAimData();
+	return data.WeaponState;
+}
+
+SCRIPT_API(InterpolateCameraPos, bool(IPlayer& player, Vector3 from, Vector3 to, int time, int cut))
+{
+	player.interpolateCameraPosition(from, to, time, PlayerCameraCutType(cut));
+	return true;
+}
+
+SCRIPT_API(InterpolateCameraLookAt, bool(IPlayer& player, Vector3 from, Vector3 to, int time, int cut))
+{
+	player.interpolateCameraLookAt(from, to, time, PlayerCameraCutType(cut));
+	return true;
+}
+
+SCRIPT_API(IsPlayerAttachedObjectSlotUsed, bool(IPlayer& player, int index))
+{
+	IPlayerObjectData* data = player.queryData<IPlayerObjectData>();
+	if (data) {
+		return data->hasAttachedObject(index);
+	}
+	return false;
+}
+
+SCRIPT_API(AttachCameraToObject, bool(IPlayer& player, IObject& object))
+{
+	player.attachCameraToObject(object);
+	return true;
+}
+
+SCRIPT_API(AttachCameraToPlayerObject, bool(IPlayer& player, IPlayerObject& object))
+{
+	player.attachCameraToObject(object);
+	return true;
+}
+
+SCRIPT_API(GetPlayerCameraAspectRatio, float(IPlayer& player))
+{
+	PlayerAimData data = player.getAimData();
+	return data.AspectRatio;
+}
+
+SCRIPT_API(GetPlayerCameraFrontVector, bool(IPlayer& player, Vector3& vector))
+{
+	PlayerAimData data = player.getAimData();
+	vector = data.CamFrontVector;
+	return true;
+}
+
+SCRIPT_API(GetPlayerCameraMode, int(IPlayer& player))
+{
+	PlayerAimData data = player.getAimData();
+	return data.CamMode;
+}
+
+SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& leftright))
+{
+	PlayerKeyData keyData = player.getKeyData();
+	keys = keyData.keys;
+	updown = keyData.upDown;
+	leftright = keyData.leftRight;
+	return true;
+}
+
+SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
+{
+	PlayerSurfingData data = player.getSurfingData();
+	if (data.type == PlayerSurfingData::Type::Vehicle) {
+		return data.ID;
+	}
+	return INVALID_VEHICLE_ID;
+}
+
+SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
+{
+	PlayerSurfingData data = player.getSurfingData();
+	if (data.type == PlayerSurfingData::Type::Object) {
+		return data.ID;
+	}
+	return INVALID_OBJECT_ID;
+}
+
+SCRIPT_API(GetPlayerTargetPlayer, int(IPlayer& player))
+{
+	IPlayer* target = player.getTargetPlayer();
+	if (target) {
+		return target->getID();
+	}
+	return INVALID_PLAYER_ID;
+}
+
+SCRIPT_API(GetPlayerTargetActor, int(IPlayer& player))
+{
+	IActor* target = player.getTargetActor();
+	if (target) {
+		return target->getID();
+	}
+	return INVALID_ACTOR_ID;
+}
+
+SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))
+{
+	IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+	if (data) {
+		IVehicle* vehicle = data->getVehicle();
+		if (vehicle == &targetVehicle) {
+			return true;
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(IsPlayerInAnyVehicle, bool(IPlayer& player))
+{
+	IPlayerVehicleData* data = player.queryData<IPlayerVehicleData>();
+	if (data) {
+		IVehicle* vehicle = data->getVehicle();
+		if (vehicle) {
+			return true;
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(IsPlayerInRangeOfPoint, bool(IPlayer& player, float range, Vector3 position))
+{
+	return range >= glm::distance(player.getPosition(), position);
+}
+
+SCRIPT_API(PlayCrimeReportForPlayer, bool(IPlayer& player, IPlayer& suspect, int crime))
+{
+	return player.playerCrimeReport(suspect, crime);
+}
+
+SCRIPT_API(RemovePlayerAttachedObject, bool(IPlayer& player, int index))
+{
+	IPlayerObjectData* data = player.queryData<IPlayerObjectData>();
+	if (data) {
+		data->removeAttachedObject(index);
+		return true;
+	}
+	return false;
+}
+
+SCRIPT_API(SetPlayerAttachedObject, bool(IPlayer& player, int index, int modelid, int bone, Vector3 offset, Vector3 rotation, Vector3 scale, uint32_t materialcolor1, uint32_t materialcolor2))
+{
+	IPlayerObjectData* data = player.queryData<IPlayerObjectData>();
+	if (data) {
+		ObjectAttachmentSlotData attachment;
+		attachment.model = modelid;
+		attachment.bone = bone;
+		attachment.offset = offset;
+		attachment.rotation = rotation;
+		attachment.scale = scale;
+		attachment.colour1 = Colour::FromARGB(materialcolor1);
+		attachment.colour2 = Colour::FromARGB(materialcolor2);
+		data->setAttachedObject(index, attachment);
+		return true;
+	}
+	return false;
+}
+
+SCRIPT_API(SetPlayerFacingAngle, bool(IPlayer& player, float angle))
+{
+	Vector3 rotation = player.getRotation().ToEuler();
+	rotation.z = angle;
+	player.setRotation(rotation);
+	return true;
+}
+
+SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint32_t colour))
+{
+	player.setOtherColour(other, Colour::FromRGBA(colour));
+	return true;
+}
+
+SCRIPT_API(AllowPlayerTeleport, bool(IPlayer& player, bool allow))
+{
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "AllowPlayerTeleport: This function is deprecated");
+	return true;
+}
