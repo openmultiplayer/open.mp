@@ -5,7 +5,6 @@
 #include <atomic>
 #include <iostream>
 #include <fstream>
-#include <filesystem>
 
 enum class ParamType {
 	Int,
@@ -21,7 +20,7 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "rcon_password", ParamType::String },
 	{ "rcon", ParamType::Int },
 	{ "gamemode", ParamType::Custom },
-	{ "filterscripts", ParamType::Custom },
+	{ "filterscripts", ParamType::StringList },
 	{ "plugins", ParamType::StringList },
 	{ "announce", ParamType::Int },
 	{ "query", ParamType::Int },
@@ -124,42 +123,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 				if (idx != -1) {
 					right = right.substr(0, idx);
 				}
-				std::filesystem::path path("gamemodes");
-				path /= right;
-				config.setString(it->second, path.string());
-				return true;
-			}
-		}
-		if (name.find("filterscripts") == 0) {
-			auto it = dictionary.find("filterscripts");
-			if (it != dictionary.end()) {
-				String listStr = right;
-				DynamicArray<String> storage;
-				DynamicArray<StringView> list;
-				int i = listStr.find_first_of(' ');
-				if (i != -1) {
-					for (; i != -1;) {
-						int next = listStr.find_first_of(' ', i + 1);
-
-						std::filesystem::path path("filterscripts");
-						if (next != -1) {
-							path /= listStr.substr(i + 1, next - i - 1);
-						}
-						else {
-							path /= listStr.substr(i + 1);
-						}
-						storage.emplace_back(path.string());
-
-						i = next;
-					}
-				}
-				else {
-					storage.emplace_back(listStr.substr(i + 1));
-				}
-				for (int i = 0; i < storage.size(); ++i) {
-					list.emplace_back(storage[i]);
-				}
-				config.setStrings(it->second, list);
+				config.setString(it->second, right);
 				return true;
 			}
 		}
