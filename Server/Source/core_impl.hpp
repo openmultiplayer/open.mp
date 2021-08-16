@@ -69,7 +69,7 @@ struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
-    Config() {
+    Config(ICore& core) : core(core) {
         {
             std::ifstream ifs(ConfigFileName);
             if (ifs.good()) {
@@ -277,6 +277,10 @@ struct Config final : IEarlyConfig {
         return bans[index];
     }
 
+    ICore& getCore() override {
+        return core;
+    }
+
     void optimiseBans() {
         std::sort(bans.begin(), bans.end());
         bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
@@ -303,6 +307,7 @@ struct Config final : IEarlyConfig {
     }
 
 private:
+    ICore& core;
     DynamicArray<BanEntry> bans;
     FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
     FlatHashSet<String> ownAllocations;
@@ -341,14 +346,31 @@ struct Core final : public ICore, public PlayerEventHandler {
     int* Multiplier;
     int* LagCompensation;
     String ServerName;
+    int EnableLogTimestamp;
+    String LogTimestampFormat;
 
     Core() :
         players(*this),
         components(*this),
-        logFile(nullptr)
+        config(*this),
+        logFile(nullptr),
+        EnableLogTimestamp(false)
     {
         players.getEventDispatcher().addEventHandler(this);
+    }
 
+    ~Core() {
+        players.getEventDispatcher().removeEventHandler(this);
+        if (logFile) {
+            fclose(logFile);
+        }
+    }
+
+    IConfig& getConfig() override {
+        return config;
+    }
+
+    void initiated() {
         if (*config.getInt("logging")) {
             logFile = ::fopen("log.txt", "w");
         }
@@ -376,21 +398,10 @@ struct Core final : public ICore, public PlayerEventHandler {
         WeaponRate = config.getInt("weapon_rate");
         Multiplier = config.getInt("multiplier");
         LagCompensation = config.getInt("lag_compensation");
+        EnableLogTimestamp = *config.getInt("logging_timestamp");
         ServerName = config.getString("server_name");
-    }
+        LogTimestampFormat = config.getString("logging_timestamp_format");
 
-    ~Core() {
-        players.getEventDispatcher().removeEventHandler(this);
-        if (logFile) {
-            fclose(logFile);
-        }
-    }
-
-    IConfig& getConfig() override {
-        return config;
-    }
-
-    void initiated() {
         config.optimiseBans();
         config.writeBans();
         components.load();
@@ -421,9 +432,10 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args) {
-        fputs("[", stream);
-        fputs(iso8601, stream);
-        fputs("]", stream);
+        if (iso8601[0]) {
+            fputs(iso8601, stream);
+            fputs(" ", stream);
+        }
         fputs(prefix, stream);
         vfprintf(stream, fmt, args);
         fputs("\n", stream);
@@ -446,21 +458,23 @@ struct Core final : public ICore, public PlayerEventHandler {
         const char* prefix = nullptr;
         switch (level) {
         case LogLevel::Debug:
-            prefix = " [Debug] ";
+            prefix = "[Debug] ";
             break;
         case LogLevel::Message:
-            prefix = " [Info] ";
+            prefix = "[Info] ";
             break;
         case LogLevel::Warning:
-            prefix = " [Warning] ";
+            prefix = "[Warning] ";
             break;
         case LogLevel::Error:
-            prefix = " [Error] ";
+            prefix = "[Error] ";
         }
 
-        char iso8601[28] = { 0 };
-        std::time_t now = WorldTime::to_time_t(WorldTime::now());
-        std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::gmtime(&now));
+        char iso8601[32] = { 0 };
+        if (EnableLogTimestamp  && !LogTimestampFormat.empty()) {
+            std::time_t now = WorldTime::to_time_t(WorldTime::now());
+            std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::gmtime(&now));
+        }
 
         FILE* stream = stdout;
         if (level == LogLevel::Error) {
