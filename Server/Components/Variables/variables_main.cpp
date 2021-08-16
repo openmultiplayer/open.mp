@@ -71,6 +71,19 @@ struct VariableStorageBase : public ToInherit {
 		return true;
 	}
 
+	bool getKeyAtIndex(int index, String& key) const override {
+		auto it = std::next(data_.begin(), index);
+		if (it != data_.end()) {
+			key = it->first;
+			return true;
+		}
+		return false;
+	}
+
+	int size() const override {
+		return data_.size();
+	}
+
 private:
 	FlatHashMap<String, Variant<int, String, float>> data_;
 };
