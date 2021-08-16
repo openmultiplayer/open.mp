@@ -92,9 +92,13 @@ SCRIPT_API(StopAudioStreamForPlayer, bool(IPlayer& player))
 	return true;
 }
 
-SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer& killee, int weapon))
+SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer* killee, int weapon))
 {
-	PawnManager::Get()->players->sendDeathMessageToAll(killer, killee, weapon);
+	if(killee != nullptr)
+	{
+		PawnManager::Get()->players->sendDeathMessageToAll(killer, *killee, weapon);
+	}
+
 	return true;
 }
 
