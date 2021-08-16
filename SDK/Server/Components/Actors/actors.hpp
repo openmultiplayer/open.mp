@@ -48,6 +48,8 @@ struct IActor : public IEntity {
 
 struct ActorEventHandler {
 	virtual void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) {}
+	virtual void onActorStreamOut(IActor& actor, IPlayer& forPlayer) {}
+	virtual void onActorStreamIn(IActor& actor, IPlayer& forPlayer) {}
 };
 
 static const UUID ActorsComponent_UUID = UUID(0xc81ca021eae2ad5c);
