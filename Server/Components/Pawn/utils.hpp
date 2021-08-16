@@ -40,7 +40,7 @@ extern "C"
 #define AMX_CHECK_PARAMETERS(name,params,n) \
 	do {                                                                                            \
 	    if (amx_NumParams(params) != (n)) {                                                         \
-	        PawnManager::Get()->core->printLn("Incorrect parameters given to `%s`: %u != %u", name, amx_NumParams(params), n); \
+	        PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `%s`: %u != %u", name, amx_NumParams(params), n); \
 	        return 0;                                                                               \
 	    }                                                                                           \
 	} while (0)
@@ -48,7 +48,7 @@ extern "C"
 #define AMX_MIN_PARAMETERS(name,params,n) \
 	do {                                                                                            \
 	    if (amx_NumParams(params) < (n)) {                                                          \
-	        PawnManager::Get()->core->printLn("Insufficient parameters given to `%s`: %u < %u", name, amx_NumParams(params), n); \
+	        PawnManager::Get()->core->logLn(LogLevel::Error, "Insufficient parameters given to `%s`: %u < %u", name, amx_NumParams(params), n); \
 	        return 0;                                                                               \
 	    }                                                                                           \
 	} while (0)
@@ -113,7 +113,7 @@ namespace utils {
 
 		if (num < 3)
 		{
-			PawnManager::Get()->core->printLn("Incorrect parameters given to `format`: %u < %u", num, 3);
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `format`: %u < %u", num, 3);
 			return 0;
 		}
 		gLen = params[2];
@@ -153,7 +153,7 @@ namespace utils {
 
 		if (num < 1)
 		{
-			PawnManager::Get()->core->printLn("Incorrect parameters given to `printf`: %u < %u", num, 1);
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `printf`: %u < %u", num, 1);
 			return 0;
 		}
 
@@ -194,7 +194,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[2], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->printLn("Parameter count does not match specifier in `Script_Call`");
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_Call`");
 			return 0;
 		}
 		cell *
@@ -208,7 +208,7 @@ namespace utils {
 			case 'a':
 				if (fmat[i + 1] != 'i' && fmat[i + 1] != 'd')
 				{
-					PawnManager::Get()->core->printLn("Array not followed by size in `Script_Call`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Array not followed by size in `Script_Call`");
 					amx->hea = hea;
 					amx->stk = stk;
 					return 0;
@@ -219,7 +219,7 @@ namespace utils {
 				// Just put the pointer directly.
 				if (amx_Push(amx, params[i + 3]) != AMX_ERR_NONE)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_Call`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_Call`");
 					amx->hea = hea;
 					amx->stk = stk;
 					return 0;
@@ -230,7 +230,7 @@ namespace utils {
 				// passed by reference to varargs functions.
 				if (amx_GetAddr(amx, params[i + 3], &data) != AMX_ERR_NONE || amx_Push(amx, *data) != AMX_ERR_NONE)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_Call`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_Call`");
 					amx->hea = hea;
 					amx->stk = stk;
 					return 0;
@@ -259,7 +259,7 @@ namespace utils {
 		amx = PawnManager::Get()->AMXFromID(params[1]);
 		if (amx == nullptr)
 		{
-			PawnManager::Get()->core->printLn("Could not find target script (%u) in `Script_CallOne`", params[1]);
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Could not find target script (%u) in `Script_CallOne`", params[1]);
 			return 0;
 		}
 		amx_StrParamChar(amx, params[2], name);
@@ -272,7 +272,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[3], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->printLn("Parameter count does not match specifier in `Script_CallOne`");
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallOne`");
 			return 0;
 		}
 		cell *
@@ -286,7 +286,7 @@ namespace utils {
 			case 'a':
 				if (fmat[i + 1] != 'i' && fmat[i + 1] != 'd')
 				{
-					PawnManager::Get()->core->printLn("Array not followed by size in `Script_CallOne`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Array not followed by size in `Script_CallOne`");
 					amx->hea = hea;
 					amx->stk = stk;
 					return 0;
@@ -297,7 +297,7 @@ namespace utils {
 				// Just put the pointer directly.
 				if (amx_Push(amx, params[i + 4]) != AMX_ERR_NONE)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallOne`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallOne`");
 					amx->hea = hea;
 					amx->stk = stk;
 					return 0;
@@ -308,7 +308,7 @@ namespace utils {
 				// passed by reference to varargs functions.
 				if (amx_GetAddr(amx, params[i + 4], &data) != AMX_ERR_NONE || amx_Push(amx, *data) != AMX_ERR_NONE)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallOne`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallOne`");
 					amx->hea = hea;
 					amx->stk = stk;
 					return 0;
@@ -340,7 +340,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[2], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->printLn("Parameter count does not match specifier in `Script_CallAll`");
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallAll`");
 			return 0;
 		}
 		struct parameter_s
@@ -373,7 +373,7 @@ namespace utils {
 				++i;
 				if (fmat[i] != 'i' && fmat[i] != 'd')
 				{
-					PawnManager::Get()->core->printLn("Array not followed by size in `Script_CallAll`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Array not followed by size in `Script_CallAll`");
 					return 0;
 				}
 				if (
@@ -381,7 +381,7 @@ namespace utils {
 					amx_GetAddr(amx, params[i + 3], &len1) != AMX_ERR_NONE ||
 					*len1 < 1)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallAll`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
 					return 0;
 				}
 				pushes.push_back({ data, { (size_t)*len1 } });
@@ -391,7 +391,7 @@ namespace utils {
 				// Just put the pointer directly.
 				if (amx_GetAddr(amx, params[i + 3], &data) != AMX_ERR_NONE || amx_StrSize(data, &len2) != AMX_ERR_NONE)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallAll`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
 					return 0;
 				}
 				pushes.push_back({ data, { (size_t)len2 } });
@@ -402,7 +402,7 @@ namespace utils {
 				// and references.
 				if (amx_GetAddr(amx, params[i + 3], &data) != AMX_ERR_NONE)
 				{
-					PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallAll`");
+					PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
 					return 0;
 				}
 				pushes.push_back({ data, { 0 } });
@@ -434,7 +434,7 @@ namespace utils {
 					// Copy the data to the heap, then push the address.
 					if (amx_PushArray(amx, nullptr, nullptr, pushes[i].src_, pushes[i].len_) != AMX_ERR_NONE)
 					{
-						PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallAll`");
+						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
 						goto pawn_CallRemoteFunction_next;
 					}
 					break;
@@ -442,7 +442,7 @@ namespace utils {
 					// Copy the data to the heap, then push the address.
 					if (amx_PushArray(amx, nullptr, &pushes[i].dest_, pushes[i].src_, 1) != AMX_ERR_NONE)
 					{
-						PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallAll`");
+						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
 						goto pawn_CallRemoteFunction_next;
 					}
 					break;
@@ -451,7 +451,7 @@ namespace utils {
 					// passed by reference to varargs functions.
 					if (amx_Push(amx, *pushes[i].src_) != AMX_ERR_NONE)
 					{
-						PawnManager::Get()->core->printLn("Error pushing parameters in `Script_CallAll`");
+						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
 						goto pawn_CallRemoteFunction_next;
 					}
 					break;
