@@ -116,7 +116,7 @@ void PawnManager::Spawn(std::string const & name)
 
 	if (!ptr.get()->IsLoaded())
 	{
-		PawnManager::Get()->core->printLn("Unable to load script %s\n\n", name.c_str());
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
 		return;
 	}
 
@@ -143,7 +143,7 @@ void PawnManager::Spawn(std::string const & name)
 	if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE)
 	{
 		// If there's no `main` ignore it for now.
-		PawnManager::Get()->core->printLn("%s", aux_StrError(err));
+		PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
 	}
 	// TODO: `AMX_EXEC_CONT` support.
 	// Assume that all initialisation and header mangling is now complete, and that it is safe to
@@ -162,7 +162,7 @@ void PawnManager::CheckNatives(PawnScript & script)
 		script.GetNativeByIndex(count, &func);
 		if (func.func == nullptr)
 		{
-			std::cerr << "Function not registered: " << func.name << std::endl;
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Function not registered: %s", func.name);
 		}
 	}
 }
