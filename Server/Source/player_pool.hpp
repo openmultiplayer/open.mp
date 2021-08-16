@@ -245,12 +245,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerPool& self;
         int* limitGlobalChatRadius;
         float* globalChatRadiusLimit;
+        int* logChat;
 
         PlayerTextRPCHandler(PlayerPool& self) : self(self) {}
 
         void init(IConfig& config) {
             limitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
             globalChatRadiusLimit = config.getFloat("limit_global_chat_radius");
+            logChat = config.getInt("logging_chat");
         }
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
@@ -272,6 +274,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if (send) {
+                if (*logChat) {
+                    self.core.printLn("%s: %s", peer.getName().data(), filteredMessage.c_str());
+                }
+
                 if (*limitGlobalChatRadius) {
                     const float limit = *globalChatRadiusLimit;
                     const Vector3 pos = peer.getPosition();
