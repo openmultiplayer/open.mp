@@ -96,5 +96,16 @@ static const FlatHashMap<String, Variant<int, String, float, DynamicArray<String
     { "cookie_reseed_time", 300000 },
     { "player_timeout", 10000 },
     { "announce", true },
-    { "logging", true }
+    { "logging", true },
+    { "enable_rcon", false },
+    { "enable_query", true },
+    { "website", "open.mp" },
+    { "network_mtu", 576 },
+    { "logging_timestamp", true },
+    { "logging_timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
+    { "logging_queries", false },
+    { "logging_chat", true },
+    { "logging_sqlite", false },
+    { "logging_sqlite_queries", false },
+    { "logging_cookies", false }
 };

@@ -11,11 +11,12 @@ enum class ParamType {
 	Float,
 	String,
 	StringList,
-	Custom
+	Custom,
+	Obsolete
 };
 
 const FlatHashMap<StringView, ParamType> types = {
-	{ "echo", ParamType::String },
+	{ "echo", ParamType::Custom },
 	{ "rcon_password", ParamType::String },
 	{ "rcon", ParamType::Int },
 	{ "gamemode", ParamType::Custom },
@@ -28,7 +29,7 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "mapname", ParamType::String },
 	{ "gamemodetext", ParamType::String },
 	{ "weather", ParamType::Int },
-	{ "worldtime", ParamType::Custom },
+	{ "worldtime", ParamType::Obsolete },
 	{ "gravity", ParamType::Float },
 	{ "weburl", ParamType::String },
 	{ "maxplayers", ParamType::Int },
@@ -37,7 +38,7 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "lanmode", ParamType::Int },
 	{ "bind", ParamType::String },
 	{ "port", ParamType::Int },
-	{ "conncookies", ParamType::Int },
+	{ "conncookies", ParamType::Obsolete },
 	{ "cookielogging", ParamType::Int },
 	{ "connseedtime", ParamType::Int },
 	{ "minconnectiontime", ParamType::Int },
@@ -46,7 +47,7 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "ackslimit", ParamType::Int },
 	{ "playertimeout", ParamType::Int },
 	{ "mtu", ParamType::Int },
-	{ "output", ParamType::Int },
+	{ "output", ParamType::Obsolete },
 	{ "timestamp", ParamType::Int },
 	{ "logtimeformat", ParamType::String },
 	{ "logqueries", ParamType::Int },
@@ -63,44 +64,41 @@ const FlatHashMap<StringView, ParamType> types = {
 };
 
 const FlatHashMap<StringView, StringView> dictionary = {
-	//{ "echo", ParamType::String },
-	//{ "rcon_password", ParamType::String },
-	//{ "rcon", ParamType::Int },
+	{ "rcon", "enable_rcon" },
+	{ "rcon_password", "rcon_password" },
 	{ "gamemode", "entry_file" },
 	{ "filterscripts", "side_scripts" },
 	{ "plugins", "legacy_plugins" },
 	{ "announce", "announce" },
-	//{ "query", ParamType::Int },
+	{ "query", "enable_query" },
 	{ "hostname", "server_name" },
-	//{ "language", ParamType::String },
-	//{ "mapname", ParamType::String },
-	//{ "gamemodetext", ParamType::String },
+	{ "language", "language" },
+	{ "mapname", "map_name" },
+	{ "gamemodetext", "mode_name" },
 	{ "weather", "weather" },
 	//{ "worldtime", ParamType::String }, TODO custom process
 	{ "gravity", "gravity" },
-	//{ "weburl", ParamType::String },
+	{ "weburl", "website" },
 	{ "maxplayers", "max_players" },
-	//{ "password", ParamType::String },
+	{ "password", "password" },
 	{ "sleep", "sleep" },
 	{ "lanmode", "lan_mode" },
 	{ "bind", "bind" },
 	{ "port", "port" },
-	//{ "conncookies", ParamType::Int },
-	//{ "cookielogging", ParamType::Int },
-	//{ "connseedtime", "cookie_reseed_time" },
+	{ "cookielogging", "logging_cookies" },
+	{ "connseedtime", "cookie_reseed_time" },
 	//{ "minconnectiontime", ParamType::Int },
 	//{ "messageslimit", ParamType::Int },
 	//{ "messageholelimit", ParamType::Int },
 	//{ "ackslimit", ParamType::Int },
 	{ "playertimeout", "player_timeout" },
-	//{ "mtu", ParamType::Int },
-	//{ "output", ParamType::Int },
-	//{ "timestamp", ParamType::Int },
-	//{ "logtimeformat", ParamType::String },
-	//{ "logqueries", ParamType::Int },
-	//{ "chatlogging", ParamType::Int },
-	//{ "db_logging", ParamType::Int },
-	//{ "db_log_queries", ParamType::Int },
+	{ "mtu", "network_mtu" },
+	{ "timestamp", "logging_timestamp" },
+	{ "logtimeformat", "logging_timestamp_format" },
+	{ "logqueries", "logging_queries" },
+	{ "chatlogging", "logging_chat" },
+	{ "db_logging", "logging_sqlite" },
+	{ "db_log_queries", "logging_sqlite_queries" },
 	{ "onfoot_rate", "on_foot_rate" },
 	{ "incar_rate", "in_car_rate" },
 	{ "weapon_rate", "weapon_rate" },
@@ -128,6 +126,10 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 				config.setString(it->second, right);
 				return true;
 			}
+		}
+		if (name.find("echo") == 0) {
+			config.getCore().printLn("%s", right.c_str());
+			return true;
 		}
 
 		return false;
@@ -220,15 +222,18 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 					// Process default dictionary items
 					if (typeIt->second == ParamType::Custom) {
 						if (!processCustom(config, name, line.substr(idx + 1))) {
-							// warning
+							config.getCore().logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
 						}
 					}
-					else {
-						processDefault(config, typeIt->second, name, line.substr(idx + 1));
+					else if (typeIt->second == ParamType::Obsolete) {
+						config.getCore().logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
+					}
+					else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
+						config.getCore().logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
 					}
 				}
 				else if (!processCustom(config, name, line.substr(idx + 1))) {
-					// warning
+					config.getCore().logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
 				}
 			}
 		}

@@ -1,55 +1,6 @@
 #include "query.hpp"
 #include <cstring>
 
-void Query::setMaxPlayers(uint16_t value)
-{
-	maxPlayers = value;
-}
-
-void Query::setServerName(StringView value)
-{
-	serverName = value;
-}
-
-void Query::setGameModeName(StringView value)
-{
-	gameModeName = value;
-}
-
-FlatHashMap<String, String>& Query::getRules()
-{
-	return rules;
-}
-
-template<typename... Args>
-void Query::setRuleValue(Args... args)
-{
-	std::vector<std::string> ruleData = { args... };
-	int ruleCount = ruleData.size();
-	if (ruleCount % 2)
-	{
-		ruleCount--;
-	}
-
-	for (int index = 0; index < ruleCount; index += 2)
-	{
-		const std::string
-			& ruleName = ruleData[index];
-		const std::string
-			& ruleValue = ruleData[index + 1];
-		rules[ruleName] = ruleValue;
-	}
-}
-
-void Query::removeRule(StringView ruleName)
-{
-	auto _rule = rules.find(ruleName);
-	if (_rule != rules.end())
-	{
-		rules.erase(ruleName);
-	}
-}
-
 template<typename T>
 void Query::writeToBuffer(char * output, int & offset, T value, size_t size)
 {
@@ -88,12 +39,21 @@ void Query::preparePlayerListForQuery() {
 	}
 }
 
-int Query::handleQuery(char const * buffer, char * output)
+int Query::handleQuery(char const * buffer, char * output, uint32_t address)
 {
 	int bufferLength = 0;
 
 	if (core == nullptr) {
 		return bufferLength;
+	}
+
+	if (logQueries) {
+		char out[16] = { 0 };
+		PeerAddress addr;
+		addr.ipv6 = false;
+		addr.v4 = address;
+		PeerAddress::ToString(addr, out, sizeof(out));
+		core->printLn("[query:%c] from %s", buffer[10], out);
 	}
 
 	// Ping
@@ -120,7 +80,8 @@ int Query::handleQuery(char const * buffer, char * output)
 		writeToBuffer(output, buffer, bufferLength, 10);
 
 		// Write `i` signal and player count details
-		writeToBuffer(output, bufferLength, static_cast<unsigned short>('i'));
+		writeToBuffer(output, bufferLength, static_cast<uint8_t>('i'));
+		writeToBuffer(output, bufferLength, static_cast<uint8_t>(passworded));
 		writeToBuffer(output, bufferLength, static_cast<uint16_t>(core->getPlayers().entries().size()));
 		writeToBuffer(output, bufferLength, maxPlayers);
 
