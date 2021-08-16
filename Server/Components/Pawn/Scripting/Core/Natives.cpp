@@ -39,6 +39,11 @@ SCRIPT_API(atan2, float(float y, float x))
 	return std::atan2(y, x) * 180 / M_PI;
 }
 
+SCRIPT_API(floatstr, float(std::string const& string))
+{
+	return std::stof(string);
+}
+
 SCRIPT_API(GetPlayerPoolSize, int())
 {
 	int highestID = -1;
