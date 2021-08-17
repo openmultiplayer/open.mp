@@ -181,10 +181,10 @@ public:
 	operator StringView() const {
 		// Handle self-allocated data - a trailing 0 is added so remove it
 		if (selfAllocated) {
-			return StringView(data, count-1);
+			return StringView(getData(), getSize() - 1);
 		}
 		// Handle other cases
-		return StringView(data, count);
+		return StringView(getData(), getSize());
 	}
 };
 
