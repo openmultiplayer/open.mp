@@ -58,7 +58,7 @@ template <typename T>
 class NetworkArray {
 private:
 	bool selfAllocated; ///< Whether we allocated the buffer and should free it on destruction
-	unsigned int count; ///< The count of the elements in the array
+	size_t count; ///< The count of the elements in the array
 	T* data; ///< The buffer that holds data - can be self-allocated or allocated externally
 
 public:
@@ -67,7 +67,7 @@ public:
 
 	/// Allocate memory and store it in the buffer
 	/// @param cnt The count of the elements to allocate
-	void allocate(unsigned int cnt) {
+	void allocate(size_t cnt) {
 		if (selfAllocated) {
 			omp_free(data);
 		}
@@ -151,6 +151,9 @@ public:
 
 	/// Data accessor
 	size_t getSize() const { return count; }
+
+	/// Data accessor
+	bool isSelfAllocated() const { return selfAllocated; }
 };
 
 /// Type used for storing UTF-8 strings to pass to the networks
@@ -165,26 +168,29 @@ public:
 		NetworkArray<char>(const_cast<char*>(str.data()), str.length() + 1)
 	{ }
 
-	void allocate(unsigned int cnt) {
-		// Guarantee null termination
-		if (cnt) {
-			NetworkArray::allocate(cnt + 1);
-			const_cast<char *>(getData())[cnt] = 0;
+	size_t getLength() const {
+		if (isSelfAllocated()) {
+			return getSize() - 1;
 		}
+		return getSize();
+	}
+
+	void allocate(size_t cnt) {
+		// Don't check `cnt != 0`, `0` is a valid (if silly) string, and `allocate` also releases
+		// (or frees the) previous data.
+		NetworkArray::allocate(cnt + 1);
+		// Guarantee null termination
+		const_cast<char *>(getData())[cnt] = 0;
 	}
 
 	/// Conversion operator for copying data to a std::string
 	operator String() const {
-		return String(getData(), getSize());
+		return String(getData(), getLength());
 	}
-	
+
 	operator StringView() const {
-		// Handle self-allocated data - a trailing 0 is added so remove it
-		if (selfAllocated) {
-			return StringView(getData(), getSize() - 1);
-		}
-		// Handle other cases
-		return StringView(getData(), getSize());
+		// Use `getLength` so we don't need to worry about the null terminator.
+		return StringView(getData(), getLength());
 	}
 };
 
@@ -357,10 +363,9 @@ struct SingleNetworkInOutEventHandler {
 /// Provides an array of packet IDs
 /// @typeparam PacketIDs A list of packet IDs for each network in the ENetworkType enum
 template <int ...PacketIDs>
-class NetworkPacketBase {
+struct NetworkPacketBase {
 	static constexpr const int ID[ENetworkType_End] = { PacketIDs... };
 
-public:
 	inline static int getID(ENetworkType type) {
 		if (type < ENetworkType_End) {
 			return ID[type];

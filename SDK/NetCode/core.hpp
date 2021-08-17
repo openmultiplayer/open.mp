@@ -645,12 +645,12 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.getLib()));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.getName()));
 				const AnimationTimeData& data = Anim.getTimeData();
-				bs.write(NetworkBitStreamValue::FLOAT(data.delta));
-				bs.write(NetworkBitStreamValue::BIT(data.loop));
-				bs.write(NetworkBitStreamValue::BIT(data.lockX));
-				bs.write(NetworkBitStreamValue::BIT(data.lockY));
-				bs.write(NetworkBitStreamValue::BIT(data.freeze));
-				bs.write(NetworkBitStreamValue::UINT32(data.time));
+				bs.write(NetworkBitStreamValue::FLOAT(data.getDelta()));
+				bs.write(NetworkBitStreamValue::BIT(data.getLoop()));
+				bs.write(NetworkBitStreamValue::BIT(data.getLockX()));
+				bs.write(NetworkBitStreamValue::BIT(data.getLockY()));
+				bs.write(NetworkBitStreamValue::BIT(data.getFreeze()));
+				bs.write(NetworkBitStreamValue::UINT32(data.getTime()));
 			}
 		};
 

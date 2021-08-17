@@ -2,7 +2,7 @@
 
 struct GangZonesComponent final : public IGangZonesComponent {
 	ICore * core;
-	MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Cnt> storage;
+	MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Capacity> storage;
 	DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
 	StringView componentName() override {

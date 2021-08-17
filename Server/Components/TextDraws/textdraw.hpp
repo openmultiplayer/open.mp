@@ -232,7 +232,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
 };
 
 struct TextDraw final : public TextDrawBase<ITextDraw> {
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> shownFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
 
     void restream() override {
         for (IPlayer* player : shownFor_.entries()) {

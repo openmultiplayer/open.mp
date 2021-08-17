@@ -239,5 +239,5 @@ public:
 private:
 	float* distance;
 	int* rate;
-	StaticArray<TimePoint, IPlayerPool::Cnt> last;
+	StaticArray<TimePoint, IPlayerPool::Capacity> last;
 };

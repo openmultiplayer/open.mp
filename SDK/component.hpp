@@ -59,6 +59,6 @@ struct IComponentList {
 	template <class ComponentT>
 	ComponentT* queryComponent() {
 		static_assert(std::is_base_of<IComponent, ComponentT>::value, "queryComponent parameter must inherit from IComponent");
-		return static_cast<ComponentT*>(queryComponent(ComponentT::getUUID()));
+		return static_cast<ComponentT*>(queryComponent(ComponentT::IID));
 	}
 };

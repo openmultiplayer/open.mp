@@ -1,17 +1,17 @@
 #include "actor.hpp"
 
 struct ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
-	ICore* core;
-	MarkedPoolStorage<Actor, IActor, IActorsComponent::Cnt> storage;
+	ICore * core;
+	MarkedPoolStorage<Actor, IActor, IActorsComponent::Capacity> storage;
 	DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
 	IPlayerPool* players;
 	StreamConfigHelper streamConfigHelper;
 
 	struct PlayerDamageActorEventHandler : public SingleNetworkInOutEventHandler {
-		ActorsComponent& self;
+		ActorsComponent & self;
 		PlayerDamageActorEventHandler(ActorsComponent& self) : self(self) {}
 
-		bool received(IPlayer& peer, INetworkBitStream& bs) override {
+		bool received(IPlayer & peer, INetworkBitStream & bs) override {
 			NetCode::RPC::OnPlayerDamageActor onPlayerDamageActorRPC;
 			if (!onPlayerDamageActorRPC.read(bs)) {
 				return false;
@@ -20,7 +20,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 			if (self.valid(onPlayerDamageActorRPC.ActorID)) {
 				Actor& actor = self.storage.get(onPlayerDamageActorRPC.ActorID);
 				if (actor.isStreamedInForPlayer(peer) && !actor.invulnerable_) {
-					ScopedPoolReleaseLock<IActor, Cnt> lock(self, onPlayerDamageActorRPC.ActorID);
+					ScopedPoolReleaseLock<IActor, Capacity> lock(self, onPlayerDamageActorRPC.ActorID);
 					self.eventDispatcher.dispatch(
 						&ActorEventHandler::onPlayerDamageActor,
 						peer,
@@ -134,7 +134,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 		storage.unlock(index);
 	}
 
-	IEventDispatcher<ActorEventHandler>& getEventDispatcher() override {
+	IEventDispatcher<ActorEventHandler> & getEventDispatcher() override {
 		return eventDispatcher;
 	}
 
@@ -160,7 +160,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 				const bool isStreamedIn = actor->isStreamedInForPlayer(player);
 				if (!isStreamedIn && shouldBeStreamedIn) {
 					actor->streamInForPlayer(player);
-					ScopedPoolReleaseLock<IActor, Cnt> lock(*this, actor->getID());
+					ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
 					eventDispatcher.dispatch(
 						&ActorEventHandler::onActorStreamIn,
 						lock.entry,
@@ -169,7 +169,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 				}
 				else if (isStreamedIn && !shouldBeStreamedIn) {
 					actor->streamOutForPlayer(player);
-					ScopedPoolReleaseLock<IActor, Cnt> lock(*this, actor->getID());
+					ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
 					eventDispatcher.dispatch(
 						&ActorEventHandler::onActorStreamOut,
 						lock.entry,

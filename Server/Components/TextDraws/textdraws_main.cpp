@@ -3,7 +3,7 @@
 
 struct PlayerTextDrawData final : IPlayerTextDrawData {
     IPlayer& player;
-    MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, IPlayerTextDrawData::Cnt> storage;
+    MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, IPlayerTextDrawData::Capacity> storage;
     bool selecting;
 
     PlayerTextDrawData(IPlayer& player) :
@@ -123,7 +123,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
 
 struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsComponent::Cnt> storage;
+    MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsComponent::Capacity> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
     StringView componentName() override {

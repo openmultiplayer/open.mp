@@ -1831,6 +1831,14 @@ public:
 	AnimationTimeData() :
 		delta(4.1f), loop(false), lockX(false), lockY(false), freeze(false), time(0)
 	{}
+
+	float getDelta() const { return delta; }
+	bool getLoop() const { return loop; }
+	bool getLockX() const { return lockX; }
+	bool getLockY() const { return lockY; }
+	bool getFreeze() const { return freeze; }
+	uint32_t getTime() const { return time; }
+	void resetTime() { time = 0; }
 };
 
 /* Interfaces, to be passed around */
@@ -1857,20 +1865,32 @@ private:
 	AnimationTimeData timeData; ///< The time data of the animation to apply
 
 public:
-	const AnimationTimeData& getTimeData() const override{
+	AnimationTimeData const & getTimeData() const override {
 		return timeData;
 	}
 
 	StringView getLib() const override {
 		return lib;
 	}
+
 	StringView getName() const override {
 		return name;
 	}
 
+	void reset() { timeData.resetTime(); }
+
 	Animation() = default;
 
 	Animation(String lib) :
-		lib(lib)
+		lib(lib),
+		name(),
+		timeData(false)
 	{}
+
+	Animation const & operator=(IAnimation const & that)
+	{
+		lib = that.getLib();
+		name = that.getName();
+		timeData = that.getTimeData();
+	}
 };

@@ -13,7 +13,7 @@
 
 template <typename T, size_t Count>
 struct IReadOnlyPool {
-    static const size_t Cnt = Count;
+    static const size_t Capacity = Count;
 
     /// Check if an index is claimed
     virtual bool valid(int index) const = 0;
@@ -160,9 +160,6 @@ struct PoolIDProvider {
 
 template <typename Type, typename Interface, size_t Count>
 class StaticPoolStorageBase : public NoCopy {
-private:
-	static const size_t Cnt = Count;
-
 public:
     int findFreeIndex(int from = 0) {
         return allocated_.findFreeIndex(from);
@@ -221,6 +218,8 @@ public:
         allocated_.remove(index, reinterpret_cast<Type&>(pool_[index * sizeof(Type)]));
         reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
     }
+
+	static const size_t Capacity = Count;
 
 protected:
     char pool_[Count * sizeof(Type)];
@@ -293,11 +292,11 @@ public:
         pool_[index] = nullptr;
     }
 
+	static const size_t Capacity = Count;
+
 protected:
     StaticArray<Type*, Count> pool_ = { nullptr };
     UniqueEntryArray<Interface> allocated_;
-
-	static const size_t Cnt = Count;
 };
 
 template <class PoolBase>
@@ -325,7 +324,7 @@ public:
     }
 
     void release(int index, bool force) {
-        assert(index < PoolBase::Cnt);
+        assert(index < PoolBase::Capacity);
         // If locked, mark for deletion on unlock
         if (marked_.test(index * 2)) {
             marked_.set(index * 2 + 1);
@@ -338,7 +337,7 @@ public:
 
 private:
     /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
-    StaticBitset<PoolBase::Cnt * 2> marked_;
+    StaticBitset<PoolBase::Capacity * 2> marked_;
 };
 
 /// Pool storage which doesn't mark entries for release but immediately releases

@@ -4,7 +4,8 @@
 #include <netcode.hpp>
 
 template <class T>
-struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
+class TextLabelBase : public T, public PoolIDProvider, public NoCopy {
+private:
     String text;
     Vector3 pos;
     Colour colour;
@@ -12,6 +13,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     TextLabelAttachmentData attachmentData;
     bool testLOS;
 
+public:
     virtual void restream() = 0;
 
     int getID() const override {
@@ -87,7 +89,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     }
 
     void streamInForClient(IPlayer& player, bool isPlayerTextLabel) {
-        NetCode::RPC::PlayerShowTextLabel showTextLabelRPC;
+		NetCode::RPC::PlayerShowTextLabel showTextLabelRPC {};
         showTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
         showTextLabelRPC.TextLabelID = poolID;
         showTextLabelRPC.Col = colour;
@@ -101,17 +103,19 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     }
 
     void streamOutForClient(IPlayer& player, bool isPlayerTextLabel) {
-        NetCode::RPC::PlayerHideTextLabel hideTextLabelRPC;
+        NetCode::RPC::PlayerHideTextLabel hideTextLabelRPC {};
         hideTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
         hideTextLabelRPC.TextLabelID = poolID;
         player.sendRPC(hideTextLabelRPC);
     }
 };
 
-struct TextLabel final : public TextLabelBase<ITextLabel> {
-    int virtualWorld;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
-
+class TextLabel final : public TextLabelBase<ITextLabel> {
+private:
+	int virtualWorld;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+	
+public:
     void restream() override {
         for (IPlayer* player : streamedFor_.entries()) {
             streamOutForClient(*player, false);
@@ -149,9 +153,11 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     }
 };
 
-struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
+class PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
+private:
     IPlayer* player = nullptr;
 
+public:
     void restream() override {
         streamOutForClient(*player, true);
         streamInForClient(*player, true);

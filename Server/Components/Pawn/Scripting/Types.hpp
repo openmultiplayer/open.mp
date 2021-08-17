@@ -669,19 +669,19 @@ namespace pawn_natives
 			amx_GetAddr(amx, params[idx + 1], &x_);
 			amx_GetAddr(amx, params[idx + 2], &y_);
 			amx_GetAddr(amx, params[idx + 3], &z_);
-			value_.q.w = amx_ctof(*w_);
-			value_.q.x = amx_ctof(*x_);
-			value_.q.y = amx_ctof(*y_);
-			value_.q.z = amx_ctof(*z_);
+			value_.w = amx_ctof(*w_);
+			value_.x = amx_ctof(*x_);
+			value_.y = amx_ctof(*y_);
+			value_.z = amx_ctof(*z_);
 		}
 
 		~ParamCast()
 		{
 			// Write the value back in to memory.
-			*w_ = amx_ftoc(value_.q.w);
-			*x_ = amx_ftoc(value_.q.x);
-			*y_ = amx_ftoc(value_.q.y);
-			*z_ = amx_ftoc(value_.q.z);
+			*w_ = amx_ftoc(value_.w);
+			*x_ = amx_ftoc(value_.x);
+			*y_ = amx_ftoc(value_.y);
+			*z_ = amx_ftoc(value_.z);
 		}
 
 		operator GTAQuat & ()

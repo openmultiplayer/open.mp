@@ -83,11 +83,17 @@ struct IObjectMaterial {
 	/// Get various data of the material
 	virtual const ObjectMaterialData& getData() const = 0;
 
-	/// Get the material's TXD name (for type Default) or text (for type Text)
-	virtual StringView getTXDOrText() const = 0;
+	/// Get the material's TXD name (for type Default).
+	virtual StringView getTXD() const = 0;
 
-	/// Get the material's texture name (for type Default) or font name (for type Text)
-	virtual StringView getTextureOrFont() const = 0;
+	/// Get the material's texture name (for type Default).
+	virtual StringView getTexture() const = 0;
+
+	/// Get the material's TXD text (for type Text).
+	virtual StringView getText() const = 0;
+
+	/// Get the material's texture font name (for type Text).
+	virtual StringView getFont() const = 0;
 };
 
 /// Object attachment data
@@ -260,19 +266,29 @@ struct IPlayerObjectData : public IPlayerData, public IPool<IPlayerObject, OBJEC
 
 /// Default object material data implementation
 struct ObjectMaterial : public IObjectMaterial {
+private:
 	String txdOrText;
 	String textureOrFont;
 	ObjectMaterialData data;
 
-	const ObjectMaterialData& getData() const override {
+public:
+	ObjectMaterialData const & getData() const override {
 		return data;
 	}
 
-	StringView getTXDOrText() const override {
+	StringView getTXD() const override {
 		return txdOrText;
 	}
 
-	StringView getTextureOrFont() const override {
+	StringView getTexture() const override {
+		return textureOrFont;
+	}
+
+	StringView getText() const override {
+		return txdOrText;
+	}
+
+	StringView getFont() const override {
 		return textureOrFont;
 	}
 };

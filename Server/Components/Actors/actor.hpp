@@ -17,7 +17,7 @@ private:
     int skin_;
     Vector3 pos_;
     float angle_;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
     float health_ = 100.f;
     bool invulnerable_ = false;
     Animation animation_;
@@ -48,17 +48,17 @@ public:
         return invulnerable_;
     }
 
-    void applyAnimation(const IAnimation& animation) override {
-        animation_.lib = animation.getLib();
-        animation_.name = animation.getName();
-        animation_.timeData = animation.getTimeData();
+    void applyAnimation(IAnimation const & animation) override {
+        animation_ = animation;
 
-        if (animation_.timeData.loop || animation_.timeData.freeze) {
+		AnimationTimeData const &
+			td = animation_.getTimeData();
+        if (td.getLoop() || td.getFreeze()) {
             animationLoop_ = true;
         }
         else {
             animationLoop_ = false;
-            animation_.timeData.time = 0;
+            animation_.reset();
         }
 
         NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation);
@@ -74,8 +74,7 @@ public:
     }
 
     void clearAnimations() override {
-        animation_.lib.clear();
-        animation_.name.clear();
+		animation_ = Animation(String());
         animationLoop_ = false;
 
         NetCode::RPC::ClearActorAnimationsForPlayer RPC;

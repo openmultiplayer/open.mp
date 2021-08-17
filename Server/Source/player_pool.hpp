@@ -4,7 +4,7 @@
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler {
     ICore& core;
-    PoolStorage<Player, IPlayer, IPlayerPool::Cnt> storage;
+    PoolStorage<Player, IPlayer, IPlayerPool::Capacity> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
     IVehiclesComponent* vehiclesComponent = nullptr;

@@ -21,24 +21,24 @@ namespace NetCode {
 
 			void write(INetworkBitStream& bs) const {
 				bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-				bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.type));
+				bs.write(NetworkBitStreamValue::UINT8(MaterialData.getData().type));
 				bs.write(NetworkBitStreamValue::UINT8(MaterialID));
 
-				if (MaterialData.data.type == ObjectMaterialData::Type::Default) {
-					bs.write(NetworkBitStreamValue::UINT16(MaterialData.data.model));
-					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.txdOrText)));
-					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textureOrFont)));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.materialColour.ARGB()));
+				if (MaterialData.getData().type == ObjectMaterialData::Type::Default) {
+					bs.write(NetworkBitStreamValue::UINT16(MaterialData.getData().model));
+					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.getTXD()));
+					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.getTexture()));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.getData().materialColour.ARGB()));
 				}
-				else if (MaterialData.data.type == ObjectMaterialData::Type::Text) {
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.materialSize));
-					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textureOrFont)));
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.fontSize));
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.bold));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.fontColour.ARGB()));
-					bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.backgroundColour.ARGB()));
-					bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.alignment));
-					bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(MaterialData.txdOrText)));
+				else if (MaterialData.getData().type == ObjectMaterialData::Type::Text) {
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.getData().materialSize));
+					bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(MaterialData.getFont()));
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.getData().fontSize));
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.getData().bold));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.getData().fontColour.ARGB()));
+					bs.write(NetworkBitStreamValue::UINT32(MaterialData.getData().backgroundColour.ARGB()));
+					bs.write(NetworkBitStreamValue::UINT8(MaterialData.getData().alignment));
+					bs.write(NetworkBitStreamValue::COMPRESSED_STR(MaterialData.getText()));
 				}
 			}
 		};
@@ -85,25 +85,25 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(MaterialsUsed.count()));
 				for (int i = 0; i < MaterialsUsed.count(); ++i) {
 					if (MaterialsUsed.test(i)) {
-						const ObjectMaterial& data = Materials[i];
-						bs.write(NetworkBitStreamValue::UINT8(data.data.type));
+						ObjectMaterial const & material = Materials[i];
+						bs.write(NetworkBitStreamValue::UINT8(material.getData().type));
 						bs.write(NetworkBitStreamValue::UINT8(i));
 
-						if (data.data.type == ObjectMaterialData::Type::Default) {
-							bs.write(NetworkBitStreamValue::UINT16(data.data.model));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.txdOrText)));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textureOrFont)));
-							bs.write(NetworkBitStreamValue::UINT32(data.data.materialColour.ARGB()));
+						if (material.getData().type == ObjectMaterialData::Type::Default) {
+							bs.write(NetworkBitStreamValue::UINT16(material.getData().model));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(material.getTXD())));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(material.getTexture()));
+							bs.write(NetworkBitStreamValue::UINT32(material.getData().materialColour.ARGB()));
 						}
-						else if (data.data.type == ObjectMaterialData::Type::Text) {
-							bs.write(NetworkBitStreamValue::UINT8(data.data.materialSize));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textureOrFont)));
-							bs.write(NetworkBitStreamValue::UINT8(data.data.fontSize));
-							bs.write(NetworkBitStreamValue::UINT8(data.data.bold));
-							bs.write(NetworkBitStreamValue::UINT32(data.data.fontColour.ARGB()));
-							bs.write(NetworkBitStreamValue::UINT32(data.data.backgroundColour.ARGB()));
-							bs.write(NetworkBitStreamValue::UINT8(data.data.alignment));
-							bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(data.txdOrText)));
+						else if (material.getData().type == ObjectMaterialData::Type::Text) {
+							bs.write(NetworkBitStreamValue::UINT8(material.getData().materialSize));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(material.getFont()));
+							bs.write(NetworkBitStreamValue::UINT8(material.getData().fontSize));
+							bs.write(NetworkBitStreamValue::UINT8(material.getData().bold));
+							bs.write(NetworkBitStreamValue::UINT32(material.getData().fontColour.ARGB()));
+							bs.write(NetworkBitStreamValue::UINT32(material.getData().backgroundColour.ARGB()));
+							bs.write(NetworkBitStreamValue::UINT8(material.getData().alignment));
+							bs.write(NetworkBitStreamValue::COMPRESSED_STR(material.getText()));
 						}
 					}
 				}

@@ -202,7 +202,7 @@ const StaticArray<VehicleComponentSlot, MAX_VEHICLE_COMPONENTS> allComponentSlot
 
 static int getVehicleComponentSlot(int component) {
 	component -= 1000;
-	if (component < MAX_VEHICLE_COMPONENTS)
+	if (0 <= component && component < MAX_VEHICLE_COMPONENTS)
 	{
 		return allComponentSlots[component];
 	}

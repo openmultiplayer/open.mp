@@ -44,12 +44,12 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.getLib())));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.getName())));
 				const AnimationTimeData& timeData = Anim.getTimeData();
-				bs.write(NetworkBitStreamValue::FLOAT(timeData.delta));
-				bs.write(NetworkBitStreamValue::BIT(timeData.loop));
-				bs.write(NetworkBitStreamValue::BIT(timeData.lockX));
-				bs.write(NetworkBitStreamValue::BIT(timeData.lockY));
-				bs.write(NetworkBitStreamValue::BIT(timeData.freeze));
-				bs.write(NetworkBitStreamValue::UINT32(timeData.time));
+				bs.write(NetworkBitStreamValue::FLOAT(timeData.getDelta()));
+				bs.write(NetworkBitStreamValue::BIT(timeData.getLoop()));
+				bs.write(NetworkBitStreamValue::BIT(timeData.getLockX()));
+				bs.write(NetworkBitStreamValue::BIT(timeData.getLockY()));
+				bs.write(NetworkBitStreamValue::BIT(timeData.getFreeze()));
+				bs.write(NetworkBitStreamValue::UINT32(timeData.getTime()));
 			}
 		};
 

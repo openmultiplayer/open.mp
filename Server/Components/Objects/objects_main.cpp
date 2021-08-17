@@ -4,9 +4,9 @@
 
 struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
 	ICore* core;
-    MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Cnt> storage;
+    MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Capacity> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-    StaticBitset<IObjectsComponent::Cnt> isPlayerObject;
+    StaticBitset<IObjectsComponent::Capacity> isPlayerObject;
     bool defCameraCollision = true;
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInOutEventHandler {
@@ -321,7 +321,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     IPlayer& player_;
     StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
     StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
-    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Cnt> storage;
+    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Capacity> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
 
