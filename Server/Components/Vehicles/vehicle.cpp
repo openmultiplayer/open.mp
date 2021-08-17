@@ -399,7 +399,7 @@ float Vehicle::getZAngle() {
 }
 
 // Set the vehicle's parameters.
-void Vehicle::setParams(VehicleParams params) {
+void Vehicle::setParams(VehicleParams const & params) {
     this->params = params;
     NetCode::RPC::SetVehicleParams vehicleRPC;
     vehicleRPC.VehicleID = poolID;
@@ -410,7 +410,7 @@ void Vehicle::setParams(VehicleParams params) {
 }
 
 // Set the vehicle's parameters for a specific player.
-void Vehicle::setParamsForPlayer(IPlayer& player, VehicleParams params) {
+void Vehicle::setParamsForPlayer(IPlayer& player, VehicleParams const & params) {
     if (!streamedFor_.valid(player.getID())) {
         return;
     }

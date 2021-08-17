@@ -10,6 +10,12 @@ struct IUUIDProvider {
 	virtual UUID getUUID() = 0;
 };
 
+template <UUID IID>
+class UUIDProvider: public virtual IUUIDProvider {
+public:
+	UUID getUUID() override { return IID };
+};
+
 enum ComponentType {
 	Other,
 	Network,
@@ -21,7 +27,7 @@ struct ICore;
 struct IComponentList;
 
 /// A component interface
-struct IComponent : public IUUIDProvider {
+struct IComponent : public virtual IUUIDProvider {
 	/// Get the component's name
 	virtual StringView componentName() = 0;
 
@@ -53,6 +59,6 @@ struct IComponentList {
 	template <class ComponentT>
 	ComponentT* queryComponent() {
 		static_assert(std::is_base_of<IComponent, ComponentT>::value, "queryComponent parameter must inherit from IComponent");
-		return static_cast<ComponentT*>(queryComponent(ComponentT::IID));
+		return static_cast<ComponentT*>(queryComponent(ComponentT::getUUID()));
 	}
 };

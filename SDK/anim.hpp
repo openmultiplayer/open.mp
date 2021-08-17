@@ -1818,7 +1818,8 @@ static const char* AnimationNames[] = {
 };
 
 /// Holds trivial animation time data
-struct AnimationTimeData {
+class AnimationTimeData {
+private:
 	float delta; ///< The speed to play the animation
 	bool loop; ///< If set to 1, the animation will loop. If set to 0, the animation will play once
 	bool lockX; ///< If set to 0, the player is returned to their old X coordinate once the animation is complete (for animations that move the player such as walking). 1 will not return them to their old position
@@ -1826,6 +1827,7 @@ struct AnimationTimeData {
 	bool freeze; ///< Setting this to 1 will freeze the player at the end of the animation. 0 will not
 	uint32_t time; ///< Timer in milliseconds. For a never-ending loop it should be 0
 
+public:
 	AnimationTimeData() :
 		delta(4.1f), loop(false), lockX(false), lockY(false), freeze(false), time(0)
 	{}
@@ -1848,11 +1850,13 @@ struct IAnimation {
 /* Implementation, NOT to be passed around */
 
 /// Default animation implementation
-struct Animation : IAnimation {
+class Animation : public IAnimation {
+private:
 	String lib; ///< The animation library of the animation to apply
 	String name; ///< The name of the animation to apply
 	AnimationTimeData timeData; ///< The time data of the animation to apply
 
+public:
 	const AnimationTimeData& getTimeData() const override{
 		return timeData;
 	}

@@ -19,9 +19,11 @@ inline constexpr auto CEILDIV(int n, int d) -> decltype (n / d)
 }
 
 
-struct RakNetLegacyBitStream final : public INetworkBitStream {
+class RakNetLegacyBitStream final : public INetworkBitStream {
+private:
     RakNet::BitStream& bs;
 
+public:
     RakNetLegacyBitStream(RakNet::BitStream& bs) : bs(bs) {}
 
     ENetworkType getNetworkType() const override {
@@ -233,9 +235,13 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 };
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler {
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler {
+public:
+	void init(ICore * core);
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
+
+private:
 
     ENetworkType getNetworkType() const override {
         return ENetworkType_RakNetLegacy;
@@ -305,7 +311,6 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
     void onTick(Microseconds elapsed) override;
-    void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason);
 
@@ -340,6 +345,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void unban(const IBanEntry& entry) override;
 
     typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
+
+	void printLn(const char * fmt, ...) const {
+		va_list args;
+		va_start(args, fmt);
+		core->vprintLn(fmt, args);
+		va_end(args);
+	}
 
     ICore* core;
     Query query;

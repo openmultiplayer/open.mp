@@ -187,10 +187,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     float getZAngle() override;
 
     // Set the vehicle's parameters.
-    void setParams(VehicleParams params) override;
+    void setParams(VehicleParams const & params) override;
 
     // Set the vehicle's parameters for a specific player.
-    void setParamsForPlayer(IPlayer& player, VehicleParams params) override;
+    void setParamsForPlayer(IPlayer& player, VehicleParams const & params) override;
 
     // Get the vehicle's parameters.
     VehicleParams const& getParams() override { return params; }

@@ -543,7 +543,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
             request.set_write_timeout(Seconds(5));
             const httplib::Result res = request.Get(get.c_str());
             if (!res || res.value().status != 200) {
-                core->printLn("Failed to announce legacy network to open.mp list");
+                printLn("Failed to announce legacy network to open.mp list");
             }
         }
     }

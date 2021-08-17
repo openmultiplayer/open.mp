@@ -44,3 +44,4 @@ struct VehicleParams {
 		windowBackRight = 0;
 	}
 };
+

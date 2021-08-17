@@ -55,11 +55,13 @@ enum class NetworkBitStreamValueType {
 
 /// Type used for storing arrays to pass to the networks
 template <typename T>
-struct NetworkArray {
+class NetworkArray {
+private:
 	bool selfAllocated; ///< Whether we allocated the buffer and should free it on destruction
 	unsigned int count; ///< The count of the elements in the array
 	T* data; ///< The buffer that holds data - can be self-allocated or allocated externally
 
+public:
 	/// Default constructor
 	NetworkArray<T>() : selfAllocated(false), count(0), data(nullptr) {}
 
@@ -143,30 +145,37 @@ struct NetworkArray {
 			omp_free(data);
 		}
 	}
+
+	/// Data accessor
+	T const * getData() const { return data; }
+
+	/// Data accessor
+	size_t getSize() const { return count; }
 };
 
 /// Type used for storing UTF-8 strings to pass to the networks
-struct NetworkString : NetworkArray<char> {
+class NetworkString : NetworkArray<char> {
+public:
 	using NetworkArray<char>::NetworkArray;
 	using NetworkArray<char>::operator=;
 
 	/// Constructor for holding std::string data without copying it or freeing it
 	/// @param string The std::string whose data to hold
 	NetworkString(StringView str) :
-		NetworkArray<char>(const_cast<char*>(str.data()), str.length())
+		NetworkArray<char>(const_cast<char*>(str.data()), str.length() + 1)
 	{ }
 
 	void allocate(unsigned int cnt) {
 		// Guarantee null termination
 		if (cnt) {
 			NetworkArray::allocate(cnt + 1);
-			data[cnt] = 0;
+			const_cast<char *>(getData())[cnt] = 0;
 		}
 	}
 
 	/// Conversion operator for copying data to a std::string
 	operator String() const {
-		return String(data, count);
+		return String(getData(), getSize());
 	}
 	
 	operator StringView() const {
@@ -558,7 +567,8 @@ struct INetworkPeer {
 
 /* Implementation, NOT to be passed around */
 
-struct Network : public INetwork, public NoCopy {
+class Network : public INetwork, public NoCopy {
+public:
 	DefaultEventDispatcher<NetworkEventHandler> networkEventDispatcher;
 	DefaultEventDispatcher<NetworkInOutEventHandler> inOutEventDispatcher;
     DefaultIndexedEventDispatcher<SingleNetworkInOutEventHandler> rpcInOutEventDispatcher;
@@ -586,11 +596,13 @@ struct Network : public INetwork, public NoCopy {
     }
 };
 
-struct BanEntry final : public IBanEntry {
+class BanEntry final : public IBanEntry {
+private:
 	String playerName;
 	String reason;
 
-	BanEntry(PeerAddress address, StringView playerName="", StringView reason="", WorldTimePoint time = WorldTime::now()) :
+public:
+	BanEntry(PeerAddress address, StringView playerName = "", StringView reason = "", WorldTimePoint time = WorldTime::now()) :
 		IBanEntry(address, time),
 		playerName(playerName),
 		reason(reason)

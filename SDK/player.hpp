@@ -228,7 +228,7 @@ struct PlayerBulletData {
 };
 
 /// A player data interface for per-player data
-struct IPlayerData : public IUUIDProvider {
+struct IPlayerData : public virtual IUUIDProvider {
 	/// Frees the player data object, called on player disconnect, usually defaults to delete this
 	virtual void free() = 0;
 };

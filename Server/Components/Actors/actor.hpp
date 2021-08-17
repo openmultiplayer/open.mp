@@ -11,7 +11,8 @@ struct PlayerActorData final : IPlayerData {
     }
 };
 
-struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
+class Actor final : public IActor, public PoolIDProvider, public NoCopy {
+private:
     int virtualWorld_ = 0;
     int skin_;
     Vector3 pos_;
@@ -22,7 +23,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     Animation animation_;
     bool animationLoop_ = false;
 
-    void setHealth(float health) override {
+public:
+	void setHealth(float health) override {
         health_ = health;
         NetCode::RPC::SetActorHealthForPlayer RPC;
         RPC.ActorID = poolID;

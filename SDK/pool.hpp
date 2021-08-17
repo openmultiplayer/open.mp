@@ -58,11 +58,13 @@ struct IPoolComponent : public IComponent, public IPool<T, Count> {
 /* Implementation, NOT to be passed around */
 
 template <class T, size_t Count>
-struct ScopedPoolReleaseLock {
-    IPool<T, Count>& pool;
+class ScopedPoolReleaseLock {
+private:
+	IPool<T, Count>& pool;
     int index;
     T& entry;
 
+public:
     ScopedPoolReleaseLock(IPool<T, Count>& pool, int index) : pool(pool), index(index), entry(pool.get(index)) {
         pool.lock(index);
     }
@@ -76,7 +78,8 @@ struct ScopedPoolReleaseLock {
 };
 
 template <typename T, size_t Size>
-struct UniqueIDArray : public NoCopy {
+class UniqueIDArray : public NoCopy {
+public:
     int findFreeIndex(int from) const {
         for (int i = from; i < Size; ++i) {
             if (!valid_[i]) {
@@ -125,8 +128,9 @@ private:
 };
 
 template <typename T>
-struct UniqueEntryArray : public NoCopy {
-    void add(T& data) {
+class UniqueEntryArray : public NoCopy {
+public:
+	void add(T& data) {
         entries_.insert(&data);
     }
 
@@ -152,9 +156,11 @@ struct PoolIDProvider {
 };
 
 template <typename Type, typename Interface, size_t Count>
-struct StaticPoolStorageBase : public NoCopy {
-    static const size_t Cnt = Count;
+class StaticPoolStorageBase : public NoCopy {
+private:
+	static const size_t Cnt = Count;
 
+public:
     int findFreeIndex(int from = 0) {
         return allocated_.findFreeIndex(from);
     }
@@ -219,9 +225,11 @@ protected:
 };
 
 template <typename Type, typename Interface, size_t Count>
-struct DynamicPoolStorageBase : public NoCopy {
+class DynamicPoolStorageBase : public NoCopy {
+private:
     static const size_t Cnt = Count;
 
+public:
     int findFreeIndex(int from = 0) {
         for (int i = from; i < Count; ++i) {
             if (pool_[i] == nullptr) {
@@ -291,15 +299,17 @@ protected:
 };
 
 template <class PoolBase>
-struct ImmediatePoolStorageLifetimeBase final : public PoolBase {
+class ImmediatePoolStorageLifetimeBase final : public PoolBase {
+public:
     void release(int index) {
         PoolBase::remove(index);
     }
 };
 
 template <class PoolBase>
-struct MarkedPoolStorageLifetimeBase final : public PoolBase {
-    void lock(int index) {
+class MarkedPoolStorageLifetimeBase final : public PoolBase {
+public:
+	void lock(int index) {
         // Mark as locked
         marked_.set(index * 2);
     }

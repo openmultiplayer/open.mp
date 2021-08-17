@@ -215,7 +215,8 @@ struct ICore {
 };
 
 /// Helper class to get streamer config properties
-struct StreamConfigHelper {
+class StreamConfigHelper {
+public:
 	float getDistanceSqr() const { const float dist = *distance; return dist* dist;}
 	int getRate() const { return *rate; }
 

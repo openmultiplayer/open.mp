@@ -27,7 +27,8 @@ struct IIndexedEventDispatcher {
 /* Implementation, NOT to be passed around */
 
 template <class EventHandlerType>
-struct DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType>, public NoCopy {
+class DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType>, public NoCopy {
+public:
     bool addEventHandler(EventHandlerType* handler) override {
         return handlers.insert(handler).second;
     }
@@ -67,7 +68,8 @@ private:
 };
 
 template <class EventHandlerType>
-struct DefaultIndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandlerType>, public NoCopy {
+class DefaultIndexedEventDispatcher final : public IIndexedEventDispatcher<EventHandlerType>, public NoCopy {
+public:
     DefaultIndexedEventDispatcher(size_t max) :
         handlers(max)
     { }

@@ -15,6 +15,8 @@ class GTAQuat
 private:
 	static constexpr float EPSILON = 0.00000202655792236328125f;
 
+	glm::quat q;
+
 public:
 	GTAQuat() : q(1.0f, 0.0f, 0.0f, 0.0f)
 	{
@@ -75,6 +77,4 @@ public:
 		q *= other.q;
 		return *this;
 	}
-
-	glm::quat q;
 };
