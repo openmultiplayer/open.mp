@@ -155,6 +155,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	}
 
 	void release(int index) override {
+		if (index == 0) {
+			return;
+		}
 		storage.release(index, false);
 	}
 
