@@ -327,6 +327,30 @@ namespace pawn_natives
 		IDatabaseResultSet* value_;
 	};
 
+	template <>
+	class ParamCast<PawnScript&> {
+	public:
+		ParamCast(AMX* amx, cell* params, int idx)
+			: value_(PawnManager::Get()->amxToScript_.find(amx)->second)
+		{
+		}
+
+		~ParamCast()
+		{}
+
+		ParamCast(ParamCast<IDatabaseConnection*> const&) = delete;
+		ParamCast(ParamCast<IDatabaseConnection*>&&) = delete;
+
+		operator PawnScript& () {
+			return *value_;
+		}
+
+		static constexpr int Size = 0;
+
+	private:
+		PawnScript* value_;
+	};
+
 	// Disable the ref version.
 	template <>
 	class ParamCast<Vector3 const &>

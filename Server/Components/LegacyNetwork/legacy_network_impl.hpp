@@ -336,7 +336,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return rakNetServer.GetLastPing(rid);
     }
 
-    void ban(const IBanEntry& entry) override;
+    void ban(const IBanEntry& entry, Milliseconds expire=Milliseconds(0)) override;
+    void unban(const IBanEntry& entry) override;
 
     typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
 
