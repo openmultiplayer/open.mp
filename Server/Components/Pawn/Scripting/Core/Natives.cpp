@@ -197,11 +197,6 @@ SCRIPT_API(GameModeExit, bool())
 	throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(OnGameModeExit, bool())
-{
-	throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
 {
 	PawnManager::Get()->players->sendGameTextToAll(string, Milliseconds(time), style);
@@ -370,12 +365,6 @@ SCRIPT_API(NetStats_PacketLossPercent, float(IPlayer& player))
 SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
 {
 	throw pawn_natives::NotImplemented();
-}
-
-SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, std::string const& message))
-{
-	PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), message);
-	return true;
 }
 
 SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer& killee, int weapon))
