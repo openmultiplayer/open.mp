@@ -92,6 +92,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 		actor.pos_ = pos;
 		actor.skin_ = skin;
 		actor.angle_ = angle;
+		actor.invulnerable_ = 1;
 		return &actor;
 	}
 
