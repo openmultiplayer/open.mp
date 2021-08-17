@@ -98,6 +98,10 @@ SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer* killee, int weapon))
 	{
 		PawnManager::Get()->players->sendDeathMessageToAll(killer, *killee, weapon);
 	}
+	else
+	{
+		PawnManager::Get()->core->logLn(LogLevel::Warning, "SendDeathMessage: Invalid playerid specified.");
+	}
 
 	return true;
 }
