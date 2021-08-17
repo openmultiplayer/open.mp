@@ -144,6 +144,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	}
 
 	bool valid(int index) const override {
+		if (index == 0) {
+			return false;
+		}
 		return storage.valid(index);
 	}
 
