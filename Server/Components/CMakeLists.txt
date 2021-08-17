@@ -24,4 +24,4 @@ add_subdirectory(LegacyConfig)
 # Test
 #add_subdirectory(DatabasesTest)
 #add_subdirectory(TestComponent)
-add_subdirectory(Rivershell)
+#add_subdirectory(Rivershell)
