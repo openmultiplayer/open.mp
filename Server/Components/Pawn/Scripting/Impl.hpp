@@ -16,23 +16,12 @@ class Scripting;
 #define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp_scripting, name, prototype)
 #define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp_scripting, name, prototype)
 
-#include "Player/Events.hpp"
-
 class Scripting
 {
 public:
-	Scripting(ICore* c)
-		: core(c)
+	Scripting()
 	{}
 
-	~Scripting()
-	{}
-
-	void addEvents() {
-		// add event handlers
-		core->getPlayers().getEventDispatcher().addEventHandler(PlayerEvents::Get());
-	}
-
-private:
-	ICore * core;
+	~Scripting();
+	void addEvents() const;
 };
