@@ -6,6 +6,7 @@
 
 struct PawnComponent : public IComponent, public CoreEventHandler {
 	ICore * core = nullptr;
+	Scripting* scriptingInstance;
 
 	UUID getUUID() override {
 		return 0x78906cd9f19c36a6;
@@ -48,8 +49,8 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		StringView entryFile = config.getString("entry_file");
 		Span<const StringView> sideScripts = config.getStrings("side_scripts");
 
-		Scripting scriptingInstance = Scripting(core);
-		scriptingInstance.addEvents();
+		scriptingInstance = new Scripting();
+		scriptingInstance->addEvents();
 
 		// load plugins
 		for (auto& plugin : plugins) {
@@ -72,6 +73,10 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 	~PawnComponent() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
+		}
+
+		if (scriptingInstance) {
+			delete scriptingInstance;
 		}
 	}
 } component;
