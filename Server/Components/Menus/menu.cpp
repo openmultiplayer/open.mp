@@ -68,7 +68,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	MenusComponent() :
 		playerSelectedMenuRowEventHandler(*this),
 		playerExitedMenuEventHandler(*this)
-	{}
+	{
+		storage.claimUnusable(0);
+	}
 
 	void onLoad(ICore * core) override {
 		this->core = core;

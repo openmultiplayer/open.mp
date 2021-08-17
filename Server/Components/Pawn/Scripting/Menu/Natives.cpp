@@ -11,7 +11,7 @@ SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, Vector2 p
 			return menu->getID();
 		}
 	}
-	return INVALID_MENU_ID;
+	return -1;
 }
 
 SCRIPT_API(DestroyMenu, bool(IMenu& menu))
