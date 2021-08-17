@@ -3,7 +3,7 @@
 #include "../../Manager/Manager.hpp"
 #include "../../Singleton.hpp"
 
-struct PlayerEvents : public ActorEventHandler, public Singleton<PlayerEvents> {
+struct ActorEvents : public ActorEventHandler, public Singleton<ActorEvents> {
 	void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override {
 		PawnManager::Get()->CallAllInSidesFirstWhile0("OnPlayerGiveDamageActor", player.getID(), actor.getID(), amount, weapon, int(part));
 	}
