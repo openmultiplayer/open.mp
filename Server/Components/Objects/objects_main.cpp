@@ -26,7 +26,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectSelected,
                         peer,
-                        lock.entry,
+                        lock.getEntry(),
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position
                     );
@@ -36,7 +36,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectSelected,
                         peer,
-                        lock.entry,
+                        lock.getEntry(),
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position
                     );
@@ -64,7 +64,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectEdited,
                         peer,
-                        lock.entry,
+                        lock.getEntry(),
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation
@@ -75,7 +75,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectEdited,
                         peer,
-                        lock.entry,
+                        lock.getEntry(),
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation
@@ -522,7 +522,7 @@ void ObjectComponent::onTick(Microseconds elapsed) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed, now)) {
             ScopedPoolReleaseLock lock(*this, *obj);
-            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.entry);
+            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.getEntry());
         }
     }
 
@@ -533,7 +533,7 @@ void ObjectComponent::onTick(Microseconds elapsed) {
                 PlayerObject* obj = static_cast<PlayerObject*>(object);
                 if (obj->advance(elapsed, now)) {
                     ScopedPoolReleaseLock lock(*data, *obj);
-                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.entry);
+                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.getEntry());
                 }
             }
         }

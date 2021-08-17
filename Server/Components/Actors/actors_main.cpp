@@ -24,7 +24,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 					self.eventDispatcher.dispatch(
 						&ActorEventHandler::onPlayerDamageActor,
 						peer,
-						lock.entry,
+						lock.getEntry(),
 						onPlayerDamageActorRPC.Damage,
 						onPlayerDamageActorRPC.WeaponID,
 						BodyPart(onPlayerDamageActorRPC.Bodypart)

@@ -31,7 +31,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                 self.eventDispatcher.dispatch(
                     &VehicleEventHandler::onPlayerEnterVehicle,
                     peer,
-                    lock.entry,
+                    lock.getEntry(),
                     onPlayerEnterVehicleRPC.Passenger
                 );
             }
@@ -60,7 +60,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                 self.eventDispatcher.dispatch(
                     &VehicleEventHandler::onPlayerExitVehicle,
                     peer,
-                    lock.entry
+                    lock.getEntry()
                 );
             }
 

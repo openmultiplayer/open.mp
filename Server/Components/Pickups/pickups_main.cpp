@@ -22,7 +22,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
 				self.eventDispatcher.dispatch(
 					&PickupEventHandler::onPlayerPickUpPickup,
 					peer,
-					lock.entry
+					lock.getEntry()
 				);
 			}
 			return true;

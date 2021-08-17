@@ -540,7 +540,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     ScopedPoolReleaseLock lock(*self.vehiclesComponent, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &lock](PlayerEventHandler* handler) {
-                            return handler->onShotVehicle(player, lock.entry, player.bulletData_);
+                            return handler->onShotVehicle(player, lock.getEntry(), player.bulletData_);
                         });
                 }
                 break;
@@ -549,7 +549,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     ScopedPoolReleaseLock lock(*self.objectsComponent, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &lock](PlayerEventHandler* handler) {
-                            return handler->onShotObject(player, lock.entry, player.bulletData_);
+                            return handler->onShotObject(player, lock.getEntry(), player.bulletData_);
                         });
                 }
                 else {
@@ -558,7 +558,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                         ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
                         allowed = self.eventDispatcher.stopAtFalse(
                             [&player, &lock](PlayerEventHandler* handler) {
-                                return handler->onShotPlayerObject(player, lock.entry, player.bulletData_);
+                                return handler->onShotPlayerObject(player, lock.getEntry(), player.bulletData_);
                             });
                     }
                 }

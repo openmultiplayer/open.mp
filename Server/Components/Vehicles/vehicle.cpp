@@ -57,7 +57,7 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     streamedFor_.add(player.getID(), player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.getEntry(), player);
 
     respawning = false;
 }
@@ -81,7 +81,7 @@ void Vehicle::streamOutForClient(IPlayer& player) {
     --data->numStreamed;
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.getEntry(), player);
 }
 
 bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
@@ -267,7 +267,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
 
     if (vehicleUpdater) {
         ScopedPoolReleaseLock lock(*pool, *this);
-        pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, lock.entry, *vehicleUpdater);
+        pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, lock.getEntry(), *vehicleUpdater);
     }
 
     for (IPlayer* player : streamedFor_.entries()) {
@@ -443,7 +443,7 @@ void Vehicle::setDead(IPlayer& killer) {
     dead = true;
     timeOfDeath = Time::now();
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, lock.getEntry(), killer);
 }
 
 bool Vehicle::isDead() {
@@ -481,7 +481,7 @@ void Vehicle::respawn() {
     params = VehicleParams{};
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, lock.getEntry());
 }
 
 Seconds Vehicle::getRespawnDelay() {

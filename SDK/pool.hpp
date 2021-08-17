@@ -75,6 +75,9 @@ public:
     ~ScopedPoolReleaseLock() {
         pool.unlock(index);
     }
+
+	T & getEntry() { return entry; }
+	T const & getEntry() const { return entry; }
 };
 
 template <typename T, size_t Size>
@@ -226,9 +229,6 @@ protected:
 
 template <typename Type, typename Interface, size_t Count>
 class DynamicPoolStorageBase : public NoCopy {
-private:
-    static const size_t Cnt = Count;
-
 public:
     int findFreeIndex(int from = 0) {
         for (int i = from; i < Count; ++i) {
@@ -296,6 +296,8 @@ public:
 protected:
     StaticArray<Type*, Count> pool_ = { nullptr };
     UniqueEntryArray<Interface> allocated_;
+
+	static const size_t Cnt = Count;
 };
 
 template <class PoolBase>

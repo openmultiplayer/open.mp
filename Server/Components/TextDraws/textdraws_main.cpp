@@ -149,11 +149,11 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
                 else {
                     if (RPC.PlayerTextDraw && data->storage.valid(RPC.TextDrawID)) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.entry);
+                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.getEntry());
                     }
                     else if (!RPC.PlayerTextDraw && self.storage.valid(RPC.TextDrawID)) {
                         ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, lock.entry);
+                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, lock.getEntry());
                     }
                 }
             }
