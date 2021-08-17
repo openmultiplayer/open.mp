@@ -174,11 +174,6 @@ SCRIPT_API(GameModeExit, bool())
 	throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(OnGameModeExit, bool())
-{
-	throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
 {
 	throw pawn_natives::NotImplemented();
