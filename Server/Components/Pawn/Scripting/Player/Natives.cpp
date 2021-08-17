@@ -8,6 +8,15 @@ SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, std::string
 	return true;
 }
 
+SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, std::string const& msg))
+{
+	IPlayerPool* pool = PawnManager::Get()->players;
+	for (IPlayer* player : pool->entries()) {
+		player->sendClientMessage(Colour::FromRGBA(colour), msg);
+	}
+	return true;
+}
+
 SCRIPT_API(SetPlayerCameraPos, bool(IPlayer& player, Vector3 vec))
 {
 	player.setCameraPosition(vec);
