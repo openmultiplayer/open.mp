@@ -132,7 +132,20 @@ namespace utils {
 		output[0] = __T('\0');
 
 		cstr = amx_Address(amx, params[3]);
-		amx_printstring(amx, cstr, &info);
+		int processed_params = amx_printstring(amx, cstr, &info);
+
+		if (processed_params != num - 3) {
+			std::string message;
+
+			if(processed_params < num - 3)
+				message = "not enough arguments given";
+			else
+				message = "too many arguments given";
+
+			PawnManager::Get()->core->printLn("`format` failed - %s", message.c_str());
+			free(output);
+			return 0;
+		}
 
 		// Store the output string.
 		cstr = amx_Address(amx, params[1]);
