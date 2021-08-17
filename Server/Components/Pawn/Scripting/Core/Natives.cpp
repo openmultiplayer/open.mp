@@ -324,11 +324,6 @@ SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
 	throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(SendClientMessageToAll, bool(int colour, std::string const& message))
-{
-	throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer& killee, int weapon))
 {
 	throw pawn_natives::NotImplemented();
