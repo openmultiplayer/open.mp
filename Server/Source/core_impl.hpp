@@ -517,6 +517,13 @@ struct Core final : public ICore, public PlayerEventHandler {
         players.broadcastRPCToAll(RPC);
     }
 
+    void setWorldTime(Hours time) override {
+        *SetWorldTime = time.count();
+        NetCode::RPC::SetPlayerWorldTime RPC;
+        RPC.Time = time;
+        players.broadcastRPCToAll(RPC);
+    }
+
     void toggleStuntBonus(bool toggle) override {
         *EnableStuntBonus = toggle;
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
@@ -592,12 +599,12 @@ struct Core final : public ICore, public PlayerEventHandler {
         StringView domain = urlNoPrefix;
         StringView path = "/";
         if ((idx = urlNoPrefix.find_first_of('/')) != -1) {
-            domain = urlNoPrefix.substr(0, idx - 1);
+            domain = urlNoPrefix.substr(0, idx);
             path = urlNoPrefix.substr(idx);
         }
 
         // Reconstruct
-        String domainStr = String(secure ? https : http) + String(urlNoPrefix);
+        String domainStr = String(secure ? https : http) + String(domain);
 
         // Set up request
         httplib::Client request(domainStr.c_str());

@@ -808,12 +808,13 @@ SCRIPT_API(AllowPlayerTeleport, bool(IPlayer& player, bool allow))
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
 {
-	throw pawn_natives::NotImplemented();
+	player.setRemoteVehicleCollisions(!disable);
+	return true;
 }
 
 SCRIPT_API(GetPlayerCameraZoom, float(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	return (player.getAimData().CamZoom & 0x3F) * 0.015873017 * 35.0 + 35.0;
 }
 
 SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
@@ -821,23 +822,35 @@ SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
 	throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(SelectTextDraw, bool(IPlayer& player, int hoverColour))
+SCRIPT_API(SelectTextDraw, bool(IPlayer& player, uint32_t hoverColour))
 {
-	throw pawn_natives::NotImplemented();
+	IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
+	if (data) {
+		data->beginSelection(Colour::FromRGBA(hoverColour));
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	IPlayerTextDrawData* data = player.queryData<IPlayerTextDrawData>();
+	if (data) {
+		data->endSelection();
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(SendClientCheck, bool(IPlayer& player, int type, int memoryAddress, int memoryOffset, int byteCount))
 {
 	throw pawn_natives::NotImplemented();
 }
+
 SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	player.spawn();
+	return true;
 }
 
 SCRIPT_API(StartRecordingPlayerData, bool(IPlayer& player, int recordType, std::string const& recordFile))
