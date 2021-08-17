@@ -10,10 +10,7 @@ SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, std::string
 
 SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, std::string const& msg))
 {
-	IPlayerPool* pool = PawnManager::Get()->players;
-	for (IPlayer* player : pool->entries()) {
-		player->sendClientMessage(Colour::FromRGBA(colour), msg);
-	}
+	PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
 	return true;
 }
 
