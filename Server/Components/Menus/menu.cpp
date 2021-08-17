@@ -68,7 +68,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	MenusComponent() :
 		playerSelectedMenuRowEventHandler(*this),
 		playerExitedMenuEventHandler(*this)
-	{}
+	{
+		storage.claimUnusable(0);
+	}
 
 	void onLoad(ICore * core) override {
 		this->core = core;
@@ -142,6 +144,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	}
 
 	bool valid(int index) const override {
+		if (index == 0) {
+			return false;
+		}
 		return storage.valid(index);
 	}
 
@@ -150,6 +155,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	}
 
 	void release(int index) override {
+		if (index == 0) {
+			return;
+		}
 		storage.release(index, false);
 	}
 
