@@ -147,5 +147,11 @@ SCRIPT_API(SetObjectMaterialText, bool(
 
 SCRIPT_API(SetObjectsDefaultCameraCol, bool(bool disable))
 {
-	throw pawn_natives::NotImplemented();
+	IObjectsComponent* objects = PawnManager::Get()->objects;
+	if (objects) {
+		objects->setDefaultCameraCollision(!disable);
+		return true;
+	}
+
+	return false;
 }

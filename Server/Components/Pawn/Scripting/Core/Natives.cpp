@@ -106,57 +106,80 @@ SCRIPT_API(AddSimpleModelTimed, bool(int virtualWorld, int baseid, int newid, st
 
 SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("rcon_allow_teleport") = allow;
+	return true;
 }
 
 SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("allow_interior_weapons") = allow;
+	return true;
 }
 
 SCRIPT_API(Ban, bool(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	player.ban();
+	return true;
 }
 
 SCRIPT_API(BanEx, bool(IPlayer& player, std::string const& reason))
 {
-	throw pawn_natives::NotImplemented();
+	player.ban(reason);
+	return true;
 }
 
 SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 {
-	throw pawn_natives::NotImplemented();
+	PeerAddress address;
+	address.ipv6 = false;
+	PeerAddress::FromString(address, ipAddress);
+	BanEntry entry(address);
+	for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
+		network->ban(entry, Milliseconds(timeMS));
+	}
+	return true;
 }
 
 SCRIPT_API(UnBlockIpAddress, bool(std::string const& ipAddress))
 {
-	throw pawn_natives::NotImplemented();
+	PeerAddress address;
+	address.ipv6 = false;
+	PeerAddress::FromString(address, ipAddress);
+	BanEntry entry(address);
+	for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
+		network->unban(entry);
+	}
+	return true;
 }
 
 SCRIPT_API(ConnectNPC, bool(std::string const& name, std::string const& script))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->connectBot(name, script);
+	return true;
 }
 
 SCRIPT_API(DisableInteriorEnterExits, bool())
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("disable_interior_enter_exits") = true;
+	return true;
 }
 
 SCRIPT_API(DisableNameTagLOS, bool())
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("disable_name_tag_los") = true;
+	return true;
 }
 
 SCRIPT_API(EnableTirePopping, bool(bool enable))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "EnableTirePopping() function is removed.");
+	return true;
 }
 
 SCRIPT_API(EnableZoneNames, bool(bool enable))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("enable_zone_names") = enable;
+	return true;
 }
 
 SCRIPT_API(FindModelFileNameFromCRC, bool(int crc, std::string& output))
@@ -176,12 +199,14 @@ SCRIPT_API(GameModeExit, bool())
 
 SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->players->sendGameTextToAll(string, Milliseconds(time), style);
+	return true;
 }
 
 SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, std::string const& string, int time, int style))
 {
-	throw pawn_natives::NotImplemented();
+	player.sendGameText(string, Milliseconds(time), style);
+	return true;
 }
 
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
@@ -201,7 +226,7 @@ SCRIPT_API(GetConsoleVarAsString, bool(std::string const& cvar, std::string& buf
 
 SCRIPT_API(GetGravity, float())
 {
-	throw pawn_natives::NotImplemented();
+	return *PawnManager::Get()->config->getFloat("gravity");
 }
 
 SCRIPT_API(GetNetworkStats, bool(std::string& output))
@@ -226,17 +251,30 @@ SCRIPT_API(GetServerTickRate, int())
 
 SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
 {
-	throw pawn_natives::NotImplemented();
+	IVariablesComponent* vars = PawnManager::Get()->vars;
+	if (vars) {
+		return vars->getInt(cvar);
+	}
+	return false;
 }
 
 SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
 {
-	throw pawn_natives::NotImplemented();
+	IVariablesComponent* vars = PawnManager::Get()->vars;
+	if (vars) {
+		return vars->getInt(cvar);
+	}
+	return false;
 }
 
 SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buffer))
 {
-	throw pawn_natives::NotImplemented();
+	IVariablesComponent* vars = PawnManager::Get()->vars;
+	if (vars) {
+		buffer = vars->getString(cvar);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
@@ -256,7 +294,8 @@ SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
 
 SCRIPT_API(Kick, bool(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	player.kick();
+	return true;
 }
 
 SCRIPT_API(KillTimer, bool(int timerid))
@@ -266,12 +305,16 @@ SCRIPT_API(KillTimer, bool(int timerid))
 
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("use_limit_global_chat_radius") = true;
+	*PawnManager::Get()->config->getFloat("limit_global_chat_radius") = chatRadius;
+	return true;
 }
 
 SCRIPT_API(LimitPlayerMarkerRadius, bool(float markerRadius))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("limit_player_markers") = true;
+	*PawnManager::Get()->config->getFloat("player_markers_draw_distance") = markerRadius;
+	return true;
 }
 
 SCRIPT_API(NetStats_BytesReceived, bool(IPlayer& player))
@@ -326,17 +369,20 @@ SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
 
 SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer& killee, int weapon))
 {
-	throw pawn_natives::NotImplemented();
+	player.sendDeathMessage(killee, killer, weapon);
+	return true;
 }
 
-SCRIPT_API(SendPlayerMessageToAll, bool(int senderid, std::string const& message))
+SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, std::string const& message))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->players->sendChatMessageToAll(sender, message);
+	return true;
 }
 
-SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, int senderid, std::string const& message))
+SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std::string const& message))
 {
-	throw pawn_natives::NotImplemented();
+	player.sendChatMessage(sender, message);
+	return true;
 }
 
 SCRIPT_API(SendRconCommand, bool(std::string const& command))
@@ -346,7 +392,8 @@ SCRIPT_API(SendRconCommand, bool(std::string const& command))
 
 SCRIPT_API(SetDeathDropAmount, bool(int amount))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("death_drop_amount") = amount;
+	return true;
 }
 
 SCRIPT_API(SetGameModeText, bool(std::string const& string))
@@ -356,27 +403,31 @@ SCRIPT_API(SetGameModeText, bool(std::string const& string))
 
 SCRIPT_API(SetGravity, bool(float gravity))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->setGravity(gravity);
+	return true;
 }
 
 SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getFloat("name_tag_draw_distance") = distance;
+	return true;
 }
 
 SCRIPT_API(SetTeamCount, bool(int count))
 {
-	throw pawn_natives::NotImplemented();
+	return false;
 }
 
 SCRIPT_API(SetWeather, bool(int weatherid))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->setWeather(weatherid);
+	return true;
 }
 
 SCRIPT_API(SetWorldTime, bool(int hour))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->setWorldTime(Hours(hour));
+	return true;
 }
 
 SCRIPT_API(SHA256_PassHash, bool(std::string const& password, std::string const& salt, std::string& output))
@@ -386,15 +437,18 @@ SCRIPT_API(SHA256_PassHash, bool(std::string const& password, std::string const&
 
 SCRIPT_API(ShowNameTags, bool(bool show))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("show_name_tags") = show;
+	return true;
 }
 
 SCRIPT_API(ShowPlayerMarkers, bool(int mode))
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("show_player_markers") = mode;
+	return true;
 }
 
 SCRIPT_API(UsePlayerPedAnims, bool())
 {
-	throw pawn_natives::NotImplemented();
+	*PawnManager::Get()->config->getInt("use_player_ped_anims") = true;
+	return true;
 }

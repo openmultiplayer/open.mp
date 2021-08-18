@@ -122,7 +122,10 @@ void PawnManager::Spawn(std::string const & name)
 
 	PawnScript & script = *ptr;
 
-	scripts_.emplace(name, std::move(ptr));
+	auto res = scripts_.emplace(name, std::move(ptr));
+	if (res.second) {
+		amxToScript_.emplace(script.GetAMX(), res.first->second.get());
+	}
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
 	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
 	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
@@ -189,6 +192,7 @@ void PawnManager::Reload(std::string const & name)
 		script.Call("OnScriptExit");
 		OnScriptExit(name);
 		PawnPluginManager::Get()->AmxUnload(script.GetAMX());
+		amxToScript_.erase(script.GetAMX());
 		scripts_.erase(pos);
 	}
 	Spawn(name);
@@ -206,6 +210,7 @@ void PawnManager::Unload(std::string const & name)
 	script.Call("OnScriptExit");
 	OnScriptExit(name);
 	PawnPluginManager::Get()->AmxUnload(script.GetAMX());
+	amxToScript_.erase(script.GetAMX());
 	scripts_.erase(pos);
 }
 

@@ -1181,6 +1181,18 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
 			}
 		};
+
+		struct SetPlayerWorldTime final : NetworkPacketBase<94> {
+			Hours Time;
+
+			bool read(INetworkBitStream& bs) const {
+				return false;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Time.count()));
+			}
+		};
 	}
 
 	namespace Packet {
