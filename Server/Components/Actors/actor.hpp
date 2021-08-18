@@ -23,6 +23,8 @@ private:
     Animation animation_;
     bool animationLoop_ = false;
 
+	friend class ActorsComponent;
+
 public:
 	void setHealth(float health) override {
         health_ = health;

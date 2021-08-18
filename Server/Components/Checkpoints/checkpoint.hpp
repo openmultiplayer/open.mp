@@ -3,7 +3,8 @@
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <netcode.hpp>
 
-struct PlayerCheckpointData final : public IPlayerCheckpointData {
+class PlayerCheckpointData final : public IPlayerCheckpointData {
+private:
 	CheckpointType type_;
 	Vector3 position_;
 	Vector3 nextPosition_;
@@ -11,6 +12,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 	bool inside_;
 	bool enabled_ = false;
 
+public:
 	CheckpointType getType() const override {
 		return type_;
 	}

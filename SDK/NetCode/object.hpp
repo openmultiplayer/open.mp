@@ -10,9 +10,9 @@ namespace NetCode {
 		struct SetPlayerObjectMaterial final : NetworkPacketBase<84> {
 			int ObjectID;
 			int MaterialID;
-			ObjectMaterial& MaterialData;
+			IObjectMaterial const & MaterialData;
 
-			SetPlayerObjectMaterial(ObjectMaterial& materialData) : MaterialData(materialData)
+			SetPlayerObjectMaterial(IObjectMaterial const & materialData) : MaterialData(materialData)
 			{}
 
 			bool read(INetworkBitStream& bs) {
@@ -91,7 +91,7 @@ namespace NetCode {
 
 						if (material.getData().type == ObjectMaterialData::Type::Default) {
 							bs.write(NetworkBitStreamValue::UINT16(material.getData().model));
-							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(material.getTXD())));
+							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(material.getTXD()));
 							bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(material.getTexture()));
 							bs.write(NetworkBitStreamValue::UINT32(material.getData().materialColour.ARGB()));
 						}

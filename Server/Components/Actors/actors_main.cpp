@@ -1,6 +1,7 @@
 #include "actor.hpp"
 
-struct ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+private:
 	ICore * core;
 	MarkedPoolStorage<Actor, IActor, IActorsComponent::Capacity> storage;
 	DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
@@ -19,7 +20,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 
 			if (self.valid(onPlayerDamageActorRPC.ActorID)) {
 				Actor& actor = self.storage.get(onPlayerDamageActorRPC.ActorID);
-				if (actor.isStreamedInForPlayer(peer) && !actor.invulnerable_) {
+				if (actor.isStreamedInForPlayer(peer) && !actor.isInvulnerable()) {
 					ScopedPoolReleaseLock<IActor, Capacity> lock(self, onPlayerDamageActorRPC.ActorID);
 					self.eventDispatcher.dispatch(
 						&ActorEventHandler::onPlayerDamageActor,
@@ -35,6 +36,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 		}
 	} playerDamageActorEventHandler;
 
+public:
 	StringView componentName() override {
 		return "Actors";
 	}
@@ -150,11 +152,11 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 				Actor* actor = static_cast<Actor*>(a);
 
 				const PlayerState state = player.getState();
-				const Vector2 dist2D = actor->pos_ - player.getPosition();
+				const Vector2 dist2D = actor->getPosition() - player.getPosition();
 				const bool shouldBeStreamedIn =
 					state != PlayerState_Spectating &&
 					state != PlayerState_None &&
-					player.getVirtualWorld() == actor->virtualWorld_ &&
+					player.getVirtualWorld() == actor->getVirtualWorld() &&
 					glm::dot(dist2D, dist2D) < maxDist;
 
 				const bool isStreamedIn = actor->isStreamedInForPlayer(player);

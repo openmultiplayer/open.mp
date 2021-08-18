@@ -1,10 +1,12 @@
 #include "gangzone.hpp"
 
-struct GangZonesComponent final : public IGangZonesComponent {
+class GangZonesComponent final : public IGangZonesComponent {
+private:
 	ICore * core;
 	MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Capacity> storage;
 	DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
+public:
 	StringView componentName() override {
 		return "GangZones";
 	}
@@ -27,7 +29,7 @@ struct GangZonesComponent final : public IGangZonesComponent {
 		}
 
 		GangZone& gangZone = storage.get(pid);
-		gangZone.pos = pos;
+		gangZone.setPosition(pos);
 		return &gangZone;
 	}
 

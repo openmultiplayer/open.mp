@@ -5,7 +5,8 @@
 #include <atomic>
 #include <iostream>
 
-struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler {
+class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler {
+private:
 	ICore* core = nullptr;
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
 	std::thread consoleThread;
@@ -13,6 +14,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	std::atomic_bool newCmd;
 	String cmd;
 
+public:
 	StringView componentName() override {
 		return "Console";
 	}

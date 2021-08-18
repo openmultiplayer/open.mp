@@ -7,14 +7,8 @@
 
 struct DatabasesComponent;
 
-struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
-
-	/// Parent databases component
-	DatabasesComponent* parentDatabasesComponent;
-
-	/// Database connection handle
-	sqlite3* databaseConnectionHandle;
-
+class DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
+public:
 	DatabaseConnection();
 
 	/// Gets its pool element ID
@@ -32,6 +26,11 @@ struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvi
 	IDatabaseResultSet* executeQuery(StringView query) override;
 
 private:
+	/// Parent databases component
+	DatabasesComponent* parentDatabasesComponent;
+
+	/// Database connection handle
+	sqlite3* databaseConnectionHandle;
 
 	/// Gets invoked when a query step has been performed
 	/// @param userData User data

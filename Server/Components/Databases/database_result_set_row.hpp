@@ -3,8 +3,8 @@
 #include <types.hpp>
 #include <Server/Components/Databases/databases.hpp>
 
-struct DatabaseResultSetRow final : public IDatabaseResultSetRow {
-
+class DatabaseResultSetRow final : public IDatabaseResultSetRow {
+public:
 	/// Adds a new field
 	/// @param fieldName Field name
 	/// @param value Field value

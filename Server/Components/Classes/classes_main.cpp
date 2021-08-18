@@ -2,8 +2,9 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <netcode.hpp>
 
-static const struct DefaultClass final : public PlayerClass {
-    DefaultClass() {
+static const class DefaultClass final : public PlayerClass {
+public:
+	DefaultClass() {
         team = 255;
         skin = 0;
         spawn = Vector3(0.0f, 0.0f, 3.1279f);
@@ -12,12 +13,14 @@ static const struct DefaultClass final : public PlayerClass {
     }
 } defClass;
 
-struct PlayerClassData final : IPlayerClassData {
-    IPlayer& player;
+class PlayerClassData final : public IPlayerClassData {
+private:
+	IPlayer& player;
     PlayerClass cls;
     bool& inClassRequest;
     bool& skipDefaultClassRequest;
 
+public:
     PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest) :
         player(player),
         cls(defClass),
@@ -27,6 +30,10 @@ struct PlayerClassData final : IPlayerClassData {
 
 	const PlayerClass& getClass() override {
 		return cls;
+	}
+	
+	void setClass(const PlayerClass & c) {
+		cls = c;
 	}
 
 	void setSpawnInfo(const PlayerClass& info) override {
@@ -60,8 +67,9 @@ struct PlayerClassData final : IPlayerClassData {
 	}
 };
 
-struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
-    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesComponent::Capacity> storage;
+class ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
+private:
+	MarkedPoolStorage<PlayerClass, PlayerClass, IClassesComponent::Capacity> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
@@ -70,7 +78,8 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
     struct PlayerRequestClassHandler : public SingleNetworkInOutEventHandler {
         ClassesComponent& self;
         PlayerRequestClassHandler(ClassesComponent& self) : self(self) {}
-	        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+	        
+		bool received(IPlayer& peer, INetworkBitStream& bs) override {
             NetCode::RPC::PlayerRequestClass playerRequestClassPacket;
             if (!playerRequestClassPacket.read(bs)) {
                 return false;
@@ -104,7 +113,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                     IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
-                        clsDataCast->cls = cls;
+                        clsDataCast->setClass(cls);
                     }
                     const WeaponSlots& weapons = cls.weapons;
                     StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
@@ -146,6 +155,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         }
     } onPlayerRequestClassHandler;
 
+public:
 	ClassesComponent() :
         onPlayerRequestClassHandler(*this)
 	{

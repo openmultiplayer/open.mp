@@ -2,7 +2,8 @@
 #include <netcode.hpp>
 #include <Server/Components/GangZones/gangzones.hpp>
 
-struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
+class GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
+private:
 	GangZonePos pos;
 	Colour col;
 	UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
@@ -14,6 +15,7 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
 		}
 	}
 
+public:
 	bool isShownForPlayer(const IPlayer& player) const override {
 		return shownFor_.valid(player.getID());
 	}

@@ -1,6 +1,7 @@
 #include "pickup.hpp"
 
-struct PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+private:
 	ICore * core;
 	MarkedPoolStorage<Pickup, IPickup, IPickupsComponent::Capacity> storage;
 	DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
@@ -29,6 +30,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
 		}
 	} playerPickUpPickupEventHandler;
 
+public:
 	StringView componentName() override {
 		return "Pickups";
 	}

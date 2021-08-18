@@ -3,9 +3,10 @@
 #include <netcode.hpp>
 
 template <class ObjectType>
-struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
+class BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
+private:
 	Vector3 pos_;
-	Vector3 rot_;
+	GTAQuat rot_;
 	int model_;
 	float drawDist_;
 	bool cameraCol_;
@@ -17,64 +18,9 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 	float rotSpeed_;
 	bool anyDelayedProcessing_;
 
-	BaseObject() :
-		attachmentData_{ ObjectAttachmentData::Type::None },
-		moving_(false),
-		anyDelayedProcessing_(false)
-	{}
-
-	bool isMoving() const override {
-		return moving_;
-	}
-
-	const ObjectAttachmentData& getAttachmentData() const override {
-		return attachmentData_;
-	}
-
-	bool getMaterialData(int index, const IObjectMaterial*& out) const override {
-		if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
-			return false;
-		}
-
-		if (!materialsUsed_.test(index)) {
-			return false;
-		}
-
-		out = &materials_[index];
-		return true;
-	}
-
-	int getID() const override {
-		return poolID;
-	}
-
-	Vector3 getPosition() const override {
-		return pos_;
-	}
-
-	GTAQuat getRotation() const override {
-		return GTAQuat(rot_);
-	}
-
-	int getVirtualWorld() const override {
-		return 0;
-	}
-
-	float getDrawDistance() const override {
-		return drawDist_;
-	}
-
-	int getModel() const override {
-		return model_;
-	}
-
-	bool getCameraCollision() const override {
-		return cameraCol_;
-	}
-
-	void setVirtualWorld(int vw) override {
-
-	}
+protected:
+	void setDelayedProcessing() { anyDelayedProcessing_ = true; }
+	void clearDelayedProcessing() { anyDelayedProcessing_ = false; }
 
 	void setMtl(int index, int model, StringView txd, StringView texture, Colour colour) {
 		materialsUsed_.set(index);
@@ -105,8 +51,10 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 		attachmentData_.rotation = rotation;
 		attachmentData_.syncRotation = sync;
 	}
+	
+	ObjectAttachementData const & getAttachmentData() const { return attachmentData_; }
 
-	void createObjectForClient(IPlayer& player) {
+	void createObjectForClient(IPlayer & player) {
 		NetCode::RPC::CreateObject createObjectRPC(materials_, materialsUsed_);
 		createObjectRPC.ObjectID = poolID;
 		createObjectRPC.ModelID = model_;
@@ -118,13 +66,13 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 		player.sendRPC(createObjectRPC);
 	}
 
-	void destroyObjectForClient(IPlayer& player) {
+	void destroyObjectForClient(IPlayer & player) {
 		NetCode::RPC::DestroyObject destroyObjectRPC;
 		destroyObjectRPC.ObjectID = poolID;
 		player.sendRPC(destroyObjectRPC);
 	}
 
-	NetCode::RPC::MoveObject move(const ObjectMoveData& data) {
+	NetCode::RPC::MoveObject move(const ObjectMoveData & data) {
 		moving_ = true;
 		moveData_ = data;
 
@@ -137,6 +85,8 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 		moveObjectRPC.MoveData = data;
 		return moveObjectRPC;
 	}
+
+	ObjectMoveData const & getMoveData() const { return moveData_; }
 
 	NetCode::RPC::StopObject stopMove() {
 		moving_ = false;
@@ -175,13 +125,107 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 		return false;
 	}
+
+	bool isMoving() const { return moving_; }
+
+	bool hasDelayedProcessing() const { return anyDelayedProcessing_; }
+
+public:
+	BaseObject() :
+		attachmentData_{ ObjectAttachmentData::Type::None },
+		moving_(false),
+		anyDelayedProcessing_(false)
+	{}
+
+	bool isMoving() const override {
+		return moving_;
+	}
+
+	const ObjectAttachmentData& getAttachmentData() const override {
+		return attachmentData_;
+	}
+
+	bool getMaterialData(int index, const IObjectMaterial*& out) const override {
+		if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
+			return false;
+		}
+
+		if (!materialsUsed_.test(index)) {
+			return false;
+		}
+
+		out = &materials_[index];
+		return true;
+	}
+
+	int getID() const override {
+		return poolID;
+	}
+
+	void setPosition(Vector3 position) override {
+		pos_ = position;
+	}
+
+	void setRotation(GTAQuat rotation) override {
+		rot_ = rotation;
+	}
+
+	Vector3 getPosition() const override {
+		return pos_;
+	}
+
+	GTAQuat getRotation() const override {
+		return rot_;
+	}
+
+	int getVirtualWorld() const override {
+		return 0;
+	}
+
+	float getDrawDistance() const override {
+		return drawDist_;
+	}
+
+	int getModel() const override {
+		return model_;
+	}
+
+	bool getCameraCollision() const override {
+		return cameraCol_;
+	}
+
+	void setVirtualWorld(int vw) override {
+
+	}
+	
+	void resetAttachment() override {
+		attachmentData_.type = ObjectAttachmentData::Type::None;
+		restream();
+	}
+
+	void setDrawDistance(float drawDistance) override {
+		drawDist_ = drawDistance;
+		restream();
+	}
+
+	void setModel(int model) override {
+		model_ = model;
+		restream();
+	}
+
+	void setCameraCollision(bool collision) override {
+		cameraCol_ = collision;
+		restream();
+	}
 };
 
-struct Object final : public BaseObject<IObject> {
+class Object final : public BaseObject<IObject> {
+private:
 	IPlayerPool* players_;
 	StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
 	StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
 
+public:
 	Object() :
 		players_(nullptr)
 	{}
@@ -193,14 +237,14 @@ struct Object final : public BaseObject<IObject> {
 	}
 
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
-		if (index < materials_.size()) {
+		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
 			setMtl(index, model, txd, texture, colour);
 			restream();
 		}
 	}
 
 	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
-		if (index < materials_.size()) {
+		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
 			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
 			restream();
 		}
@@ -219,36 +263,38 @@ struct Object final : public BaseObject<IObject> {
 	}
 
 	bool advance(Microseconds elapsed, TimePoint now) {
-		if (anyDelayedProcessing_) {
+		if (hasDelayedProcessing()) {
 			for (IPlayer* player : players_->entries()) {
 				const int pid = player->getID();
 				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
 					delayedProcessing_.reset(pid);
-					anyDelayedProcessing_ = delayedProcessing_.any();
 
-					if (moving_) {
+					if (isMoving()) {
 						NetCode::RPC::MoveObject moveObjectRPC;
 						moveObjectRPC.ObjectID = poolID;
-						moveObjectRPC.CurrentPosition = pos_;
-						moveObjectRPC.MoveData = moveData_;
+						moveObjectRPC.CurrentPosition = getPosition();
+						moveObjectRPC.MoveData = getMoveData();
 						player->sendRPC(moveObjectRPC);
 					}
 
 					if (
-						attachmentData_.type == ObjectAttachmentData::Type::Player &&
-						players_->valid(attachmentData_.ID)
+						getAttachmentData().type == ObjectAttachmentData::Type::Player &&
+						players_->valid(getAttachmentData().ID)
 					) {
-						IPlayer& other = players_->get(attachmentData_.ID);
+						IPlayer& other = players_->get(getAttachmentData().ID);
 						if (other.isStreamedInForPlayer(*player)) {
 							NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
 							attachObjectToPlayerRPC.ObjectID = poolID;
-							attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
-							attachObjectToPlayerRPC.Offset = attachmentData_.offset;
-							attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
+							attachObjectToPlayerRPC.PlayerID = getAttachmentData().ID;
+							attachObjectToPlayerRPC.Offset = getAttachmentData().offset;
+							attachObjectToPlayerRPC.Rotation = getAttachmentData().rotation;
 							player->sendRPC(attachObjectToPlayerRPC);
 						}
 					}
 				}
+			}
+			if (!delayedProcessing_.any()) {
+				clearDelayedProcessing();
 			}
 		}
 
@@ -261,20 +307,15 @@ struct Object final : public BaseObject<IObject> {
 		const int pid = player.getID();
 		delayedProcessing_.set(pid);
 		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
-		anyDelayedProcessing_ = true;
+		setDelayedProcessing();
 	}
 
 	void destroyForPlayer(IPlayer& player) {
 		destroyObjectForClient(player);
 	}
 
-	void resetAttachment() override {
-		attachmentData_.type = ObjectAttachmentData::Type::None;
-		restream();
-	}
-
 	void setPosition(Vector3 position) override {
-		pos_ = position;
+		BaseObject<IObject>::setPosition(position);
 
 		NetCode::RPC::SetObjectPosition setObjectPositionRPC;
 		setObjectPositionRPC.ObjectID = poolID;
@@ -283,27 +324,12 @@ struct Object final : public BaseObject<IObject> {
 	}
 
 	void setRotation(GTAQuat rotation) override {
-		rot_ = rotation.ToEuler();
+		BaseObject<IObject>::setRotation(rotation);
 
 		NetCode::RPC::SetObjectRotation setObjectRotationRPC;
 		setObjectRotationRPC.ObjectID = poolID;
-		setObjectRotationRPC.Rotation = rot_;
+		setObjectRotationRPC.Rotation = getRotation().ToEuler();
 		players_->broadcastRPCToAll(setObjectRotationRPC);
-	}
-
-	void setDrawDistance(float drawDistance) override {
-		drawDist_ = drawDistance;
-		restream();
-	}
-
-	void setModel(int model) override {
-		model_ = model;
-		restream();
-	}
-
-	void setCameraCollision(bool collision) override {
-		cameraCol_ = collision;
-		restream();
 	}
 
 	virtual void attachToObject(IObject& object, Vector3 offset, Vector3 rotation, bool syncRotation) override {
@@ -320,9 +346,9 @@ struct Object final : public BaseObject<IObject> {
 		setAttachmentData(ObjectAttachmentData::Type::Player, player.getID(), offset, rotation, true);
 		NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
 		attachObjectToPlayerRPC.ObjectID = poolID;
-		attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
-		attachObjectToPlayerRPC.Offset = attachmentData_.offset;
-		attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
+		attachObjectToPlayerRPC.PlayerID = getAttachmentData().ID;
+		attachObjectToPlayerRPC.Offset = getAttachmentData().offset;
+		attachObjectToPlayerRPC.Rotation = getAttachmentData().rotation;
 		player.broadcastRPCToStreamed(attachObjectToPlayerRPC);
 	}
 
@@ -348,22 +374,30 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 	}
 
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
-		if (index < materials_.size()) {
+		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
 			setMtl(index, model, txd, texture, colour);
-			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
-			setPlayerObjectMaterialRPC.ObjectID = poolID;
-			setPlayerObjectMaterialRPC.MaterialID = index;
-			player_->sendRPC(setPlayerObjectMaterialRPC);
+			// `IObject` just does `restream()` here.
+			IObjectMaterial const * out;
+			if (getMaterialData(index, out)) {
+				NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*out);
+				setPlayerObjectMaterialRPC.ObjectID = poolID;
+				setPlayerObjectMaterialRPC.MaterialID = index;
+				player_->sendRPC(setPlayerObjectMaterialRPC);
+			}
 		}
 	}
 
 	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
-		if (index < materials_.size()) {
+		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
 			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
-			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
-			setPlayerObjectMaterialRPC.ObjectID = poolID;
-			setPlayerObjectMaterialRPC.MaterialID = index;
-			player_->sendRPC(setPlayerObjectMaterialRPC);
+			// `IObject` just does `restream()` here.
+			IObjectMaterial const * out;
+			if (getMaterialData(index, out)) {
+				NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*out);
+				setPlayerObjectMaterialRPC.ObjectID = poolID;
+				setPlayerObjectMaterialRPC.MaterialID = index;
+				player_->sendRPC(setPlayerObjectMaterialRPC);
+			}
 		}
 	}
 
@@ -380,15 +414,15 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 	}
 
 	bool advance(Microseconds elapsed, TimePoint now) {
-		if (anyDelayedProcessing_) {
+		if (hasDelayedProcessing()) {
 			if (now >= delayedProcessingTime_) {
-				anyDelayedProcessing_ = false;
+				clearDelayedProcessing();
 
-				if (moving_) {
+				if (isMoving()) {
 					NetCode::RPC::MoveObject moveObjectRPC;
 					moveObjectRPC.ObjectID = poolID;
-					moveObjectRPC.CurrentPosition = pos_;
-					moveObjectRPC.MoveData = moveData_;
+					moveObjectRPC.CurrentPosition = getPosition();
+					moveObjectRPC.MoveData = getMoveData();
 					player_->sendRPC(moveObjectRPC);
 				}
 			}
@@ -400,9 +434,9 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 	void createForPlayer() {
 		createObjectForClient(*player_);
 
-		if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
+		if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player) {
 			delayedProcessingTime_ = Time::now() + Seconds(1);
-			anyDelayedProcessing_ = true;
+			setDelayedProcessing();
 		}
 	}
 
@@ -410,13 +444,8 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		destroyObjectForClient(*player_);
 	}
 
-	void resetAttachment() override {
-		attachmentData_.type = ObjectAttachmentData::Type::None;
-		restream();
-	}
-
 	void setPosition(Vector3 position) override {
-		pos_ = position;
+		BaseObject<IPlayerObject>::setPosition(position);
 
 		NetCode::RPC::SetObjectPosition setObjectPositionRPC;
 		setObjectPositionRPC.ObjectID = poolID;
@@ -425,27 +454,12 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 	}
 
 	void setRotation(GTAQuat rotation) override {
-		rot_ = rotation.ToEuler();
+		BaseObject<IPlayerObject>::setRotation(rotation);
 
 		NetCode::RPC::SetObjectRotation setObjectRotationRPC;
 		setObjectRotationRPC.ObjectID = poolID;
-		setObjectRotationRPC.Rotation = rot_;
+		setObjectRotationRPC.Rotation = getRotation().ToEuler();
 		player_->sendRPC(setObjectRotationRPC);
-	}
-
-	void setDrawDistance(float drawDistance) override {
-		drawDist_ = drawDistance;
-		restream();
-	}
-
-	void setModel(int model) override {
-		model_ = model;
-		restream();
-	}
-
-	void setCameraCollision(bool collision) override {
-		cameraCol_ = collision;
-		restream();
 	}
 
 	void attachToVehicle(IVehicle& vehicle, Vector3 offset, Vector3 rotation) override {

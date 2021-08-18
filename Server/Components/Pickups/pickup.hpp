@@ -2,8 +2,9 @@
 #include <Server/Components/Pickups/pickups.hpp>
 #include <netcode.hpp>
 
-struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
-    int virtualWorld;
+class Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
+private:
+	int virtualWorld;
     int modelId;
     PickupType type;
     Vector3 pos;
@@ -17,6 +18,22 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
         }
     }
 
+	void streamInForClient(IPlayer & player) {
+		NetCode::RPC::PlayerCreatePickup createPickupRPC;
+		createPickupRPC.PickupID = poolID;
+		createPickupRPC.Model = modelId;
+		createPickupRPC.Type = type;
+		createPickupRPC.Position = pos;
+		player.sendRPC(createPickupRPC);
+	}
+
+	void streamOutForClient(IPlayer & player) {
+		NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
+		destroyPickupRPC.PickupID = poolID;
+		player.sendRPC(destroyPickupRPC);
+	}
+
+public:
     bool isStreamedInForPlayer(const IPlayer & player) const override {
         return streamedFor_.valid(player.getID());
     }
@@ -72,21 +89,6 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
 
     int getModel() const override {
         return modelId;
-    }
-
-    void streamInForClient(IPlayer & player) {
-        NetCode::RPC::PlayerCreatePickup createPickupRPC;
-        createPickupRPC.PickupID = poolID;
-        createPickupRPC.Model = modelId;
-        createPickupRPC.Type = type;
-        createPickupRPC.Position = pos;
-        player.sendRPC(createPickupRPC);
-    }
-
-    void streamOutForClient(IPlayer & player) {
-        NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
-        destroyPickupRPC.PickupID = poolID;
-        player.sendRPC(destroyPickupRPC);
     }
 
     ~Pickup() {

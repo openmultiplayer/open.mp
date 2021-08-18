@@ -18,7 +18,8 @@ struct PlayerMenuData final : IPlayerMenuData {
 	}
 };
 
-struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
+class Menu final : public IMenu, public PoolIDProvider, public NoCopy {
+private:
 	String title;
 	uint8_t columnCount;
 	Vector2 pos;
@@ -32,6 +33,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 
 	UniqueIDArray<IPlayer, IPlayerPool::Capacity> initedFor_;
 
+public:
 	void setColumnHeader(StringView header, MenuColumn column) override {
 		if (column > columnCount) {
 			return;

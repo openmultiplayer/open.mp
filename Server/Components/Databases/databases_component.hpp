@@ -2,13 +2,9 @@
 
 #include "database_connection.hpp"
 
-struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
-
+class DatabasesComponent final : public IDatabasesComponent, public NoCopy {
+public:
 	DatabasesComponent();
-
-	/// Creates a result set
-	/// @returns Result set if successful, otherwise "nullptr"
-	IDatabaseResultSet* createResultSet();
 
 	/// Gets the component name
 	/// @returns Component name
@@ -67,6 +63,9 @@ struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
 	IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) override;
 
 private:
+	/// Creates a result set
+	/// @returns Result set if successful, otherwise "nullptr"
+	IDatabaseResultSet * createResultSet();
 
 	/// Database connections
 	/// TODO: Replace with a pool type that grows dynamically

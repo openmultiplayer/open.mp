@@ -1,14 +1,11 @@
 #include "menu.hpp"
 
-struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
+class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
+private:
 	ICore * core;
 	MarkedPoolStorage<Menu, IMenu, IMenusComponent::Capacity> storage;
 	DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
 	IPlayerPool * players = nullptr;
-
-	IPlayerData * onPlayerDataRequest(IPlayer & player) override {
-		return new PlayerMenuData();
-	}
 
 	struct PlayerSelectedMenuRowEventHandler : public SingleNetworkInOutEventHandler {
 		MenusComponent & self;
@@ -61,6 +58,10 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 		}
 	} playerExitedMenuEventHandler;
 
+public:
+	IPlayerData * onPlayerDataRequest(IPlayer & player) override {
+		return new PlayerMenuData();
+	}
 	StringView componentName() override {
 		return "Menus";
 	}

@@ -109,7 +109,8 @@ const FlatHashMap<StringView, StringView> dictionary = {
 	{ "lagcompmode", "lag_compensation" }
 };
 
-struct LegacyConfigComponent final : public IConfigProviderComponent {
+class LegacyConfigComponent final : public IConfigProviderComponent {
+public:
 	PROVIDE_UUID(0x24ef6216838f9ffc);
 
 	StringView componentName() override {
