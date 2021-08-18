@@ -250,7 +250,11 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Kick the player
 	virtual void kick() = 0;
 
+	/// Ban the player
 	virtual void ban(StringView reason = StringView()) = 0;
+
+	/// Immediately spawn the player
+	virtual void spawn() = 0;
 
 	/// Get the player pool that the player is stored in
 	virtual IPlayerPool* getPool() const = 0;
@@ -458,6 +462,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Set the player's gravity
 	virtual void setGravity(float gravity) = 0;
 
+	/// Set the player's world time
+	virtual void setWorldTime(Hours time) = 0;
+
 	/// Apply an animation to the player
 	/// @param animation The animation to apply
 	/// @param syncType How to sync the animation
@@ -507,8 +514,8 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Send a message to the player
 	virtual void sendClientMessage(const Colour& colour, StringView message) const = 0;
 
-	/// Send a standardly formatted chat message as the player to everyone
-	virtual void sendChatMessage(StringView message) const = 0;
+	/// Send a standardly formatted chat message from another player
+	virtual void sendChatMessage(IPlayer& sender, StringView message) const = 0;
 
 	/// Send a command to server (Player)
 	virtual void sendCommand(StringView message) const = 0;

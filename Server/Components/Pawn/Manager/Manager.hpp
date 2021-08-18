@@ -34,6 +34,7 @@ class PawnManager : public Singleton<PawnManager>
 public:
 	FlatHashMap<String, std::unique_ptr<PawnScript>> scripts_;
 	std::string entryScript = "";
+	FlatHashMap<AMX*, PawnScript*> amxToScript_;
 	ICore* core = nullptr;
 	IConfig* config = nullptr;
 	IPlayerPool* players = nullptr;

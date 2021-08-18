@@ -76,6 +76,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     uint8_t numStreamed_;
     TimePoint lastGameTimeUpdate_;
     bool isBot_;
+    bool toSpawn_;
 
     Player() :
         pool_(nullptr),
@@ -112,13 +113,21 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         chatBubbleExpiration_(Time::now()),
         numStreamed_(0),
         lastGameTimeUpdate_(),
-        isBot_(false)
+        isBot_(false),
+        toSpawn_(false)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
     }
 
     void ban(StringView reason) override;
+
+    void spawn() override {
+        toSpawn_ = true;
+        NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
+        playerRequestSpawnResponse.Allow = true;
+        sendRPC(playerRequestSpawnResponse);
+    }
 
     uint32_t getClientVersion() const override {
         return version_;
@@ -157,7 +166,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerWeatherRPC.WeatherID = WeatherID;
         sendRPC(setPlayerWeatherRPC);
     }
-	
+
+    void setWorldTime(Hours time) override {
+        NetCode::RPC::SetPlayerWorldTime RPC;
+        RPC.Time = time;
+        sendRPC(RPC);
+    }
+
 	void setWorldBounds(Vector4 coords) override {
         worldBounds_ = coords;
         NetCode::RPC::SetWorldBounds setWorldBoundsRPC;
@@ -787,9 +802,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(sendClientMessage);
     }
 
-    void sendChatMessage(StringView message) const override {
+    void sendChatMessage(IPlayer& sender, StringView message) const override {
         NetCode::RPC::PlayerChatMessage sendChatMessage;
-        sendChatMessage.PlayerID = poolID;
+        sendChatMessage.PlayerID = static_cast<Player&>(sender).poolID;
         sendChatMessage.message = message;
         sendRPC(sendChatMessage);
     }

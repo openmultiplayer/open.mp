@@ -24,14 +24,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerRequestSpawnRPCHandler(PlayerPool& self) : self(self) {}
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
-            NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
-            playerRequestSpawnResponse.Allow = self.eventDispatcher.stopAtFalse(
+            Player& player = static_cast<Player&>(peer);
+
+            player.toSpawn_ = self.eventDispatcher.stopAtFalse(
                 [&peer](PlayerEventHandler* handler) {
                     return handler->onRequestSpawn(peer);
                 }
-            ) ? 1 : 0;
+            );
 
+            NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
+            playerRequestSpawnResponse.Allow = player.toSpawn_;
             peer.sendRPC(playerRequestSpawnResponse);
+
             return true;
         }
     } playerRequestSpawnRPCHandler;
@@ -203,37 +207,39 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             Player& player = static_cast<Player&>(peer);
-            player.setState(PlayerState_Spawned);
+            if (player.toSpawn_ || player.isBot_) {
+                player.setState(PlayerState_Spawned);
 
-            self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
+                self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
 
-            IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
-            if (classData) {
-                const PlayerClass& cls = classData->getClass();
-                player.pos_ = cls.spawn;
-                player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
-                player.team_ = cls.team;
-                player.skin_ = cls.skin;
-                player.weapons_[0] = cls.weapons[0];
-                player.weapons_[1] = cls.weapons[1];
-                player.weapons_[2] = cls.weapons[2];
-                const WeaponSlots& weapons = cls.weapons;
-                for (size_t i = 3; i < weapons.size(); ++i) {
-                    if (weapons[i].id == 0) {
-                        continue;
-                    }
-                    if (weapons[i].id <= 18 || (weapons[i].id >= 22 && weapons[i].id <= 46)) {
-                        peer.giveWeapon(weapons[i]);
+                IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
+                if (classData) {
+                    const PlayerClass& cls = classData->getClass();
+                    player.pos_ = cls.spawn;
+                    player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
+                    player.team_ = cls.team;
+                    player.skin_ = cls.skin;
+                    player.weapons_[0] = cls.weapons[0];
+                    player.weapons_[1] = cls.weapons[1];
+                    player.weapons_[2] = cls.weapons[2];
+                    const WeaponSlots& weapons = cls.weapons;
+                    for (size_t i = 3; i < weapons.size(); ++i) {
+                        if (weapons[i].id == 0) {
+                            continue;
+                        }
+                        if (weapons[i].id <= 18 || (weapons[i].id >= 22 && weapons[i].id <= 46)) {
+                            peer.giveWeapon(weapons[i]);
+                        }
                     }
                 }
-            }
 
-            self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
+                self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
-            // Make sure to restream player on spawn
-            for (IPlayer* other : self.storage.entries()) {
-                if (&player != other && player.isStreamedInForPlayer(*other)) {
-                    player.streamOutForPlayer(*other);
+                // Make sure to restream player on spawn
+                for (IPlayer* other : self.storage.entries()) {
+                    if (&player != other && player.isStreamedInForPlayer(*other)) {
+                        player.streamOutForPlayer(*other);
+                    }
                 }
             }
 
@@ -284,7 +290,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     for (IPlayer* other : self.storage.entries()) {
                         float dist = glm::distance(pos, other->getPosition());
                         if (dist < limit) {
-                            peer.sendChatMessage(filteredMessage);
+                            other->sendChatMessage(peer, filteredMessage);
                         }
                     }
                 }

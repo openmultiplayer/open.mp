@@ -459,12 +459,22 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     }
 }
 
-void RakNetLegacyNetwork::ban(const IBanEntry& entry) {
+void RakNetLegacyNetwork::ban(const IBanEntry& entry, Milliseconds expire) {
     // Only support ipv4
     if (!entry.address.ipv6) {
         char out[16]{ 0 };
         if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
-            rakNetServer.AddToBanList(out);
+            rakNetServer.AddToBanList(out, expire.count());
+        }
+    }
+}
+
+void RakNetLegacyNetwork::unban(const IBanEntry& entry) {
+    // Only support ipv4
+    if (!entry.address.ipv6) {
+        char out[16]{ 0 };
+        if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
+            rakNetServer.RemoveFromBanList(out);
         }
     }
 }
