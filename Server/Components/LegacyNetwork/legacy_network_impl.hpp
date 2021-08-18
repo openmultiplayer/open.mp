@@ -23,6 +23,56 @@ class RakNetLegacyBitStream final : public INetworkBitStream {
 private:
     RakNet::BitStream& bs;
 
+	template <typename LenType>
+	void writeDynamicString(const NetworkString & input) {
+		bs.Write(static_cast<LenType>(input.count));
+		bs.Write(input.data, input.count);
+	}
+
+	template <typename LenType>
+	bool readDynamicString(NetworkString & input) {
+		LenType len;
+		if (!bs.Read(len)) {
+			return false;
+		}
+
+		if (len > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+			return false;
+		}
+
+		input.allocate(len);
+		return bs.Read(input.data, len);
+	}
+
+	template <typename T>
+	void writeFixedArray(const NetworkArray<T> & input) {
+		bs.Write(reinterpret_cast<const char *>(input.data), input.count * sizeof(T));
+	}
+
+	template <typename T>
+	bool readFixedArray(NetworkArray<T> & input, size_t len) {
+		if (len * sizeof(T) > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+			return false;
+		}
+
+		T * data = input.allocate(len);
+
+		return bs.Read(reinterpret_cast<char *>(data), len * sizeof(T));
+	}
+
+	void writeFixedString(const NetworkString & input) {
+		bs.Write(input.getData(), input.getLength());
+	}
+
+	bool readFixedString(NetworkString & input, size_t len) {
+		if (len > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
+			return false;
+		}
+
+		char * data = input.allocate(len);
+		return bs.Read(data, len);
+	}
+
 public:
     RakNetLegacyBitStream(RakNet::BitStream& bs) : bs(bs) {}
 
@@ -39,7 +89,7 @@ public:
         }
     }
 
-    bool write(const NetworkBitStreamValue& input) override {
+    bool write(const NetworkBitStreamValue& input, size_t len) override {
         switch (input.type) {
         case NetworkBitStreamValueType::BIT:
             bs.Write(std::get<bool>(input.data)); break;
@@ -105,12 +155,13 @@ public:
         }
         case NetworkBitStreamValueType::GTA_QUAT: {
             const GTAQuat& quat = std::get<GTAQuat>(input.data);
-            bs.WriteNormQuat(quat.q.w, quat.q.x, quat.q.y, quat.q.z);
+            bs.WriteNormQuat(quat.w, quat.x, quat.y, quat.z);
             break;
         }
         case NetworkBitStreamValueType::COMPRESSED_STR: {
             const NetworkString& str = std::get<NetworkString>(input.data);
-            RakNet::StringCompressor::Instance()->EncodeString(str.data, str.count + 1, &bs);
+			// Have to do `+ 1` here because Raknet subtracts it again.
+            RakNet::StringCompressor::Instance()->EncodeString(str.getData(), str.getLength() + 1, &bs);
             break;
         }
         case NetworkBitStreamValueType::NONE:
@@ -119,57 +170,7 @@ public:
         return true;
     }
 
-    template <typename LenType>
-    void writeDynamicString(const NetworkString& input) {
-        bs.Write(static_cast<LenType>(input.count));
-        bs.Write(input.data, input.count);
-    }
-
-    template <typename LenType>
-    bool readDynamicString(NetworkString& input) {
-        LenType len;
-        if (!bs.Read(len)) {
-            return false;
-        }
-
-        if (len > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
-            return false;
-        }
-
-        input.allocate(len);
-        return bs.Read(input.data, len);
-    }
-
-    template <typename T>
-    void writeFixedArray(const NetworkArray<T>& input) {
-        bs.Write(reinterpret_cast<const char*>(input.data), input.count * sizeof(T));
-    }
-
-    template <typename T>
-    bool readFixedArray(NetworkArray<T>& input) {
-        if (input.count * sizeof(T) > unsigned(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
-            return false;
-        }
-
-        input.allocate(input.count);
-        return bs.Read(reinterpret_cast<char*>(input.data), input.count * sizeof(T));
-    }
-
-    void writeFixedString(const NetworkString& input) {
-        bs.Write(input.data, input.count);
-    }
-
-    bool readFixedString(NetworkString& input) {
-        if (input.count * sizeof(char) > (unsigned int)(BITS_TO_BYTES(bs.GetNumberOfUnreadBits()))) {
-            return false;
-        }
-
-        const unsigned int len = input.count;
-        input.allocate(len);
-        return bs.Read(input.data, len);
-    }
-
-    bool read(NetworkBitStreamValue& input) override {
+    bool read(NetworkBitStreamValue& input, size_t len) override {
         bool success = false;
         switch (input.type) {
         case NetworkBitStreamValueType::BIT:
@@ -201,7 +202,7 @@ public:
         case NetworkBitStreamValueType::VEC4:
             success = bs.Read(input.data.emplace<Vector4>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            success = readFixedString(std::get<NetworkString>(input.data)); break;
+            success = readFixedString(std::get<NetworkString>(input.data), len); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
             success = readDynamicString<uint8_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
@@ -209,11 +210,11 @@ public:
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
             success = readDynamicString<uint32_t>(input.data.emplace<NetworkString>()); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8:
-            success = readFixedArray<uint8_t>(input.data.emplace<NetworkArray<uint8_t>>()); break;
+            success = readFixedArray<uint8_t>(input.data.emplace<NetworkArray<uint8_t>>(), len); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT16:
-            success = readFixedArray<uint16_t>(input.data.emplace<NetworkArray<uint16_t>>()); break;
+            success = readFixedArray<uint16_t>(input.data.emplace<NetworkArray<uint16_t>>(), len); break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
-            success = readFixedArray<uint32_t>(input.data.emplace<NetworkArray<uint32_t>>()); break;
+            success = readFixedArray<uint32_t>(input.data.emplace<NetworkArray<uint32_t>>(), len); break;
         case NetworkBitStreamValueType::HP_ARMOR_COMPRESSED: {
             uint8_t
                 health, armour;
@@ -242,7 +243,6 @@ public:
     ~RakNetLegacyNetwork();
 
 private:
-
     ENetworkType getNetworkType() const override {
         return ENetworkType_RakNetLegacy;
     }
