@@ -127,6 +127,9 @@ struct ICore {
 	/// Set server weather
 	virtual void setWeather(int weather) = 0;
 
+	/// Set server world time
+	virtual void setWorldTime(Hours time) = 0;
+
 	/// Toggle server stunt bonus
 	virtual void toggleStuntBonus(bool toggle) = 0;
 

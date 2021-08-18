@@ -210,7 +210,9 @@ void Player::streamOutForPlayer(IPlayer& other) {
 
 void Player::ban(StringView reason) {
     const BanEntry entry(netData_.networkID.address, name_, reason);
-    netData_.network->ban(entry);
+    for (INetwork* network : pool_->core.getNetworks()) {
+        network->ban(entry);
+    }
     netData_.network->disconnect(*this);
     pool_->core.getConfig().addBan(entry);
     pool_->core.getConfig().writeBans();

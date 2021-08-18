@@ -472,7 +472,11 @@ struct INetwork {
 	/// Disconnect the peer from the network
 	virtual void disconnect(const INetworkPeer& peer) = 0;
 
-	virtual void ban(const IBanEntry& entry) = 0;
+	/// Ban a peer from the network
+	virtual void ban(const IBanEntry& entry, Milliseconds expire = Milliseconds(0)) = 0;
+
+	/// Unban a peer from the network
+	virtual void unban(const IBanEntry& entry) = 0;
 };
 
 /// A component interface which allows for writing a network component
@@ -586,7 +590,7 @@ struct BanEntry final : public IBanEntry {
 	String playerName;
 	String reason;
 
-	BanEntry(PeerAddress address, StringView playerName, StringView reason, WorldTimePoint time = WorldTime::now()) :
+	BanEntry(PeerAddress address, StringView playerName="", StringView reason="", WorldTimePoint time = WorldTime::now()) :
 		IBanEntry(address, time),
 		playerName(playerName),
 		reason(reason)
