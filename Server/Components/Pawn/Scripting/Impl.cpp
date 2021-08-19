@@ -3,12 +3,14 @@
 #include "Player/Events.hpp"
 #include "Actor/Events.hpp"
 #include "Checkpoint/Events.hpp"
+#include "Class/Events.hpp"
 
 Scripting::~Scripting() {
 	// remove event handlers
 	PawnManager::Get()->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
 	PawnManager::Get()->actors->getEventDispatcher().removeEventHandler(ActorEvents::Get());
 	PawnManager::Get()->checkpoints->getEventDispatcher().removeEventHandler(CheckpointEvents::Get());
+	PawnManager::Get()->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
 }
 
 void Scripting::addEvents() const {
@@ -16,4 +18,5 @@ void Scripting::addEvents() const {
 	PawnManager::Get()->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
 	PawnManager::Get()->actors->getEventDispatcher().addEventHandler(ActorEvents::Get());
 	PawnManager::Get()->checkpoints->getEventDispatcher().addEventHandler(CheckpointEvents::Get());
+	PawnManager::Get()->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
 }
