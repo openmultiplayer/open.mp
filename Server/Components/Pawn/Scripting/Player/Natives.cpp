@@ -472,7 +472,7 @@ SCRIPT_API(SetPlayerChatBubble, bool(IPlayer& player, const std::string& text, u
 	return true;
 }
 
-SCRIPT_API(SetPlayerPosFindz, bool(IPlayer& player, Vector3 pos))
+SCRIPT_API(SetPlayerPosFindZ, bool(IPlayer& player, Vector3 pos))
 {
 	player.setPositionFindZ(pos);
 	return true;
