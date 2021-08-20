@@ -77,7 +77,6 @@ const FlatHashMap<StringView, StringView> dictionary = {
 	{ "mapname", "map_name" },
 	{ "gamemodetext", "mode_name" },
 	{ "weather", "weather" },
-	//{ "worldtime", ParamType::String }, TODO custom process
 	{ "gravity", "gravity" },
 	{ "weburl", "website" },
 	{ "maxplayers", "max_players" },
@@ -114,6 +113,16 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 
 	StringView componentName() override {
 		return "LegacyConfig";
+	}
+
+	Pair<bool, StringView> getNameFromAlias(StringView alias) const override {
+		auto it = dictionary.find(alias);
+		if (it == dictionary.end()) {
+			return Pair<bool, StringView>{true, StringView()};
+		}
+		else {
+			return Pair<bool, StringView>{it->first != it->second, it->second};
+		}
 	}
 
 	bool processCustom(IEarlyConfig& config, String name, String right) {
