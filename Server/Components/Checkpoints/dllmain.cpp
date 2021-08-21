@@ -20,14 +20,14 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 
 		bool onUpdate(IPlayer& player, TimePoint now) override {
 			PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
-			const float radius = cp->type_ == CheckpointType::STANDARD ? cp->size_ / 2 : cp->size_;
+			const float radius = cp->getType() == CheckpointType::STANDARD ? cp->getSize() / 2 : cp->getSize();
 			const float maxDistance = radius * radius;
-			const Vector3 dist3D = cp->position_ - player.getPosition();
+			const Vector3 dist3D = cp->getPosition() - player.getPosition();
 
 			if (glm::dot(dist3D, dist3D) > maxDistance) {
-				if (cp->enabled_ && cp->inside_) {
-					cp->inside_ = false;
-					void (PlayerCheckpointEventHandler:: * leaveHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint : &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint;
+				if (cp->isEnabled() && cp->hasPlayerInside()) {
+					cp->setPlayerInside(false);
+					void (PlayerCheckpointEventHandler:: * leaveHandler)(IPlayer&) = (cp->getType() == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint : &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint;
 					self.eventDispatcher.dispatch(
 						leaveHandler,
 						player
@@ -35,9 +35,9 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 				}
 			}
 			else {
-				if (cp->enabled_ && !cp->inside_) {
-					cp->inside_ = true;
-					void (PlayerCheckpointEventHandler:: * enterHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint : &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint;
+				if (cp->isEnabled() && !cp->hasPlayerInside()) {
+					cp->setPlayerInside(true);
+					void (PlayerCheckpointEventHandler:: * enterHandler)(IPlayer&) = (cp->getType() == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint : &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint;
 					self.eventDispatcher.dispatch(
 						enterHandler,
 						player

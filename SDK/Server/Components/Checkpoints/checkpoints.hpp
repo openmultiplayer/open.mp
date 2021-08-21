@@ -34,6 +34,7 @@ struct IPlayerCheckpointData : public IPlayerData {
 
 	virtual void enable(IPlayer& player) = 0;
 	virtual void disable(IPlayer& player) = 0;
+	virtual bool isEnabled() const = 0;
 };
 
 struct PlayerCheckpointEventHandler {

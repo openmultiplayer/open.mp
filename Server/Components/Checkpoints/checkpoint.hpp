@@ -13,6 +13,10 @@ private:
 	bool enabled_ = false;
 
 public:
+	bool isEnabled() const override {
+		return enabled_;
+	}
+
 	CheckpointType getType() const override {
 		return type_;
 	}
