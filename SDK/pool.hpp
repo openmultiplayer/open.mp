@@ -168,10 +168,10 @@ public:
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (&pool_[freeIdx]) Type();
-            allocated_.add(freeIdx, pool_[freeIdx]);
+            new (getPtr(index)) Type();
+            allocated_.add(freeIdx, *getPtr(index));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[freeIdx].poolID = freeIdx;
+				getPtr(index)->poolID = freeIdx;
             }
         }
         return freeIdx;
@@ -180,10 +180,10 @@ public:
     int claim(int hint) {
         assert(hint < Count);
         if (!valid(hint)) {
-            new (&pool_[hint]) Type();
-            allocated_.add(hint, pool_[hint]);
+            new (getPtr(index)) Type();
+            allocated_.add(hint, *getPtr(index));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[hint]y.poolID = hint;
+				getPtr(index)->poolID = hint;
             }
             return hint;
         }
@@ -202,7 +202,7 @@ public:
 
     Type& get(int index) {
         assert(index < Count);
-        return pool_[index];
+        return *getPtr(index);
     }
 
     const FlatPtrHashSet<Interface>& entries() {
@@ -215,15 +215,20 @@ public:
 
     void remove(int index) {
         assert(index < Count);
-        allocated_.remove(index, pool_[index]);
-        pool_[index].~Type();
+        allocated_.remove(index, *getPtr(index));
+		getPtr(index)->~Type();
     }
 
 	static const size_t Capacity = Count;
 
+protected:
+	Type * getPtr(int index) {
+		return reinterpret_cast<Type *>(&pool_[index * ceildiv(sizeof(Type), alignof(Type)) * alignof(Type)]);
+	}
+
 private:
-	// Let the compiler deal with alignments.
-    Type pool_[Count];
+	// Account for non-standard alignments, especially ones that don't match `char` array alignment.
+    char pool_[Count * ceildiv(sizeof(Type), alignof(Type)) * alignof(Type)] alignas(alignof(Type));
     UniqueIDArray<Interface, Count> allocated_;
 };
 

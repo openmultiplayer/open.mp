@@ -153,3 +153,9 @@ public:
 		return Colour::FromRGBA(0x00FFFFFF);
 	}
 };
+
+inline constexpr auto CEILDIV(int n, int d) -> decltype (n / d)
+{
+	return (n) ? ((n - (int)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
+}
+
