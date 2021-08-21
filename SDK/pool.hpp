@@ -52,7 +52,7 @@ struct IPool : IReadOnlyPool<T, Count> {
 template <typename T, size_t Count>
 struct IPoolComponent : public IComponent, public IPool<T, Count> {
     /// Return Pool component type
-    ComponentType componentType() override { return ComponentType::Pool; }
+    ComponentType componentType() const override { return ComponentType::Pool; }
 };
 
 /* Implementation, NOT to be passed around */
