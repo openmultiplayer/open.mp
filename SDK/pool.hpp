@@ -192,7 +192,7 @@ public:
     }
 	
 	template <typename ... Args>
-    Type* emplace(Args && args) {
+    Type* emplace(Args && ...args) {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
             new (getPtr(hint)) Type(std::forward<Args>(args)...);
@@ -206,7 +206,7 @@ public:
     }
 
 	template <typename ... Args>
-	Type * emplace(int hint, Args && args) {
+	Type * emplace(int hint, Args && ...args) {
 		if (valid(hint)) {
 			hint = findFreeIndex();
 		}
