@@ -510,15 +510,7 @@ SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool toggle))
 
 SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
 {
-	Animation data;
-	data.lib = animlib;
-	data.name = animname;
-	data.timeData.delta = delta;
-	data.timeData.loop = loop;
-	data.timeData.lockX = lockX;
-	data.timeData.lockY = lockY;
-	data.timeData.freeze = freeze;
-	data.timeData.time = time;
+	Animation data(animlib, animname, AnimationTimeData(delta, loop, lockX, lockY, freeze, time));
 	player.applyAnimation(data, PlayerAnimationSyncType(sync));
 	return true;
 }
@@ -620,8 +612,8 @@ SCRIPT_API(GetPlayerVehicleSeat, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
 {
-	WeaponSlots weapons = player.getWeapons();
-	WeaponSlotData weapon = weapons[slot];
+	WeaponSlots const & weapons = player.getWeapons();
+	WeaponSlotData const & weapon = weapons[slot];
 	weaponid = weapon.id;
 	ammo = weapon.ammo;
 	return true;
@@ -629,7 +621,7 @@ SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, i
 
 SCRIPT_API(GetPlayerWeaponState, int(IPlayer& player))
 {
-	PlayerAimData data = player.getAimData();
+	PlayerAimData const & data = player.getAimData();
 	return data.WeaponState;
 }
 
@@ -668,26 +660,26 @@ SCRIPT_API(AttachCameraToPlayerObject, bool(IPlayer& player, IPlayerObject& obje
 
 SCRIPT_API(GetPlayerCameraAspectRatio, float(IPlayer& player))
 {
-	PlayerAimData data = player.getAimData();
+	PlayerAimData const & data = player.getAimData();
 	return data.AspectRatio;
 }
 
 SCRIPT_API(GetPlayerCameraFrontVector, bool(IPlayer& player, Vector3& vector))
 {
-	PlayerAimData data = player.getAimData();
+	PlayerAimData const & data = player.getAimData();
 	vector = data.CamFrontVector;
 	return true;
 }
 
 SCRIPT_API(GetPlayerCameraMode, int(IPlayer& player))
 {
-	PlayerAimData data = player.getAimData();
+	PlayerAimData const & data = player.getAimData();
 	return data.CamMode;
 }
 
 SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& leftright))
 {
-	PlayerKeyData keyData = player.getKeyData();
+	PlayerKeyData const & keyData = player.getKeyData();
 	keys = keyData.keys;
 	updown = keyData.upDown;
 	leftright = keyData.leftRight;

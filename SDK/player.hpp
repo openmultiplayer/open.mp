@@ -306,7 +306,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void setWeaponAmmo(WeaponSlotData data) = 0;
 
 	/// Get player's weapons
-	virtual WeaponSlots const & getWeapons() = 0;
+	virtual WeaponSlots const & getWeapons() const = 0;
 
 	/// Reset the player's weapons
 	virtual void resetWeapons() = 0;

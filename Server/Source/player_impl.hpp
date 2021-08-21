@@ -680,11 +680,11 @@ public:
         return keys_;
     }
 
-    const PlayerAimData& getAimData() const override {
+    PlayerAimData const & getAimData() const override {
         return aimingData_;
     }
 
-    const PlayerBulletData& getBulletData() const override {
+    PlayerBulletData const & getBulletData() const override {
         return bulletData_;
     }
 
@@ -744,7 +744,7 @@ public:
         }
     }
 
-    WeaponSlots getWeapons() override {
+    WeaponSlots const & getWeapons() const override {
         return weapons_;
     }
 
