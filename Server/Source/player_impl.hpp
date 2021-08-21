@@ -80,6 +80,8 @@ private:
     bool toSpawn_;
 
     void setState(PlayerState state);
+	
+	friend class PlayerPool;
 
 public:
     Player() :
@@ -674,7 +676,7 @@ public:
         sendRPC(setPlayerFacingAngleRPC);
     }
 
-    PlayerKeyData getKeyData() const override {
+    PlayerKeyData const & getKeyData() const override {
         return keys_;
     }
 

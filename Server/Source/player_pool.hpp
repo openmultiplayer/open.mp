@@ -2,8 +2,9 @@
 
 #include "player_impl.hpp"
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler {
-    ICore& core;
+class PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler {
+private:
+	ICore& core;
     PoolStorage<Player, IPlayer, IPlayerPool::Capacity> storage;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
@@ -207,7 +208,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool received(IPlayer& peer, INetworkBitStream& bs) override {
             Player& player = static_cast<Player&>(peer);
-            if (player.toSpawn_ || player.isBot_) {
+            if (player.toSpawn_ || player.isBot()) {
                 player.setState(PlayerState_Spawned);
 
                 self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
@@ -215,7 +216,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
                 if (classData) {
                     const PlayerClass& cls = classData->getClass();
-                    player.pos_ = cls.spawn;
+                    player.getPosition() = cls.spawn;
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
                     player.team_ = cls.team;
                     player.skin_ = cls.skin;
@@ -339,7 +340,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             footSync.PlayerID = player.poolID;
             footSync.Rotation *= player.rotTransform_;
-            player.pos_ = footSync.Position;
+            player.getPosition() = footSync.Position;
             player.rot_ = footSync.Rotation;
             uint32_t newKeys;
             switch (footSync.AdditionalKey) {
@@ -356,15 +357,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 newKeys = footSync.Keys;
                 break;
             }
-            if (player.keys_.keys != newKeys) {
+
+			PlayerKeyData & keyData = const_cast<PlayerKeyData &>(player.getKeyData());
+            if (keyData.keys != newKeys) {
                 self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
+                    handler->onKeyStateChange(peer, newKeys, player.getKeyData().keys);
                     });
             }
 
-            player.keys_.keys = newKeys;
-            player.keys_.leftRight = footSync.LeftRight;
-            player.keys_.upDown = footSync.UpDown;
+            keyData.keys = newKeys;
+            keyData.leftRight = footSync.LeftRight;
+            keyData.upDown = footSync.UpDown;
             player.health_ = footSync.HealthArmour.x;
             player.armour_ = footSync.HealthArmour.y;
             player.armedWeapon_ = footSync.Weapon;
@@ -375,7 +378,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.action_ = PlayerSpecialAction(footSync.SpecialAction);
             player.setState(PlayerState_OnFoot);
 
-            if (!player.controllable_) {
+            if (!player.getControllable()) {
                 footSync.Keys = 0;
                 footSync.UpDown = 0;
                 footSync.LeftRight = 0;
@@ -405,14 +408,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
-            player.pos_ = spectatorSync.Position;
+            player.getPosition() = spectatorSync.Position;
             player.keys_.keys = spectatorSync.Keys;
             player.keys_.leftRight = spectatorSync.LeftRight;
             player.keys_.upDown = spectatorSync.UpDown;
 
             player.setState(PlayerState_Spectating);
 
-            if (!player.controllable_) {
+            if (!player.getControllable()) {
                 spectatorSync.Keys = 0;
                 spectatorSync.UpDown = 0;
                 spectatorSync.LeftRight = 0;
@@ -445,6 +448,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.CamZoom = aimSync.CamZoom;
                 player.aimingData_.WeaponState = aimSync.WeaponState;
                 player.aimingData_.AspectRatio = aimSync.AspectRatio;
+                player.aimingData_.CamPos = aimSync.CamPos;
 
                 aimSync.PlayerID = player.poolID;
                 peer.broadcastPacketToStreamed(aimSync);
@@ -512,53 +516,54 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false; // OOB shot
             }
 
-            player.bulletData_.hitPos = bulletSync.Offset;
-            player.bulletData_.origin = bulletSync.Origin;
-            player.bulletData_.hitID = bulletSync.HitID;
-            player.bulletData_.hitType = static_cast<PlayerBulletHitType>(bulletSync.HitType);
-            player.bulletData_.weapon = bulletSync.WeaponID;
+			PlayerBulletData & bulletData = const_cast<PlayerBulletData &>(player.getBulletData());
+            bulletData.hitPos = bulletSync.Offset;
+            bulletData.origin = bulletSync.Origin;
+            bulletData.hitID = bulletSync.HitID;
+            bulletData.hitType = static_cast<PlayerBulletHitType>(bulletSync.HitType);
+            bulletData.weapon = bulletSync.WeaponID;
 
             bool allowed = true;
-            switch (player.bulletData_.hitType) {
+            switch (bulletData.hitType) {
             case PlayerBulletHitType_None:
                 allowed = self.eventDispatcher.stopAtFalse(
                     [&player](PlayerEventHandler* handler) {
-                        return handler->onShotMissed(player, player.bulletData_);
+                        return handler->onShotMissed(player, player.getBulletData());
                     });
                 break;
             case PlayerBulletHitType_Player:
-                if (self.storage.valid(player.bulletData_.hitID)) {
-                    IPlayer& target = self.storage.get(player.bulletData_.hitID);
+                if (self.storage.valid(bulletData.hitID)) {
+                    IPlayer& target = self.storage.get(bulletData.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &target](PlayerEventHandler* handler) {
-                            return handler->onShotPlayer(player, target, player.bulletData_);
+                            return handler->onShotPlayer(player, target, player.getBulletData());
                         });
                 }
                 break;
             case PlayerBulletHitType_Vehicle:
-                if (self.vehiclesComponent && self.vehiclesComponent->valid(player.bulletData_.hitID)) {
-                    ScopedPoolReleaseLock lock(*self.vehiclesComponent, player.bulletData_.hitID);
+                if (self.vehiclesComponent && self.vehiclesComponent->valid(bulletData.hitID)) {
+                    ScopedPoolReleaseLock lock(*self.vehiclesComponent, bulletData.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &lock](PlayerEventHandler* handler) {
-                            return handler->onShotVehicle(player, lock.getEntry(), player.bulletData_);
+                            return handler->onShotVehicle(player, lock.getEntry(), player.getBulletData());
                         });
                 }
                 break;
             case PlayerBulletHitType_Object:
-                if (self.objectsComponent && self.objectsComponent->valid(player.bulletData_.hitID)) {
-                    ScopedPoolReleaseLock lock(*self.objectsComponent, player.bulletData_.hitID);
+                if (self.objectsComponent && self.objectsComponent->valid(bulletData.hitID)) {
+                    ScopedPoolReleaseLock lock(*self.objectsComponent, bulletData.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
                         [&player, &lock](PlayerEventHandler* handler) {
-                            return handler->onShotObject(player, lock.getEntry(), player.bulletData_);
+                            return handler->onShotObject(player, lock.getEntry(), player.getBulletData());
                         });
                 }
                 else {
                     IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
-                    if (data && data->valid(player.bulletData_.hitID)) {
-                        ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
+                    if (data && data->valid(bulletData.hitID)) {
+                        ScopedPoolReleaseLock lock(*data, bulletData.hitID);
                         allowed = self.eventDispatcher.stopAtFalse(
                             [&player, &lock](PlayerEventHandler* handler) {
-                                return handler->onShotPlayerObject(player, lock.getEntry(), player.bulletData_);
+                                return handler->onShotPlayerObject(player, lock.getEntry(), player.getBulletData());
                             });
                     }
                 }
@@ -585,7 +590,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
-            player.pos_ = vehicleSync.Position;
+            player.getPosition() = vehicleSync.Position;
             uint32_t newKeys;
             switch (vehicleSync.AdditionalKey) {
             case 1:
@@ -602,14 +607,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 break;
             }
 
-            if (player.keys_.keys != newKeys) {
+			PlayerKeyData & keyData = const_cast<PlayerKeyData &>(player.getKeyData());
+            if (keyData.keys != newKeys) {
                 self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
-                    });
+                    handler->onKeyStateChange(peer, newKeys, player.getKeyData().keys);
+                });
             }
-            player.keys_.keys = newKeys;
-            player.keys_.leftRight = vehicleSync.LeftRight;
-            player.keys_.upDown = vehicleSync.UpDown;
+            keyData.keys = newKeys;
+            keyData.leftRight = vehicleSync.LeftRight;
+            keyData.upDown = vehicleSync.UpDown;
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
@@ -688,7 +694,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 0x10C9C5FF, 0x70524DFF, 0x0BE472FF, 0x8A2CD7FF, 0x6152C2FF,
                 0xCF72A9FF, 0xE59338FF, 0xEEDC2DFF, 0xD8C762FF, 0xD8C762FF,
         };
-        player.colour_ = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
+        player.getColour() = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
 
         return &player;
     }
@@ -709,7 +715,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (vehicle.isRespawning()) return false;
             vehicle.updateFromPassengerSync(passengerSync, peer);
 
-            player.pos_ = passengerSync.Position;
+            player.getPosition() = passengerSync.Position;
             uint32_t newKeys;
             switch (passengerSync.AdditionalKey) {
             case 1:
@@ -725,14 +731,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 newKeys = passengerSync.Keys;
                 break;
             }
-            if (player.keys_.keys != newKeys) {
+
+			PlayerKeyData & keyData = const_cast<PlayerKeyData &>(player.getKeyData());
+            if (keyData.keys != newKeys) {
                 self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
-                    });
+                    handler->onKeyStateChange(peer, newKeys, player.getKeyData().keys);
+                });
             }
-            player.keys_.keys = newKeys;
-            player.keys_.leftRight = passengerSync.LeftRight;
-            player.keys_.upDown = passengerSync.UpDown;
+            keyData.keys = newKeys;
+            keyData.leftRight = passengerSync.LeftRight;
+            keyData.upDown = passengerSync.UpDown;
             player.health_ = passengerSync.HealthArmour.x;
             player.armour_ = passengerSync.HealthArmour.y;
             player.armedWeapon_ = passengerSync.WeaponID;
@@ -772,7 +780,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             else if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
             }
-            else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || peer.queryData<IPlayerVehicleData>()->getVehicle() != &vehicle)) {
+            else if (unoccupiedSync.SeatID && (player.getState() != PlayerState_Passenger || peer.queryData<IPlayerVehicleData>()->getVehicle() != &vehicle)) {
                 return false;
             }
 
@@ -812,6 +820,48 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerTrailerSyncHandler;
 
+	void init(IComponentList & components) {
+		IConfig & config = core.getConfig();
+		streamConfigHelper = StreamConfigHelper(config);
+		playerTextRPCHandler.init(config);
+		markersShow = config.getInt("show_player_markers");
+		markersLimit = config.getInt("limit_player_markers");
+		markersLimitRadius = config.getFloat("player_markers_draw_distance");
+		markersUpdateRate = config.getInt("player_markers_update_rate");
+		gameTimeUpdateRate = config.getInt("player_time_update_rate");
+		maxBots = *config.getInt("max_bots");
+
+		playerUpdateDispatcher.addEventHandler(this);
+		core.addNetworkEventHandler(this);
+		core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::PlayerCommandMessage>(&playerCommandRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerCameraTarget>(&playerCameraTargetRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
+		core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
+
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerSpectatorSync>(&playerSpectatorHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
+		core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
+
+		vehiclesComponent = components.queryComponent<IVehiclesComponent>();
+		objectsComponent = components.queryComponent<IObjectsComponent>();
+		actorsComponent = components.queryComponent<IActorsComponent>();
+	}
+
+public:
     bool valid(int index) const override {
         return storage.valid(index);
     }
@@ -881,9 +931,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         Player& player = static_cast<Player&>(peer);
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = player.poolID;
-        playerJoinPacket.Col = player.colour_;
+        playerJoinPacket.Col = player.getColour();
         playerJoinPacket.IsNPC = false;
-        playerJoinPacket.Name = StringView(player.name_);
+        playerJoinPacket.Name = StringView(player.getName());
         for (IPlayer* other : storage.entries()) {
             if (&peer == other) {
                 continue;
@@ -894,9 +944,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player* otherPlayer = static_cast<Player*>(other);
             NetCode::RPC::PlayerJoin otherJoinPacket;
             otherJoinPacket.PlayerID = otherPlayer->poolID;
-            otherJoinPacket.Col = otherPlayer->colour_;
+            otherJoinPacket.Col = otherPlayer->getColour();
             otherJoinPacket.IsNPC = false;
-            otherJoinPacket.Name = StringView(otherPlayer->name_);
+            otherJoinPacket.Name = StringView(otherPlayer->getName());
             peer.sendRPC(otherJoinPacket);
         }
 
@@ -937,7 +987,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
-            if (player.isBot_) {
+            if (player.isBot()) {
                 --numBots;
             }
 
@@ -1029,47 +1079,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         broadcastRPCToAll(createExplosionRPC);
     }
 
-    void init(IComponentList& components) {
-        IConfig& config = core.getConfig();
-        streamConfigHelper = StreamConfigHelper(config);
-        playerTextRPCHandler.init(config);
-        markersShow = config.getInt("show_player_markers");
-        markersLimit = config.getInt("limit_player_markers");
-        markersLimitRadius = config.getFloat("player_markers_draw_distance");
-        markersUpdateRate = config.getInt("player_markers_update_rate");
-        gameTimeUpdateRate = config.getInt("player_time_update_rate");
-        maxBots = *config.getInt("max_bots");
-
-        playerUpdateDispatcher.addEventHandler(this);
-        core.addNetworkEventHandler(this);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerCommandMessage>(&playerCommandRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerCameraTarget>(&playerCameraTargetRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
-
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerSpectatorSync>(&playerSpectatorHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
-
-        vehiclesComponent = components.queryComponent<IVehiclesComponent>();
-        objectsComponent = components.queryComponent<IObjectsComponent>();
-        actorsComponent = components.queryComponent<IActorsComponent>();
-    }
-
     bool onUpdate(IPlayer& p, TimePoint now) override {
         Player& player = static_cast<Player&>(p);
         const float maxDist = streamConfigHelper.getDistanceSqr();
@@ -1090,11 +1099,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
 
                 const PlayerState state = other->getState();
-                const Vector2 dist2D = player.pos_ - other->getPosition();
+                const Vector2 dist2D = player.getPosition() - other->getPosition();
                 const bool shouldBeStreamedIn =
                     state != PlayerState_Spectating &&
                     state != PlayerState_None &&
-                    other->getVirtualWorld() == player.virtualWorld_ &&
+                    other->getVirtualWorld() == player.getVirtualWorld() &&
                     glm::dot(dist2D, dist2D) < maxDist;
 
                 const bool isStreamedIn = other->isStreamedInForPlayer(player);
