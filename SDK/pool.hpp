@@ -168,28 +168,57 @@ public:
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (getPtr(index)) Type();
-            allocated_.add(freeIdx, *getPtr(index));
+            new (getPtr(freeIdx)) Type();
+            allocated_.add(freeIdx, *getPtr(freeIdx));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-				getPtr(index)->poolID = freeIdx;
+				getPtr(freeIdx)->poolID = freeIdx;
             }
         }
         return freeIdx;
     }
 
     int claim(int hint) {
-        assert(hint < Count);
-        if (!valid(hint)) {
-            new (getPtr(index)) Type();
-            allocated_.add(hint, *getPtr(index));
+		if (valid(hint)) {
+			hint = findFreeIndex();
+		}
+		if (hint >= 0 && hint < Count) {
+			new (getPtr(hint)) Type();
+			allocated_.add(hint, *getPtr(hint));
+			if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+				getPtr(hint)->poolID = hint;
+			}
+		}
+		return hint;
+    }
+	
+	template <typename ... Args>
+    Type* emplace(Args && args) {
+        const int freeIdx = findFreeIndex();
+        if (freeIdx >= 0) {
+            new (getPtr(hint)) Type(std::forward<Args>(args)...);
+            allocated_.add(freeIdx, *getPtr(hint));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-				getPtr(index)->poolID = hint;
+				getPtr(hint)->poolID = freeIdx;
             }
-            return hint;
+			return getPtr(hint);
         }
-        else {
-            return claim();
-        }
+        return nullptr;
+    }
+
+	template <typename ... Args>
+	Type * emplace(int hint, Args && args) {
+		if (valid(hint)) {
+			hint = findFreeIndex();
+		}
+		if (hint >= 0 && hint < Count) {
+			new (getPtr(hint)) Type(std::forward<Args>(args)...);
+			allocated_.add(hint, *getPtr(hint));
+			if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+				getPtr(hint)->poolID = hint;
+			}
+			return getPtr(hint);
+		}
+        return nullptr;
     }
 
     void claimUnusable(int index) {
@@ -222,7 +251,7 @@ public:
 	static const size_t Capacity = Count;
 
 protected:
-	Type * getPtr(int index) {
+	Type * getPtr(int index) inline {
 		return reinterpret_cast<Type *>(&pool_[index * ceildiv(sizeof(Type), alignof(Type)) * alignof(Type)]);
 	}
 
