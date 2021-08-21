@@ -1387,7 +1387,7 @@ namespace NetCode {
 						bs.read<NetworkBitStreamValueType::UINT8>(data.id) &&
 						bs.read<NetworkBitStreamValueType::UINT16>(data.ammo)
 						) {
-						WeaponData[WeaponDataCount++] = Pair<uint8_t, WeaponSlotData>(slot, data);
+						WeaponData[WeaponDataCount++] = std::make_pair(slot, data);
 					}
 					else { // Malformed packet
 						return false;

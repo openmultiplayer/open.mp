@@ -313,7 +313,7 @@ struct Config final : IEarlyConfig {
                 return res;
             }
         }
-        return Pair<bool, StringView>{true, StringView()};
+        return std::make_pair(true, StringView());
     }
 
     void addProvider(IConfigProviderComponent* provider) {
