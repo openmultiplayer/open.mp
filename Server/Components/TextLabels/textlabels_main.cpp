@@ -17,18 +17,19 @@ public:
     }
 
     IPlayerTextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, bool los, IPlayer& attach) override {
-		return storage.emplace(&player, text, colour, pos, drawDist, los, { attach.getID(), INVALID_VEHICLE_ID });
+		TextLabelAttachmentData attachment { attach.getID(), INVALID_VEHICLE_ID };
+		return storage.emplace(&player, text, colour, pos, drawDist, los, attachment);
     }
 
     IPlayerTextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, bool los, IVehicle& attach) override {
-		return storage.emplace(&player, text, colour, pos, drawDist, los, { INVALID_PLAYER_ID, attach.getID() });
+		TextLabelAttachmentData attachment { INVALID_PLAYER_ID, attach.getID() };
+		return storage.emplace(&player, text, colour, pos, drawDist, los, attachment);
     }
 
     void free() override {
         /// Detach player from player labels so they don't try to send an RPC
         for (IPlayerTextLabel* textLabel : storage.entries()) {
-            PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
-            lbl->player = nullptr;
+			textLabel->onDisconnect(player, PeerDisconnectReason_Shutdown);
         }
         delete this;
     }
@@ -114,11 +115,13 @@ public:
     }
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override {
-		return storage.emplace(text, colour, pos, drawDist, vw, los, { attach.getID(), INVALID_VEHICLE_ID });
+		TextLabelAttachmentData attachment { attach.getID(), INVALID_VEHICLE_ID };
+		return storage.emplace(text, colour, pos, drawDist, vw, los, attachment);
     }
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IVehicle& attach) override {
-		return storage.emplace(text, colour, pos, drawDist, vw, los, { INVALID_PLAYER_ID, attach.getID() });
+		TextLabelAttachmentData attachment { INVALID_PLAYER_ID, attach.getID() };
+		return storage.emplace(text, colour, pos, drawDist, vw, los, attachment);
     }
 
     void free() override {
@@ -209,9 +212,7 @@ public:
             if (label->getAttachmentData().playerID == pid) {
                 textLabel->detachFromPlayer(label->getPosition());
             }
-            if (label->streamedFor_.valid(pid)) {
-                label->streamedFor_.remove(pid, player);
-            }
+			label->onDisconnect(player, reason);
         }
         for (IPlayer* player : players->entries()) {
             IPlayerTextLabelData* data = player->queryData<IPlayerTextLabelData>();

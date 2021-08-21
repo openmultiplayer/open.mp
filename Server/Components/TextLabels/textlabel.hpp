@@ -188,6 +188,13 @@ public:
             streamOutForClient(*player, false);
         }
     }
+
+	void onDisconnect(IPlayer & p, PeerDisconnectReason reason) override {
+		const int pid = p.getID();
+		if (streamedFor_.valid(pid)) {
+			streamedFor_.remove(pid, p);
+		}
+	}
 };
 
 class PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
@@ -228,4 +235,10 @@ public:
             streamOutForClient(*player, false);
         }
     }
+
+	void onDisconnect(IPlayer & p, PeerDisconnectReason reason) override {
+		if (p.getID() == player->getID()) {
+			player = nullptr;
+		}
+	}
 };
