@@ -168,10 +168,10 @@ public:
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)])) Type();
-            allocated_.add(freeIdx, reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]));
+            new (&pool_[freeIdx]) Type();
+            allocated_.add(freeIdx, pool_[freeIdx]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]).poolID = freeIdx;
+                pool_[freeIdx].poolID = freeIdx;
             }
         }
         return freeIdx;
@@ -180,10 +180,10 @@ public:
     int claim(int hint) {
         assert(hint < Count);
         if (!valid(hint)) {
-            new (reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)])) Type();
-            allocated_.add(hint, reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]));
+            new (&pool_[hint]) Type();
+            allocated_.add(hint, pool_[hint]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]).poolID = hint;
+                pool_[hint]y.poolID = hint;
             }
             return hint;
         }
@@ -202,7 +202,7 @@ public:
 
     Type& get(int index) {
         assert(index < Count);
-        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
+        return pool_[index];
     }
 
     const FlatPtrHashSet<Interface>& entries() {
@@ -215,14 +215,15 @@ public:
 
     void remove(int index) {
         assert(index < Count);
-        allocated_.remove(index, reinterpret_cast<Type&>(pool_[index * sizeof(Type)]));
-        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
+        allocated_.remove(index, pool_[index]);
+        pool_[index].~Type();
     }
 
 	static const size_t Capacity = Count;
 
-protected:
-    char pool_[Count * sizeof(Type)];
+private:
+	// Let the compiler deal with alignments.
+    Type pool_[Count];
     UniqueIDArray<Interface, Count> allocated_;
 };
 
