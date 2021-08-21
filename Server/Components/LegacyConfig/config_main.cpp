@@ -118,10 +118,10 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 	Pair<bool, StringView> getNameFromAlias(StringView alias) const override {
 		auto it = dictionary.find(alias);
 		if (it == dictionary.end()) {
-			return Pair<bool, StringView>{true, StringView()};
+			return std::make_pair(true, StringView());
 		}
 		else {
-			return Pair<bool, StringView>{it->first != it->second, it->second};
+			return std::make_pair(it->first != it->second, it->second);
 		}
 	}
 

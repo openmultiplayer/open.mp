@@ -20,7 +20,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     bool selectable = false;
     int previewModel = 0;
     GTAQuat previewRotation = GTAQuat(Vector3(0.f));
-    Pair<int, int> previewVehicleColours = { -1, -1 };
+    Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
 
     int getID() const override {
