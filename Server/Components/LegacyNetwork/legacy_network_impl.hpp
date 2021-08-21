@@ -71,6 +71,14 @@ private:
 public:
     RakNetLegacyBitStream(RakNet::BitStream& bs) : bs(bs) {}
 
+	RakNet::BitStream const * getRaknetBitStream() const {
+		return &bs;
+	}
+	
+	void reset() {
+		bs.Reset();
+	}
+
     ENetworkType getNetworkType() const override {
         return ENetworkType_RakNetLegacy;
     }
@@ -262,7 +270,7 @@ private:
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address.v4), nid.port };
-        return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
+        return rakNetServer.Send(lbs.getRaknetBitStream(), RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
 
     bool broadcastRPC(int id, const INetworkBitStream& bs) override {
@@ -275,7 +283,7 @@ private:
         }
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
-        return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        return rakNetServer.RPC(id, lbs.getRaknetBitStream(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
     bool sendRPC(const INetworkPeer& peer, int id, const INetworkBitStream& bs) override {
@@ -291,11 +299,11 @@ private:
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid{ unsigned(nid.address.v4), nid.port };
-        return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        return rakNetServer.RPC(id, lbs.getRaknetBitStream(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
     INetworkBitStream& writeBitStream() override {
-        wlbs.bs.Reset();
+        wlbs.reset();
         return wlbs;
     }
 
