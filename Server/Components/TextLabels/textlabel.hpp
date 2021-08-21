@@ -37,27 +37,29 @@ protected:
 		player.sendRPC(hideTextLabelRPC);
 	}
 
-	TextLabelBase<IPlayerTextLabel>(StringView t, Colour c, Vector3 p, float d, bool l)
+	TextLabelBase<T>(StringView t, Colour c, Vector3 p, float d, bool l)
 	:
 		text(t),
-		colour(c),
 		pos(p),
+		colour(c),
 		drawDist(d),
 		attachmentData(),
 		testLOS(l)
 	{
 	}
 
-	TextLabelBase<IPlayerTextLabel>(StringView t, Colour c, Vector3 p, float d, bool l, TextLabelAttachmentData const & a)
+	TextLabelBase<T>(StringView t, Colour c, Vector3 p, float d, bool l, TextLabelAttachmentData const & a)
 	:
 		text(t),
-		colour(c),
 		pos(p),
+		colour(c),
 		drawDist(d),
 		attachmentData(a),
 		testLOS(l)
 	{
 	}
+
+	TextLabelBase<T>() = default;
 
 public:
     int getID() const override {
@@ -160,6 +162,8 @@ public:
 	{
 	}
 
+	TextLabel() = default;
+
     bool isStreamedInForPlayer(const IPlayer& player) const override {
         return streamedFor_.valid(player.getID());
     }
@@ -222,6 +226,8 @@ public:
 	{
 		streamInForClient(*p, true);
 	}
+
+	PlayerTextLabel() = default;
 
     int getVirtualWorld() const override {
         return 0;
