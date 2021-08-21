@@ -60,11 +60,13 @@ struct ITextLabel : public ITextLabelBase {
 
 	/// Streams out the text label for a specific player
 	virtual void streamOutForPlayer(IPlayer& player) = 0;
+
+	virtual void onDisconnect(IPlayer & player, PeerDisconnectReason reason) = 0;
 };
 
 /// A player text label
 struct IPlayerTextLabel : public ITextLabelBase {
-
+	virtual void onDisconnect(IPlayer & player, PeerDisconnectReason reason) = 0;
 };
 
 static const UUID TextLabelsComponent_UUID = UUID(0xa0c57ea80a009742);
