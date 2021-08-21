@@ -165,7 +165,6 @@ public:
         return allocated_.findFreeIndex(from);
     }
 
-	template <typename = std::enable_if_t<std::is_default_constructible_v<Type>>>
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
@@ -178,7 +177,6 @@ public:
         return freeIdx;
     }
 
-	template <typename = std::enable_if_t<std::is_default_constructible_v<Type>>>
 	int claim(int hint) {
 		if (valid(hint)) {
 			hint = findFreeIndex();

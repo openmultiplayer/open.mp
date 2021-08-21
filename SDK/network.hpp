@@ -19,7 +19,8 @@ struct PeerNetworkData;
 enum PeerDisconnectReason {
 	PeerDisconnectReason_Timeout,
 	PeerDisconnectReason_Quit,
-	PeerDisconnectReason_Kicked
+	PeerDisconnectReason_Kicked,
+	PeerDisconnectReason_Shutdown
 };
 
 /// Used for specifying bit stream data types
@@ -74,6 +75,7 @@ public:
 		selfAllocated = true;
 		count = cnt;
 		data = reinterpret_cast<T*>(omp_malloc(sizeof(T) * cnt));
+		return data;
 	}
 
 	/// Constructor for holding external array data without copying or freeing it

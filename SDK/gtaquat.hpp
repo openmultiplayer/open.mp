@@ -71,7 +71,7 @@ public:
 	}
 
 	GTAQuat operator*(const GTAQuat& other) const {
-		glm::quat res = glm::quat::operator*(*reinterpret_cast<glm::quat const *>(this), reinterpret_cast<glm::quat const &>(other));
+		glm::quat res = glm::operator*(*reinterpret_cast<glm::quat const *>(this), reinterpret_cast<glm::quat const &>(other));
 		return GTAQuat(res);
 	}
 

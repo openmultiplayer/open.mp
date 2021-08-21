@@ -1884,7 +1884,7 @@ public:
 	Animation(String lib) :
 		lib(lib),
 		name(),
-		timeData(false)
+		timeData()
 	{}
 
 	Animation const & operator=(IAnimation const & that)
@@ -1892,5 +1892,6 @@ public:
 		lib = that.getLib();
 		name = that.getName();
 		timeData = that.getTimeData();
+		return *this;
 	}
 };
