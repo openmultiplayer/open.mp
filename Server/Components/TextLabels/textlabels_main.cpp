@@ -115,8 +115,12 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;
 
-    StringView componentName() override {
+    StringView componentName() const override {
         return "TextLabels";
+    }
+
+    SemanticVersion componentVersion() const override {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
     void onLoad(ICore* core) override {
