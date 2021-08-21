@@ -165,6 +165,7 @@ public:
         return allocated_.findFreeIndex(from);
     }
 
+	template <typename = std::enable_if_t<std::is_default_constructible_v<Type>>>
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
@@ -177,7 +178,8 @@ public:
         return freeIdx;
     }
 
-    int claim(int hint) {
+	template <typename = std::enable_if_t<std::is_default_constructible_v<Type>>>
+	int claim(int hint) {
 		if (valid(hint)) {
 			hint = findFreeIndex();
 		}
@@ -195,12 +197,12 @@ public:
     Type* emplace(Args && ...args) {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (getPtr(hint)) Type(std::forward<Args>(args)...);
-            allocated_.add(freeIdx, *getPtr(hint));
+            new (getPtr(freeIdx)) Type(std::forward<Args>(args)...);
+            allocated_.add(freeIdx, *getPtr(freeIdx));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-				getPtr(hint)->poolID = freeIdx;
+				getPtr(freeIdx)->poolID = freeIdx;
             }
-			return getPtr(hint);
+			return getPtr(freeIdx);
         }
         return nullptr;
     }
@@ -251,13 +253,13 @@ public:
 	static const size_t Capacity = Count;
 
 protected:
-	Type * getPtr(int index) inline {
-		return reinterpret_cast<Type *>(&pool_[index * ceildiv(sizeof(Type), alignof(Type)) * alignof(Type)]);
+	inline Type * getPtr(int index) {
+		return reinterpret_cast<Type *>(&pool_[index * CEILDIV(sizeof(Type), alignof(Type)) * alignof(Type)]);
 	}
 
 private:
 	// Account for non-standard alignments, especially ones that don't match `char` array alignment.
-    char pool_[Count * ceildiv(sizeof(Type), alignof(Type)) * alignof(Type)] alignas(alignof(Type));
+	alignas(alignof(Type)) char pool_[Count * CEILDIV(sizeof(Type), alignof(Type)) * alignof(Type)];
     UniqueIDArray<Interface, Count> allocated_;
 };
 
