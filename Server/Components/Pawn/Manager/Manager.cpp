@@ -132,6 +132,9 @@ void PawnManager::Spawn(std::string const & name)
 	script.Register("format", &utils::pawn_format);
 	script.Register("printf", &utils::pawn_printf);
 	script.Register("Script_GetID", &utils::pawn_Script_GetID);
+	script.Register("SetTimer", &utils::pawn_settimer);
+	script.Register("SetTimerEx", &utils::pawn_settimerex);
+	script.Register("KillTimer", &utils::pawn_killtimer);
 
 	pawn_natives::AmxLoad(script.GetAMX());
 
