@@ -508,10 +508,10 @@ SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool toggle))
 	return true;
 }
 
-SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
+SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animLib, const std::string& animName, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
 {
-	Animation data(animlib, animname, AnimationTimeData(delta, loop, lockX, lockY, freeze, time));
-	player.applyAnimation(data, PlayerAnimationSyncType(sync));
+	Animation animation(animLib, animName, AnimationTimeData(delta, loop, lockX, lockY, freeze, time));
+	player.applyAnimation(animation, PlayerAnimationSyncType(sync));
 	return true;
 }
 

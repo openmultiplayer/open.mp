@@ -38,19 +38,7 @@ SCRIPT_API(GetActorVirtualWorld, int(IActor& actor))
 
 SCRIPT_API(ApplyActorAnimation, bool(IActor& actor, const std::string& animLib, const std::string& animName, float delta, int loop, int lockX, int lockY, int freeze, int time))
 {
-	Animation animation;
-	AnimationTimeData animationData;
-	animationData.delta = delta;
-	animationData.loop = loop;
-	animationData.lockX = lockX;
-	animationData.lockY = lockY;
-	animationData.freeze = freeze;
-	animationData.time = time;
-
-	animation.lib = animLib;
-	animation.name = animName;
-	animation.timeData = animationData;
-
+	Animation animation(animLib, animName, AnimationTimeData(delta, loop, lockX, lockY, freeze, time));
 	actor.applyAnimation(animation);
 	return true;
 }

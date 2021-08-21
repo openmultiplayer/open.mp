@@ -1832,6 +1832,10 @@ public:
 		delta(4.1f), loop(false), lockX(false), lockY(false), freeze(false), time(0)
 	{}
 
+	AnimationTimeData(float d, bool l, bool x, bool y, bool f, uint32_t t) :
+		delta(d), loop(l), lockX(x), lockY(y), freeze(f), time(t)
+	{}
+
 	float getDelta() const { return delta; }
 	bool getLoop() const { return loop; }
 	bool getLockX() const { return lockX; }
@@ -1881,10 +1885,16 @@ public:
 
 	Animation() = default;
 
-	Animation(String lib) :
-		lib(lib),
+	Animation(StringView l) :
+		lib(l),
 		name(),
 		timeData()
+	{}
+	
+	Animation(StringView l, StringView n, AnimationTimeData const & t) :
+		lib(l),
+		name(n),
+		timeData(t)
 	{}
 
 	Animation const & operator=(IAnimation const & that)

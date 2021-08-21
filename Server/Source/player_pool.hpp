@@ -694,7 +694,7 @@ private:
                 0x10C9C5FF, 0x70524DFF, 0x0BE472FF, 0x8A2CD7FF, 0x6152C2FF,
                 0xCF72A9FF, 0xE59338FF, 0xEEDC2DFF, 0xD8C762FF, 0xD8C762FF,
         };
-        player.getColour() = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
+        player.colour_ = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
 
         return &player;
     }
