@@ -306,7 +306,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual void setWeaponAmmo(WeaponSlotData data) = 0;
 
 	/// Get player's weapons
-	virtual WeaponSlots getWeapons() = 0;
+	virtual WeaponSlots const & getWeapons() = 0;
 
 	/// Reset the player's weapons
 	virtual void resetWeapons() = 0;
@@ -568,7 +568,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual unsigned getInterior() const = 0;
 
 	/// Get the player's key data
-	virtual PlayerKeyData getKeyData() const = 0;
+	virtual PlayerKeyData const & getKeyData() const = 0;
 
 	/// Get the player's skill levels
 	/// @note See https://open.mp/docs/scripting/resources/weaponskills
