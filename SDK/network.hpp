@@ -20,7 +20,7 @@ enum PeerDisconnectReason {
 	PeerDisconnectReason_Timeout,
 	PeerDisconnectReason_Quit,
 	PeerDisconnectReason_Kicked,
-	PeerDisconnectReason_Shutdown
+	PeerDisconnectReason_Shutdown // The server is closing.
 };
 
 /// Used for specifying bit stream data types
