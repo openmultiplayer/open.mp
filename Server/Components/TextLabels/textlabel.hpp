@@ -13,9 +13,53 @@ private:
     TextLabelAttachmentData attachmentData;
     bool testLOS;
 
-public:
     virtual void restream() = 0;
 
+protected:
+	void streamInForClient(IPlayer & player, bool isPlayerTextLabel) {
+		NetCode::RPC::PlayerShowTextLabel showTextLabelRPC {};
+		showTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
+		showTextLabelRPC.TextLabelID = poolID;
+		showTextLabelRPC.Col = colour;
+		showTextLabelRPC.Position = pos;
+		showTextLabelRPC.DrawDistance = drawDist;
+		showTextLabelRPC.LOS = testLOS;
+		showTextLabelRPC.PlayerAttachID = attachmentData.playerID;
+		showTextLabelRPC.VehicleAttachID = attachmentData.vehicleID;
+		showTextLabelRPC.Text = StringView(text);
+		player.sendRPC(showTextLabelRPC);
+	}
+
+	void streamOutForClient(IPlayer & player, bool isPlayerTextLabel) {
+		NetCode::RPC::PlayerHideTextLabel hideTextLabelRPC {};
+		hideTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
+		hideTextLabelRPC.TextLabelID = poolID;
+		player.sendRPC(hideTextLabelRPC);
+	}
+
+	TextLabelBase<IPlayerTextLabel>(StringView t, Colour c, Vector3 p, float d, bool l)
+	:
+		text(t),
+		colour(c),
+		pos(p),
+		drawDist(d),
+		attachmentData(),
+		testLOS(l)
+	{
+	}
+
+	TextLabelBase<IPlayerTextLabel>(StringView t, Colour c, Vector3 p, float d, bool l, TextLabelAttachmentData const & a)
+	:
+		text(t),
+		colour(c),
+		pos(p),
+		drawDist(d),
+		attachmentData(a),
+		testLOS(l)
+	{
+	}
+
+public:
     int getID() const override {
         return poolID;
     }
@@ -87,41 +131,34 @@ public:
         attachmentData.vehicleID = INVALID_VEHICLE_ID;
         restream();
     }
-
-    void streamInForClient(IPlayer& player, bool isPlayerTextLabel) {
-		NetCode::RPC::PlayerShowTextLabel showTextLabelRPC {};
-        showTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
-        showTextLabelRPC.TextLabelID = poolID;
-        showTextLabelRPC.Col = colour;
-        showTextLabelRPC.Position = pos;
-        showTextLabelRPC.DrawDistance = drawDist;
-        showTextLabelRPC.LOS = testLOS;
-        showTextLabelRPC.PlayerAttachID = attachmentData.playerID;
-        showTextLabelRPC.VehicleAttachID = attachmentData.vehicleID;
-        showTextLabelRPC.Text = StringView(text);
-        player.sendRPC(showTextLabelRPC);
-    }
-
-    void streamOutForClient(IPlayer& player, bool isPlayerTextLabel) {
-        NetCode::RPC::PlayerHideTextLabel hideTextLabelRPC {};
-        hideTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
-        hideTextLabelRPC.TextLabelID = poolID;
-        player.sendRPC(hideTextLabelRPC);
-    }
 };
 
 class TextLabel final : public TextLabelBase<ITextLabel> {
 private:
 	int virtualWorld;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
-	
-public:
+
     void restream() override {
         for (IPlayer* player : streamedFor_.entries()) {
             streamOutForClient(*player, false);
             streamInForClient(*player, false);
         }
     }
+	
+public:
+	TextLabel(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los)
+	:
+		TextLabelBase<ITextLabel>(text, colour, pos, drawDist, los),
+		virtualWorld(vw)
+	{
+	}
+
+	TextLabel(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, TextLabelAttachmentData const & attachments)
+	:
+		TextLabelBase<ITextLabel>(text, colour, pos, drawDist, los, attachments),
+		virtualWorld(vw)
+	{
+	}
 
     bool isStreamedInForPlayer(const IPlayer& player) const override {
         return streamedFor_.valid(player.getID());
@@ -157,11 +194,27 @@ class PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
 private:
     IPlayer* player = nullptr;
 
-public:
     void restream() override {
         streamOutForClient(*player, true);
         streamInForClient(*player, true);
     }
+
+public:
+	PlayerTextLabel(IPlayer * p, StringView text, Colour colour, Vector3 pos, float drawDist, bool los)
+	:
+		TextLabelBase<IPlayerTextLabel>(text, colour, pos, drawDist, los),
+		player(p)
+	{
+		streamInForClient(*p, true);
+	}
+	
+	PlayerTextLabel(IPlayer * p, StringView text, Colour colour, Vector3 pos, float drawDist, bool los, TextLabelAttachmentData const & attachments)
+	:
+		TextLabelBase<IPlayerTextLabel>(text, colour, pos, drawDist, los, attachments),
+		player(p)
+	{
+		streamInForClient(*p, true);
+	}
 
     int getVirtualWorld() const override {
         return 0;
