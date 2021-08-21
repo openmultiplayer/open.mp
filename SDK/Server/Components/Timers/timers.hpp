@@ -21,7 +21,11 @@ struct ITimer {
 };
 
 struct TimerTimeOutHandler {
+	/// Called when a timer times out (can be multiple times per timer if it's repeating)
 	virtual void timeout(ITimer& timer) = 0;
+
+	/// Called when a timer is about to be destroyed, used for deallocating handler
+	virtual void free(ITimer& timer) = 0;
 };
 
 static const UUID TimersComponent_UUID = UUID(0x2ad8124c5ea257a3);
