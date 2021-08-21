@@ -67,7 +67,7 @@ public:
 
 	/// Allocate memory and store it in the buffer
 	/// @param cnt The count of the elements to allocate
-	void allocate(size_t cnt) {
+	T* allocate(size_t cnt) {
 		if (selfAllocated) {
 			omp_free(data);
 		}
@@ -112,6 +112,9 @@ public:
 
 	/// Copy assignment
 	NetworkArray<T>& operator=(const NetworkArray<T>& other) {
+		if (selfAllocated) {
+			omp_free(data);
+		}
 		selfAllocated = other.selfAllocated;
 		count = other.count;
 		if (other.selfAllocated) {
@@ -126,17 +129,14 @@ public:
 
 	/// Move constructor
 	NetworkArray<T>(NetworkArray<T>&& other) {
+		if (selfAllocated) {
+			omp_free(data);
+		}
 		selfAllocated = other.selfAllocated;
 		count = other.count;
 		data = other.data;
-	}
-
-	/// Move assignment
-	NetworkArray<T>& operator=(NetworkArray<T>&& other) {
-		selfAllocated = other.selfAllocated;
-		count = other.count;
-		data = other.data;
-		return *this;
+		// Don't double-free.
+		other.selfAllocated = false;
 	}
 
 	/// Destructor, frees self-allocated memory
@@ -157,7 +157,7 @@ public:
 };
 
 /// Type used for storing UTF-8 strings to pass to the networks
-class NetworkString : NetworkArray<char> {
+class NetworkString : public NetworkArray<char> {
 public:
 	using NetworkArray<char>::NetworkArray;
 	using NetworkArray<char>::operator=;
@@ -175,12 +175,12 @@ public:
 		return getSize();
 	}
 
-	void allocate(size_t cnt) {
+	char * allocate(size_t cnt) {
 		// Don't check `cnt != 0`, `0` is a valid (if silly) string, and `allocate` also releases
 		// (or frees the) previous data.
-		NetworkArray::allocate(cnt + 1);
-		// Guarantee null termination
-		const_cast<char *>(getData())[cnt] = 0;
+		char * ret = NetworkArray::allocate(cnt + 1);
+		ret[cnt] = 0;
+		return ret;
 	}
 
 	/// Conversion operator for copying data to a std::string
@@ -204,7 +204,7 @@ public:
 	template <> \
 	struct DataTypeFromNetworkTypeImpl<NetworkBitStreamValueType::type> { \
 		using value = dataType; \
-	};
+	}
 
 struct NetworkBitStreamValue {
 	/// Template struct which has the data type for a specific network type
@@ -303,13 +303,15 @@ struct INetworkBitStream {
 
 	/// Write a value into the bit stream
 	/// @param value The value to write to the bit stream
+	/// @param[in] len The length for fixed-length arrays/strings
 	/// @return True on success, false on failure
-	virtual bool write(const NetworkBitStreamValue& value) = 0;
+	virtual bool write(const NetworkBitStreamValue& value, size_t len = 0) = 0;
 
 	/// Read a value from the bit stream
 	/// @param[in,out] input The input whose type to use for knowing what data type to read and then write the value to
+	/// @param[in] len The length for fixed-length arrays/strings
 	/// @return True on success, false on failure
-	virtual bool read(NetworkBitStreamValue& input) = 0;
+	virtual bool read(NetworkBitStreamValue& input, size_t len = 0) = 0;
 
 	/// Reset the stream
 	/// @param reset The type of reset to do

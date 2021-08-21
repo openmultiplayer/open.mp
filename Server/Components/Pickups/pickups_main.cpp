@@ -148,7 +148,7 @@ public:
 				const bool shouldBeStreamedIn =
 					state != PlayerState_Spectating &&
 					state != PlayerState_None &&
-					player.getVirtualWorld() == pickup->virtualWorld &&
+					player.getVirtualWorld() == pickup->getVirtualWorld() &&
 					glm::dot(dist3D, dist3D) < maxDist;
 
 				const bool isStreamedIn = pickup->isStreamedInForPlayer(player);

@@ -23,7 +23,8 @@ struct PlayerChatBubble {
     float drawDist;
 };
 
-struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
+class Player final : public IPlayer, public PoolIDProvider, public NoCopy {
+private:
     PlayerPool* pool_;
     PeerNetworkData netData_;
     uint32_t version_;
@@ -78,6 +79,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     bool isBot_;
     bool toSpawn_;
 
+    void setState(PlayerState state);
+
+public:
     Player() :
         pool_(nullptr),
         cameraPos_(0.f, 0.f, 0.f),
@@ -136,8 +140,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     bool isBot() const override {
         return isBot_;
     }
-
-    void setState(PlayerState state);
 
     PlayerState getState() const override {
         return state_;

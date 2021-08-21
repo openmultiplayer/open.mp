@@ -20,6 +20,12 @@ private:
     bool& inClassRequest;
     bool& skipDefaultClassRequest;
 
+	void setClass(const PlayerClass & c) {
+		cls = c;
+	}
+
+	friend class ClassesComponent;
+
 public:
     PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest) :
         player(player),
@@ -32,10 +38,6 @@ public:
 		return cls;
 	}
 	
-	void setClass(const PlayerClass & c) {
-		cls = c;
-	}
-
 	void setSpawnInfo(const PlayerClass& info) override {
 		cls.team = info.team;
 		cls.skin = info.skin;

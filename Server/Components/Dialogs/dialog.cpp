@@ -1,9 +1,11 @@
 #include <netcode.hpp>
 #include <Server/Components/Dialogs/dialogs.hpp>
 
-struct PlayerDialogData final : public IPlayerDialogData {
+class PlayerDialogData final : public IPlayerDialogData {
+private:
 	uint16_t activeId = 0xFFFF;
 
+public:
 	void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override {
 		NetCode::RPC::ShowDialog showDialog;
 		showDialog.ID = id;
@@ -27,7 +29,8 @@ struct PlayerDialogData final : public IPlayerDialogData {
 	}
 };
 
-struct DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
+class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
+private:
 	ICore* core;
 	DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;
 
@@ -60,6 +63,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
 		}
 	} dialogResponseHandler;
 
+public:
 	PlayerDialogData* onPlayerDataRequest(IPlayer& player) override {
 		return new PlayerDialogData();
 	}

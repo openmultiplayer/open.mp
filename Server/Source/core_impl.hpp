@@ -27,7 +27,8 @@ namespace nlohmann {
     };
 }
 
-struct ComponentList : public IComponentList {
+class ComponentList : public IComponentList {
+public:
     using IComponentList::queryComponent;
 
     ComponentList(ICore& core) : core(core)
@@ -65,10 +66,12 @@ private:
 
 static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 
-struct Config final : IEarlyConfig {
+class Config final : public IEarlyConfig {
+private:
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
+pubilc:
     Config(ICore& core) : core(core) {
         {
             std::ifstream ifs(ConfigFileName);
@@ -281,6 +284,7 @@ struct Config final : IEarlyConfig {
         return core;
     }
 
+private:
     void optimiseBans() {
         std::sort(bans.begin(), bans.end());
         bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
@@ -306,14 +310,14 @@ struct Config final : IEarlyConfig {
         return true;
     }
 
-private:
     ICore& core;
     DynamicArray<BanEntry> bans;
     FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
     FlatHashSet<String> ownAllocations;
 };
 
-struct Core final : public ICore, public PlayerEventHandler {
+class Core final : public ICore, public PlayerEventHandler {
+private:
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
@@ -348,27 +352,6 @@ struct Core final : public ICore, public PlayerEventHandler {
     String ServerName;
     int EnableLogTimestamp;
     String LogTimestampFormat;
-
-    Core() :
-        players(*this),
-        components(*this),
-        config(*this),
-        logFile(nullptr),
-        EnableLogTimestamp(false)
-    {
-        players.getEventDispatcher().addEventHandler(this);
-    }
-
-    ~Core() {
-        players.getEventDispatcher().removeEventHandler(this);
-        if (logFile) {
-            fclose(logFile);
-        }
-    }
-
-    IConfig& getConfig() override {
-        return config;
-    }
 
     void initiated() {
         if (*config.getInt("logging")) {
@@ -409,6 +392,68 @@ struct Core final : public ICore, public PlayerEventHandler {
         components.init();
     }
 
+    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args) {
+        if (iso8601[0]) {
+            fputs(iso8601, stream);
+            fputs(" ", stream);
+        }
+        fputs(prefix, stream);
+        vfprintf(stream, fmt, args);
+        fputs("\n", stream);
+    }
+
+    void addComponents(const DynamicArray<IComponent*>& newComponents) {
+        for (auto& component : newComponents) {
+            auto res = components.add(component);
+            if (!res.second) {
+                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUUID());
+            }
+            if (component->componentType() == ComponentType::Network) {
+                networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
+            }
+            else if (component->componentType() == ComponentType::ConfigProvider) {
+                static_cast<IConfigProviderComponent*>(component)->configure(config);
+            }
+        }
+    }
+
+    void run() {
+        sleepTimer = Milliseconds(*config.getInt("sleep"));
+
+        TimePoint prev = Time::now();
+        for (;;)
+        {
+            const TimePoint now = Time::now();
+            Microseconds us = duration_cast<Microseconds>(now - prev);
+            prev = now;
+            eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
+
+            std::this_thread::sleep_until(now + sleepTimer);
+        }
+    }
+
+public:
+    Core() :
+        players(*this),
+        components(*this),
+        config(*this),
+        logFile(nullptr),
+        EnableLogTimestamp(false)
+    {
+        players.getEventDispatcher().addEventHandler(this);
+    }
+
+    ~Core() {
+        players.getEventDispatcher().removeEventHandler(this);
+        if (logFile) {
+            fclose(logFile);
+        }
+    }
+
+    IConfig& getConfig() override {
+        return config;
+    }
+
     int getVersion() override {
         return 0;
     }
@@ -429,16 +474,6 @@ struct Core final : public ICore, public PlayerEventHandler {
         va_start(args, fmt);
         vlogLn(level, fmt, args);
         va_end(args);
-    }
-
-    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args) {
-        if (iso8601[0]) {
-            fputs(iso8601, stream);
-            fputs(" ", stream);
-        }
-        fputs(prefix, stream);
-        vfprintf(stream, fmt, args);
-        fputs("\n", stream);
     }
 
     virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override {
@@ -634,36 +669,6 @@ struct Core final : public ICore, public PlayerEventHandler {
         }
         else {
             handler.onHTTPResponse(int(res.error()), StringView());
-        }
-    }
-
-    void addComponents(const DynamicArray<IComponent*>& newComponents) {
-        for (auto& component : newComponents) {
-            auto res = components.add(component);
-            if (!res.second) {
-                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUUID());
-            }
-            if (component->componentType() == ComponentType::Network) {
-                networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
-            }
-            else if (component->componentType() == ComponentType::ConfigProvider) {
-                static_cast<IConfigProviderComponent*>(component)->configure(config);
-            }
-        }
-    }
-
-    void run() {
-        sleepTimer = Milliseconds(*config.getInt("sleep"));
-
-        TimePoint prev = Time::now();
-        for (;;)
-        {
-            const TimePoint now = Time::now();
-            Microseconds us = duration_cast<Microseconds>(now - prev);
-            prev = now;
-            eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
-
-            std::this_thread::sleep_until(now + sleepTimer);
         }
     }
 };

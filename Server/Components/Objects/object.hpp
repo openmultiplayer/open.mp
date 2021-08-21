@@ -361,17 +361,50 @@ public:
 	}
 };
 
-struct PlayerObject final : public BaseObject<IPlayerObject> {
+class PlayerObject final : public BaseObject<IPlayerObject> {
+private:
 	IPlayer* player_;
 	TimePoint delayedProcessingTime_;
-
-	PlayerObject() :
-		player_(nullptr)
-	{}
 
 	void restream() {
 		createObjectForClient(*player_);
 	}
+
+	bool advance(Microseconds elapsed, TimePoint now) {
+		if (hasDelayedProcessing()) {
+			if (now >= delayedProcessingTime_) {
+				clearDelayedProcessing();
+
+				if (isMoving()) {
+					NetCode::RPC::MoveObject moveObjectRPC;
+					moveObjectRPC.ObjectID = poolID;
+					moveObjectRPC.CurrentPosition = getPosition();
+					moveObjectRPC.MoveData = getMoveData();
+					player_->sendRPC(moveObjectRPC);
+				}
+			}
+		}
+
+		return advanceMove(elapsed);
+	}
+
+	void createForPlayer() {
+		createObjectForClient(*player_);
+
+		if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player) {
+			delayedProcessingTime_ = Time::now() + Seconds(1);
+			setDelayedProcessing();
+		}
+	}
+
+	void destroyForPlayer() {
+		destroyObjectForClient(*player_);
+	}
+
+public:
+	PlayerObject() :
+		player_(nullptr)
+	{}
 
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
 		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
@@ -413,37 +446,6 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		player_->sendRPC(stopMove());
 	}
 
-	bool advance(Microseconds elapsed, TimePoint now) {
-		if (hasDelayedProcessing()) {
-			if (now >= delayedProcessingTime_) {
-				clearDelayedProcessing();
-
-				if (isMoving()) {
-					NetCode::RPC::MoveObject moveObjectRPC;
-					moveObjectRPC.ObjectID = poolID;
-					moveObjectRPC.CurrentPosition = getPosition();
-					moveObjectRPC.MoveData = getMoveData();
-					player_->sendRPC(moveObjectRPC);
-				}
-			}
-		}
-
-		return advanceMove(elapsed);
-	}
-
-	void createForPlayer() {
-		createObjectForClient(*player_);
-
-		if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player) {
-			delayedProcessingTime_ = Time::now() + Seconds(1);
-			setDelayedProcessing();
-		}
-	}
-
-	void destroyForPlayer() {
-		destroyObjectForClient(*player_);
-	}
-
 	void setPosition(Vector3 position) override {
 		BaseObject<IPlayerObject>::setPosition(position);
 
@@ -473,3 +475,4 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 		}
 	}
 };
+

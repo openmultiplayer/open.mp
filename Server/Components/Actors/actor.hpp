@@ -25,6 +25,36 @@ private:
 
 	friend class ActorsComponent;
 
+	void restream() {
+		for (IPlayer * player : streamedFor_.entries()) {
+			streamOutForClient(*player);
+			streamInForClient(*player);
+		}
+	}
+
+	void streamInForClient(IPlayer & player) {
+		NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC;
+		showActorForPlayerRPC.ActorID = poolID;
+		showActorForPlayerRPC.Angle = angle_;
+		showActorForPlayerRPC.Health = health_;
+		showActorForPlayerRPC.Invulnerable = invulnerable_;
+		showActorForPlayerRPC.Position = pos_;
+		showActorForPlayerRPC.SkinID = skin_;
+		player.sendRPC(showActorForPlayerRPC);
+
+		if (animationLoop_) {
+			NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
+			RPC.ActorID = poolID;
+			player.sendRPC(RPC);
+		}
+	}
+
+	void streamOutForClient(IPlayer & player) {
+		NetCode::RPC::HideActorForPlayer RPC;
+		RPC.ActorID = poolID;
+		player.sendRPC(RPC);
+	}
+
 public:
 	void setHealth(float health) override {
         health_ = health;
@@ -84,13 +114,6 @@ public:
 
         for (IPlayer* player : streamedFor_.entries()) {
             player->sendRPC(RPC);
-        }
-    }
-
-    void restream() {
-        for (IPlayer* player : streamedFor_.entries()) {
-            streamOutForClient(*player);
-            streamInForClient(*player);
         }
     }
 
@@ -173,29 +196,6 @@ public:
         return skin_;
     }
 
-    void streamInForClient(IPlayer& player) {
-        NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC;
-        showActorForPlayerRPC.ActorID = poolID;
-        showActorForPlayerRPC.Angle = angle_;
-        showActorForPlayerRPC.Health = health_;
-        showActorForPlayerRPC.Invulnerable = invulnerable_;
-        showActorForPlayerRPC.Position = pos_;
-        showActorForPlayerRPC.SkinID = skin_;
-        player.sendRPC(showActorForPlayerRPC);
-
-        if (animationLoop_) {
-            NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
-            RPC.ActorID = poolID;
-            player.sendRPC(RPC);
-        }
-    }
-
-    void streamOutForClient(IPlayer& player) {
-        NetCode::RPC::HideActorForPlayer RPC;
-        RPC.ActorID = poolID;
-        player.sendRPC(RPC);
-    }
-
     ~Actor() {
         for (IPlayer* player : streamedFor_.entries()) {
             --player->queryData<PlayerActorData>()->numStreamed;
@@ -203,3 +203,4 @@ public:
         }
     }
 };
+

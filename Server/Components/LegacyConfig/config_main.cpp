@@ -110,14 +110,8 @@ const FlatHashMap<StringView, StringView> dictionary = {
 };
 
 class LegacyConfigComponent final : public IConfigProviderComponent {
-public:
-	PROVIDE_UUID(0x24ef6216838f9ffc);
-
-	StringView componentName() override {
-		return "LegacyConfig";
-	}
-
-	bool processCustom(IEarlyConfig& config, String name, String right) {
+private:
+	bool processCustom(IEarlyConfig & config, String name, String right) {
 		if (name.find("gamemode") == 0) {
 			auto it = dictionary.find("gamemode");
 			if (it != dictionary.end()) {
@@ -172,7 +166,7 @@ public:
 		return false;
 	}
 
-	bool processDefault(IEarlyConfig& config, ParamType type, String name, String right) {
+	bool processDefault(IEarlyConfig & config, ParamType type, String name, String right) {
 		auto dictIt = dictionary.find(name);
 		if (dictIt != dictionary.end()) {
 			switch (type) {
@@ -223,6 +217,13 @@ public:
 			}
 		}
 		return false;
+	}
+
+public:
+	PROVIDE_UUID(0x24ef6216838f9ffc);
+
+	StringView componentName() override {
+		return "LegacyConfig";
 	}
 
 	bool configure(IEarlyConfig& config) override {
@@ -277,7 +278,6 @@ public:
 		// todo read server.cfg, process it
 		return true;
 	}
-
 } component;
 
 COMPONENT_ENTRY_POINT() {
