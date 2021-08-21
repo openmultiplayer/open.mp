@@ -112,8 +112,12 @@ const FlatHashMap<StringView, StringView> dictionary = {
 struct LegacyConfigComponent final : public IConfigProviderComponent {
 	PROVIDE_UUID(0x24ef6216838f9ffc);
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "LegacyConfig";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	bool processCustom(IEarlyConfig& config, String name, String right) {

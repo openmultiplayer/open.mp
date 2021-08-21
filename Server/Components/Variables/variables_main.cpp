@@ -102,8 +102,12 @@ struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, Play
 		return new PlayerVariableData();
 	}
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Variables";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore * core) override {

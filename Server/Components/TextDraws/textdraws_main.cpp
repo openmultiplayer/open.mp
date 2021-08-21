@@ -126,8 +126,12 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
     MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsComponent::Cnt> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
-    StringView componentName() override {
+    StringView componentName() const override {
         return "TextLabels";
+    }
+
+    SemanticVersion componentVersion() const override {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
     struct PlayerSelectTextDrawEventHandler : public SingleNetworkInOutEventHandler {

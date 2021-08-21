@@ -482,7 +482,7 @@ struct INetwork {
 /// A component interface which allows for writing a network component
 struct INetworkComponent : public IComponent {
 	/// Return Network component type
-	ComponentType componentType() override { return ComponentType::Network; }
+	ComponentType componentType() const override { return ComponentType::Network; }
 
 	/// Return the network provided by the component
 	virtual INetwork* getNetwork() = 0;

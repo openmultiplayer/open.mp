@@ -2,6 +2,10 @@
 
 #include "types.hpp"
 
+#ifndef BUILD_NUMBER
+	#define BUILD_NUMBER 0
+#endif
+
 /// Should always be used in classes inheriting IUUIDProvider
 #define PROVIDE_UUID(uuid) static constexpr UUID IID = uuid; UUID getUUID() override { return uuid; }
 
@@ -23,10 +27,13 @@ struct IComponentList;
 /// A component interface
 struct IComponent : public IUUIDProvider {
 	/// Get the component's name
-	virtual StringView componentName() = 0;
+	virtual StringView componentName() const = 0;
 
 	/// Get the component's type
-	virtual ComponentType componentType() { return ComponentType::Other; }
+	virtual ComponentType componentType() const { return ComponentType::Other; }
+
+	/// Get the component's version
+	virtual SemanticVersion componentVersion() const = 0;
 
 	/// Called for every component after components have been loaded
 	/// Should be used for storing the core interface, registering player/core event handlers
