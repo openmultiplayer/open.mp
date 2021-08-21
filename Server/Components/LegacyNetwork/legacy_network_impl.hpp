@@ -13,11 +13,6 @@
 
 struct Core;
 
-inline constexpr auto CEILDIV(int n, int d) -> decltype (n / d)
-{
-    return (n) ? ((n - (int)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
-}
-
 
 class RakNetLegacyBitStream final : public INetworkBitStream {
 private:
