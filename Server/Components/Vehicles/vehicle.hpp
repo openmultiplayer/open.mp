@@ -28,10 +28,11 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
     }
 };
 
-struct VehiclesComponent;
+class VehiclesComponent;
 
-struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
-    Vector3 pos;
+class Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
+private:
+	Vector3 pos;
     GTAQuat rot;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
@@ -69,6 +70,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
 
+	void streamOutForClient(IPlayer & player);
+
+	friend class VehiclesComponent;
+
+public:
     Vehicle() {
         mods.fill(0);
         carriages.fill(nullptr);
@@ -122,8 +128,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void streamInForPlayer(IPlayer& player) override;
     void streamOutForPlayer(IPlayer& player) override;
-
-    void streamOutForClient(IPlayer& player);
 
     /// Update the vehicle's data from a player sync packet.
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;

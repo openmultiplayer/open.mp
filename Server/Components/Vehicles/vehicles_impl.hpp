@@ -5,13 +5,17 @@
 #include "vehicle.hpp"
 #include "vehicle_components.hpp"
 
-struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
-    ICore* core;
+class VehiclesComponent final : public IVehiclesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+private:
+	ICore* core;
     MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Capacity> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
     StreamConfigHelper streamConfigHelper;
 
+	friend class Vehicle;
+
+public:
     IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override {
         return eventDispatcher;
     }
