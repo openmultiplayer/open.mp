@@ -71,7 +71,12 @@ private:
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
-pubilc:
+	ICore & core;
+	DynamicArray<BanEntry> bans;
+	FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
+	FlatHashSet<String> ownAllocations;
+
+public:
     Config(ICore& core) : core(core) {
         {
             std::ifstream ifs(ConfigFileName);
@@ -284,12 +289,6 @@ pubilc:
         return core;
     }
 
-private:
-    void optimiseBans() {
-        std::sort(bans.begin(), bans.end());
-        bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
-    }
-
     static bool writeDefault() {
         // Creates default config.json file if it doesn't exist
         // Returns true if a config file was written, false otherwise
@@ -310,10 +309,10 @@ private:
         return true;
     }
 
-    ICore& core;
-    DynamicArray<BanEntry> bans;
-    FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
-    FlatHashSet<String> ownAllocations;
+	void optimiseBans() {
+		std::sort(bans.begin(), bans.end());
+		bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
+	}
 };
 
 class Core final : public ICore, public PlayerEventHandler {
@@ -431,6 +430,8 @@ private:
             std::this_thread::sleep_until(now + sleepTimer);
         }
     }
+
+	friend int main(int argc, char ** argv);
 
 public:
     Core() :

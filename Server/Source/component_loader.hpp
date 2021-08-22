@@ -31,7 +31,7 @@ DynamicArray<IComponent*> loadComponents(Core &core, const std::filesystem::path
     DynamicArray<IComponent*> res;
     std::filesystem::create_directory(path);
 
-    Span<const StringView> components = core.config.getStrings("components");
+    Span<const StringView> components = core.getConfig().getStrings("components");
     if (components.empty()) {
         for (auto& p : std::filesystem::directory_iterator(path)) {
             if (p.path().extension() == LIBRARY_EXT) {

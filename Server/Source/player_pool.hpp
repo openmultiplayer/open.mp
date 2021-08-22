@@ -820,6 +820,9 @@ private:
         }
     } playerTrailerSyncHandler;
 
+	friend class Player;
+
+public:
 	void init(IComponentList & components) {
 		IConfig & config = core.getConfig();
 		streamConfigHelper = StreamConfigHelper(config);
@@ -861,9 +864,6 @@ private:
 		actorsComponent = components.queryComponent<IActorsComponent>();
 	}
 
-	friend class Player;
-
-public:
     bool valid(int index) const override {
         return storage.valid(index);
     }

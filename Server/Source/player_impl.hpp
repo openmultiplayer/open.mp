@@ -15,7 +15,7 @@
 #include <glm/glm.hpp>
 #include <regex>
 
-struct PlayerPool;
+class PlayerPool;
 
 struct PlayerChatBubble {
     String text;
