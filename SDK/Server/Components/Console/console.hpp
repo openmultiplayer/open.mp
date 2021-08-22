@@ -1,7 +1,7 @@
 #include <core.hpp>
 
 struct ConsoleEventHandler {
-	virtual bool onConsoleText(StringView text) { return false; }
+	virtual bool onConsoleText(StringView command, StringView parameters) { return false; }
 };
 
 static const UUID ConsoleComponent_UUID = UUID(0xbfa24e49d0c95ee4);
