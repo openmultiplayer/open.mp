@@ -232,7 +232,44 @@ private:
 	StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
 	StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
 
-	bool advance(Microseconds elapsed, TimePoint now) {
+	void createForPlayer(IPlayer & player) {
+		createObjectForClient(player);
+
+		const int pid = player.getID();
+		delayedProcessing_.set(pid);
+		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
+		setDelayedProcessing();
+	}
+
+	void destroyForPlayer(IPlayer & player) {
+		destroyObjectForClient(player);
+	}
+
+protected:
+	void restream() override {
+		for (IPlayer* player : players_->entries()) {
+			createObjectForClient(*player);
+		}
+	}
+
+public:
+	Object()
+	:
+		players_(nullptr)
+	{
+	}
+
+	Object(IPlayerPool * players, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCol)
+	:
+		BaseObject<IObject>(modelID, position, rotation, drawDist, cameraCol),
+		players_(players)
+	{
+		for (IPlayer * player : players->entries()) {
+			createForPlayer(*player);
+		}
+	}
+
+	bool onTick(Microseconds elapsed, TimePoint now) override {
 		if (hasDelayedProcessing()) {
 			for (IPlayer * player : players_->entries()) {
 				const int pid = player->getID();
@@ -269,43 +306,6 @@ private:
 		}
 
 		return advanceMove(elapsed);
-	}
-
-	void createForPlayer(IPlayer & player) {
-		createObjectForClient(player);
-
-		const int pid = player.getID();
-		delayedProcessing_.set(pid);
-		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
-		setDelayedProcessing();
-	}
-
-	void destroyForPlayer(IPlayer & player) {
-		destroyObjectForClient(player);
-	}
-
-protected:
-	void restream() override {
-		for (IPlayer* player : players_->entries()) {
-			createObjectForClient(*player);
-		}
-	}
-
-public:
-	Object()
-	:
-		players_(nullptr)
-	{
-	}
-
-	Object(IPlayerPool * players, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCol)
-	:
-		BaseObject<IObject>(modelID, position, rotation, drawDist, cameraCol),
-		players_(players)
-	{
-		for (IPlayer * player : players->entries()) {
-			createForPlayer(*player);
-		}
 	}
 
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
@@ -389,23 +389,10 @@ class PlayerObject final : public BaseObject<IPlayerObject> {
 private:
 	IPlayer* player_;
 	TimePoint delayedProcessingTime_;
-	bool advance(Microseconds elapsed, TimePoint now) {
-		if (hasDelayedProcessing()) {
-			if (now >= delayedProcessingTime_) {
-				clearDelayedProcessing();
 
-				if (isMoving()) {
-					NetCode::RPC::MoveObject moveObjectRPC;
-					moveObjectRPC.ObjectID = poolID;
-					moveObjectRPC.CurrentPosition = getPosition();
-					moveObjectRPC.MoveData = getMoveData();
-					player_->sendRPC(moveObjectRPC);
-				}
-			}
-		}
-
-		return advanceMove(elapsed);
-	}
+	// I got it SO close to not needing `friend`.  I could have gone all the way, but it wasn't
+	// worth it - the only thing left is `obj->player_ = nullptr;` in `free`.
+	friend class PlayerObjectData;
 
 	void createForPlayer() {
 		createObjectForClient(*player_);
@@ -438,6 +425,24 @@ public:
 		player_(player)
 	{
 		createForPlayer();
+	}
+
+	bool onTick(Microseconds elapsed, TimePoint now) override {
+		if (hasDelayedProcessing()) {
+			if (now >= delayedProcessingTime_) {
+				clearDelayedProcessing();
+
+				if (isMoving()) {
+					NetCode::RPC::MoveObject moveObjectRPC;
+					moveObjectRPC.ObjectID = poolID;
+					moveObjectRPC.CurrentPosition = getPosition();
+					moveObjectRPC.MoveData = getMoveData();
+					player_->sendRPC(moveObjectRPC);
+				}
+			}
+		}
+
+		return advanceMove(elapsed);
 	}
 
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {

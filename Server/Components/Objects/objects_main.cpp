@@ -255,12 +255,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         const int pid = player.getID();
         for (IObject* object : storage.entries()) {
             Object* obj = static_cast<Object*>(object);
-            if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
+			auto const & attachment = obj->getAttachmentData();
+            if (attachment.type == ObjectAttachmentData::Type::Player && attachment.ID == pid) {
                 NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
                 attachObjectToPlayerRPC.ObjectID = obj->poolID;
-                attachObjectToPlayerRPC.PlayerID = obj->attachmentData_.ID;
-                attachObjectToPlayerRPC.Offset = obj->attachmentData_.offset;
-                attachObjectToPlayerRPC.Rotation = obj->attachmentData_.rotation;
+                attachObjectToPlayerRPC.PlayerID = attachment.ID;
+                attachObjectToPlayerRPC.Offset = attachment.offset;
+                attachObjectToPlayerRPC.Rotation = attachment.rotation;
                 forPlayer.sendRPC(attachObjectToPlayerRPC);
             }
         }
@@ -497,7 +498,7 @@ public:
 void ObjectComponent::onTick(Microseconds elapsed, TimePoint now) {
     for (IObject* object : storage.entries()) {
         Object* obj = static_cast<Object*>(object);
-        if (obj->advance(elapsed, now)) {
+        if (obj->onTick(elapsed, now)) {
             ScopedPoolReleaseLock lock(*this, *obj);
             eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.getEntry());
         }
@@ -508,7 +509,7 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now) {
         if (data) {
             for (IPlayerObject* object : data->entries()) {
                 PlayerObject* obj = static_cast<PlayerObject*>(object);
-                if (obj->advance(elapsed, now)) {
+                if (obj->onTick(elapsed, now)) {
                     ScopedPoolReleaseLock lock(*data, *obj);
                     eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.getEntry());
                 }

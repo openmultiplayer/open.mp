@@ -192,6 +192,9 @@ struct IBaseObject : public IEntity {
 
 	/// Set the object's material to some text
 	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) = 0;
+
+	/// Called every tick.
+	virtual bool onTick(Microseconds elapsed, TimePoint now) = 0;
 };
 
 /// An object interface
