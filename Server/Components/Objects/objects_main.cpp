@@ -179,19 +179,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             return nullptr;
         }
 
-        Object& obj = storage.get(objid);
-        obj.players_ = &core->getPlayers();
-        obj.pos_ = position;
-        obj.rot_ = rotation;
-        obj.model_ = modelID;
-        obj.drawDist_ = drawDist;
-        obj.cameraCol_ = defCameraCollision;
-
-        for (IPlayer* player : core->getPlayers().entries()) {
-            obj.createForPlayer(*player);
-        }
-
-        return &obj;
+        return storage.emplace(objid, &core->getPlayers(), modelID, position, rotation, drawDist, defCameraCollision);
     }
 
 	void free() override {
@@ -354,17 +342,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
 
         component_.isPlayerObject.set(objid);
 
-        PlayerObject& obj = storage.get(objid);
-        obj.player_ = &player_;
-        obj.pos_ = position;
-        obj.rot_ = rotation;
-        obj.model_ = modelID;
-        obj.drawDist_ = drawDist;
-        obj.cameraCol_ = component_.defCameraCollision;
-
-        obj.createForPlayer();
-
-        return &obj;
+		return storage.emplace(objid, &player_, modelID, position, rotation, drawDist, component_.defCameraCollision);
     }
 
     int findFreeIndex() override {

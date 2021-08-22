@@ -19,6 +19,25 @@ private:
 	bool anyDelayedProcessing_;
 
 protected:
+	BaseObject() = default;
+
+	BaseObject(int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCol)
+	:
+		pos_(position),
+		rot_(rotation),
+		model_(modelID),
+		drawDist_(drawDist),
+		cameraCol_(cameraCol),
+		attachmentData_(),
+		materials_(),
+		materialsUsed_(),
+		moving_(false),
+		moveData_(),
+		rotSpeed_(0.0),
+		anyDelayedProcessing_(false)
+	{
+	}
+
 	void setDelayedProcessing() { anyDelayedProcessing_ = true; }
 	void clearDelayedProcessing() { anyDelayedProcessing_ = false; }
 
@@ -273,9 +292,22 @@ protected:
 	}
 
 public:
-	Object() :
+	Object()
+	:
 		players_(nullptr)
-	{}
+	{
+	}
+
+	Object(IPlayerPool * players, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCol)
+	:
+		BaseObject<IObject>(modelID, position, rotation, drawDist, cameraCol),
+		players_(players)
+	{
+		for (IPlayer * player : players->entries()) {
+			createForPlayer(*player);
+		}
+	}
+
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
 		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
 			setMtl(index, model, txd, texture, colour);
@@ -390,9 +422,19 @@ protected:
 	}
 
 public:
-	PlayerObject() :
+	PlayerObject()
+	:
 		player_(nullptr)
-	{}
+	{
+	}
+
+	PlayerObject(IPlayer * player, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCol)
+	:
+		BaseObject<IPlayerObject>(modelID, position, rotation, drawDist, cameraCol),
+		player_(player)
+	{
+		createForPlayer();
+	}
 
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
 		if (index < MAX_OBJECT_MATERIAL_SLOTS) {

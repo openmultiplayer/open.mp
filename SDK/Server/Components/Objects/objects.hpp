@@ -77,6 +77,12 @@ struct ObjectMaterialData {
 
 	Colour backgroundColour; // Text
 
+	ObjectMaterialData()
+	:
+		type(Type::None)
+	{
+	}
+
 	ObjectMaterialData(int mdl, Colour matCol, Colour backCol)
 	:
 		type(Type::Default), model(mdl), materialColour(matCol), backgroundColour(backCol)
@@ -284,6 +290,8 @@ private:
 	ObjectMaterialData data;
 
 public:
+	ObjectMaterial() = default;
+
 	ObjectMaterial(StringView tt, StringView tf, ObjectMaterialData const & d)
 	:
 		txdOrText(tt), textureOrFont(tf), data(d)
