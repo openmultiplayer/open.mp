@@ -24,24 +24,12 @@ protected:
 
 	void setMtl(int index, int model, StringView txd, StringView texture, Colour colour) {
 		materialsUsed_.set(index);
-		materials_[index].data.type = ObjectMaterialData::Type::Default;
-		materials_[index].data.model = model;
-		materials_[index].txdOrText = txd;
-		materials_[index].textureOrFont = texture;
-		materials_[index].data.materialColour = colour;
+		materials_[index] = ObjectMaterial(txd, texture, ObjectMaterialData(model, colour, Colour()));
 	}
 
 	void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) {
 		materialsUsed_.set(index);
-		materials_[index].data.type = ObjectMaterialData::Type::Text;
-		materials_[index].txdOrText = text;
-		materials_[index].data.materialSize = size;
-		materials_[index].textureOrFont = fontFace;
-		materials_[index].data.fontSize = fontSize;
-		materials_[index].data.bold = bold;
-		materials_[index].data.fontColour = fontColour;
-		materials_[index].data.backgroundColour = backColour;
-		materials_[index].data.alignment = align;
+		materials_[index] = ObjectMaterial(text, fontFace, ObjectMaterialData(size, fontSize, align, bold, fontColour, backColour));
 	}
 
 	void setAttachmentData(ObjectAttachmentData::Type type, int id, Vector3 offset, Vector3 rotation, bool sync) {

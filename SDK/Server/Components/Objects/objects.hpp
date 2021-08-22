@@ -76,6 +76,18 @@ struct ObjectMaterialData {
 	};
 
 	Colour backgroundColour; // Text
+
+	ObjectMaterialData(int mdl, Colour matCol, Colour backCol)
+	:
+		type(Type::Default), model(mdl), materialColour(matCol), backgroundColour(backCol)
+	{
+	}
+
+	ObjectMaterialData(uint8_t matSize, uint8_t fSize, uint8_t align, bool b, Colour fontCol, Colour backCol)
+	:
+		type(Type::Text), materialSize(matSize), fontSize(fSize), alignment(align), bold(b), fontColour(fontCol), backgroundColour(backCol)
+	{
+	}
 };
 
 /// Object material data
@@ -272,6 +284,12 @@ private:
 	ObjectMaterialData data;
 
 public:
+	ObjectMaterial(StringView tt, StringView tf, ObjectMaterialData const & d)
+	:
+		txdOrText(tt), textureOrFont(tf), data(d)
+	{
+	}
+
 	ObjectMaterialData const & getData() const override {
 		return data;
 	}
