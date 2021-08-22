@@ -109,15 +109,16 @@ protected:
 				return true;
 			}
 			else {
-				const float ratio = remainingDistance / travelledDistance;
-				pos_ += (moveData_.targetPos - pos_) / ratio;
+				const float ratio = travelledDistance / remainingDistance;
+				pos_ += (moveData_.targetPos - pos_) * ratio;
 
 				if (!std::isnan(rotSpeed_)) {
-					const float remainingRotation = glm::distance(rot_, moveData_.targetRot);
+					auto rot = rot_.ToEuler();
+					const float remainingRotation = glm::distance(rot, moveData_.targetRot);
 					const float travelledRotation = duration_cast<RealSeconds>(elapsed).count() * rotSpeed_;
 					if (travelledRotation > std::numeric_limits<float>::epsilon()) {
-						const float rotationRatio = remainingRotation / travelledRotation;
-						rot_ += (moveData_.targetRot - rot_) / rotationRatio;
+						const float rotationRatio = travelledRotation / remainingRotation;
+						rot_ = GTAQuat(rot + (moveData_.targetRot - rot) * rotationRatio);
 					}
 				}
 			}
