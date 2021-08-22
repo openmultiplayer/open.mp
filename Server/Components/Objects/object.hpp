@@ -57,7 +57,7 @@ protected:
 		createObjectRPC.ObjectID = poolID;
 		createObjectRPC.ModelID = model_;
 		createObjectRPC.Position = pos_;
-		createObjectRPC.Rotation = rot_;
+		createObjectRPC.Rotation = rot_.ToEuler();
 		createObjectRPC.DrawDistance = drawDist_;
 		createObjectRPC.CameraCollision = cameraCol_;
 		createObjectRPC.AttachmentData = attachmentData_;
@@ -75,7 +75,7 @@ protected:
 		moveData_ = data;
 
 		/// targetRot being NAN will result in rotSpeed being NAN resulting in no rotation
-		rotSpeed_ = glm::distance(rot_, moveData_.targetRot) * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
+		rotSpeed_ = glm::distance(rot_.ToEuler(), moveData_.targetRot) * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
 
 		NetCode::RPC::MoveObject moveObjectRPC;
 		moveObjectRPC.ObjectID = poolID;
