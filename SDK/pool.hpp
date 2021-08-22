@@ -285,20 +285,49 @@ public:
         return freeIdx;
     }
 
-    int claim(int hint) {
-        assert(hint < Count);
-        if (!valid(hint)) {
-            pool_[hint] = new Type();
-            allocated_.add(*pool_[hint]);
-            if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                pool_[hint]->poolID = hint;
-            }
-            return hint;
-        }
-        else {
-            return claim();
-        }
-    }
+	int claim(int hint) {
+		if (valid(hint)) {
+			hint = findFreeIndex();
+		}
+		if (hint >= 0 && hint < Count) {
+			pool_[hint] = new Type();
+			allocated_.add(*pool_[hint]);
+			if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+				pool_[hint]->poolID = hint;
+			}
+		}
+		return hint;
+	}
+
+	template <typename ... Args>
+	Type * emplace(Args && ...args) {
+		const int freeIdx = findFreeIndex();
+		if (freeIdx >= 0) {
+			pool_[freeIdx] = new Type(std::forward<Args>(args)...);
+			allocated_.add(*pool_[freeIdx]);
+			if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+				pool_[freeIdx]->poolID = freeIdx;
+			}
+			return pool_[freeIdx];
+		}
+		return nullptr;
+	}
+
+	template <typename ... Args>
+	Type * emplace(int hint, Args && ...args) {
+		if (valid(hint)) {
+			hint = findFreeIndex();
+		}
+		if (hint >= 0 && hint < Count) {
+			pool_[hint] = new Type(std::forward<Args>(args)...);
+			allocated_.add(*pool_[hint]);
+			if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
+				pool_[hint]->poolID = hint;
+			}
+			return pool_[hint];
+		}
+		return nullptr;
+	}
 
     void claimUnusable(int index) {
         pool_[index] = reinterpret_cast<Type*>(0x01);
