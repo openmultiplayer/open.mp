@@ -237,8 +237,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
     void onConnect(IPlayer& player) override {
         for (IObject* o : storage.entries()) {
-            Object* obj = static_cast<Object*>(o);
-            obj->createForPlayer(player);
+			o->onConnect(player);
         }
     }
 
@@ -286,7 +285,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         const int pid = player.getID();
         for (IObject* object : storage.entries()) {
             Object* obj = static_cast<Object*>(object);
-            if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
+            if (obj->getAttachmentData().type == ObjectAttachmentData::Type::Player && obj->getAttachmentData().ID == pid) {
                 obj->resetAttachment();
             }
         }
@@ -304,8 +303,9 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     void onTick(Microseconds elapsed) override;
 };
 
-struct PlayerObjectData final : public IPlayerObjectData {
-    ObjectComponent& component_;
+class PlayerObjectData final : public IPlayerObjectData {
+private:
+	ObjectComponent& component_;
     IPlayer& player_;
     StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
     StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
@@ -313,6 +313,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     bool inObjectSelection_;
     bool inObjectEdit_;
 
+public:
     PlayerObjectData(ObjectComponent& component, IPlayer& player) :
         component_(component), player_(player)
     {

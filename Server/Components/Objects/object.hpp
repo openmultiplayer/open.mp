@@ -322,6 +322,10 @@ public:
 		}
 	}
 
+	void onConnect(IPlayer & player) override {
+		createForPlayer(player);
+	}
+
 	void startMoving(const ObjectMoveData& data) override {
 		if (isMoving()) {
 			stopMoving();

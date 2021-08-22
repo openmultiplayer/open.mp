@@ -201,6 +201,8 @@ struct IObject : public IBaseObject {
 
 	/// Attach the object to another object
 	virtual void attachToObject(IObject& object, Vector3 offset, Vector3 rotation, bool syncRotation) = 0;
+
+	virtual void onConnect(IPlayer & player) = 0;
 };
 
 struct IPlayerObject : public IBaseObject {
