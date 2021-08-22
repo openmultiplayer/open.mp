@@ -52,8 +52,6 @@ protected:
 		attachmentData_.syncRotation = sync;
 	}
 	
-	ObjectAttachementData const & getAttachmentData() const { return attachmentData_; }
-
 	void createObjectForClient(IPlayer & player) {
 		NetCode::RPC::CreateObject createObjectRPC(materials_, materialsUsed_);
 		createObjectRPC.ObjectID = poolID;
@@ -126,8 +124,6 @@ protected:
 
 		return false;
 	}
-
-	bool isMoving() const { return moving_; }
 
 	bool hasDelayedProcessing() const { return anyDelayedProcessing_; }
 
@@ -226,6 +222,58 @@ private:
 	StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
 	StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
 
+	bool advance(Microseconds elapsed, TimePoint now) {
+		if (hasDelayedProcessing()) {
+			for (IPlayer * player : players_->entries()) {
+				const int pid = player->getID();
+				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
+					delayedProcessing_.reset(pid);
+
+					if (isMoving()) {
+						NetCode::RPC::MoveObject moveObjectRPC;
+						moveObjectRPC.ObjectID = poolID;
+						moveObjectRPC.CurrentPosition = getPosition();
+						moveObjectRPC.MoveData = getMoveData();
+						player->sendRPC(moveObjectRPC);
+					}
+
+					if (
+						getAttachmentData().type == ObjectAttachmentData::Type::Player &&
+						players_->valid(getAttachmentData().ID)
+						) {
+						IPlayer & other = players_->get(getAttachmentData().ID);
+						if (other.isStreamedInForPlayer(*player)) {
+							NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+							attachObjectToPlayerRPC.ObjectID = poolID;
+							attachObjectToPlayerRPC.PlayerID = getAttachmentData().ID;
+							attachObjectToPlayerRPC.Offset = getAttachmentData().offset;
+							attachObjectToPlayerRPC.Rotation = getAttachmentData().rotation;
+							player->sendRPC(attachObjectToPlayerRPC);
+						}
+					}
+				}
+			}
+			if (!delayedProcessing_.any()) {
+				clearDelayedProcessing();
+			}
+		}
+
+		return advanceMove(elapsed);
+	}
+
+	void createForPlayer(IPlayer & player) {
+		createObjectForClient(player);
+
+		const int pid = player.getID();
+		delayedProcessing_.set(pid);
+		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
+		setDelayedProcessing();
+	}
+
+	void destroyForPlayer(IPlayer & player) {
+		destroyObjectForClient(player);
+	}
+
 public:
 	Object() :
 		players_(nullptr)
@@ -261,58 +309,6 @@ public:
 
 	void stopMoving() override {
 		players_->broadcastRPCToAll(stopMove());
-	}
-
-	bool advance(Microseconds elapsed, TimePoint now) {
-		if (hasDelayedProcessing()) {
-			for (IPlayer* player : players_->entries()) {
-				const int pid = player->getID();
-				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
-					delayedProcessing_.reset(pid);
-
-					if (isMoving()) {
-						NetCode::RPC::MoveObject moveObjectRPC;
-						moveObjectRPC.ObjectID = poolID;
-						moveObjectRPC.CurrentPosition = getPosition();
-						moveObjectRPC.MoveData = getMoveData();
-						player->sendRPC(moveObjectRPC);
-					}
-
-					if (
-						getAttachmentData().type == ObjectAttachmentData::Type::Player &&
-						players_->valid(getAttachmentData().ID)
-					) {
-						IPlayer& other = players_->get(getAttachmentData().ID);
-						if (other.isStreamedInForPlayer(*player)) {
-							NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-							attachObjectToPlayerRPC.ObjectID = poolID;
-							attachObjectToPlayerRPC.PlayerID = getAttachmentData().ID;
-							attachObjectToPlayerRPC.Offset = getAttachmentData().offset;
-							attachObjectToPlayerRPC.Rotation = getAttachmentData().rotation;
-							player->sendRPC(attachObjectToPlayerRPC);
-						}
-					}
-				}
-			}
-			if (!delayedProcessing_.any()) {
-				clearDelayedProcessing();
-			}
-		}
-
-		return advanceMove(elapsed);
-	}
-
-	void createForPlayer(IPlayer& player) {
-		createObjectForClient(player);
-
-		const int pid = player.getID();
-		delayedProcessing_.set(pid);
-		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
-		setDelayedProcessing();
-	}
-
-	void destroyForPlayer(IPlayer& player) {
-		destroyObjectForClient(player);
 	}
 
 	void setPosition(Vector3 position) override {
