@@ -34,6 +34,18 @@ private:
 	}
 
 public:
+	Pickup() = default;
+
+	Pickup(int vw, int model, PickupType t, Vector3 position, bool statc)
+	:
+		virtualWorld(vw), modelId(model), type(t), pos(position), isStatic(statc)
+	{
+	}
+
+	bool getStatic() const {
+		return isStatic;
+	}
+
     bool isStreamedInForPlayer(const IPlayer & player) const override {
         return streamedFor_.valid(player.getID());
     }
@@ -47,6 +59,13 @@ public:
         streamedFor_.remove(player.getID(), player);
         streamOutForClient(player);
     }
+
+	void onDisconnect(IPlayer & player, PeerDisconnectReason reason) override {
+		const int pid = player.getID();
+		if (streamedFor_.valid(pid)) {
+			streamedFor_.remove(pid, player);
+		}
+	}
 
     int getVirtualWorld() const override {
         return virtualWorld;

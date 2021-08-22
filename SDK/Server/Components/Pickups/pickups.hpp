@@ -30,6 +30,8 @@ struct IPickup : public IEntity {
 
 	/// Streams out pickup for a player
 	virtual void streamOutForPlayer(IPlayer & player) = 0;
+
+	virtual void onDisconnect(IPlayer & player, PeerDisconnectReason reason) = 0;
 };
 
 struct PickupEventHandler {

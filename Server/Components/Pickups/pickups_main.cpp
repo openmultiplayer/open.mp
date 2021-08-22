@@ -57,34 +57,12 @@ public:
 	}
 
 	IPickup * create(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic) override {
-		int freeIdx = storage.findFreeIndex();
-		if (freeIdx == -1) {
-			// No free index
-			return nullptr;
-		}
-
-		int pid = storage.claim(freeIdx);
-		if (pid == -1) {
-			// No free index
-			return nullptr;
-		}
-
-		Pickup & pickup = storage.get(pid);
-		pickup.pos = pos;
-		pickup.type = type;
-		pickup.virtualWorld = virtualWorld;
-		pickup.modelId = modelId;
-		pickup.isStatic = isStatic;
-		return &pickup;
+		return storage.emplace(virtualWorld, modelId, type, pos, isStatic);
 	}
 
 	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
-		const int pid = player.getID();
 		for (IPickup* p : storage.entries()) {
-			Pickup* pickup = static_cast<Pickup*>(p);
-			if (pickup->streamedFor_.valid(pid)) {
-				pickup->streamedFor_.remove(pid, player);
-			}
+			p->onDisconnect(player, reason);
 		}
 	}
 
@@ -115,7 +93,7 @@ public:
 	}
 
 	void release(int index) override {
-		if (!storage.get(index).isStatic) {
+		if (!storage.get(index).getStatic()) {
 			storage.release(index, false);
 		}
 	}
@@ -144,7 +122,7 @@ public:
 				Pickup* pickup = static_cast<Pickup*>(p);
 
 				const PlayerState state = player.getState();
-				const Vector3 dist3D = pickup->pos - player.getPosition();
+				const Vector3 dist3D = pickup->getPosition() - player.getPosition();
 				const bool shouldBeStreamedIn =
 					state != PlayerState_Spectating &&
 					state != PlayerState_None &&
