@@ -61,8 +61,12 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 		}
 	} playerExitedMenuEventHandler;
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Menus";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	MenusComponent() :

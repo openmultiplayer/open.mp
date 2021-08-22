@@ -29,8 +29,12 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
 		}
 	} playerPickUpPickupEventHandler;
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Pickups";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	PickupsComponent() :

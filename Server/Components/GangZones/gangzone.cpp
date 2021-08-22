@@ -5,8 +5,12 @@ struct GangZonesComponent final : public IGangZonesComponent {
 	MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Cnt> storage;
 	DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "GangZones";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore * core) override {

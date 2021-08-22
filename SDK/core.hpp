@@ -70,7 +70,7 @@ struct IEarlyConfig : public IConfig {
 /// A component interface which allows for adding to the configuration
 struct IConfigProviderComponent : public IComponent {
 	/// Return Pool component type
-	ComponentType componentType() override { return ComponentType::ConfigProvider; }
+	ComponentType componentType() const override { return ComponentType::ConfigProvider; }
 
 	/// We probably won't need onLoad, override it implicitly
 	void onLoad(ICore* core) override {}
@@ -89,7 +89,7 @@ enum LogLevel {
 /// The core interface
 struct ICore {
 	/// Get the SDK version
-	virtual int getVersion() = 0;
+	virtual SemanticVersion getSDKVersion() = 0;
 
 	/// Print a new line to console
 	__attribute__((__format__(__printf__, 2, 3)))

@@ -267,8 +267,12 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         return new PlayerVehicleData();
     }
 
-    StringView componentName() override {
-        return "VehiclesComponent";
+    StringView componentName() const override {
+        return "Vehicles";
+    }
+
+    SemanticVersion componentVersion() const override {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
     StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() override {

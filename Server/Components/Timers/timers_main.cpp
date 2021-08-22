@@ -1,11 +1,15 @@
 #include <sdk.hpp>
 #include "timer.hpp"
 
-struct ConsoleComponent final : public ITimersComponent, public CoreEventHandler {
+struct TimersComponent final : public ITimersComponent, public CoreEventHandler {
 	ICore* core = nullptr;
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Timers";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore* core) override {
@@ -13,7 +17,7 @@ struct ConsoleComponent final : public ITimersComponent, public CoreEventHandler
 		core->getEventDispatcher().addEventHandler(this);
 	}
 
-	~ConsoleComponent() {
+	~TimersComponent() {
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
 		}
