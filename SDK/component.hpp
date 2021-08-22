@@ -13,7 +13,7 @@ struct IUUIDProvider {
 template <UUID IID>
 class UUIDProvider: public virtual IUUIDProvider {
 public:
-	UUID getUUID() override { return IID };
+	UUID getUUID() override { return IID; }
 };
 
 enum ComponentType {
