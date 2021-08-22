@@ -10,6 +10,7 @@
 #include "player_pool.hpp"
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Console/console.hpp>
 #include "util.hpp"
 
 #define CPPHTTPLIB_OPENSSL_SUPPORT
@@ -313,7 +314,7 @@ private:
     FlatHashSet<String> ownAllocations;
 };
 
-struct Core final : public ICore, public PlayerEventHandler {
+struct Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
@@ -348,6 +349,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     String ServerName;
     int EnableLogTimestamp;
     String LogTimestampFormat;
+	bool run_ = true;
 
     Core() :
         players(*this),
@@ -360,6 +362,7 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     ~Core() {
+		components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
         players.getEventDispatcher().removeEventHandler(this);
         if (logFile) {
             fclose(logFile);
@@ -407,6 +410,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
+		components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
     }
 
     SemanticVersion getSDKVersion() override {
@@ -656,7 +660,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
 
         TimePoint prev = Time::now();
-        for (;;)
+        while (run_)
         {
             const TimePoint now = Time::now();
             Microseconds us = duration_cast<Microseconds>(now - prev);
@@ -666,4 +670,11 @@ struct Core final : public ICore, public PlayerEventHandler {
             std::this_thread::sleep_until(now + sleepTimer);
         }
     }
+
+	bool onConsoleText(StringView command, StringView parameters) override {
+		if (command == "exit") {
+			run_ = false;
+		}
+		return false;
+	}
 };
