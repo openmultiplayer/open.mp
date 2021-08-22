@@ -115,6 +115,9 @@ protected:
 
 	bool hasDelayedProcessing() const { return anyDelayedProcessing_; }
 
+protected:
+	virtual void restream() = 0;
+
 public:
 	BaseObject() :
 		attachmentData_{ ObjectAttachmentData::Type::None },
@@ -262,17 +265,17 @@ private:
 		destroyObjectForClient(player);
 	}
 
-public:
-	Object() :
-		players_(nullptr)
-	{}
-
-	void restream() {
+protected:
+	void restream() override {
 		for (IPlayer* player : players_->entries()) {
 			createObjectForClient(*player);
 		}
 	}
 
+public:
+	Object() :
+		players_(nullptr)
+	{}
 	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
 		if (index < MAX_OBJECT_MATERIAL_SLOTS) {
 			setMtl(index, model, txd, texture, colour);
@@ -350,11 +353,6 @@ class PlayerObject final : public BaseObject<IPlayerObject> {
 private:
 	IPlayer* player_;
 	TimePoint delayedProcessingTime_;
-
-	void restream() {
-		createObjectForClient(*player_);
-	}
-
 	bool advance(Microseconds elapsed, TimePoint now) {
 		if (hasDelayedProcessing()) {
 			if (now >= delayedProcessingTime_) {
@@ -384,6 +382,11 @@ private:
 
 	void destroyForPlayer() {
 		destroyObjectForClient(*player_);
+	}
+
+protected:
+	void restream() override {
+		createObjectForClient(*player_);
 	}
 
 public:
