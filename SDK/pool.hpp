@@ -252,8 +252,8 @@ public:
 
 	~StaticPoolStorageBase() {
 		// Placement destructor.
-		for (Type * ptr : allocated_.entries()) {
-			ptr->~Type();
+		for (Type const * ptr : allocated_.entries()) {
+			const_cast<Type *>(ptr)->~Type();
 		}
 	}
 
