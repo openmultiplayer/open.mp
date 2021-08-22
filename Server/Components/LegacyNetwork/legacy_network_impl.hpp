@@ -20,8 +20,8 @@ private:
 
 	template <typename LenType>
 	void writeDynamicString(const NetworkString & input) {
-		bs.Write(static_cast<LenType>(input.count));
-		bs.Write(input.data, input.count);
+		bs.Write(static_cast<LenType>(input.getSize()));
+		bs.Write(input.data, input.getSize());
 	}
 
 	template <typename LenType>
@@ -35,13 +35,13 @@ private:
 			return false;
 		}
 
-		input.allocate(len);
-		return bs.Read(input.data, len);
+		char * data = input.allocate(len);
+		return bs.Read(data, len);
 	}
 
 	template <typename T>
 	void writeFixedArray(const NetworkArray<T> & input) {
-		bs.Write(reinterpret_cast<const char *>(input.data), input.count * sizeof(T));
+		bs.Write(reinterpret_cast<const char *>(input.getData()), input.getSize() * sizeof(T));
 	}
 
 	template <typename T>
@@ -51,7 +51,6 @@ private:
 		}
 
 		T * data = input.allocate(len);
-
 		return bs.Read(reinterpret_cast<char *>(data), len * sizeof(T));
 	}
 
