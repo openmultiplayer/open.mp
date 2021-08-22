@@ -861,6 +861,8 @@ private:
 		actorsComponent = components.queryComponent<IActorsComponent>();
 	}
 
+	friend class Player;
+
 public:
     bool valid(int index) const override {
         return storage.valid(index);

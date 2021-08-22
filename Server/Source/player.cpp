@@ -49,7 +49,7 @@ IPlayer* Player::getCameraTargetPlayer() {
         return nullptr;
     }
 
-    IPlayer& target = pool_->storage.get(targetPlayer_);
+    IPlayer& target = pool_->get(targetPlayer_);
     if (!target.isStreamedInForPlayer(*this)) {
         return nullptr;
     }
