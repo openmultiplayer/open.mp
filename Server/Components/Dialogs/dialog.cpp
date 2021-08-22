@@ -23,6 +23,10 @@ public:
 	uint16_t getActiveID() const override {
 		return activeId;
 	}
+	
+	void setActiveID(uint16_t id){
+		activeId = id;
+	}
 
 	void free() override {
 		delete this;
@@ -58,7 +62,7 @@ private:
 				sendDialogResponse.ListItem,
 				sendDialogResponse.Text);
 
-			data->activeId = DIALOG_INVALID_ID;
+			data->setActiveID(DIALOG_INVALID_ID);
 			return true;
 		}
 	} dialogResponseHandler;
