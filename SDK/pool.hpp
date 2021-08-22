@@ -121,7 +121,7 @@ public:
         return valid_.test(index);
     }
 
-    const FlatPtrHashSet<T>& entries() {
+    FlatPtrHashSet<T> const & entries() const {
         return entries_;
     }
 
@@ -250,6 +250,13 @@ public:
 
 	static const size_t Capacity = Count;
 
+	~StaticPoolStorageBase() {
+		// Placement destructor.
+		for (Type * ptr : allocated_.entries()) {
+			ptr->~Type();
+		}
+	}
+
 protected:
 	inline Type * getPtr(int index) {
 		return reinterpret_cast<Type *>(&pool_[index * CEILDIV(sizeof(Type), alignof(Type)) * alignof(Type)]);
@@ -357,6 +364,13 @@ public:
     }
 
 	static const size_t Capacity = Count;
+
+	~DynamicPoolStorageBase() {
+		// Delete all the held items (`delete` has a `null` check).
+		for (int i = 0; i < Count; ++i) {
+			delete pool_[i];
+		}
+	}
 
 protected:
     StaticArray<Type*, Count> pool_ = { nullptr };
