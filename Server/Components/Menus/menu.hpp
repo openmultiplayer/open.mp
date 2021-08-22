@@ -34,6 +34,24 @@ private:
 	UniqueIDArray<IPlayer, IPlayerPool::Capacity> initedFor_;
 
 public:
+	Menu() = default;
+
+	Menu(StringView titleText, Vector2 position, uint8_t columns, float col1, float col2)
+		:
+		title(titleText),
+		columnCount(columns),
+		pos(position),
+		col1Width(col1),
+		col2Width(col2),
+		menuEnabled(true),
+		rowEnabled(),
+		columnHeaders { "" },
+		columnItemCount { 0 },
+		columnMenuItems { {{ "" }} }
+	{
+		rowEnabled.fill(true);
+	}
+
 	void setColumnHeader(StringView header, MenuColumn column) override {
 		if (column > columnCount) {
 			return;
@@ -138,6 +156,13 @@ public:
 
 		IPlayerMenuData * data = player.queryData<IPlayerMenuData>();
 		data->setMenuID(INVALID_MENU_ID);
+	}
+
+	void onDisconnect(IPlayer & player, PeerDisconnectReason reason) override {
+		const int pid = player.getID();
+		if (initedFor_.valid(pid)) {
+			initedFor_.remove(pid, player);
+		}
 	}
 
 	int getID() const override {

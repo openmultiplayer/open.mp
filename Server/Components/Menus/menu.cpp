@@ -82,12 +82,8 @@ public:
 	}
 
 	void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
-		const int pid = player.getID();
 		for (IMenu* m : storage.entries()) {
-			Menu* menu = static_cast<Menu*>(m);
-			if (menu->initedFor_.valid(pid)) {
-				menu->initedFor_.remove(pid, player);
-			}
+			m->onDisconnect(player, reason);
 		}
 	}
 
@@ -100,30 +96,7 @@ public:
 	}
 
 	IMenu * create(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width) override {
-		int freeIdx = storage.findFreeIndex();
-		if (freeIdx == -1) {
-			// No free index
-			return nullptr;
-		}
-
-		int pid = storage.claim(freeIdx);
-		if (pid == -1) {
-			// No free index
-			return nullptr;
-		}
-
-		Menu & menu = storage.get(pid);
-		menu.title = title;
-		menu.pos = position;
-		menu.columnCount = columns;
-		menu.col1Width = col1Width;
-		menu.col2Width = col2Width;
-		menu.menuEnabled = true;
-		menu.rowEnabled.fill(true);
-		menu.columnHeaders = { "" };
-		menu.columnItemCount = { 0 };
-		menu.columnMenuItems = { {{ "" }} };
-		return &menu;
+		return storage.emplace(title, position, columns, col1Width, col2Width);
 	}
 
 	void free() override {

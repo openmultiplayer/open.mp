@@ -31,6 +31,8 @@ struct IMenu : public IIDProvider {
 
 	/// Hide menu for a player
 	virtual void hideForPlayer(IPlayer & player) = 0;
+
+	virtual void onDisconnect(IPlayer & player, PeerDisconnectReason reason) = 0;
 };
 
 struct MenuEventHandler {
