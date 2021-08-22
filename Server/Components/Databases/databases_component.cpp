@@ -19,18 +19,6 @@ IDatabaseResultSet* DatabasesComponent::createResultSet() {
 	return ret;
 }
 
-/// Gets the component name
-/// @returns Component name
-StringView DatabasesComponent::componentName() {
-	return "Databases";
-}
-
-/// Gets the component type
-/// @returns Component type
-ComponentType DatabasesComponent::componentType() {
-	return ComponentType::Other;
-}
-
 /// Called for every component after components have been loaded
 /// Should be used for storing the core interface, registering player/core event handlers
 /// Should NOT be used for interacting with other components as they might not have been initialised yet

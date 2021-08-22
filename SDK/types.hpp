@@ -151,3 +151,59 @@ struct Colour {
 		return Colour::FromRGBA(0x00FFFFFF);
 	}
 };
+
+/// SemVer
+struct SemanticVersion {
+	uint8_t major; ///< MAJOR version when you make incompatible API changes
+	uint8_t minor; ///< MINOR version when you add functionality in a backwards compatible manner
+	uint8_t patch; ///< PATCH version when you make backwards compatible bug fixes
+	uint16_t prerel; ///< PRE-RELEASE version
+
+	SemanticVersion(uint8_t major, uint8_t minor, uint8_t patch, uint8_t prerel = 0) :
+		major(major), minor(minor), patch(patch)
+	{}
+
+	int compare(const SemanticVersion& other, bool cmpPreRel) const {
+		if (major != other.major) {
+			return major - other.major;
+		}
+
+		if (minor != other.minor) {
+			return minor - other.minor;
+		}
+
+		if (patch != other.patch) {
+			return patch - other.patch;
+		}
+
+		if (cmpPreRel && prerel != other.prerel) {
+			return prerel - other.prerel;
+		}
+
+		return 0;
+	}
+
+	bool operator==(const SemanticVersion& other) const {
+		return compare(other, false) == 0;
+	}
+
+	bool operator!=(const SemanticVersion& other) const {
+		return !(*this == other);
+	}
+
+	bool operator>(const SemanticVersion& other) const {
+		return compare(other, false) > 0;
+	}
+
+	bool operator<(const SemanticVersion& other) const {
+		return compare(other, false) < 0;
+	}
+
+	bool operator>=(const SemanticVersion& other) const {
+		return compare(other, false) >= 0;
+	}
+
+	bool operator<=(const SemanticVersion& other) const {
+		return compare(other, false) <= 0;
+	}
+};

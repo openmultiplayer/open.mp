@@ -12,8 +12,12 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		return 0x78906cd9f19c36a6;
 	}
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Pawn";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore * c) override {

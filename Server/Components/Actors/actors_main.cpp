@@ -35,8 +35,12 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 		}
 	} playerDamageActorEventHandler;
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Actors";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	ActorsComponent() :
