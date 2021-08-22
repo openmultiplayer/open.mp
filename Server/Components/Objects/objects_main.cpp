@@ -168,18 +168,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             freeIdx = storage.findFreeIndex(freeIdx + 1);
         }
 
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int objid = storage.claim(freeIdx);
-        if (objid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        return storage.emplace(objid, &core->getPlayers(), modelID, position, rotation, drawDist, defCameraCollision);
+        return storage.emplace(freeIdx, &core->getPlayers(), modelID, position, rotation, drawDist, defCameraCollision);
     }
 
 	void free() override {
@@ -331,20 +320,9 @@ public:
             freeIdx = storage.findFreeIndex(freeIdx + 1);
         }
 
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
+        component_.isPlayerObject.set(freeIdx);
 
-        int objid = storage.claim(freeIdx);
-        if (objid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        component_.isPlayerObject.set(objid);
-
-		return storage.emplace(objid, &player_, modelID, position, rotation, drawDist, component_.defCameraCollision);
+		return storage.emplace(freeIdx, &player_, modelID, position, rotation, drawDist, component_.defCameraCollision);
     }
 
     int findFreeIndex() override {
