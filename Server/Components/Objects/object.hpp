@@ -19,7 +19,12 @@ private:
 	bool anyDelayedProcessing_;
 
 protected:
-	BaseObject() = default;
+	BaseObject() :
+		attachmentData_ { ObjectAttachmentData::Type::None },
+		moving_(false),
+		anyDelayedProcessing_(false)
+	{
+	}
 
 	BaseObject(int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCol)
 	:
@@ -138,12 +143,6 @@ protected:
 	virtual void restream() = 0;
 
 public:
-	BaseObject() :
-		attachmentData_{ ObjectAttachmentData::Type::None },
-		moving_(false),
-		anyDelayedProcessing_(false)
-	{}
-
 	bool isMoving() const override {
 		return moving_;
 	}
