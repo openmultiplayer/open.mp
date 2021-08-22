@@ -21,7 +21,7 @@ private:
 	template <typename LenType>
 	void writeDynamicString(const NetworkString & input) {
 		bs.Write(static_cast<LenType>(input.getSize()));
-		bs.Write(input.data, input.getSize());
+		bs.Write(input.getData(), input.getSize());
 	}
 
 	template <typename LenType>

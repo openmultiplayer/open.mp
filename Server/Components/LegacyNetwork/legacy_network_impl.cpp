@@ -596,7 +596,6 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now) {
         rakNetServer.DeallocatePacket(pkt);
     }
 
-    auto now = Time::now();
     if (now - lastCookieSeed > cookieSeedTime) {
         SAMPRakNet::SeedCookie();
         lastCookieSeed = now;
