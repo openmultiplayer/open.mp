@@ -5,7 +5,7 @@
 
 #include "database_result_set.hpp"
 
-struct DatabasesComponent;
+class DatabasesComponent;
 
 class DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
 public:
@@ -25,9 +25,11 @@ public:
 	/// @returns Result set
 	IDatabaseResultSet* executeQuery(StringView query) override;
 
-private:
 	/// Parent databases component
 	DatabasesComponent* parentDatabasesComponent;
+
+private:
+	friend class DatabasesComponent;
 
 	/// Database connection handle
 	sqlite3* databaseConnectionHandle;
@@ -40,3 +42,4 @@ private:
 	/// @returns Query step result
 	static int queryStepExecuted(void* userData, int fieldCount, char** values, char** fieldNames);
 };
+
