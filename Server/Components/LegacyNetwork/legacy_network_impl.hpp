@@ -313,7 +313,7 @@ private:
     IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, uint32_t challenge, StringView name);
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
-    void onTick(Microseconds elapsed) override;
+    void onTick(Microseconds elapsed, TimePoint now) override;
 
     void OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason);
 

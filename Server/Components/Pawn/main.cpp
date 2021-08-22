@@ -66,7 +66,7 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		core->getEventDispatcher().addEventHandler(this);
 	}
 
-	void onTick(Microseconds elapsed) override {
+	void onTick(Microseconds elapsed, TimePoint now) override {
 		PawnPluginManager::Get()->ProcessTick();
 	}
 

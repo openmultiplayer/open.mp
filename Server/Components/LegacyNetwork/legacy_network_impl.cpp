@@ -566,7 +566,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     query.setServerName(serverName);
 }
 
-void RakNetLegacyNetwork::onTick(Microseconds elapsed) {
+void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now) {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
         auto pos = playerFromRID.find(pkt->playerId);
         if (pos != playerFromRID.end()) {

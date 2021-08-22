@@ -19,7 +19,7 @@ struct HTTPResponseHandler {
 
 /// An event handler for core events
 struct CoreEventHandler {
-	virtual void onTick(Microseconds elapsed) = 0;
+	virtual void onTick(Microseconds elapsed, TimePoint now) = 0;
 };
 
 struct IConfig {

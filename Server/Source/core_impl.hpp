@@ -426,7 +426,7 @@ private:
             const TimePoint now = Time::now();
             Microseconds us = duration_cast<Microseconds>(now - prev);
             prev = now;
-            eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
+            eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
 
             std::this_thread::sleep_until(now + sleepTimer);
         }

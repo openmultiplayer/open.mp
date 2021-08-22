@@ -300,7 +300,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     }
 
-    void onTick(Microseconds elapsed) override;
+    void onTick(Microseconds elapsed, TimePoint now) override;
 };
 
 class PlayerObjectData final : public IPlayerObjectData {
@@ -494,9 +494,7 @@ public:
     }
 };
 
-void ObjectComponent::onTick(Microseconds elapsed) {
-    const TimePoint now = Time::now();
-
+void ObjectComponent::onTick(Microseconds elapsed, TimePoint now) {
     for (IObject* object : storage.entries()) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed, now)) {

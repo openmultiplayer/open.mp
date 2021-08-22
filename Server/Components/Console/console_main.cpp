@@ -48,7 +48,7 @@ public:
 		return eventDispatcher;
 	}
 
-	void onTick(Microseconds elapsed) override {
+	void onTick(Microseconds elapsed, TimePoint now) override {
 		bool expected = true;
 		if (newCmd.compare_exchange_weak(expected, false)) {
 			cmdMutex.lock();
