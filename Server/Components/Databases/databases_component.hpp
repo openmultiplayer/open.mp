@@ -62,11 +62,11 @@ public:
 	/// @returns Database result set
 	IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) override;
 
-private:
 	/// Creates a result set
 	/// @returns Result set if successful, otherwise "nullptr"
 	IDatabaseResultSet * createResultSet();
 
+private:
 	/// Database connections
 	/// TODO: Replace with a pool type that grows dynamically
 	DynamicPoolStorage<DatabaseConnection, IDatabaseConnection, 1025> databaseConnections;
@@ -75,3 +75,4 @@ private:
 	/// TODO: Replace with a pool type that grows dynamically
 	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 2049> databaseResultSets;
 };
+

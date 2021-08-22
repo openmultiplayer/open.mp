@@ -165,7 +165,7 @@ public:
 					ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
 					eventDispatcher.dispatch(
 						&ActorEventHandler::onActorStreamIn,
-						lock.entry,
+						lock.getEntry(),
 						player
 					);
 				}
@@ -174,7 +174,7 @@ public:
 					ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
 					eventDispatcher.dispatch(
 						&ActorEventHandler::onActorStreamOut,
-						lock.entry,
+						lock.getEntry(),
 						player
 					);
 				}
