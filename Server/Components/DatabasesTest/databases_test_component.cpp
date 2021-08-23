@@ -20,13 +20,13 @@ struct DatabasesTestComponent final : public IComponent, public NoCopy {
 
 	/// Gets the component name
 	/// @returns Component name
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Databases test";
 	}
 
 	/// Gets the component type
 	/// @returns Component type
-	ComponentType componentType() override {
+	ComponentType componentType() const override {
 		return ComponentType::Other;
 	}
 

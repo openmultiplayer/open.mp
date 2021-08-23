@@ -59,8 +59,12 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
 	}
 
-	StringView componentName() override {
-		return "CheckpointComponent";
+	StringView componentName() const override {
+		return "Checkpoints";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	void free() override {
