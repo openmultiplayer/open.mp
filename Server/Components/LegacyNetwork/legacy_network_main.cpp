@@ -12,8 +12,12 @@ struct RakNetLegacyNetworkComponent : INetworkComponent {
 		return &legacyNetwork;
 	}
 
-	StringView componentName() override {
-		return "RakNetLegacyNetworkComponent";
+	StringView componentName() const override {
+		return "RakNetLegacyNetwork";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	UUID getUUID() override {

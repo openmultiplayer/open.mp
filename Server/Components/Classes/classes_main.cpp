@@ -160,9 +160,13 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return eventDispatcher;
     }
 
-    StringView componentName() override {
+    StringView componentName() const override {
 		return "Classes";
 	}
+
+    SemanticVersion componentVersion() const override {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+    }
 
     PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override {
         int freeIdx = storage.findFreeIndex();

@@ -34,8 +34,8 @@ struct IMenu : public IIDProvider {
 };
 
 struct MenuEventHandler {
-	virtual bool onPlayerSelectedMenuRow(IPlayer & player, MenuRow row) { return true; }
-	virtual bool onPlayerExitedMenu(IPlayer & player) { return true; }
+	virtual void onPlayerSelectedMenuRow(IPlayer & player, MenuRow row) { }
+	virtual void onPlayerExitedMenu(IPlayer & player) { }
 };
 
 static const UUID PlayerMenuData_UUID = UUID(0x01d8e934e9791b99);

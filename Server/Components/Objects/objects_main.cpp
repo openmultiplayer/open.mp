@@ -154,8 +154,12 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         return defCameraCollision;
     }
 
-    StringView componentName() override {
+    StringView componentName() const override {
         return "Objects";
+    }
+
+    SemanticVersion componentVersion() const override {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
     IObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override {

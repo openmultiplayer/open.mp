@@ -13,8 +13,12 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	std::atomic_bool newCmd;
 	String cmd;
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Console";
+	}
+
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore* core) override {

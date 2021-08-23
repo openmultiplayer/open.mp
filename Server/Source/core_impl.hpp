@@ -434,8 +434,8 @@ struct Core final : public ICore, public PlayerEventHandler {
         components.init();
     }
 
-    int getVersion() override {
-        return 0;
+    SemanticVersion getSDKVersion() override {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
     void printLn(const char* fmt, ...) override {
