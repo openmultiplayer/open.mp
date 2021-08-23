@@ -195,8 +195,13 @@ namespace utils {
 	inline cell AMX_NATIVE_CALL pawn_settimer(AMX* amx, cell const* params)
 	{
 		AMX_MIN_PARAMETERS("SetTimer", params, 3);
-		char*
-			callback;
+
+		if (params[2] < 0) {
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid interval passed to SetTimer: %i", params[2]);
+			return false;
+		}
+
+		char* callback;
 		amx_StrParamChar(amx, params[1], callback);
 
 		return PawnTimerImpl::Get()->setTimer(callback, Milliseconds(params[2]), params[3], amx);
@@ -205,6 +210,12 @@ namespace utils {
 	inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
 	{
 		AMX_MIN_PARAMETERS("SetTimerEx", params, 4);
+
+		if (params[2] < 0) {
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid interval passed to SetTimerEx: %i", params[2]);
+			return false;
+		}
+
 		char* callback;
 		amx_StrParamChar(amx, params[1], callback);
 

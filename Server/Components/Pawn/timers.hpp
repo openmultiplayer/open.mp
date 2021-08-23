@@ -23,6 +23,7 @@ struct PawnTimerImpl : public Singleton<PawnTimerImpl> {
 
 private:
 	Pair<size_t, PawnTimerHandler*> newTimer(const char* callback, Milliseconds interval, bool repeating, AMX* amx);
+	int newTimerExError(PawnTimerHandler* handler, AMX* amx, int err, StringView message);
 
 	size_t insert(ITimer* timer) {
 		pool.emplace(idx, timer);
@@ -61,12 +62,15 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 		cell ret;
 		cell out;
 		cell* in;
+		int err = AMX_ERR_NONE;
 		if (hasParams) {
 			// Not enough space in this heap.  Try again later.
-			if (amx_Allot(amx, data.size(), &out, &in) != AMX_ERR_NONE) {
+			if ((err = amx_Allot(amx, data.size(), &out, &in)) != AMX_ERR_NONE) {
 				char funcname[sNAMEMAX + 1];
 				amx_GetPublic(amx, funcidx, funcname);
 				PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): Not enough space in heap for %s timer", funcname);
+				amx_RaiseError(amx, err);
+				return;
 			}
 			// Push the parameters (many all at once).
 			memcpy(in, data.data(), data.size() * sizeof(cell));
@@ -88,7 +92,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 			}
 		}
 		// Step 4: Call the function.
-		if (amx_Exec(amx, &ret, funcidx) == AMX_ERR_NONE)
+		if ((err = amx_Exec(amx, &ret, funcidx)) == AMX_ERR_NONE)
 		{
 			if (hasParams) {
 				// Step 5: Retrieve reference parameters.
@@ -107,6 +111,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 			char funcname[sNAMEMAX + 1];
 			amx_GetPublic(amx, funcidx, funcname);
 			PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): There was a problem in calling %s", funcname);
+			amx_RaiseError(amx, err);
 		}
 
 		if (hasParams) {

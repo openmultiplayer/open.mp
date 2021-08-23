@@ -34,4 +34,10 @@ struct Timer final : public ITimer {
 	void kill() override {
 		running_ = false;
 	}
+
+	~Timer() {
+		if (handler_) {
+			handler_->free(*this);
+		}
+	}
 };
