@@ -108,13 +108,18 @@ const FlatHashMap<StringView, StringView> dictionary = {
 	{ "lagcompmode", "lag_compensation" }
 };
 
+
 struct LegacyConfigComponent final : public IConfigProviderComponent {
 	PROVIDE_UUID(0x24ef6216838f9ffc);
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "LegacyConfig";
 	}
 
+  SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+	}
+  
 	Pair<bool, StringView> getNameFromAlias(StringView alias) const override {
 		auto it = dictionary.find(alias);
 		if (it == dictionary.end()) {
@@ -123,7 +128,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 		else {
 			return std::make_pair(it->first != it->second, it->second);
 		}
-	}
+  }
 
 	bool processCustom(IEarlyConfig& config, String name, String right) {
 		if (name.find("gamemode") == 0) {

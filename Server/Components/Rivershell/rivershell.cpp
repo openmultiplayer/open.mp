@@ -52,7 +52,7 @@ struct RivershellMode :
 		return 0x5ea395b11220dc50;
 	}
 
-	StringView componentName() override {
+	StringView componentName() const override {
 		return "Rivershell";
 	}
 

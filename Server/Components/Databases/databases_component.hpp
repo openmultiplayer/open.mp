@@ -12,11 +12,21 @@ struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
 
 	/// Gets the component name
 	/// @returns Component name
-	StringView componentName() override;
+	StringView componentName() const override {
+		return "Databases";
+	}
 
 	/// Gets the component type
 	/// @returns Component type
-	ComponentType componentType() override;
+	ComponentType componentType() const override {
+		return ComponentType::Other;
+	}
+
+	/// Gets the component version
+	/// @return Component version
+	SemanticVersion componentVersion() const override {
+		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+	}
 
 	/// Called for every component after components have been loaded
 	/// Should be used for storing the core interface, registering player/core event handlers
