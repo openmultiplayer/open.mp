@@ -106,5 +106,11 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(Allow));
 			}
 		};
+
+		struct ImmediatelySpawnPlayer final : NetworkPacketBase<129> {
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT32(2));
+			}
+		};
 	}
 }
