@@ -20,6 +20,7 @@ if(MSVC)
 	# Use strict intermediate floating-point precision
 	add_compile_options("/fp:strict")
 	add_compile_options("/arch:SSE2")
+	add_compile_options("-Werror=format")
 
 elseif(UNIX)
 	# Linux GCC/Clang
@@ -41,8 +42,8 @@ elseif(UNIX)
 		set(THREADS_PREFER_PTHREAD_FLAG ON)
 	endif()
 
-	set(CMAKE_C_FLAGS "-pthread")
-	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++")
+	set(CMAKE_C_FLAGS "-pthread -Werror=format")
+	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++ -Werror=format")
 
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)
