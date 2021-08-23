@@ -52,7 +52,6 @@ struct ConsoleComponent final : public ITimersComponent, public CoreEventHandler
 			}
 			auto oldIt = it++;
 			if (deleteTimer) {
-				timer->handler_->free(*timer);
 				delete timer;
 				timers.erase(oldIt);
 			}
