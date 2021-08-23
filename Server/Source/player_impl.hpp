@@ -124,9 +124,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void spawn() override {
         toSpawn_ = true;
-        NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
-        playerRequestSpawnResponse.Allow = true;
-        sendRPC(playerRequestSpawnResponse);
+        sendRPC(NetCode::RPC::ImmediatelySpawnPlayer());
     }
 
     uint32_t getClientVersion() const override {
