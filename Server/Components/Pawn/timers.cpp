@@ -7,7 +7,7 @@ Pair<size_t, PawnTimerHandler*> PawnTimerImpl::newTimer(const char* callback, Mi
 		int err = AMX_ERR_NONE;
 		if ((err = amx_FindPublic(amx, callback, &funcidx)) != AMX_ERR_NONE)
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTimer(Ex): Couldn't find %s in your script", callback);
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTimer(Ex): Couldn't find %s in your script: %s", callback, aux_StrError(err));
 			amx_RaiseError(amx, err);
 		}
 		else {
@@ -101,7 +101,7 @@ int PawnTimerImpl::setTimerEx(const char* callback, Milliseconds interval, bool 
 
 int PawnTimerImpl::newTimerExError(PawnTimerHandler* handler, AMX* amx, int err, StringView message) {
 	amx_RaiseError(amx, err);
-	PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: %s", message.data());
+	PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: %s: %s", message.data(), aux_StrError(err));
 	delete handler;
 	return 0;
 }
