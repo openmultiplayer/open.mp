@@ -142,7 +142,7 @@ namespace utils {
 			else
 				message = "too many arguments given";
 
-			PawnManager::Get()->core->printLn("`format` failed - %s", message.c_str());
+			PawnManager::Get()->core->logLn(LogLevel::Error, "`format` failed - %s", message.c_str());
 			free(output);
 			return 0;
 		}
