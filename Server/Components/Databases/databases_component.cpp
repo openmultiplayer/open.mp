@@ -85,6 +85,9 @@ std::size_t DatabasesComponent::getDatabaseConnectionCount() const {
 /// @param databaseConnectionID Database connection ID
 /// @returns "true" if database connection ID is valid, otherwise "false"
 bool DatabasesComponent::isDatabaseConnectionIDValid(int databaseConnectionID) const {
+	if (databaseConnectionID == 0) {
+		return false;
+	}
 	return databaseConnections.valid(databaseConnectionID);
 }
 
@@ -105,6 +108,9 @@ std::size_t DatabasesComponent::getDatabaseResultSetCount() const {
 /// @param databaseResultSetID Database result set ID
 /// @returns "true" if database result set ID is valid, otherwise "false"
 bool DatabasesComponent::isDatabaseResultSetIDValid(int databaseResultSetID) const {
+	if (databaseResultSetID == 0) {
+		return false;
+	}
 	return databaseResultSets.valid(databaseResultSetID);
 }
 
