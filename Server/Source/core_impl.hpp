@@ -439,6 +439,7 @@ struct Core final : public ICore, public PlayerEventHandler {
         fputs(prefix, stream);
         vfprintf(stream, fmt, args);
         fputs("\n", stream);
+        fflush(stream);
     }
 
     virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override {
