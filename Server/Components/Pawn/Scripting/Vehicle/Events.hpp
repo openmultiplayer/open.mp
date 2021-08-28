@@ -39,8 +39,8 @@ struct VehicleEvents : public VehicleEventHandler, public Singleton<VehicleEvent
 
 	bool onVehicleMod(IPlayer& player, IVehicle& vehicle, int component) override { 
 		cell ret = PawnManager::Get()->CallInEntry("OnVehicleMod", player.getID(), vehicle.getID(), component);
-		PawnManager::Get()->CallInSidesWhile1("OnVehicleMod", player.getID(), vehicle.getID(), component);
-		return !!ret;
+		cell side_ret = PawnManager::Get()->CallInSidesWhile1("OnVehicleMod", player.getID(), vehicle.getID(), component);
+		return side_ret && ret;
 	}
 
 	bool onVehicleRespray(IPlayer& player, IVehicle& vehicle, int colour1, int colour2) override {
