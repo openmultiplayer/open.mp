@@ -8,6 +8,7 @@
 #include "Menu/Events.hpp"
 #include "TextDraw/Events.hpp"
 #include "Pickup/Events.hpp"
+#include "Vehicle/Events.hpp"
 
 Scripting::~Scripting() {
 	// remove event handlers
@@ -19,6 +20,7 @@ Scripting::~Scripting() {
 	PawnManager::Get()->menus->getEventDispatcher().removeEventHandler(MenuEvents::Get());
 	PawnManager::Get()->textdraws->getEventDispatcher().removeEventHandler(TextDrawEvents::Get());
 	PawnManager::Get()->pickups->getEventDispatcher().removeEventHandler(PickupEvents::Get());
+	PawnManager::Get()->vehicles->getEventDispatcher().removeEventHandler(VehicleEvents::Get());
 }
 
 void Scripting::addEvents() const {
@@ -31,4 +33,5 @@ void Scripting::addEvents() const {
 	PawnManager::Get()->menus->getEventDispatcher().addEventHandler(MenuEvents::Get());
 	PawnManager::Get()->textdraws->getEventDispatcher().addEventHandler(TextDrawEvents::Get());
 	PawnManager::Get()->pickups->getEventDispatcher().addEventHandler(PickupEvents::Get());
+	PawnManager::Get()->vehicles->getEventDispatcher().addEventHandler(VehicleEvents::Get());
 }

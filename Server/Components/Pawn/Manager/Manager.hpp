@@ -160,6 +160,24 @@ public:
 	}
 
 	template <typename ... T>
+	cell CallInSides(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second->Call(name, args...);
+			}
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
 	cell CallInEntry(char const* name, T ... args)
 	{
 		cell
