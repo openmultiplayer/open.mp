@@ -77,17 +77,18 @@ public:
 		cell
 			ret = 0;
 
+		PawnScript * first = nullptr;
 		for (auto& cur : scripts_) {
 			if (cur.first == entryScript) {
-				continue;
+				first = cur.second.get();
 			}
 			else {
-				ret = cur.second.get()->Call(name, args...);
+				ret = cur.second->Call(name, args...);
 			}
 		}
 
-		if (scripts_.find(entryScript) != scripts_.end()) {
-			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		if (first != nullptr) {
+			first->Call(name, args...);
 		}
 
 		return ret;
@@ -99,20 +100,21 @@ public:
 		cell
 			ret = 0;
 
+		PawnScript * first = nullptr;
 		for (auto& cur : scripts_) {
 			if (cur.first == entryScript) {
-				continue;
+				first = cur.second.get();
 			}
 			else {
-				ret = cur.second.get()->Call(name, args...);
+				ret = cur.second->Call(name, args...);
 				if (ret) {
 					break;
 				}
 			}
 		}
 
-		if (scripts_.find(entryScript) != scripts_.end()) {
-			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		if (first != nullptr) {
+			first->Call(name, args...);
 		}
 
 		return ret;
@@ -124,20 +126,22 @@ public:
 		cell
 			ret = 0;
 
+		PawnScript * first = nullptr;
 		for (auto& cur : scripts_) {
 			if (cur.first == entryScript) {
+				first = cur.second.get();
 				continue;
 			}
 			else {
-				ret = cur.second.get()->Call(name, args...);
+				ret = cur.second->Call(name, args...);
 				if (!ret) {
 					break;
 				}
 			}
 		}
 
-		if (scripts_.find(entryScript) != scripts_.end()) {
-			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		if (first != nullptr) {
+			first->Call(name, args...);
 		}
 
 		return ret;
@@ -149,8 +153,9 @@ public:
 		cell
 			ret = 0;
 
-		if (scripts_.find(entryScript) != scripts_.end()) {
-			ret = scripts_.at(entryScript).get()->Call(name, args...);
+		FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const & first = scripts_.find(entryScript);
+		if (first != scripts_.end()) {
+			ret = first->second->Call(name, args...);
 		}
 
 		for (auto& cur : scripts_) {
@@ -158,7 +163,7 @@ public:
 				continue;
 			}
 			else {
-				ret = cur.second.get()->Call(name, args...);
+				ret = cur.second->Call(name, args...);
 			}
 		}
 
