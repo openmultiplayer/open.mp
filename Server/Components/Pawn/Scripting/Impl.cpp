@@ -6,6 +6,7 @@
 #include "Class/Events.hpp"
 #include "Dialog/Events.hpp"
 #include "Menu/Events.hpp"
+#include "TextDraw/Events.hpp"
 
 Scripting::~Scripting() {
 	// remove event handlers
@@ -15,6 +16,7 @@ Scripting::~Scripting() {
 	PawnManager::Get()->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
 	PawnManager::Get()->dialogs->getEventDispatcher().removeEventHandler(DialogEvents::Get());
 	PawnManager::Get()->menus->getEventDispatcher().removeEventHandler(MenuEvents::Get());
+	PawnManager::Get()->textdraws->getEventDispatcher().removeEventHandler(TextDrawEvents::Get());
 }
 
 void Scripting::addEvents() const {
@@ -25,4 +27,5 @@ void Scripting::addEvents() const {
 	PawnManager::Get()->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
 	PawnManager::Get()->dialogs->getEventDispatcher().addEventHandler(DialogEvents::Get());
 	PawnManager::Get()->menus->getEventDispatcher().addEventHandler(MenuEvents::Get());
+	PawnManager::Get()->textdraws->getEventDispatcher().addEventHandler(TextDrawEvents::Get());
 }
