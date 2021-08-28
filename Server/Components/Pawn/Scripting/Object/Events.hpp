@@ -49,7 +49,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 	void onPlayerAttachedObjectEdited(IPlayer& player, int index, bool saved, const ObjectAttachmentSlotData& data) override {
 		cell ret = PawnManager::Get()->CallInSidesWhile0(
 			"OnPlayerEditAttachedObject",
-			player.getID(), saved, data.model, data.bone,
+			player.getID(), saved, index, data.model, data.bone,
 			data.offset.x, data.offset.y, data.offset.z,
 			data.rotation.x, data.rotation.y, data.rotation.z,
 			data.scale.x, data.scale.y, data.scale.z
@@ -57,7 +57,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 		if (!ret) {
 			PawnManager::Get()->CallInEntry(
 				"OnPlayerEditAttachedObject",
-				player.getID(), saved, data.model, data.bone,
+				player.getID(), saved, index, data.model, data.bone,
 				data.offset.x, data.offset.y, data.offset.z,
 				data.rotation.x, data.rotation.y, data.rotation.z,
 				data.scale.x, data.scale.y, data.scale.z
