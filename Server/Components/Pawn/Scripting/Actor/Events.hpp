@@ -5,7 +5,8 @@
 
 struct ActorEvents : public ActorEventHandler, public Singleton<ActorEvents> {
 	void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override {
-		PawnManager::Get()->CallAllInSidesFirstWhile0("OnPlayerGiveDamageActor", player.getID(), actor.getID(), amount, weapon, int(part));
+		PawnManager::Get()->CallInSidesWhile0("OnPlayerGiveDamageActor", player.getID(), actor.getID(), amount, weapon, int(part));
+		PawnManager::Get()->CallInEntry("OnPlayerGiveDamageActor", player.getID(), actor.getID(), amount, weapon, int(part));
 	}
 
 	void onActorStreamIn(IActor& actor, IPlayer& forPlayer) override {

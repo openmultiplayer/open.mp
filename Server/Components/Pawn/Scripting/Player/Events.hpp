@@ -5,18 +5,24 @@
 
 struct PlayerEvents : public PlayerEventHandler, public Singleton<PlayerEvents>{
 	void onConnect(IPlayer & player) override {
-		PawnManager::Get()->CallAll("OnPlayerConnect", player.getID());
+		PawnManager::Get()->CallInSidesWhile1("OnPlayerConnect", player.getID());
+		PawnManager::Get()->CallInEntry("OnPlayerConnect", player.getID());
 	}
 
 	void onSpawn(IPlayer& player) override {
-		PawnManager::Get()->CallAll("OnPlayerSpawn", player.getID());
+		PawnManager::Get()->CallInSidesWhile1("OnPlayerSpawn", player.getID());
+		PawnManager::Get()->CallInEntry("OnPlayerSpawn", player.getID());
 	}
 
 	bool onCommandText(IPlayer& player, StringView cmdtext) override {
-		return PawnManager::Get()->CallAll("OnPlayerCommandText", player.getID(), cmdtext);
+		cell ret = PawnManager::Get()->CallInSidesWhile0("OnPlayerCommandText", player.getID(), cmdtext);
+		if (!ret) {
+			ret = PawnManager::Get()->CallInEntry("OnPlayerCommandText", player.getID(), cmdtext);
+		}
+		return ret;
 	}
 
 	void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) override {
-		PawnManager::Get()->CallAll("OnPlayerKeyStateChange", player.getID(), newKeys, oldKeys);
+		PawnManager::Get()->CallAllInEntryFirst("OnPlayerKeyStateChange", player.getID(), newKeys, oldKeys);
 	}
 };

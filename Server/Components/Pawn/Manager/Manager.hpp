@@ -88,60 +88,7 @@ public:
 		}
 
 		if (first != nullptr) {
-			first->Call(name, args...);
-		}
-
-		return ret;
-	}
-
-	template <typename ... T>
-	cell CallAllInSidesFirstWhile0(char const* name, T ... args)
-	{
-		cell
-			ret = 0;
-
-		PawnScript * first = nullptr;
-		for (auto& cur : scripts_) {
-			if (cur.first == entryScript) {
-				first = cur.second.get();
-			}
-			else {
-				ret = cur.second->Call(name, args...);
-				if (ret) {
-					break;
-				}
-			}
-		}
-
-		if (first != nullptr) {
-			first->Call(name, args...);
-		}
-
-		return ret;
-	}
-
-	template <typename ... T>
-	cell CallAllInSidesFirstWhile1(char const* name, T ... args)
-	{
-		cell
-			ret = 0;
-
-		PawnScript * first = nullptr;
-		for (auto& cur : scripts_) {
-			if (cur.first == entryScript) {
-				first = cur.second.get();
-				continue;
-			}
-			else {
-				ret = cur.second->Call(name, args...);
-				if (!ret) {
-					break;
-				}
-			}
-		}
-
-		if (first != nullptr) {
-			first->Call(name, args...);
+			ret = first->Call(name, args...);
 		}
 
 		return ret;
@@ -153,7 +100,7 @@ public:
 		cell
 			ret = 0;
 
-		FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const & first = scripts_.find(entryScript);
+		FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const& first = scripts_.find(entryScript);
 		if (first != scripts_.end()) {
 			ret = first->second->Call(name, args...);
 		}
@@ -165,6 +112,62 @@ public:
 			else {
 				ret = cur.second->Call(name, args...);
 			}
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
+	cell CallInSidesWhile0(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second->Call(name, args...);
+				if (ret) {
+					break;
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
+	cell CallInSidesWhile1(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		for (auto& cur : scripts_) {
+			if (cur.first == entryScript) {
+				continue;
+			}
+			else {
+				ret = cur.second->Call(name, args...);
+				if (!ret) {
+					break;
+				}
+			}
+		}
+
+		return ret;
+	}
+
+	template <typename ... T>
+	cell CallInEntry(char const* name, T ... args)
+	{
+		cell
+			ret = 0;
+
+		FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const & first = scripts_.find(entryScript);
+		if (first != scripts_.end()) {
+			ret = first->second->Call(name, args...);
 		}
 
 		return ret;
