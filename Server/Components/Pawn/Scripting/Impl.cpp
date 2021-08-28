@@ -13,6 +13,7 @@
 Scripting::~Scripting() {
 	// remove event handlers
 	PawnManager::Get()->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
+	PawnManager::Get()->players->getPlayerUpdateDispatcher().removeEventHandler(PlayerEvents::Get());
 	PawnManager::Get()->actors->getEventDispatcher().removeEventHandler(ActorEvents::Get());
 	PawnManager::Get()->checkpoints->getEventDispatcher().removeEventHandler(CheckpointEvents::Get());
 	PawnManager::Get()->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
@@ -26,6 +27,7 @@ Scripting::~Scripting() {
 void Scripting::addEvents() const {
 	// add event handlers
 	PawnManager::Get()->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
+	PawnManager::Get()->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
 	PawnManager::Get()->actors->getEventDispatcher().addEventHandler(ActorEvents::Get());
 	PawnManager::Get()->checkpoints->getEventDispatcher().addEventHandler(CheckpointEvents::Get());
 	PawnManager::Get()->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
