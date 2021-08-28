@@ -662,7 +662,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 /// A player event handler
 struct PlayerEventHandler {
 	virtual IPlayerData* onPlayerDataRequest(IPlayer& player) { return nullptr; }
-	virtual void onIncomingConnection(IPlayer& player) { }
+	virtual void onIncomingConnection(IPlayer& player, StringView ipAddress, unsigned short port) { }
 	virtual void onConnect(IPlayer& player) {}
 	virtual void onDisconnect(IPlayer& player, PeerDisconnectReason reason) {}
 	virtual bool onRequestSpawn(IPlayer& player) { return true; }
