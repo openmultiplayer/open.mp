@@ -373,6 +373,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's client version
 	virtual uint32_t getClientVersion() const = 0;
 
+	/// Get player's client verison name
+	virtual StringView getClientVersionName() const = 0;
+
 	/// Set the player's position with the proper Z coordinate for the map
 	virtual void setPositionFindZ(Vector3 pos) = 0;
 

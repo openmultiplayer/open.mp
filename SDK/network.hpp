@@ -323,6 +323,7 @@ enum NewConnectionResult {
 
 struct PeerRequestParams {
 	uint32_t version;
+	StringView versionName;
 	bool bot;
 	StringView name;
 };
