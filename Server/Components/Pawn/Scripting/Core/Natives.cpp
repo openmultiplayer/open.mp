@@ -241,7 +241,8 @@ SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
 
 SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
 {
-	throw pawn_natives::NotImplemented();
+	version = player.getClientVersionName();
+	return true;
 }
 
 SCRIPT_API(GetServerTickRate, int())
