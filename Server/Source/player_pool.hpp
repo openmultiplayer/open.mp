@@ -662,6 +662,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         player.netData_ = netData;
         player.version_ = params.version;
+        player.versionName_ = params.versionName;
         player.name_ = params.name;
         player.isBot_ = params.bot;
 

@@ -27,6 +27,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool* pool_;
     PeerNetworkData netData_;
     uint32_t version_;
+    String versionName_;
     Vector3 pos_;
     Vector3 cameraPos_;
     Vector3 cameraLookAt_;
@@ -131,6 +132,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     uint32_t getClientVersion() const override {
         return version_;
+    }
+
+    StringView getClientVersionName() const override {
+        return versionName_;
     }
 
     bool isBot() const override {
