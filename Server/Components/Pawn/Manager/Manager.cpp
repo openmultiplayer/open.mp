@@ -47,16 +47,6 @@ PawnManager::~PawnManager()
 	}
 }
 
-void PawnManager::OnScriptInit(const std::string & script)
-{
-
-}
-
-void PawnManager::OnScriptExit(const std::string & script)
-{
-
-}
-
 bool PawnManager::OnServerCommand(std::string const & cmd, std::string const & args)
 {
 	// Legacy commands.
@@ -104,55 +94,6 @@ int PawnManager::IDFromAMX(AMX * amx) const
 	return 0;
 }
 
-void PawnManager::Spawn(std::string const & name)
-{
-	// if the user just supplied a script name, add the extension
-	// otherwise, don't, as they may have supplied a full abs/rel path.
-	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
-
-	std::string canon;
-	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
-
-	if (!ptr.get()->IsLoaded())
-	{
-		PawnManager::Get()->core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
-		return;
-	}
-
-	PawnScript & script = *ptr;
-
-	auto res = scripts_.emplace(name, std::move(ptr));
-	if (res.second) {
-		amxToScript_.emplace(script.GetAMX(), res.first->second.get());
-	}
-	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
-	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
-	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
-	script.Register("format", &utils::pawn_format);
-	script.Register("printf", &utils::pawn_printf);
-	script.Register("Script_GetID", &utils::pawn_Script_GetID);
-
-	pawn_natives::AmxLoad(script.GetAMX());
-
-	PawnPluginManager::Get()->AmxLoad(script.GetAMX());
-
-	OnScriptInit(name);
-
-	CheckNatives(script);
-	script.Call("OnScriptInit");
-
-	int err = script.Exec(nullptr, AMX_EXEC_MAIN);
-	if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE)
-	{
-		// If there's no `main` ignore it for now.
-		PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
-	}
-	// TODO: `AMX_EXEC_CONT` support.
-	// Assume that all initialisation and header mangling is now complete, and that it is safe to
-	// cache public pointers.
-}
-
 void PawnManager::CheckNatives(PawnScript & script)
 {
 	int
@@ -176,39 +117,100 @@ void PawnManager::Load(std::string const & name, bool primary)
 	{
 		return;
 	}
-	Spawn(name);
-	if (primary)
+
+	// if the user just supplied a script name, add the extension
+	// otherwise, don't, as they may have supplied a full abs/rel path.
+	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
+
+	std::string canon;
+	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
+	std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
+
+	if (!ptr.get()->IsLoaded())
 	{
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
+		return;
+	}
+
+	PawnScript& script = *ptr;
+
+	auto res = scripts_.emplace(name, std::move(ptr));
+	if (res.second) {
+		amxToScript_.emplace(script.GetAMX(), res.first->second.get());
+	}
+	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
+	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
+	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
+	script.Register("format", &utils::pawn_format);
+	script.Register("printf", &utils::pawn_printf);
+	script.Register("Script_GetID", &utils::pawn_Script_GetID);
+
+	pawn_natives::AmxLoad(script.GetAMX());
+
+	PawnPluginManager::Get()->AmxLoad(script.GetAMX());
+
+	CheckNatives(script);
+
+	int err = script.Exec(nullptr, AMX_EXEC_MAIN);
+	if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
+		// If there's no `main` ignore it for now.
+		PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+	}
+	// TODO: `AMX_EXEC_CONT` support.
+	// Assume that all initialisation and header mangling is now complete, and that it is safe to
+	// cache public pointers.
+
+	script.Call("OnScriptInit");
+
+	if (primary) {
 		entryScript = name;
+		script.Call("OnGameModeInit");
+	}
+	else {
+		script.Call("OnFilterScriptInit");
 	}
 }
 
 void PawnManager::Reload(std::string const & name)
 {
 	auto pos = scripts_.find(name);
+	bool isEntryScript = entryScript == name;
 	if (pos != scripts_.end()) {
 		auto & script = *pos->second;
 
 		script.Call("OnScriptExit");
-		OnScriptExit(name);
+		if (isEntryScript) {
+			script.Call("OnGameModeExit");
+		}
+		else {
+			script.Call("OnFilterScriptExit");
+		}
+
 		PawnPluginManager::Get()->AmxUnload(script.GetAMX());
 		amxToScript_.erase(script.GetAMX());
 		scripts_.erase(pos);
 	}
-	Spawn(name);
+	Load(name, entryScript == name);
 }
 
 void PawnManager::Unload(std::string const & name)
 {
-	auto
-		pos = scripts_.find(name);
+	auto pos = scripts_.find(name);
+	bool isEntryScript = entryScript == name;
 	if (pos == scripts_.end())
 	{
 		return;
 	}
 	auto & script = *pos->second;
+
 	script.Call("OnScriptExit");
-	OnScriptExit(name);
+	if (isEntryScript) {
+		script.Call("OnGameModeExit");
+	}
+	else {
+		script.Call("OnFilterScriptExit");
+	}
+
 	PawnPluginManager::Get()->AmxUnload(script.GetAMX());
 	amxToScript_.erase(script.GetAMX());
 	scripts_.erase(pos);
