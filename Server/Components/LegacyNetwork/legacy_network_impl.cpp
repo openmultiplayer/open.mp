@@ -300,7 +300,7 @@ enum LegacyClientVersion {
     LegacyClientVersion_03DL = 4062
 };
 
-IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, uint32_t challenge, StringView name) {
+IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, StringView versionName, uint32_t challenge, StringView name) {
     const RakNet::PlayerID rid = rpcParams->sender;
 
     if (playerFromRID.find(rpcParams->sender) != playerFromRID.end()) {
@@ -324,6 +324,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
     PeerRequestParams params;
     params.version = version;
+    params.versionName = versionName;
     params.name = name;
     params.bot = isNPC;
     newConnectionResult = core->getPlayers().requestPlayer(netData, params);
@@ -353,7 +354,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         RakNetLegacyBitStream lbs(bs);
         NetCode::RPC::PlayerConnect playerConnectRPC;
         if (playerConnectRPC.read(lbs)) {
-            IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, playerConnectRPC.VersionNumber, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
+            IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
             if (newPeer) {
                 network->inOutEventDispatcher.all(
                     [newPeer, &lbs](NetworkInOutEventHandler* handler) {
@@ -387,7 +388,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
         RakNetLegacyBitStream lbs(bs);
         NetCode::RPC::NPCConnect NPCConnectRPC;
         if (NPCConnectRPC.read(lbs)) {
-            IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, NPCConnectRPC.VersionNumber, NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
+            IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
             if (newPeer) {
                 network->inOutEventDispatcher.all(
                     [newPeer, &lbs](NetworkInOutEventHandler* handler) {
