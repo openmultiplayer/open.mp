@@ -279,7 +279,8 @@ SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buff
 
 SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
 {
-	throw pawn_natives::NotImplemented();
+	weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
+	return true;
 }
 
 SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
