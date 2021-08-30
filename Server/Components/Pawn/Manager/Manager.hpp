@@ -61,9 +61,6 @@ public:
 		core->printLn("[PAWN-LOG] %s: %s", type.c_str(), message.c_str());
 	}
 
-	void OnScriptInit(const std::string & script);
-	void OnScriptExit(const std::string & script);
-
 	void SetBasePath(std::string const & path);
 	void SetScriptPath(std::string const & path);
 
@@ -285,7 +282,6 @@ private:
 	friend int ComponentCallGM(char * name);
 	friend int ComponentCallFS(char * name);
 
-	void Spawn(std::string const & name);
 	bool OnServerCommand(std::string const & cmd, std::string const & args);
 
 	void CheckNatives(PawnScript & script);
