@@ -38,6 +38,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 			component->cmd = line;
 			component->newCmd = true;
 		}
+		exit(0);
 	}
 
 	~ConsoleComponent() {
@@ -72,19 +73,19 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 			size_t split = command.find_first_of(' ', start);
 			if (split == std::string::npos || split == end) {
 				// No parameters.
-				eventDispatcher.dispatch(
-					&ConsoleEventHandler::onConsoleText,
-					view.substr(start, end - start),
-					""
+				eventDispatcher.anyTrue(
+					[view, start, end](ConsoleEventHandler* handler) {
+						return handler->onConsoleText(view.substr(start, end - start), "");
+					}
 				);
 			}
 			else {
 				// Split parameters.
 				size_t params = command.find_first_not_of(whitespace_, split);
-				eventDispatcher.dispatch(
-					&ConsoleEventHandler::onConsoleText,
-					view.substr(start, split - start),
-					view.substr(split, end - split)
+				eventDispatcher.anyTrue(
+					[view, start, end, split](ConsoleEventHandler* handler) {
+						return handler->onConsoleText(view.substr(start, end - start), view.substr(split, end - split));
+					}
 				);
 			}
 
@@ -95,6 +96,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	bool onConsoleText(StringView command, StringView parameters) override {
 		if (command == "exit") {
 			run_ = false;
+			return true;
 		}
 		return false;
 	}
