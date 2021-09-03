@@ -171,6 +171,7 @@ enum PlayerWeapon {
 	PlayerWeapon_Explosion,
 	PlayerWeapon_Drown = 53,
 	PlayerWeapon_Collision,
+	PlayerWeapon_End
 };
 
 static const StringView PlayerWeaponNames[] = {
