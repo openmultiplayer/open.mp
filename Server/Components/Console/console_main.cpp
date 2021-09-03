@@ -5,13 +5,15 @@
 #include <atomic>
 #include <iostream>
 
-struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler {
+struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler {
 	ICore* core = nullptr;
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
 	std::thread consoleThread;
 	std::mutex cmdMutex;
 	std::atomic_bool newCmd;
 	String cmd;
+	bool run_ = true;
+	char const * const whitespace_ = " \t\n\r\f\v";
 
 	StringView componentName() const override {
 		return "Console";
@@ -24,17 +26,19 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	void onLoad(ICore* core) override {
 		this->core = core;
 		core->getEventDispatcher().addEventHandler(this);
+		this->getEventDispatcher().addEventHandler(this);
 		consoleThread = std::thread(ThreadProc, this);
 	}
 
 	static void ThreadProc(ConsoleComponent* component) {
 		String line;
-		for (;;) {
+		while (component->run_) {
 			std::getline(std::cin, line);
 			std::scoped_lock<std::mutex> lock(component->cmdMutex);
 			component->cmd = line;
 			component->newCmd = true;
 		}
+		exit(0);
 	}
 
 	~ConsoleComponent() {
@@ -57,10 +61,44 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 			String command = cmd;
 			cmdMutex.unlock();
 
-			// todo: add commands
+			// Trim the command.
+			size_t start = command.find_first_not_of(whitespace_);
+			if (start == std::string::npos) {
+				return;
+			}
+			size_t end = command.find_last_not_of(whitespace_) + 1;
 
-			eventDispatcher.dispatch(&ConsoleEventHandler::onConsoleText, command);
+			// Get the first word of the command.
+			StringView view = command;
+			size_t split = command.find_first_of(' ', start);
+			if (split == std::string::npos || split == end) {
+				// No parameters.
+				eventDispatcher.anyTrue(
+					[view, start, end](ConsoleEventHandler* handler) {
+						return handler->onConsoleText(view.substr(start, end - start), "");
+					}
+				);
+			}
+			else {
+				// Split parameters.
+				size_t params = command.find_first_not_of(whitespace_, split);
+				eventDispatcher.anyTrue(
+					[view, start, end, split](ConsoleEventHandler* handler) {
+						return handler->onConsoleText(view.substr(start, end - start), view.substr(split, end - split));
+					}
+				);
+			}
+
+			// todo: add commands
 		}
+	}
+
+	bool onConsoleText(StringView command, StringView parameters) override {
+		if (command == "exit") {
+			run_ = false;
+			return true;
+		}
+		return false;
 	}
 } component;
 
