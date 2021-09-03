@@ -121,6 +121,118 @@ enum PlayerCameraCutType {
 	PlayerCameraCutType_Move
 };
 
+enum PlayerWeapon {
+	PlayerWeapon_Fist,
+	PlayerWeapon_BrassKnuckle,
+	PlayerWeapon_GolfClub,
+	PlayerWeapon_NiteStick,
+	PlayerWeapon_Knife,
+	PlayerWeapon_Bat,
+	PlayerWeapon_Shovel,
+	PlayerWeapon_PoolStick,
+	PlayerWeapon_Katana,
+	PlayerWeapon_Chainsaw,
+	PlayerWeapon_Dildo,
+	PlayerWeapon_Dildo2,
+	PlayerWeapon_Vibrator,
+	PlayerWeapon_Vibrator2,
+	PlayerWeapon_Flower,
+	PlayerWeapon_Cane,
+	PlayerWeapon_Grenade,
+	PlayerWeapon_Teargas,
+	PlayerWeapon_Moltov,
+	PlayerWeapon_Colt45 = 22,
+	PlayerWeapon_Silenced,
+	PlayerWeapon_Deagle,
+	PlayerWeapon_Shotgun,
+	PlayerWeapon_Sawedoff,
+	PlayerWeapon_Shotgspa,
+	PlayerWeapon_UZI,
+	PlayerWeapon_MP5,
+	PlayerWeapon_AK47,
+	PlayerWeapon_M4,
+	PlayerWeapon_TEC9,
+	PlayerWeapon_Rifle,
+	PlayerWeapon_Sniper,
+	PlayerWeapon_RocketLauncher,
+	PlayerWeapon_HeatSeeker,
+	PlayerWeapon_FlameThrower,
+	PlayerWeapon_Minigun,
+	PlayerWeapon_Satchel,
+	PlayerWeapon_Bomb,
+	PlayerWeapon_SprayCan,
+	PlayerWeapon_FireExtinguisher,
+	PlayerWeapon_Camera,
+	PlayerWeapon_Night_Vis_Goggles,
+	PlayerWeapon_Thermal_Goggles,
+	PlayerWeapon_Parachute,
+	PlayerWeapon_Vehicle = 49,
+	PlayerWeapon_Heliblades,
+	PlayerWeapon_Explosion,
+	PlayerWeapon_Drown = 53,
+	PlayerWeapon_Collision,
+	PlayerWeapon_End
+};
+
+static const StringView PlayerWeaponNames[] = {
+	"Fist"
+	"Brass Knuckles",
+	"Golf Club",
+	"Nite Stick",
+	"Knife",
+	"Baseball Bat",
+	"Shovel",
+	"Pool Cue",
+	"Katana",
+	"Chainsaw",
+	"Dildo",
+	"Dildo",
+	"Vibrator",
+	"Vibrator",
+	"Flowers",
+	"Cane",
+	"Grenade",
+	"Teargas",
+	"Molotov Cocktail", // 18
+	"Invalid",
+	"Invalid",
+	"Invalid",
+	"Colt 45", // 22
+	"Silenced Pistol",
+	"Desert Eagle",
+	"Shotgun",
+	"Sawn-off Shotgun",
+	"Combat Shotgun",
+	"UZI",
+	"MP5",
+	"AK47",
+	"M4",
+	"TEC9",
+	"Rifle",
+	"Sniper Rifle",
+	"Rocket Launcher",
+	"Heat Seaker",
+	"Flamethrower",
+	"Minigun",
+	"Satchel Explosives",
+	"Bomb",
+	"Spray Can",
+	"Fire Extinguisher",
+	"Camera",
+	"Night Vision Goggles",
+	"Thermal Goggles",
+	"Parachute", // 46
+	"Invalid",
+	"Invalid",
+	"Vehicle", // 49
+	"Helicopter Blades",
+	"Explosion", // 50
+	"Invalid",
+	"Invalid",
+	"Drowned", // 53
+	"Splat"
+};
+
 static const StringView BodyPartString[] = {
 	"invalid",
 	"invalid",
@@ -261,6 +373,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Get the player's client version
 	virtual uint32_t getClientVersion() const = 0;
+
+	/// Get player's client verison name
+	virtual StringView getClientVersionName() const = 0;
 
 	/// Set the player's position with the proper Z coordinate for the map
 	virtual void setPositionFindZ(Vector3 pos) = 0;
@@ -455,7 +570,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 
 	/// Set the player's armour
 	virtual void setArmour(float armour) = 0;
-	
+
 	/// Get the player's armour
 	virtual float getArmour() const = 0;
 
@@ -678,7 +793,7 @@ struct PlayerEventHandler {
 	virtual bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual void onScoreChange(IPlayer& player, int score) {}
-	virtual void onNameChange(IPlayer & player, StringView oldName) {}
+	virtual void onNameChange(IPlayer& player, StringView oldName) {}
 	virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) {}
 	virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) {}
 	virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) {}

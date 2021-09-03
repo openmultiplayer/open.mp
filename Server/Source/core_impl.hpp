@@ -532,6 +532,14 @@ struct Core final : public ICore, public PlayerEventHandler {
         players.broadcastRPCToAll(RPC);
     }
 
+    StringView getWeaponName(PlayerWeapon weapon) override {
+        int index = int(weapon);
+        if (weapon < PlayerWeapon_Fist && weapon > PlayerWeapon_End) {
+            return "Invalid";
+        }
+        return PlayerWeaponNames[index];
+    }
+
     void onConnect(IPlayer& player) override {
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = *EnableZoneNames;
