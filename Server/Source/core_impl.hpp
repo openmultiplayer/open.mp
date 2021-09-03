@@ -306,8 +306,29 @@ struct Config final : IEarlyConfig {
         return true;
     }
 
+    Pair<bool, StringView> getNameFromAlias(StringView alias) const override {
+        for (IConfigProviderComponent* provider : providers) {
+            auto res = provider->getNameFromAlias(alias);
+            if (!res.second.empty()) {
+                return res;
+            }
+        }
+        return std::make_pair(true, StringView());
+    }
+
+    void addProvider(IConfigProviderComponent* provider) {
+        providers.insert(provider);
+    }
+
+    void init() {
+        for (IConfigProviderComponent* provider : providers) {
+            provider->configure(*this);
+        }
+    }
+
 private:
     ICore& core;
+    FlatPtrHashSet<IConfigProviderComponent> providers;
     DynamicArray<BanEntry> bans;
     FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
     FlatHashSet<String> ownAllocations;
@@ -371,6 +392,10 @@ struct Core final : public ICore, public PlayerEventHandler {
     }
 
     void initiated() {
+        config.init();
+
+        // Don't use config before this point
+
         if (*config.getInt("logging")) {
             logFile = ::fopen("log.txt", "w");
         }
@@ -656,7 +681,7 @@ struct Core final : public ICore, public PlayerEventHandler {
                 networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
             }
             else if (component->componentType() == ComponentType::ConfigProvider) {
-                static_cast<IConfigProviderComponent*>(component)->configure(config);
+                config.addProvider(static_cast<IConfigProviderComponent*>(component));
             }
         }
     }
