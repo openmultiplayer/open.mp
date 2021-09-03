@@ -105,3 +105,12 @@ int PawnTimerImpl::newTimerExError(PawnTimerHandler* handler, AMX* amx, int err,
 	delete handler;
 	return 0;
 }
+
+void PawnTimerImpl::killTimers(AMX* amx) {
+	for (auto& kv : pool) {
+		PawnTimerHandler* handler = static_cast<PawnTimerHandler*>(kv.second->handler());
+		if (handler->amx == amx) {
+			kv.second->kill();
+		}
+	}
+}

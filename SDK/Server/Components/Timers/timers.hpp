@@ -3,6 +3,8 @@
 #include <events.hpp>
 #include <chrono>
 
+struct TimerTimeOutHandler;
+
 struct ITimer {
 	/// Get whether the timer is running or has been killed
 	virtual bool running() const = 0;
@@ -18,6 +20,9 @@ struct ITimer {
 
 	/// Immediately kill the timer
 	virtual void kill() = 0;
+
+	/// Get the handler associated with the timer
+	virtual TimerTimeOutHandler* handler() const = 0;
 };
 
 struct TimerTimeOutHandler {

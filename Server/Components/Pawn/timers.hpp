@@ -21,13 +21,37 @@ struct PawnTimerImpl : public Singleton<PawnTimerImpl> {
 		return false;
 	}
 
+	void killTimers(AMX* amx);
+
 private:
 	Pair<size_t, PawnTimerHandler*> newTimer(const char* callback, Milliseconds interval, bool repeating, AMX* amx);
 	int newTimerExError(PawnTimerHandler* handler, AMX* amx, int err, StringView message);
 
 	size_t insert(ITimer* timer) {
+		bool wrappedOnce = false;
+		while (pool.find(idx) != pool.end()) {
+			if (idx == UINT_MAX) {
+				// No free timer slots
+				if (wrappedOnce) {
+					return 0;
+				}
+				// Wrap safely
+				idx = 0;
+				wrappedOnce = true;
+			}
+			else {
+				++idx;
+			}
+		}
 		pool.emplace(idx, timer);
-		return idx++;
+		size_t lastIdx = idx;
+		if (idx == UINT_MAX) {
+			idx = 0;
+		}
+		else {
+			++idx;
+		}
+		return lastIdx;
 	}
 
 	bool remove(uint32_t id) {
