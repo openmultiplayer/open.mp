@@ -31,6 +31,10 @@ struct Timer final : public ITimer {
 		return interval_;
 	}
 
+	TimerTimeOutHandler* handler() const override {
+		return handler_;
+	}
+
 	void kill() override {
 		running_ = false;
 	}
