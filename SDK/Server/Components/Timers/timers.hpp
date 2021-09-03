@@ -3,6 +3,8 @@
 #include <events.hpp>
 #include <chrono>
 
+struct TimerTimeOutHandler;
+
 struct ITimer {
 	/// Get whether the timer is running or has been killed
 	virtual bool running() const = 0;
@@ -18,10 +20,17 @@ struct ITimer {
 
 	/// Immediately kill the timer
 	virtual void kill() = 0;
+
+	/// Get the handler associated with the timer
+	virtual TimerTimeOutHandler* handler() const = 0;
 };
 
 struct TimerTimeOutHandler {
+	/// Called when a timer times out (can be multiple times per timer if it's repeating)
 	virtual void timeout(ITimer& timer) = 0;
+
+	/// Called when a timer is about to be destroyed, used for deallocating handler
+	virtual void free(ITimer& timer) = 0;
 };
 
 static const UUID TimersComponent_UUID = UUID(0x2ad8124c5ea257a3);
