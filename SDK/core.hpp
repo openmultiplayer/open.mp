@@ -50,6 +50,9 @@ struct IConfig {
 	/// Write bans to file
 	virtual void writeBans() const = 0;
 
+	/// Get an option name from an alias if available
+	/// @return A pair of bool which is true if the alias is deprecated and a string with the real config name
+	virtual Pair<bool, StringView> getNameFromAlias(StringView alias) const = 0;
 };
 
 struct ICore;
@@ -77,6 +80,10 @@ struct IConfigProviderComponent : public IComponent {
 
 	/// Fill a configuration object with custom configuration
 	virtual bool configure(IEarlyConfig& config) = 0;
+
+	/// Get an option name from an alias if available
+	/// @return A pair of bool which is true if the alias is deprecated and a string with the real config name
+	virtual Pair<bool, StringView> getNameFromAlias(StringView alias) const = 0;
 };
 
 enum LogLevel {

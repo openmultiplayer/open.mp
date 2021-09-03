@@ -144,6 +144,9 @@ void PawnManager::Load(std::string const & name, bool primary)
 	script.Register("format", &utils::pawn_format);
 	script.Register("printf", &utils::pawn_printf);
 	script.Register("Script_GetID", &utils::pawn_Script_GetID);
+	script.Register("SetTimer", &utils::pawn_settimer);
+	script.Register("SetTimerEx", &utils::pawn_settimerex);
+	script.Register("KillTimer", &utils::pawn_killtimer);
 
 	pawn_natives::AmxLoad(script.GetAMX());
 
@@ -212,6 +215,7 @@ void PawnManager::Unload(std::string const & name)
 	}
 
 	PawnPluginManager::Get()->AmxUnload(script.GetAMX());
+	PawnTimerImpl::Get()->killTimers(script.GetAMX());
 	amxToScript_.erase(script.GetAMX());
 	scripts_.erase(pos);
 }

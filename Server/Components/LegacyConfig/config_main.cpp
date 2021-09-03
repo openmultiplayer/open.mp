@@ -77,7 +77,6 @@ const FlatHashMap<StringView, StringView> dictionary = {
 	{ "mapname", "map_name" },
 	{ "gamemodetext", "mode_name" },
 	{ "weather", "weather" },
-	//{ "worldtime", ParamType::String }, TODO custom process
 	{ "gravity", "gravity" },
 	{ "weburl", "website" },
 	{ "maxplayers", "max_players" },
@@ -109,6 +108,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
 	{ "lagcompmode", "lag_compensation" }
 };
 
+
 struct LegacyConfigComponent final : public IConfigProviderComponent {
 	PROVIDE_UUID(0x24ef6216838f9ffc);
 
@@ -116,9 +116,19 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 		return "LegacyConfig";
 	}
 
-	SemanticVersion componentVersion() const override {
+  SemanticVersion componentVersion() const override {
 		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
 	}
+  
+	Pair<bool, StringView> getNameFromAlias(StringView alias) const override {
+		auto it = dictionary.find(alias);
+		if (it == dictionary.end()) {
+			return std::make_pair(true, StringView());
+		}
+		else {
+			return std::make_pair(it->first != it->second, it->second);
+		}
+  }
 
 	bool processCustom(IEarlyConfig& config, String name, String right) {
 		if (name.find("gamemode") == 0) {

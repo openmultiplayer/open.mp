@@ -5,6 +5,8 @@
 #include <iostream>
 #include <amx/amx.h>
 
+#include "timers.hpp"
+
 extern "C"
 {
 #if defined _UNICODE
@@ -188,6 +190,45 @@ namespace utils {
 		}
 
 		return 1;
+	}
+
+	inline cell AMX_NATIVE_CALL pawn_settimer(AMX* amx, cell const* params)
+	{
+		AMX_MIN_PARAMETERS("SetTimer", params, 3);
+
+		if (params[2] < 0) {
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid interval passed to SetTimer: %i", params[2]);
+			return false;
+		}
+
+		char* callback;
+		amx_StrParamChar(amx, params[1], callback);
+
+		return PawnTimerImpl::Get()->setTimer(callback, Milliseconds(params[2]), params[3], amx);
+	}
+
+	inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
+	{
+		AMX_MIN_PARAMETERS("SetTimerEx", params, 4);
+
+		if (params[2] < 0) {
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid interval passed to SetTimerEx: %i", params[2]);
+			return false;
+		}
+
+		char* callback;
+		amx_StrParamChar(amx, params[1], callback);
+
+		char* fmt;
+		amx_StrParamChar(amx, params[4], fmt);
+
+		return PawnTimerImpl::Get()->setTimerEx(callback, Milliseconds(params[2]), params[3], fmt, amx, &params[5]);
+	}
+
+	inline cell AMX_NATIVE_CALL pawn_killtimer(AMX* amx, cell const* params)
+	{
+		AMX_MIN_PARAMETERS("KillTimer", params, 1);
+		return PawnTimerImpl::Get()->killTimer(params[1]);
 	}
 
 	inline cell AMX_NATIVE_CALL pawn_Script_Call(AMX * amx, cell const * params)

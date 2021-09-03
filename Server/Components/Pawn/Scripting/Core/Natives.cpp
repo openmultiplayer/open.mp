@@ -209,19 +209,55 @@ SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, std::string const& string, i
 	return true;
 }
 
+int getConfigOptionAsInt(std::string const& cvar) {
+	IConfig* config = PawnManager::Get()->config;
+	auto res = config->getNameFromAlias(cvar);
+	int* var = nullptr;
+	if (!res.second.empty()) {
+		if (res.first) {
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
+		}
+		var = config->getInt(res.second);
+	}
+	else {
+		var = config->getInt(cvar);
+	}
+	if (var) {
+		return *var;
+	}
+	else {
+		return 0;
+	}
+}
+
+int getConfigOptionAsString(std::string const& cvar, std::string& buffer) {
+	IConfig* config = PawnManager::Get()->config;
+	auto res = config->getNameFromAlias(cvar);
+	if (!res.second.empty()) {
+		if (res.first) {
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
+		}
+		buffer = config->getString(res.second);
+	}
+	else {
+		buffer = config->getString(cvar);
+	}
+	return buffer.size();
+}
+
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
 {
-	throw pawn_natives::NotImplemented();
+	return getConfigOptionAsInt(cvar);
 }
 
 SCRIPT_API(GetConsoleVarAsInt, int(std::string const& cvar))
 {
-	throw pawn_natives::NotImplemented();
+	return getConfigOptionAsInt(cvar);
 }
 
-SCRIPT_API(GetConsoleVarAsString, bool(std::string const& cvar, std::string& buffer))
+SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, std::string& buffer))
 {
-	throw pawn_natives::NotImplemented();
+	return getConfigOptionAsString(cvar, buffer);
 }
 
 SCRIPT_API(GetGravity, float())
@@ -252,30 +288,17 @@ SCRIPT_API(GetServerTickRate, int())
 
 SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
 {
-	IVariablesComponent* vars = PawnManager::Get()->vars;
-	if (vars) {
-		return vars->getInt(cvar);
-	}
-	return false;
+	return getConfigOptionAsInt(cvar);
 }
 
 SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
 {
-	IVariablesComponent* vars = PawnManager::Get()->vars;
-	if (vars) {
-		return vars->getInt(cvar);
-	}
-	return false;
+	return getConfigOptionAsInt(cvar);
 }
 
 SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buffer))
 {
-	IVariablesComponent* vars = PawnManager::Get()->vars;
-	if (vars) {
-		buffer = vars->getString(cvar);
-		return true;
-	}
-	return false;
+	return getConfigOptionAsString(cvar, buffer);
 }
 
 SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
