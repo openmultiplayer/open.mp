@@ -213,6 +213,7 @@ void PawnManager::Unload(std::string const & name)
 	script.Call("OnScriptExit");
 	OnScriptExit(name);
 	PawnPluginManager::Get()->AmxUnload(script.GetAMX());
+	PawnTimerImpl::Get()->killTimers(script.GetAMX());
 	amxToScript_.erase(script.GetAMX());
 	scripts_.erase(pos);
 }
