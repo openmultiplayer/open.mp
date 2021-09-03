@@ -133,6 +133,9 @@ struct ICore {
 	/// Toggle server stunt bonus
 	virtual void toggleStuntBonus(bool toggle) = 0;
 
+	/// Get weapon's name as a string
+	virtual StringView getWeaponName(PlayerWeapon weapon) = 0;
+
 	/// Attempt to connect a new bot to the server
 	/// @param name The bot name (player name)
 	/// @param script The bot script to execute
