@@ -63,20 +63,20 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 					// Split parameters.
 					self.eventDispatcher.anyTrue(
 						[view, start, end, split](ConsoleEventHandler* handler) {
-							return handler->onConsoleText(view.substr(start, end - start), view.substr(split, end - split));
+							return handler->onConsoleText(view.substr(start, end - start), view.substr(split + 1, end - split));
 						}
 					);
 				}
 			}
 			else {
-				StringView cmd = view.substr(start, end - start);
+				StringView cmd = view.substr(start, split);
 				if (cmd == "login")
 				{
 					if (split == std::string::npos || split == end) {
 						return true;
 					}
 
-					StringView password = view.substr(split, end - split);
+					StringView password = view.substr(split + 1, end - split - 2);
 					bool success = false;
 					
 					if (password == self.core->getConfig().getString("rcon_password"))
@@ -123,6 +123,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 		this->core = core;
 		core->getEventDispatcher().addEventHandler(this);
 		this->getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getEventDispatcher().addEventHandler(this);
 
 		core->addPerPacketEventHandler<NetCode::Packet::PlayerRconCommand>(&playerRconCommandHandler);
 
@@ -146,6 +147,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 		}
 		if (core) {
 			core->getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getEventDispatcher().removeEventHandler(this);
 
 			core->removePerPacketEventHandler<NetCode::Packet::PlayerRconCommand>(&playerRconCommandHandler);
 		}
@@ -185,7 +187,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 				size_t params = command.find_first_not_of(whitespace_, split);
 				eventDispatcher.anyTrue(
 					[view, start, end, split](ConsoleEventHandler* handler) {
-						return handler->onConsoleText(view.substr(start, end - start), view.substr(split, end - split));
+						return handler->onConsoleText(view.substr(start, end - start), view.substr(split + 1, end - split));
 					}
 				);
 			}
