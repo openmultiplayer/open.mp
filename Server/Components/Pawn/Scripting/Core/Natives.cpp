@@ -283,7 +283,7 @@ SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
 
 SCRIPT_API(GetServerTickRate, int())
 {
-	throw pawn_natives::NotImplemented();
+	return PawnManager::Get()->core->tickRate();
 }
 
 SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
