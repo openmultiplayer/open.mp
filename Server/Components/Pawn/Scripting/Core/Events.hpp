@@ -8,11 +8,11 @@ struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
 		std::string fullCommand = command.data();
 		fullCommand.append(" ");
 		fullCommand.append(parameters.data());
-		cell ret = PawnManager::Get()->CallInSides("OnRconCommand", fullCommand);
+		cell ret = PawnManager::Get()->CallInSides("OnRconCommand", DefaultReturnValue_False, fullCommand);
 		if (!ret) {
-			PawnManager::Get()->CallInEntry("OnRconCommand", fullCommand);
+			ret = PawnManager::Get()->CallInEntry("OnRconCommand", DefaultReturnValue_False, fullCommand);
 		}
-		return false; 
+		return ret;
 	}
 
 	void onRconLoginAttempt(IPlayer& player, const StringView& password, bool success) override {
@@ -22,7 +22,7 @@ struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
 			PeerAddress::ToString(data.networkID.address, out, sizeof(out));
 		}
 
-		PawnManager::Get()->CallInSides("OnRconLoginAttempt", out, password, success);
-		PawnManager::Get()->CallInEntry("OnRconLoginAttempt", out, password, success);
+		PawnManager::Get()->CallInSides("OnRconLoginAttempt", DefaultReturnValue_True, out, password, success);
+		PawnManager::Get()->CallInEntry("OnRconLoginAttempt", DefaultReturnValue_True, out, password, success);
 	}
 };
