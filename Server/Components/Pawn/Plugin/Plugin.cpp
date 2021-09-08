@@ -436,7 +436,7 @@ int PluginCallGM(char * name)
 	{
 		if (cur.first == manager->entryScript)
 		{
-			return cur.second->Call(name);
+			return cur.second->Call(name, DefaultReturnValue_False);
 		}
 	}
 	return 0;
@@ -454,7 +454,7 @@ int PluginCallFS(char * name)
 			continue;
 		}
 
-		ret = cur.second->Call(name);
+		ret = cur.second->Call(name, DefaultReturnValue_False);
 		if (!ret)
 			return ret;
 	}

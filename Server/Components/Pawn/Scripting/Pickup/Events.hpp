@@ -5,6 +5,6 @@
 
 struct PickupEvents : public PickupEventHandler, public Singleton<PickupEvents> {
 	void onPlayerPickUpPickup(IPlayer& player, IPickup& pickup) override {
-		PawnManager::Get()->CallAllInEntryFirst("OnPlayerPickUpPickup", player.getID(), pickup.getID());
+		PawnManager::Get()->CallAllInEntryFirst("OnPlayerPickUpPickup", DefaultReturnValue_True, player.getID(), pickup.getID());
 	}
 };
