@@ -11,7 +11,7 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 
 	// Set up dummy checkpoint data for when the player connects
 	PlayerCheckpointData* onPlayerDataRequest(IPlayer& player) override {
-		return new PlayerCheckpointData();
+		return new PlayerCheckpointData(player);
 	}
 
 	struct PlayerCheckpointActionHandler : public PlayerUpdateEventHandler {

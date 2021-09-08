@@ -5,7 +5,7 @@
 struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
 	GangZonePos pos;
 	Colour col;
-	UniqueIDArray<IPlayer, IPlayerPool::Cnt> shownFor_;
+	UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
 
 	void restream() {
 		for (IPlayer* player : shownFor_.entries()) {

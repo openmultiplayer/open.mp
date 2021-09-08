@@ -4,7 +4,7 @@
 
 struct PlayerTextLabelData final : IPlayerTextLabelData {
     IPlayer& player;
-    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, ITextLabelsComponent::Cnt> storage;
+    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, ITextLabelsComponent::Capacity> storage;
 
     PlayerTextLabelData(IPlayer& player) :
         player(player)
@@ -110,7 +110,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
 struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core;
-    MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsComponent::Cnt> storage;
+    MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsComponent::Capacity> storage;
     IVehiclesComponent* vehicles = nullptr;
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;

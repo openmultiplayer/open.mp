@@ -35,7 +35,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     GTAQuat rot;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
     StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
     float health = 1000.0f;
     uint8_t interior = 0;
@@ -187,10 +187,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     float getZAngle() override;
 
     // Set the vehicle's parameters.
-    void setParams(VehicleParams params) override;
+    void setParams(const VehicleParams& params) override;
 
     // Set the vehicle's parameters for a specific player.
-    void setParamsForPlayer(IPlayer& player, VehicleParams params) override;
+    void setParamsForPlayer(IPlayer& player, const VehicleParams& params) override;
 
     // Get the vehicle's parameters.
     VehicleParams const& getParams() override { return params; }

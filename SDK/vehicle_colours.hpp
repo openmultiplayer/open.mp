@@ -216,7 +216,7 @@ static const uint16_t vehicleIndexes[212 + 1] = {
 	1158
 };
 
-static const uint16_t vehiclePrimaryColours[1158] = {
+static const uint8_t vehiclePrimaryColours[1158] = {
 	4, 123, 113, 101, 75, 62, 40, 36,      // 400 - landstal
 	41, 47, 52, 66, 74, 87, 91, 113,       // 401 - bravura
 	10, 13, 22, 30, 39, 90, 98, 110,       // 402 - buffalo

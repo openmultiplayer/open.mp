@@ -30,7 +30,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 	StaticArray<uint8_t, 2> columnItemCount;
 	StaticArray<StaticArray<String, MAX_MENU_ITEMS>, 2> columnMenuItems;
 
-	UniqueIDArray<IPlayer, IPlayerPool::Cnt> initedFor_;
+	UniqueIDArray<IPlayer, IPlayerPool::Capacity> initedFor_;
 
 	void setColumnHeader(StringView header, MenuColumn column) override {
 		if (column > columnCount) {
