@@ -158,10 +158,10 @@ struct IVehicle : public IEntity {
 	virtual float getZAngle() = 0;
 
 	// Set the vehicle's parameters.
-	virtual void setParams(VehicleParams params) = 0;
+	virtual void setParams(const VehicleParams& params) = 0;
 
 	// Set the vehicle's parameters for a specific player.
-	virtual void setParamsForPlayer(IPlayer& player, VehicleParams params) = 0;
+	virtual void setParamsForPlayer(IPlayer& player, const VehicleParams& params) = 0;
 
 	// Get the vehicle's parameters.
 	virtual VehicleParams const& getParams() = 0;

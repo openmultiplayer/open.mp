@@ -683,7 +683,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	virtual unsigned getInterior() const = 0;
 
 	/// Get the player's key data
-	virtual PlayerKeyData getKeyData() const = 0;
+	virtual const PlayerKeyData& getKeyData() const = 0;
 
 	/// Get the player's skill levels
 	/// @note See https://open.mp/docs/scripting/resources/weaponskills

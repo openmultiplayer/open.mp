@@ -2,7 +2,7 @@
 
 struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
 	ICore * core;
-	MarkedPoolStorage<Menu, IMenu, IMenusComponent::Cnt> storage;
+	MarkedPoolStorage<Menu, IMenu, IMenusComponent::Capacity> storage;
 	DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
 	IPlayerPool * players = nullptr;
 

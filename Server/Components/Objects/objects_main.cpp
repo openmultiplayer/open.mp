@@ -4,9 +4,9 @@
 
 struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
 	ICore* core;
-    MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Cnt> storage;
+    MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Capacity> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-    StaticBitset<IObjectsComponent::Cnt> isPlayerObject;
+    StaticBitset<IObjectsComponent::Capacity> isPlayerObject;
     bool defCameraCollision = true;
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInOutEventHandler {
@@ -317,7 +317,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     }
 
-    void onTick(Microseconds elapsed) override;
+    void onTick(Microseconds elapsed, TimePoint now) override;
 };
 
 struct PlayerObjectData final : public IPlayerObjectData {
@@ -325,7 +325,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     IPlayer& player_;
     StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
     StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
-    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Cnt> storage;
+    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Capacity> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
 
@@ -519,9 +519,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 };
 
-void ObjectComponent::onTick(Microseconds elapsed) {
-    const TimePoint now = Time::now();
-
+void ObjectComponent::onTick(Microseconds elapsed, TimePoint now) {
     for (IObject* object : storage.entries()) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed, now)) {
