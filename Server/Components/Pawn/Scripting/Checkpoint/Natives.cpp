@@ -10,7 +10,7 @@ SCRIPT_API(SetPlayerCheckpoint, bool(IPlayer& player, Vector3 position, float si
 		cp->setType(CheckpointType::STANDARD);
 		cp->setPosition(position);
 		cp->setSize(size);
-		cp->enable(player);
+		cp->enable();
 		return true;
 	}
 	return false;
@@ -20,7 +20,7 @@ SCRIPT_API(DisablePlayerCheckpoint, bool(IPlayer& player))
 {
 	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 	if (cp) {
-		cp->disable(player);
+		cp->disable();
 		return true;
 	}
 	return false;
@@ -43,7 +43,7 @@ SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayer& player, int type, Vector3 posi
 		cp->setPosition(position);
 		cp->setNextPosition(nextPosition);
 		cp->setSize(size);
-		cp->enable(player);
+		cp->enable();
 		return true;
 	}
 	return false;
@@ -53,7 +53,7 @@ SCRIPT_API(DisablePlayerRaceCheckpoint, bool(IPlayer& player))
 {
 	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 	if (cp) {
-		cp->disable(player);
+		cp->disable();
 		return true;
 	}
 	return false;

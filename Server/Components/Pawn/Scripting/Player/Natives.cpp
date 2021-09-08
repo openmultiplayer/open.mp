@@ -687,7 +687,7 @@ SCRIPT_API(GetPlayerCameraMode, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& leftright))
 {
-	PlayerKeyData keyData = player.getKeyData();
+	const PlayerKeyData& keyData = player.getKeyData();
 	keys = keyData.keys;
 	updown = keyData.upDown;
 	leftright = keyData.leftRight;

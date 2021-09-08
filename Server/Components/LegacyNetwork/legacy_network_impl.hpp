@@ -13,12 +13,6 @@
 
 struct Core;
 
-inline constexpr auto CEILDIV(int n, int d) -> decltype (n / d)
-{
-    return (n) ? ((n - (int)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
-}
-
-
 struct RakNetLegacyBitStream final : public INetworkBitStream {
     RakNet::BitStream& bs;
 
@@ -304,7 +298,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, StringView versionName, uint32_t challenge, StringView name);
     template <size_t ID>
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
-    void onTick(Microseconds elapsed) override;
+    void onTick(Microseconds elapsed, TimePoint now) override;
     void init(ICore* core);
 
     void OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason);

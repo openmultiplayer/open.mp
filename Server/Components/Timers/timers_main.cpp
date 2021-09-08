@@ -34,7 +34,7 @@ struct TimersComponent final : public ITimersComponent, public CoreEventHandler 
 		return timer;
 	}
 
-	void onTick(Microseconds elapsed) override {
+	void onTick(Microseconds elapsed, TimePoint now) override {
 		for (auto it = timers.begin(); it != timers.end();) {
 			Timer* timer = *it;
 			bool deleteTimer = false;

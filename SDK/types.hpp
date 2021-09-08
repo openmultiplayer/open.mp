@@ -207,3 +207,9 @@ struct SemanticVersion {
 		return compare(other, false) <= 0;
 	}
 };
+
+template <typename T, typename U>
+inline constexpr auto CEILDIV(T n, U d) -> decltype (n / d)
+{
+	return (n) ? ((n - (T)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
+}

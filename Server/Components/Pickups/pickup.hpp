@@ -8,7 +8,7 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     PickupType type;
     Vector3 pos;
     bool isStatic;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
 
     void restream() {
         for (IPlayer* player : streamedFor_.entries()) {
