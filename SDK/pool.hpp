@@ -245,7 +245,7 @@ struct DynamicPoolStorageBase : public NoCopy {
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            pool_[freeIdx] = new(std::align_val_t(alignof(Type))) Type();
+            pool_[freeIdx] = new Type();
             allocated_.add(*pool_[freeIdx]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 pool_[freeIdx]->poolID = freeIdx;
@@ -257,7 +257,7 @@ struct DynamicPoolStorageBase : public NoCopy {
     int claim(int hint) {
         assert(hint < Count);
         if (!valid(hint)) {
-            pool_[hint] = new(std::align_val_t(alignof(Type))) Type();
+            pool_[hint] = new Type();
             allocated_.add(*pool_[hint]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 pool_[hint]->poolID = hint;
