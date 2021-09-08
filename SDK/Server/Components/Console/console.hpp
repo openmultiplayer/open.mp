@@ -18,9 +18,6 @@ static const UUID PlayerConsoleData_UUID = UUID(0x9f8d20f2f471cbae);
 struct IPlayerConsoleData : public IPlayerData {
 	PROVIDE_UUID(PlayerConsoleData_UUID);
 
-	/// Check if player is admin (access to RCON)
-	virtual bool isPlayerAdmin() const = 0;
-
-	/// Set player admin (access to RCON)
-	virtual void setPlayerAdmin(bool set) = 0;
+	/// Check if player has console access
+	virtual bool hasConsoleAccess() const = 0;
 };
