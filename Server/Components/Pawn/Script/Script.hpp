@@ -150,8 +150,6 @@ public:
 	}
 
 private:
-	bool OnRconCommand(std::string const & cmd, std::string const & args);
-
 	ICore * serverCore;
 	AMX amx_;
 	bool loaded_ = false;
