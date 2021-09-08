@@ -5,11 +5,11 @@
 
 struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> {
 	void onMoved(IObject& object) override {
-		PawnManager::Get()->CallAllInSidesFirst("OnObjectMoved", object.getID());
+		PawnManager::Get()->CallAllInSidesFirst("OnObjectMoved", DefaultReturnValue_True, object.getID());
 	}
 
 	void onPlayerObjectMoved(IPlayer& player, IPlayerObject& object) override {
-		PawnManager::Get()->CallAllInSidesFirst("OnPlayerObjectMoved", object.getID());
+		PawnManager::Get()->CallAllInSidesFirst("OnPlayerObjectMoved", DefaultReturnValue_True, object.getID());
 	}
 
 	void onObjectEdited(IPlayer& player, IObject& object, ObjectEditResponse response, Vector3 offset, Vector3 rotation) override {
@@ -22,6 +22,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 		if (!ret) {
 			PawnManager::Get()->CallInEntry(
 				"OnPlayerEditObject",
+				DefaultReturnValue_True,
 				player.getID(), 0, object.getID(), int(response),
 				offset.x, offset.y, offset.z,
 				rotation.x, rotation.y, rotation.z
@@ -39,6 +40,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 		if (!ret) {
 			PawnManager::Get()->CallInEntry(
 				"OnPlayerEditObject",
+				DefaultReturnValue_True,
 				player.getID(), 1, object.getID(), int(response),
 				offset.x, offset.y, offset.z,
 				rotation.x, rotation.y, rotation.z
@@ -57,6 +59,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 		if (!ret) {
 			PawnManager::Get()->CallInEntry(
 				"OnPlayerEditAttachedObject",
+				DefaultReturnValue_True,
 				player.getID(), saved, index, data.model, data.bone,
 				data.offset.x, data.offset.y, data.offset.z,
 				data.rotation.x, data.rotation.y, data.rotation.z,
@@ -74,6 +77,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 		if (!ret) {
 			PawnManager::Get()->CallInEntry(
 				"OnPlayerEditObject",
+				DefaultReturnValue_True,
 				player.getID(), 1, object.getID(), model,
 				position.x, position.y, position.z
 			);
@@ -89,6 +93,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 		if (!ret) {
 			PawnManager::Get()->CallInEntry(
 				"OnPlayerEditObject",
+				DefaultReturnValue_True,
 				player.getID(), 2, object.getID(), model,
 				position.x, position.y, position.z
 			);
