@@ -5,18 +5,18 @@
 
 struct CheckpointEvents : public PlayerCheckpointEventHandler, public Singleton<CheckpointEvents> {
 	void onPlayerEnterCheckpoint(IPlayer& player) override {
-		PawnManager::Get()->CallAllInSidesFirst("OnPlayerEnterCheckpoint", player.getID());
+		PawnManager::Get()->CallAllInSidesFirst("OnPlayerEnterCheckpoint", DefaultReturnValue_True, player.getID());
 	}
 
 	void onPlayerLeaveCheckpoint(IPlayer& player) override {
-		PawnManager::Get()->CallAllInSidesFirst("OnPlayerLeaveCheckpoint", player.getID());
+		PawnManager::Get()->CallAllInSidesFirst("OnPlayerLeaveCheckpoint", DefaultReturnValue_True, player.getID());
 	}
 
 	void onPlayerEnterRaceCheckpoint(IPlayer& player) override {
-		PawnManager::Get()->CallAllInSidesFirst("OnPlayerEnterRaceCheckpoint", player.getID());
+		PawnManager::Get()->CallAllInSidesFirst("OnPlayerEnterRaceCheckpoint", DefaultReturnValue_True, player.getID());
 	}
 
 	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override {
-		PawnManager::Get()->CallAllInSidesFirst("OnPlayerLeaveRaceCheckpoint", player.getID());
+		PawnManager::Get()->CallAllInSidesFirst("OnPlayerLeaveRaceCheckpoint", DefaultReturnValue_True, player.getID());
 	}
 };
