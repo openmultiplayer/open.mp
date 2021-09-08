@@ -42,7 +42,7 @@ PawnManager::~PawnManager()
 {
 	for (auto & cur : scripts_)
 	{
-		cur.second->Call("OnScriptExit", cur.second->GetID());
+		cur.second->Call("OnScriptExit", DefaultReturnValue_False, cur.second->GetID());
 		PawnPluginManager::Get()->AmxUnload(cur.second->GetAMX());
 	}
 }
@@ -163,14 +163,14 @@ void PawnManager::Load(std::string const & name, bool primary)
 	// Assume that all initialisation and header mangling is now complete, and that it is safe to
 	// cache public pointers.
 
-	script.Call("OnScriptInit");
+	script.Call("OnScriptInit", DefaultReturnValue_False);
 
 	if (primary) {
 		entryScript = name;
-		script.Call("OnGameModeInit");
+		script.Call("OnGameModeInit", DefaultReturnValue_False);
 	}
 	else {
-		script.Call("OnFilterScriptInit");
+		script.Call("OnFilterScriptInit", DefaultReturnValue_False);
 	}
 }
 
@@ -181,12 +181,12 @@ void PawnManager::Reload(std::string const & name)
 	if (pos != scripts_.end()) {
 		auto & script = *pos->second;
 
-		script.Call("OnScriptExit");
+		script.Call("OnScriptExit", DefaultReturnValue_False);
 		if (isEntryScript) {
-			script.Call("OnGameModeExit");
+			script.Call("OnGameModeExit", DefaultReturnValue_False);
 		}
 		else {
-			script.Call("OnFilterScriptExit");
+			script.Call("OnFilterScriptExit", DefaultReturnValue_False);
 		}
 
 		PawnPluginManager::Get()->AmxUnload(script.GetAMX());
@@ -206,12 +206,12 @@ void PawnManager::Unload(std::string const & name)
 	}
 	auto & script = *pos->second;
 
-	script.Call("OnScriptExit");
+	script.Call("OnScriptExit", DefaultReturnValue_False);
 	if (isEntryScript) {
-		script.Call("OnGameModeExit");
+		script.Call("OnGameModeExit", DefaultReturnValue_False);
 	}
 	else {
-		script.Call("OnFilterScriptExit");
+		script.Call("OnFilterScriptExit", DefaultReturnValue_False);
 	}
 
 	PawnPluginManager::Get()->AmxUnload(script.GetAMX());

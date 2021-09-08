@@ -103,21 +103,7 @@ void PawnScript::SubscribeAll()
 {
 
 }
-*/
 
-bool PawnScript::OnRconCommand(std::string const & cmd, std::string const & args)
-{
-	if (args.length() == 0)
-	{
-		return !!Call("OnRconCommand", cmd);
-	}
-	else
-	{
-		return !!Call("OnRconCommand", cmd + " " + args);
-	}
-}
-
-/*
 void PawnScript::PrintError(int err)
 {
 	std::string pawnError = aux_StrError(num);

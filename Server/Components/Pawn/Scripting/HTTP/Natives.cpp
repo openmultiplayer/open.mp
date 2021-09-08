@@ -10,7 +10,7 @@ struct PawnHTTPResponseHandler : HTTPResponseHandler {
 
 	void onHTTPResponse(int status, StringView body) override {
 		// TODO async
-		script.Call(callback, index, status, String(body));
+		script.Call(callback, DefaultReturnValue_True, index, status, String(body));
 	}
 };
 

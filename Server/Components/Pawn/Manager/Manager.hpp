@@ -69,10 +69,9 @@ public:
 	void Unload(std::string const & name);
 
 	template <typename ... T>
-	cell CallAllInSidesFirst(char const* name, T ... args)
+	cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(defaultRetValue);
 
 		PawnScript * first = nullptr;
 		for (auto& cur : scripts_) {
@@ -80,26 +79,25 @@ public:
 				first = cur.second.get();
 			}
 			else {
-				ret = cur.second->Call(name, args...);
+				ret = cur.second->Call(name, defaultRetValue, args...);
 			}
 		}
 
 		if (first != nullptr) {
-			ret = first->Call(name, args...);
+			ret = first->Call(name, defaultRetValue, args...);
 		}
 
 		return ret;
 	}
 
 	template <typename ... T>
-	cell CallAllInEntryFirst(char const* name, T ... args)
+	cell CallAllInEntryFirst(char const* name, DefaultReturnValue defaultRetValue, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(defaultRetValue);
 
 		FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const& first = scripts_.find(entryScript);
 		if (first != scripts_.end()) {
-			ret = first->second->Call(name, args...);
+			ret = first->second->Call(name, defaultRetValue, args...);
 		}
 
 		for (auto& cur : scripts_) {
@@ -107,7 +105,7 @@ public:
 				continue;
 			}
 			else {
-				ret = cur.second->Call(name, args...);
+				ret = cur.second->Call(name, defaultRetValue, args...);
 			}
 		}
 
@@ -125,7 +123,7 @@ public:
 				continue;
 			}
 			else {
-				ret = cur.second->Call(name, args...);
+				ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 				if (ret) {
 					break;
 				}
@@ -139,14 +137,14 @@ public:
 	cell CallInSidesWhile1(char const* name, T ... args)
 	{
 		cell
-			ret = 0;
+			ret = 1;
 
 		for (auto& cur : scripts_) {
 			if (cur.first == entryScript) {
 				continue;
 			}
 			else {
-				ret = cur.second->Call(name, args...);
+				ret = cur.second->Call(name, DefaultReturnValue_True, args...);
 				if (!ret) {
 					break;
 				}
@@ -157,17 +155,16 @@ public:
 	}
 
 	template <typename ... T>
-	cell CallInSides(char const* name, T ... args)
+	cell CallInSides(char const* name, DefaultReturnValue defaultRetValue, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(defaultRetValue);
 
 		for (auto& cur : scripts_) {
 			if (cur.first == entryScript) {
 				continue;
 			}
 			else {
-				ret = cur.second->Call(name, args...);
+				ret = cur.second->Call(name, defaultRetValue, args...);
 			}
 		}
 
@@ -175,14 +172,13 @@ public:
 	}
 
 	template <typename ... T>
-	cell CallInEntry(char const* name, T ... args)
+	cell CallInEntry(char const* name, DefaultReturnValue defaultRetValue, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(defaultRetValue);
 
 		FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const & first = scripts_.find(entryScript);
 		if (first != scripts_.end()) {
-			ret = first->second->Call(name, args...);
+			ret = first->second->Call(name, defaultRetValue, args...);
 		}
 
 		return ret;
@@ -195,7 +191,7 @@ public:
 			ret = 0;
 		for (auto & cur : scripts_)
 		{
-			ret = cur.second->Call(name, args...);
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 		}
 		return ret;
 	}
@@ -207,7 +203,7 @@ public:
 			ret = 0;
 		for (auto & cur : scripts_)
 		{
-			ret = cur.second->Call(name, args...);
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 		}
 		return ret;
 	}
@@ -219,7 +215,7 @@ public:
 			ret = 0;
 		for (auto & cur : scripts_)
 		{
-			ret = cur.second->Call(name, args...);
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 				return ret;
 		}
@@ -229,11 +225,11 @@ public:
 	template <typename ... T>
 	cell CallWhile0(std::string const & name, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(DefaultReturnValue_False);
+
 		for (auto & cur : scripts_)
 		{
-			ret = cur.second->Call(name, args...);
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 				return ret;
 		}
@@ -243,11 +239,11 @@ public:
 	template <typename ... T>
 	cell CallWhile1(char const * name, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(DefaultReturnValue_True);
+
 		for (auto & cur : scripts_)
 		{
-			ret = cur.second->Call(name, args...);
+			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 				return ret;
 		}
@@ -257,11 +253,11 @@ public:
 	template <typename ... T>
 	cell CallWhile1(std::string const & name, T ... args)
 	{
-		cell
-			ret = 0;
+		cell ret = static_cast<cell>(DefaultReturnValue_True);
+
 		for (auto & cur : scripts_)
 		{
-			ret = cur.second->Call(name, args...);
+			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 				return ret;
 		}
