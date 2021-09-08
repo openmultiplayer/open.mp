@@ -5,10 +5,10 @@
 
 struct MenuEvents : public MenuEventHandler, public Singleton<MenuEvents> {
 	void onPlayerSelectedMenuRow(IPlayer& player, MenuRow row) override {
-		PawnManager::Get()->CallAllInEntryFirst("OnPlayerSelectedMenuRow", player.getID(), int(row));
+		PawnManager::Get()->CallAllInEntryFirst("OnPlayerSelectedMenuRow", DefaultReturnValue_True, player.getID(), int(row));
 	}
 
 	void onPlayerExitedMenu(IPlayer& player) override {
-		PawnManager::Get()->CallAllInEntryFirst("OnPlayerExitedMenu", player.getID());
+		PawnManager::Get()->CallAllInEntryFirst("OnPlayerExitedMenu", DefaultReturnValue_True, player.getID());
 	}
 };
