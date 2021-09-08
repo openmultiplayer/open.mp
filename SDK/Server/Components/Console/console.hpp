@@ -3,7 +3,7 @@
 
 struct ConsoleEventHandler {
 	virtual bool onConsoleText(StringView command, StringView parameters) { return false; }
-	virtual void onRconLoginAttempt(IPlayer& player, StringView password, bool success) { }
+	virtual void onRconLoginAttempt(IPlayer& player, const StringView& password, bool success) { }
 };
 
 static const UUID ConsoleComponent_UUID = UUID(0xbfa24e49d0c95ee4);
