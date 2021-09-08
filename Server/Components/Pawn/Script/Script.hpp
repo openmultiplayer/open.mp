@@ -18,6 +18,11 @@ int AMXAPI amx_GetNativeByIndex(AMX const * amx, int index, AMX_NATIVE_INFO * re
 int AMXAPI amx_MakeAddr(AMX * amx, cell * phys_addr, cell * amx_addr);
 int AMXAPI amx_StrSize(const cell * cstr, int * length);
 
+enum DefaultReturnValue {
+	DefaultReturnValue_False,
+	DefaultReturnValue_True
+};
+
 class PawnScript
 {
 public:
@@ -104,18 +109,21 @@ public:
 	}
 
 	template <typename ... T>
-	cell Call(char const * name, T ... args)
+	cell Call(char const* name, DefaultReturnValue defaultRetValue, T ... args)
 	{
-		int
-			idx;
-		FindPublic(name, &idx);
-		return Call(idx, args...);
+		int idx;
+		if (!FindPublic(name, &idx)) {
+			return Call(idx, args...);
+		}
+		else {
+			return static_cast<cell>(defaultRetValue);
+		}
 	}
 
 	template <typename ... T>
-	inline cell Call(std::string const & name, T ... args)
+	inline cell Call(std::string const & name, DefaultReturnValue defaultRetValue, T ... args)
 	{
-		return Call(name.c_str(), args...);
+		return Call(name.c_str(), defaultRetValue, args...);
 	}
 
 	// Call a function using an idx we know is correct.
