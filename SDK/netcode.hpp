@@ -3,6 +3,7 @@
 #include "NetCode/actor.hpp"
 #include "NetCode/checkpoint.hpp"
 #include "NetCode/class.hpp"
+#include "NetCode/console.hpp"
 #include "NetCode/core.hpp"
 #include "NetCode/dialog.hpp"
 #include "NetCode/gangzone.hpp"
