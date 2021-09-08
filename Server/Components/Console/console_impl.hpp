@@ -4,14 +4,14 @@
 #include <netcode.hpp>
 
 struct PlayerConsoleData final : IPlayerConsoleData {
-	bool isAdmin = false;
+	bool hasAccess = false;
 
-	bool isPlayerAdmin() const override {
-		return isAdmin;
+	bool hasConsoleAccess() const override {
+		return hasAccess;
 	}
 
-	void setPlayerAdmin(bool set) override {
-		isAdmin = set;
+	void setConsoleAccessibility(bool set) {
+		hasAccess = set;
 	}
 
 	void free() override {

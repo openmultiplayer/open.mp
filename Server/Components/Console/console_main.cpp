@@ -29,7 +29,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 			}
 
 			std::string command = packet.cmd;
-			IPlayerConsoleData* data = peer.queryData<IPlayerConsoleData>();
+			PlayerConsoleData* data = peer.queryData<PlayerConsoleData>();
 
 			// Trim the command.
 			size_t start = command.find_first_not_of(self.whitespace_);
@@ -42,7 +42,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 			StringView view = command;
 			size_t split = command.find_first_of(' ', start);
 
-			if (data->isPlayerAdmin())
+			if (data->hasConsoleAccess())
 			{
 				if (command.size() < 1) {
 					peer.sendClientMessage(Colour::White(), "You forgot the RCON command!");
@@ -81,7 +81,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 					
 					if (password == self.core->getConfig().getString("rcon_password"))
 					{
-						data->setPlayerAdmin(true);
+						data->setConsoleAccessibility(true);
 						self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%s) has logged in.", peer.getID(), peer.getName().data());
 						peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
 						success = true;
