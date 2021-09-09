@@ -874,3 +874,54 @@ SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
 	output = player.getSerial();
 	return true;
 }
+
+SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
+{
+	IPlayerConsoleData* data = player.queryData<IPlayerConsoleData>();
+	if (data) {
+		return data->hasConsoleAccess();
+	}
+	return false;
+}
+
+SCRIPT_API(Kick, bool(IPlayer& player))
+{
+	player.kick();
+	return true;
+}
+
+SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, std::string const& string, int time, int style))
+{
+	player.sendGameText(string, Milliseconds(time), style);
+	return true;
+}
+
+SCRIPT_API(Ban, bool(IPlayer& player))
+{
+	player.ban();
+	return true;
+}
+
+SCRIPT_API(BanEx, bool(IPlayer& player, std::string const& reason))
+{
+	player.ban(reason);
+	return true;
+}
+
+SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer& killee, int weapon))
+{
+	player.sendDeathMessage(killee, killer, weapon);
+	return true;
+}
+
+SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std::string const& message))
+{
+	player.sendChatMessage(sender, message);
+	return true;
+}
+
+SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
+{
+	version = player.getClientVersionName();
+	return true;
+}
