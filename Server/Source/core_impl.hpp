@@ -181,7 +181,7 @@ struct Config final : IEarlyConfig {
     }
 
     const StringView getString(StringView key) const override {
-        auto it = processed.find(key);
+        auto it = processed.find(String(key));
         if (it == processed.end()) {
             return StringView();
         }
@@ -192,7 +192,7 @@ struct Config final : IEarlyConfig {
     }
 
     int* getInt(StringView key) override {
-        auto it = processed.find(key);
+        auto it = processed.find(String(key));
         if (it == processed.end()) {
             return nullptr;
         }
@@ -203,7 +203,7 @@ struct Config final : IEarlyConfig {
     }
 
     float* getFloat(StringView key) override {
-        auto it = processed.find(key);
+        auto it = processed.find(String(key));
         if (it == processed.end()) {
             return 0;
         }
@@ -214,7 +214,7 @@ struct Config final : IEarlyConfig {
     }
 
     Span<const StringView> getStrings(StringView key) const override {
-        auto it = processed.find(key);
+        auto it = processed.find(String(key));
         if (it == processed.end()) {
             return Span<StringView>();
         }
@@ -226,20 +226,20 @@ struct Config final : IEarlyConfig {
     }
 
     void setString(StringView key, StringView value) override {
-        processed[key] = String(value);
+        processed[String(key)] = String(value);
     }
 
     void setInt(StringView key, int value) override {
-        processed[key] = value;
+        processed[String(key)] = value;
     }
 
     void setFloat(StringView key, float value) override {
-        processed[key] = value;
+        processed[String(key)] = value;
     }
 
     void setStrings(StringView key, Span<const StringView> value) override {
         ownAllocations.insert(String(key));
-        DynamicArray<StringView>& vec = processed[key].emplace<DynamicArray<StringView>>();
+        DynamicArray<StringView>& vec = processed[String(key)].emplace<DynamicArray<StringView>>();
         for (const StringView v : value) {
             // Allocate persistent memory for the StringView array
             String val(v);
@@ -341,7 +341,7 @@ private:
     ICore& core;
     FlatPtrHashSet<IConfigProviderComponent> providers;
     DynamicArray<BanEntry> bans;
-    FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
+    std::map<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
     FlatHashSet<String> ownAllocations;
 };
 
@@ -561,6 +561,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         NetCode::RPC::SetPlayerGravity RPC;
         RPC.Gravity = gravity;
         players.broadcastRPCToAll(RPC);
+
+        updateNetworks();
     }
 
     void setWeather(int weather) override {
@@ -568,6 +570,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         NetCode::RPC::SetPlayerWeather RPC;
         RPC.WeatherID = weather;
         players.broadcastRPCToAll(RPC);
+
+        updateNetworks();
     }
 
     void setWorldTime(Hours time) override {
@@ -582,6 +586,34 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
         RPC.Enable = toggle;
         players.broadcastRPCToAll(RPC);
+    }
+
+    void setData(SettableCoreDataType type, StringView data) override {
+        switch (type) {
+        case SettableCoreDataType::ServerName:
+            config.setString("server_name", data);
+            break;
+        case SettableCoreDataType::ModeText:
+            config.setString("mode_name", data);
+            break;
+        case SettableCoreDataType::MapName:
+            config.setString("map_name", data);
+            break;
+        case SettableCoreDataType::Language:
+            config.setString("language", data);
+            break;
+        case SettableCoreDataType::Password:
+            config.setString("password", data);
+            break;
+        case SettableCoreDataType::AdminPassword:
+            config.setString("rcon_password", data);
+            break;
+        case SettableCoreDataType::URL:
+            config.setString("website", data);
+            break;
+        }
+
+        updateNetworks();
     }
 
     StringView getWeaponName(PlayerWeapon weapon) override {

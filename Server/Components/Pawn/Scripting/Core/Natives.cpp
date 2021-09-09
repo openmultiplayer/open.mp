@@ -426,7 +426,8 @@ SCRIPT_API(SetDeathDropAmount, bool(int amount))
 
 SCRIPT_API(SetGameModeText, bool(std::string const& string))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->setData(SettableCoreDataType::ModeText, string);
+	return true;
 }
 
 SCRIPT_API(SetGravity, bool(float gravity))

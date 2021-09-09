@@ -478,6 +478,9 @@ struct INetwork {
 
 	/// Unban a peer from the network
 	virtual void unban(const IBanEntry& entry) = 0;
+
+	/// Update server parameters
+	virtual void update() = 0;
 };
 
 /// A component interface which allows for writing a network component
