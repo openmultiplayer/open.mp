@@ -483,25 +483,13 @@ void RakNetLegacyNetwork::unban(const IBanEntry& entry) {
     }
 }
 
-void RakNetLegacyNetwork::init(ICore* c) {
-    core = c;
-    core->getEventDispatcher().addEventHandler(this);
-    core->getPlayers().getEventDispatcher().addEventHandler(this);
-    SAMPRakNet::Init(core);
-    SAMPRakNet::SeedToken();
-    lastCookieSeed = Time::now();
-    SAMPRakNet::SeedCookie();
-
+void RakNetLegacyNetwork::update() {
     IConfig& config = core->getConfig();
-    int maxPlayers = *config.getInt("max_players");
-    StringView serverName = config.getString("server_name");
-    int port = *config.getInt("port");
-    int sleep = *config.getInt("sleep");
-    StringView bind = config.getString("bind");
+
     cookieSeedTime = Milliseconds(*config.getInt("cookie_reseed_time"));
     SAMPRakNet::SetTimeout(*config.getInt("player_timeout"));
     SAMPRakNet::SetLogCookies(*config.getInt("logging_cookies"));
-    query = Query(c);
+
     query.setLogQueries(*config.getInt("logging_queries"));
     if (*config.getInt("enable_query")) {
         SAMPRakNet::SetQuery(&query);
@@ -527,7 +515,6 @@ void RakNetLegacyNetwork::init(ICore* c) {
     if (!website.empty()) {
         query.setRuleValue("weburl", String(website));
     }
-    query.setRuleValue("version", "0.3.7-R2 open.mp");
 
     StringView password = config.getString("password");
     query.setPassworded(!password.empty());
@@ -535,6 +522,26 @@ void RakNetLegacyNetwork::init(ICore* c) {
 
     int mtu = *config.getInt("network_mtu");
     rakNetServer.SetMTUSize(mtu);
+}
+
+void RakNetLegacyNetwork::init(ICore* c) {
+    core = c;
+    core->getEventDispatcher().addEventHandler(this);
+    core->getPlayers().getEventDispatcher().addEventHandler(this);
+    SAMPRakNet::Init(core);
+    SAMPRakNet::SeedToken();
+    lastCookieSeed = Time::now();
+    SAMPRakNet::SeedCookie();
+
+    IConfig& config = core->getConfig();
+    int maxPlayers = *config.getInt("max_players");
+    int port = *config.getInt("port");
+    int sleep = *config.getInt("sleep");
+    StringView bind = config.getString("bind");
+    query = Query(c);
+    query.setRuleValue("version", "0.3.7-R2 open.mp");
+
+    update();
 
     if (*config.getInt("announce")) {
         const String get = "/0.3.7/announce/" + std::to_string(port);
@@ -567,7 +574,6 @@ void RakNetLegacyNetwork::init(ICore* c) {
 
     SAMPRakNet::SetPort(port);
     query.setMaxPlayers(maxPlayers);
-    query.setServerName(serverName);
 }
 
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now) {
