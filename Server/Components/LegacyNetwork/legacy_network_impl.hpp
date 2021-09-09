@@ -311,6 +311,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         query.preparePlayerListForQuery();
     }
 
+    void update() override;
+
     void onConnect(IPlayer & player) override {
         query.preparePlayerListForQuery();
     }

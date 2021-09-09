@@ -174,6 +174,10 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	}
 
 	bool onConsoleText(StringView command, StringView parameters) override {
+		if (command == "gamemodetext") {
+			core->setData(SettableCoreDataType::ModeText, parameters);
+			return true;
+		}
 		// todo: add commands
 		return false;
 	}
