@@ -20,6 +20,8 @@
 #include <httplib/httplib.h>
 #pragma clang diagnostic pop
 
+#include <openssl/sha.h>
+
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
     template <typename ...Args>
@@ -694,6 +696,30 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         else {
             handler.onHTTPResponse(int(res.error()), StringView());
         }
+    }
+
+    bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override {
+        String input(String(password) + String(salt));
+
+        SHA256_CTX ctx{};
+        if (!SHA256_Init(&ctx)) {
+            return false;
+        }
+        if (!SHA256_Update(&ctx, input.data(), input.length())) {
+            return false;
+        }
+        unsigned char md[SHA256_DIGEST_LENGTH];
+        if (!SHA256_Final(md, &ctx)) {
+            return false;
+        }
+
+        char* data = output.data();
+        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
+            sprintf(data + 2 * i, "%02X", md[i]);
+        }
+        data[64] = '\0';
+
+        return true;
     }
 
     void addComponent(IComponent* component) {
