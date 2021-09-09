@@ -307,11 +307,6 @@ SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
 	return true;
 }
 
-SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
-{
-	throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
 {
 	IPlayerConsoleData* data = player.queryData<IPlayerConsoleData>();
