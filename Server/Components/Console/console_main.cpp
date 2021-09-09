@@ -8,6 +8,16 @@
 #include <iostream>
 #include "console_impl.hpp"
 
+char const* const whitespace = " \t\n\r\f\v";
+StringView trim(StringView view) {
+	const size_t start = view.find_first_not_of(whitespace);
+	if (start == StringView::npos) {
+		return "";
+	}
+	const size_t end = view.find_last_not_of(whitespace);
+	return view.substr(start, end - start + 1);
+}
+
 struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
 	ICore* core = nullptr;
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
@@ -15,8 +25,6 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 	std::mutex cmdMutex;
 	std::atomic_bool newCmd;
 	String cmd;
-	bool run_ = true;
-	char const* const whitespace_ = " \t\n\r\f\v";
 
 	struct PlayerRconCommandHandler : public SingleNetworkInOutEventHandler {
 		ConsoleComponent& self;
@@ -28,75 +36,47 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 				return false;
 			}
 
-			std::string command = packet.cmd;
+			StringView command = trim(packet.cmd);
 			PlayerConsoleData* data = peer.queryData<PlayerConsoleData>();
 
-			// Trim the command.
-			size_t start = command.find_first_not_of(self.whitespace_);
-			if (start == std::string::npos) {
-				return true;
-			}
-			size_t end = command.find_last_not_of(self.whitespace_) + 1;
-
-			// Get the first word of the command.
-			StringView view = command;
-			size_t split = command.find_first_of(' ', start);
-
-			if (data->hasConsoleAccess())
-			{
+			if (data->hasConsoleAccess()) {
 				if (command.size() < 1) {
 					peer.sendClientMessage(Colour::White(), "You forgot the RCON command!");
 					return true;
 				}
 
-				self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player [%s] sent command: %s", peer.getName().data(), command.c_str());
+				self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player [%s] sent command: %s", peer.getName().data(), command.data());
 
-				if (split == std::string::npos || split == end) {
-					// No parameters.
-					self.eventDispatcher.anyTrue(
-						[view, start, end](ConsoleEventHandler* handler) {
-							return handler->onConsoleText(view.substr(start, end - start), "");
-						}
-					);
-				}
-				else {
-					// Split parameters.
-					self.eventDispatcher.anyTrue(
-						[view, start, end, split](ConsoleEventHandler* handler) {
-							return handler->onConsoleText(view.substr(start, end - start), view.substr(split + 1, end - split));
-						}
-					);
-				}
+				self.send(command);
 			}
 			else {
-				StringView cmd = view.substr(start, split);
-				if (cmd == "login")
-				{
-					if (split == std::string::npos || split == end) {
-						return true;
-					}
+				// Get the first word of the command.
+				size_t split = command.find_first_of(' ');
+				if (split != StringView::npos) {
+					StringView commandName = trim(command.substr(0, split));
+					StringView password = trim(command.substr(split + 1));
+					if (commandName == "login") {
+						bool success = false;
 
-					StringView password = view.substr(split + 1, end - split - 2);
-					bool success = false;
-					
-					if (password == self.core->getConfig().getString("rcon_password"))
-					{
-						data->setConsoleAccessibility(true);
-						self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%s) has logged in.", peer.getID(), peer.getName().data());
-						peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
-						success = true;
-					}
-					else {
-						self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%s) <%s> failed login.", peer.getID(), peer.getName().data(), password.data());
-						peer.sendClientMessage(Colour::White(), "SERVER: Bad admin password. Repeated attempts will get you banned.");
-						success = false;
-					}
-
-					self.eventDispatcher.all(
-						[&peer, &password, &success](ConsoleEventHandler* handler) {
-							handler->onRconLoginAttempt(peer, password, success);
+						if (password == self.core->getConfig().getString("rcon_password"))
+						{
+							data->setConsoleAccessibility(true);
+							self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%s) has logged in.", peer.getID(), peer.getName().data());
+							peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
+							success = true;
 						}
-					);
+						else {
+							self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%s) <%s> failed login.", peer.getID(), peer.getName().data(), password.data());
+							peer.sendClientMessage(Colour::White(), "SERVER: Bad admin password. Repeated attempts will get you banned.");
+							success = false;
+						}
+
+						self.eventDispatcher.all(
+							[&peer, password, success](ConsoleEventHandler* handler) {
+								handler->onRconLoginAttempt(peer, password, success);
+							}
+						);
+					}
 				}
 			}
 			return true;
@@ -132,13 +112,12 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
 	static void ThreadProc(ConsoleComponent* component) {
 		String line;
-		while (component->run_) {
+		while (true) {
 			std::getline(std::cin, line);
 			std::scoped_lock<std::mutex> lock(component->cmdMutex);
 			component->cmd = line;
 			component->newCmd = true;
 		}
-		exit(0);
 	}
 
 	~ConsoleComponent() {
@@ -157,6 +136,32 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 		return eventDispatcher;
 	}
 
+	void send(StringView command) override {
+		// Get the first word of the command.
+		StringView trimmedCommand = trim(command);
+		if (trimmedCommand.length() > 0) {
+			size_t split = trimmedCommand.find_first_of(' ');
+			if (split == StringView::npos) {
+				// No parameters.
+				eventDispatcher.anyTrue(
+					[trimmedCommand](ConsoleEventHandler* handler) {
+						return handler->onConsoleText(trimmedCommand, "");
+					}
+				);
+			}
+			else {
+				// Split parameters.
+				StringView trimmedCommandName = trim(trimmedCommand.substr(0, split));
+				StringView trimmedCommandParams = trim(trimmedCommand.substr(split + 1));
+				eventDispatcher.anyTrue(
+					[trimmedCommandName, trimmedCommandParams](ConsoleEventHandler* handler) {
+						return handler->onConsoleText(trimmedCommandName, trimmedCommandParams);
+					}
+				);
+			}
+		}
+	}
+
 	void onTick(Microseconds elapsed, TimePoint now) override {
 		bool expected = true;
 		if (newCmd.compare_exchange_weak(expected, false)) {
@@ -164,43 +169,12 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 			String command = cmd;
 			cmdMutex.unlock();
 
-			// Trim the command.
-			size_t start = command.find_first_not_of(whitespace_);
-			if (start == std::string::npos) {
-				return;
-			}
-			size_t end = command.find_last_not_of(whitespace_) + 1;
-
-			// Get the first word of the command.
-			StringView view = command;
-			size_t split = command.find_first_of(' ', start);
-			if (split == std::string::npos || split == end) {
-				// No parameters.
-				eventDispatcher.anyTrue(
-					[view, start, end](ConsoleEventHandler* handler) {
-						return handler->onConsoleText(view.substr(start, end - start), "");
-					}
-				);
-			}
-			else {
-				// Split parameters.
-				size_t params = command.find_first_not_of(whitespace_, split);
-				eventDispatcher.anyTrue(
-					[view, start, end, split](ConsoleEventHandler* handler) {
-						return handler->onConsoleText(view.substr(start, end - start), view.substr(split + 1, end - split));
-					}
-				);
-			}
-
-			// todo: add commands
+			send(command);
 		}
 	}
 
 	bool onConsoleText(StringView command, StringView parameters) override {
-		if (command == "exit") {
-			run_ = false;
-			return true;
-		}
+		// todo: add commands
 		return false;
 	}
 } component;
