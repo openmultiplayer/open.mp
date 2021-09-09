@@ -158,6 +158,9 @@ struct ICore {
 	/// Get the ticks per second
 	virtual unsigned tickRate() const = 0;
 
+	/// Hash a password with SHA-256, for backwards compatibility
+	virtual bool sha256(StringView password, StringView salt, StaticArray<char, 64+1>& output) const = 0;
+
 	/// Add a per-RPC event handler for each network for the packet's network ID
 	template <class Packet>
 	inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler) {
