@@ -3,6 +3,7 @@
 #include "Query/query.hpp"
 #include <netcode.hpp>
 #include <raknet/PacketEnumerations.h>
+#include <ttmath/ttmath.h>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
@@ -303,7 +304,7 @@ enum LegacyClientVersion {
     LegacyClientVersion_03DL = 4062
 };
 
-IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, uint32_t version, StringView versionName, uint32_t challenge, StringView name) {
+IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name) {
     const RakNet::PlayerID rid = rpcParams->sender;
 
     if (playerFromRID.find(rpcParams->sender) != playerFromRID.end()) {
@@ -330,6 +331,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
     params.versionName = versionName;
     params.name = name;
     params.bot = isNPC;
+    params.serial = serial;
     newConnectionResult = core->getPlayers().requestPlayer(netData, params);
 
     if (newConnectionResult.first != NewConnectionResult_Success) {
@@ -357,7 +359,34 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         RakNetLegacyBitStream lbs(bs);
         NetCode::RPC::PlayerConnect playerConnectRPC;
         if (playerConnectRPC.read(lbs)) {
-            IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
+
+            bool serialIsInvalid = true;
+            String serial;
+            ttmath::UInt<100> serialNumber;
+            ttmath::uint remainder = 0;
+
+            serialNumber.FromString(playerConnectRPC.Key.data, 16);
+            serialNumber.DivInt(1001, remainder);
+
+            if (remainder == 0) {
+                serial = serialNumber.ToString(16);
+                if (serial.size() != 0 && serial.size() < 50) {
+                    serialIsInvalid = false;
+                }
+            }
+
+            if (serialIsInvalid) {
+                PeerAddress address;
+                address.v4 = rpcParams->sender.binaryAddress;
+
+                char out[16]{ 0 };
+                PeerAddress::ToString(address, out, sizeof(out));
+
+                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %s", out);
+                network->rakNetServer.Kick(rpcParams->sender);
+            }
+
+            IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
             if (newPeer) {
                 network->inOutEventDispatcher.all(
                     [newPeer, &lbs](NetworkInOutEventHandler* handler) {
@@ -391,7 +420,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
         RakNetLegacyBitStream lbs(bs);
         NetCode::RPC::NPCConnect NPCConnectRPC;
         if (NPCConnectRPC.read(lbs)) {
-            IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
+            IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
             if (newPeer) {
                 network->inOutEventDispatcher.all(
                     [newPeer, &lbs](NetworkInOutEventHandler* handler) {

@@ -116,18 +116,6 @@ SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 	return true;
 }
 
-SCRIPT_API(Ban, bool(IPlayer& player))
-{
-	player.ban();
-	return true;
-}
-
-SCRIPT_API(BanEx, bool(IPlayer& player, std::string const& reason))
-{
-	player.ban(reason);
-	return true;
-}
-
 SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 {
 	PeerAddress address;
@@ -203,12 +191,6 @@ SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
 	return true;
 }
 
-SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, std::string const& string, int time, int style))
-{
-	player.sendGameText(string, Milliseconds(time), style);
-	return true;
-}
-
 int getConfigOptionAsInt(std::string const& cvar) {
 	IConfig* config = PawnManager::Get()->config;
 	auto res = config->getNameFromAlias(cvar);
@@ -275,12 +257,6 @@ SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
 	throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
-{
-	version = player.getClientVersionName();
-	return true;
-}
-
 SCRIPT_API(GetServerTickRate, int())
 {
 	return PawnManager::Get()->core->tickRate();
@@ -304,26 +280,6 @@ SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buff
 SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
 {
 	weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
-	return true;
-}
-
-SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
-{
-	throw pawn_natives::NotImplemented();
-}
-
-SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
-{
-	IPlayerConsoleData* data = player.queryData<IPlayerConsoleData>();
-	if (data) {
-		return data->hasConsoleAccess();
-	}
-	return false;
-}
-
-SCRIPT_API(Kick, bool(IPlayer& player))
-{
-	player.kick();
 	return true;
 }
 
@@ -391,21 +347,9 @@ SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
 	throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer& killee, int weapon))
-{
-	player.sendDeathMessage(killee, killer, weapon);
-	return true;
-}
-
 SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, std::string const& message))
 {
 	PawnManager::Get()->players->sendChatMessageToAll(sender, message);
-	return true;
-}
-
-SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std::string const& message))
-{
-	player.sendChatMessage(sender, message);
 	return true;
 }
 

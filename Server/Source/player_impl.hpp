@@ -33,6 +33,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     Vector3 cameraLookAt_;
     GTAQuat rot_;
     String name_;
+    String serial_;
     FlatHashMap<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Colour colour_;
@@ -580,6 +581,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     StringView getName() const override {
         return name_;
+    }
+
+    StringView getSerial() const override {
+        return serial_;
     }
 
     int getID() const override {
