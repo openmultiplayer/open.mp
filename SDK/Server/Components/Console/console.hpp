@@ -12,6 +12,9 @@ struct IConsoleComponent : public IComponent {
 
 	/// Get the ConsoleEventHandler event dispatcher
 	virtual IEventDispatcher<ConsoleEventHandler>& getEventDispatcher() = 0;
+
+	/// Send a console command
+	virtual void send(StringView command) = 0;
 };
 
 static const UUID PlayerConsoleData_UUID = UUID(0x9f8d20f2f471cbae);
