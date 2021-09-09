@@ -414,6 +414,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Get the player's name
 	virtual StringView getName() const = 0;
 
+	/// Get the player's serial (gpci)
+	virtual StringView getSerial() const = 0;
+
 	/// Give a weapon to the player
 	virtual void giveWeapon(WeaponSlotData weapon) = 0;
 
