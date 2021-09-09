@@ -361,11 +361,11 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
         if (playerConnectRPC.read(lbs)) {
 
             bool serialIsInvalid = true;
-            StringView serial;
+            String serial;
             ttmath::UInt<100> serialNumber;
             ttmath::uint remainder = 0;
 
-            serialNumber.FromString(playerConnectRPC.Key, 16);
+            serialNumber.FromString(playerConnectRPC.Key.data, 16);
             serialNumber.DivInt(1001, remainder);
 
             if (remainder == 0) {
