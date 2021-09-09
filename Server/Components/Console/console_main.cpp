@@ -8,8 +8,8 @@
 #include <iostream>
 #include "console_impl.hpp"
 
-char const* const whitespace = " \t\n\r\f\v";
 StringView trim(StringView view) {
+	char const* const whitespace = " \t\n\r\f\v";
 	const size_t start = view.find_first_not_of(whitespace);
 	if (start == StringView::npos) {
 		return "";
