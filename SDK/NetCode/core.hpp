@@ -124,6 +124,7 @@ namespace NetCode {
 			uint32_t     LagCompensation;
 			NetworkString  ServerName;
 			NetworkArray<uint8_t> VehicleModels;
+			bool         EnableVehicleFriendlyFire;
 
 			bool read(INetworkBitStream& bs) {
 				bs.read<NetworkBitStreamValueType::BIT>(EnableZoneNames);
@@ -152,7 +153,8 @@ namespace NetCode {
 				bs.read<NetworkBitStreamValueType::UINT32>(Multiplier);
 				bs.read<NetworkBitStreamValueType::UINT32>(LagCompensation);
 				bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(ServerName);
-				return bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8>(VehicleModels);
+				bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8>(VehicleModels);
+				return bs.read<NetworkBitStreamValueType::UINT32>(EnableVehicleFriendlyFire);
 			}
 
 			void write(INetworkBitStream& bs) const {
@@ -183,6 +185,7 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT32(LagCompensation));
 				bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(ServerName));
 				bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(VehicleModels));
+				bs.write(NetworkBitStreamValue::UINT32(EnableVehicleFriendlyFire));
 			}
 		};
 
