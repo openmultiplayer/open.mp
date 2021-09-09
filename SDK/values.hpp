@@ -56,7 +56,7 @@ enum PlayerMarkerMode {
     PlayerMarkerMode_Streamed
 };
 
-static const FlatHashMap<String, Variant<int, String, float, DynamicArray<StringView>>> Defaults {
+static const std::map<String, Variant<int, String, float, DynamicArray<StringView>>> Defaults {
     { "max_players", 50 },
     { "sleep", 5 },
     { "port", 7777 },

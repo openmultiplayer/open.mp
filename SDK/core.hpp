@@ -22,6 +22,17 @@ struct CoreEventHandler {
 	virtual void onTick(Microseconds elapsed, TimePoint now) = 0;
 };
 
+/// Types of data can be set in core during runtime
+enum class SettableCoreDataType {
+	ServerName,
+	ModeText,
+	MapName,
+	Language,
+	URL,
+	Password,
+	AdminPassword,
+};
+
 struct IConfig {
 	/// Get a variable as a string
 	virtual const StringView getString(StringView key) const = 0;
@@ -140,6 +151,9 @@ struct ICore {
 	/// Toggle server stunt bonus
 	virtual void toggleStuntBonus(bool toggle) = 0;
 
+	/// Set string data during runtime
+	virtual void setData(SettableCoreDataType type, StringView data) = 0;
+
 	/// Get weapon's name as a string
 	virtual StringView getWeaponName(PlayerWeapon weapon) = 0;
 
@@ -226,6 +240,14 @@ struct ICore {
 		const FlatPtrHashSet<INetwork>& networks = getNetworks();
 		for (INetwork* network : networks) {
 			network->getEventDispatcher().removeEventHandler(handler);
+		}
+	}
+
+	/// Update network and query parameter cache
+	inline void updateNetworks() {
+		const FlatPtrHashSet<INetwork>& networks = getNetworks();
+		for (INetwork* network : networks) {
+			network->update();
 		}
 	}
 };
