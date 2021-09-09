@@ -283,7 +283,7 @@ SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
 
 SCRIPT_API(GetServerTickRate, int())
 {
-	throw pawn_natives::NotImplemented();
+	return PawnManager::Get()->core->tickRate();
 }
 
 SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
@@ -314,7 +314,11 @@ SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
 
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	IPlayerConsoleData* data = player.queryData<IPlayerConsoleData>();
+	if (data) {
+		return data->hasConsoleAccess();
+	}
+	return false;
 }
 
 SCRIPT_API(Kick, bool(IPlayer& player))

@@ -155,6 +155,9 @@ struct ICore {
 	/// @param[opt] data The POST data
 	virtual void requestHTTP(HTTPResponseHandler& handler, HTTPRequestType type, StringView url, StringView data = StringView()) = 0;
 
+	/// Get the ticks per second
+	virtual unsigned tickRate() const = 0;
+
 	/// Add a per-RPC event handler for each network for the packet's network ID
 	template <class Packet>
 	inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler) {
