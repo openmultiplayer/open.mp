@@ -351,6 +351,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     ComponentList components;
     Config config;
     FILE* logFile;
+    bool run_;
+    unsigned ticksPerSecond;
+    unsigned ticksThisSecond;
+    TimePoint ticksPerSecondLastUpdate;
 
     int* EnableZoneNames;
     int* UsePlayerPedAnims;
@@ -378,13 +382,15 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     String ServerName;
     int EnableLogTimestamp;
     String LogTimestampFormat;
-	bool run_ = true;
 
     Core() :
         players(*this),
         components(*this),
         config(*this),
         logFile(nullptr),
+        run_(true),
+        ticksPerSecond(0u),
+        ticksThisSecond(0u),
         EnableLogTimestamp(false)
     {
         players.getEventDispatcher().addEventHandler(this);
@@ -443,6 +449,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
     IConfig& getConfig() override {
         return config;
+    }
+
+    unsigned tickRate() const override {
+        return ticksPerSecond;
     }
 
     SemanticVersion getSDKVersion() override {
@@ -762,6 +772,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             const TimePoint now = Time::now();
             Microseconds us = duration_cast<Microseconds>(now - prev);
             prev = now;
+
+            if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
+                ticksPerSecondLastUpdate = now;
+                ticksPerSecond = ticksThisSecond;
+                ticksThisSecond = 0u;
+            }
+            ++ticksThisSecond;
+
             eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
 
             std::this_thread::sleep_until(now + sleepTimer);
@@ -771,6 +789,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 	bool onConsoleText(StringView command, StringView parameters) override {
 		if (command == "exit") {
 			run_ = false;
+            return true;
 		}
 		return false;
 	}
