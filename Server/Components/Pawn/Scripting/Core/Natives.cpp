@@ -327,11 +327,6 @@ SCRIPT_API(Kick, bool(IPlayer& player))
 	return true;
 }
 
-SCRIPT_API(KillTimer, bool(int timerid))
-{
-	throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
 {
 	*PawnManager::Get()->config->getInt("use_limit_global_chat_radius") = true;
@@ -416,7 +411,11 @@ SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std
 
 SCRIPT_API(SendRconCommand, bool(std::string const& command))
 {
-	throw pawn_natives::NotImplemented();
+	IConsoleComponent* console = PawnManager::Get()->console;
+	if (console) {
+		console->send(command);
+	}
+	return true;
 }
 
 SCRIPT_API(SetDeathDropAmount, bool(int amount))
