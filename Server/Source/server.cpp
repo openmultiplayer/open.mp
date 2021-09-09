@@ -4,7 +4,6 @@
 #include <cxxopts.hpp>
 #include <sdk.hpp>
 #include "core_impl.hpp"
-#include "component_loader.hpp"
 
 int main(int argc, char** argv)
 {
@@ -53,9 +52,5 @@ int main(int argc, char** argv)
         );
     }
 
-    DynamicArray<IComponent*> components = loadComponents(*core, "components");
-    core->printLn("Loaded %i component(s)", components.size());
-    core->addComponents(components);
-    core->initiated();
     core->run();
 }

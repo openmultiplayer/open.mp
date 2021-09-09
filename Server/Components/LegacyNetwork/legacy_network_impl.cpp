@@ -4,8 +4,11 @@
 #include <netcode.hpp>
 #include <raknet/PacketEnumerations.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib/httplib.h>
+#pragma clang diagnostic pop
 
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
@@ -567,7 +570,7 @@ void RakNetLegacyNetwork::init(ICore* c) {
     query.setServerName(serverName);
 }
 
-void RakNetLegacyNetwork::onTick(Microseconds elapsed) {
+void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now) {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
         auto pos = playerFromRID.find(pkt->playerId);
         if (pos != playerFromRID.end()) {
@@ -597,7 +600,6 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed) {
         rakNetServer.DeallocatePacket(pkt);
     }
 
-    auto now = Time::now();
     if (now - lastCookieSeed > cookieSeedTime) {
         SAMPRakNet::SeedCookie();
         lastCookieSeed = now;

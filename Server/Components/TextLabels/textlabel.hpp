@@ -110,7 +110,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
 
 struct TextLabel final : public TextLabelBase<ITextLabel> {
     int virtualWorld;
-    UniqueIDArray<IPlayer, IPlayerPool::Cnt> streamedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
 
     void restream() override {
         for (IPlayer* player : streamedFor_.entries()) {

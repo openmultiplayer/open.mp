@@ -2,7 +2,7 @@
 
 struct PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
 	ICore * core;
-	MarkedPoolStorage<Pickup, IPickup, IPickupsComponent::Cnt> storage;
+	MarkedPoolStorage<Pickup, IPickup, IPickupsComponent::Capacity> storage;
 	DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
 	IPlayerPool * players = nullptr;
 	StreamConfigHelper streamConfigHelper;

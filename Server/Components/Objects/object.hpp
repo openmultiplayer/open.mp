@@ -179,8 +179,8 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 struct Object final : public BaseObject<IObject> {
 	IPlayerPool* players_;
-	StaticBitset<IPlayerPool::Cnt> delayedProcessing_;
-	StaticArray<TimePoint, IPlayerPool::Cnt> delayedProcessingTime_;
+	StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
+	StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
 
 	Object() :
 		players_(nullptr)
