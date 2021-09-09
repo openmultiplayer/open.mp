@@ -4,6 +4,7 @@
 #include <fstream>
 #include <thread>
 #include <sstream>
+#include <filesystem>
 #include <events.hpp>
 #include <pool.hpp>
 #include <nlohmann/json.hpp>
@@ -13,8 +14,11 @@
 #include <Server/Components/Console/console.hpp>
 #include "util.hpp"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib/httplib.h>
+#pragma clang diagnostic pop
 
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
@@ -57,6 +61,10 @@ struct ComponentList : public IComponentList {
 
     auto add(IComponent* component) {
         return components.try_emplace(component->getUUID(), component);
+    }
+
+    size_t size() const {
+        return components.size();
     }
 
 private:
@@ -386,21 +394,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         EnableLogTimestamp(false)
     {
         players.getEventDispatcher().addEventHandler(this);
-    }
 
-    ~Core() {
-		components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
-        players.getEventDispatcher().removeEventHandler(this);
-        if (logFile) {
-            fclose(logFile);
-        }
-    }
-
-    IConfig& getConfig() override {
-        return config;
-    }
-
-    void initiated() {
+        loadComponents("components");
         config.init();
 
         // Don't use config before this point
@@ -441,7 +436,19 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
+        components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+    }
+
+    ~Core() {
 		components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        players.getEventDispatcher().removeEventHandler(this);
+        if (logFile) {
+            fclose(logFile);
+        }
+    }
+
+    IConfig& getConfig() override {
+        return config;
     }
 
     unsigned tickRate() const override {
@@ -573,7 +580,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
     StringView getWeaponName(PlayerWeapon weapon) override {
         int index = int(weapon);
-        if (weapon < PlayerWeapon_Fist && weapon > PlayerWeapon_End) {
+        if (weapon < 0 || weapon > PlayerWeapon_End) {
             return "Invalid";
         }
         return PlayerWeaponNames[index];
@@ -685,19 +692,75 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    void addComponents(const DynamicArray<IComponent*>& newComponents) {
-        for (auto& component : newComponents) {
-            auto res = components.add(component);
-            if (!res.second) {
-                printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUUID());
-            }
-            if (component->componentType() == ComponentType::Network) {
-                networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
-            }
-            else if (component->componentType() == ComponentType::ConfigProvider) {
-                config.addProvider(static_cast<IConfigProviderComponent*>(component));
+    void addComponent(IComponent* component) {
+        auto res = components.add(component);
+        if (!res.second) {
+            printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUUID());
+        }
+        if (component->componentType() == ComponentType::Network) {
+            networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
+        }
+        else if (component->componentType() == ComponentType::ConfigProvider) {
+            config.addProvider(static_cast<IConfigProviderComponent*>(component));
+        }
+    }
+
+    IComponent* loadComponent(const std::filesystem::path& path) {
+        printLn("Loading component %s", path.filename().u8string().c_str());
+        auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
+        if (componentLib == nullptr) {
+            printLn("\tFailed to load component.");
+            return nullptr;
+        }
+        ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
+        if (OnComponentLoad == nullptr) {
+            printLn("\tFailed to load component.");
+            LIBRARY_FREE(componentLib);
+            return nullptr;
+        }
+        IComponent* component = OnComponentLoad();
+        if (component != nullptr) {
+            printLn("\tSuccessfully loaded component %s with UUID %016llx", component->componentName().data(), component->getUUID());
+            return component;
+        }
+        else {
+            printLn("\tFailed to load component.");
+            LIBRARY_FREE(componentLib);
+            return nullptr;
+        }
+    }
+
+    void loadComponents(const std::filesystem::path& path) {
+        std::filesystem::create_directory(path);
+
+        Span<const StringView> componentsCfg = config.getStrings("components");
+        if (componentsCfg.empty()) {
+            for (auto& p : std::filesystem::directory_iterator(path)) {
+                if (p.path().extension() == LIBRARY_EXT) {
+                    IComponent* component = loadComponent(p);
+                    if (component) {
+                        addComponent(component);
+                    }
+                }
             }
         }
+        else {
+            for (const StringView component : componentsCfg) {
+                auto file = std::filesystem::path(path) / component;
+                if (!file.has_extension()) {
+                    file.replace_extension(LIBRARY_EXT);
+                }
+
+                if (std::filesystem::exists(file)) {
+                    IComponent* component = loadComponent(file);
+                    if (component) {
+                        addComponent(component);
+                    }
+                }
+            }
+        }
+
+        printLn("Loaded %i component(s)", components.size());
     }
 
     void run() {
@@ -717,7 +780,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             }
             ++ticksThisSecond;
 
-            eventDispatcher.dispatch(&CoreEventHandler::onTick, us);
+            eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
 
             std::this_thread::sleep_until(now + sleepTimer);
         }
