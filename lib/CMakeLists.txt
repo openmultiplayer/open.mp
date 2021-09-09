@@ -140,6 +140,11 @@ target_compile_options(raknet
 		"-Wno-#pragma-messages"
 )
 
+# ttmath
+# ------
+add_subdirectory(ttmath)
+GroupSourcesByFolder(ttmath)
+set_property(TARGET ttmath PROPERTY FOLDER "lib")
 
 # GLM
 # ---

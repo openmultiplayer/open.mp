@@ -10,3 +10,6 @@
 [submodule "lib/RakNet"]
 	path = lib/RakNet
 	url = https://github.com/openmultiplayer/RakNet
+[submodule "lib/ttmath"]
+	path = lib/ttmath
+	url = https://github.com/openmultiplayer/ttmath

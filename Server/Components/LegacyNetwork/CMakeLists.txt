@@ -3,6 +3,7 @@ add_server_component(${ProjectId})
 
 target_link_libraries(${ProjectId} PRIVATE
 	raknet
+	ttmath
 	CONAN_PKG::cpp-httplib
 	CONAN_PKG::openssl
 )

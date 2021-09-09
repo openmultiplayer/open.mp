@@ -326,6 +326,7 @@ struct PeerRequestParams {
 	StringView versionName;
 	bool bot;
 	StringView name;
+	StringView serial;
 };
 
 /// An event handler for network events
