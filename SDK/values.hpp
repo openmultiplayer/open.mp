@@ -108,5 +108,6 @@ static const FlatHashMap<String, Variant<int, String, float, DynamicArray<String
     { "logging_sqlite", false },
     { "logging_sqlite_queries", false },
     { "logging_cookies", false },
-    { "rcon_allow_teleport", false }
+    { "rcon_allow_teleport", false },
+    { "vehicle_friendly_fire", false }
 };
