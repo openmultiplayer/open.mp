@@ -60,7 +60,7 @@ struct PlayerClassData final : IPlayerClassData {
 };
 
 struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
-    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesComponent::Cnt> storage;
+    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesComponent::Capacity> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;

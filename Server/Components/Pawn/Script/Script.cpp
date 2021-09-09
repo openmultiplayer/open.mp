@@ -10,12 +10,6 @@
 
 #include "Script.hpp"
 
-template <typename T, typename U>
-inline constexpr auto CEILDIV(T n, U d) -> decltype (n / d)
-{
-	return (n) ? ((n - (T)1) / d + (decltype (n / d))1) : (decltype (n / d))0;
-}
-
 extern "C"
 {
 	int AMXEXPORT amx_ArgsInit(AMX * amx);

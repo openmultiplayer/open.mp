@@ -7,7 +7,7 @@
 
 struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core;
-    MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Cnt> storage;
+    MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Capacity> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
     StreamConfigHelper streamConfigHelper;

@@ -13,7 +13,7 @@
 
 template <typename T, size_t Count>
 struct IReadOnlyPool {
-    static const size_t Cnt = Count;
+    static const size_t Capacity = Count;
 
     /// Check if an index is claimed
     virtual bool valid(int index) const = 0;
@@ -153,7 +153,7 @@ struct PoolIDProvider {
 
 template <typename Type, typename Interface, size_t Count>
 struct StaticPoolStorageBase : public NoCopy {
-    static const size_t Cnt = Count;
+    static const size_t Capacity = Count;
 
     int findFreeIndex(int from = 0) {
         return allocated_.findFreeIndex(from);
@@ -162,10 +162,10 @@ struct StaticPoolStorageBase : public NoCopy {
     int claim() {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (reinterpret_cast<Type*>(&pool_[freeIdx * sizeof(Type)])) Type();
-            allocated_.add(freeIdx, reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]));
+            new (getPtr(freeIdx)) Type();
+            allocated_.add(freeIdx, *getPtr(freeIdx));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                reinterpret_cast<Type&>(pool_[freeIdx * sizeof(Type)]).poolID = freeIdx;
+                getPtr(freeIdx)->poolID = freeIdx;
             }
         }
         return freeIdx;
@@ -174,10 +174,10 @@ struct StaticPoolStorageBase : public NoCopy {
     int claim(int hint) {
         assert(hint < Count);
         if (!valid(hint)) {
-            new (reinterpret_cast<Type*>(&pool_[hint * sizeof(Type)])) Type();
-            allocated_.add(hint, reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]));
+            new (getPtr(hint)) Type();
+            allocated_.add(hint, *getPtr(hint));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
-                reinterpret_cast<Type&>(pool_[hint * sizeof(Type)]).poolID = hint;
+                getPtr(hint)->poolID = hint;
             }
             return hint;
         }
@@ -196,7 +196,7 @@ struct StaticPoolStorageBase : public NoCopy {
 
     Type& get(int index) {
         assert(index < Count);
-        return reinterpret_cast<Type&>(pool_[index * sizeof(Type)]);
+        return *getPtr(index);
     }
 
     const FlatPtrHashSet<Interface>& entries() {
@@ -209,18 +209,29 @@ struct StaticPoolStorageBase : public NoCopy {
 
     void remove(int index) {
         assert(index < Count);
-        allocated_.remove(index, reinterpret_cast<Type&>(pool_[index * sizeof(Type)]));
-        reinterpret_cast<Type&>(pool_[index * sizeof(Type)]).~Type();
+        allocated_.remove(index, *getPtr(index));
+        getPtr(index)->~Type();
+    }
+
+    ~StaticPoolStorageBase() {
+        // Placement destructor.
+        for (Interface* const ptr : allocated_.entries()) {
+            static_cast<Type*>(ptr)->~Type();
+        }
     }
 
 protected:
+    inline Type* getPtr(int index) {
+        return reinterpret_cast<Type*>(&pool_[index * CEILDIV(sizeof(Type), alignof(Type)) * alignof(Type)]);
+    }
+
     char pool_[Count * sizeof(Type)];
     UniqueIDArray<Interface, Count> allocated_;
 };
 
 template <typename Type, typename Interface, size_t Count>
 struct DynamicPoolStorageBase : public NoCopy {
-    static const size_t Cnt = Count;
+    static const size_t Capacity = Count;
 
     int findFreeIndex(int from = 0) {
         for (int i = from; i < Count; ++i) {
@@ -285,6 +296,12 @@ struct DynamicPoolStorageBase : public NoCopy {
         pool_[index] = nullptr;
     }
 
+    ~DynamicPoolStorageBase() {
+        for (Interface* const ptr : allocated_.entries()) {
+            delete static_cast<Type*>(ptr);
+        }
+    }
+
 protected:
     StaticArray<Type*, Count> pool_ = { nullptr };
     UniqueEntryArray<Interface> allocated_;
@@ -313,7 +330,7 @@ struct MarkedPoolStorageLifetimeBase final : public PoolBase {
     }
 
     void release(int index, bool force) {
-        assert(index < PoolBase::Cnt);
+        assert(index < PoolBase::Capacity);
         // If locked, mark for deletion on unlock
         if (marked_.test(index * 2)) {
             marked_.set(index * 2 + 1);
@@ -326,7 +343,7 @@ struct MarkedPoolStorageLifetimeBase final : public PoolBase {
 
 private:
     /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
-    StaticBitset<PoolBase::Cnt * 2> marked_;
+    StaticBitset<PoolBase::Capacity * 2> marked_;
 };
 
 /// Pool storage which doesn't mark entries for release but immediately releases

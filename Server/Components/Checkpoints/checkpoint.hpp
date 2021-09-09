@@ -10,6 +10,9 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 	float size_;
 	bool inside_;
 	bool enabled_ = false;
+	IPlayer& player_;
+
+	PlayerCheckpointData(IPlayer& player) : player_(player) {}
 
 	CheckpointType getType() const override {
 		return type_;
@@ -55,7 +58,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 		delete this;
 	}
 
-	void enable(IPlayer& player) override {
+	void enable() override {
 		// Cannot be within a checkpoint once it's created
 		inside_ = false;
 		enabled_ = true;
@@ -65,7 +68,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 			NetCode::RPC::SetCheckpoint setCP;
 			setCP.position = position_;
 			setCP.size = size_;
-			player.sendRPC(setCP);
+			player_.sendRPC(setCP);
 			break;
 		case CheckpointType::RACE_NORMAL:
 		case CheckpointType::RACE_FINISH:
@@ -81,14 +84,14 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 			setRaceCP.position = position_;
 			setRaceCP.nextPosition = nextPosition_;
 			setRaceCP.size = size_;
-			player.sendRPC(setRaceCP);
+			player_.sendRPC(setRaceCP);
 			break;
 		default:
 			return;
 		}
 	}
 
-	void disable(IPlayer& player) override {
+	void disable() override {
 		// Cannot be within a checkpoint once it's disabled
 		inside_ = false;
 		enabled_ = false;
@@ -96,7 +99,7 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 		switch (type_) {
 		case CheckpointType::STANDARD:
 			NetCode::RPC::DisableCheckpoint disableCP;
-			player.sendRPC(disableCP);
+			player_.sendRPC(disableCP);
 			break;
 		case CheckpointType::RACE_NORMAL:
 		case CheckpointType::RACE_FINISH:
@@ -108,10 +111,14 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
 		case CheckpointType::RACE_AIR_THREE:
 		case CheckpointType::RACE_AIR_FOUR:
 			NetCode::RPC::DisableRaceCheckpoint disableRaceCP;
-			player.sendRPC(disableRaceCP);
+			player_.sendRPC(disableRaceCP);
 			break;
 		default:
 			return;
 		}
+	}
+
+	bool isEnabled() const override {
+		return enabled_;
 	}
 };
