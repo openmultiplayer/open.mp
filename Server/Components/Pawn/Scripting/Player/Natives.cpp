@@ -868,3 +868,9 @@ SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
 {
 	throw pawn_natives::NotImplemented();
 }
+
+SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
+{
+	output = player.getSerial();
+	return true;
+}
