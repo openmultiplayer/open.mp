@@ -380,6 +380,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     int* Multiplier;
     int* LagCompensation;
     String ServerName;
+    int* EnableVehicleFriendlyFire;
+
     int EnableLogTimestamp;
     String LogTimestampFormat;
 
@@ -427,8 +429,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         WeaponRate = config.getInt("weapon_rate");
         Multiplier = config.getInt("multiplier");
         LagCompensation = config.getInt("lag_compensation");
-        EnableLogTimestamp = *config.getInt("logging_timestamp");
         ServerName = config.getString("server_name");
+        EnableVehicleFriendlyFire = config.getInt("vehicle_friendly_fire");
+
+        EnableLogTimestamp = *config.getInt("logging_timestamp");
         LogTimestampFormat = config.getString("logging_timestamp_format");
 
         config.optimiseBans();
@@ -616,9 +620,9 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        StaticArray<uint8_t, 212> emptyModel;
+        static const StaticArray<uint8_t, 212> emptyModel{ 0 };
         playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
-
+        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
         player.sendRPC(playerInitRPC);
     }
 

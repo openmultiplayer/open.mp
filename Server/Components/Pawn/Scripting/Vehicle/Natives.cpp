@@ -332,5 +332,6 @@ SCRIPT_API(AddStaticVehicleEx, bool(int modelid, Vector3 spawn, float angle, int
 
 SCRIPT_API(EnableVehicleFriendlyFire, bool())
 {
-    throw pawn_natives::NotImplemented();
+    *PawnManager::Get()->config->getInt("vehicle_friendly_fire") = true;
+    return true;
 }
