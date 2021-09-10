@@ -339,6 +339,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void unban(const IBanEntry& entry) override;
 
     typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
+    typedef std::map<IPlayer*, unsigned int> PerSecondRecvMsgMap;
+    typedef std::map<IPlayer*, TimePoint> LastRecvMsgProcessMap;
 
     ICore* core;
     Query query;
@@ -348,6 +350,6 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     RakNetLegacyBitStream wlbs;
     Milliseconds cookieSeedTime;
     TimePoint lastCookieSeed;
-    TimePoint lastRecvMsgProcess; // Last time we stored per second received messages count
-    FlatHashMap<IPlayer, unsigned int> perSecondRecvMsg; // Per connection messages received per second 
+    LastRecvMsgProcessMap lastRecvMsgProcess; // Last time we stored per second received messages count
+    PerSecondRecvMsgMap receivedMessages; // Stored received messages
 };

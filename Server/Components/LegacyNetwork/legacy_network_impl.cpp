@@ -348,6 +348,8 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
     IPlayer& player = *newConnectionResult.second;
     playerFromRID.emplace(rid, player);
+    receivedMessages.emplace(&player, 0);
+    lastRecvMsgProcess.emplace(&player, std::chrono::steady_clock::now());
 
     return newConnectionResult.second;
 }
@@ -456,9 +458,12 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnec
     IPlayer& player = pos->second;
     playerFromRID.erase(rid);
 
-    FlatHashMap<IPlayer, unsigned int>::iterator it = perSecondRecvMsg.find(player);
-    if (it != perSecondRecvMsg.end()) {
-        perSecondRecvMsg.erase(player);
+    if (receivedMessages.find(&player) != receivedMessages.end()) {
+        receivedMessages.erase(&player);
+    }
+
+    if (lastRecvMsgProcess.find(&player) != lastRecvMsgProcess.end()) {
+        lastRecvMsgProcess.erase(&player);
     }
     
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, reason);
@@ -572,7 +577,7 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
     stats.messagesReceived
         = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
 
-    stats.messagesReceivedPerSecond = perSecondRecvMsg[*player];
+    stats.messagesReceivedPerSecond = stats.messagesReceived - receivedMessages[player];
     stats.bytesReceived = BITS_TO_BYTES(raknetStats->bitsReceived + raknetStats->bitsWithBadCRCReceived);
     stats.acknowlegementsReceived = raknetStats->acknowlegementsReceived;
     stats.duplicateAcknowlegementsReceived = raknetStats->duplicateAcknowlegementsReceived;
@@ -715,10 +720,10 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now) {
                     });
             }
 
-            if (lastRecvMsgProcess - now >= Seconds(1)) {
-                lastRecvMsgProcess = now;
+            if (now - lastRecvMsgProcess[&player] >= Seconds(1)) {
+                lastRecvMsgProcess[&player] = now;
                 NetworkStats stats = getStatistics(player.getID());
-                perSecondRecvMsg[player] = stats.messagesReceived - stats.messagesReceivedPerSecond;
+                receivedMessages[&player] = stats.messagesReceived;
             }
         }
         rakNetServer.DeallocatePacket(pkt);
