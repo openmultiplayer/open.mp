@@ -346,6 +346,8 @@ struct NetworkStats {
 	double bitsPerSecond;
 	double bpsSent;
 	double bpsReceived;
+	bool isActive; // only for player network statistics
+	int connectMode; // only for player network statistics
 };
 
 /// An event handler for network events
