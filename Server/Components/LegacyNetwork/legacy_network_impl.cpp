@@ -3,6 +3,7 @@
 #include "Query/query.hpp"
 #include <netcode.hpp>
 #include <raknet/PacketEnumerations.h>
+#include <raknet/RakPeer.h>
 #include <ttmath/ttmath.h>
 
 #pragma clang diagnostic push
@@ -454,7 +455,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnec
 
     IPlayer& player = pos->second;
     playerFromRID.erase(rid);
-
+    
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, reason);
 }
 
@@ -510,6 +511,83 @@ void RakNetLegacyNetwork::unban(const IBanEntry& entry) {
             rakNetServer.RemoveFromBanList(out);
         }
     }
+}
+
+NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
+    NetworkStats stats = { 0 };
+
+    RakNet::PlayerID playerID;
+    IPlayer* player;
+
+    if (playerIndex == -1) {
+        playerID = RakNet::UNASSIGNED_PLAYER_ID;
+    }
+    else {
+        playerID = rakNetServer.GetPlayerIDFromIndex(playerIndex);
+        // Return empty statistics structure if passed index does not exist
+        if (playerID == RakNet::UNASSIGNED_PLAYER_ID) {
+            return stats;
+        }
+
+        player = &core->getPlayers().get(playerIndex);
+        // Return empty statistics structure if player is not found
+        if (player == nullptr) {
+            return stats;
+        }
+    }
+
+    RakNet::RakNetStatisticsStruct* raknetStats = rakNetServer.GetStatistics(playerID);
+
+    // Return empty statistics structure if raknet failed to provide statistics
+    if (raknetStats == nullptr) {
+        return stats;
+    }
+
+    RakNet::RakNetTime time = RakNet::GetTime();
+    double elapsedTime;
+    elapsedTime = (time - raknetStats->connectionStartTime) / 1000.0f;
+
+    stats.connectionStartTime = raknetStats->connectionStartTime;
+    stats.messageSendBuffer
+        = raknetStats->messageSendBuffer[RakNet::SYSTEM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::HIGH_PRIORITY] +
+        raknetStats->messageSendBuffer[RakNet::MEDIUM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::LOW_PRIORITY];
+
+    stats.messagesSent
+        = raknetStats->messagesSent[RakNet::SYSTEM_PRIORITY] + raknetStats->messagesSent[RakNet::HIGH_PRIORITY] +
+        raknetStats->messagesSent[RakNet::MEDIUM_PRIORITY] + raknetStats->messagesSent[RakNet::LOW_PRIORITY];
+
+    stats.totalBytesSent = BITS_TO_BYTES(raknetStats->totalBitsSent);
+    stats.acknowlegementsSent = raknetStats->acknowlegementsSent;
+    stats.acknowlegementsPending = raknetStats->acknowlegementsPending;
+    stats.messagesOnResendQueue = raknetStats->messagesOnResendQueue;
+    stats.messageResends = raknetStats->messageResends;
+    stats.messagesTotalBytesResent = BITS_TO_BYTES(raknetStats->messagesTotalBitsResent);
+    stats.packetloss = 100.0f * static_cast<float>(raknetStats->messagesTotalBitsResent) / static_cast<float>(raknetStats->totalBitsSent);
+
+    stats.messagesReceived
+        = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
+
+    stats.bytesReceived = BITS_TO_BYTES(raknetStats->bitsReceived + raknetStats->bitsWithBadCRCReceived);
+    stats.acknowlegementsReceived = raknetStats->acknowlegementsReceived;
+    stats.duplicateAcknowlegementsReceived = raknetStats->duplicateAcknowlegementsReceived;
+    stats.bitsPerSecond = raknetStats->bitsPerSecond;
+    stats.bpsSent = static_cast<double>(raknetStats->totalBitsSent) / elapsedTime;
+    stats.bpsReceived = static_cast<double>(raknetStats->bitsReceived) / elapsedTime;
+
+    stats.isActive = false;
+    stats.connectMode = 0;
+
+    if (playerID != RakNet::UNASSIGNED_PLAYER_ID) {
+        RakNet::RakPeer::RemoteSystemStruct* remoteSystem = rakNetServer.GetRemoteSystemFromPlayerID(playerID);
+
+        if (remoteSystem) {
+            stats.isActive = remoteSystem->isActive;
+            stats.connectMode = remoteSystem->connectMode;
+            stats.messagesReceivedPerSecond = stats.messagesReceived - remoteSystem->receivedMsgCount;
+        }
+    }
+
+    return stats;
 }
 
 void RakNetLegacyNetwork::update() {

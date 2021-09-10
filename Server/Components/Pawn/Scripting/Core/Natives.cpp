@@ -2,6 +2,8 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <sstream>
+#include <iomanip>
 #include "../Types.hpp"
 
 SCRIPT_API(GetTickCount, int())
@@ -249,12 +251,64 @@ SCRIPT_API(GetGravity, float())
 
 SCRIPT_API(GetNetworkStats, bool(std::string& output))
 {
-	throw pawn_natives::NotImplemented();
+	std::stringstream stream;
+	NetworkStats stats;
+
+	for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
+		if (network->getNetworkType() == ENetworkType::ENetworkType_RakNetLegacy) {
+			stats = network->getStatistics();
+		}
+	}
+
+	stream 
+		<< "Messages in Send buffer: " << stats.messageSendBuffer << std::endl
+		<< "Messages sent: " << stats.messagesSent << std::endl
+		<< "Bytes sent: " << stats.totalBytesSent << std::endl
+		<< "Acks sent: " << stats.acknowlegementsSent << std::endl
+		<< "Acks in send buffer: " << stats.acknowlegementsPending << std::endl
+		<< "Messages waiting for ack: " << stats.messagesOnResendQueue << std::endl
+		<< "Messages resent: " << stats.messageResends << std::endl
+		<< "Bytes resent: " << stats.messagesTotalBytesResent << std::endl
+		<< "Packetloss: " << std::setprecision(1) << stats.packetloss << std::endl
+		<< "Messages received: " << stats.messagesReceived << std::endl
+		<< "Bytes received: " << stats.bytesReceived << std::endl
+		<< "Acks received:" << stats.acknowlegementsReceived << std::endl
+		<< "Duplicate acks received: " << stats.duplicateAcknowlegementsReceived << std::endl
+		<< "Inst. KBits per second:" << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
+		<< "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
+		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
+
+	output = stream.str();
+	return true;
 }
 
 SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
 {
-	throw pawn_natives::NotImplemented();
+	std::stringstream stream;
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+
+	stream
+		<< "Network Active: " << int(stats.isActive) << std::endl
+		<< "Network State: " << stats.connectMode << std::endl
+		<< "Messages in Send buffer: " << stats.messageSendBuffer << std::endl
+		<< "Messages sent: " << stats.messagesSent << std::endl
+		<< "Bytes sent: " << stats.totalBytesSent << std::endl
+		<< "Acks sent: " << stats.acknowlegementsSent << std::endl
+		<< "Acks in send buffer: " << stats.acknowlegementsPending << std::endl
+		<< "Messages waiting for ack: " << stats.messagesOnResendQueue << std::endl
+		<< "Messages resent: " << stats.messageResends << std::endl
+		<< "Bytes resent: " << stats.messagesTotalBytesResent << std::endl
+		<< "Packetloss: " << std::setprecision(1) << stats.packetloss << std::endl
+		<< "Messages received: " << stats.messagesReceived << std::endl
+		<< "Bytes received: " << stats.bytesReceived << std::endl
+		<< "Acks received:" << stats.acknowlegementsReceived << std::endl
+		<< "Duplicate acks received: " << stats.duplicateAcknowlegementsReceived << std::endl
+		<< "Inst. KBits per second:" << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
+		<< "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
+		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
+
+	output = stream.str();
+	return true;
 }
 
 SCRIPT_API(GetServerTickRate, int())
@@ -297,49 +351,67 @@ SCRIPT_API(LimitPlayerMarkerRadius, bool(float markerRadius))
 	return true;
 }
 
-SCRIPT_API(NetStats_BytesReceived, bool(IPlayer& player))
+SCRIPT_API(NetStats_BytesReceived, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.bytesReceived;
 }
 
-SCRIPT_API(NetStats_BytesSent, bool(IPlayer& player))
+SCRIPT_API(NetStats_BytesSent, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.totalBytesSent;
 }
 
-SCRIPT_API(NetStats_ConnectionStatus, bool(IPlayer& player))
+SCRIPT_API(NetStats_ConnectionStatus, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.connectMode;
 }
 
-SCRIPT_API(NetStats_GetConnectedTime, bool(IPlayer& player))
+SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.connectionStartTime;
 }
 
 SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
 {
-	throw pawn_natives::NotImplemented();
+	PeerNetworkData data = player.getNetworkData();
+
+	char out[16]{ 0 };
+	if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
+		std::string ip_port = out;
+		ip_port += ":";
+		ip_port += std::to_string(data.networkID.port);
+		output = ip_port;
+		return true;
+	}
+	return false;
 }
 
-SCRIPT_API(NetStats_MessagesReceived, bool(IPlayer& player))
+SCRIPT_API(NetStats_MessagesReceived, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.messagesReceived;
 }
 
-SCRIPT_API(NetStats_MessagesRecvPerSecond, bool(IPlayer& player))
+SCRIPT_API(NetStats_MessagesRecvPerSecond, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.messagesReceivedPerSecond;
 }
 
-SCRIPT_API(NetStats_MessagesSent, bool(IPlayer& player))
+SCRIPT_API(NetStats_MessagesSent, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.messagesSent;
 }
 
 SCRIPT_API(NetStats_PacketLossPercent, float(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.packetloss;
 }
 
 SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
