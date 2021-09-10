@@ -322,7 +322,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         query.preparePlayerListForQuery();
     }
 
-    NetworkStats& getStatistics(int playerIndex = -1) override;
+    NetworkStats getStatistics(int playerIndex = -1) override;
 
     unsigned getPing(const INetworkPeer& peer) override {
         const PeerNetworkData& netData = peer.getNetworkData();

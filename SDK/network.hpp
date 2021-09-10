@@ -490,7 +490,7 @@ struct INetwork {
 	virtual INetworkBitStream& writeBitStream() = 0;
 
 	/// Get netowrk statistics
-	virtual NetworkStats& getStatistics(int playerIndex = -1) = 0;
+	virtual NetworkStats getStatistics(int playerIndex = -1) = 0;
 
 	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
 	virtual unsigned getPing(const INetworkPeer& peer) = 0;
