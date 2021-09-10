@@ -567,6 +567,7 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
     stats.messagesReceived
         = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
 
+    stats.messagesReceivedPerSecond = stats.messagesReceived - raknetStats->perSecondReceivedMsgCount;
     stats.bytesReceived = BITS_TO_BYTES(raknetStats->bitsReceived + raknetStats->bitsWithBadCRCReceived);
     stats.acknowlegementsReceived = raknetStats->acknowlegementsReceived;
     stats.duplicateAcknowlegementsReceived = raknetStats->duplicateAcknowlegementsReceived;
@@ -583,7 +584,6 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
         if (remoteSystem) {
             stats.isActive = remoteSystem->isActive;
             stats.connectMode = remoteSystem->connectMode;
-            stats.messagesReceivedPerSecond = stats.messagesReceived - remoteSystem->receivedMsgCount;
         }
     }
 
