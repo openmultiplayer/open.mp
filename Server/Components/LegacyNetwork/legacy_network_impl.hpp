@@ -7,6 +7,7 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/StringCompressor.h>
+#include <raknet/GetTime.h>
 #include <glm/glm.hpp>
 #include "Query/query.hpp"
 #define MAGNITUDE_EPSILON 0.00001f
@@ -320,6 +321,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void onDisconnect(IPlayer & player, PeerDisconnectReason reason) override {
         query.preparePlayerListForQuery();
     }
+
+    NetworkStats& getStatistics() override;
 
     unsigned getPing(const INetworkPeer& peer) override {
         const PeerNetworkData& netData = peer.getNetworkData();

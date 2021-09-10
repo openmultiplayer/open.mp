@@ -512,6 +512,46 @@ void RakNetLegacyNetwork::unban(const IBanEntry& entry) {
     }
 }
 
+NetworkStats& RakNetLegacyNetwork::getStatistics() {
+    NetworkStats stats;
+
+    RakNet::RakNetStatisticsStruct* raknetStats = rakNetServer.GetStatistics(RakNet::UNASSIGNED_PLAYER_ID);
+
+    RakNet::RakNetTime time = RakNet::GetTime();
+    double elapsedTime;
+    double bpsSent;
+    double bpsReceived;
+    elapsedTime = (time - raknetStats->connectionStartTime) / 1000.0f;
+
+    stats.messageSendBuffer
+        = raknetStats->messageSendBuffer[RakNet::SYSTEM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::HIGH_PRIORITY] +
+        raknetStats->messageSendBuffer[RakNet::MEDIUM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::LOW_PRIORITY];
+
+    stats.messagesSent
+        = raknetStats->messagesSent[RakNet::SYSTEM_PRIORITY] + raknetStats->messagesSent[RakNet::HIGH_PRIORITY] +
+        raknetStats->messagesSent[RakNet::MEDIUM_PRIORITY] + raknetStats->messagesSent[RakNet::LOW_PRIORITY];
+
+    stats.totalBytesSent = BITS_TO_BYTES(raknetStats->totalBitsSent);
+    stats.acknowlegementsSent = raknetStats->acknowlegementsSent;
+    stats.acknowlegementsPending = raknetStats->acknowlegementsPending;
+    stats.messagesOnResendQueue = raknetStats->messagesOnResendQueue;
+    stats.messageResends = raknetStats->messageResends;
+    stats.messagesTotalBytesResent = BITS_TO_BYTES(raknetStats->messagesTotalBitsResent);
+    stats.packetloss = 100.0f * static_cast<float>(raknetStats->messagesTotalBitsResent) / static_cast<float>(raknetStats->totalBitsSent);
+
+    stats.messagesReceived
+        = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
+
+    stats.bytesReceived = BITS_TO_BYTES(raknetStats->bitsReceived + raknetStats->bitsWithBadCRCReceived);
+    stats.acknowlegementsReceived = raknetStats->acknowlegementsReceived;
+    stats.duplicateAcknowlegementsReceived = raknetStats->duplicateAcknowlegementsReceived;
+    stats.bitsPerSecond = raknetStats->bitsPerSecond;
+    stats.bpsSent = static_cast<double>(raknetStats->totalBitsSent) / elapsedTime;
+    stats.bpsReceived = static_cast<double>(raknetStats->bitsReceived) / elapsedTime;
+
+    return stats;
+}
+
 void RakNetLegacyNetwork::update() {
     IConfig& config = core->getConfig();
 
