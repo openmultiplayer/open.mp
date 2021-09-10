@@ -351,49 +351,68 @@ SCRIPT_API(LimitPlayerMarkerRadius, bool(float markerRadius))
 	return true;
 }
 
-SCRIPT_API(NetStats_BytesReceived, bool(IPlayer& player))
+SCRIPT_API(NetStats_BytesReceived, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.bytesReceived;
 }
 
-SCRIPT_API(NetStats_BytesSent, bool(IPlayer& player))
+SCRIPT_API(NetStats_BytesSent, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.totalBytesSent;
 }
 
-SCRIPT_API(NetStats_ConnectionStatus, bool(IPlayer& player))
+SCRIPT_API(NetStats_ConnectionStatus, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.connectMode;
 }
 
-SCRIPT_API(NetStats_GetConnectedTime, bool(IPlayer& player))
+SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.connectionStartTime;
 }
 
-SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
+SCRIPT_API(NetStats_GetIpPort, int(IPlayer& player, std::string& output))
 {
-	throw pawn_natives::NotImplemented();
+	PeerNetworkData data = player.getNetworkData();
+	if (!data.networkID.address.ipv6) {
+		char out[16]{ 0 };
+		if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
+			std::string ip_port = out;
+			ip_port += ":";
+			ip_port += std::to_string(data.networkID.port);
+			output = ip_port;
+			return true;
+		}
+	}
+	return false;
 }
 
-SCRIPT_API(NetStats_MessagesReceived, bool(IPlayer& player))
+SCRIPT_API(NetStats_MessagesReceived, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.messagesReceived;
 }
 
-SCRIPT_API(NetStats_MessagesRecvPerSecond, bool(IPlayer& player))
+SCRIPT_API(NetStats_MessagesRecvPerSecond, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.messagesReceivedPerSecond;
 }
 
-SCRIPT_API(NetStats_MessagesSent, bool(IPlayer& player))
+SCRIPT_API(NetStats_MessagesSent, int(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.messagesSent;
 }
 
 SCRIPT_API(NetStats_PacketLossPercent, float(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+	return stats.packetloss;
 }
 
 SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
