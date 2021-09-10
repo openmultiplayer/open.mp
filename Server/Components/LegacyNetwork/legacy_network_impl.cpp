@@ -3,6 +3,7 @@
 #include "Query/query.hpp"
 #include <netcode.hpp>
 #include <raknet/PacketEnumerations.h>
+#include <raknet/RakPeer.h>
 #include <ttmath/ttmath.h>
 
 #pragma clang diagnostic push
@@ -566,6 +567,18 @@ NetworkStats& RakNetLegacyNetwork::getStatistics(int playerIndex) {
     stats.bitsPerSecond = raknetStats->bitsPerSecond;
     stats.bpsSent = static_cast<double>(raknetStats->totalBitsSent) / elapsedTime;
     stats.bpsReceived = static_cast<double>(raknetStats->bitsReceived) / elapsedTime;
+
+    stats.isActive = false;
+    stats.connectMode = 0;
+
+    if (playerID != RakNet::UNASSIGNED_PLAYER_ID) {
+        RakNet::RakPeer::RemoteSystemStruct* remoteSystem = rakNetServer.GetRemoteSystemFromPlayerID(playerID);
+
+        if (remoteSystem) {
+            stats.isActive = remoteSystem->isActive;
+            stats.connectMode = remoteSystem->connectMode;
+        }
+    }
 
     return stats;
 }
