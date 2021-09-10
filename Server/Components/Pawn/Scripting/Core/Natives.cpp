@@ -375,18 +375,17 @@ SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 	return stats.connectionStartTime;
 }
 
-SCRIPT_API(NetStats_GetIpPort, int(IPlayer& player, std::string& output))
+SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
 {
 	PeerNetworkData data = player.getNetworkData();
-	if (!data.networkID.address.ipv6) {
-		char out[16]{ 0 };
-		if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
-			std::string ip_port = out;
-			ip_port += ":";
-			ip_port += std::to_string(data.networkID.port);
-			output = ip_port;
-			return true;
-		}
+
+	char out[16]{ 0 };
+	if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
+		std::string ip_port = out;
+		ip_port += ":";
+		ip_port += std::to_string(data.networkID.port);
+		output = ip_port;
+		return true;
 	}
 	return false;
 }

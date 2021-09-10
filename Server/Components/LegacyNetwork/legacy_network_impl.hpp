@@ -350,6 +350,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     RakNetLegacyBitStream wlbs;
     Milliseconds cookieSeedTime;
     TimePoint lastCookieSeed;
-    LastRecvMsgProcessMap lastRecvMsgProcess; // Last time we stored per second received messages count
-    PerSecondRecvMsgMap receivedMessages; // Stored received messages
+    /// Last time we stored per second received messages count
+    LastRecvMsgProcessMap lastRecvMsgProcess; 
+    /// Stored received messages
+    PerSecondRecvMsgMap receivedMessages; 
 };
