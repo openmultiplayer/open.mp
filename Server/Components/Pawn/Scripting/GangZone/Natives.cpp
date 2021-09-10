@@ -27,7 +27,7 @@ SCRIPT_API(GangZoneDestroy, bool(IGangZone& gangzone))
 SCRIPT_API(GangZoneShowForPlayer, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))
 {
 	gangzone.showForPlayer(player, Colour::FromRGBA(colour));
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneShowForAll, bool(IGangZone& gangzone, uint32_t colour))
@@ -36,13 +36,13 @@ SCRIPT_API(GangZoneShowForAll, bool(IGangZone& gangzone, uint32_t colour))
 	for (IPlayer* player : pool->entries()) {
 		gangzone.showForPlayer(*player, Colour::FromRGBA(colour));
 	}
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneHideForPlayer, bool(IPlayer& player, IGangZone& gangzone))
 {
 	gangzone.hideForPlayer(player);
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneHideForAll, bool(IGangZone& gangzone))
@@ -51,13 +51,13 @@ SCRIPT_API(GangZoneHideForAll, bool(IGangZone& gangzone))
 	for (IPlayer* player : pool->entries()) {
 		gangzone.hideForPlayer(*player);
 	}
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneFlashForPlayer, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))
 {
 	gangzone.flashForPlayer(player, Colour::FromRGBA(colour));
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneFlashForAll, bool(IGangZone& gangzone, uint32_t colour))
@@ -66,13 +66,13 @@ SCRIPT_API(GangZoneFlashForAll, bool(IGangZone& gangzone, uint32_t colour))
 	for (IPlayer* player : pool->entries()) {
 		gangzone.flashForPlayer(*player, Colour::FromRGBA(colour));
 	}
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneStopFlashForPlayer, bool(IPlayer& player, IGangZone& gangzone))
 {
 	gangzone.stopFlashForPlayer(player);
-	return false;
+	return true;
 }
 
 SCRIPT_API(GangZoneStopFlashForAll, bool(IGangZone& gangzone))
@@ -81,5 +81,5 @@ SCRIPT_API(GangZoneStopFlashForAll, bool(IGangZone& gangzone))
 	for (IPlayer* player : pool->entries()) {
 		gangzone.stopFlashForPlayer(*player);
 	}
-	return false;
+	return true;
 }
