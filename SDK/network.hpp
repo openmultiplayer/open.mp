@@ -330,6 +330,7 @@ struct PeerRequestParams {
 };
 
 struct NetworkStats {
+	unsigned connectionStartTime;
 	unsigned messageSendBuffer;
 	unsigned messagesSent;
 	unsigned totalBytesSent;
@@ -340,6 +341,7 @@ struct NetworkStats {
 	unsigned messagesTotalBytesResent;
 	float packetloss;
 	unsigned messagesReceived;
+	unsigned messagesReceivedPerSecond;
 	unsigned bytesReceived;
 	unsigned acknowlegementsReceived;
 	unsigned duplicateAcknowlegementsReceived;
