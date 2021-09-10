@@ -512,10 +512,28 @@ void RakNetLegacyNetwork::unban(const IBanEntry& entry) {
     }
 }
 
-NetworkStats& RakNetLegacyNetwork::getStatistics() {
+NetworkStats& RakNetLegacyNetwork::getStatistics(int playerIndex) {
     NetworkStats stats;
 
-    RakNet::RakNetStatisticsStruct* raknetStats = rakNetServer.GetStatistics(RakNet::UNASSIGNED_PLAYER_ID);
+    RakNet::PlayerID playerID;
+
+    if (playerIndex == -1) {
+        playerID == RakNet::UNASSIGNED_PLAYER_ID;
+    }
+    else {
+        playerID = rakNetServer.GetPlayerIDFromIndex(playerIndex);
+        // Return empty statistics structure if passed index does not exist
+        if (playerID == RakNet::UNASSIGNED_PLAYER_ID) {
+            return stats;
+        }
+    }
+
+    RakNet::RakNetStatisticsStruct* raknetStats = rakNetServer.GetStatistics(playerID);
+
+    // Return empty statistics structure if raknet failed to provide statistics
+    if (raknetStats == nullptr) {
+        return stats;
+    }
 
     RakNet::RakNetTime time = RakNet::GetTime();
     double elapsedTime;
