@@ -456,6 +456,11 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnec
     IPlayer& player = pos->second;
     playerFromRID.erase(rid);
 
+    FlatHashMap<IPlayer, unsigned int>::iterator it = perSecondRecvMsg.find(player);
+    if (it != perSecondRecvMsg.end()) {
+        perSecondRecvMsg.erase(player);
+    }
+    
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, reason);
 }
 
@@ -514,9 +519,10 @@ void RakNetLegacyNetwork::unban(const IBanEntry& entry) {
 }
 
 NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
-    NetworkStats stats;
+    NetworkStats stats = { 0 };
 
     RakNet::PlayerID playerID;
+    IPlayer* player;
 
     if (playerIndex == -1) {
         playerID = RakNet::UNASSIGNED_PLAYER_ID;
@@ -525,6 +531,12 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
         playerID = rakNetServer.GetPlayerIDFromIndex(playerIndex);
         // Return empty statistics structure if passed index does not exist
         if (playerID == RakNet::UNASSIGNED_PLAYER_ID) {
+            return stats;
+        }
+
+        player = &core->getPlayers().get(playerIndex);
+        // Return empty statistics structure if player is not found
+        if (player == nullptr) {
             return stats;
         }
     }
@@ -540,6 +552,7 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
     double elapsedTime;
     elapsedTime = (time - raknetStats->connectionStartTime) / 1000.0f;
 
+    stats.connectionStartTime = raknetStats->connectionStartTime;
     stats.messageSendBuffer
         = raknetStats->messageSendBuffer[RakNet::SYSTEM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::HIGH_PRIORITY] +
         raknetStats->messageSendBuffer[RakNet::MEDIUM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::LOW_PRIORITY];
@@ -559,6 +572,7 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex) {
     stats.messagesReceived
         = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
 
+    stats.messagesReceivedPerSecond = perSecondRecvMsg[*player];
     stats.bytesReceived = BITS_TO_BYTES(raknetStats->bitsReceived + raknetStats->bitsWithBadCRCReceived);
     stats.acknowlegementsReceived = raknetStats->acknowlegementsReceived;
     stats.duplicateAcknowlegementsReceived = raknetStats->duplicateAcknowlegementsReceived;
@@ -699,6 +713,12 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now) {
                     RakNetLegacyBitStream lbs(bs);
                     handler->received(player, lbs);
                     });
+            }
+
+            if (lastRecvMsgProcess - now >= Seconds(1)) {
+                lastRecvMsgProcess = now;
+                NetworkStats stats = getStatistics(player.getID());
+                perSecondRecvMsg[player] = stats.messagesReceived - stats.messagesReceivedPerSecond;
             }
         }
         rakNetServer.DeallocatePacket(pkt);
