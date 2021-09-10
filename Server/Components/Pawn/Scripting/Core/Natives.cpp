@@ -2,6 +2,8 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <sstream>
+#include <iomanip>
 #include "../Types.hpp"
 
 SCRIPT_API(GetTickCount, int())
@@ -249,7 +251,34 @@ SCRIPT_API(GetGravity, float())
 
 SCRIPT_API(GetNetworkStats, bool(std::string& output))
 {
-	throw pawn_natives::NotImplemented();
+	std::stringstream stream;
+	NetworkStats stats;
+
+	for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
+		if (network->getNetworkType() == ENetworkType::ENetworkType_RakNetLegacy) {
+			stats = network->getStatistics();
+		}
+	}
+
+	stream << "Messages in Send buffer: " << stats.messageSendBuffer << std::endl
+		<< "Messages sent: " << stats.messagesSent << std::endl
+		<< "Bytes sent: " << stats.totalBytesSent << std::endl
+		<< "Acks sent: " << stats.acknowlegementsSent << std::endl
+		<< "Acks in send buffer: " << stats.acknowlegementsPending << std::endl
+		<< "Messages waiting for ack: " << stats.messagesOnResendQueue << std::endl
+		<< "Messages resent: " << stats.messageResends << std::endl
+		<< "Bytes resent: " << stats.messagesTotalBytesResent << std::endl
+		<< "Packetloss: " << std::setprecision(1) << stats.packetloss << std::endl
+		<< "Messages received: " << stats.messagesReceived << std::endl
+		<< "Bytes received: " << stats.bytesReceived << std::endl
+		<< "Acks received:" << stats.acknowlegementsReceived << std::endl
+		<< "Duplicate acks received: " << stats.duplicateAcknowlegementsReceived << std::endl
+		<< "Inst. KBits per second:" << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
+		<< "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
+		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
+
+	output = stream.str();
+	return true;
 }
 
 SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
