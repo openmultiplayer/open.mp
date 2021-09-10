@@ -329,6 +329,29 @@ struct PeerRequestParams {
 	StringView serial;
 };
 
+struct NetworkStats {
+	unsigned connectionStartTime;
+	unsigned messageSendBuffer;
+	unsigned messagesSent;
+	unsigned totalBytesSent;
+	unsigned acknowlegementsSent;
+	unsigned acknowlegementsPending;
+	unsigned messagesOnResendQueue;
+	unsigned messageResends;
+	unsigned messagesTotalBytesResent;
+	float packetloss;
+	unsigned messagesReceived;
+	unsigned messagesReceivedPerSecond;
+	unsigned bytesReceived;
+	unsigned acknowlegementsReceived;
+	unsigned duplicateAcknowlegementsReceived;
+	double bitsPerSecond;
+	double bpsSent;
+	double bpsReceived;
+	bool isActive; // only for player network statistics
+	int connectMode; // only for player network statistics
+};
+
 /// An event handler for network events
 struct NetworkEventHandler {
 	virtual void onPeerConnect(IPlayer& peer) { }
@@ -467,6 +490,9 @@ struct INetwork {
 
 	/// Get a new bit stream for writing
 	virtual INetworkBitStream& writeBitStream() = 0;
+
+	/// Get netowrk statistics
+	virtual NetworkStats getStatistics(int playerIndex = -1) = 0;
 
 	/// Get the last ping for a peer on this network or 0 if the peer isn't on this network
 	virtual unsigned getPing(const INetworkPeer& peer) = 0;
