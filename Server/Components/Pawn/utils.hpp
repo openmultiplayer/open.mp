@@ -145,6 +145,15 @@ namespace utils {
 				message = "too many arguments given";
 
 			PawnManager::Get()->core->logLn(LogLevel::Error, "`format` failed - %s", message.c_str());
+
+			// Insufficient amount of passed parameters should not break the entire function scope.
+			// It should just silently fail and return 0 which user can handle it themselves if it failed.
+			// We are somewhat sure right now that raised error is because of amount of params not being matched.
+			// Let's trick AMX by setting AMX::error value to AMX_ERR_NONE if it's AMX_ERR_NATIVE.
+			if (amx->error == AMX_ERR_NATIVE) {
+				amx->error = AMX_ERR_NONE;
+			}
+
 			free(output);
 			return 0;
 		}
