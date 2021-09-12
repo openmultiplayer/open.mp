@@ -193,7 +193,20 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerShowTextDraw playerShowTextDrawRPC;
         playerShowTextDrawRPC.PlayerTextDraw = isPlayerTextDraw;
         playerShowTextDrawRPC.UseBox = box;
-        playerShowTextDrawRPC.Alignment = alignment;
+        switch (alignment) {
+        case TextDrawAlignmentTypes::TextDrawAlignment_Default:
+            playerShowTextDrawRPC.Alignment = 0;
+            break;
+        case TextDrawAlignmentTypes::TextDrawAlignment_Left:
+            playerShowTextDrawRPC.Alignment = 1;
+            break;
+        case TextDrawAlignmentTypes::TextDrawAlignment_Center:
+            playerShowTextDrawRPC.Alignment = 4;
+            break;
+        case TextDrawAlignmentTypes::TextDrawAlignment_Right:
+            playerShowTextDrawRPC.Alignment = 2;
+            break;
+        }
         playerShowTextDrawRPC.Proportional = proportional;
         playerShowTextDrawRPC.TextDrawID = poolID;
         playerShowTextDrawRPC.LetterSize = letterSize;
