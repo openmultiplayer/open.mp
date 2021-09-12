@@ -180,7 +180,7 @@ SCRIPT_API(GetPlayerDrunkLevel, int(IPlayer& player))
 	return player.getDrunkLevel();
 }
 
-SCRIPT_API(GivePlayerWeapon, bool(IPlayer& player, uint8_t weaponid, uint8_t ammo))
+SCRIPT_API(GivePlayerWeapon, bool(IPlayer& player, uint8_t weaponid, uint32_t ammo))
 {
 	WeaponSlotData data;
 	data.id = weaponid;
