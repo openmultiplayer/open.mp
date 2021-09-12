@@ -555,10 +555,7 @@ SCRIPT_API(EnableStuntBonusForPlayer, bool(IPlayer& player, bool enable))
 
 SCRIPT_API(EnableStuntBonusForAll, bool(bool enable))
 {
-	IPlayerPool* pool = PawnManager::Get()->players;
-	for (IPlayer* player : pool->entries()) {
-		player->toggleStuntBonus(enable);
-	}
+	PawnManager::Get()->core->toggleStuntBonus(enable);
 	return true;
 }
 
