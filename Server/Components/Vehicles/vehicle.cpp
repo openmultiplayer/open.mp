@@ -347,6 +347,11 @@ void Vehicle::removeComponent(int component) {
 }
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID) {
+    const bool isStreamedIn = this->isStreamedInForPlayer(player);
+    if (!isStreamedIn) {
+        this->streamInForPlayer(player);
+    }
+
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
     player.queryData<PlayerVehicleData>()->vehicle = this;
     putPlayerInVehicleRPC.VehicleID = poolID;
