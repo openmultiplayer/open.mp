@@ -62,7 +62,7 @@ struct TimersComponent final : public ITimersComponent, public CoreEventHandler 
 		}
 	}
 
-	FlatPtrHashSet<Timer> timers;
+	std::set<Timer*> timers;
 } component;
 
 COMPONENT_ENTRY_POINT() {
