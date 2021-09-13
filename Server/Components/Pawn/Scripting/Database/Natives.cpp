@@ -1,7 +1,6 @@
 #include "sdk.hpp"
 #include "../Types.hpp"
 #include <filesystem>
-#include <stdlib.h>
 
 SCRIPT_API(db_open, int(const std::string& name)) {
 	std::filesystem::path dbFilePath = std::filesystem::canonical("scriptfiles/" + name);
