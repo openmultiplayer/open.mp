@@ -11,7 +11,7 @@ bool DatabaseResultSet::addRow(int fieldCount, char** fieldNames, char** values)
 		rows.push({});
 		DatabaseResultSetRow* result_set_row(&rows.back());
 		for (int field_index(0); field_index < fieldCount; field_index++) {
-			if (!result_set_row->addField(fieldNames[field_index], values[field_index])) {
+			if (!result_set_row->addField(fieldNames[field_index], values[field_index] ? values[field_index] : "")) {
 				ret = false;
 				break;
 			}
