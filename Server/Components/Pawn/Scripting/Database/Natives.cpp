@@ -1,8 +1,10 @@
 #include "sdk.hpp"
 #include "../Types.hpp"
+#include <filesystem>
 
 SCRIPT_API(db_open, int(const std::string& name)) {
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(name));
+	std::filesystem::path dbFilePath = std::filesystem::canonical("scriptfiles/" + name);
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
 	return database_connection ? database_connection->getID() : 0;
 }
 
