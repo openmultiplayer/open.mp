@@ -3,7 +3,7 @@
 #include <filesystem>
 
 SCRIPT_API(db_open, int(const std::string& name)) {
-	std::filesystem::path dbFilePath = std::filesystem::canonical("scriptfiles/" + name);
+	std::filesystem::path dbFilePath = std::filesystem::absolute("scriptfiles/" + name);
 	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
 	return database_connection ? database_connection->getID() : 0;
 }
