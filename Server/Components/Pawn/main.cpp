@@ -1,9 +1,9 @@
 #include "sdk.hpp"
-
 #include "Manager/Manager.hpp"
 #include "PluginManager/PluginManager.hpp"
 #include "Scripting/Impl.hpp"
-#include "utils.hpp"
+#include <filesystem>
+#include <stdlib.h>
 
 struct PawnComponent : public IComponent, public CoreEventHandler {
 	ICore * core = nullptr;
@@ -31,26 +31,11 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		PawnPluginManager::Get()->core = core;
 
 		// Set AMXFILE environment variable to "{current_dir}/scriptfiles"
-		std::string scriptfilesPath;
-		utils::GetCurrentWorkingDirectory(scriptfilesPath);
-		int length = scriptfilesPath.length();
+		std::filesystem::path scriptfilesPath = std::filesystem::canonical("scriptfiles");
+		std::string amxFileEnvVar = scriptfilesPath.string();
 
-#ifdef WIN32
-		if (scriptfilesPath[length - 1] != '\\')
-		{
-			scriptfilesPath.append("\\\0");
-		}
-		scriptfilesPath.append("scriptfiles\\");
-		scriptfilesPath.insert(0, "AMXFILE=");
-		_putenv(scriptfilesPath.c_str());
-#else
-		if (scriptfilesPath[length - 1] != '/')
-		{
-			scriptfilesPath.append("/\0");
-		}
-		scriptfilesPath.append("scriptfiles/");
-		setenv("AMXFILE", scriptfilesPath.c_str(), 1);
-#endif
+		amxFileEnvVar.insert(0, "AMXFILE=");
+		putenv(amxFileEnvVar.c_str());
 
 	}
 
