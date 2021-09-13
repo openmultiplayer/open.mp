@@ -150,25 +150,22 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 				String listStr = right;
 				DynamicArray<String> storage;
 				DynamicArray<StringView> list;
-				int i = listStr.find_first_of(' ');
-				if (i != -1) {
-					for (; i != -1;) {
-						int next = listStr.find_first_of(' ', i + 1);
+				int i = 0;
+				for (; ;) {
+					int next = listStr.find_first_of(' ', i);
 
-						std::filesystem::path path("filterscripts");
-						if (next != -1) {
-							path /= listStr.substr(i + 1, next - i - 1);
-						}
-						else {
-							path /= listStr.substr(i + 1);
-						}
-						storage.emplace_back(path.string());
-
-						i = next;
+					std::filesystem::path path("filterscripts");
+					if (next != -1) {
+						path /= listStr.substr(i, next - i);
 					}
-				}
-				else {
-					storage.emplace_back(listStr.substr(i + 1));
+					else {
+						path /= listStr.substr(i);
+						storage.emplace_back(path.string());
+						break;
+					}
+					storage.emplace_back(path.string());
+
+					i = next + 1;
 				}
 				for (int i = 0; i < storage.size(); ++i) {
 					list.emplace_back(storage[i]);
@@ -207,23 +204,19 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 				String listStr = right;
 				DynamicArray<String> storage;
 				DynamicArray<StringView> list;
-				int i = listStr.find_first_of(' ');
-				if (i != -1) {
-					for (; i != -1;) {
-						int next = listStr.find_first_of(' ', i + 1);
+				int i = 0;
+				for (; ;) {
+					int next = listStr.find_first_of(' ', i);
 
-						if (next != -1) {
-							storage.emplace_back(listStr.substr(i + 1, next - i - 1));
-						}
-						else {
-							storage.emplace_back(listStr.substr(i + 1));
-						}
-
-						i = next;
+					if (next != -1) {
+						storage.emplace_back(listStr.substr(i, next - i));
 					}
-				}
-				else {
-					storage.emplace_back(listStr.substr(i + 1));
+					else {
+						storage.emplace_back(listStr.substr(i));
+						break;
+					}
+
+					i = next + 1;
 				}
 				for (int i = 0; i < storage.size(); ++i) {
 					list.emplace_back(storage[i]);

@@ -103,11 +103,11 @@ namespace utils {
 		return 0;
 	}
 
-	inline cell AMX_NATIVE_CALL pawn_format(AMX * amx, cell const * params)
+	inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 	{
 		int
 			num = params[0] / sizeof(cell);
-		cell *
+		cell*
 			cstr;
 		AMX_FMTINFO
 			info;
@@ -121,8 +121,7 @@ namespace utils {
 		gLen = params[2];
 		gOff = 0;
 
-		TCHAR *
-			output = (TCHAR *)malloc(sizeof(TCHAR) * gLen);
+		std::unique_ptr<TCHAR[]> output = std::make_unique<TCHAR[]>(gLen);
 
 		info.params = params + 4;
 		info.numparams = num - 3;
@@ -130,38 +129,29 @@ namespace utils {
 		info.length = gLen;  // Max. length of the string.
 		info.f_putstr = str_putstr;
 		info.f_putchar = str_putchar;
-		info.user = output;
+		info.user = output.get();
 		output[0] = __T('\0');
 
 		cstr = amx_Address(amx, params[3]);
 		int processed_params = amx_printstring(amx, cstr, &info);
 
-		if (processed_params != num - 3) {
-			std::string message;
+		// Insufficient amount of passed parameters should not break the entire function scope.
+		// It should just silently fail and return 0 which user can handle it themselves if it failed.
+		// We are somewhat sure right now that raised error is because of amount of params not being matched.
+		// Let's trick AMX by setting AMX::error value to AMX_ERR_NONE if it's AMX_ERR_NATIVE.
+		if (amx->error == AMX_ERR_NATIVE) {
+			amx->error = AMX_ERR_NONE;
+		}
 
-			if(processed_params < num - 3)
-				message = "not enough arguments given";
-			else
-				message = "too many arguments given";
-
-			PawnManager::Get()->core->logLn(LogLevel::Error, "`format` failed - %s", message.c_str());
-
-			// Insufficient amount of passed parameters should not break the entire function scope.
-			// It should just silently fail and return 0 which user can handle it themselves if it failed.
-			// We are somewhat sure right now that raised error is because of amount of params not being matched.
-			// Let's trick AMX by setting AMX::error value to AMX_ERR_NONE if it's AMX_ERR_NATIVE.
-			if (amx->error == AMX_ERR_NATIVE) {
-				amx->error = AMX_ERR_NONE;
-			}
-
-			free(output);
-			return 0;
+		if (processed_params < num - 3) {
+			char* fmt;
+			amx_StrParamChar(amx, params[3], fmt);
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
 		}
 
 		// Store the output string.
 		cstr = amx_Address(amx, params[1]);
-		amx_SetString(cstr, (char *)output, false, sizeof(TCHAR) > 1, gLen);
-		free(output);
+		amx_SetString(cstr, (char*)output.get(), false, sizeof(TCHAR) > 1, gLen);
 		return 1;
 	}
 
@@ -257,7 +247,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[2], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_Call`");
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_Call`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
 			return 0;
 		}
 		cell *
@@ -335,7 +325,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[3], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallOne`");
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallOne`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
 			return 0;
 		}
 		cell *
@@ -403,7 +393,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[2], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallAll`");
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallAll`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
 			return 0;
 		}
 		struct parameter_s

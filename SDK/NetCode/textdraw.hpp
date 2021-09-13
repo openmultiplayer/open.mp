@@ -10,7 +10,7 @@ namespace NetCode {
 			bool PlayerTextDraw;
 			int TextDrawID;
 			bool UseBox;
-			bool Alignment;
+			int Alignment;
 			bool Proportional;
 			Vector2 LetterSize;
 			Colour LetterColour;
