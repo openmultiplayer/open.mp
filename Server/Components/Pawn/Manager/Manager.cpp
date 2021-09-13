@@ -154,24 +154,23 @@ void PawnManager::Load(std::string const & name, bool primary)
 
 	CheckNatives(script);
 
-	int err = script.Exec(nullptr, AMX_EXEC_MAIN);
-	if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
-		// If there's no `main` ignore it for now.
-		PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
-	}
-	// TODO: `AMX_EXEC_CONT` support.
-	// Assume that all initialisation and header mangling is now complete, and that it is safe to
-	// cache public pointers.
-
-	script.Call("OnScriptInit", DefaultReturnValue_False);
-
 	if (primary) {
 		entryScript = name;
 		script.Call("OnGameModeInit", DefaultReturnValue_False);
+
+		int err = script.Exec(nullptr, AMX_EXEC_MAIN);
+		if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
+			// If there's no `main` ignore it for now.
+			PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+		}
 	}
 	else {
 		script.Call("OnFilterScriptInit", DefaultReturnValue_False);
 	}
+
+	// TODO: `AMX_EXEC_CONT` support.
+	// Assume that all initialisation and header mangling is now complete, and that it is safe to
+	// cache public pointers.
 }
 
 void PawnManager::Reload(std::string const & name)

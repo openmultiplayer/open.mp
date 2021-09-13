@@ -170,6 +170,10 @@ struct NetworkString : NetworkArray<char> {
 	}
 	
 	operator StringView() const {
+		// Return empty string if we don't have one
+		if (data == nullptr) {
+			return StringView("");
+		}
 		// Handle self-allocated data - a trailing 0 is added so remove it
 		if (selfAllocated) {
 			return StringView(data, count-1);
