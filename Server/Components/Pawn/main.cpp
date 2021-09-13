@@ -1,8 +1,9 @@
 #include "sdk.hpp"
-
 #include "Manager/Manager.hpp"
 #include "PluginManager/PluginManager.hpp"
 #include "Scripting/Impl.hpp"
+#include <filesystem>
+#include <stdlib.h>
 
 struct PawnComponent : public IComponent, public CoreEventHandler {
 	ICore * core = nullptr;
@@ -28,6 +29,13 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		PawnManager::Get()->players = &core->getPlayers();
 
 		PawnPluginManager::Get()->core = core;
+
+		// Set AMXFILE environment variable to "{current_dir}/scriptfiles"
+		std::filesystem::path scriptfilesPath = std::filesystem::canonical("scriptfiles");
+		std::string amxFileEnvVar = scriptfilesPath.string();
+
+		amxFileEnvVar.insert(0, "AMXFILE=");
+		putenv(amxFileEnvVar.data());
 	}
 
 	void onInit(IComponentList* components) override {
