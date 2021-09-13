@@ -121,8 +121,7 @@ namespace utils {
 		gLen = params[2];
 		gOff = 0;
 
-		TCHAR*
-			output = (TCHAR*)malloc(sizeof(TCHAR) * gLen);
+		std::unique_ptr<TCHAR[]> output = std::make_unique<TCHAR[]>(gLen);
 
 		info.params = params + 4;
 		info.numparams = num - 3;
@@ -130,7 +129,7 @@ namespace utils {
 		info.length = gLen;  // Max. length of the string.
 		info.f_putstr = str_putstr;
 		info.f_putchar = str_putchar;
-		info.user = output;
+		info.user = output.get();
 		output[0] = __T('\0');
 
 		cstr = amx_Address(amx, params[3]);
@@ -152,8 +151,7 @@ namespace utils {
 
 		// Store the output string.
 		cstr = amx_Address(amx, params[1]);
-		amx_SetString(cstr, (char*)output, false, sizeof(TCHAR) > 1, gLen);
-		free(output);
+		amx_SetString(cstr, (char*)output.get(), false, sizeof(TCHAR) > 1, gLen);
 		return 1;
 	}
 
