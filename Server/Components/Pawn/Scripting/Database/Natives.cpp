@@ -1,29 +1,11 @@
 #include "sdk.hpp"
-#include "../../utils.hpp"
 #include "../Types.hpp"
+#include <filesystem>
+#include <stdlib.h>
 
 SCRIPT_API(db_open, int(const std::string& name)) {
-	std::string dbPath;
-	utils::GetCurrentWorkingDirectory(dbPath);
-	int length = dbPath.length();
-
-#ifdef WIN32
-	if (dbPath[length - 1] != '\\')
-	{
-		dbPath.append("\\\0");
-	}
-	dbPath.append("scriptfiles\\");
-	dbPath.append(name);
-#else
-	if (dbPath[length - 1] != '/')
-	{
-		dbPath.append("/\0");
-	}
-	dbPath.append("scriptfiles/");
-	dbPath.append(name);
-#endif
-
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbPath));
+	std::filesystem::path dbFilePath = std::filesystem::canonical("scriptfiles/" + name);
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
 	return database_connection ? database_connection->getID() : 0;
 }
 
