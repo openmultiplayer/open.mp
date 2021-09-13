@@ -32,6 +32,9 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 
 		// Set AMXFILE environment variable to "{current_dir}/scriptfiles"
 		std::filesystem::path scriptfilesPath = std::filesystem::absolute("scriptfiles");
+		if (!std::filesystem::exists(scriptfilesPath) || !std::filesystem::is_directory(scriptfilesPath)) {
+			std::filesystem::create_directory(scriptfilesPath);
+		}
 		std::string amxFileEnvVar = scriptfilesPath.string();
 
 		amxFileEnvVar.insert(0, "AMXFILE=");
