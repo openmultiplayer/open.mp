@@ -35,8 +35,7 @@ struct PawnComponent : public IComponent, public CoreEventHandler {
 		std::string amxFileEnvVar = scriptfilesPath.string();
 
 		amxFileEnvVar.insert(0, "AMXFILE=");
-		putenv(amxFileEnvVar.c_str());
-
+		putenv(amxFileEnvVar.data());
 	}
 
 	void onInit(IComponentList* components) override {
