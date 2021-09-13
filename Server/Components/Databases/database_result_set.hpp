@@ -67,9 +67,15 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
 	/// @returns Floating point number
 	double getFieldFloatByName(StringView fieldName) const override;
 
+	/// Gets database results in legacy structure
+	LegacyDBResult& getLegacyDBResult() override;
+
 	/// Rows
 	Queue<DatabaseResultSetRow> rows;
 
 	/// Number of rows
 	std::size_t rowCount;
+
+	/// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
+	LegacyDBResult legacyDbResult;
 };

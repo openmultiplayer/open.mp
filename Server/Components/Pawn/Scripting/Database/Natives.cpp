@@ -78,7 +78,8 @@ SCRIPT_API(db_get_mem_handle, int(IDatabaseConnection& db)) {
 }
 
 SCRIPT_API(db_get_result_mem_handle, int(IDatabaseResultSet& dbresult)) {
-	return reinterpret_cast<int>(&dbresult);
+	LegacyDBResult& legacyDbResult = dbresult.getLegacyDBResult();
+	return reinterpret_cast<int>(&legacyDbResult);
 }
 
 SCRIPT_API(db_debug_openfiles, int()) {

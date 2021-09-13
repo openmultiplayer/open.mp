@@ -2,6 +2,16 @@
 
 #include <sdk.hpp>
 
+struct LegacyDBResult {
+	int rows;
+	int columns;
+	char** results;
+
+	// extra members to be used in open.mp code
+	DynamicArray<char*> results_;
+	bool fieldsAreAdded = false;
+};
+
 struct IDatabaseResultSetRow {
 
 	/// Gets the number of fields
@@ -102,6 +112,8 @@ struct IDatabaseResultSet : public IIDProvider {
 	/// @param fieldName Field name
 	/// @returns Floating point number
 	virtual double getFieldFloatByName(StringView fieldName) const = 0;
+
+	virtual LegacyDBResult& getLegacyDBResult() = 0;
 };
 
 struct IDatabaseConnection : public IIDProvider {

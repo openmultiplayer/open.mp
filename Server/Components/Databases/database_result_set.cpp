@@ -8,9 +8,26 @@
 bool DatabaseResultSet::addRow(int fieldCount, char** fieldNames, char** values) {
 	bool ret((fieldCount <= 0) || (values && fieldNames));
 	if (ret) {
+
+		// First time DatabaseResultSet::addRow being called after query exeuction 
+		// so push all field names back to our vector of char* so we are keeping data 
+		// for using it in legacy database result structure
+		if (!legacyDbResult.fieldsAreAdded) {
+			for (int field_index(0); field_index < fieldCount; field_index++) {
+				legacyDbResult.results_.push_back(fieldNames[field_index]);
+			}
+			legacyDbResult.columns = fieldCount;
+			legacyDbResult.fieldsAreAdded = true;
+		}
+
 		rows.push({});
 		DatabaseResultSetRow* result_set_row(&rows.back());
 		for (int field_index(0); field_index < fieldCount; field_index++) {
+
+			// Push values in a row back to our vector of char*, keeping them and all rows
+			// in order for using it in legacy database result structure
+			legacyDbResult.results_.push_back(const_cast<char*>(values[field_index] ? values[field_index] : ""));
+
 			if (!result_set_row->addField(fieldNames[field_index], values[field_index] ? values[field_index] : "")) {
 				ret = false;
 				break;
@@ -22,6 +39,11 @@ bool DatabaseResultSet::addRow(int fieldCount, char** fieldNames, char** values)
 		else {
 			rows.pop();
 		}
+
+		// Now here we are assigning collected results in legacy structure to
+		// our LegacyDBResult::results
+		legacyDbResult.results = legacyDbResult.results_.data();
+		legacyDbResult.columns = rowCount;
 	}
 	return ret;
 }
@@ -107,4 +129,9 @@ long DatabaseResultSet::getFieldIntegerByName(StringView fieldName) const {
 /// @returns Floating point number
 double DatabaseResultSet::getFieldFloatByName(StringView fieldName) const {
 	return rows.empty() ? 0.0 : rows.front().getFieldFloatByName(fieldName);
+}
+
+/// Gets database results in legacy structure
+LegacyDBResult& DatabaseResultSet::getLegacyDBResult() {
+	return legacyDbResult;
 }
