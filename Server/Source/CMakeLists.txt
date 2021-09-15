@@ -31,6 +31,7 @@ if(MSVC)
 	target_link_libraries(Server PRIVATE
 		mpr
 		shlwapi
+		winmm
 	)
 else()
 	target_link_libraries(Server PRIVATE

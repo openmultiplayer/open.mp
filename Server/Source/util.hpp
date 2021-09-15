@@ -7,6 +7,8 @@
 	struct IUnknown;
 	#include <Windows.h>
 	#include <shellapi.h>
+	#include <timeapi.h>
+	#define SET_TICKER_RESOLUTION(ms) timeBeginPeriod(ms)
 	#define LIBRARY_OPEN(path) LoadLibrary(path)
 	#define LIBRARY_GET_ADDR GetProcAddress
 	#define LIBRARY_FREE FreeLibrary
@@ -16,6 +18,7 @@
 	#include <stdlib.h>
 	#include <sys/time.h>
 	#include <unistd.h>
+	#define SET_TICKER_RESOLUTION(ms)
 	#define LIBRARY_OPEN(path) dlopen(path, RTLD_LAZY | RTLD_LOCAL)
 	#define LIBRARY_GET_ADDR dlsym
 	#define LIBRARY_FREE dlclose
