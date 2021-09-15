@@ -167,7 +167,7 @@ struct ICore {
 	/// @param type The request type
 	/// @param url The URL
 	/// @param[opt] data The POST data
-	virtual void requestHTTP(HTTPResponseHandler& handler, HTTPRequestType type, StringView url, StringView data = StringView()) = 0;
+	virtual void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data = StringView()) = 0;
 
 	/// Get the ticks per second
 	virtual unsigned tickRate() const = 0;

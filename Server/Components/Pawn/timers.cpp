@@ -3,24 +3,15 @@
 Pair<size_t, PawnTimerHandler*> PawnTimerImpl::newTimer(const char* callback, Milliseconds interval, bool repeating, AMX* amx) {
 	ITimersComponent* timers = PawnManager::Get()->timers;
 	if (timers && amx) {
-		int funcidx;
-		int err = AMX_ERR_NONE;
-		if ((err = amx_FindPublic(amx, callback, &funcidx)) != AMX_ERR_NONE)
-		{
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTimer(Ex): Couldn't find %s in your script: %s", callback, aux_StrError(err));
-			amx_RaiseError(amx, err);
+		PawnTimerHandler* handler = new PawnTimerHandler(callback, amx);
+		ITimer* timer = timers->create(handler, interval, repeating);
+		if (timer == nullptr) {
+			delete handler;
 		}
 		else {
-			PawnTimerHandler* handler = new PawnTimerHandler(funcidx, amx);
-			ITimer* timer = timers->create(handler, interval, repeating);
-			if (timer == nullptr) {
-				delete handler;
-			}
-			else {
-				size_t idx = insert(timer);
-				handler->poolID = idx;
-				return std::make_pair(idx, handler);
-			}
+			size_t idx = insert(timer);
+			handler->poolID = idx;
+			return std::make_pair(idx, handler);
 		}
 	}
 	return std::make_pair(0u, static_cast<PawnTimerHandler*>(nullptr));

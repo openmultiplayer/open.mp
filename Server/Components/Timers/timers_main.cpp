@@ -54,10 +54,12 @@ struct TimersComponent final : public ITimersComponent, public CoreEventHandler 
 					}
 				}
 			}
-			auto oldIt = it++;
 			if (deleteTimer) {
 				delete timer;
-				timers.erase(oldIt);
+				it=timers.erase(it);
+			}
+			else {
+				++it;
 			}
 		}
 	}
