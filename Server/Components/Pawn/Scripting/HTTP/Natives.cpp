@@ -1,7 +1,7 @@
 #include <sdk.hpp>
 #include "../Types.hpp"
 
-struct PawnHTTPResponseHandler : HTTPResponseHandler {
+struct PawnHTTPResponseHandler final : HTTPResponseHandler {
 	int index;
 	String callback;
 	PawnScript& script;
@@ -9,14 +9,13 @@ struct PawnHTTPResponseHandler : HTTPResponseHandler {
 	PawnHTTPResponseHandler(int index, StringView callback, PawnScript& script) : index(index), callback(callback), script(script) {}
 
 	void onHTTPResponse(int status, StringView body) override {
-		// TODO async
 		script.Call(callback, DefaultReturnValue_True, index, status, String(body));
+		delete this;
 	}
 };
 
 SCRIPT_API(HTTP, bool(int index, int method, std::string const& url, std::string const& data, std::string const& callback, PawnScript& script))
 {
-	PawnHTTPResponseHandler handler(index, callback, script);
-	PawnManager::Get()->core->requestHTTP(handler, HTTPRequestType(method), url, data);
+	PawnManager::Get()->core->requestHTTP(new PawnHTTPResponseHandler(index, callback, script), HTTPRequestType(method), url, data);
 	return true;
 }
