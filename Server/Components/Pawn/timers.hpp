@@ -64,14 +64,14 @@ private:
 
 struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 	AMX* amx;
-	int funcidx;
+	String callback;
 	String fmt;
 	DynamicArray<cell> params;
 	DynamicArray<cell> data;
 
-	PawnTimerHandler(int funcidx, AMX* amx) :
+	PawnTimerHandler(String callback, AMX* amx) :
 		amx(amx),
-		funcidx(funcidx)
+		callback(callback)
 	{}
 
 	void timeout(ITimer& timer) override {
@@ -90,9 +90,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 		if (hasParams) {
 			// Not enough space in this heap.  Try again later.
 			if ((err = amx_Allot(amx, data.size(), &out, &in)) != AMX_ERR_NONE) {
-				char funcname[sNAMEMAX + 1];
-				amx_GetPublic(amx, funcidx, funcname);
-				PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): Not enough space in heap for %s timer: %s", funcname, aux_StrError(err));
+				PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): Not enough space in heap for %s timer: %s", callback.c_str(), aux_StrError(err));
 				amx_RaiseError(amx, err);
 				return;
 			}
@@ -115,8 +113,10 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 				}
 			}
 		}
+
+		int funcidx;
 		// Step 4: Call the function.
-		if ((err = amx_Exec(amx, &ret, funcidx)) == AMX_ERR_NONE)
+		if ((err = amx_FindPublic(amx, callback.c_str(), &funcidx)) == AMX_ERR_NONE && (err = amx_Exec(amx, &ret, funcidx)) == AMX_ERR_NONE)
 		{
 			if (hasParams) {
 				// Step 5: Retrieve reference parameters.
@@ -132,9 +132,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 			}
 		}
 		else {
-			char funcname[sNAMEMAX + 1];
-			amx_GetPublic(amx, funcidx, funcname);
-			PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): There was a problem in calling %s: %s", funcname, aux_StrError(err));
+			PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): There was a problem in calling %s: %s", callback.c_str(), aux_StrError(err));
 			amx_RaiseError(amx, err);
 		}
 

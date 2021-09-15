@@ -4,6 +4,7 @@
 #include <cxxopts.hpp>
 #include <sdk.hpp>
 #include "core_impl.hpp"
+#include "util.hpp"
 
 int main(int argc, char** argv)
 {
@@ -41,6 +42,8 @@ int main(int argc, char** argv)
         // Generate config
         return !Config::writeDefault();
     }
+
+    SET_TICKER_RESOLUTION(1);
 
     Core* core = new Core();
 
