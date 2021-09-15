@@ -345,6 +345,111 @@ private:
     FlatHashSet<String> ownAllocations;
 };
 
+struct HTTPAsyncIO {
+    HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) :
+        handler(handler),
+        type(type),
+        url(url),
+        data(data),
+        finished(false),
+        response(0)
+    {
+        thread = std::thread(&threadProc, this);
+    }
+
+    ~HTTPAsyncIO() {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+
+    bool tryExec() {
+        if (finished) {
+            handler->onHTTPResponse(response, body);
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+private:
+    static void threadProc(HTTPAsyncIO* params) {
+        constexpr StringView http = "http://";
+        constexpr StringView https = "https://";
+
+        HTTPRequestType type = params->type;
+        StringView url = params->url;
+        StringView data = params->data;
+
+        // Deconstruct because a certain someone decided it would be a good idea to have http:// be optional
+        StringView urlNoPrefix = url;
+        bool secure = false;
+        int idx;
+        if ((idx = url.find(http)) == 0) {
+            urlNoPrefix = url.substr(http.size());
+            secure = false;
+        }
+        else if ((idx = url.find(https)) == 0) {
+            urlNoPrefix = url.substr(https.size());
+            secure = true;
+        }
+
+        // Deconstruct further
+        StringView domain = urlNoPrefix;
+        StringView path = "/";
+        if ((idx = urlNoPrefix.find_first_of('/')) != -1) {
+            domain = urlNoPrefix.substr(0, idx);
+            path = urlNoPrefix.substr(idx);
+        }
+
+        // Reconstruct
+        String domainStr = String(secure ? https : http) + String(domain);
+
+        // Set up request
+        httplib::Client request(domainStr.c_str());
+        request.enable_server_certificate_verification(true);
+        request.set_follow_location(true);
+        request.set_connection_timeout(Seconds(5));
+        request.set_read_timeout(Seconds(5));
+        request.set_write_timeout(Seconds(5));
+
+        // Run request
+        httplib::Result res(nullptr, httplib::Error::Canceled);
+        switch (type) {
+        case HTTPRequestType_Get:
+            res = request.Get(path.data());
+            break;
+        case HTTPRequestType_Post:
+            res = request.Post(path.data(), String(data), "application/x-www-form-urlencoded");
+            break;
+        case HTTPRequestType_Head:
+            res = request.Head(path.data());
+            break;
+        }
+
+        if (res) {
+            params->body = res.value().body;
+            params->response = res.value().status;
+        }
+        else {
+            params->response = int(res.error());
+        }
+
+        params->finished.store(true);
+    }
+
+    std::thread thread;
+    HTTPResponseHandler* handler;
+    HTTPRequestType type;
+    String url;
+    String data;
+
+    std::atomic_bool finished;
+    int response;
+    String body;
+};
+
 struct Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
@@ -357,6 +462,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     unsigned ticksPerSecond;
     unsigned ticksThisSecond;
     TimePoint ticksPerSecondLastUpdate;
+    std::set<HTTPAsyncIO*> httpFutures;
 
     int* EnableZoneNames;
     int* UsePlayerPedAnims;
@@ -671,63 +777,9 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         utils::RunProcess(config.getString("bot_exe"), args);
     }
 
-    void requestHTTP(HTTPResponseHandler& handler, HTTPRequestType type, StringView url, StringView data) override {
-        constexpr StringView http = "http://";
-        constexpr StringView https = "https://";
-
-        // Deconstruct because a certain someone decided it would be a good idea to have http:// be optional
-        StringView urlNoPrefix = url;
-        bool secure = false;
-        int idx;
-        if ((idx = url.find(http)) == 0) {
-            urlNoPrefix = url.substr(http.size());
-            secure = false;
-        }
-        else if ((idx = url.find(https)) == 0) {
-            urlNoPrefix = url.substr(https.size());
-            secure = true;
-        }
-
-        // Deconstruct further
-        StringView domain = urlNoPrefix;
-        StringView path = "/";
-        if ((idx = urlNoPrefix.find_first_of('/')) != -1) {
-            domain = urlNoPrefix.substr(0, idx);
-            path = urlNoPrefix.substr(idx);
-        }
-
-        // Reconstruct
-        String domainStr = String(secure ? https : http) + String(domain);
-
-        // Set up request
-        httplib::Client request(domainStr.c_str());
-        request.enable_server_certificate_verification(true);
-        request.set_follow_location(true);
-        request.set_connection_timeout(Seconds(5));
-        request.set_read_timeout(Seconds(5));
-        request.set_write_timeout(Seconds(5));
-
-        // Run request
-        httplib::Result res(nullptr, httplib::Error::Canceled);
-        switch (type) {
-        case HTTPRequestType_Get:
-            res = request.Get(path.data());
-            break;
-        case HTTPRequestType_Post:
-            res = request.Post(path.data(), String(data), "application/x-www-form-urlencoded");
-            break;
-        case HTTPRequestType_Head:
-            res = request.Head(path.data());
-            break;
-        }
-
-        // Call handler
-        if (res) {
-            handler.onHTTPResponse(res.value().status, res.value().body);
-        }
-        else {
-            handler.onHTTPResponse(int(res.error()), StringView());
-        }
+    void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override {
+        HTTPAsyncIO* httpIO = new HTTPAsyncIO(handler, type, url, data);
+        httpFutures.emplace(httpIO);
     }
 
     bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override {
@@ -843,6 +895,17 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             ++ticksThisSecond;
 
             eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
+
+            for (auto it = httpFutures.begin(); it != httpFutures.end();) {
+                HTTPAsyncIO* httpIO = *it;
+                if (httpIO->tryExec()) {
+                    delete httpIO;
+                    it = httpFutures.erase(it);
+                }
+                else {
+                    ++it;
+                }
+            }
 
             std::this_thread::sleep_until(now + sleepTimer);
         }
