@@ -247,8 +247,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[2], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_Call`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
-			return 0;
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Parameter count does not match specifier in `Script_Call`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
 		}
 		cell *
 			data,
@@ -325,8 +324,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[3], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallOne`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
-			return 0;
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Parameter count does not match specifier in `Script_CallOne`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
 		}
 		cell *
 			data,
@@ -393,8 +391,7 @@ namespace utils {
 		amx_StrParamChar(amx, params[2], fmat);
 		if (num != (int)(2 + strlen(fmat)))
 		{
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Parameter count does not match specifier in `Script_CallAll`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
-			return 0;
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Parameter count does not match specifier in `Script_CallAll`. callback: %s - fmat: %s - count: %d)", name, fmat, num - 2);
 		}
 		struct parameter_s
 		{
