@@ -23,7 +23,7 @@
 			throw pawn_natives::ParamCastFailure(); \
 		} \
  \
-		static type* Val(cell ref) { \
+		static type* Val(cell ref) noexcept { \
 			auto pool = PawnManager::Get()->poolPtr; \
 			if (pool && pool->valid(ref)) { \
 				return &pool->get(ref); \
@@ -35,7 +35,7 @@
 	template <> \
 	class ParamCast<type*> { \
 	public: \
-		ParamCast(AMX* amx, cell* params, int idx) { \
+		ParamCast(AMX* amx, cell* params, int idx) noexcept { \
 			value_ = ParamLookup<type>::Val(params[idx]); \
 		} \
  \
@@ -102,7 +102,7 @@
 			throw pawn_natives::ParamCastFailure(); \
 		} \
  \
-		static type* Val(IPlayer& player, cell ref) { \
+		static type* Val(IPlayer& player, cell ref) noexcept { \
 			auto data = player.queryData<dataType>(); \
 			if (data && data->valid(ref)) { \
 				return &data->get(ref); \
@@ -202,7 +202,7 @@ namespace pawn_natives
 			throw pawn_natives::ParamCastFailure();
 		}
 
-		static IDatabaseConnection* Val(cell ref) {
+		static IDatabaseConnection* Val(cell ref) noexcept {
 			IDatabasesComponent* databases_component = PawnManager::Get()->databases;
 			IDatabaseConnection* connection = nullptr;
 			if (databases_component && databases_component->isDatabaseConnectionIDValid(static_cast<int>(ref))) {
@@ -238,7 +238,7 @@ namespace pawn_natives
 	template <>
 	class ParamCast<IDatabaseConnection*> {
 	public:
-		ParamCast(AMX* amx, cell* params, int idx)
+		ParamCast(AMX* amx, cell* params, int idx) noexcept
 		{
 			value_ = ParamLookup<IDatabaseConnection>::Val(params[idx]);
 		}
@@ -270,7 +270,7 @@ namespace pawn_natives
 			throw pawn_natives::ParamCastFailure();
 		}
 
-		static IDatabaseResultSet* Val(cell ref) {
+		static IDatabaseResultSet* Val(cell ref) noexcept {
 			IDatabasesComponent* databases_component = PawnManager::Get()->databases;
 			IDatabaseResultSet* resultSet = nullptr;
 			if (databases_component && databases_component->isDatabaseResultSetIDValid(static_cast<int>(ref))) {
@@ -306,7 +306,7 @@ namespace pawn_natives
 	template <>
 	class ParamCast<IDatabaseResultSet*> {
 	public:
-		ParamCast(AMX* amx, cell* params, int idx)
+		ParamCast(AMX* amx, cell* params, int idx) noexcept
 		{
 			value_ = ParamLookup<IDatabaseResultSet>::Val(params[idx]);
 		}

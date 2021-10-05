@@ -410,9 +410,9 @@ SCRIPT_API(GetPlayerCameraTargetVehicle, int(IPlayer& player))
 	return INVALID_VEHICLE_ID;
 }
 
-SCRIPT_API(IsPlayerConnected, bool(IPlayer& player))
+SCRIPT_API(IsPlayerConnected, bool(IPlayer* player))
 {
-	return true;
+	return player != nullptr;
 }
 
 SCRIPT_API(PutPlayerInVehicle, bool(IPlayer& player, IVehicle& vehicle, int seatID))

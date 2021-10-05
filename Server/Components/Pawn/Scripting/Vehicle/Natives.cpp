@@ -301,9 +301,9 @@ SCRIPT_API(GetVehicleVirtualWorld, int(IVehicle& vehicle))
     return vehicle.getVirtualWorld();
 }
 
-SCRIPT_API(IsValidVehicle, bool(IVehicle& vehicle))
+SCRIPT_API(IsValidVehicle, bool(IVehicle* vehicle))
 {
-    return true;
+    return vehicle != nullptr;
 }
 
 SCRIPT_API(AddStaticVehicle, bool(int modelid, Vector3 spawn, float angle, int colour1, int colour2))
