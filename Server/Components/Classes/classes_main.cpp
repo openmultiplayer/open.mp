@@ -29,29 +29,18 @@ struct PlayerClassData final : IPlayerClassData {
 	}
 
 	void setSpawnInfo(const PlayerClass& info) override {
-		cls.team = info.team;
-		cls.skin = info.skin;
-		cls.spawn = info.spawn;
-		cls.angle = info.angle;
-		cls.weapons = info.weapons;
-
-        if (inClassRequest) {
-            skipDefaultClassRequest = true;
-        }
-        else {
-            const WeaponSlots& weapons = info.weapons;
-            StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-            StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-            NetCode::RPC::SetSpawnInfo setSpawnInfoRPC;
-            setSpawnInfoRPC.TeamID = info.team;
-            setSpawnInfoRPC.ModelID = info.skin;
-            setSpawnInfoRPC.Spawn = info.spawn;
-            setSpawnInfoRPC.ZAngle = info.angle;
-            setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
-            setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
-
-            player.sendRPC(setSpawnInfoRPC);
-        }
+        const WeaponSlots& weapons = info.weapons;
+        StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+        StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
+        NetCode::RPC::SetSpawnInfo setSpawnInfoRPC;
+        setSpawnInfoRPC.TeamID = info.team;
+        setSpawnInfoRPC.ModelID = info.skin;
+        setSpawnInfoRPC.Spawn = info.spawn;
+        setSpawnInfoRPC.ZAngle = info.angle;
+        setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
+        setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
+        
+        player.sendRPC(setSpawnInfoRPC);
 	}
 
 	void free() override {
