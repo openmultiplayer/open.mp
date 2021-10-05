@@ -73,9 +73,9 @@ SCRIPT_API(SetObjectNoCameraCol, bool(IObject& object))
 	return true;
 }
 
-SCRIPT_API(IsValidObject, bool(IObject& object))
+SCRIPT_API(IsValidObject, bool(IObject* object))
 {
-	return true;
+	return object != nullptr;
 }
 
 SCRIPT_API(MoveObject, bool(IObject& object, Vector3 position, float speed, Vector3 rotation))
