@@ -6,6 +6,7 @@
 #include <amx/amx.h>
 
 #include "timers.hpp"
+#include "format.hpp"
 
 extern "C"
 {
@@ -56,9 +57,6 @@ extern "C"
 	} while (0)
 
 namespace utils {
-	static int gLen = 0;
-	static int gOff = 0;
-
 	inline bool endsWith(const std::string & mainStr, const std::string & toMatch)
 	{
 		if (mainStr.size() >= toMatch.size() &&
@@ -68,82 +66,27 @@ namespace utils {
 			return false;
 	}
 
-	static int str_putstr(void * dest, const TCHAR * str)
-	{
-		int len = _tcslen(str);
-		if (gOff + len < gLen)
-		{
-			_tcscat((TCHAR *)dest + gOff, str);
-			gOff += len;
-		}
-		return 0;
-	}
-
-	static int str_putchar(void * dest, TCHAR ch)
-	{
-		if (gOff + 1 < gLen)
-		{
-			((TCHAR *)dest)[gOff] = ch;
-			((TCHAR *)dest)[++gOff] = '\0';
-		}
-		return 0;
-	}
-
-	static int stream_putstr(void* dest, const TCHAR* str)
-	{
-		String* out = reinterpret_cast<String*>(dest);
-		(*out) += str;
-		return 0;
-	}
-
-	static int stream_putchar(void* dest, TCHAR ch)
-	{
-		String* out = reinterpret_cast<String*>(dest);
-		(*out) += ch;
-		return 0;
-	}
-
 	inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 	{
 		int
 			num = params[0] / sizeof(cell);
 		cell*
 			cstr;
-		AMX_FMTINFO
-			info;
-		memset(&info, 0, sizeof info);
 
 		if (num < 3)
 		{
 			PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `format`: %u < %u", num, 3);
 			return 0;
 		}
-		gLen = params[2];
-		gOff = 0;
+		int maxlen = params[2];
 
-		std::unique_ptr<TCHAR[]> output = std::make_unique<TCHAR[]>(gLen);
+		std::unique_ptr<TCHAR[]> output = std::make_unique<TCHAR[]>(maxlen);
 
-		info.params = params + 4;
-		info.numparams = num - 3;
-		info.skip = 0;
-		info.length = gLen;  // Max. length of the string.
-		info.f_putstr = str_putstr;
-		info.f_putchar = str_putchar;
-		info.user = output.get();
-		output[0] = __T('\0');
-
+		int param = 4;
 		cstr = amx_Address(amx, params[3]);
-		int processed_params = amx_printstring(amx, cstr, &info);
+		atcprintf(output.get(), maxlen - 1, cstr, amx, params, &param);
 
-		// Insufficient amount of passed parameters should not break the entire function scope.
-		// It should just silently fail and return 0 which user can handle it themselves if it failed.
-		// We are somewhat sure right now that raised error is because of amount of params not being matched.
-		// Let's trick AMX by setting AMX::error value to AMX_ERR_NONE if it's AMX_ERR_NATIVE.
-		if (amx->error == AMX_ERR_NATIVE) {
-			amx->error = AMX_ERR_NONE;
-		}
-
-		if (processed_params < num - 3) {
+		if (param <= num) {
 			char* fmt;
 			amx_StrParamChar(amx, params[3], fmt);
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
@@ -151,7 +94,7 @@ namespace utils {
 
 		// Store the output string.
 		cstr = amx_Address(amx, params[1]);
-		amx_SetString(cstr, (char*)output.get(), false, sizeof(TCHAR) > 1, gLen);
+		amx_SetString(cstr, (char*)output.get(), false, sizeof(TCHAR) > 1, maxlen);
 		return 1;
 	}
 
@@ -161,9 +104,6 @@ namespace utils {
 			num = params[0] / sizeof(cell);
 		cell*
 			cstr;
-		AMX_FMTINFO
-			info;
-		memset(&info, 0, sizeof info);
 
 		if (num < 1)
 		{
@@ -171,21 +111,19 @@ namespace utils {
 			return 0;
 		}
 
-		String out;
-
-		info.params = params + 2;
-		info.numparams = num - 1;
-		info.skip = 0;
-		info.length = INT_MAX;  // Max. length of the string.
-		info.f_putstr = stream_putstr;
-		info.f_putchar = stream_putchar;
-		info.user = &out;
-
+		char buf[8192];
+		int param = 2;
 		cstr = amx_Address(amx, params[1]);
-		amx_printstring(amx, cstr, &info);
+		int len = atcprintf(buf, sizeof(buf) - 1, cstr, amx, params, &param);
 
-		if (!out.empty()) {
-			PawnManager::Get()->core->printLn("%s", out.c_str());
+		if (param <= num) {
+			char* fmt;
+			amx_StrParamChar(amx, params[3], fmt);
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "printf: not enough arguments given. fmt: \"%s\"", fmt);
+		}
+
+		if (len > 0) {
+			PawnManager::Get()->core->printLn("%s", buf);
 		}
 
 		return 1;
