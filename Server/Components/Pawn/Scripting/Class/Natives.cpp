@@ -5,7 +5,7 @@
 
 SCRIPT_API(AddPlayerClass, bool(
 	int modelid, Vector3 position, float angle,
-	uint8_t weapon1, uint8_t weapon1_ammo, uint8_t weapon2, uint8_t weapon2_ammo, uint8_t weapon3, uint8_t weapon3_ammo
+	uint8_t weapon1, uint32_t weapon1_ammo, uint8_t weapon2, uint32_t weapon2_ammo, uint8_t weapon3, uint32_t weapon3_ammo
 	))
 {
 	IClassesComponent* component = PawnManager::Get()->classes;
@@ -27,7 +27,7 @@ SCRIPT_API(AddPlayerClass, bool(
 
 SCRIPT_API(AddPlayerClassEx, bool(
 	int teamid, int modelid, Vector3 position, float angle,
-	uint8_t weapon1, uint8_t weapon1_ammo, uint8_t weapon2, uint8_t weapon2_ammo, uint8_t weapon3, uint8_t weapon3_ammo
+	uint8_t weapon1, uint32_t weapon1_ammo, uint8_t weapon2, uint32_t weapon2_ammo, uint8_t weapon3, uint32_t weapon3_ammo
 	))
 {
 	IClassesComponent* component = PawnManager::Get()->classes;
@@ -49,7 +49,7 @@ SCRIPT_API(AddPlayerClassEx, bool(
 
 SCRIPT_API(SetSpawnInfo, bool(
 	IPlayer& player, int team, int skin, Vector3 position, float angle,
-	uint8_t weapon1, uint8_t weapon1_ammo, uint8_t weapon2, uint8_t weapon2_ammo, uint8_t weapon3, uint8_t weapon3_ammo
+	uint8_t weapon1, uint8_t weapon2, uint8_t weapon3, uint32_t weapon1_ammo, uint32_t weapon2_ammo, uint32_t weapon3_ammo
 	))
 {
 	IPlayerClassData* classData = player.queryData<IPlayerClassData>();
