@@ -108,7 +108,7 @@ SCRIPT_API(IsActorInvulnerable, bool(IActor& actor))
 	return actor.isInvulnerable();
 }
 
-SCRIPT_API(IsValidActor, bool(IActor& actor))
+SCRIPT_API(IsValidActor, bool(IActor* actor))
 {
-	return true;
+	return actor != nullptr;
 }
