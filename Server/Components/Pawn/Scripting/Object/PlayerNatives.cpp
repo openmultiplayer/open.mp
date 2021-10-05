@@ -68,9 +68,9 @@ SCRIPT_API(SetPlayerObjectNoCameraCol, bool(IPlayer& player, IPlayerObject& obje
 	return true;
 }
 
-SCRIPT_API(IsValidPlayerObject, bool(IPlayer& player, IPlayerObject& object))
+SCRIPT_API(IsValidPlayerObject, bool(IPlayer& player, IPlayerObject* object))
 {
-	return true;
+	return object != nullptr;
 }
 
 SCRIPT_API(MovePlayerObject, bool(IPlayer& player, IPlayerObject& object, Vector3 position, float speed, Vector3 rotation))

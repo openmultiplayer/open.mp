@@ -62,7 +62,7 @@ SCRIPT_API(GetPlayerMenu, int(IPlayer& player))
 	return menuData->getMenuID();
 }
 
-SCRIPT_API(IsValidMenu, bool(IMenu& menu))
+SCRIPT_API(IsValidMenu, bool(IMenu* menu))
 {
-	return true;
+	return menu != nullptr;
 }
