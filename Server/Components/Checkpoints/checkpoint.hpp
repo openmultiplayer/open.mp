@@ -34,15 +34,11 @@ struct CheckpointDataBase : public T {
 	}
 };
 
-struct PlayerCheckpointData final : public CheckpointDataBase<IPlayerCheckpointData> {
+struct PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerStandardCheckpointData> {
 	bool enabled_ = false;
 	IPlayer& player_;
 
-	PlayerCheckpointData(IPlayer& player) : player_(player) {}
-
-	void free() override {
-		delete this;
-	}
+	PlayerStandardCheckpointData(IPlayer& player) : player_(player) {}
 
 	void enable() override {
 		if (enabled_) {
@@ -50,17 +46,17 @@ struct PlayerCheckpointData final : public CheckpointDataBase<IPlayerCheckpointD
 		}
 
 		enabled_ = true;
-		inside_ = false;
+		setPlayerInside(false);
 
 		NetCode::RPC::SetCheckpoint setCP;
-		setCP.position = position_;
-		setCP.size = radius_ * 2;
+		setCP.position = getPosition();
+		setCP.size = getRadius() * 2; // samp client asks for diameter for normal checkpoints
 		player_.sendRPC(setCP);
 	}
 
 	void disable() override {
 		enabled_ = false;
-		inside_ = false;
+		setPlayerInside(false);
 
 		NetCode::RPC::DisableCheckpoint disableCP;
 		player_.sendRPC(disableCP);
@@ -95,28 +91,24 @@ struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChe
 		nextPosition_ = nextPosition;
 	}
 
-	void free() override {
-		delete this;
-	}
-
 	void enable() override {
 		if (enabled_) {
 			disable();
 		}
 
-		inside_ = false;
+		setPlayerInside(false);
 		enabled_ = true;
 
 		NetCode::RPC::SetRaceCheckpoint setRaceCP;
 		setRaceCP.type = static_cast<uint8_t>(type_);
-		setRaceCP.position = position_;
+		setRaceCP.position = getPosition();
 		setRaceCP.nextPosition = nextPosition_;
-		setRaceCP.size = radius_ * 2;
+		setRaceCP.size = getRadius(); // samp client asks for radius for race checkpoints
 		player_.sendRPC(setRaceCP);
 	}
 
 	void disable() override {
-		inside_ = false;
+		setPlayerInside(false);
 		enabled_ = false;
 
 		NetCode::RPC::DisableRaceCheckpoint disableRaceCP;
@@ -125,5 +117,29 @@ struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChe
 
 	bool isEnabled() const override {
 		return enabled_;
+	}
+};
+
+struct PlayerCheckpointData final : public IPlayerCheckpointData {
+	PlayerRaceCheckpointData* raceCheckpoint;
+	PlayerStandardCheckpointData* standardCheckpoint;
+
+	PlayerCheckpointData(IPlayer& player) :
+		raceCheckpoint(new PlayerRaceCheckpointData(player)),
+		standardCheckpoint(new PlayerStandardCheckpointData(player))
+	{}
+
+	void free() override {
+		delete raceCheckpoint;
+		delete standardCheckpoint;
+		delete this;
+	}
+
+	IPlayerRaceCheckpointData& getRaceCheckpoint() override {
+		return *raceCheckpoint;
+	}
+
+	IPlayerStandardCheckpointData& getStandardCheckpoint() override {
+		return *standardCheckpoint;
 	}
 };

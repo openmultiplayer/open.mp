@@ -14,36 +14,75 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 		return new PlayerCheckpointData(player);
 	}
 
+	static void processPlayerCheckpoint(CheckpointsComponent& component, IPlayer& player) {
+		PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
+		if (playerCheckpointData) {
+			IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
+			if (cp.isEnabled()) {
+				float radius = cp.getRadius();
+				float maxDistanceSqr = radius * radius;
+				Vector3 distanceFromCheckpoint = cp.getPosition() - player.getPosition();
+
+				if (glm::dot(distanceFromCheckpoint, distanceFromCheckpoint) > maxDistanceSqr) {
+					if (cp.isPlayerInside()) {
+						cp.setPlayerInside(false);
+						component.eventDispatcher.dispatch(
+							&PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint,
+							player
+						);
+					}
+				}
+				else {
+					if (!cp.isPlayerInside()) {
+						cp.setPlayerInside(true);
+						component.eventDispatcher.dispatch(
+							&PlayerCheckpointEventHandler::onPlayerEnterCheckpoint,
+							player
+						);
+					}
+				}
+			}
+		}
+	}
+
+	static void processPlayerRaceCheckpoint(CheckpointsComponent& component, IPlayer& player) {
+		PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
+		if (playerCheckpointData) {
+			IPlayerRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
+			if (cp.isEnabled()) {
+				float radius = cp.getRadius();
+				float maxDistanceSqr = radius * radius;
+				Vector3 distanceFromCheckpoint = cp.getPosition() - player.getPosition();
+
+				if (glm::dot(distanceFromCheckpoint, distanceFromCheckpoint) > maxDistanceSqr) {
+					if (cp.isPlayerInside()) {
+						cp.setPlayerInside(false);
+						component.eventDispatcher.dispatch(
+							&PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint,
+							player
+						);
+					}
+				}
+				else {
+					if (!cp.isPlayerInside()) {
+						cp.setPlayerInside(true);
+						component.eventDispatcher.dispatch(
+							&PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint,
+							player
+						);
+					}
+				}
+			}
+		}
+	}
+
 	struct PlayerCheckpointActionHandler : public PlayerUpdateEventHandler {
 		CheckpointsComponent& self;
 		PlayerCheckpointActionHandler(CheckpointsComponent& self) : self(self) {}
 
 		bool onUpdate(IPlayer& player, TimePoint now) override {
-			PlayerCheckpointData* cp = player.queryData<PlayerCheckpointData>();
-			const float radius = cp->type_ == CheckpointType::STANDARD ? cp->size_ / 2 : cp->size_;
-			const float maxDistance = radius * radius;
-			const Vector3 dist3D = cp->position_ - player.getPosition();
-
-			if (glm::dot(dist3D, dist3D) > maxDistance) {
-				if (cp->enabled_ && cp->inside_) {
-					cp->inside_ = false;
-					void (PlayerCheckpointEventHandler:: * leaveHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint : &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint;
-					self.eventDispatcher.dispatch(
-						leaveHandler,
-						player
-					);
-				}
-			}
-			else {
-				if (cp->enabled_ && !cp->inside_) {
-					cp->inside_ = true;
-					void (PlayerCheckpointEventHandler:: * enterHandler)(IPlayer&) = (cp->type_ == CheckpointType::STANDARD) ? &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint : &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint;
-					self.eventDispatcher.dispatch(
-						enterHandler,
-						player
-					);
-				}
-			}
+			processPlayerCheckpoint(self, player);
+			processPlayerRaceCheckpoint(self, player);
 			return true;
 		}
 	} playerCheckpointActionHandler;
