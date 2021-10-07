@@ -30,19 +30,23 @@ struct ICheckpointDataBase {
 	virtual bool isEnabled() const = 0;
 };
 
-static const UUID PlayerCheckpointData_UUID = UUID(0xbc07576aa3591a66);
-struct IPlayerCheckpointData : public ICheckpointDataBase, public IPlayerData {
-	PROVIDE_UUID(PlayerCheckpointData_UUID);
+struct IPlayerStandardCheckpointData : public ICheckpointDataBase {
+
 };
 
-static const UUID PlayerRaceCheckpointData_UUID = UUID(0x3beffcbfd55c8b7c);
-struct IPlayerRaceCheckpointData :public ICheckpointDataBase, public IPlayerData {
-	PROVIDE_UUID(PlayerRaceCheckpointData_UUID);
-
+struct IPlayerRaceCheckpointData : public ICheckpointDataBase {
 	virtual RaceCheckpointType getType() const = 0;
 	virtual void setType(RaceCheckpointType type) = 0;
 	virtual Vector3 getNextPosition() const = 0;
 	virtual void setNextPosition(const Vector3& nextPosition) = 0;
+};
+
+static const UUID PlayerCheckpointData_UUID = UUID(0xbc07576aa3591a66);
+struct IPlayerCheckpointData : public IPlayerData {
+	PROVIDE_UUID(PlayerCheckpointData_UUID);
+
+	virtual IPlayerRaceCheckpointData& getRaceCheckpoint() = 0;
+	virtual IPlayerStandardCheckpointData& getStandardCheckpoint() = 0;
 };
 
 struct PlayerCheckpointEventHandler {
