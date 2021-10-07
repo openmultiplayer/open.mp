@@ -7,9 +7,8 @@ SCRIPT_API(SetPlayerCheckpoint, bool(IPlayer& player, Vector3 position, float si
 {
 	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
 	if (cp) {
-		cp->setType(CheckpointType::STANDARD);
 		cp->setPosition(position);
-		cp->setSize(size);
+		cp->setRadius(size / 2.0f);
 		cp->enable();
 		return true;
 	}
@@ -29,20 +28,20 @@ SCRIPT_API(DisablePlayerCheckpoint, bool(IPlayer& player))
 SCRIPT_API(IsPlayerInCheckpoint, bool(IPlayer& player))
 {
 	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
-	if (cp && cp->getType() == CheckpointType::STANDARD) {
-		return cp->hasPlayerInside();
+	if (cp->isEnabled()) {
+		return cp->isPlayerInside();
 	}
 	return false;
 }
 
 SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayer& player, int type, Vector3 position, Vector3 nextPosition, float size))
 {
-	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+	IPlayerRaceCheckpointData* cp = player.queryData<IPlayerRaceCheckpointData>();
 	if (cp && type >= 0 && type <= 8) {
-		cp->setType(CheckpointType(type));
+		cp->setType(RaceCheckpointType(type));
 		cp->setPosition(position);
 		cp->setNextPosition(nextPosition);
-		cp->setSize(size);
+		cp->setRadius(size / 2.0f);
 		cp->enable();
 		return true;
 	}
@@ -51,7 +50,7 @@ SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayer& player, int type, Vector3 posi
 
 SCRIPT_API(DisablePlayerRaceCheckpoint, bool(IPlayer& player))
 {
-	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
+	IPlayerRaceCheckpointData* cp = player.queryData<IPlayerRaceCheckpointData>();
 	if (cp) {
 		cp->disable();
 		return true;
@@ -61,9 +60,9 @@ SCRIPT_API(DisablePlayerRaceCheckpoint, bool(IPlayer& player))
 
 SCRIPT_API(IsPlayerInRaceCheckpoint, bool(IPlayer& player))
 {
-	IPlayerCheckpointData* cp = player.queryData<IPlayerCheckpointData>();
-	if (cp && cp->getType() != CheckpointType::STANDARD) {
-		return cp->hasPlayerInside();
+	IPlayerRaceCheckpointData* cp = player.queryData<IPlayerRaceCheckpointData>();
+	if (cp && cp->getType() != RaceCheckpointType::RACE_NONE && cp->isEnabled()) {
+		return cp->isPlayerInside();
 	}
 	return false;
 }
