@@ -1196,6 +1196,28 @@ namespace NetCode {
 				bs.write(NetworkBitStreamValue::UINT8(Time.count()));
 			}
 		};
+
+		struct ClientCheck final : NetworkPacketBase<103> {
+			int Type;
+			int Address;
+			int Offset;
+			int Count;
+			int Results;
+
+			bool read(INetworkBitStream& bs) {
+				bs.read<NetworkBitStreamValueType::UINT8>(Type);
+				bs.read<NetworkBitStreamValueType::UINT32>(Address);
+				bs.read<NetworkBitStreamValueType::UINT16>(Results);
+				return true;
+			}
+
+			void write(INetworkBitStream& bs) const {
+				bs.write(NetworkBitStreamValue::UINT8(Type));
+				bs.write(NetworkBitStreamValue::UINT32(Address));
+				bs.write(NetworkBitStreamValue::UINT16(Offset));
+				bs.write(NetworkBitStreamValue::UINT16(Count));
+			}
+		};
 	}
 
 	namespace Packet {
