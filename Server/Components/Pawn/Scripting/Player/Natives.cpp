@@ -845,9 +845,9 @@ SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
 	return false;
 }
 
-SCRIPT_API(SendClientCheck, bool(IPlayer& player, int type, int memoryAddress, int memoryOffset, int byteCount))
+SCRIPT_API(SendClientCheck, bool(IPlayer& player, int actionType, int address, int offset, int count))
 {
-	throw pawn_natives::NotImplemented();
+	player.sendClientCheck(actionType, address, offset, count);
 }
 
 SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
