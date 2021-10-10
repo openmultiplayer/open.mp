@@ -596,7 +596,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void setPosition(Vector3 position) override {
-        pos_ = position;
+        // do not update position internally, let player's position change on their end first
+        // then we receive updates by them when they send on foot sync packets
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
         sendRPC(setPlayerPosRPC);
