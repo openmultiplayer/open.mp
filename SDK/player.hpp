@@ -739,6 +739,9 @@ struct IPlayer : public IEntity, public INetworkPeer {
 	/// Make player spectate a vehicle
 	virtual void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) = 0;
 
+	/// Send client check (asks for certain data depending on type of action)
+	virtual void sendClientCheck(int actionType, int address, int offset, int count) = 0;
+
 	/// Get whether the player is a bot (NPC)
 	virtual bool isBot() const = 0;
 
