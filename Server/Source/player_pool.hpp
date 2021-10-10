@@ -326,6 +326,27 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerCommandRPCHandler;
 
+    struct ClientCheckResponseRPCHandler : public SingleNetworkInOutEventHandler {
+        PlayerPool& self;
+        ClientCheckResponseRPCHandler(PlayerPool& self) : self(self) {}
+
+        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+            NetCode::RPC::ClientCheck rpc;
+            if (!rpc.read(bs)) {
+                return false;
+            }
+
+            self.eventDispatcher.dispatch(
+                &PlayerEventHandler::onClientCheckResponse,
+                peer,
+                rpc.Type,
+                rpc.Address,
+                rpc.Results
+            );
+            return true;
+        }
+    } clientCheckResponseRPCHandler;
+
     struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
         PlayerPool& self;
         PlayerFootSyncHandler(PlayerPool& self) : self(self) {}
@@ -962,6 +983,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerSpawnRPCHandler(*this),
         playerTextRPCHandler(*this),
         playerCommandRPCHandler(*this),
+        clientCheckResponseRPCHandler(*this),
         playerFootSyncHandler(*this),
         playerSpectatorHandler(*this),
         playerAimSyncHandler(*this),
@@ -1057,6 +1079,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
         core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
+        core.addPerRPCEventHandler<NetCode::RPC::ClientCheck>(&clientCheckResponseRPCHandler);
 
         core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.addPerPacketEventHandler<NetCode::Packet::PlayerSpectatorSync>(&playerSpectatorHandler);
@@ -1128,6 +1151,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
         core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
+        core.removePerRPCEventHandler<NetCode::RPC::ClientCheck>(&clientCheckResponseRPCHandler);
 
         core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
         core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);

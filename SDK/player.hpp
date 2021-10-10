@@ -808,6 +808,7 @@ struct PlayerEventHandler {
 	virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) {}
 	virtual void onClickedMap(IPlayer& player, Vector3 pos) {}
 	virtual void onClickedPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) {}
+	virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) {}
 };
 
 struct PlayerUpdateEventHandler {
