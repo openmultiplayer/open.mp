@@ -913,6 +913,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendRPC(rpc);
     }
 
+    void sendClientCheck(int actionType, int address, int offset, int count) override {
+        NetCode::RPC::ClientCheck rpc;
+        rpc.Type = actionType;
+        rpc.Address = address;
+        rpc.Offset = offset;
+        rpc.Count = count;
+        sendRPC(rpc);
+    }
+
     ~Player() {
         for (auto& v : playerData_) {
             v.second->free();
