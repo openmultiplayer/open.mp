@@ -188,6 +188,10 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
 		PawnManager::Get()->CallInEntry("OnPlayerClickPlayer", DefaultReturnValue_True, player.getID(), clicked.getID(), int(source));
 	}
 
+	void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) override {
+		PawnManager::Get()->CallAllInSidesFirst("OnClientCheckResponse", DefaultReturnValue_True, player.getID(), actionType, address, results);
+	}
+
 	bool onUpdate(IPlayer& player, TimePoint now) override {
 		cell ret = PawnManager::Get()->CallInSidesWhile1("OnPlayerUpdate", player.getID());
 		if (ret) {
