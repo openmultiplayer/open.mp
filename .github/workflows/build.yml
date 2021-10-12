@@ -31,6 +31,13 @@ jobs:
     runs-on: [self-hosted, Windows]
 
     steps:
+    - name: clang-format lint
+      uses: DoozyX/clang-format-lint-action@v0.12
+      with:
+        exclude: './lib'
+        style: WebKit
+        clangFormatVersion: 12
+
     - uses: actions/checkout@v2
       with:
         submodules: recursive
