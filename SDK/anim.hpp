@@ -3,7 +3,8 @@
 #include "types.hpp"
 
 /// Animation names
-static const char* AnimationNames[] = {
+static const char* AnimationNames[] = 
+{
     "",
     "AIRPORT:THRW_BARL_THRW",
     "ATTRACTORS:STEPSIT_IN",
