@@ -1,10 +1,12 @@
 #include "player_pool.hpp"
 
-IPlayerPool* Player::getPool() const {
+IPlayerPool* Player::getPool() const
+{
     return pool_;
 }
 
-void Player::setColour(Colour colour) {
+void Player::setColour(Colour colour)
+{
     colour_ = colour;
     NetCode::RPC::SetPlayerColor setPlayerColorRPC;
     setPlayerColorRPC.PlayerID = poolID;
@@ -12,12 +14,12 @@ void Player::setColour(Colour colour) {
     pool_->broadcastRPCToAll(setPlayerColorRPC);
 }
 
-EPlayerNameStatus Player::setName(StringView name) {
+EPlayerNameStatus Player::setName(StringView name)
+{
     assert(pool_);
     if (pool_->isNameTaken(name, this)) {
         return EPlayerNameStatus::Taken;
-    }
-    else if (name.length() > MAX_PLAYER_NAME) {
+    } else if (name.length() > MAX_PLAYER_NAME) {
         return EPlayerNameStatus::Invalid;
     }
     pool_->eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
@@ -32,7 +34,8 @@ EPlayerNameStatus Player::setName(StringView name) {
     return EPlayerNameStatus::Updated;
 }
 
-void Player::updateMarkers(Milliseconds updateRate, bool limit, float radius, TimePoint now) {
+void Player::updateMarkers(Milliseconds updateRate, bool limit, float radius, TimePoint now)
+{
     if (duration_cast<Milliseconds>(now - lastMarkerUpdate_) > updateRate) {
         lastMarkerUpdate_ = now;
         NetCode::Packet::PlayerMarkersSync markersSync(*pool_, *this, limit, radius);
@@ -40,7 +43,8 @@ void Player::updateMarkers(Milliseconds updateRate, bool limit, float radius, Ti
     }
 }
 
-IPlayer* Player::getCameraTargetPlayer() {
+IPlayer* Player::getCameraTargetPlayer()
+{
     if (!enableCameraTargeting_) {
         return nullptr;
     }
@@ -57,7 +61,8 @@ IPlayer* Player::getCameraTargetPlayer() {
     return &target;
 }
 
-IVehicle* Player::getCameraTargetVehicle() {
+IVehicle* Player::getCameraTargetVehicle()
+{
     if (!enableCameraTargeting_) {
         return nullptr;
     }
@@ -79,7 +84,8 @@ IVehicle* Player::getCameraTargetVehicle() {
     return &target;
 }
 
-IObject* Player::getCameraTargetObject() {
+IObject* Player::getCameraTargetObject()
+{
     if (!enableCameraTargeting_) {
         return nullptr;
     }
@@ -96,7 +102,8 @@ IObject* Player::getCameraTargetObject() {
     return &component->get(cameraTargetObject_);
 }
 
-IPlayer* Player::getTargetPlayer() {
+IPlayer* Player::getTargetPlayer()
+{
     if (!pool_->valid(targetPlayer_)) {
         return nullptr;
     }
@@ -109,7 +116,8 @@ IPlayer* Player::getTargetPlayer() {
     return &target;
 }
 
-IActor* Player::getCameraTargetActor() {
+IActor* Player::getCameraTargetActor()
+{
     IActorsComponent* component = pool_->actorsComponent;
 
     if (!component) {
@@ -128,7 +136,8 @@ IActor* Player::getCameraTargetActor() {
     return &target;
 }
 
-IActor* Player::getTargetActor() {
+IActor* Player::getTargetActor()
+{
     IActorsComponent* component = pool_->actorsComponent;
 
     if (!component) {
@@ -147,21 +156,24 @@ IActor* Player::getTargetActor() {
     return &target;
 }
 
-void Player::setState(PlayerState state) {
+void Player::setState(PlayerState state)
+{
     if (state_ != state) {
         pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
         state_ = state;
     }
 }
 
-void Player::setScore(int score) {
+void Player::setScore(int score)
+{
     if (score_ != score) {
         score_ = score;
         pool_->eventDispatcher.dispatch(&PlayerEventHandler::onScoreChange, *this, score);
     }
 }
 
-void Player::streamInForPlayer(IPlayer& other) {
+void Player::streamInForPlayer(IPlayer& other)
+{
     const int pid = other.getID();
     if (!streamedFor_.valid(pid)) {
         uint8_t& numStreamed = static_cast<Player&>(other).numStreamed_;
@@ -195,7 +207,8 @@ void Player::streamInForPlayer(IPlayer& other) {
     }
 }
 
-void Player::streamOutForPlayer(IPlayer& other) {
+void Player::streamOutForPlayer(IPlayer& other)
+{
     const int pid = other.getID();
     if (streamedFor_.valid(pid)) {
         --static_cast<Player&>(other).numStreamed_;
@@ -208,7 +221,8 @@ void Player::streamOutForPlayer(IPlayer& other) {
     }
 }
 
-void Player::ban(StringView reason) {
+void Player::ban(StringView reason)
+{
     const BanEntry entry(netData_.networkID.address, name_, reason);
     for (INetwork* network : pool_->core.getNetworks()) {
         network->ban(entry);
