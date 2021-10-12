@@ -1,5 +1,5 @@
-#include <sdk.hpp>
 #include "../Types.hpp"
+#include <sdk.hpp>
 #include <vehicle_components.hpp>
 #include <vehicle_models.hpp>
 
@@ -222,8 +222,7 @@ SCRIPT_API(GetVehicleTrailer, int(IVehicle& vehicle))
     IVehicle* trailer = vehicle.getTrailer();
     if (trailer) {
         return trailer->getID();
-    }
-    else {
+    } else {
         return 0; // why isnt this INVALID_VEHICLE_ID mr keyman
     }
 }

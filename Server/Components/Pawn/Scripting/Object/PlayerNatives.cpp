@@ -1,121 +1,118 @@
+#include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
-#include "../Types.hpp"
 
 SCRIPT_API(CreatePlayerObject, int(IPlayer& player, int modelid, Vector3 position, Vector3 rotation, float drawDistance))
 {
-	IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
-	if (playerData) {
-		IPlayerObject* object = playerData->create(modelid, position, rotation, drawDistance);
-		if (object) {
-			return object->getID();
-		}
-	}
-	return INVALID_OBJECT_ID;
+    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    if (playerData) {
+        IPlayerObject* object = playerData->create(modelid, position, rotation, drawDistance);
+        if (object) {
+            return object->getID();
+        }
+    }
+    return INVALID_OBJECT_ID;
 }
 
 SCRIPT_API(DestroyPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-	IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
-	playerData->release(object.getID());
-	return true;
+    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    playerData->release(object.getID());
+    return true;
 }
 
 SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& object, IVehicle& vehicle, Vector3 offset, Vector3 rotation))
 {
-	object.attachToVehicle(vehicle, offset, rotation);
-	return true;
+    object.attachToVehicle(vehicle, offset, rotation);
+    return true;
 }
 
 SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& object, IPlayer& playerAttachedTo, Vector3 offset, Vector3 rotation))
 {
-	PawnManager::Get()->core->logLn(LogLevel::Warning, "This native was removed from sa-mp, we do not support it either (yet)");
-	return false;
+    PawnManager::Get()->core->logLn(LogLevel::Warning, "This native was removed from sa-mp, we do not support it either (yet)");
+    return false;
 }
 
 SCRIPT_API(SetPlayerObjectPos, bool(IPlayer& player, IPlayerObject& object, Vector3 position))
 {
-	object.setPosition(position);
-	return true;
+    object.setPosition(position);
+    return true;
 }
 
 SCRIPT_API(GetPlayerObjectPos, bool(IPlayer& player, IPlayerObject& object, Vector3& position))
 {
-	position = object.getPosition();
-	return true;
+    position = object.getPosition();
+    return true;
 }
 
 SCRIPT_API(SetPlayerObjectRot, bool(IPlayer& player, IPlayerObject& object, Vector3 rotation))
 {
-	object.setRotation(rotation);
-	return true;
+    object.setRotation(rotation);
+    return true;
 }
 
 SCRIPT_API(GetPlayerObjectRot, bool(IPlayer& player, IPlayerObject& object, Vector3& rotation))
 {
-	rotation = object.getRotation().ToEuler();
-	return true;
+    rotation = object.getRotation().ToEuler();
+    return true;
 }
 
 SCRIPT_API(GetPlayerObjectModel, bool(IPlayer& player, IPlayerObject& object))
 {
-	return object.getModel();
+    return object.getModel();
 }
 
 SCRIPT_API(SetPlayerObjectNoCameraCol, bool(IPlayer& player, IPlayerObject& object))
 {
-	object.setCameraCollision(false);
-	return true;
+    object.setCameraCollision(false);
+    return true;
 }
 
 SCRIPT_API(IsValidPlayerObject, bool(IPlayer& player, IPlayerObject* object))
 {
-	return object != nullptr;
+    return object != nullptr;
 }
 
 SCRIPT_API(MovePlayerObject, bool(IPlayer& player, IPlayerObject& object, Vector3 position, float speed, Vector3 rotation))
 {
-	ObjectMoveData data;
-	data.targetPos = position;
-	data.targetRot = rotation;
-	data.speed = speed;
+    ObjectMoveData data;
+    data.targetPos = position;
+    data.targetRot = rotation;
+    data.speed = speed;
 
-	object.startMoving(data);
-	return true;
+    object.startMoving(data);
+    return true;
 }
 
 SCRIPT_API(StopPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-	object.stopMoving();
-	return true;
+    object.stopMoving();
+    return true;
 }
 
 SCRIPT_API(IsPlayerObjectMoving, bool(IPlayer& player, IPlayerObject& object))
 {
-	return object.isMoving();
+    return object.isMoving();
 }
 
 SCRIPT_API(EditPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-	IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
-	if (playerData) {
-		playerData->editObject(object);
-		return true;
-	}
-	return false;
+    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    if (playerData) {
+        playerData->editObject(object);
+        return true;
+    }
+    return false;
 }
 
 SCRIPT_API(SetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialIndex, int modelId, const std::string& txdName, const std::string& textureName, uint32_t materialcolor))
 {
-	object.setMaterial(materialIndex, modelId, txdName, textureName, Colour::FromARGB(materialcolor));
-	return true;
+    object.setMaterial(materialIndex, modelId, txdName, textureName, Colour::FromARGB(materialcolor));
+    return true;
 }
 
-SCRIPT_API(SetPlayerObjectMaterialText, bool(
-	IPlayer& player, IPlayerObject& object, const std::string& text, int materialindex, int materialsize, const std::string& fontface,
-	int fontsize, bool bold, uint32_t fontcolor, uint32_t backcolor, int textalignment
-	))
+SCRIPT_API(SetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, const std::string& text, int materialindex, int materialsize, const std::string& fontface, int fontsize, bool bold, uint32_t fontcolor, uint32_t backcolor, int textalignment))
 {
-	object.setMaterialText(materialindex, text, materialsize, fontface, fontsize, bold, Colour::FromARGB(fontcolor), Colour::FromARGB(backcolor), ObjectMaterialTextAlign(textalignment));
-	return true;
+    object.setMaterialText(materialindex, text, materialsize, fontface, fontsize, bold, Colour::FromARGB(fontcolor), Colour::FromARGB(backcolor), ObjectMaterialTextAlign(textalignment));
+    return true;
 }

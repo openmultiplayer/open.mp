@@ -1,9 +1,9 @@
 #pragma once
 
-#include <Server/Components/Vehicles/vehicles.hpp>
-#include <netcode.hpp>
 #include "vehicle.hpp"
 #include "vehicle_components.hpp"
+#include <Server/Components/Vehicles/vehicles.hpp>
+#include <netcode.hpp>
 
 struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core;
@@ -12,15 +12,20 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
     StreamConfigHelper streamConfigHelper;
 
-    IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override {
+    IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override
+    {
         return eventDispatcher;
     }
 
     struct PlayerEnterVehicleHandler : public SingleNetworkInOutEventHandler {
         VehiclesComponent& self;
-        PlayerEnterVehicleHandler(VehiclesComponent& self) : self(self) {}
+        PlayerEnterVehicleHandler(VehiclesComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
             if (!onPlayerEnterVehicleRPC.read(bs) || !self.storage.valid(onPlayerEnterVehicleRPC.VehicleID)) {
                 return false;
@@ -32,8 +37,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                     &VehicleEventHandler::onPlayerEnterVehicle,
                     peer,
                     lock.entry,
-                    onPlayerEnterVehicleRPC.Passenger
-                );
+                    onPlayerEnterVehicleRPC.Passenger);
             }
 
             NetCode::RPC::EnterVehicle enterVehicleRPC;
@@ -47,9 +51,13 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
     struct PlayerExitVehicleHandler : public SingleNetworkInOutEventHandler {
         VehiclesComponent& self;
-        PlayerExitVehicleHandler(VehiclesComponent& self) : self(self) {}
+        PlayerExitVehicleHandler(VehiclesComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
             if (!onPlayerExitVehicleRPC.read(bs) || !self.storage.valid(onPlayerExitVehicleRPC.VehicleID)) {
                 return false;
@@ -60,8 +68,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                 self.eventDispatcher.dispatch(
                     &VehicleEventHandler::onPlayerExitVehicle,
                     peer,
-                    lock.entry
-                );
+                    lock.entry);
             }
 
             NetCode::RPC::ExitVehicle exitVehicleRPC;
@@ -74,9 +81,13 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
     struct PlayerUpdateVehicleDamageStatus : public SingleNetworkInOutEventHandler {
         VehiclesComponent& self;
-        PlayerUpdateVehicleDamageStatus(VehiclesComponent& self) : self(self) {}
+        PlayerUpdateVehicleDamageStatus(VehiclesComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
             if (!onDamageStatus.read(bs) || !self.storage.valid(onDamageStatus.VehicleID)) {
                 return false;
@@ -93,9 +104,13 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
     struct PlayerSCMEventHandler : public SingleNetworkInOutEventHandler {
         VehiclesComponent& self;
-        PlayerSCMEventHandler(VehiclesComponent& self) : self(self) {}
+        PlayerSCMEventHandler(VehiclesComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::SCMEvent scmEvent;
             if (!scmEvent.read(bs) || !self.storage.valid(scmEvent.VehicleID)) {
                 return false;
@@ -130,8 +145,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
                 if (allowed) {
                     vehicle.addComponent(scmEvent.Arg1);
-                }
-                else {
+                } else {
                     NetCode::RPC::RemoveVehicleComponent modRPC;
                     modRPC.VehicleID = scmEvent.VehicleID;
                     modRPC.Component = scmEvent.Arg1;
@@ -144,8 +158,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                 bool allowed = self.eventDispatcher.stopAtFalse(
                     [&peer, &vehicle, &scmEvent](VehicleEventHandler* handler) {
                         return handler->onVehicleRespray(peer, vehicle, scmEvent.Arg1, scmEvent.Arg2);
-                    }
-                );
+                    });
 
                 if (allowed) {
                     vehicle.setColour(scmEvent.Arg1, scmEvent.Arg2);
@@ -156,7 +169,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
             case VehicleSCMEvent_EnterExitModShop: {
                 self.eventDispatcher.all([&peer, scmEvent](VehicleEventHandler* handler) {
                     handler->onEnterExitModShop(peer, scmEvent.Arg1, scmEvent.Arg2);
-                    });
+                });
 
                 NetCode::RPC::SCMEvent enterExitRPC;
                 enterExitRPC.PlayerID = peer.getID();
@@ -179,9 +192,13 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
     struct VehicleDeathHandler final : public SingleNetworkInOutEventHandler {
         VehiclesComponent& self;
-        VehicleDeathHandler(VehiclesComponent& self) : self(self) {}
+        VehicleDeathHandler(VehiclesComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::VehicleDeath vehicleDeath;
             if (!vehicleDeath.read(bs) || !self.storage.valid(vehicleDeath.VehicleID)) {
                 return false;
@@ -190,8 +207,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
             Vehicle& vehicle = self.storage.get(vehicleDeath.VehicleID);
             if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            }
-            else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer) {
+            } else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer) {
                 return false;
             }
 
@@ -200,7 +216,8 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         }
     } vehicleDeathHandler;
 
-    void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override {
+    void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
+    {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
             Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
@@ -216,7 +233,8 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         }
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
         const int pid = player.getID();
         for (IVehicle* v : storage.entries()) {
             Vehicle* vehicle = static_cast<Vehicle*>(v);
@@ -229,12 +247,12 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         }
     }
 
-    VehiclesComponent() :
-        playerEnterVehicleHandler(*this),
-        playerExitVehicleHandler(*this),
-        vehicleDamageStatusHandler(*this),
-        playerSCMEventHandler(*this),
-        vehicleDeathHandler(*this)
+    VehiclesComponent()
+        : playerEnterVehicleHandler(*this)
+        , playerExitVehicleHandler(*this)
+        , vehicleDamageStatusHandler(*this)
+        , playerSCMEventHandler(*this)
+        , vehicleDeathHandler(*this)
     {
         preloadModels.fill(1);
     }
@@ -250,7 +268,8 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         core->removePerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
     }
 
-    void onLoad(ICore* core) override {
+    void onLoad(ICore* core) override
+    {
         this->core = core;
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
@@ -263,34 +282,40 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    {
         return new PlayerVehicleData();
     }
 
-    StringView componentName() const override {
+    StringView componentName() const override
+    {
         return "Vehicles";
     }
 
-    SemanticVersion componentVersion() const override {
+    SemanticVersion componentVersion() const override
+    {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() override {
+    StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() override
+    {
         return preloadModels;
     }
 
-    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override {
-        IVehicle* ret = create(VehicleSpawnData{ modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
+    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override
+    {
+        IVehicle* ret = create(VehicleSpawnData { modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;
-            ret->addCarriage(create(VehicleSpawnData{ carridgeModel, position, Z, colour1, colour2, respawnDelay }), 0);
-            ret->addCarriage(create(VehicleSpawnData{ carridgeModel, position, Z, colour1, colour2, respawnDelay }), 1);
-            ret->addCarriage(create(VehicleSpawnData{ carridgeModel, position, Z, colour1, colour2, respawnDelay }), 2);
+            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 0);
+            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 1);
+            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 2);
         }
         return ret;
     }
 
-    IVehicle* create(VehicleSpawnData data) override {
+    IVehicle* create(VehicleSpawnData data) override
+    {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -309,36 +334,43 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         return &vehicle;
     }
 
-    void free() override {
+    void free() override
+    {
         delete this;
     }
 
-    int findFreeIndex() override {
+    int findFreeIndex() override
+    {
         return storage.findFreeIndex();
     }
 
-    int claim() override {
+    int claim() override
+    {
         int res = storage.claim();
         return res;
     }
 
-    int claim(int hint) override {
+    int claim(int hint) override
+    {
         int res = storage.claim(hint);
         return res;
     }
 
-    bool valid(int index) const override {
+    bool valid(int index) const override
+    {
         if (index == 0) {
             return false;
         }
         return storage.valid(index);
     }
 
-    IVehicle& get(int index) override {
+    IVehicle& get(int index) override
+    {
         return storage.get(index);
     }
 
-    void release(int index) override {
+    void release(int index) override
+    {
         Vehicle& vehicle = storage.get(index);
         if (vehicle.spawnData.modelID == 538 || vehicle.spawnData.modelID == 537) {
             auto carriages = storage.get(index).getCarriages();
@@ -349,20 +381,24 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         storage.release(index, false);
     }
 
-    void lock(int index) override {
+    void lock(int index) override
+    {
         storage.lock(index);
     }
 
-    void unlock(int index) override {
+    void unlock(int index) override
+    {
         storage.unlock(index);
     }
 
     /// Get a set of all the available objects
-    const FlatPtrHashSet<IVehicle>& entries() override {
+    const FlatPtrHashSet<IVehicle>& entries() override
+    {
         return storage.entries();
     }
 
-    bool onUpdate(IPlayer& player, TimePoint now) override {
+    bool onUpdate(IPlayer& player, TimePoint now) override
+    {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (IVehicle* v : storage.entries()) {
@@ -370,16 +406,12 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                 bool occupied = false;
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = vehicle->pos - player.getPosition();
-                const bool shouldBeStreamedIn =
-                    state != PlayerState_None &&
-                    player.getVirtualWorld() == vehicle->virtualWorld_ &&
-                    glm::dot(dist2D, dist2D) < maxDist;
+                const bool shouldBeStreamedIn = state != PlayerState_None && player.getVirtualWorld() == vehicle->virtualWorld_ && glm::dot(dist2D, dist2D) < maxDist;
 
                 const bool isStreamedIn = vehicle->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
                     vehicle->streamInForPlayer(player);
-                }
-                else if (isStreamedIn && !shouldBeStreamedIn) {
+                } else if (isStreamedIn && !shouldBeStreamedIn) {
                     vehicle->streamOutForPlayer(player);
                 }
 
@@ -394,8 +426,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                     if (now - vehicle->timeOfDeath >= vehicle->getRespawnDelay()) {
                         vehicle->respawn();
                     }
-                }
-                else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != Seconds(-1)) {
+                } else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != Seconds(-1)) {
                     if (now - vehicle->lastOccupied >= vehicle->getRespawnDelay()) {
                         vehicle->respawn();
                     }
