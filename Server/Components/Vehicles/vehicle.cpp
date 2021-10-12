@@ -2,7 +2,8 @@
 #include "vehicles_impl.hpp"
 #include <vehicle_components.hpp>
 
-void Vehicle::streamInForPlayer(IPlayer& player) {
+void Vehicle::streamInForPlayer(IPlayer& player)
+{
     if (streamedFor_.valid(player.getID())) {
         return;
     }
@@ -62,7 +63,8 @@ void Vehicle::streamInForPlayer(IPlayer& player) {
     respawning = false;
 }
 
-void Vehicle::streamOutForPlayer(IPlayer& player) {
+void Vehicle::streamOutForPlayer(IPlayer& player)
+{
     int id = player.getID();
     if (!streamedFor_.valid(id)) {
         return;
@@ -72,7 +74,8 @@ void Vehicle::streamOutForPlayer(IPlayer& player) {
     streamOutForClient(player);
 }
 
-void Vehicle::streamOutForClient(IPlayer& player) {
+void Vehicle::streamOutForClient(IPlayer& player)
+{
     NetCode::RPC::StreamOutVehicle streamOut;
     streamOut.VehicleID = poolID;
     player.sendRPC(streamOut);
@@ -84,7 +87,8 @@ void Vehicle::streamOutForClient(IPlayer& player) {
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
 }
 
-bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) {
+bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player)
+{
     if (respawning) {
         return false;
     }
@@ -125,11 +129,11 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     return true;
 }
 
-bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) {
+bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player)
+{
     if ((isTrailer() && tower->getDriver() != nullptr && tower->getDriver() != &player) || respawning) {
         return false;
-    }
-    else if (!unoccupiedSync.SeatID) {
+    } else if (!unoccupiedSync.SeatID) {
         float playerDistance = glm::distance(player.getPosition(), pos);
         auto& entries = streamedFor_.entries();
         for (IPlayer* comparable : entries) {
@@ -146,11 +150,10 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
         }
     }
 
-    UnoccupiedVehicleUpdate data = UnoccupiedVehicleUpdate{ unoccupiedSync.SeatID, unoccupiedSync.Position, unoccupiedSync.Velocity };
-    bool allowed = 
-        pool->eventDispatcher.stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
-            return handler->onUnoccupiedVehicleUpdate(*this, player, data);
-        });
+    UnoccupiedVehicleUpdate data = UnoccupiedVehicleUpdate { unoccupiedSync.SeatID, unoccupiedSync.Position, unoccupiedSync.Velocity };
+    bool allowed = pool->eventDispatcher.stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
+        return handler->onUnoccupiedVehicleUpdate(*this, player, data);
+    });
 
     if (tower && !towing) {
         tower->detachTrailer();
@@ -165,7 +168,8 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
     return allowed;
 }
 
-bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& trailerSync, IPlayer& player) {
+bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& trailerSync, IPlayer& player)
+{
     if (!streamedFor_.valid(player.getID())) {
         return false;
     }
@@ -177,8 +181,7 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
     if (!vehicle) {
         return false;
-    }
-    else if (tower != vehicle && !detaching) {
+    } else if (tower != vehicle && !detaching) {
         tower = static_cast<Vehicle*>(vehicle);
         tower->attachTrailer(*this);
         towing = false;
@@ -200,13 +203,13 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
         trailerUpdateTime = now;
     }
     bool allowed = pool->eventDispatcher.stopAtFalse([&player, this](VehicleEventHandler* handler) {
-            return handler->onTrailerUpdate(player, *this);
-        }
-    );
+        return handler->onTrailerUpdate(player, *this);
+    });
     return allowed;
 }
 
-bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player) {
+bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player)
+{
     if (player.getState() != PlayerState_Passenger) {
         PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
         data->vehicle = this;
@@ -217,7 +220,8 @@ bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync
     return false;
 }
 
-void Vehicle::setPlate(StringView plate) {
+void Vehicle::setPlate(StringView plate)
+{
     numberPlate = plate;
     NetCode::RPC::SetVehiclePlate plateRPC;
     plateRPC.VehicleID = poolID;
@@ -228,11 +232,13 @@ void Vehicle::setPlate(StringView plate) {
     }
 }
 
-const StringView Vehicle::getPlate() {
+const StringView Vehicle::getPlate()
+{
     return numberPlate;
 }
 
-void Vehicle::setColour(int col1, int col2) {
+void Vehicle::setColour(int col1, int col2)
+{
     bodyColour1 = col1;
     bodyColour2 = col2;
 
@@ -248,11 +254,13 @@ void Vehicle::setColour(int col1, int col2) {
     }
 }
 
-Pair<int, int> Vehicle::getColour() const {
-    return { bodyColour1 , bodyColour2 };
+Pair<int, int> Vehicle::getColour() const
+{
+    return { bodyColour1, bodyColour2 };
 }
 
-void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater) {
+void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater)
+{
     tyreDamage = TyreStatus;
     doorDamage = DoorStatus;
     panelDamage = PanelStatus;
@@ -277,14 +285,16 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
     }
 }
 
-void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, int& LightStatus, int& TyreStatus) {
+void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, int& LightStatus, int& TyreStatus)
+{
     PanelStatus = panelDamage;
     DoorStatus = doorDamage;
     LightStatus = lightDamage;
     TyreStatus = tyreDamage;
 }
 
-void Vehicle::setPaintJob(int paintjob) {
+void Vehicle::setPaintJob(int paintjob)
+{
     paintJob = paintjob + 1;
     NetCode::RPC::SCMEvent paintRPC;
     paintRPC.PlayerID = 0xFFFF;
@@ -297,13 +307,15 @@ void Vehicle::setPaintJob(int paintjob) {
     }
 }
 
-int Vehicle::getPaintJob() {
+int Vehicle::getPaintJob()
+{
     // Vehicle stream in thinks 0 is basically "no" paintjob but San Andreas has multiple
     // paintjobs as ID 0 so... we just + 1 to it on stream in but nobody knows about that so - 1 back when someone is trying to get it.
     return paintJob - 1;
 }
 
-void Vehicle::addComponent(int component) {
+void Vehicle::addComponent(int component)
+{
     int slot = getVehicleComponentSlot(component);
     if (slot == VehicleComponent_None) {
         return;
@@ -321,14 +333,16 @@ void Vehicle::addComponent(int component) {
     }
 }
 
-int Vehicle::getComponentInSlot(int slot) {
+int Vehicle::getComponentInSlot(int slot)
+{
     if (slot < 0 || slot >= MAX_VEHICLE_COMPONENT_SLOT) {
         return INVALID_COMPONENT_ID;
     }
     return mods[slot];
 }
 
-void Vehicle::removeComponent(int component) {
+void Vehicle::removeComponent(int component)
+{
     int slot = getVehicleComponentSlot(component);
     if (slot == VehicleComponent_None) {
         return;
@@ -346,7 +360,8 @@ void Vehicle::removeComponent(int component) {
     }
 }
 
-void Vehicle::putPlayer(IPlayer& player, int SeatID) {
+void Vehicle::putPlayer(IPlayer& player, int SeatID)
+{
     const bool isStreamedIn = this->isStreamedInForPlayer(player);
     if (!isStreamedIn) {
         this->streamInForPlayer(player);
@@ -359,7 +374,8 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID) {
     player.sendRPC(putPlayerInVehicleRPC);
 }
 
-void Vehicle::setHealth(float Health) {
+void Vehicle::setHealth(float Health)
+{
     health = Health;
     NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
     setVehicleHealthRPC.VehicleID = poolID;
@@ -369,7 +385,8 @@ void Vehicle::setHealth(float Health) {
     }
 }
 
-void Vehicle::setInterior(int InteriorID) {
+void Vehicle::setInterior(int InteriorID)
+{
     interior = InteriorID;
     NetCode::RPC::LinkVehicleToInterior linkVehicleToInteriorRPC;
     linkVehicleToInteriorRPC.VehicleID = poolID;
@@ -379,16 +396,19 @@ void Vehicle::setInterior(int InteriorID) {
     }
 }
 
-int Vehicle::getInterior() {
+int Vehicle::getInterior()
+{
     return interior;
 }
 
-void Vehicle::removePlayer(IPlayer& player) {
+void Vehicle::removePlayer(IPlayer& player)
+{
     NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
     player.sendRPC(removePlayerFromVehicleRPC);
 }
 
-void Vehicle::setZAngle(float angle) {
+void Vehicle::setZAngle(float angle)
+{
     const Vector3 euler = rot.ToEuler();
     rot = GTAQuat(euler.x, euler.y, angle);
     NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
@@ -399,12 +419,14 @@ void Vehicle::setZAngle(float angle) {
     }
 }
 
-float Vehicle::getZAngle() {
+float Vehicle::getZAngle()
+{
     return rot.ToEuler().z;
 }
 
 // Set the vehicle's parameters.
-void Vehicle::setParams(const VehicleParams& params) {
+void Vehicle::setParams(const VehicleParams& params)
+{
     this->params = params;
     NetCode::RPC::SetVehicleParams vehicleRPC;
     vehicleRPC.VehicleID = poolID;
@@ -415,7 +437,8 @@ void Vehicle::setParams(const VehicleParams& params) {
 }
 
 // Set the vehicle's parameters for a specific player.
-void Vehicle::setParamsForPlayer(IPlayer& player, const VehicleParams& params) {
+void Vehicle::setParamsForPlayer(IPlayer& player, const VehicleParams& params)
+{
     if (!streamedFor_.valid(player.getID())) {
         return;
     }
@@ -426,11 +449,13 @@ void Vehicle::setParamsForPlayer(IPlayer& player, const VehicleParams& params) {
     player.sendRPC(vehicleRPC);
 }
 
-float Vehicle::getHealth() {
+float Vehicle::getHealth()
+{
     return health;
 }
 
-void Vehicle::setPosition(Vector3 position) {
+void Vehicle::setPosition(Vector3 position)
+{
     pos = position;
     NetCode::RPC::SetVehiclePosition setVehiclePosition;
     setVehiclePosition.VehicleID = poolID;
@@ -440,22 +465,26 @@ void Vehicle::setPosition(Vector3 position) {
     }
 }
 
-Vector3 Vehicle::getPosition() const {
+Vector3 Vehicle::getPosition() const
+{
     return pos;
 }
 
-void Vehicle::setDead(IPlayer& killer) {
+void Vehicle::setDead(IPlayer& killer)
+{
     dead = true;
     timeOfDeath = Time::now();
     ScopedPoolReleaseLock lock(*pool, *this);
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
 }
 
-bool Vehicle::isDead() {
+bool Vehicle::isDead()
+{
     return dead;
 }
 
-void Vehicle::respawn() {
+void Vehicle::respawn()
+{
     respawning = true;
     const auto& entries = streamedFor_.entries();
     for (IPlayer* player : entries) {
@@ -483,21 +512,24 @@ void Vehicle::respawn() {
     trailer = nullptr;
     tower = nullptr;
     towing = false;
-    params = VehicleParams{};
+    params = VehicleParams {};
 
     ScopedPoolReleaseLock lock(*pool, *this);
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
 }
 
-Seconds Vehicle::getRespawnDelay() {
+Seconds Vehicle::getRespawnDelay()
+{
     return spawnData.respawnDelay;
 }
 
-bool Vehicle::hasBeenOccupied() {
+bool Vehicle::hasBeenOccupied()
+{
     return beenOccupied;
 }
 
-void Vehicle::attachTrailer(IVehicle& trailer) {
+void Vehicle::attachTrailer(IVehicle& trailer)
+{
     this->trailer = static_cast<Vehicle*>(&trailer);
     towing = true;
     this->trailer->setTower(this);
@@ -510,7 +542,8 @@ void Vehicle::attachTrailer(IVehicle& trailer) {
     }
 }
 
-void Vehicle::detachTrailer() {
+void Vehicle::detachTrailer()
+{
     if (trailer && towing) {
         NetCode::RPC::DetachTrailer trailerRPC;
         trailerRPC.VehicleID = poolID;
@@ -523,7 +556,8 @@ void Vehicle::detachTrailer() {
     }
 }
 
-void Vehicle::setVelocity(Vector3 velocity) {
+void Vehicle::setVelocity(Vector3 velocity)
+{
     if (!driver) {
         return;
     }
@@ -535,7 +569,8 @@ void Vehicle::setVelocity(Vector3 velocity) {
     driver->sendRPC(velocityRPC);
 }
 
-void Vehicle::setAngularVelocity(Vector3 velocity) {
+void Vehicle::setAngularVelocity(Vector3 velocity)
+{
     if (!driver) {
         return;
     }

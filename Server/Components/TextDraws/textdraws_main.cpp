@@ -1,17 +1,19 @@
-#include <netcode.hpp>
 #include "textdraw.hpp"
+#include <netcode.hpp>
 
 struct PlayerTextDrawData final : IPlayerTextDrawData {
     IPlayer& player;
     MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, IPlayerTextDrawData::Capacity> storage;
     bool selecting;
 
-    PlayerTextDrawData(IPlayer& player) :
-        player(player),
-        selecting(false)
-    {}
+    PlayerTextDrawData(IPlayer& player)
+        : player(player)
+        , selecting(false)
+    {
+    }
 
-    void beginSelection(Colour highlight) override {
+    void beginSelection(Colour highlight) override
+    {
         selecting = true;
         NetCode::RPC::PlayerBeginTextDrawSelect beginTextDrawSelectRPC;
         beginTextDrawSelectRPC.Enable = true;
@@ -19,11 +21,13 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         player.sendRPC(beginTextDrawSelectRPC);
     }
 
-    bool isSelecting() const override {
+    bool isSelecting() const override
+    {
         return selecting;
     }
 
-    void endSelection() override {
+    void endSelection() override
+    {
         selecting = false;
         NetCode::RPC::PlayerBeginTextDrawSelect beginTextDrawSelectRPC;
         beginTextDrawSelectRPC.Enable = false;
@@ -31,7 +35,8 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         player.sendRPC(beginTextDrawSelectRPC);
     }
 
-    IPlayerTextDraw* create(Vector2 position, StringView text) override {
+    IPlayerTextDraw* create(Vector2 position, StringView text) override
+    {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -51,7 +56,8 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         return &textDraw;
     }
 
-    IPlayerTextDraw* create(Vector2 position, int model) override {
+    IPlayerTextDraw* create(Vector2 position, int model) override
+    {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -73,7 +79,8 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         return &textDraw;
     }
 
-    void free() override {
+    void free() override
+    {
         for (IPlayerTextDraw* textDraw : storage.entries()) {
             PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
             td->player = nullptr;
@@ -81,42 +88,51 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         delete this;
     }
 
-    int findFreeIndex() override {
+    int findFreeIndex() override
+    {
         return storage.findFreeIndex();
     }
 
-    int claim() override {
+    int claim() override
+    {
         int res = storage.claim();
         return res;
     }
 
-    int claim(int hint) override {
+    int claim(int hint) override
+    {
         int res = storage.claim(hint);
         return res;
     }
 
-    bool valid(int index) const override {
+    bool valid(int index) const override
+    {
         return storage.valid(index);
     }
 
-    IPlayerTextDraw& get(int index) override {
+    IPlayerTextDraw& get(int index) override
+    {
         return storage.get(index);
     }
 
-    void release(int index) override {
+    void release(int index) override
+    {
         storage.release(index, false);
     }
 
-    void lock(int index) override {
+    void lock(int index) override
+    {
         storage.lock(index);
     }
 
-    void unlock(int index) override {
+    void unlock(int index) override
+    {
         storage.unlock(index);
     }
 
     /// Get a set of all the available labels
-    const FlatPtrHashSet<IPlayerTextDraw>& entries() override {
+    const FlatPtrHashSet<IPlayerTextDraw>& entries() override
+    {
         return storage.entries();
     }
 };
@@ -126,19 +142,25 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
     MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsComponent::Capacity> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
-    StringView componentName() const override {
+    StringView componentName() const override
+    {
         return "TextLabels";
     }
 
-    SemanticVersion componentVersion() const override {
+    SemanticVersion componentVersion() const override
+    {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
     struct PlayerSelectTextDrawEventHandler : public SingleNetworkInOutEventHandler {
         TextDrawsComponent& self;
-        PlayerSelectTextDrawEventHandler(TextDrawsComponent& self) : self(self) {}
+        PlayerSelectTextDrawEventHandler(TextDrawsComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::OnPlayerSelectTextDraw RPC;
             if (!RPC.read(bs)) {
                 return false;
@@ -149,13 +171,11 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
                 if (RPC.Invalid) {
                     self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
                     data->selecting = false;
-                }
-                else {
+                } else {
                     if (RPC.PlayerTextDraw && data->storage.valid(RPC.TextDrawID)) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
                         self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.entry);
-                    }
-                    else if (!RPC.PlayerTextDraw && self.storage.valid(RPC.TextDrawID)) {
+                    } else if (!RPC.PlayerTextDraw && self.storage.valid(RPC.TextDrawID)) {
                         ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
                         self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, lock.entry);
                     }
@@ -166,32 +186,38 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         }
     } playerSelectTextDrawEventHandler;
 
-    TextDrawsComponent() :
-        playerSelectTextDrawEventHandler(*this)
-    {}
+    TextDrawsComponent()
+        : playerSelectTextDrawEventHandler(*this)
+    {
+    }
 
-    void onLoad(ICore* c) override {
+    void onLoad(ICore* c) override
+    {
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);
     }
 
-    ~TextDrawsComponent() {
+    ~TextDrawsComponent()
+    {
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);
         }
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override {
+    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    {
         return new PlayerTextDrawData(player);
     }
 
-    IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() override {
+    IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() override
+    {
         return dispatcher;
     }
 
-    ITextDraw* create(Vector2 position, StringView text) override {
+    ITextDraw* create(Vector2 position, StringView text) override
+    {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -210,7 +236,8 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         return &textDraw;
     }
 
-    ITextDraw* create(Vector2 position, int model) override {
+    ITextDraw* create(Vector2 position, int model) override
+    {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -231,49 +258,60 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         return &textDraw;
     }
 
-    void free() override {
+    void free() override
+    {
         delete this;
     }
 
-    int findFreeIndex() override {
+    int findFreeIndex() override
+    {
         return storage.findFreeIndex();
     }
 
-    int claim() override {
+    int claim() override
+    {
         int res = storage.claim();
         return res;
     }
 
-    int claim(int hint) override {
+    int claim(int hint) override
+    {
         int res = storage.claim(hint);
         return res;
     }
 
-    bool valid(int index) const override {
+    bool valid(int index) const override
+    {
         return storage.valid(index);
     }
 
-    ITextDraw& get(int index) override {
+    ITextDraw& get(int index) override
+    {
         return storage.get(index);
     }
 
-    void release(int index) override {
+    void release(int index) override
+    {
         storage.release(index, false);
     }
 
-    void lock(int index) override {
+    void lock(int index) override
+    {
         storage.lock(index);
     }
 
-    void unlock(int index) override {
+    void unlock(int index) override
+    {
         storage.unlock(index);
     }
 
-    const FlatPtrHashSet<ITextDraw>& entries() override {
+    const FlatPtrHashSet<ITextDraw>& entries() override
+    {
         return storage.entries();
     }
 };
 
-COMPONENT_ENTRY_POINT() {
-	return new TextDrawsComponent();
+COMPONENT_ENTRY_POINT()
+{
+    return new TextDrawsComponent();
 }

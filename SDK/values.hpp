@@ -1,8 +1,8 @@
 #pragma once
 
+#include "types.hpp"
 #include <map>
 #include <string>
-#include "types.hpp"
 
 constexpr int MAX_SEATS = 4;
 constexpr int PLAYER_POOL_SIZE = 1000;
@@ -69,7 +69,7 @@ static const std::map<String, Variant<int, String, float, DynamicArray<StringVie
     { "name_tag_draw_distance", 70.0f },
     { "disable_interior_enter_exits", false },
     { "disable_name_tag_los", false },
-    { "manual_vehicle_engine_and_lights", false},
+    { "manual_vehicle_engine_and_lights", false },
     { "show_name_tags", true },
     { "show_player_markers", PlayerMarkerMode_Global },
     { "limit_player_markers", false },
