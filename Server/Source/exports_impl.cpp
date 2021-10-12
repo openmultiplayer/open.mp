@@ -1,6 +1,6 @@
-#include <exports.hpp>
-#include <cstdlib>
 #include <cstddef>
+#include <cstdlib>
+#include <exports.hpp>
 #include <network.hpp>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -12,15 +12,18 @@ struct IUnknown;
 #include <arpa/inet.h>
 #endif
 
-void* omp_malloc(size_t size) {
+void* omp_malloc(size_t size)
+{
     return malloc(size);
 }
 
-void omp_free(void* ptr) {
+void omp_free(void* ptr)
+{
     return free(ptr);
 }
 
-bool PeerAddress::FromString(PeerAddress& out, StringView string) {
+bool PeerAddress::FromString(PeerAddress& out, StringView string)
+{
     if (out.ipv6) {
         in6_addr output;
         if (inet_pton(AF_INET6, string.data(), &output)) {
@@ -35,8 +38,7 @@ bool PeerAddress::FromString(PeerAddress& out, StringView string) {
 #endif
             return true;
         }
-    }
-    else {
+    } else {
         in_addr output;
         if (inet_pton(AF_INET, string.data(), &output)) {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -51,7 +53,8 @@ bool PeerAddress::FromString(PeerAddress& out, StringView string) {
     return false;
 }
 
-bool PeerAddress::ToString(const PeerAddress& in, char* buf, size_t len) {
+bool PeerAddress::ToString(const PeerAddress& in, char* buf, size_t len)
+{
     if (in.ipv6) {
         in6_addr addr;
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -64,8 +67,7 @@ bool PeerAddress::ToString(const PeerAddress& in, char* buf, size_t len) {
         }
 #endif
         return inet_ntop(AF_INET6, &addr, buf, len) != nullptr;
-    }
-    else {
+    } else {
         in_addr addr;
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
         addr.S_un.S_addr = in.v4;
