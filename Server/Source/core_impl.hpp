@@ -8,12 +8,12 @@
 #include <cstdarg>
 #include <events.hpp>
 #include <filesystem>
-#include <variant>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <pool.hpp>
 #include <sstream>
 #include <thread>
+#include <variant>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
@@ -25,14 +25,16 @@
 
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
-    template <typename ...Args>
-    struct adl_serializer<Variant<Args...>> {
-        static void to_json(json& j, Variant<Args...> const& v) {
-            absl::visit([&](auto&& value) {
-                j = std::forward<decltype(value)>(value);
-            }, v);
-        }
-    };
+template <typename... Args>
+struct adl_serializer<Variant<Args...>> {
+    static void to_json(json& j, Variant<Args...> const& v)
+    {
+        absl::visit([&](auto&& value) {
+            j = std::forward<decltype(value)>(value);
+        },
+            v);
+    }
+};
 }
 
 struct ComponentList : public IComponentList {
@@ -576,7 +578,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    ~Core() {
+    ~Core()
+    {
         IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
         if (consoleComp) {
             components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);

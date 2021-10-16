@@ -374,7 +374,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return lastPlayedSound_;
     }
 
-    void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override {
+    void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override
+    {
         lastPlayedAudio_ = String(url);
         NetCode::RPC::PlayAudioStreamForPlayer playAudioStreamRPC;
         playAudioStreamRPC.URL = url;
@@ -874,7 +875,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return weapon.ammo;
     }
 
-    void setShopName(StringView name) override {
+    void setShopName(StringView name) override
+    {
         shopName_ = String(name);
         NetCode::RPC::SetPlayerShopName setPlayerShopNameRPC;
         setPlayerShopNameRPC.Name = name;

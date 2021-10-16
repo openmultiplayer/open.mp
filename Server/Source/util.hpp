@@ -66,11 +66,12 @@ std::string GetLastErrorAsString()
 }
 #endif
 
-	void RunProcess(StringView exe, StringView args) {
-		auto exePath = std::filesystem::path(exe.data());
-		if (!exePath.has_extension()) {
-			exePath.replace_extension(EXECUTABLE_EXT);
-		}
+void RunProcess(StringView exe, StringView args)
+{
+    auto exePath = std::filesystem::path(exe.data());
+    if (!exePath.has_extension()) {
+        exePath.replace_extension(EXECUTABLE_EXT);
+    }
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
     ShellExecute(nullptr, "open", exePath.string().c_str(), args.data(), nullptr, FALSE);

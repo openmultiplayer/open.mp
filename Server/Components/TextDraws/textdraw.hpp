@@ -39,7 +39,8 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         return *this;
     }
 
-    void setText(StringView txt) override {
+    void setText(StringView txt) override
+    {
         text = String(txt);
     }
 

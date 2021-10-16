@@ -4,177 +4,195 @@
 
 template <class ObjectType>
 struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
-	Vector3 pos_;
-	Vector3 rot_;
-	int model_;
-	float drawDist_;
-	bool cameraCol_;
-	ObjectAttachmentData attachmentData_;
-	StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS> materials_;
-	StaticBitset<MAX_OBJECT_MATERIAL_SLOTS> materialsUsed_;
-	bool moving_;
-	ObjectMoveData moveData_;
-	float rotSpeed_;
-	bool anyDelayedProcessing_;
+    Vector3 pos_;
+    Vector3 rot_;
+    int model_;
+    float drawDist_;
+    bool cameraCol_;
+    ObjectAttachmentData attachmentData_;
+    StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS> materials_;
+    StaticBitset<MAX_OBJECT_MATERIAL_SLOTS> materialsUsed_;
+    bool moving_;
+    ObjectMoveData moveData_;
+    float rotSpeed_;
+    bool anyDelayedProcessing_;
 
-	BaseObject() :
-		attachmentData_{ ObjectAttachmentData::Type::None },
-		moving_(false),
-		anyDelayedProcessing_(false)
-	{}
+    BaseObject()
+        : attachmentData_ { ObjectAttachmentData::Type::None }
+        , moving_(false)
+        , anyDelayedProcessing_(false)
+    {
+    }
 
-	bool isMoving() const override {
-		return moving_;
-	}
+    bool isMoving() const override
+    {
+        return moving_;
+    }
 
-	const ObjectAttachmentData& getAttachmentData() const override {
-		return attachmentData_;
-	}
+    const ObjectAttachmentData& getAttachmentData() const override
+    {
+        return attachmentData_;
+    }
 
-	bool getMaterialData(int index, const IObjectMaterial*& out) const override {
-		if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
-			return false;
-		}
+    bool getMaterialData(int index, const IObjectMaterial*& out) const override
+    {
+        if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
+            return false;
+        }
 
-		if (!materialsUsed_.test(index)) {
-			return false;
-		}
+        if (!materialsUsed_.test(index)) {
+            return false;
+        }
 
-		out = &materials_[index];
-		return true;
-	}
+        out = &materials_[index];
+        return true;
+    }
 
-	int getID() const override {
-		return poolID;
-	}
+    int getID() const override
+    {
+        return poolID;
+    }
 
-	Vector3 getPosition() const override {
-		return pos_;
-	}
+    Vector3 getPosition() const override
+    {
+        return pos_;
+    }
 
-	GTAQuat getRotation() const override {
-		return GTAQuat(rot_);
-	}
+    GTAQuat getRotation() const override
+    {
+        return GTAQuat(rot_);
+    }
 
-	int getVirtualWorld() const override {
-		return 0;
-	}
+    int getVirtualWorld() const override
+    {
+        return 0;
+    }
 
-	float getDrawDistance() const override {
-		return drawDist_;
-	}
+    float getDrawDistance() const override
+    {
+        return drawDist_;
+    }
 
-	int getModel() const override {
-		return model_;
-	}
+    int getModel() const override
+    {
+        return model_;
+    }
 
-	bool getCameraCollision() const override {
-		return cameraCol_;
-	}
+    bool getCameraCollision() const override
+    {
+        return cameraCol_;
+    }
 
-	void setVirtualWorld(int vw) override {
+    void setVirtualWorld(int vw) override
+    {
+    }
 
-	}
+    void setMtl(int index, int model, StringView txd, StringView texture, Colour colour)
+    {
+        materialsUsed_.set(index);
+        materials_[index].data.type = ObjectMaterialData::Type::Default;
+        materials_[index].data.model = model;
+        materials_[index].txdOrText = String(txd);
+        materials_[index].textureOrFont = String(texture);
+        materials_[index].data.materialColour = colour;
+    }
 
-	void setMtl(int index, int model, StringView txd, StringView texture, Colour colour) {
-		materialsUsed_.set(index);
-		materials_[index].data.type = ObjectMaterialData::Type::Default;
-		materials_[index].data.model = model;
-		materials_[index].txdOrText = String(txd);
-		materials_[index].textureOrFont = String(texture);
-		materials_[index].data.materialColour = colour;
-	}
+    void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
+    {
+        materialsUsed_.set(index);
+        materials_[index].data.type = ObjectMaterialData::Type::Text;
+        materials_[index].txdOrText = String(text);
+        materials_[index].data.materialSize = size;
+        materials_[index].textureOrFont = String(fontFace);
+        materials_[index].data.fontSize = fontSize;
+        materials_[index].data.bold = bold;
+        materials_[index].data.fontColour = fontColour;
+        materials_[index].data.backgroundColour = backColour;
+        materials_[index].data.alignment = align;
+    }
 
-	void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) {
-		materialsUsed_.set(index);
-		materials_[index].data.type = ObjectMaterialData::Type::Text;
-		materials_[index].txdOrText = String(text);
-		materials_[index].data.materialSize = size;
-		materials_[index].textureOrFont = String(fontFace);
-		materials_[index].data.fontSize = fontSize;
-		materials_[index].data.bold = bold;
-		materials_[index].data.fontColour = fontColour;
-		materials_[index].data.backgroundColour = backColour;
-		materials_[index].data.alignment = align;
-	}
+    void setAttachmentData(ObjectAttachmentData::Type type, int id, Vector3 offset, Vector3 rotation, bool sync)
+    {
+        attachmentData_.type = type;
+        attachmentData_.ID = id;
+        attachmentData_.offset = offset;
+        attachmentData_.rotation = rotation;
+        attachmentData_.syncRotation = sync;
+    }
 
-	void setAttachmentData(ObjectAttachmentData::Type type, int id, Vector3 offset, Vector3 rotation, bool sync) {
-		attachmentData_.type = type;
-		attachmentData_.ID = id;
-		attachmentData_.offset = offset;
-		attachmentData_.rotation = rotation;
-		attachmentData_.syncRotation = sync;
-	}
+    void createObjectForClient(IPlayer& player)
+    {
+        NetCode::RPC::CreateObject createObjectRPC(materials_, materialsUsed_);
+        createObjectRPC.ObjectID = poolID;
+        createObjectRPC.ModelID = model_;
+        createObjectRPC.Position = pos_;
+        createObjectRPC.Rotation = rot_;
+        createObjectRPC.DrawDistance = drawDist_;
+        createObjectRPC.CameraCollision = cameraCol_;
+        createObjectRPC.AttachmentData = attachmentData_;
+        player.sendRPC(createObjectRPC);
+    }
 
-	void createObjectForClient(IPlayer& player) {
-		NetCode::RPC::CreateObject createObjectRPC(materials_, materialsUsed_);
-		createObjectRPC.ObjectID = poolID;
-		createObjectRPC.ModelID = model_;
-		createObjectRPC.Position = pos_;
-		createObjectRPC.Rotation = rot_;
-		createObjectRPC.DrawDistance = drawDist_;
-		createObjectRPC.CameraCollision = cameraCol_;
-		createObjectRPC.AttachmentData = attachmentData_;
-		player.sendRPC(createObjectRPC);
-	}
+    void destroyObjectForClient(IPlayer& player)
+    {
+        NetCode::RPC::DestroyObject destroyObjectRPC;
+        destroyObjectRPC.ObjectID = poolID;
+        player.sendRPC(destroyObjectRPC);
+    }
 
-	void destroyObjectForClient(IPlayer& player) {
-		NetCode::RPC::DestroyObject destroyObjectRPC;
-		destroyObjectRPC.ObjectID = poolID;
-		player.sendRPC(destroyObjectRPC);
-	}
+    NetCode::RPC::MoveObject move(const ObjectMoveData& data)
+    {
+        moving_ = true;
+        moveData_ = data;
 
-	NetCode::RPC::MoveObject move(const ObjectMoveData& data) {
-		moving_ = true;
-		moveData_ = data;
+        /// targetRot being NAN will result in rotSpeed being NAN resulting in no rotation
+        rotSpeed_ = glm::distance(rot_, moveData_.targetRot) * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
 
-		/// targetRot being NAN will result in rotSpeed being NAN resulting in no rotation
-		rotSpeed_ = glm::distance(rot_, moveData_.targetRot) * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
+        NetCode::RPC::MoveObject moveObjectRPC;
+        moveObjectRPC.ObjectID = poolID;
+        moveObjectRPC.CurrentPosition = pos_;
+        moveObjectRPC.MoveData = data;
+        return moveObjectRPC;
+    }
 
-		NetCode::RPC::MoveObject moveObjectRPC;
-		moveObjectRPC.ObjectID = poolID;
-		moveObjectRPC.CurrentPosition = pos_;
-		moveObjectRPC.MoveData = data;
-		return moveObjectRPC;
-	}
+    NetCode::RPC::StopObject stopMove()
+    {
+        moving_ = false;
+        NetCode::RPC::StopObject stopObjectRPC;
+        stopObjectRPC.ObjectID = poolID;
+        return stopObjectRPC;
+    }
 
-	NetCode::RPC::StopObject stopMove() {
-		moving_ = false;
-		NetCode::RPC::StopObject stopObjectRPC;
-		stopObjectRPC.ObjectID = poolID;
-		return stopObjectRPC;
-	}
+    bool advanceMove(Microseconds elapsed)
+    {
+        if (moving_) {
+            const float remainingDistance = glm::distance(pos_, moveData_.targetPos);
+            const float travelledDistance = duration_cast<RealSeconds>(elapsed).count() * moveData_.speed;
 
-	bool advanceMove(Microseconds elapsed) {
-		if (moving_) {
-			const float remainingDistance = glm::distance(pos_, moveData_.targetPos);
-			const float travelledDistance = duration_cast<RealSeconds>(elapsed).count() * moveData_.speed;
+            if (travelledDistance >= remainingDistance) {
+                moving_ = false;
+                pos_ = moveData_.targetPos;
+                if (!std::isnan(rotSpeed_)) {
+                    rot_ = moveData_.targetRot;
+                }
+                return true;
+            } else {
+                const float ratio = remainingDistance / travelledDistance;
+                pos_ += (moveData_.targetPos - pos_) / ratio;
 
-			if (travelledDistance >= remainingDistance) {
-				moving_ = false;
-				pos_ = moveData_.targetPos;
-				if (!std::isnan(rotSpeed_)) {
-					rot_ = moveData_.targetRot;
-				}
-				return true;
-			}
-			else {
-				const float ratio = remainingDistance / travelledDistance;
-				pos_ += (moveData_.targetPos - pos_) / ratio;
+                if (!std::isnan(rotSpeed_)) {
+                    const float remainingRotation = glm::distance(rot_, moveData_.targetRot);
+                    const float travelledRotation = duration_cast<RealSeconds>(elapsed).count() * rotSpeed_;
+                    if (travelledRotation > std::numeric_limits<float>::epsilon()) {
+                        const float rotationRatio = remainingRotation / travelledRotation;
+                        rot_ += (moveData_.targetRot - rot_) / rotationRatio;
+                    }
+                }
+            }
+        }
 
-				if (!std::isnan(rotSpeed_)) {
-					const float remainingRotation = glm::distance(rot_, moveData_.targetRot);
-					const float travelledRotation = duration_cast<RealSeconds>(elapsed).count() * rotSpeed_;
-					if (travelledRotation > std::numeric_limits<float>::epsilon()) {
-						const float rotationRatio = remainingRotation / travelledRotation;
-						rot_ += (moveData_.targetRot - rot_) / rotationRatio;
-					}
-				}
-			}
-		}
-
-		return false;
-	}
+        return false;
+    }
 };
 
 struct Object final : public BaseObject<IObject> {
