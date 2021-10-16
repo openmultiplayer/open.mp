@@ -172,7 +172,7 @@ struct Config final : IEarlyConfig {
         // Free strings allocated for the StringView array
         for (const auto& kv : processed) {
             if (kv.second.index() == 3 && ownAllocations.find(kv.first) != ownAllocations.end()) {
-                const auto& arr = std::get<DynamicArray<StringView>>(kv.second);
+                const auto& arr = absl::get<DynamicArray<StringView>>(kv.second);
                 for (auto& v : arr) {
                     delete[] v.data();
                 }
@@ -188,7 +188,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 1) {
             return StringView();
         }
-        return StringView(std::get<String>(it->second));
+        return StringView(absl::get<String>(it->second));
     }
 
     int* getInt(StringView key) override {
@@ -199,7 +199,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 0) {
             return 0;
         }
-        return &std::get<int>(it->second);
+        return &absl::get<int>(it->second);
     }
 
     float* getFloat(StringView key) override {
@@ -210,7 +210,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 2) {
             return 0;
         }
-        return &std::get<float>(it->second);
+        return &absl::get<float>(it->second);
     }
 
     Span<const StringView> getStrings(StringView key) const override {
@@ -221,7 +221,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 3) {
             return Span<StringView>();
         }
-        const DynamicArray<StringView>& vw = std::get<DynamicArray<StringView>>(it->second);
+        const DynamicArray<StringView>& vw = absl::get<DynamicArray<StringView>>(it->second);
         return Span<const StringView>(vw.data(), vw.size());
     }
 
