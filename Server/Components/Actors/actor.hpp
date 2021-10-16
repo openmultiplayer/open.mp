@@ -51,7 +51,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         return invulnerable_;
     }
 
-    void applyAnimation(const IAnimation& animation) override {
+    void applyAnimation(const IAnimation& animation) override
+    {
         animation_.lib = String(animation.getLib());
         animation_.name = String(animation.getName());
         animation_.timeData = animation.getTimeData();

@@ -60,13 +60,15 @@ public:
         }
     }
 
-	void setServerName(StringView value) {
-		serverName = String(value);
-	}
+    void setServerName(StringView value)
+    {
+        serverName = String(value);
+    }
 
-	void setGameModeName(StringView value) {
-		gameModeName = String(value);
-	}
+    void setGameModeName(StringView value)
+    {
+        gameModeName = String(value);
+    }
 
 private:
     ICore* core = nullptr;

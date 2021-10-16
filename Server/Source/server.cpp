@@ -14,8 +14,7 @@ int main(int argc, char** argv)
         "h,help",
         "Print usage information")(
         "write-config",
-        "Generate default config.json")(
-        "script",
+        "Generate default config.json")("script",
         "Script to run",
         cxxopts::value<std::string>());
     options.parse_positional("script");
