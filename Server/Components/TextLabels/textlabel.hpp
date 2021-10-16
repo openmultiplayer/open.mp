@@ -32,7 +32,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     void setRotation(GTAQuat rotation) override {}
 
     void setText(StringView txt) override {
-        text = txt;
+        text = String(txt);
         restream();
     }
 

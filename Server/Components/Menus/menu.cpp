@@ -116,7 +116,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 		}
 
 		Menu & menu = storage.get(pid);
-		menu.title = title;
+		menu.title = String(title);
 		menu.pos = position;
 		menu.columnCount = columns;
 		menu.col1Width = col1Width;

@@ -37,7 +37,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 			return;
 		}
 
-		columnHeaders.at(column) = header;
+		columnHeaders.at(column) = String(header);
 	}
 
 	void addMenuItem(StringView itemText, MenuColumn column) override {
@@ -53,7 +53,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 			return;
 		}
 
-		columnMenuItems.at(column).at(itemCount) = itemText;
+		columnMenuItems.at(column).at(itemCount) = String(itemText);
 		itemCount++;
 		columnItemCount.at(column) = itemCount;
 

@@ -338,7 +338,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override {
-        lastPlayedAudio_ = url;
+        lastPlayedAudio_ = String(url);
         NetCode::RPC::PlayAudioStreamForPlayer playAudioStreamRPC;
         playAudioStreamRPC.URL = url;
         playAudioStreamRPC.Usepos = usePos;
@@ -779,7 +779,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     }
 
     void setShopName(StringView name) override {
-        shopName_ = name;
+        shopName_ = String(name);
         NetCode::RPC::SetPlayerShopName setPlayerShopNameRPC;
         setPlayerShopNameRPC.Name = name;
         sendRPC(setPlayerShopNameRPC);
@@ -791,7 +791,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setChatBubble(StringView text, const Colour& colour, float drawDist, Milliseconds expire) override {
         chatBubbleExpiration_ = Time::now() + expire;
-        chatBubble_.text = text;
+        chatBubble_.text = String(text);
         chatBubble_.drawDist = drawDist;
         chatBubble_.colour = colour;
 

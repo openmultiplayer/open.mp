@@ -22,7 +22,7 @@ EPlayerNameStatus Player::setName(StringView name) {
     }
     pool_->eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
 
-    name_ = name;
+    name_ = String(name);
 
     NetCode::RPC::SetPlayerName setPlayerNameRPC;
     setPlayerNameRPC.PlayerID = poolID;
