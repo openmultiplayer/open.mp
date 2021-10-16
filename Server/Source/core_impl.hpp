@@ -26,15 +26,6 @@
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
     template <typename ...Args>
-    struct adl_serializer<std::variant<Args...>> {
-        static void to_json(json& j, std::variant<Args...> const& v) {
-            std::visit([&](auto&& value) {
-                j = std::forward<decltype(value)>(value);
-            }, v);
-        }
-    };
-
-    template <typename ...Args>
     struct adl_serializer<Variant<Args...>> {
         static void to_json(json& j, Variant<Args...> const& v) {
             absl::visit([&](auto&& value) {
