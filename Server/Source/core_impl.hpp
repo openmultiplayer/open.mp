@@ -548,11 +548,18 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
-        components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+
+        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
+        if (consoleComp) {
+            components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        }
     }
 
     ~Core() {
-		components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
+        if (consoleComp) {
+            components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        }
         players.getEventDispatcher().removeEventHandler(this);
         if (logFile) {
             fclose(logFile);
