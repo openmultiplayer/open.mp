@@ -2,12 +2,13 @@
 #include <netcode.hpp>
 
 static const struct DefaultClass final : public PlayerClass {
-    DefaultClass() {
+    DefaultClass()
+    {
         team = 255;
         skin = 0;
         spawn = Vector3(0.0f, 0.0f, 3.1279f);
         angle = 0.f;
-        weapons.fill(WeaponSlotData{ 0, 0 });
+        weapons.fill(WeaponSlotData { 0, 0 });
     }
 } defClass;
 
@@ -17,18 +18,21 @@ struct PlayerClassData final : IPlayerClassData {
     bool& inClassRequest;
     bool& skipDefaultClassRequest;
 
-    PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest) :
-        player(player),
-        cls(defClass),
-        inClassRequest(inClassRequest),
-        skipDefaultClassRequest(skipDefaultClassRequest)
-    {}
+    PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest)
+        : player(player)
+        , cls(defClass)
+        , inClassRequest(inClassRequest)
+        , skipDefaultClassRequest(skipDefaultClassRequest)
+    {
+    }
 
-	const PlayerClass& getClass() override {
-		return cls;
-	}
+    const PlayerClass& getClass() override
+    {
+        return cls;
+    }
 
-	void setSpawnInfo(const PlayerClass& info) override {
+    void setSpawnInfo(const PlayerClass& info) override
+    {
         const WeaponSlots& weapons = info.weapons;
         StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
         StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
@@ -39,13 +43,14 @@ struct PlayerClassData final : IPlayerClassData {
         setSpawnInfoRPC.ZAngle = info.angle;
         setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
         setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
-        
-        player.sendRPC(setSpawnInfoRPC);
-	}
 
-	void free() override {
-		delete this;
-	}
+        player.sendRPC(setSpawnInfoRPC);
+    }
+
+    void free() override
+    {
+        delete this;
+    }
 };
 
 struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
@@ -53,12 +58,16 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
-	ICore* core;
+    ICore* core;
 
     struct PlayerRequestClassHandler : public SingleNetworkInOutEventHandler {
         ClassesComponent& self;
-        PlayerRequestClassHandler(ClassesComponent& self) : self(self) {}
-	        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        PlayerRequestClassHandler(ClassesComponent& self)
+            : self(self)
+        {
+        }
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::PlayerRequestClass playerRequestClassPacket;
             if (!playerRequestClassPacket.read(bs)) {
                 return false;
@@ -67,10 +76,9 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
             self.inClassRequest = true;
             self.skipDefaultClassRequest = false;
             if (self.eventDispatcher.stopAtFalse(
-                [&peer, &playerRequestClassPacket](ClassEventHandler* handler) {
-                    return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
-                }
-            )) {
+                    [&peer, &playerRequestClassPacket](ClassEventHandler* handler) {
+                        return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
+                    })) {
                 if (self.skipDefaultClassRequest) {
                     IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
                     if (clsData) {
@@ -86,8 +94,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
                         peer.sendRPC(playerRequestClassResponse);
                     }
-                }
-                else if (self.storage.valid(playerRequestClassPacket.Classid)) {
+                } else if (self.storage.valid(playerRequestClassPacket.Classid)) {
                     const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid);
                     IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
                     if (clsData) {
@@ -104,8 +111,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                     playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
                     peer.sendRPC(playerRequestClassResponse);
-                }
-                else {
+                } else {
                     const WeaponSlots& weapons = defClass.weapons;
                     StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                     StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
@@ -117,8 +123,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
                     peer.sendRPC(playerRequestClassResponse);
                 }
-            }
-            else {
+            } else {
                 StaticArray<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
                 NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponseNotAllowed;
@@ -134,30 +139,35 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         }
     } onPlayerRequestClassHandler;
 
-	ClassesComponent() :
-        onPlayerRequestClassHandler(*this)
-	{
-	}
+    ClassesComponent()
+        : onPlayerRequestClassHandler(*this)
+    {
+    }
 
-    void onLoad(ICore* c) override {
+    void onLoad(ICore* c) override
+    {
         core = c;
         core->addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
     }
 
-    IEventDispatcher<ClassEventHandler>& getEventDispatcher() override {
+    IEventDispatcher<ClassEventHandler>& getEventDispatcher() override
+    {
         return eventDispatcher;
     }
 
-    StringView componentName() const override {
-		return "Classes";
-	}
+    StringView componentName() const override
+    {
+        return "Classes";
+    }
 
-    SemanticVersion componentVersion() const override {
+    SemanticVersion componentVersion() const override
+    {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override {
+    PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
+    {
         int freeIdx = storage.findFreeIndex();
         if (freeIdx == -1) {
             // No free index
@@ -179,58 +189,71 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return &cls;
     }
 
-	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
-		return new PlayerClassData(player, inClassRequest, skipDefaultClassRequest);
-	}
+    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    {
+        return new PlayerClassData(player, inClassRequest, skipDefaultClassRequest);
+    }
 
-	void free() override {
-		delete this;
-	}
+    void free() override
+    {
+        delete this;
+    }
 
-    int findFreeIndex() override {
+    int findFreeIndex() override
+    {
         return storage.findFreeIndex();
     }
 
-    int claim() override {
+    int claim() override
+    {
         int res = storage.claim();
         return res;
     }
 
-    int claim(int hint) override {
+    int claim(int hint) override
+    {
         int res = storage.claim(hint);
         return res;
     }
 
-    bool valid(int index) const override {
+    bool valid(int index) const override
+    {
         return storage.valid(index);
     }
 
-    PlayerClass& get(int index) override {
+    PlayerClass& get(int index) override
+    {
         return storage.get(index);
     }
 
-    void release(int index) override {
+    void release(int index) override
+    {
         storage.release(index, false);
     }
 
-    void lock(int index) override {
+    void lock(int index) override
+    {
         storage.lock(index);
     }
 
-    void unlock(int index) override {
+    void unlock(int index) override
+    {
         storage.unlock(index);
     }
 
-    const FlatPtrHashSet<PlayerClass>& entries() override {
+    const FlatPtrHashSet<PlayerClass>& entries() override
+    {
         return storage.entries();
     }
 
-	~ClassesComponent() {
+    ~ClassesComponent()
+    {
         core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
-		core->getPlayers().getEventDispatcher().removeEventHandler(this);
-	}
+        core->getPlayers().getEventDispatcher().removeEventHandler(this);
+    }
 };
 
-COMPONENT_ENTRY_POINT() {
-	return new ClassesComponent();
+COMPONENT_ENTRY_POINT()
+{
+    return new ClassesComponent();
 }

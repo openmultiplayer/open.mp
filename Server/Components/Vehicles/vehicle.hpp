@@ -1,10 +1,10 @@
 #pragma once
 
-#include <Server/Components/Vehicles/vehicles.hpp>
-#include <netcode.hpp>
-#include <chrono>
 #include "vehicle_colours.hpp"
 #include "vehicle_params.hpp"
+#include <Server/Components/Vehicles/vehicles.hpp>
+#include <chrono>
+#include <netcode.hpp>
 
 struct PlayerVehicleData final : public IPlayerVehicleData {
     IVehicle* vehicle = nullptr;
@@ -13,17 +13,20 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
 
     /// Get the player's vehicle
     /// Returns nullptr if they aren't in a vehicle
-    IVehicle* getVehicle() override {
+    IVehicle* getVehicle() override
+    {
         return vehicle;
     }
 
     /// Get the player's seat
     /// Returns -1 if they aren't in a vehicle.
-    int getSeat() const override {
+    int getSeat() const override
+    {
         return seat;
     }
 
-    void free() override {
+    void free() override
+    {
         delete this;
     }
 };
@@ -69,27 +72,32 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
 
-    Vehicle() {
+    Vehicle()
+    {
         mods.fill(0);
         carriages.fill(nullptr);
     }
 
-    ~Vehicle() {
+    ~Vehicle()
+    {
         const auto& entries = streamedFor_.entries();
         for (IPlayer* player : entries) {
             streamOutForPlayer(*player);
         }
     }
 
-    virtual int getVirtualWorld() const override {
+    virtual int getVirtualWorld() const override
+    {
         return virtualWorld_;
     }
 
-    virtual void setVirtualWorld(int vw) override {
+    virtual void setVirtualWorld(int vw) override
+    {
         virtualWorld_ = vw;
     }
 
-    int getID() const override {
+    int getID() const override
+    {
         return poolID;
     }
 
@@ -97,19 +105,23 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void setPosition(Vector3 position) override;
 
-    GTAQuat getRotation() const override {
+    GTAQuat getRotation() const override
+    {
         return rot;
     }
 
-    void setRotation(GTAQuat rotation) override {
+    void setRotation(GTAQuat rotation) override
+    {
         rot = rotation;
     }
 
-    bool isStreamedInForPlayer(const IPlayer& player) const override {
+    bool isStreamedInForPlayer(const IPlayer& player) const override
+    {
         return streamedFor_.valid(player.getID());
     }
 
-    void setSpawnData(VehicleSpawnData data) override {
+    void setSpawnData(VehicleSpawnData data) override
+    {
         spawnData = data;
 
         if (spawnData.colour1 == -1 || spawnData.colour2 == -1) {
@@ -149,7 +161,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     float getHealth() override;
 
     /// Returns the current driver of the vehicle
-    IPlayer* getDriver() override {
+    IPlayer* getDriver() override
+    {
         return driver;
     }
 
@@ -181,7 +194,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void removePlayer(IPlayer& player) override;
 
     /// Set the vehicle's Z angle.
-	void setZAngle(float angle) override;
+    void setZAngle(float angle) override;
 
     /// Gets the vehicle's Z angle.
     float getZAngle() override;
@@ -215,13 +228,18 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     // Sets (links) the vehicle to an interior.
     void setInterior(int InteriorID) override;
 
-	// Gets the vehicle's interior.
+    // Gets the vehicle's interior.
     int getInterior() override;
 
     /// Set if the vehicle has been occupied.
-    void setBeenOccupied(bool occupied) { this->beenOccupied = occupied; lastOccupied = Time::now(); }
+    void setBeenOccupied(bool occupied)
+    {
+        this->beenOccupied = occupied;
+        lastOccupied = Time::now();
+    }
 
-    void repair() override {
+    void repair() override
+    {
         setHealth(1000.f);
         setDamageStatus(0, 0, 0, 0);
         params.bonnet = 0;
@@ -242,31 +260,36 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     bool isTrailer() const override { return !towing && tower != nullptr; }
 
     /// Get the current vehicle's attached trailer.
-    IVehicle* getTrailer() const override {
+    IVehicle* getTrailer() const override
+    {
         if (!towing) {
             return nullptr;
         }
         return trailer;
     }
 
-    void setTower(Vehicle* tower) {
+    void setTower(Vehicle* tower)
+    {
         detaching = true;
         this->tower = tower;
         towing = false;
     }
 
     /// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
-    void addCarriage(IVehicle* carriage, int pos) override {
+    void addCarriage(IVehicle* carriage, int pos) override
+    {
         if (spawnData.modelID != 538 && spawnData.modelID != 537) {
             return;
         }
         carriages.at(pos) = carriage;
     }
-    void updateCarriage(Vector3 pos, Vector3 veloc) override {
+    void updateCarriage(Vector3 pos, Vector3 veloc) override
+    {
         this->pos = pos;
         velocity = veloc;
     }
-    StaticArray<IVehicle*, 3> getCarriages() override {
+    StaticArray<IVehicle*, 3> getCarriages() override
+    {
         return carriages;
     }
 
@@ -274,7 +297,8 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void setVelocity(Vector3 velocity) override;
 
     /// Gets the current velocity of the vehicle.
-    Vector3 getVelocity() override {
+    Vector3 getVelocity() override
+    {
         return velocity;
     }
 
@@ -282,12 +306,14 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void setAngularVelocity(Vector3 velocity) override;
 
     /// Gets the current angular velocity of the vehicle.
-    Vector3 getAngularVelocity() override {
+    Vector3 getAngularVelocity() override
+    {
         return angularVelocity;
     }
 
     /// Gets the current model ID of the vehicle.
-    int getModel() override{
+    int getModel() override
+    {
         return spawnData.modelID;
     }
 };

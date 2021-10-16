@@ -178,284 +178,318 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 };
 
 struct Object final : public BaseObject<IObject> {
-	IPlayerPool* players_;
-	StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
-	StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
+    IPlayerPool* players_;
+    StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
+    StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
 
-	Object() :
-		players_(nullptr)
-	{}
+    Object()
+        : players_(nullptr)
+    {
+    }
 
-	void restream() {
-		for (IPlayer* player : players_->entries()) {
-			createObjectForClient(*player);
-		}
-	}
+    void restream()
+    {
+        for (IPlayer* player : players_->entries()) {
+            createObjectForClient(*player);
+        }
+    }
 
-	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
-		if (index < materials_.size()) {
-			setMtl(index, model, txd, texture, colour);
-			restream();
-		}
-	}
+    virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override
+    {
+        if (index < materials_.size()) {
+            setMtl(index, model, txd, texture, colour);
+            restream();
+        }
+    }
 
-	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
-		if (index < materials_.size()) {
-			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
-			restream();
-		}
-	}
+    virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
+    {
+        if (index < materials_.size()) {
+            setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
+            restream();
+        }
+    }
 
-	void startMoving(const ObjectMoveData& data) override {
-		if (isMoving()) {
-			stopMoving();
-		}
+    void startMoving(const ObjectMoveData& data) override
+    {
+        if (isMoving()) {
+            stopMoving();
+        }
 
-		players_->broadcastRPCToAll(move(data));
-	}
+        players_->broadcastRPCToAll(move(data));
+    }
 
-	void stopMoving() override {
-		players_->broadcastRPCToAll(stopMove());
-	}
+    void stopMoving() override
+    {
+        players_->broadcastRPCToAll(stopMove());
+    }
 
-	bool advance(Microseconds elapsed, TimePoint now) {
-		if (anyDelayedProcessing_) {
-			for (IPlayer* player : players_->entries()) {
-				const int pid = player->getID();
-				if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
-					delayedProcessing_.reset(pid);
-					anyDelayedProcessing_ = delayedProcessing_.any();
+    bool advance(Microseconds elapsed, TimePoint now)
+    {
+        if (anyDelayedProcessing_) {
+            for (IPlayer* player : players_->entries()) {
+                const int pid = player->getID();
+                if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
+                    delayedProcessing_.reset(pid);
+                    anyDelayedProcessing_ = delayedProcessing_.any();
 
-					if (moving_) {
-						NetCode::RPC::MoveObject moveObjectRPC;
-						moveObjectRPC.ObjectID = poolID;
-						moveObjectRPC.CurrentPosition = pos_;
-						moveObjectRPC.MoveData = moveData_;
-						player->sendRPC(moveObjectRPC);
-					}
+                    if (moving_) {
+                        NetCode::RPC::MoveObject moveObjectRPC;
+                        moveObjectRPC.ObjectID = poolID;
+                        moveObjectRPC.CurrentPosition = pos_;
+                        moveObjectRPC.MoveData = moveData_;
+                        player->sendRPC(moveObjectRPC);
+                    }
 
-					if (
-						attachmentData_.type == ObjectAttachmentData::Type::Player &&
-						players_->valid(attachmentData_.ID)
-					) {
-						IPlayer& other = players_->get(attachmentData_.ID);
-						if (other.isStreamedInForPlayer(*player)) {
-							NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-							attachObjectToPlayerRPC.ObjectID = poolID;
-							attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
-							attachObjectToPlayerRPC.Offset = attachmentData_.offset;
-							attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-							player->sendRPC(attachObjectToPlayerRPC);
-						}
-					}
-				}
-			}
-		}
+                    if (
+                        attachmentData_.type == ObjectAttachmentData::Type::Player && players_->valid(attachmentData_.ID)) {
+                        IPlayer& other = players_->get(attachmentData_.ID);
+                        if (other.isStreamedInForPlayer(*player)) {
+                            NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+                            attachObjectToPlayerRPC.ObjectID = poolID;
+                            attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
+                            attachObjectToPlayerRPC.Offset = attachmentData_.offset;
+                            attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
+                            player->sendRPC(attachObjectToPlayerRPC);
+                        }
+                    }
+                }
+            }
+        }
 
-		return advanceMove(elapsed);
-	}
+        return advanceMove(elapsed);
+    }
 
-	void createForPlayer(IPlayer& player) {
-		createObjectForClient(player);
+    void createForPlayer(IPlayer& player)
+    {
+        createObjectForClient(player);
 
-		const int pid = player.getID();
-		delayedProcessing_.set(pid);
-		delayedProcessingTime_[pid] = Time::now() + Seconds(1);
-		anyDelayedProcessing_ = true;
-	}
+        const int pid = player.getID();
+        delayedProcessing_.set(pid);
+        delayedProcessingTime_[pid] = Time::now() + Seconds(1);
+        anyDelayedProcessing_ = true;
+    }
 
-	void destroyForPlayer(IPlayer& player) {
-		destroyObjectForClient(player);
-	}
+    void destroyForPlayer(IPlayer& player)
+    {
+        destroyObjectForClient(player);
+    }
 
-	void resetAttachment() override {
-		attachmentData_.type = ObjectAttachmentData::Type::None;
-		restream();
-	}
+    void resetAttachment() override
+    {
+        attachmentData_.type = ObjectAttachmentData::Type::None;
+        restream();
+    }
 
-	void setPosition(Vector3 position) override {
-		pos_ = position;
+    void setPosition(Vector3 position) override
+    {
+        pos_ = position;
 
-		NetCode::RPC::SetObjectPosition setObjectPositionRPC;
-		setObjectPositionRPC.ObjectID = poolID;
-		setObjectPositionRPC.Position = position;
-		players_->broadcastRPCToAll(setObjectPositionRPC);
-	}
+        NetCode::RPC::SetObjectPosition setObjectPositionRPC;
+        setObjectPositionRPC.ObjectID = poolID;
+        setObjectPositionRPC.Position = position;
+        players_->broadcastRPCToAll(setObjectPositionRPC);
+    }
 
-	void setRotation(GTAQuat rotation) override {
-		rot_ = rotation.ToEuler();
+    void setRotation(GTAQuat rotation) override
+    {
+        rot_ = rotation.ToEuler();
 
-		NetCode::RPC::SetObjectRotation setObjectRotationRPC;
-		setObjectRotationRPC.ObjectID = poolID;
-		setObjectRotationRPC.Rotation = rot_;
-		players_->broadcastRPCToAll(setObjectRotationRPC);
-	}
+        NetCode::RPC::SetObjectRotation setObjectRotationRPC;
+        setObjectRotationRPC.ObjectID = poolID;
+        setObjectRotationRPC.Rotation = rot_;
+        players_->broadcastRPCToAll(setObjectRotationRPC);
+    }
 
-	void setDrawDistance(float drawDistance) override {
-		drawDist_ = drawDistance;
-		restream();
-	}
+    void setDrawDistance(float drawDistance) override
+    {
+        drawDist_ = drawDistance;
+        restream();
+    }
 
-	void setModel(int model) override {
-		model_ = model;
-		restream();
-	}
+    void setModel(int model) override
+    {
+        model_ = model;
+        restream();
+    }
 
-	void setCameraCollision(bool collision) override {
-		cameraCol_ = collision;
-		restream();
-	}
+    void setCameraCollision(bool collision) override
+    {
+        cameraCol_ = collision;
+        restream();
+    }
 
-	virtual void attachToObject(IObject& object, Vector3 offset, Vector3 rotation, bool syncRotation) override {
-		setAttachmentData(ObjectAttachmentData::Type::Object, static_cast<Object&>(object).poolID, offset, rotation, syncRotation);
-		restream();
-	}
+    virtual void attachToObject(IObject& object, Vector3 offset, Vector3 rotation, bool syncRotation) override
+    {
+        setAttachmentData(ObjectAttachmentData::Type::Object, static_cast<Object&>(object).poolID, offset, rotation, syncRotation);
+        restream();
+    }
 
-	void attachToVehicle(IVehicle& vehicle, Vector3 offset, Vector3 rotation) override {
-		setAttachmentData(ObjectAttachmentData::Type::Vehicle, vehicle.getID(), offset, rotation, true);
-		restream();
-	}
+    void attachToVehicle(IVehicle& vehicle, Vector3 offset, Vector3 rotation) override
+    {
+        setAttachmentData(ObjectAttachmentData::Type::Vehicle, vehicle.getID(), offset, rotation, true);
+        restream();
+    }
 
-	void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) override {
-		setAttachmentData(ObjectAttachmentData::Type::Player, player.getID(), offset, rotation, true);
-		NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-		attachObjectToPlayerRPC.ObjectID = poolID;
-		attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
-		attachObjectToPlayerRPC.Offset = attachmentData_.offset;
-		attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-		player.broadcastRPCToStreamed(attachObjectToPlayerRPC);
-	}
+    void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) override
+    {
+        setAttachmentData(ObjectAttachmentData::Type::Player, player.getID(), offset, rotation, true);
+        NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+        attachObjectToPlayerRPC.ObjectID = poolID;
+        attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
+        attachObjectToPlayerRPC.Offset = attachmentData_.offset;
+        attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
+        player.broadcastRPCToStreamed(attachObjectToPlayerRPC);
+    }
 
-	~Object() {
-		if (players_) {
-			for (IPlayer* player : players_->entries()) {
-				destroyForPlayer(*player);
-			}
-		}
-	}
+    ~Object()
+    {
+        if (players_) {
+            for (IPlayer* player : players_->entries()) {
+                destroyForPlayer(*player);
+            }
+        }
+    }
 };
 
 struct PlayerObject final : public BaseObject<IPlayerObject> {
-	IPlayer* player_;
-	TimePoint delayedProcessingTime_;
+    IPlayer* player_;
+    TimePoint delayedProcessingTime_;
 
-	PlayerObject() :
-		player_(nullptr)
-	{}
+    PlayerObject()
+        : player_(nullptr)
+    {
+    }
 
-	void restream() {
-		createObjectForClient(*player_);
-	}
+    void restream()
+    {
+        createObjectForClient(*player_);
+    }
 
-	virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override {
-		if (index < materials_.size()) {
-			setMtl(index, model, txd, texture, colour);
-			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
-			setPlayerObjectMaterialRPC.ObjectID = poolID;
-			setPlayerObjectMaterialRPC.MaterialID = index;
-			player_->sendRPC(setPlayerObjectMaterialRPC);
-		}
-	}
+    virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override
+    {
+        if (index < materials_.size()) {
+            setMtl(index, model, txd, texture, colour);
+            NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
+            setPlayerObjectMaterialRPC.ObjectID = poolID;
+            setPlayerObjectMaterialRPC.MaterialID = index;
+            player_->sendRPC(setPlayerObjectMaterialRPC);
+        }
+    }
 
-	virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override {
-		if (index < materials_.size()) {
-			setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
-			NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
-			setPlayerObjectMaterialRPC.ObjectID = poolID;
-			setPlayerObjectMaterialRPC.MaterialID = index;
-			player_->sendRPC(setPlayerObjectMaterialRPC);
-		}
-	}
+    virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
+    {
+        if (index < materials_.size()) {
+            setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
+            NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
+            setPlayerObjectMaterialRPC.ObjectID = poolID;
+            setPlayerObjectMaterialRPC.MaterialID = index;
+            player_->sendRPC(setPlayerObjectMaterialRPC);
+        }
+    }
 
-	void startMoving(const ObjectMoveData& data) override {
-		if (isMoving()) {
-			stopMoving();
-		}
+    void startMoving(const ObjectMoveData& data) override
+    {
+        if (isMoving()) {
+            stopMoving();
+        }
 
-		player_->sendRPC(move(data));
-	}
+        player_->sendRPC(move(data));
+    }
 
-	void stopMoving() override {
-		player_->sendRPC(stopMove());
-	}
+    void stopMoving() override
+    {
+        player_->sendRPC(stopMove());
+    }
 
-	bool advance(Microseconds elapsed, TimePoint now) {
-		if (anyDelayedProcessing_) {
-			if (now >= delayedProcessingTime_) {
-				anyDelayedProcessing_ = false;
+    bool advance(Microseconds elapsed, TimePoint now)
+    {
+        if (anyDelayedProcessing_) {
+            if (now >= delayedProcessingTime_) {
+                anyDelayedProcessing_ = false;
 
-				if (moving_) {
-					NetCode::RPC::MoveObject moveObjectRPC;
-					moveObjectRPC.ObjectID = poolID;
-					moveObjectRPC.CurrentPosition = pos_;
-					moveObjectRPC.MoveData = moveData_;
-					player_->sendRPC(moveObjectRPC);
-				}
-			}
-		}
+                if (moving_) {
+                    NetCode::RPC::MoveObject moveObjectRPC;
+                    moveObjectRPC.ObjectID = poolID;
+                    moveObjectRPC.CurrentPosition = pos_;
+                    moveObjectRPC.MoveData = moveData_;
+                    player_->sendRPC(moveObjectRPC);
+                }
+            }
+        }
 
-		return advanceMove(elapsed);
-	}
+        return advanceMove(elapsed);
+    }
 
-	void createForPlayer() {
-		createObjectForClient(*player_);
+    void createForPlayer()
+    {
+        createObjectForClient(*player_);
 
-		if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
-			delayedProcessingTime_ = Time::now() + Seconds(1);
-			anyDelayedProcessing_ = true;
-		}
-	}
+        if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
+            delayedProcessingTime_ = Time::now() + Seconds(1);
+            anyDelayedProcessing_ = true;
+        }
+    }
 
-	void destroyForPlayer() {
-		destroyObjectForClient(*player_);
-	}
+    void destroyForPlayer()
+    {
+        destroyObjectForClient(*player_);
+    }
 
-	void resetAttachment() override {
-		attachmentData_.type = ObjectAttachmentData::Type::None;
-		restream();
-	}
+    void resetAttachment() override
+    {
+        attachmentData_.type = ObjectAttachmentData::Type::None;
+        restream();
+    }
 
-	void setPosition(Vector3 position) override {
-		pos_ = position;
+    void setPosition(Vector3 position) override
+    {
+        pos_ = position;
 
-		NetCode::RPC::SetObjectPosition setObjectPositionRPC;
-		setObjectPositionRPC.ObjectID = poolID;
-		setObjectPositionRPC.Position = position;
-		player_->sendRPC(setObjectPositionRPC);
-	}
+        NetCode::RPC::SetObjectPosition setObjectPositionRPC;
+        setObjectPositionRPC.ObjectID = poolID;
+        setObjectPositionRPC.Position = position;
+        player_->sendRPC(setObjectPositionRPC);
+    }
 
-	void setRotation(GTAQuat rotation) override {
-		rot_ = rotation.ToEuler();
+    void setRotation(GTAQuat rotation) override
+    {
+        rot_ = rotation.ToEuler();
 
-		NetCode::RPC::SetObjectRotation setObjectRotationRPC;
-		setObjectRotationRPC.ObjectID = poolID;
-		setObjectRotationRPC.Rotation = rot_;
-		player_->sendRPC(setObjectRotationRPC);
-	}
+        NetCode::RPC::SetObjectRotation setObjectRotationRPC;
+        setObjectRotationRPC.ObjectID = poolID;
+        setObjectRotationRPC.Rotation = rot_;
+        player_->sendRPC(setObjectRotationRPC);
+    }
 
-	void setDrawDistance(float drawDistance) override {
-		drawDist_ = drawDistance;
-		restream();
-	}
+    void setDrawDistance(float drawDistance) override
+    {
+        drawDist_ = drawDistance;
+        restream();
+    }
 
-	void setModel(int model) override {
-		model_ = model;
-		restream();
-	}
+    void setModel(int model) override
+    {
+        model_ = model;
+        restream();
+    }
 
-	void setCameraCollision(bool collision) override {
-		cameraCol_ = collision;
-		restream();
-	}
+    void setCameraCollision(bool collision) override
+    {
+        cameraCol_ = collision;
+        restream();
+    }
 
-	void attachToVehicle(IVehicle& vehicle, Vector3 offset, Vector3 rotation) override {
-		setAttachmentData(ObjectAttachmentData::Type::Vehicle, vehicle.getID(), offset, rotation, true);
-		restream();
-	}
+    void attachToVehicle(IVehicle& vehicle, Vector3 offset, Vector3 rotation) override
+    {
+        setAttachmentData(ObjectAttachmentData::Type::Vehicle, vehicle.getID(), offset, rotation, true);
+        restream();
+    }
 
-	~PlayerObject() {
-		if (player_) {
-			destroyForPlayer();
-		}
-	}
+    ~PlayerObject()
+    {
+        if (player_) {
+            destroyForPlayer();
+        }
+    }
 };

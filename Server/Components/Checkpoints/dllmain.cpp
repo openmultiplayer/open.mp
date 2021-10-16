@@ -2,120 +2,128 @@
 #include <sdk.hpp>
 
 struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
-	DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
-	ICore* core;
+    DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
+    ICore* core;
 
-	DefaultEventDispatcher<PlayerCheckpointEventHandler>& getEventDispatcher() override {
-		return eventDispatcher;
-	}
+    DefaultEventDispatcher<PlayerCheckpointEventHandler>& getEventDispatcher() override
+    {
+        return eventDispatcher;
+    }
 
-	// Set up dummy checkpoint data for when the player connects
-	PlayerCheckpointData* onPlayerDataRequest(IPlayer& player) override {
-		return new PlayerCheckpointData(player);
-	}
+    // Set up dummy checkpoint data for when the player connects
+    PlayerCheckpointData* onPlayerDataRequest(IPlayer& player) override
+    {
+        return new PlayerCheckpointData(player);
+    }
 
-	static void processPlayerCheckpoint(CheckpointsComponent& component, IPlayer& player) {
-		PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
-		if (playerCheckpointData) {
-			IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
-			if (cp.isEnabled()) {
-				float radius = cp.getRadius();
-				float maxDistanceSqr = radius * radius;
-				Vector3 distanceFromCheckpoint = cp.getPosition() - player.getPosition();
+    static void processPlayerCheckpoint(CheckpointsComponent& component, IPlayer& player)
+    {
+        PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
+        if (playerCheckpointData) {
+            IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
+            if (cp.isEnabled()) {
+                float radius = cp.getRadius();
+                float maxDistanceSqr = radius * radius;
+                Vector3 distanceFromCheckpoint = cp.getPosition() - player.getPosition();
 
-				if (glm::dot(distanceFromCheckpoint, distanceFromCheckpoint) > maxDistanceSqr) {
-					if (cp.isPlayerInside()) {
-						cp.setPlayerInside(false);
-						component.eventDispatcher.dispatch(
-							&PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint,
-							player
-						);
-					}
-				}
-				else {
-					if (!cp.isPlayerInside()) {
-						cp.setPlayerInside(true);
-						component.eventDispatcher.dispatch(
-							&PlayerCheckpointEventHandler::onPlayerEnterCheckpoint,
-							player
-						);
-					}
-				}
-			}
-		}
-	}
+                if (glm::dot(distanceFromCheckpoint, distanceFromCheckpoint) > maxDistanceSqr) {
+                    if (cp.isPlayerInside()) {
+                        cp.setPlayerInside(false);
+                        component.eventDispatcher.dispatch(
+                            &PlayerCheckpointEventHandler::onPlayerLeaveCheckpoint,
+                            player);
+                    }
+                } else {
+                    if (!cp.isPlayerInside()) {
+                        cp.setPlayerInside(true);
+                        component.eventDispatcher.dispatch(
+                            &PlayerCheckpointEventHandler::onPlayerEnterCheckpoint,
+                            player);
+                    }
+                }
+            }
+        }
+    }
 
-	static void processPlayerRaceCheckpoint(CheckpointsComponent& component, IPlayer& player) {
-		PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
-		if (playerCheckpointData) {
-			IPlayerRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
-			if (cp.isEnabled()) {
-				float radius = cp.getRadius();
-				float maxDistanceSqr = radius * radius;
-				Vector3 distanceFromCheckpoint = cp.getPosition() - player.getPosition();
+    static void processPlayerRaceCheckpoint(CheckpointsComponent& component, IPlayer& player)
+    {
+        PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
+        if (playerCheckpointData) {
+            IPlayerRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
+            if (cp.isEnabled()) {
+                float radius = cp.getRadius();
+                float maxDistanceSqr = radius * radius;
+                Vector3 distanceFromCheckpoint = cp.getPosition() - player.getPosition();
 
-				if (glm::dot(distanceFromCheckpoint, distanceFromCheckpoint) > maxDistanceSqr) {
-					if (cp.isPlayerInside()) {
-						cp.setPlayerInside(false);
-						component.eventDispatcher.dispatch(
-							&PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint,
-							player
-						);
-					}
-				}
-				else {
-					if (!cp.isPlayerInside()) {
-						cp.setPlayerInside(true);
-						component.eventDispatcher.dispatch(
-							&PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint,
-							player
-						);
-					}
-				}
-			}
-		}
-	}
+                if (glm::dot(distanceFromCheckpoint, distanceFromCheckpoint) > maxDistanceSqr) {
+                    if (cp.isPlayerInside()) {
+                        cp.setPlayerInside(false);
+                        component.eventDispatcher.dispatch(
+                            &PlayerCheckpointEventHandler::onPlayerLeaveRaceCheckpoint,
+                            player);
+                    }
+                } else {
+                    if (!cp.isPlayerInside()) {
+                        cp.setPlayerInside(true);
+                        component.eventDispatcher.dispatch(
+                            &PlayerCheckpointEventHandler::onPlayerEnterRaceCheckpoint,
+                            player);
+                    }
+                }
+            }
+        }
+    }
 
-	struct PlayerCheckpointActionHandler : public PlayerUpdateEventHandler {
-		CheckpointsComponent& self;
-		PlayerCheckpointActionHandler(CheckpointsComponent& self) : self(self) {}
+    struct PlayerCheckpointActionHandler : public PlayerUpdateEventHandler {
+        CheckpointsComponent& self;
+        PlayerCheckpointActionHandler(CheckpointsComponent& self)
+            : self(self)
+        {
+        }
 
-		bool onUpdate(IPlayer& player, TimePoint now) override {
-			processPlayerCheckpoint(self, player);
-			processPlayerRaceCheckpoint(self, player);
-			return true;
-		}
-	} playerCheckpointActionHandler;
+        bool onUpdate(IPlayer& player, TimePoint now) override
+        {
+            processPlayerCheckpoint(self, player);
+            processPlayerRaceCheckpoint(self, player);
+            return true;
+        }
+    } playerCheckpointActionHandler;
 
-	CheckpointsComponent() :
-		playerCheckpointActionHandler(*this)
-	{
-	}
+    CheckpointsComponent()
+        : playerCheckpointActionHandler(*this)
+    {
+    }
 
-	void onLoad(ICore* c) override {
-		core = c;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
-		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
-	}
+    void onLoad(ICore* c) override
+    {
+        core = c;
+        core->getPlayers().getEventDispatcher().addEventHandler(this);
+        core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
+    }
 
-	StringView componentName() const override {
-		return "Checkpoints";
-	}
+    StringView componentName() const override
+    {
+        return "Checkpoints";
+    }
 
-	SemanticVersion componentVersion() const override {
-		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
-	}
+    SemanticVersion componentVersion() const override
+    {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+    }
 
-	void free() override {
-		delete this;
-	}
+    void free() override
+    {
+        delete this;
+    }
 
-	~CheckpointsComponent() {
-		core->getPlayers().getEventDispatcher().removeEventHandler(this);
-		core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
-	}
+    ~CheckpointsComponent()
+    {
+        core->getPlayers().getEventDispatcher().removeEventHandler(this);
+        core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
+    }
 };
 
-COMPONENT_ENTRY_POINT() {
-	return new CheckpointsComponent();
+COMPONENT_ENTRY_POINT()
+{
+    return new CheckpointsComponent();
 }
