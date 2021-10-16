@@ -537,11 +537,11 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         WeaponRate = config.getInt("weapon_rate");
         Multiplier = config.getInt("multiplier");
         LagCompensation = config.getInt("lag_compensation");
-        ServerName = config.getString("server_name");
+        ServerName = String(config.getString("server_name"));
         EnableVehicleFriendlyFire = config.getInt("vehicle_friendly_fire");
 
         EnableLogTimestamp = *config.getInt("logging_timestamp");
-        LogTimestampFormat = config.getString("logging_timestamp_format");
+        LogTimestampFormat = String(config.getString("logging_timestamp_format"));
 
         config.optimiseBans();
         config.writeBans();
