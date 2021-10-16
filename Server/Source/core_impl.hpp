@@ -5,6 +5,7 @@
 #include <thread>
 #include <sstream>
 #include <filesystem>
+#include <variant>
 #include <events.hpp>
 #include <pool.hpp>
 #include <nlohmann/json.hpp>
@@ -28,6 +29,15 @@ namespace nlohmann {
     struct adl_serializer<std::variant<Args...>> {
         static void to_json(json& j, std::variant<Args...> const& v) {
             std::visit([&](auto&& value) {
+                j = std::forward<decltype(value)>(value);
+            }, v);
+        }
+    };
+
+    template <typename ...Args>
+    struct adl_serializer<Variant<Args...>> {
+        static void to_json(json& j, Variant<Args...> const& v) {
+            absl::visit([&](auto&& value) {
                 j = std::forward<decltype(value)>(value);
             }, v);
         }
@@ -867,7 +877,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
         else {
             for (const StringView component : componentsCfg) {
-                auto file = std::filesystem::path(path) / component;
+                auto file = std::filesystem::path(path) / component.data();
                 if (!file.has_extension()) {
                     file.replace_extension(LIBRARY_EXT);
                 }

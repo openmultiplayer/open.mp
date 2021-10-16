@@ -69,7 +69,7 @@ namespace utils {
 #endif
 
 	void RunProcess(StringView exe, StringView args) {
-		auto exePath = std::filesystem::path(exe);
+		auto exePath = std::filesystem::path(exe.data());
 		if (!exePath.has_extension()) {
 			exePath.replace_extension(EXECUTABLE_EXT);
 		}
