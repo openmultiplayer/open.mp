@@ -190,44 +190,43 @@ SCRIPT_API(GameModeExit, bool())
 
 SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
 {
-	PawnManager::Get()->players->sendGameTextToAll(string, Milliseconds(time), style);
-	return true;
+    PawnManager::Get()->players->sendGameTextToAll(string, Milliseconds(time), style);
+    return true;
 }
 
-int getConfigOptionAsInt(std::string const& cvar) {
-	IConfig* config = PawnManager::Get()->config;
-	auto res = config->getNameFromAlias(cvar);
-	int* var = nullptr;
-	if (!res.second.empty()) {
-		if (res.first) {
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
-		}
-		var = config->getInt(res.second);
-	}
-	else {
-		var = config->getInt(cvar);
-	}
-	if (var) {
-		return *var;
-	}
-	else {
-		return 0;
-	}
+int getConfigOptionAsInt(std::string const& cvar)
+{
+    IConfig* config = PawnManager::Get()->config;
+    auto res = config->getNameFromAlias(cvar);
+    int* var = nullptr;
+    if (!res.second.empty()) {
+        if (res.first) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
+        }
+        var = config->getInt(res.second);
+    } else {
+        var = config->getInt(cvar);
+    }
+    if (var) {
+        return *var;
+    } else {
+        return 0;
+    }
 }
 
-int getConfigOptionAsString(std::string const& cvar, std::string& buffer) {
-	IConfig* config = PawnManager::Get()->config;
-	auto res = config->getNameFromAlias(cvar);
-	if (!res.second.empty()) {
-		if (res.first) {
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
-		}
-		buffer = String(config->getString(res.second));
-	}
-	else {
-		buffer = String(config->getString(cvar));
-	}
-	return buffer.size();
+int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
+{
+    IConfig* config = PawnManager::Get()->config;
+    auto res = config->getNameFromAlias(cvar);
+    if (!res.second.empty()) {
+        if (res.first) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
+        }
+        buffer = String(config->getString(res.second));
+    } else {
+        buffer = String(config->getString(cvar));
+    }
+    return buffer.size();
 }
 
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
@@ -334,8 +333,8 @@ SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buff
 
 SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
 {
-	weapon = String(PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid)));
-	return true;
+    weapon = String(PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid)));
+    return true;
 }
 
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))

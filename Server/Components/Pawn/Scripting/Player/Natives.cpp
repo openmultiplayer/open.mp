@@ -208,8 +208,8 @@ SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
 
 SCRIPT_API(GetPlayerName, bool(IPlayer& player, std::string& name))
 {
-	name = String(player.getName());
-	return true;
+    name = String(player.getName());
+    return true;
 }
 
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
@@ -864,8 +864,8 @@ SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
 
 SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
 {
-	output = String(player.getSerial());
-	return true;
+    output = String(player.getSerial());
+    return true;
 }
 
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
@@ -915,6 +915,6 @@ SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std
 
 SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
 {
-	version = String(player.getClientVersionName());
-	return true;
+    version = String(player.getClientVersionName());
+    return true;
 }

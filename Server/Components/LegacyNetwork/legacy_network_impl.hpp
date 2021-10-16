@@ -41,51 +41,70 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     {
         switch (input.type) {
         case NetworkBitStreamValueType::BIT:
-            bs.Write(absl::get<bool>(input.data)); break;
+            bs.Write(absl::get<bool>(input.data));
+            break;
         case NetworkBitStreamValueType::UINT8:
-            bs.Write(absl::get<uint8_t>(input.data)); break;
+            bs.Write(absl::get<uint8_t>(input.data));
+            break;
         case NetworkBitStreamValueType::UINT16:
-            bs.Write(absl::get<uint16_t>(input.data)); break;
+            bs.Write(absl::get<uint16_t>(input.data));
+            break;
         case NetworkBitStreamValueType::UINT32:
-            bs.Write(absl::get<uint32_t>(input.data)); break;
+            bs.Write(absl::get<uint32_t>(input.data));
+            break;
         case NetworkBitStreamValueType::UINT64:
-            bs.Write(absl::get<uint64_t>(input.data)); break;
+            bs.Write(absl::get<uint64_t>(input.data));
+            break;
         case NetworkBitStreamValueType::INT8:
-            bs.Write(absl::get<int8_t>(input.data)); break;
+            bs.Write(absl::get<int8_t>(input.data));
+            break;
         case NetworkBitStreamValueType::INT16:
-            bs.Write(absl::get<int16_t>(input.data)); break;
+            bs.Write(absl::get<int16_t>(input.data));
+            break;
         case NetworkBitStreamValueType::INT32:
-            bs.Write(absl::get<int32_t>(input.data)); break;
+            bs.Write(absl::get<int32_t>(input.data));
+            break;
         case NetworkBitStreamValueType::INT64:
-            bs.Write(absl::get<int64_t>(input.data)); break;
+            bs.Write(absl::get<int64_t>(input.data));
+            break;
         case NetworkBitStreamValueType::DOUBLE:
-            bs.Write(absl::get<double>(input.data)); break;
+            bs.Write(absl::get<double>(input.data));
+            break;
         case NetworkBitStreamValueType::FLOAT:
-            bs.Write(absl::get<float>(input.data)); break;
+            bs.Write(absl::get<float>(input.data));
+            break;
         case NetworkBitStreamValueType::VEC2:
-            bs.Write(absl::get<Vector2>(input.data)); break;
+            bs.Write(absl::get<Vector2>(input.data));
+            break;
         case NetworkBitStreamValueType::VEC3:
-            bs.Write(absl::get<Vector3>(input.data)); break;
+            bs.Write(absl::get<Vector3>(input.data));
+            break;
         case NetworkBitStreamValueType::VEC4:
-            bs.Write(absl::get<Vector4>(input.data)); break;
+            bs.Write(absl::get<Vector4>(input.data));
+            break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            writeFixedString(absl::get<NetworkString>(input.data)); break;
+            writeFixedString(absl::get<NetworkString>(input.data));
+            break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
-            writeDynamicString<uint8_t>(absl::get<NetworkString>(input.data)); break;
+            writeDynamicString<uint8_t>(absl::get<NetworkString>(input.data));
+            break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_16:
-            writeDynamicString<uint16_t>(absl::get<NetworkString>(input.data)); break;
+            writeDynamicString<uint16_t>(absl::get<NetworkString>(input.data));
+            break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_32:
-            writeDynamicString<uint32_t>(absl::get<NetworkString>(input.data)); break;
+            writeDynamicString<uint32_t>(absl::get<NetworkString>(input.data));
+            break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8:
-            writeFixedArray<uint8_t>(absl::get<NetworkArray<uint8_t>>(input.data)); break;
+            writeFixedArray<uint8_t>(absl::get<NetworkArray<uint8_t>>(input.data));
+            break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT16:
-            writeFixedArray<uint16_t>(absl::get<NetworkArray<uint16_t>>(input.data)); break;
+            writeFixedArray<uint16_t>(absl::get<NetworkArray<uint16_t>>(input.data));
+            break;
         case NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32:
-            writeFixedArray<uint32_t>(absl::get<NetworkArray<uint32_t>>(input.data)); break;
+            writeFixedArray<uint32_t>(absl::get<NetworkArray<uint32_t>>(input.data));
+            break;
         case NetworkBitStreamValueType::HP_ARMOR_COMPRESSED: {
-            uint8_t ha =
-                (absl::get<Vector2>(input.data).x >= 100 ? 0x0F : (uint8_t)CEILDIV((int)absl::get<Vector2>(input.data).x, 7)) << 4 |
-                (absl::get<Vector2>(input.data).y >= 100 ? 0x0F : (uint8_t)CEILDIV((int)absl::get<Vector2>(input.data).y, 7));
+            uint8_t ha = (absl::get<Vector2>(input.data).x >= 100 ? 0x0F : (uint8_t)CEILDIV((int)absl::get<Vector2>(input.data).x, 7)) << 4 | (absl::get<Vector2>(input.data).y >= 100 ? 0x0F : (uint8_t)CEILDIV((int)absl::get<Vector2>(input.data).y, 7));
             bs.Write(ha);
             break;
         }
@@ -221,7 +240,8 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
             success = bs.Read(input.data.emplace<Vector4>());
             break;
         case NetworkBitStreamValueType::FIXED_LEN_STR:
-            success = readFixedString(absl::get<NetworkString>(input.data)); break;
+            success = readFixedString(absl::get<NetworkString>(input.data));
+            break;
         case NetworkBitStreamValueType::DYNAMIC_LEN_STR_8:
             success = readDynamicString<uint8_t>(input.data.emplace<NetworkString>());
             break;
