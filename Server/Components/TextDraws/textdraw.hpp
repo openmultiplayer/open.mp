@@ -1,6 +1,6 @@
-#include <sdk.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <netcode.hpp>
+#include <sdk.hpp>
 
 template <class T>
 struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
@@ -23,15 +23,18 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
 
-    int getID() const override {
+    int getID() const override
+    {
         return poolID;
     }
 
-    Vector2 getPosition() const override {
+    Vector2 getPosition() const override
+    {
         return pos;
     }
 
-    T& setPosition(Vector2 position) override {
+    T& setPosition(Vector2 position) override
+    {
         pos = position;
         return *this;
     }
@@ -40,156 +43,190 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         text = String(txt);
     }
 
-    StringView getText() const override {
+    StringView getText() const override
+    {
         return text;
     }
 
-    T& setLetterColour(Colour col) override {
+    T& setLetterColour(Colour col) override
+    {
         letterColour = col;
         return *this;
     }
 
-    Colour getLetterColour() const override {
+    Colour getLetterColour() const override
+    {
         return letterColour;
     }
 
-    T& setLetterSize(Vector2 size) override {
+    T& setLetterSize(Vector2 size) override
+    {
         letterSize = size;
         return *this;
-	}
+    }
 
-    Vector2 getLetterSize() const override {
+    Vector2 getLetterSize() const override
+    {
         return letterSize;
-	}
+    }
 
-    T& setTextSize(Vector2 size) override {
+    T& setTextSize(Vector2 size) override
+    {
         textSize = size;
         return *this;
-	}
+    }
 
-    Vector2 getTextSize() const override {
+    Vector2 getTextSize() const override
+    {
         return textSize;
-	}
+    }
 
-    T& setAlignment(TextDrawAlignmentTypes align) override{
+    T& setAlignment(TextDrawAlignmentTypes align) override
+    {
         alignment = align;
         return *this;
-	}
+    }
 
-    TextDrawAlignmentTypes getAlignment() const override {
+    TextDrawAlignmentTypes getAlignment() const override
+    {
         return alignment;
-	}
+    }
 
-    T& setUsingBox(bool use) override {
+    T& setUsingBox(bool use) override
+    {
         box = use;
         return *this;
-	}
+    }
 
-    bool isUsingBox() const override {
+    bool isUsingBox() const override
+    {
         return box;
-	}
+    }
 
-    T& setBoxColour(Colour colour) override {
+    T& setBoxColour(Colour colour) override
+    {
         boxColour = colour;
         return *this;
-	}
+    }
 
-    Colour getBoxColour() const override {
+    Colour getBoxColour() const override
+    {
         return boxColour;
-	}
+    }
 
-    T& setShadow(int shadow) override {
+    T& setShadow(int shadow) override
+    {
         shadowSize = shadow;
         return *this;
-	}
+    }
 
-    int getShadow() const override {
+    int getShadow() const override
+    {
         return shadowSize;
-	}
+    }
 
-    T& setOutline(int outline) override {
+    T& setOutline(int outline) override
+    {
         outlineSize = outline;
         return *this;
-	}
+    }
 
-    int getOutline() const override {
+    int getOutline() const override
+    {
         return outlineSize;
-	}
+    }
 
-    T& setBackColour(Colour colour) override {
+    T& setBackColour(Colour colour) override
+    {
         backgroundColour = colour;
         return *this;
-	}
+    }
 
-    Colour getBackColour() const override {
+    Colour getBackColour() const override
+    {
         return backgroundColour;
-	}
+    }
 
-    T& setStyle(TextDrawStyle s) override {
+    T& setStyle(TextDrawStyle s) override
+    {
         style = s;
         return *this;
-	}
+    }
 
-    TextDrawStyle getStyle() const override {
+    TextDrawStyle getStyle() const override
+    {
         return style;
-	}
+    }
 
-    T& setProportional(bool p) override {
+    T& setProportional(bool p) override
+    {
         proportional = p;
         return *this;
-	}
+    }
 
-    bool isProportional() const override {
+    bool isProportional() const override
+    {
         return proportional;
-	}
+    }
 
-    T& setSelectable(bool select) override {
+    T& setSelectable(bool select) override
+    {
         selectable = select;
         return *this;
-	}
+    }
 
-    bool isSelectable() const override {
+    bool isSelectable() const override
+    {
         return selectable;
-	}
+    }
 
-    T& setPreviewModel(int model) override {
+    T& setPreviewModel(int model) override
+    {
         previewModel = model;
         return *this;
-	}
+    }
 
-    int getPreviewModel() const override {
+    int getPreviewModel() const override
+    {
         return previewModel;
-	}
+    }
 
-    T& setPreviewRotation(GTAQuat rotation) override {
+    T& setPreviewRotation(GTAQuat rotation) override
+    {
         previewRotation = rotation;
         return *this;
-	}
+    }
 
-    GTAQuat getPreviewRotation() const override {
+    GTAQuat getPreviewRotation() const override
+    {
         return previewRotation;
-	}
+    }
 
-    T& setPreviewVehicleColour(int colour1, int colour2) override {
+    T& setPreviewVehicleColour(int colour1, int colour2) override
+    {
         previewVehicleColours.first = colour1;
         previewVehicleColours.second = colour2;
         return *this;
-	}
+    }
 
-    Pair<int, int> getPreviewVehicleColour() const override {
+    Pair<int, int> getPreviewVehicleColour() const override
+    {
         return previewVehicleColours;
-	}
+    }
 
-    T& setPreviewZoom(float zoom) override {
+    T& setPreviewZoom(float zoom) override
+    {
         previewZoom = zoom;
         return *this;
     }
 
-    float getPreviewZoom() const override {
+    float getPreviewZoom() const override
+    {
         return previewZoom;
     }
 
-    void showForClient(IPlayer& player, bool isPlayerTextDraw) {
+    void showForClient(IPlayer& player, bool isPlayerTextDraw)
+    {
         NetCode::RPC::PlayerShowTextDraw playerShowTextDrawRPC;
         playerShowTextDrawRPC.PlayerTextDraw = isPlayerTextDraw;
         playerShowTextDrawRPC.UseBox = box;
@@ -228,14 +265,16 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         player.sendRPC(playerShowTextDrawRPC);
     }
 
-    void hideForClient(IPlayer& player, bool isPlayerTextDraw) {
+    void hideForClient(IPlayer& player, bool isPlayerTextDraw)
+    {
         NetCode::RPC::PlayerHideTextDraw playerHideTextDrawRPC;
         playerHideTextDrawRPC.PlayerTextDraw = isPlayerTextDraw;
         playerHideTextDrawRPC.TextDrawID = poolID;
         player.sendRPC(playerHideTextDrawRPC);
     }
 
-    void setTextForClient(IPlayer& player, StringView txt, bool isPlayerTextDraw) {
+    void setTextForClient(IPlayer& player, StringView txt, bool isPlayerTextDraw)
+    {
         NetCode::RPC::PlayerTextDrawSetString playerTextDrawSetStringRPC;
         playerTextDrawSetStringRPC.PlayerTextDraw = isPlayerTextDraw;
         playerTextDrawSetStringRPC.TextDrawID = poolID;
@@ -247,34 +286,40 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
 struct TextDraw final : public TextDrawBase<ITextDraw> {
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
 
-    void restream() override {
+    void restream() override
+    {
         for (IPlayer* player : shownFor_.entries()) {
             showForClient(*player, false);
         }
     }
 
-    bool isShownForPlayer(const IPlayer& player) const override {
+    bool isShownForPlayer(const IPlayer& player) const override
+    {
         return shownFor_.valid(player.getID());
     }
 
-    void showForPlayer(IPlayer& player) override {
+    void showForPlayer(IPlayer& player) override
+    {
         shownFor_.add(player.getID(), player);
         showForClient(player, false);
     }
 
-    void hideForPlayer(IPlayer& player) override {
+    void hideForPlayer(IPlayer& player) override
+    {
         shownFor_.remove(player.getID(), player);
         hideForClient(player, false);
     }
 
-    void setText(StringView txt) override {
+    void setText(StringView txt) override
+    {
         TextDrawBase<ITextDraw>::setText(txt);
         for (IPlayer* player : shownFor_.entries()) {
             setTextForClient(*player, txt, false);
         }
     }
 
-    ~TextDraw() {
+    ~TextDraw()
+    {
         for (IPlayer* player : shownFor_.entries()) {
             hideForClient(*player, false);
         }
@@ -285,34 +330,40 @@ struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
     IPlayer* player = nullptr;
     bool shown = false;
 
-    void show() override {
+    void show() override
+    {
         showForClient(*player, true);
         shown = true;
     }
 
-    void hide() override {
+    void hide() override
+    {
         hideForClient(*player, true);
         shown = false;
     }
 
-    bool isShown() const override {
+    bool isShown() const override
+    {
         return shown;
     }
 
-    void restream() override {
+    void restream() override
+    {
         if (shown) {
             showForClient(*player, true);
         }
     }
 
-    void setText(StringView txt) override {
+    void setText(StringView txt) override
+    {
         TextDrawBase<IPlayerTextDraw>::setText(txt);
         if (shown) {
             setTextForClient(*player, txt, true);
         }
     }
 
-    ~PlayerTextDraw() {
+    ~PlayerTextDraw()
+    {
         if (player) {
             hideForClient(*player, true);
         }

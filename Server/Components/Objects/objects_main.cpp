@@ -1,9 +1,9 @@
+#include "object.hpp"
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
-#include "object.hpp"
 
 struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
-	ICore* core;
+    ICore* core;
     MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Capacity> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
     StaticBitset<IObjectsComponent::Capacity> isPlayerObject;
@@ -11,9 +11,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInOutEventHandler {
         ObjectComponent& self;
-        PlayerSelectObjectEventHandler(ObjectComponent& self) : self(self) {}
+        PlayerSelectObjectEventHandler(ObjectComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::OnPlayerSelectObject onPlayerSelectObjectRPC;
             if (!onPlayerSelectObjectRPC.read(bs)) {
                 return false;
@@ -28,18 +32,15 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                         peer,
                         lock.entry,
                         onPlayerSelectObjectRPC.Model,
-                        onPlayerSelectObjectRPC.Position
-                    );
-                }
-                else if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Player || data->valid(onPlayerSelectObjectRPC.ObjectID)) {
+                        onPlayerSelectObjectRPC.Position);
+                } else if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Player || data->valid(onPlayerSelectObjectRPC.ObjectID)) {
                     ScopedPoolReleaseLock lock(*data, onPlayerSelectObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onPlayerObjectSelected,
                         peer,
                         lock.entry,
                         onPlayerSelectObjectRPC.Model,
-                        onPlayerSelectObjectRPC.Position
-                    );
+                        onPlayerSelectObjectRPC.Position);
                 }
             }
 
@@ -49,9 +50,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
     struct PlayerEditObjectEventHandler : public SingleNetworkInOutEventHandler {
         ObjectComponent& self;
-        PlayerEditObjectEventHandler(ObjectComponent& self) : self(self) {}
+        PlayerEditObjectEventHandler(ObjectComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::OnPlayerEditObject onPlayerEditObjectRPC;
             if (!onPlayerEditObjectRPC.read(bs)) {
                 return false;
@@ -67,10 +72,8 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                         lock.entry,
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
-                        onPlayerEditObjectRPC.Rotation
-                    );
-                }
-                else if (self.valid(onPlayerEditObjectRPC.ObjectID)) {
+                        onPlayerEditObjectRPC.Rotation);
+                } else if (self.valid(onPlayerEditObjectRPC.ObjectID)) {
                     ScopedPoolReleaseLock lock(self, onPlayerEditObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectEdited,
@@ -78,8 +81,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                         lock.entry,
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
-                        onPlayerEditObjectRPC.Rotation
-                    );
+                        onPlayerEditObjectRPC.Rotation);
                 }
 
                 if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final) {
@@ -93,9 +95,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
     struct PlayerEditAttachedObjectEventHandler : public SingleNetworkInOutEventHandler {
         ObjectComponent& self;
-        PlayerEditAttachedObjectEventHandler(ObjectComponent& self) : self(self) {}
+        PlayerEditAttachedObjectEventHandler(ObjectComponent& self)
+            : self(self)
+        {
+        }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override {
+        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        {
             NetCode::RPC::OnPlayerEditAttachedObject onPlayerEditAttachedObjectRPC;
             if (!onPlayerEditAttachedObjectRPC.read(bs)) {
                 return false;
@@ -108,8 +114,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     peer,
                     onPlayerEditAttachedObjectRPC.Index,
                     onPlayerEditAttachedObjectRPC.Response,
-                    onPlayerEditAttachedObjectRPC.AttachmentData
-                );
+                    onPlayerEditAttachedObjectRPC.AttachmentData);
 
                 data->endObjectEdit();
             }
@@ -118,15 +123,16 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     } playerEditAttachedObjectEventHandler;
 
-    ObjectComponent() :
-        playerSelectObjectEventHandler(*this),
-        playerEditObjectEventHandler(*this),
-        playerEditAttachedObjectEventHandler(*this)
+    ObjectComponent()
+        : playerSelectObjectEventHandler(*this)
+        , playerEditObjectEventHandler(*this)
+        , playerEditAttachedObjectEventHandler(*this)
     {
         storage.claimUnusable(0);
     }
 
-    void onLoad(ICore* core) override {
+    void onLoad(ICore* core) override
+    {
         this->core = core;
         core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
@@ -135,34 +141,39 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEditAttachedObject>(&playerEditAttachedObjectEventHandler);
     }
 
-	~ObjectComponent()
-	{
+    ~ObjectComponent()
+    {
         core->getEventDispatcher().removeEventHandler(this);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectObject>(&playerSelectObjectEventHandler);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEditObject>(&playerEditObjectEventHandler);
         core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEditAttachedObject>(&playerEditAttachedObjectEventHandler);
-	}
+    }
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override;
 
-    void setDefaultCameraCollision(bool collision) override {
+    void setDefaultCameraCollision(bool collision) override
+    {
         defCameraCollision = collision;
     }
 
-    bool getDefaultCameraCollision() const override {
+    bool getDefaultCameraCollision() const override
+    {
         return defCameraCollision;
     }
 
-    StringView componentName() const override {
+    StringView componentName() const override
+    {
         return "Objects";
     }
 
-    SemanticVersion componentVersion() const override {
+    SemanticVersion componentVersion() const override
+    {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    IObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override {
+    IObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
+    {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx != -1) {
             if (!isPlayerObject.test(freeIdx)) {
@@ -198,67 +209,80 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         return &obj;
     }
 
-	void free() override {
-		delete this;
-	}
+    void free() override
+    {
+        delete this;
+    }
 
-    int findFreeIndex() override {
+    int findFreeIndex() override
+    {
         return storage.findFreeIndex();
     }
 
-    int claim() override {
+    int claim() override
+    {
         int res = storage.claim();
         return res;
     }
 
-    int claim(int hint) override {
+    int claim(int hint) override
+    {
         int res = storage.claim(hint);
         return res;
     }
 
-    bool valid(int index) const override {
+    bool valid(int index) const override
+    {
         if (index == 0) {
             return false;
         }
         return storage.valid(index);
     }
 
-    IObject& get(int index) override {
+    IObject& get(int index) override
+    {
         return storage.get(index);
     }
 
-    void release(int index) override {
+    void release(int index) override
+    {
         if (index == 0) {
             return;
         }
         storage.release(index, false);
     }
 
-    void lock(int index) override {
+    void lock(int index) override
+    {
         storage.lock(index);
     }
 
-    void unlock(int index) override {
+    void unlock(int index) override
+    {
         storage.unlock(index);
     }
 
-    IEventDispatcher<ObjectEventHandler>& getEventDispatcher() override {
+    IEventDispatcher<ObjectEventHandler>& getEventDispatcher() override
+    {
         return eventDispatcher;
     }
 
     /// Get a set of all the available objects
-    const FlatPtrHashSet<IObject>& entries() override {
+    const FlatPtrHashSet<IObject>& entries() override
+    {
         return storage.entries();
     }
 
-    void onConnect(IPlayer& player) override {
+    void onConnect(IPlayer& player) override
+    {
         for (IObject* o : storage.entries()) {
             Object* obj = static_cast<Object*>(o);
             obj->createForPlayer(player);
         }
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override {
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
         const int pid = player.getID();
         for (IObject* obj : storage.entries()) {
             const ObjectAttachmentData& data = obj->getAttachmentData();
@@ -268,7 +292,8 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     }
 
-    void onStreamIn(IPlayer& player, IPlayer& forPlayer) override {
+    void onStreamIn(IPlayer& player, IPlayer& forPlayer) override
+    {
         const int pid = player.getID();
         for (IObject* object : storage.entries()) {
             Object* obj = static_cast<Object*>(object);
@@ -298,7 +323,8 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     }
 
     // Pre-spawn so you can safely attach onSpawn
-    void preSpawn(IPlayer& player) override {
+    void preSpawn(IPlayer& player) override
+    {
         const int pid = player.getID();
         for (IObject* object : storage.entries()) {
             Object* obj = static_cast<Object*>(object);
@@ -329,13 +355,15 @@ struct PlayerObjectData final : public IPlayerObjectData {
     bool inObjectSelection_;
     bool inObjectEdit_;
 
-    PlayerObjectData(ObjectComponent& component, IPlayer& player) :
-        component_(component), player_(player)
+    PlayerObjectData(ObjectComponent& component, IPlayer& player)
+        : component_(component)
+        , player_(player)
     {
         storage.claimUnusable(0);
     }
 
-    IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override {
+    IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
+    {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx != -1) {
             if (!component_.storage.valid(freeIdx)) {
@@ -371,52 +399,62 @@ struct PlayerObjectData final : public IPlayerObjectData {
         return &obj;
     }
 
-    int findFreeIndex() override {
+    int findFreeIndex() override
+    {
         return storage.findFreeIndex();
     }
 
-    int claim() override {
+    int claim() override
+    {
         int res = storage.claim();
         return res;
     }
 
-    int claim(int hint) override {
+    int claim(int hint) override
+    {
         int res = storage.claim(hint);
         return res;
     }
 
-    bool valid(int index) const override {
+    bool valid(int index) const override
+    {
         if (index == 0) {
             return false;
         }
         return storage.valid(index);
     }
 
-    IPlayerObject& get(int index) override {
+    IPlayerObject& get(int index) override
+    {
         return storage.get(index);
     }
 
-    void release(int index) override {
+    void release(int index) override
+    {
         if (index == 0) {
             return;
         }
         storage.release(index, false);
     }
 
-    void lock(int index) override {
+    void lock(int index) override
+    {
         storage.lock(index);
     }
 
-    void unlock(int index) override {
+    void unlock(int index) override
+    {
         storage.unlock(index);
     }
 
     /// Get a set of all the available objects
-    const FlatPtrHashSet<IPlayerObject>& entries() override {
+    const FlatPtrHashSet<IPlayerObject>& entries() override
+    {
         return storage.entries();
     }
 
-    void free() override {
+    void free() override
+    {
         /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage.entries()) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
@@ -425,29 +463,34 @@ struct PlayerObjectData final : public IPlayerObjectData {
         delete this;
     }
 
-    void beginObjectSelection() override {
+    void beginObjectSelection() override
+    {
         inObjectEdit_ = false;
         inObjectSelection_ = true;
         NetCode::RPC::PlayerBeginObjectSelect playerBeginObjectSelectRPC;
         player_.sendRPC(playerBeginObjectSelectRPC);
     }
 
-    bool selectingObject() const override {
+    bool selectingObject() const override
+    {
         return inObjectSelection_;
     }
 
-    bool editingObject() const override {
+    bool editingObject() const override
+    {
         return inObjectEdit_;
     }
 
-    void endObjectEdit() override {
+    void endObjectEdit() override
+    {
         inObjectSelection_ = false;
         inObjectEdit_ = false;
         NetCode::RPC::PlayerCancelObjectEdit playerCancelObjectEditRPC;
         player_.sendRPC(playerCancelObjectEditRPC);
     }
 
-    void editObject(IObject& object) override {
+    void editObject(IObject& object) override
+    {
         inObjectSelection_ = false;
         inObjectEdit_ = true;
 
@@ -457,7 +500,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
         player_.sendRPC(playerBeginObjectEditRPC);
     }
 
-    void editObject(IPlayerObject& object) override {
+    void editObject(IPlayerObject& object) override
+    {
         inObjectSelection_ = false;
         inObjectEdit_ = true;
 
@@ -467,7 +511,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
         player_.sendRPC(playerBeginObjectEditRPC);
     }
 
-    void setAttachedObject(int index, const ObjectAttachmentSlotData& data) override {
+    void setAttachedObject(int index, const ObjectAttachmentSlotData& data) override
+    {
         if (index < MAX_ATTACHED_OBJECT_SLOTS) {
             slotsOccupied_.set(index);
             slots_[index] = data;
@@ -485,7 +530,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
         }
     }
 
-    void removeAttachedObject(int index) override {
+    void removeAttachedObject(int index) override
+    {
         slotsOccupied_.reset(index);
 
         NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
@@ -499,15 +545,18 @@ struct PlayerObjectData final : public IPlayerObjectData {
         }
     }
 
-    bool hasAttachedObject(int index) const override {
+    bool hasAttachedObject(int index) const override
+    {
         return slotsOccupied_.test(index);
     }
 
-    const ObjectAttachmentSlotData& getAttachedObject(int index) const override {
+    const ObjectAttachmentSlotData& getAttachedObject(int index) const override
+    {
         return slots_[index];
     }
 
-    void editAttachedObject(int index) override {
+    void editAttachedObject(int index) override
+    {
         if (slotsOccupied_.test(index)) {
             inObjectSelection_ = false;
             inObjectEdit_ = true;
@@ -519,7 +568,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
     }
 };
 
-void ObjectComponent::onTick(Microseconds elapsed, TimePoint now) {
+void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
+{
     for (IObject* object : storage.entries()) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed, now)) {
@@ -542,10 +592,12 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now) {
     }
 }
 
-IPlayerData* ObjectComponent::onPlayerDataRequest(IPlayer& player) {
+IPlayerData* ObjectComponent::onPlayerDataRequest(IPlayer& player)
+{
     return new PlayerObjectData(*this, player);
 }
 
-COMPONENT_ENTRY_POINT() {
-	return new ObjectComponent();
+COMPONENT_ENTRY_POINT()
+{
+    return new ObjectComponent();
 }

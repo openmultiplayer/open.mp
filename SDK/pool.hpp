@@ -1,13 +1,13 @@
 #pragma once
 
-#include <set>
-#include <bitset>
-#include <array>
-#include <type_traits>
-#include <cassert>
-#include <absl/container/flat_hash_set.h>
-#include "types.hpp"
 #include "entity.hpp"
+#include "types.hpp"
+#include <absl/container/flat_hash_set.h>
+#include <array>
+#include <bitset>
+#include <cassert>
+#include <set>
+#include <type_traits>
 
 /* Interfaces, to be passed around */
 
@@ -23,23 +23,22 @@ struct IReadOnlyPool {
 
     /// Get a set of all the available objects
     virtual const FlatPtrHashSet<T>& entries() = 0;
-
 };
 
-/// A statically sized pool interface 
+/// A statically sized pool interface
 template <typename T, size_t Count>
 struct IPool : IReadOnlyPool<T, Count> {
-	/// Get the first free index or -1 if no index is available to use
-	virtual int findFreeIndex() = 0;
+    /// Get the first free index or -1 if no index is available to use
+    virtual int findFreeIndex() = 0;
 
-	/// Claim the first free index
-	virtual int claim() = 0;
+    /// Claim the first free index
+    virtual int claim() = 0;
 
-	/// Attempt to claim the index at hint and if unavailable, claim the first available index
-	virtual int claim(int hint) = 0;
+    /// Attempt to claim the index at hint and if unavailable, claim the first available index
+    virtual int claim(int hint) = 0;
 
-	/// Release the object at an index
-	virtual void release(int index) = 0;
+    /// Release the object at an index
+    virtual void release(int index) = 0;
 
     /// Lock an entry at index to postpone release until unlocked
     virtual void lock(int index) = 0;
@@ -63,21 +62,29 @@ struct ScopedPoolReleaseLock {
     int index;
     T& entry;
 
-    ScopedPoolReleaseLock(IPool<T, Count>& pool, int index) : pool(pool), index(index), entry(pool.get(index)) {
+    ScopedPoolReleaseLock(IPool<T, Count>& pool, int index)
+        : pool(pool)
+        , index(index)
+        , entry(pool.get(index))
+    {
         pool.lock(index);
     }
 
-    ScopedPoolReleaseLock(IPool<T, Count>& pool, const IIDProvider& provider) : ScopedPoolReleaseLock(pool, provider.getID())
-    {}
+    ScopedPoolReleaseLock(IPool<T, Count>& pool, const IIDProvider& provider)
+        : ScopedPoolReleaseLock(pool, provider.getID())
+    {
+    }
 
-    ~ScopedPoolReleaseLock() {
+    ~ScopedPoolReleaseLock()
+    {
         pool.unlock(index);
     }
 };
 
 template <typename T, size_t Size>
 struct UniqueIDArray : public NoCopy {
-    int findFreeIndex(int from) const {
+    int findFreeIndex(int from) const
+    {
         for (int i = from; i < Size; ++i) {
             if (!valid_[i]) {
                 return i;
@@ -86,36 +93,42 @@ struct UniqueIDArray : public NoCopy {
         return -1;
     }
 
-    void add(int index) {
+    void add(int index)
+    {
         assert(index < Size);
         valid_.set(index);
     }
 
-    void add(int index, T& data) {
+    void add(int index, T& data)
+    {
         assert(index < Size);
         valid_.set(index);
         entries_.insert(&data);
     }
 
     /// Attempt to remove data for element at index and return the next iterator in the entries list
-    void remove(int index, T& data) {
+    void remove(int index, T& data)
+    {
         valid_.reset(index);
         entries_.erase(&data);
     }
 
-    void clear() {
+    void clear()
+    {
         valid_.reset();
         entries_.clear();
     }
 
-    bool valid(int index) const {
+    bool valid(int index) const
+    {
         if (index >= Size) {
             return false;
         }
         return valid_.test(index);
     }
 
-    const FlatPtrHashSet<T>& entries() {
+    const FlatPtrHashSet<T>& entries()
+    {
         return entries_;
     }
 
@@ -126,20 +139,24 @@ private:
 
 template <typename T>
 struct UniqueEntryArray : public NoCopy {
-    void add(T& data) {
+    void add(T& data)
+    {
         entries_.insert(&data);
     }
 
     /// Attempt to remove data for element at index and return the next iterator in the entries list
-    void remove(T& data) {
+    void remove(T& data)
+    {
         entries_.erase(&data);
     }
 
-    void clear() {
+    void clear()
+    {
         entries_.clear();
     }
 
-    const FlatPtrHashSet<T>& entries() const {
+    const FlatPtrHashSet<T>& entries() const
+    {
         return entries_;
     }
 
@@ -155,11 +172,13 @@ template <typename Type, typename Interface, size_t Count>
 struct StaticPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
 
-    int findFreeIndex(int from = 0) {
+    int findFreeIndex(int from = 0)
+    {
         return allocated_.findFreeIndex(from);
     }
 
-    int claim() {
+    int claim()
+    {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
             new (getPtr(freeIdx)) Type();
@@ -171,7 +190,8 @@ struct StaticPoolStorageBase : public NoCopy {
         return freeIdx;
     }
 
-    int claim(int hint) {
+    int claim(int hint)
+    {
         assert(hint < Count);
         if (!valid(hint)) {
             new (getPtr(hint)) Type();
@@ -180,40 +200,46 @@ struct StaticPoolStorageBase : public NoCopy {
                 getPtr(hint)->poolID = hint;
             }
             return hint;
-        }
-        else {
+        } else {
             return claim();
         }
     }
 
-    void claimUnusable(int index) {
+    void claimUnusable(int index)
+    {
         allocated_.add(index);
     }
 
-    bool valid(int index) const {
+    bool valid(int index) const
+    {
         return allocated_.valid(index);
     }
 
-    Type& get(int index) {
+    Type& get(int index)
+    {
         assert(index < Count);
         return *getPtr(index);
     }
 
-    const FlatPtrHashSet<Interface>& entries() {
+    const FlatPtrHashSet<Interface>& entries()
+    {
         return allocated_.entries();
     }
 
-    const FlatPtrHashSet<Interface>& entries() const {
+    const FlatPtrHashSet<Interface>& entries() const
+    {
         return allocated_.entries();
     }
 
-    void remove(int index) {
+    void remove(int index)
+    {
         assert(index < Count);
         allocated_.remove(index, *getPtr(index));
         getPtr(index)->~Type();
     }
 
-    ~StaticPoolStorageBase() {
+    ~StaticPoolStorageBase()
+    {
         // Placement destructor.
         for (Interface* const ptr : allocated_.entries()) {
             static_cast<Type*>(ptr)->~Type();
@@ -221,7 +247,8 @@ struct StaticPoolStorageBase : public NoCopy {
     }
 
 protected:
-    inline Type* getPtr(int index) {
+    inline Type* getPtr(int index)
+    {
         return reinterpret_cast<Type*>(&pool_[index * CEILDIV(sizeof(Type), alignof(Type)) * alignof(Type)]);
     }
 
@@ -233,7 +260,8 @@ template <typename Type, typename Interface, size_t Count>
 struct DynamicPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
 
-    int findFreeIndex(int from = 0) {
+    int findFreeIndex(int from = 0)
+    {
         for (int i = from; i < Count; ++i) {
             if (pool_[i] == nullptr) {
                 return i;
@@ -242,7 +270,8 @@ struct DynamicPoolStorageBase : public NoCopy {
         return -1;
     }
 
-    int claim() {
+    int claim()
+    {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
             pool_[freeIdx] = new Type();
@@ -254,7 +283,8 @@ struct DynamicPoolStorageBase : public NoCopy {
         return freeIdx;
     }
 
-    int claim(int hint) {
+    int claim(int hint)
+    {
         assert(hint < Count);
         if (!valid(hint)) {
             pool_[hint] = new Type();
@@ -263,40 +293,45 @@ struct DynamicPoolStorageBase : public NoCopy {
                 pool_[hint]->poolID = hint;
             }
             return hint;
-        }
-        else {
+        } else {
             return claim();
         }
     }
 
-    void claimUnusable(int index) {
+    void claimUnusable(int index)
+    {
         pool_[index] = reinterpret_cast<Type*>(0x01);
     }
 
-    bool valid(int index) const {
+    bool valid(int index) const
+    {
         if (index >= Count) {
             return false;
         }
         return pool_[index] != nullptr;
     }
 
-    Type& get(int index) {
+    Type& get(int index)
+    {
         assert(index < Count);
         return *pool_[index];
     }
 
-    const FlatPtrHashSet<Interface>& entries() const {
+    const FlatPtrHashSet<Interface>& entries() const
+    {
         return allocated_.entries();
     }
 
-    void remove(int index) {
+    void remove(int index)
+    {
         assert(index < Count);
         allocated_.remove(*pool_[index]);
         delete pool_[index];
         pool_[index] = nullptr;
     }
 
-    ~DynamicPoolStorageBase() {
+    ~DynamicPoolStorageBase()
+    {
         for (Interface* const ptr : allocated_.entries()) {
             delete static_cast<Type*>(ptr);
         }
@@ -309,19 +344,22 @@ protected:
 
 template <class PoolBase>
 struct ImmediatePoolStorageLifetimeBase final : public PoolBase {
-    void release(int index) {
+    void release(int index)
+    {
         PoolBase::remove(index);
     }
 };
 
 template <class PoolBase>
 struct MarkedPoolStorageLifetimeBase final : public PoolBase {
-    void lock(int index) {
+    void lock(int index)
+    {
         // Mark as locked
         marked_.set(index * 2);
     }
 
-    void unlock(int index) {
+    void unlock(int index)
+    {
         marked_.reset(index * 2);
         // If marked for deletion on unlock, release
         if (marked_.test(index * 2 + 1)) {
@@ -329,13 +367,13 @@ struct MarkedPoolStorageLifetimeBase final : public PoolBase {
         }
     }
 
-    void release(int index, bool force) {
+    void release(int index, bool force)
+    {
         assert(index < PoolBase::Capacity);
         // If locked, mark for deletion on unlock
         if (marked_.test(index * 2)) {
             marked_.set(index * 2 + 1);
-        }
-        else { // If not locked, immediately delete
+        } else { // If not locked, immediately delete
             marked_.reset(index * 2 + 1);
             PoolBase::remove(index);
         }

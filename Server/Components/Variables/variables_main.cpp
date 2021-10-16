@@ -1,8 +1,8 @@
 #include <Server/Components/Variables/variables.hpp>
-#include <sdk.hpp>
-#include <variant>
-#include <unordered_map>
 #include <absl/container/flat_hash_map.h>
+#include <sdk.hpp>
+#include <unordered_map>
+#include <variant>
 
 template <class ToInherit>
 struct VariableStorageBase : public ToInherit {
@@ -85,43 +85,50 @@ struct VariableStorageBase : public ToInherit {
 	}
 
 private:
-	FlatHashMap<String, Variant<int, String, float>> data_;
+    FlatHashMap<String, Variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
 
-	void free() override {
-		delete this;
-	}
+    void free() override
+    {
+        delete this;
+    }
 };
 
 struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, PlayerEventHandler {
-	ICore* core;
+    ICore* core;
 
-	IPlayerData* onPlayerDataRequest(IPlayer& player) override {
-		return new PlayerVariableData();
-	}
+    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    {
+        return new PlayerVariableData();
+    }
 
-	StringView componentName() const override {
-		return "Variables";
-	}
+    StringView componentName() const override
+    {
+        return "Variables";
+    }
 
-	SemanticVersion componentVersion() const override {
-		return SemanticVersion(0, 0, 0, BUILD_NUMBER);
-	}
+    SemanticVersion componentVersion() const override
+    {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+    }
 
-	void onLoad(ICore * core) override {
-		this->core = core;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
-	}
+    void onLoad(ICore* core) override
+    {
+        this->core = core;
+        core->getPlayers().getEventDispatcher().addEventHandler(this);
+    }
 
-	~VariablesComponent() {
-		if (core) {
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
-		}
-	}
+    ~VariablesComponent()
+    {
+        if (core) {
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+        }
+    }
 } component;
 
-COMPONENT_ENTRY_POINT() {
-	return &component;
+COMPONENT_ENTRY_POINT()
+{
+    return &component;
 }

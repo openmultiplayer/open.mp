@@ -1,21 +1,24 @@
-#include <sdk.hpp>
 #include <Server/Components/Menus/menus.hpp>
 #include <netcode.hpp>
+#include <sdk.hpp>
 
 struct PlayerMenuData final : IPlayerMenuData {
-	uint8_t menuId = INVALID_MENU_ID;
+    uint8_t menuId = INVALID_MENU_ID;
 
-	uint8_t getMenuID() const override {
-		return menuId;
-	}
+    uint8_t getMenuID() const override
+    {
+        return menuId;
+    }
 
-	void setMenuID(uint8_t id) override {
-		menuId = id;
-	}
+    void setMenuID(uint8_t id) override
+    {
+        menuId = id;
+    }
 
-	void free() override {
-		delete this;
-	}
+    void free() override
+    {
+        delete this;
+    }
 };
 
 struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {

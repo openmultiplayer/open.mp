@@ -1,19 +1,19 @@
 #pragma once
 
+#include "player_pool.hpp"
+#include "util.hpp"
+#include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/Console/console.hpp>
+#include <Server/Components/Vehicles/vehicles.hpp>
 #include <cstdarg>
-#include <fstream>
-#include <thread>
-#include <sstream>
+#include <events.hpp>
 #include <filesystem>
 #include <variant>
-#include <events.hpp>
-#include <pool.hpp>
+#include <fstream>
 #include <nlohmann/json.hpp>
-#include "player_pool.hpp"
-#include <Server/Components/Classes/classes.hpp>
-#include <Server/Components/Vehicles/vehicles.hpp>
-#include <Server/Components/Console/console.hpp>
-#include "util.hpp"
+#include <pool.hpp>
+#include <sstream>
+#include <thread>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
@@ -47,35 +47,40 @@ namespace nlohmann {
 struct ComponentList : public IComponentList {
     using IComponentList::queryComponent;
 
-    ComponentList(ICore& core) : core(core)
-    {}
+    ComponentList(ICore& core)
+        : core(core)
+    {
+    }
 
-    IComponent* queryComponent(UUID id) override {
+    IComponent* queryComponent(UUID id) override
+    {
         auto it = components.find(id);
         return it == components.end() ? nullptr : it->second;
     }
 
-    void load() {
+    void load()
+    {
         std::for_each(components.begin(), components.end(),
             [this](const Pair<UUID, IComponent*>& pair) {
                 pair.second->onLoad(&core);
-            }
-        );
+            });
     }
 
-    void init() {
+    void init()
+    {
         std::for_each(components.begin(), components.end(),
             [this](const Pair<UUID, IComponent*>& pair) {
                 pair.second->onInit(this);
-            }
-        );
+            });
     }
 
-    auto add(IComponent* component) {
+    auto add(IComponent* component)
+    {
         return components.try_emplace(component->getUUID(), component);
     }
 
-    size_t size() const {
+    size_t size() const
+    {
         return components.size();
     }
 
@@ -90,35 +95,32 @@ struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
-    Config(ICore& core) : core(core) {
+    Config(ICore& core)
+        : core(core)
+    {
         {
             std::ifstream ifs(ConfigFileName);
             if (ifs.good()) {
                 nlohmann::json props;
                 try {
                     props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-                }
-                catch (std::ios_base::failure) {}  // Is a directory?
+                } catch (std::ios_base::failure) {
+                } // Is a directory?
                 if (props.is_null() || props.is_discarded() || !props.is_object()) {
                     processed = Defaults;
-                }
-                else {
+                } else {
                     const auto& obj = props.get<nlohmann::json::object_t>();
                     for (const auto& kv : obj) {
                         const nlohmann::json& v = kv.second;
                         if (v.is_number_integer()) {
                             processed[kv.first].emplace<int>(v.get<int>());
-                        }
-                        else if (v.is_boolean()) {
+                        } else if (v.is_boolean()) {
                             processed[kv.first].emplace<int>(v.get<bool>());
-                        }
-                        else if (v.is_number_float()) {
+                        } else if (v.is_number_float()) {
                             processed[kv.first].emplace<float>(v.get<float>());
-                        }
-                        else if (v.is_string()) {
+                        } else if (v.is_string()) {
                             processed[kv.first].emplace<String>(v.get<String>());
-                        }
-                        else if (v.is_array()) {
+                        } else if (v.is_array()) {
                             auto& vec = processed[kv.first].emplace<DynamicArray<StringView>>();
                             ownAllocations.insert(kv.first);
                             const auto& arr = v.get<nlohmann::json::array_t>();
@@ -168,9 +170,7 @@ struct Config final : IEarlyConfig {
                                     address,
                                     arrVal["player"].get<String>(),
                                     arrVal["reason"].get<String>(),
-                                    WorldTime::from_time_t(t)
-                                )
-                            );
+                                    WorldTime::from_time_t(t)));
                         }
                     }
                 }
@@ -178,7 +178,8 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    ~Config() {
+    ~Config()
+    {
         // Free strings allocated for the StringView array
         for (const auto& kv : processed) {
             if (kv.second.index() == 3 && ownAllocations.find(kv.first) != ownAllocations.end()) {
@@ -190,7 +191,8 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    const StringView getString(StringView key) const override {
+    const StringView getString(StringView key) const override
+    {
         auto it = processed.find(String(key));
         if (it == processed.end()) {
             return StringView();
@@ -201,7 +203,8 @@ struct Config final : IEarlyConfig {
         return StringView(absl::get<String>(it->second));
     }
 
-    int* getInt(StringView key) override {
+    int* getInt(StringView key) override
+    {
         auto it = processed.find(String(key));
         if (it == processed.end()) {
             return nullptr;
@@ -212,7 +215,8 @@ struct Config final : IEarlyConfig {
         return &absl::get<int>(it->second);
     }
 
-    float* getFloat(StringView key) override {
+    float* getFloat(StringView key) override
+    {
         auto it = processed.find(String(key));
         if (it == processed.end()) {
             return 0;
@@ -223,7 +227,8 @@ struct Config final : IEarlyConfig {
         return &absl::get<float>(it->second);
     }
 
-    Span<const StringView> getStrings(StringView key) const override {
+    Span<const StringView> getStrings(StringView key) const override
+    {
         auto it = processed.find(String(key));
         if (it == processed.end()) {
             return Span<StringView>();
@@ -235,19 +240,23 @@ struct Config final : IEarlyConfig {
         return Span<const StringView>(vw.data(), vw.size());
     }
 
-    void setString(StringView key, StringView value) override {
+    void setString(StringView key, StringView value) override
+    {
         processed[String(key)] = String(value);
     }
 
-    void setInt(StringView key, int value) override {
+    void setInt(StringView key, int value) override
+    {
         processed[String(key)] = value;
     }
 
-    void setFloat(StringView key, float value) override {
+    void setFloat(StringView key, float value) override
+    {
         processed[String(key)] = value;
     }
 
-    void setStrings(StringView key, Span<const StringView> value) override {
+    void setStrings(StringView key, Span<const StringView> value) override
+    {
         ownAllocations.insert(String(key));
         DynamicArray<StringView>& vec = processed[String(key)].emplace<DynamicArray<StringView>>();
         for (const StringView v : value) {
@@ -259,15 +268,18 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    void addBan(const IBanEntry& entry) override {
+    void addBan(const IBanEntry& entry) override
+    {
         bans.emplace_back(BanEntry(entry.address, entry.getPlayerName(), entry.getReason()));
     }
 
-    void removeBan(size_t index) override {
+    void removeBan(size_t index) override
+    {
         bans.erase(bans.begin() + index);
     }
 
-    void writeBans() const override {
+    void writeBans() const override
+    {
         nlohmann::json top = nlohmann::json::array();
         for (const IBanEntry& entry : bans) {
             nlohmann::json obj;
@@ -290,28 +302,33 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    size_t getBansCount() const override {
+    size_t getBansCount() const override
+    {
         return bans.size();
     }
 
-    const IBanEntry& getBan(size_t index) const override {
+    const IBanEntry& getBan(size_t index) const override
+    {
         return bans[index];
     }
 
-    ICore& getCore() override {
+    ICore& getCore() override
+    {
         return core;
     }
 
-    void optimiseBans() {
+    void optimiseBans()
+    {
         std::sort(bans.begin(), bans.end());
         bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
     }
 
-    static bool writeDefault() {
+    static bool writeDefault()
+    {
         // Creates default config.json file if it doesn't exist
         // Returns true if a config file was written, false otherwise
         std::ifstream ifs(ConfigFileName);
-        if(ifs.good()) {
+        if (ifs.good()) {
             return false;
         }
 
@@ -327,7 +344,8 @@ struct Config final : IEarlyConfig {
         return true;
     }
 
-    Pair<bool, StringView> getNameFromAlias(StringView alias) const override {
+    Pair<bool, StringView> getNameFromAlias(StringView alias) const override
+    {
         for (IConfigProviderComponent* provider : providers) {
             auto res = provider->getNameFromAlias(alias);
             if (!res.second.empty()) {
@@ -337,11 +355,13 @@ struct Config final : IEarlyConfig {
         return std::make_pair(true, StringView());
     }
 
-    void addProvider(IConfigProviderComponent* provider) {
+    void addProvider(IConfigProviderComponent* provider)
+    {
         providers.insert(provider);
     }
 
-    void init() {
+    void init()
+    {
         for (IConfigProviderComponent* provider : providers) {
             provider->configure(*this);
         }
@@ -356,35 +376,37 @@ private:
 };
 
 struct HTTPAsyncIO {
-    HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) :
-        handler(handler),
-        type(type),
-        url(url),
-        data(data),
-        finished(false),
-        response(0)
+    HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data)
+        : handler(handler)
+        , type(type)
+        , url(url)
+        , data(data)
+        , finished(false)
+        , response(0)
     {
         thread = std::thread(&threadProc, this);
     }
 
-    ~HTTPAsyncIO() {
+    ~HTTPAsyncIO()
+    {
         if (thread.joinable()) {
             thread.join();
         }
     }
 
-    bool tryExec() {
+    bool tryExec()
+    {
         if (finished) {
             handler->onHTTPResponse(response, body);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
 
 private:
-    static void threadProc(HTTPAsyncIO* params) {
+    static void threadProc(HTTPAsyncIO* params)
+    {
         constexpr StringView http = "http://";
         constexpr StringView https = "https://";
 
@@ -399,8 +421,7 @@ private:
         if ((idx = url.find(http)) == 0) {
             urlNoPrefix = url.substr(http.size());
             secure = false;
-        }
-        else if ((idx = url.find(https)) == 0) {
+        } else if ((idx = url.find(https)) == 0) {
             urlNoPrefix = url.substr(https.size());
             secure = true;
         }
@@ -441,8 +462,7 @@ private:
         if (res) {
             params->body = res.value().body;
             params->response = res.value().status;
-        }
-        else {
+        } else {
             params->response = int(res.error());
         }
 
@@ -503,15 +523,15 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     int EnableLogTimestamp;
     String LogTimestampFormat;
 
-    Core() :
-        players(*this),
-        components(*this),
-        config(*this),
-        logFile(nullptr),
-        run_(true),
-        ticksPerSecond(0u),
-        ticksThisSecond(0u),
-        EnableLogTimestamp(false)
+    Core()
+        : players(*this)
+        , components(*this)
+        , config(*this)
+        , logFile(nullptr)
+        , run_(true)
+        , ticksPerSecond(0u)
+        , ticksThisSecond(0u)
+        , EnableLogTimestamp(false)
     {
         players.getEventDispatcher().addEventHandler(this);
 
@@ -576,37 +596,44 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    IConfig& getConfig() override {
+    IConfig& getConfig() override
+    {
         return config;
     }
 
-    unsigned tickRate() const override {
+    unsigned tickRate() const override
+    {
         return ticksPerSecond;
     }
 
-    SemanticVersion getSDKVersion() override {
+    SemanticVersion getSDKVersion() override
+    {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    void printLn(const char* fmt, ...) override {
+    void printLn(const char* fmt, ...) override
+    {
         va_list args;
         va_start(args, fmt);
         vprintLn(fmt, args);
         va_end(args);
     }
 
-    void vprintLn(const char* fmt, va_list args) override {
+    void vprintLn(const char* fmt, va_list args) override
+    {
         vlogLn(LogLevel::Message, fmt, args);
     }
 
-    virtual void logLn(LogLevel level, const char* fmt, ...) override {
+    virtual void logLn(LogLevel level, const char* fmt, ...) override
+    {
         va_list args;
         va_start(args, fmt);
         vlogLn(level, fmt, args);
         va_end(args);
     }
 
-    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args) {
+    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args)
+    {
         if (iso8601[0]) {
             fputs(iso8601, stream);
             fputs(" ", stream);
@@ -617,11 +644,12 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         fflush(stream);
     }
 
-    virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override {
+    virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override
+    {
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
         if (level == LogLevel::Debug) {
             char debugStr[4096] = { 0 };
-            const int written = vsnprintf(debugStr, sizeof(debugStr)-1, fmt, args);
+            const int written = vsnprintf(debugStr, sizeof(debugStr) - 1, fmt, args);
             debugStr[written] = '\n';
             OutputDebugString(debugStr);
         }
@@ -647,7 +675,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
 
         char iso8601[32] = { 0 };
-        if (EnableLogTimestamp  && !LogTimestampFormat.empty()) {
+        if (EnableLogTimestamp && !LogTimestampFormat.empty()) {
             std::time_t now = WorldTime::to_time_t(WorldTime::now());
             std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::gmtime(&now));
         }
@@ -663,23 +691,28 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    IPlayerPool& getPlayers() override {
+    IPlayerPool& getPlayers() override
+    {
         return players;
     }
 
-    const FlatPtrHashSet<INetwork>& getNetworks() override {
+    const FlatPtrHashSet<INetwork>& getNetworks() override
+    {
         return networks;
     }
 
-    unsigned getTickCount() const override {
+    unsigned getTickCount() const override
+    {
         return utils::GetTickCount();
     }
 
-    IEventDispatcher<CoreEventHandler>& getEventDispatcher() override {
+    IEventDispatcher<CoreEventHandler>& getEventDispatcher() override
+    {
         return eventDispatcher;
     }
 
-    void setGravity(float gravity) override {
+    void setGravity(float gravity) override
+    {
         *SetGravity = gravity;
         NetCode::RPC::SetPlayerGravity RPC;
         RPC.Gravity = gravity;
@@ -688,7 +721,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         updateNetworks();
     }
 
-    void setWeather(int weather) override {
+    void setWeather(int weather) override
+    {
         *SetWeather = weather;
         NetCode::RPC::SetPlayerWeather RPC;
         RPC.WeatherID = weather;
@@ -697,21 +731,24 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         updateNetworks();
     }
 
-    void setWorldTime(Hours time) override {
+    void setWorldTime(Hours time) override
+    {
         *SetWorldTime = time.count();
         NetCode::RPC::SetPlayerWorldTime RPC;
         RPC.Time = time;
         players.broadcastRPCToAll(RPC);
     }
 
-    void toggleStuntBonus(bool toggle) override {
+    void toggleStuntBonus(bool toggle) override
+    {
         *EnableStuntBonus = toggle;
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
         RPC.Enable = toggle;
         players.broadcastRPCToAll(RPC);
     }
 
-    void setData(SettableCoreDataType type, StringView data) override {
+    void setData(SettableCoreDataType type, StringView data) override
+    {
         switch (type) {
         case SettableCoreDataType::ServerName:
             config.setString("server_name", data);
@@ -739,7 +776,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         updateNetworks();
     }
 
-    StringView getWeaponName(PlayerWeapon weapon) override {
+    StringView getWeaponName(PlayerWeapon weapon) override
+    {
         int index = int(weapon);
         if (weapon < 0 || weapon > PlayerWeapon_End) {
             return "Invalid";
@@ -747,7 +785,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         return PlayerWeaponNames[index];
     }
 
-    void onConnect(IPlayer& player) override {
+    void onConnect(IPlayer& player) override
+    {
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = *EnableZoneNames;
         playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
@@ -777,13 +816,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        static const StaticArray<uint8_t, 212> emptyModel{ 0 };
+        static const StaticArray<uint8_t, 212> emptyModel { 0 };
         playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
         playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
         player.sendRPC(playerInitRPC);
     }
 
-    void connectBot(StringView name, StringView script) override {
+    void connectBot(StringView name, StringView script) override
+    {
         StringView bind = config.getString("bind");
         int port = *config.getInt("port");
         StringView password = config.getString("password");
@@ -794,15 +834,17 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         utils::RunProcess(config.getString("bot_exe"), args);
     }
 
-    void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override {
+    void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override
+    {
         HTTPAsyncIO* httpIO = new HTTPAsyncIO(handler, type, url, data);
         httpFutures.emplace(httpIO);
     }
 
-    bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override {
+    bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override
+    {
         String input(String(password) + String(salt));
 
-        SHA256_CTX ctx{};
+        SHA256_CTX ctx {};
         if (!SHA256_Init(&ctx)) {
             return false;
         }
@@ -823,20 +865,21 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         return true;
     }
 
-    void addComponent(IComponent* component) {
+    void addComponent(IComponent* component)
+    {
         auto res = components.add(component);
         if (!res.second) {
             printLn("Tried to add plug-ins %s and %s with conflicting UUID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUUID());
         }
         if (component->componentType() == ComponentType::Network) {
             networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
-        }
-        else if (component->componentType() == ComponentType::ConfigProvider) {
+        } else if (component->componentType() == ComponentType::ConfigProvider) {
             config.addProvider(static_cast<IConfigProviderComponent*>(component));
         }
     }
 
-    IComponent* loadComponent(const std::filesystem::path& path) {
+    IComponent* loadComponent(const std::filesystem::path& path)
+    {
         printLn("Loading component %s", path.filename().u8string().c_str());
         auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
         if (componentLib == nullptr) {
@@ -853,15 +896,15 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         if (component != nullptr) {
             printLn("\tSuccessfully loaded component %s with UUID %016llx", component->componentName().data(), component->getUUID());
             return component;
-        }
-        else {
+        } else {
             printLn("\tFailed to load component.");
             LIBRARY_FREE(componentLib);
             return nullptr;
         }
     }
 
-    void loadComponents(const std::filesystem::path& path) {
+    void loadComponents(const std::filesystem::path& path)
+    {
         std::filesystem::create_directory(path);
 
         Span<const StringView> componentsCfg = config.getStrings("components");
@@ -874,8 +917,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
                     }
                 }
             }
-        }
-        else {
+        } else {
             for (const StringView component : componentsCfg) {
                 auto file = std::filesystem::path(path) / component.data();
                 if (!file.has_extension()) {
@@ -894,12 +936,12 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         printLn("Loaded %i component(s)", components.size());
     }
 
-    void run() {
+    void run()
+    {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
 
         TimePoint prev = Time::now();
-        while (run_)
-        {
+        while (run_) {
             const TimePoint now = Time::now();
             Microseconds us = duration_cast<Microseconds>(now - prev);
             prev = now;
@@ -918,8 +960,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
                 if (httpIO->tryExec()) {
                     delete httpIO;
                     it = httpFutures.erase(it);
-                }
-                else {
+                } else {
                     ++it;
                 }
             }
@@ -928,11 +969,12 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-	bool onConsoleText(StringView command, StringView parameters) override {
-		if (command == "exit") {
-			run_ = false;
+    bool onConsoleText(StringView command, StringView parameters) override
+    {
+        if (command == "exit") {
+            run_ = false;
             return true;
-		}
-		return false;
-	}
+        }
+        return false;
+    }
 };
