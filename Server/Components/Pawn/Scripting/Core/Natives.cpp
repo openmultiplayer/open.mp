@@ -221,10 +221,10 @@ int getConfigOptionAsString(std::string const& cvar, std::string& buffer) {
 		if (res.first) {
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
 		}
-		buffer = config->getString(res.second);
+		buffer = String(config->getString(res.second));
 	}
 	else {
-		buffer = config->getString(cvar);
+		buffer = String(config->getString(cvar));
 	}
 	return buffer.size();
 }
@@ -333,7 +333,7 @@ SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buff
 
 SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
 {
-	weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
+	weapon = String(PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid)));
 	return true;
 }
 

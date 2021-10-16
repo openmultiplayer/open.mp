@@ -47,8 +47,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     }
 
     void applyAnimation(const IAnimation& animation) override {
-        animation_.lib = animation.getLib();
-        animation_.name = animation.getName();
+        animation_.lib = String(animation.getLib());
+        animation_.name = String(animation.getName());
         animation_.timeData = animation.getTimeData();
 
         if (animation_.timeData.loop || animation_.timeData.freeze) {

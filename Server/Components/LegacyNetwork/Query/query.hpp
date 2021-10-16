@@ -59,11 +59,11 @@ public:
 	}
 
 	void setServerName(StringView value) {
-		serverName = value;
+		serverName = String(value);
 	}
 
 	void setGameModeName(StringView value) {
-		gameModeName = value;
+		gameModeName = String(value);
 	}
 
 private:

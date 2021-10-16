@@ -683,9 +683,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         player.netData_ = netData;
         player.version_ = params.version;
-        player.versionName_ = params.versionName;
-        player.name_ = params.name;
-        player.serial_ = params.serial;
+        player.versionName_ = String(params.versionName);
+        player.name_ = String(params.name);
+        player.serial_ = String(params.serial);
         player.isBot_ = params.bot;
 
         // Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846)
