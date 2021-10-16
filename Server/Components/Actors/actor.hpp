@@ -1,12 +1,13 @@
-#include <sdk.hpp>
-#include <netcode.hpp>
 #include <Server/Components/Actors/actors.hpp>
+#include <netcode.hpp>
+#include <sdk.hpp>
 
 struct PlayerActorData final : IPlayerData {
     PROVIDE_UUID(0xd1bb1d1f96c7e572)
     uint8_t numStreamed = 0;
 
-    void free() override {
+    void free() override
+    {
         delete this;
     }
 };
@@ -22,7 +23,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     Animation animation_;
     bool animationLoop_ = false;
 
-    void setHealth(float health) override {
+    void setHealth(float health) override
+    {
         health_ = health;
         NetCode::RPC::SetActorHealthForPlayer RPC;
         RPC.ActorID = poolID;
@@ -33,16 +35,19 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    float getHealth() const override {
+    float getHealth() const override
+    {
         return health_;
     }
 
-    void setInvulnerable(bool invuln) override {
+    void setInvulnerable(bool invuln) override
+    {
         invulnerable_ = invuln;
         restream();
     }
 
-    bool isInvulnerable() const override {
+    bool isInvulnerable() const override
+    {
         return invulnerable_;
     }
 
@@ -53,8 +58,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
 
         if (animation_.timeData.loop || animation_.timeData.freeze) {
             animationLoop_ = true;
-        }
-        else {
+        } else {
             animationLoop_ = false;
             animation_.timeData.time = 0;
         }
@@ -67,11 +71,13 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    const Animation& getAnimation() const override {
+    const Animation& getAnimation() const override
+    {
         return animation_;
     }
 
-    void clearAnimations() override {
+    void clearAnimations() override
+    {
         animation_.lib.clear();
         animation_.name.clear();
         animationLoop_ = false;
@@ -84,18 +90,21 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void restream() {
+    void restream()
+    {
         for (IPlayer* player : streamedFor_.entries()) {
             streamOutForClient(*player);
             streamInForClient(*player);
         }
     }
 
-    bool isStreamedInForPlayer(const IPlayer & player) const override {
+    bool isStreamedInForPlayer(const IPlayer& player) const override
+    {
         return streamedFor_.valid(player.getID());
     }
 
-    void streamInForPlayer(IPlayer & player) override {
+    void streamInForPlayer(IPlayer& player) override
+    {
         const int pid = player.getID();
         if (!streamedFor_.valid(pid)) {
             uint8_t& numStreamed = player.queryData<PlayerActorData>()->numStreamed;
@@ -107,7 +116,8 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void streamOutForPlayer(IPlayer & player) override {
+    void streamOutForPlayer(IPlayer& player) override
+    {
         const int pid = player.getID();
         if (streamedFor_.valid(pid)) {
             uint8_t& numStreamed = player.queryData<PlayerActorData>()->numStreamed;
@@ -117,23 +127,28 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    int getVirtualWorld() const override {
+    int getVirtualWorld() const override
+    {
         return virtualWorld_;
     }
 
-    void setVirtualWorld(int vw) override {
+    void setVirtualWorld(int vw) override
+    {
         virtualWorld_ = vw;
     }
 
-    int getID() const override {
+    int getID() const override
+    {
         return poolID;
     }
 
-    Vector3 getPosition() const override {
+    Vector3 getPosition() const override
+    {
         return pos_;
     }
 
-    void setPosition(Vector3 position) override {
+    void setPosition(Vector3 position) override
+    {
         pos_ = position;
 
         NetCode::RPC::SetActorPosForPlayer RPC;
@@ -145,11 +160,13 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    GTAQuat getRotation() const override {
+    GTAQuat getRotation() const override
+    {
         return GTAQuat(0.f, 0.f, angle_);
     }
 
-    void setRotation(GTAQuat rotation) override {
+    void setRotation(GTAQuat rotation) override
+    {
         angle_ = rotation.ToEuler().z;
 
         NetCode::RPC::SetActorFacingAngleForPlayer RPC;
@@ -161,16 +178,19 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void setSkin(int id) override {
+    void setSkin(int id) override
+    {
         skin_ = id;
         restream();
     }
 
-    int getSkin() const override {
+    int getSkin() const override
+    {
         return skin_;
     }
 
-    void streamInForClient(IPlayer& player) {
+    void streamInForClient(IPlayer& player)
+    {
         NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC;
         showActorForPlayerRPC.ActorID = poolID;
         showActorForPlayerRPC.Angle = angle_;
@@ -187,13 +207,15 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void streamOutForClient(IPlayer& player) {
+    void streamOutForClient(IPlayer& player)
+    {
         NetCode::RPC::HideActorForPlayer RPC;
         RPC.ActorID = poolID;
         player.sendRPC(RPC);
     }
 
-    ~Actor() {
+    ~Actor()
+    {
         for (IPlayer* player : streamedFor_.entries()) {
             --player->queryData<PlayerActorData>()->numStreamed;
             streamOutForClient(*player);

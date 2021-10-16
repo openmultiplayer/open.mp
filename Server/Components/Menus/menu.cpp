@@ -183,6 +183,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 	}
 };
 
-COMPONENT_ENTRY_POINT() {
-	return new MenusComponent();
+COMPONENT_ENTRY_POINT()
+{
+    return new MenusComponent();
 }

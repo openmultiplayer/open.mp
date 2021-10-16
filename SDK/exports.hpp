@@ -4,17 +4,17 @@
 #include <new>
 
 #ifdef OMP_EXPORTS
-    #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-        #define OMP_API __declspec(dllexport)
-    #else
-        #define OMP_API __attribute__((visibility("default")))
-    #endif
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#define OMP_API __declspec(dllexport)
 #else
-    #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-        #define OMP_API __declspec(dllimport)
-    #else
-        #define OMP_API
-    #endif
+#define OMP_API __attribute__((visibility("default")))
+#endif
+#else
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#define OMP_API __declspec(dllimport)
+#else
+#define OMP_API
+#endif
 #endif
 
 /// A version of std::malloc to use for API allocations
