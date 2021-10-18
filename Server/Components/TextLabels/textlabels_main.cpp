@@ -27,7 +27,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
         PlayerTextLabel& textLabel = storage.get(pid);
         textLabel.player = &player;
-        textLabel.text = text;
+        textLabel.text = String(text);
         textLabel.colour = colour;
         textLabel.pos = pos;
         textLabel.drawDist = drawDist;
@@ -182,7 +182,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         }
 
         TextLabel& textLabel = storage.get(pid);
-        textLabel.text = text;
+        textLabel.text = String(text);
         textLabel.colour = colour;
         textLabel.pos = pos;
         textLabel.drawDist = drawDist;

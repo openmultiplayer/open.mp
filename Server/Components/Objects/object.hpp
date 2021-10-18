@@ -92,8 +92,8 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
         materialsUsed_.set(index);
         materials_[index].data.type = ObjectMaterialData::Type::Default;
         materials_[index].data.model = model;
-        materials_[index].txdOrText = txd;
-        materials_[index].textureOrFont = texture;
+        materials_[index].txdOrText = String(txd);
+        materials_[index].textureOrFont = String(texture);
         materials_[index].data.materialColour = colour;
     }
 
@@ -101,9 +101,9 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
     {
         materialsUsed_.set(index);
         materials_[index].data.type = ObjectMaterialData::Type::Text;
-        materials_[index].txdOrText = text;
+        materials_[index].txdOrText = String(text);
         materials_[index].data.materialSize = size;
-        materials_[index].textureOrFont = fontFace;
+        materials_[index].textureOrFont = String(fontFace);
         materials_[index].data.fontSize = fontSize;
         materials_[index].data.bold = bold;
         materials_[index].data.fontColour = fontColour;

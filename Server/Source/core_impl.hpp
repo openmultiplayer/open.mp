@@ -13,6 +13,7 @@
 #include <pool.hpp>
 #include <sstream>
 #include <thread>
+#include <variant>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
@@ -25,10 +26,10 @@
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
 template <typename... Args>
-struct adl_serializer<std::variant<Args...>> {
-    static void to_json(json& j, std::variant<Args...> const& v)
+struct adl_serializer<Variant<Args...>> {
+    static void to_json(json& j, Variant<Args...> const& v)
     {
-        std::visit([&](auto&& value) {
+        absl::visit([&](auto&& value) {
             j = std::forward<decltype(value)>(value);
         },
             v);
@@ -175,7 +176,7 @@ struct Config final : IEarlyConfig {
         // Free strings allocated for the StringView array
         for (const auto& kv : processed) {
             if (kv.second.index() == 3 && ownAllocations.find(kv.first) != ownAllocations.end()) {
-                const auto& arr = std::get<DynamicArray<StringView>>(kv.second);
+                const auto& arr = absl::get<DynamicArray<StringView>>(kv.second);
                 for (auto& v : arr) {
                     delete[] v.data();
                 }
@@ -192,7 +193,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 1) {
             return StringView();
         }
-        return StringView(std::get<String>(it->second));
+        return StringView(absl::get<String>(it->second));
     }
 
     int* getInt(StringView key) override
@@ -204,7 +205,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 0) {
             return 0;
         }
-        return &std::get<int>(it->second);
+        return &absl::get<int>(it->second);
     }
 
     float* getFloat(StringView key) override
@@ -216,7 +217,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 2) {
             return 0;
         }
-        return &std::get<float>(it->second);
+        return &absl::get<float>(it->second);
     }
 
     Span<const StringView> getStrings(StringView key) const override
@@ -228,7 +229,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 3) {
             return Span<StringView>();
         }
-        const DynamicArray<StringView>& vw = std::get<DynamicArray<StringView>>(it->second);
+        const DynamicArray<StringView>& vw = absl::get<DynamicArray<StringView>>(it->second);
         return Span<const StringView>(vw.data(), vw.size());
     }
 
@@ -559,23 +560,30 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         WeaponRate = config.getInt("weapon_rate");
         Multiplier = config.getInt("multiplier");
         LagCompensation = config.getInt("lag_compensation");
-        ServerName = config.getString("server_name");
+        ServerName = String(config.getString("server_name"));
         EnableVehicleFriendlyFire = config.getInt("vehicle_friendly_fire");
 
         EnableLogTimestamp = *config.getInt("logging_timestamp");
-        LogTimestampFormat = config.getString("logging_timestamp_format");
+        LogTimestampFormat = String(config.getString("logging_timestamp_format"));
 
         config.optimiseBans();
         config.writeBans();
         components.load();
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
-        components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+
+        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
+        if (consoleComp) {
+            components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        }
     }
 
     ~Core()
     {
-        components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
+        if (consoleComp) {
+            components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+        }
         players.getEventDispatcher().removeEventHandler(this);
         if (logFile) {
             fclose(logFile);
@@ -905,7 +913,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             }
         } else {
             for (const StringView component : componentsCfg) {
-                auto file = std::filesystem::path(path) / component;
+                auto file = std::filesystem::path(path) / component.data();
                 if (!file.has_extension()) {
                     file.replace_extension(LIBRARY_EXT);
                 }

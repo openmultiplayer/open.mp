@@ -51,7 +51,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
 
         PlayerTextDraw& textDraw = storage.get(pid);
         textDraw.player = &player;
-        textDraw.text = text;
+        textDraw.text = String(text);
         textDraw.pos = position;
         return &textDraw;
     }
@@ -231,7 +231,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         }
 
         TextDraw& textDraw = storage.get(pid);
-        textDraw.text = text;
+        textDraw.text = String(text);
         textDraw.pos = position;
         return &textDraw;
     }

@@ -222,7 +222,7 @@ bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync
 
 void Vehicle::setPlate(StringView plate)
 {
-    numberPlate = plate;
+    numberPlate = String(plate);
     NetCode::RPC::SetVehiclePlate plateRPC;
     plateRPC.VehicleID = poolID;
     plateRPC.plate = numberPlate;
