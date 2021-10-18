@@ -4,15 +4,10 @@ jobs:
   formatting-check:
     name: Clang format
     runs-on: [self-hosted, Linux]
-    strategy:
-      matrix:
-        path:
-          - 'SDK'
-          - 'Server'
     steps:
     - uses: actions/checkout@v2
     - name: Run clang-format for C/C++ source files.
-      uses: AmyrAhmady/clang-format-action@1.0
+      uses: AmyrAhmady/clang-format-action@v1.0
       with:
         source: "Server/**/*.hpp,SDK/**/*.hpp,Server/**/*.cpp,SDK/**/*.cpp"
         style: 'WebKit'
