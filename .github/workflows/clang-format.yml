@@ -4,18 +4,13 @@ jobs:
   format-files:
     name: Clang format
     runs-on: [self-hosted, Linux]
-    strategy:
-      matrix:
-        path:
-          - 'SDK'
-          - 'Server'
     steps:
     - uses: actions/checkout@v2
     - name: Run clang-format for C/C++ source files.
-      uses: AmyrAhmady/clang-format-action@v1.1
+      uses: AmyrAhmady/clang-format-action@v1.2
       with:
         clang-format-version: '11'
-        check-path: ${{ matrix.path }}
+        sources: "Server/**/*.hpp,SDK/**/*.hpp,Server/**/*.cpp,SDK/**/*.cpp"
         fallback-style: 'WebKit'
     - name: Commit and push
       run: |
