@@ -1,16 +1,22 @@
-name: clang-format Check
+name: clang-format
 on: [pull_request]
 jobs:
-  formatting-check:
+  format-files:
     name: Clang format
     runs-on: [self-hosted, Linux]
+    strategy:
+      matrix:
+        path:
+          - 'SDK'
+          - 'Server'
     steps:
     - uses: actions/checkout@v2
     - name: Run clang-format for C/C++ source files.
-      uses: AmyrAhmady/clang-format-action@v1.0
+      uses: AmyrAhmady/clang-format-action@v1.1
       with:
-        source: "Server/**/*.hpp,SDK/**/*.hpp,Server/**/*.cpp,SDK/**/*.cpp"
-        style: 'WebKit'
+        clang-format-version: '11'
+        check-path: ${{ matrix.path }}
+        fallback-style: 'WebKit'
     - name: Commit and push
       run: |
         git config --global user.name 'auto-format'
