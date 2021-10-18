@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Run clang-format for C/C++ source files.
-        uses: AmyrAhmady/clang-format-action@v1.5
+        uses: AmyrAhmady/clang-format-action@v1.6
         with:
           clang-format-version: "11"
           sources: "Server/**/*.hpp,SDK/**/*.hpp,Server/**/*.cpp,SDK/**/*.cpp"
