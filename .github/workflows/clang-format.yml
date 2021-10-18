@@ -5,18 +5,16 @@ jobs:
     name: Clang format
     runs-on: [self-hosted, Linux]
     steps:
-    - uses: actions/checkout@v2
-    - name: Run clang-format for C/C++ source files.
-      uses: AmyrAhmady/clang-format-action@v1.4
-      with:
-        clang-format-version: '11'
-        sources: "Server/**/*.hpp,SDK/**/*.hpp,Server/**/*.cpp,SDK/**/*.cpp"
-        fallback-style: 'WebKit'
-    - name: Commit and push
-      run: |
-        git config --global user.name 'auto-format'
-        git config --global user.email 'auto-format@auto.format'
-        git add ./Server
-        git add ./SDK
-        git commit -am "clang-format: ato format after push"
-        git push
+      - uses: actions/checkout@v2
+      - name: Run clang-format for C/C++ source files.
+        uses: AmyrAhmady/clang-format-action@v1.5
+        with:
+          clang-format-version: "11"
+          sources: "Server/**/*.hpp,SDK/**/*.hpp,Server/**/*.cpp,SDK/**/*.cpp"
+          fallback-style: "WebKit"
+      - uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "clang-format: format files"
+          commit_user_name: clnag-format # defaults to "GitHub Actions"
+          commit_user_email: clang-format@open.mp # defaults to "actions@github.com"
+          commit_author: clang-format <clang-format@open.mp> # defaults to author of the commit that triggered the run

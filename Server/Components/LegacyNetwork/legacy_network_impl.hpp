@@ -27,9 +27,8 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
         return ENetworkType_RakNetLegacy;
     }
 
-    void reset(ENetworkBitStreamReset reset) override
-    {
-        if (reset & BSResetRead) {
+    void reset(ENetworkBitStreamReset reset) override {
+                               if (reset & BSResetRead) {
             bs.ResetReadPointer();
         }
         if (reset & BSResetWrite) {
