@@ -30,7 +30,7 @@ SCRIPT_API(SetPVarString, bool(IPlayer& player, const std::string& varname, cons
 SCRIPT_API(GetPVarString, bool(IPlayer& player, const std::string& varname, std::string& output))
 {
     GET_PLAYER_VAR_COMP(component, false);
-    output = component->getString(varname);
+    output = String(component->getString(varname));
     return true;
 }
 

@@ -43,7 +43,7 @@ SCRIPT_API(db_num_fields, int(IDatabaseResultSet& dbresult))
 SCRIPT_API(db_field_name, bool(IDatabaseResultSet& dbresult, int field, std::string& result))
 {
     if ((field >= 0) && (field < dbresult.getFieldCount())) {
-        result = dbresult.getFieldName(static_cast<std::size_t>(field));
+        result = String(dbresult.getFieldName(static_cast<std::size_t>(field)));
         return true;
     }
     return false;
@@ -52,7 +52,7 @@ SCRIPT_API(db_field_name, bool(IDatabaseResultSet& dbresult, int field, std::str
 SCRIPT_API(db_get_field, bool(IDatabaseResultSet& dbresult, int field, std::string& result))
 {
     if ((field >= 0) && (field < dbresult.getFieldCount())) {
-        result = dbresult.getFieldString(static_cast<std::size_t>(field));
+        result = String(dbresult.getFieldString(static_cast<std::size_t>(field)));
         return true;
     }
     return false;
@@ -61,7 +61,7 @@ SCRIPT_API(db_get_field, bool(IDatabaseResultSet& dbresult, int field, std::stri
 SCRIPT_API(db_get_field_assoc, bool(IDatabaseResultSet& dbresult, const std::string& field, std::string& result))
 {
     if (dbresult.isFieldNameAvailable(field)) {
-        result = dbresult.getFieldStringByName(field);
+        result = String(dbresult.getFieldStringByName(field));
         return true;
     }
     return false;

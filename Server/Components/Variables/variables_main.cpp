@@ -19,7 +19,7 @@ struct VariableStorageBase : public ToInherit {
         if (it->second.index() != 1) {
             return StringView();
         }
-        return StringView(std::get<String>(it->second));
+        return StringView(absl::get<String>(it->second));
     }
 
     void setInt(StringView key, int value) override
@@ -36,7 +36,7 @@ struct VariableStorageBase : public ToInherit {
         if (it->second.index() != 0) {
             return 0;
         }
-        return std::get<int>(it->second);
+        return absl::get<int>(it->second);
     }
 
     void setFloat(StringView key, float value) override
@@ -53,7 +53,7 @@ struct VariableStorageBase : public ToInherit {
         if (it->second.index() != 2) {
             return 0;
         }
-        return std::get<float>(it->second);
+        return absl::get<float>(it->second);
     }
 
     VariableType getType(StringView key) const override

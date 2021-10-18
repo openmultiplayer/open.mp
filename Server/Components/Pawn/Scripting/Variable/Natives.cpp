@@ -30,7 +30,7 @@ SCRIPT_API(SetSVarString, bool(const std::string& varname, const std::string& va
 SCRIPT_API(GetSVarString, bool(const std::string& varname, std::string& output))
 {
     GET_VAR_COMP(component, false);
-    output = component->getString(varname);
+    output = String(component->getString(varname));
     return true;
 }
 
