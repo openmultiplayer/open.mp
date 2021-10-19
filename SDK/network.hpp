@@ -502,7 +502,8 @@ struct INetwork {
     /// Attempt to broadcast an RPC to everyone on this network
     /// @param id The RPC ID for the current network
     /// @param bs The bit stream with data to send
-    virtual bool broadcastRPC(int id, const INetworkBitStream& bs) = 0;
+    /// @param exceptPeer send RPC to everyone except this peer
+    virtual bool broadcastRPC(int id, const INetworkBitStream& bs, const INetworkPeer* exceptPeer = nullptr) = 0;
 
     /// Get a new bit stream for writing
     virtual INetworkBitStream& writeBitStream() = 0;
