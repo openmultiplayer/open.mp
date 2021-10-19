@@ -317,7 +317,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return rakNetServer.Send(&lbs.bs, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
 
-    bool broadcastRPC(int id, const INetworkBitStream& bs) override
+    bool broadcastRPC(int id, const INetworkBitStream& bs, const INetworkPeer* exceptPeer) override
     {
         if (id == INVALID_PACKET_ID) {
             return false;
@@ -328,6 +328,17 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         }
 
         const RakNetLegacyBitStream& lbs = static_cast<const RakNetLegacyBitStream&>(bs);
+
+        if (exceptPeer) {
+            const PeerNetworkData& netData = exceptPeer->getNetworkData();
+            if (netData.network == this) {
+                const PeerNetworkData::NetworkID& nid = netData.networkID;
+                const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
+
+                return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+            }
+        }
+
         return rakNetServer.RPC(id, &lbs.bs, RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
