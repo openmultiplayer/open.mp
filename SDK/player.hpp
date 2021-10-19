@@ -851,31 +851,21 @@ struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
     /// Request a new player with the given network parameters
     virtual Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) = 0;
 
+    /// Get set of available network instances
+    virtual const FlatPtrHashSet<INetwork>& getNetworks() = 0;
+
     /// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
     /// @param packet The packet to send
     template <class Packet>
     inline void broadcastRPCToAll(const Packet& packet, const IPlayer* skipFrom = nullptr)
     {
         static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-        for (IPlayer* player : entries()) {
-            if (player == skipFrom) {
-                continue;
-            }
-            player->sendRPC(packet);
-        }
-    }
 
-    /// Attempt to broadcast a packet derived from NetworkPacketBase to all peers
-    /// @param packet The packet to send
-    template <class Packet>
-    inline void broadcastPacketToAll(const Packet& packet, const IPlayer* skipFrom = nullptr)
-    {
-        static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
-        for (IPlayer* player : entries()) {
-            if (player == skipFrom) {
-                continue;
-            }
-            player->sendPacket(packet);
+        for (INetwork* network : getNetworks()) {
+            ENetworkType type = network->getNetworkType();
+            INetworkBitStream& bs = network->writeBitStream();
+            packet.write(bs);
+            network->broadcastRPC(Packet::getID(type), bs, skipFrom);
         }
     }
 };

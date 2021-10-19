@@ -1017,6 +1017,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return playerUpdateDispatcher;
     }
 
+    const FlatPtrHashSet<INetwork>& getNetworks() override
+    {
+        return core.getNetworks();
+    }
+
     Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override
     {
         if (params.bot) {
