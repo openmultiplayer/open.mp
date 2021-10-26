@@ -56,10 +56,10 @@ jobs:
       - name: Generate build files
         run: mkdir build && cd build && cmake .. -G "Visual Studio 16 2019" -A Win32 -T "ClangCL"
 
-      - name: Build
-        run: |
-          cd build
-          cmake  . --config Debug
+      # - name: Build
+      #   run: |
+      #     cd build
+      #     cmake --build . --config Debug
 
       - name: Upload S3
         uses: jakejarvis/s3-sync-action@master
@@ -68,7 +68,7 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
           AWS_S3_ENDPOINT: https://assets.open.mp
           AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
-          # SOURCE_DIR: "build/Output/Debug/Server"
+          # SOURCE_DIR: "build/Output"
           SOURCE_DIR: "build"
           DEST_DIR: ${{steps.version.outputs.tag}}
 
@@ -108,10 +108,10 @@ jobs:
       - name: Generate build files
         run: mkdir build && cd build && cmake .. -G Ninja -DCMAKE_CXX_FLAGS=-m32 -DCMAKE_C_FLAGS=-m32 -DCMAKE_BUILD_TYPE=Release
 
-      - name: Build
-        run: |
-          cd build
-          cmake --build . --config Debug
+      # - name: Build
+      #   run: |
+      #     cd build
+      #     cmake --build . --config Debug
 
       - name: Upload S3
         uses: jakejarvis/s3-sync-action@master
@@ -120,5 +120,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
           AWS_S3_ENDPOINT: https://assets.open.mp
           AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
-          SOURCE_DIR: "build/Output/Debug/Server"
+          # SOURCE_DIR: "build/Output/Debug/Server"
+          SOURCE_DIR: "build"
           DEST_DIR: ${{steps.version.outputs.tag}}
