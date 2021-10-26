@@ -35,6 +35,16 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Generate Version String
+        id: version
+        uses: jimschubert/query-tag-action@v1
+        with:
+          include: "v*"
+
+      - name: Show Version String
+        run: |
+          echo 'Built version: ${{steps.version.outputs.tag}}'
+
       - name: Setup Python
         uses: actions/setup-python@v2
 
@@ -60,6 +70,16 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: recursive
+
+      - name: Generate Version String
+        id: version
+        uses: jimschubert/query-tag-action@v1
+        with:
+          include: "v*"
+
+      - name: Show Version String
+        run: |
+          echo 'Built version: ${{steps.version.outputs.tag}}'
 
       - name: Setup Python
         uses: actions/setup-python@v2
