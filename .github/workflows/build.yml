@@ -35,8 +35,8 @@ jobs:
         id: version
         with:
           submodules: recursive
-        run: echo "::set-output name=tag::${git describe --always --tags}"
 
+      - run: echo "::set-output name=tag::${git describe --always --tags}"
       - name: Show Version String
         run: |
           echo 'Built version: ${{steps.version.outputs.tag}}'
@@ -67,8 +67,8 @@ jobs:
         id: version
         with:
           submodules: recursive
-        run: echo "::set-output name=tag::${git describe --always --tags}"
 
+      - run: echo "::set-output name=tag::${git describe --always --tags}"
       - name: Show Version String
         run: |
           echo 'Built version: ${{steps.version.outputs.tag}}'
