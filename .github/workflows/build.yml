@@ -32,14 +32,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        id: version
         with:
           submodules: recursive
-
-      - name: Generate Version String
-        id: version
-        uses: jimschubert/query-tag-action@v1
-        with:
-          include: "v*"
+        run: echo "::set-output name=tag::${git describe --always --tags}"
 
       - name: Show Version String
         run: |
@@ -68,14 +64,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+        id: version
         with:
           submodules: recursive
-
-      - name: Generate Version String
-        id: version
-        uses: jimschubert/query-tag-action@v1
-        with:
-          include: "v*"
+        run: echo "::set-output name=tag::${git describe --always --tags}"
 
       - name: Show Version String
         run: |
