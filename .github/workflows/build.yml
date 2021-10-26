@@ -32,11 +32,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        id: version
         with:
           submodules: recursive
 
-      - run: echo "::set-output name=tag::${git describe --always --tags}"
+      - name: Generate Version String
+        id: version
+        run: echo "::set-output name=tag::${git describe --always --tags}"
+
       - name: Show Version String
         run: |
           echo 'Built version: ${{steps.version.outputs.tag}}'
@@ -64,11 +66,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-        id: version
         with:
           submodules: recursive
 
-      - run: echo "::set-output name=tag::${git describe --always --tags}"
+      - name: Generate Version String
+        id: version
+        run: echo "::set-output name=tag::${git describe --always --tags}"
+
       - name: Show Version String
         run: |
           echo 'Built version: ${{steps.version.outputs.tag}}'
