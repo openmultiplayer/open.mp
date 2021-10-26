@@ -61,6 +61,16 @@ jobs:
           cd build
           cmake --build . --config Debug
 
+      - name: Upload S3
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          AWS_S3_ENDPOINT: https://assets.open.mp
+          AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
+          SOURCE_DIR: "build/Output/Debug/Server"
+          DEST_DIR: ${{steps.version.outputs.tag}}
+
   build-linux:
     runs-on: [self-hosted, Linux]
 
@@ -101,3 +111,13 @@ jobs:
         run: |
           cd build
           cmake --build . --config Debug
+
+      - name: Upload S3
+        uses: jakejarvis/s3-sync-action@master
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          AWS_S3_ENDPOINT: https://assets.open.mp
+          AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
+          SOURCE_DIR: "build/Output/Debug/Server"
+          DEST_DIR: ${{steps.version.outputs.tag}}
