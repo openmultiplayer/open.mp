@@ -62,18 +62,18 @@ jobs:
       #     cmake --build . --config Debug
 
       - name: Upload S3
-        uses: jakejarvis/s3-sync-action@master
+        uses: mostlytyped/s3-put-action@v1.0.0
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
-          AWS_S3_ENDPOINT: https://assets.open.mp
-          AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
+          AWS_ENDPOINT: https://assets.open.mp
+          AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
           # SOURCE_DIR: "build/Output"
-          SOURCE_DIR: "build"
-          DEST_DIR: ${{steps.version.outputs.tag}}
+          LOCAL_FILE: "build"
+          REMOTE_FILE: ${{steps.version.outputs.tag}}
 
   build-linux:
-    runs-on: [self-hosted, Linux]
+    runs-on: "ubuntu-18.04"
 
     steps:
       - uses: actions/checkout@v2
@@ -114,12 +114,12 @@ jobs:
       #     cmake --build . --config Debug
 
       - name: Upload S3
-        uses: jakejarvis/s3-sync-action@master
+        uses: mostlytyped/s3-put-action@v1.0.0
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
-          AWS_S3_ENDPOINT: https://assets.open.mp
-          AWS_S3_BUCKET: ${{ secrets.AWS_BUCKET }}
+          AWS_ENDPOINT: https://assets.open.mp
+          AWS_BUCKET: ${{ secrets.AWS_BUCKET }}
           # SOURCE_DIR: "build/Output/Debug/Server"
-          SOURCE_DIR: "build"
-          DEST_DIR: ${{steps.version.outputs.tag}}
+          LOCAL_FILE: "build"
+          REMOTE_FILE: ${{steps.version.outputs.tag}}
