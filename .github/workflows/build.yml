@@ -37,7 +37,7 @@ jobs:
 
       - name: Generate Version String
         id: version
-        run: echo "::set-output name=tag::${git describe --always --tags}"
+        run: echo "::set-output name=tag::$(git describe --always --tags)"
 
       - name: Show Version String
         run: |
@@ -71,7 +71,7 @@ jobs:
 
       - name: Generate Version String
         id: version
-        run: echo "::set-output name=tag::${git describe --always --tags}"
+        run: echo "::set-output name=tag::$(git describe --always --tags)"
 
       - name: Show Version String
         run: |
