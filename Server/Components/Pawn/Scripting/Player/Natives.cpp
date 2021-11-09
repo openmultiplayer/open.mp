@@ -436,7 +436,7 @@ SCRIPT_API(RemovePlayerMapIcon, bool(IPlayer& player, int iconID))
     return true;
 }
 
-SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, int style, uint32_t colour))
+SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, uint32_t colour, int style))
 {
     player.setMapIcon(iconID, pos, type, MapIconStyle(style), Colour::FromRGBA(colour));
     return true;
