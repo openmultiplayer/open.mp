@@ -283,7 +283,8 @@ SCRIPT_API(GetPlayerVelocity, bool(IPlayer& player, Vector3& velocity))
 
 SCRIPT_API(GetPlayerCameraPos, bool(IPlayer& player, Vector3& pos))
 {
-    pos = player.getCameraPosition();
+    PlayerAimData data = player.getAimData();
+    pos = data.CamPos;
     return true;
 }
 

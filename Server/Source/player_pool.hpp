@@ -516,6 +516,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.AimZ = aimSync.AimZ;
                 player.aimingData_.CamFrontVector = aimSync.CamFrontVector;
                 player.aimingData_.CamMode = aimSync.CamMode;
+                player.aimingData_.CamPos = aimSync.CamPos;
                 player.aimingData_.CamZoom = aimSync.CamZoom;
                 player.aimingData_.WeaponState = aimSync.WeaponState;
                 player.aimingData_.AspectRatio = aimSync.AspectRatio;
