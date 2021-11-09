@@ -4,6 +4,16 @@
 #include "sdk.hpp"
 
 struct TextDrawEvents : public TextDrawEventHandler, public Singleton<TextDrawEvents> {
+    
+    
+    virtual void onTextDrawSelectionCancel(IPlayer& player) override 
+    { 
+        cell ret = PawnManager::Get()->CallInSidesWhile0("OnPlayerClickTextDraw", player.getID(), INVALID_TEXTDRAW);
+        if (!ret) {
+            PawnManager::Get()->CallInEntry("OnPlayerClickTextDraw", DefaultReturnValue_False, player.getID(), INVALID_TEXTDRAW);
+        }
+    }
+
     void onTextDrawClick(IPlayer& player, ITextDraw& td) override
     {
         cell ret = PawnManager::Get()->CallInSidesWhile0("OnPlayerClickTextDraw", player.getID(), td.getID());
