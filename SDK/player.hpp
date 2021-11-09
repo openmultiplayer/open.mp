@@ -249,8 +249,8 @@ static const StringView BodyPartString[] = {
 struct PlayerKeyData {
     // todo fill with union
     uint32_t keys;
-    uint16_t upDown;
-    uint16_t leftRight;
+    int16_t upDown;
+    int16_t leftRight;
 };
 
 struct PlayerAnimationData {
@@ -528,7 +528,7 @@ struct IPlayer : public IEntity, public INetworkPeer {
     virtual int getMoney() = 0;
 
     /// Set a map icon for the player
-    virtual void setMapIcon(int id, Vector3 pos, int type, MapIconStyle style, Colour colour = Colour::White()) = 0;
+    virtual void setMapIcon(int id, Vector3 pos, int type, Colour colour, MapIconStyle style) = 0;
 
     /// Unset a map icon for the player
     virtual void unsetMapIcon(int id) = 0;
