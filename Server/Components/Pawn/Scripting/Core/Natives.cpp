@@ -18,7 +18,7 @@ SCRIPT_API(GetMaxPlayers, int())
 
 SCRIPT_API(VectorSize, float(Vector3 vector))
 {
-    return vector.length();
+    return glm::length(vector);
 }
 
 SCRIPT_API(asin, float(float value))
