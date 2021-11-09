@@ -438,7 +438,7 @@ SCRIPT_API(RemovePlayerMapIcon, bool(IPlayer& player, int iconID))
 
 SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, uint32_t colour, int style))
 {
-    player.setMapIcon(iconID, pos, type, MapIconStyle(style), Colour::FromRGBA(colour));
+    player.setMapIcon(iconID, pos, type, Colour::FromRGBA(colour), MapIconStyle(style));
     return true;
 }
 
@@ -682,11 +682,9 @@ SCRIPT_API(GetPlayerCameraMode, int(IPlayer& player))
 SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& leftright))
 {
     const PlayerKeyData& keyData = player.getKeyData();
-
     keys = keyData.keys;
-    updown = static_cast<int16_t>(keyData.upDown);
-    leftright = static_cast<int16_t>(keyData.leftRight);
-
+    updown = keyData.upDown;
+    leftright = keyData.leftRight;
     return true;
 }
 
@@ -847,6 +845,7 @@ SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
 SCRIPT_API(SendClientCheck, bool(IPlayer& player, int actionType, int address, int offset, int count))
 {
     player.sendClientCheck(actionType, address, offset, count);
+    return true;
 }
 
 SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
