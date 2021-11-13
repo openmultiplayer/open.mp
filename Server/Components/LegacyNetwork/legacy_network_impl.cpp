@@ -627,8 +627,9 @@ void RakNetLegacyNetwork::update()
     }
 
     StringView password = config.getString("password");
-    query.setPassworded(!password.empty());
-    rakNetServer.SetPassword(password.data());
+    bool isPassworded = !password.empty() && password.compare("0") != 0;
+    query.setPassworded(isPassworded);
+    rakNetServer.SetPassword(isPassworded ? 0 : password.data());
 
     int mtu = *config.getInt("network_mtu");
     rakNetServer.SetMTUSize(mtu);
