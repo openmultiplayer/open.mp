@@ -521,6 +521,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.WeaponState = aimSync.WeaponState;
                 player.aimingData_.AspectRatio = aimSync.AspectRatio;
 
+                //fix for camera shaking hack, i think there are more bugged ids
+                if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u)
+                    aimSync.CamMode = 4u;
+
                 aimSync.PlayerID = player.poolID;
                 peer.broadcastPacketToStreamed(aimSync);
             }
