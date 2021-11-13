@@ -336,8 +336,8 @@ struct PlayerAimData {
 
 struct PlayerBulletData {
     Vector3 origin;
-    Vector3 end;
     Vector3 hitPos;
+    Vector3 offset;
     uint8_t weapon;
     PlayerBulletHitType hitType;
     uint16_t hitID;
