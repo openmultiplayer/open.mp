@@ -9,7 +9,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     }
 
     int& numStreamed = player.queryData<PlayerVehicleData>()->numStreamed;
-    if (numStreamed > MAX_STREAMED_VEHICLES) {
+    if (numStreamed >= MAX_STREAMED_VEHICLES) {
         return;
     }
 
