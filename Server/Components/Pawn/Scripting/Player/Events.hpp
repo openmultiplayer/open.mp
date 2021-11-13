@@ -76,14 +76,14 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
             "OnPlayerWeaponShot",
             player.getID(),
             bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-            bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+            bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         if (ret) {
             ret = PawnManager::Get()->CallInEntry(
                 "OnPlayerWeaponShot",
                 DefaultReturnValue_True,
                 player.getID(),
                 bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-                bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+                bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         }
         return !!ret;
     }
@@ -94,14 +94,14 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
             "OnPlayerWeaponShot",
             player.getID(),
             bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-            bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+            bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         if (ret) {
             ret = PawnManager::Get()->CallInEntry(
                 "OnPlayerWeaponShot",
                 DefaultReturnValue_True,
                 player.getID(),
                 bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-                bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+                bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         }
         return !!ret;
     }
@@ -112,14 +112,14 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
             "OnPlayerWeaponShot",
             player.getID(),
             bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-            bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+            bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         if (ret) {
             ret = PawnManager::Get()->CallInEntry(
                 "OnPlayerWeaponShot",
                 DefaultReturnValue_True,
                 player.getID(),
                 bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-                bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+                bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         }
         return !!ret;
     }
@@ -130,14 +130,14 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
             "OnPlayerWeaponShot",
             player.getID(),
             bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-            bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+            bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         if (ret) {
             ret = PawnManager::Get()->CallInEntry(
                 "OnPlayerWeaponShot",
                 DefaultReturnValue_True,
                 player.getID(),
                 bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-                bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+                bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         }
         return !!ret;
     }
@@ -148,14 +148,14 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
             "OnPlayerWeaponShot",
             player.getID(),
             bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-            bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+            bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         if (ret) {
             ret = PawnManager::Get()->CallInEntry(
                 "OnPlayerWeaponShot",
                 DefaultReturnValue_True,
                 player.getID(),
                 bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
-                bulletData.hitPos.x, bulletData.hitPos.y, bulletData.hitPos.z);
+                bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
         }
         return !!ret;
     }
