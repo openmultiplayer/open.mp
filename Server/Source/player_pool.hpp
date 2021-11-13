@@ -616,9 +616,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false; // OOB shot
             }
 
-            player.bulletData_.hitPos = bulletSync.Offset;
+            player.bulletData_.offset = bulletSync.Offset;
             player.bulletData_.origin = bulletSync.Origin;
-            player.bulletData_.end = bulletSync.HitPos;
+            player.bulletData_.hitPos = bulletSync.HitPos;
             player.bulletData_.hitID = bulletSync.HitID;
             player.bulletData_.hitType = static_cast<PlayerBulletHitType>(bulletSync.HitType);
             player.bulletData_.weapon = bulletSync.WeaponID;

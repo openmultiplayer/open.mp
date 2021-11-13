@@ -367,7 +367,7 @@ SCRIPT_API(GetPlayerLastShotVectors, bool(IPlayer& player, Vector3& origin, Vect
 {
     PlayerBulletData data = player.getBulletData();
     origin = data.origin;
-    hitPos = data.end;
+    hitPos = data.hitPos;
     return true;
 }
 
