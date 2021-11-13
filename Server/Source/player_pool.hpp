@@ -116,11 +116,24 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (onPlayerGiveTakeDamageRPC.Damage <= 0.0f) {
+                return false;
+            }
+
+            if (onPlayerGiveTakeDamageRPC.Bodypart < 3) {
+                return false;
+            }
+
             bool pidValid = self.storage.valid(onPlayerGiveTakeDamageRPC.PlayerID);
+
             if (onPlayerGiveTakeDamageRPC.Taking) {
                 IPlayer* from = nullptr;
                 if (pidValid) {
                     from = &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID);
+
+                    if (!from->isStreamedInForPlayer(peer)) {
+                        return false;
+                    }
                 }
                 self.eventDispatcher.dispatch(
                     &PlayerEventHandler::onTakeDamage,
@@ -133,6 +146,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 if (!pidValid) {
                     return false;
                 }
+
+                IPlayer* to = &self.storage.get(onPlayerGiveTakeDamageRPC.PlayerID);
+                if (!to->isStreamedInForPlayer(peer)) {
+                    return false;
+                }
+
                 self.eventDispatcher.dispatch(
                     &PlayerEventHandler::onGiveDamage,
                     peer,
@@ -584,6 +603,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     return false;
                 }
             }
+
             // Check if hitid is valid for vehicles/objects
 
             static const float bounds = 20000.0f * 20000.0f;
@@ -598,6 +618,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             player.bulletData_.hitPos = bulletSync.Offset;
             player.bulletData_.origin = bulletSync.Origin;
+            player.bulletData_.end = bulletSync.HitPos;
             player.bulletData_.hitID = bulletSync.HitID;
             player.bulletData_.hitType = static_cast<PlayerBulletHitType>(bulletSync.HitType);
             player.bulletData_.weapon = bulletSync.WeaponID;
