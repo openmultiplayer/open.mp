@@ -316,9 +316,9 @@ SCRIPT_API(GetPlayerVirtualWorld, int(IPlayer& player))
     return player.getVirtualWorld();
 }
 
-SCRIPT_API(IsPlayerNPC, bool(IPlayer& player))
+SCRIPT_API(IsPlayerNPC, bool(IPlayer* player))
 {
-    return player.isBot();
+    return player != nullptr && player->isBot();
 }
 
 SCRIPT_API(IsPlayerStreamedIn, bool(IPlayer& player, IPlayer& other))
