@@ -34,7 +34,7 @@ const FlatHashMap<StringView, ParamType> types = {
     { "gravity", ParamType::Float },
     { "weburl", ParamType::String },
     { "maxplayers", ParamType::Int },
-    { "password", ParamType::String },
+    { "password", ParamType::Custom },
     { "sleep", ParamType::Int },
     { "lanmode", ParamType::Int },
     { "bind", ParamType::String },
@@ -146,6 +146,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
                 return true;
             }
         }
+
         if (name.find("filterscripts") == 0) {
             auto it = dictionary.find("filterscripts");
             if (it != dictionary.end()) {
@@ -175,8 +176,19 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
                 return true;
             }
         }
+
         if (name.find("echo") == 0) {
             config.getCore().printLn("%s", right.c_str());
+            return true;
+        }
+
+        if (name.find("password") == 0) {
+            String password = "\0";
+            if (right.size() > 0 && right[0] != '0') {
+                password = right;
+            }
+            auto it = dictionary.find("password");
+            config.setString(it->second, password);
             return true;
         }
 
