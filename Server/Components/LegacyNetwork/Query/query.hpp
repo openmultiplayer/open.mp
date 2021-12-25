@@ -19,6 +19,7 @@ public:
     }
 
     int handleQuery(char const* buffer, char* output, uint32_t address);
+    void refreshPlayerListNextQuery() { refreshPlayerList = true; };
     void preparePlayerListForQuery();
 
     void setMaxPlayers(uint16_t value)
@@ -73,7 +74,9 @@ public:
 private:
     ICore* core = nullptr;
     char playerListBuffer[(4 + 24) * 100 + 1]; // 4 bytes for score, 24 bytes for player name, and only writing 100 players to it
+    uint16_t playerListCount = 0;
     int playerListBufferLength = 0;
+    bool refreshPlayerList = false;
     uint16_t maxPlayers = 0;
     String serverName = "open.mp server";
     String gameModeName = "Unknown";

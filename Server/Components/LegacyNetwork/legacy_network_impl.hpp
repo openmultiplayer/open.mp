@@ -384,7 +384,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        query.preparePlayerListForQuery();
+        query.refreshPlayerListNextQuery();
     }
 
     NetworkStats getStatistics(int playerIndex = -1) override;
