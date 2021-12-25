@@ -20,7 +20,12 @@ void Query::preparePlayerListForQuery()
         return;
     }
 
+    if (refreshPlayerList) {
+        refreshPlayerList = false;
+    }
+
     playerListBufferLength = 0;
+    playerListCount = 0;
 
     if (core->getPlayers().entries().size() >= 100) {
         std::fill_n(playerListBuffer, sizeof(playerListBuffer), 0);
@@ -37,6 +42,7 @@ void Query::preparePlayerListForQuery()
 
         // Write player score
         writeToBuffer(playerListBuffer, playerListBufferLength, player->getScore());
+        ++playerListCount;
     }
 }
 
@@ -103,12 +109,14 @@ int Query::handleQuery(char const* buffer, char* output, uint32_t address)
     else if (buffer[10] == 'c') {
         writeToBuffer(output, buffer, bufferLength, 10);
 
-        // Ignore sending player list if player count if over 100
-        unsigned int playerCountForQuery = core->getPlayers().entries().size() >= 100 ? 0 : core->getPlayers().entries().size();
+        //Refresh players list if needed
+        if (refreshPlayerList) {
+            preparePlayerListForQuery();
+        }
 
         // Write 'c' signal and player count
         writeToBuffer(output, bufferLength, static_cast<unsigned char>('c'));
-        writeToBuffer(output, bufferLength, static_cast<uint16_t>(playerCountForQuery));
+        writeToBuffer(output, bufferLength, playerListCount);
 
         if (playerListBufferLength > 0) {
             writeToBuffer(output, playerListBuffer, bufferLength, playerListBufferLength);
