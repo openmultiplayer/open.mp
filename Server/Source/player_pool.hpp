@@ -494,8 +494,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
+            uint32_t newKeys = spectatorSync.Keys;
+
             player.pos_ = spectatorSync.Position;
-            player.keys_.keys = spectatorSync.Keys;
+
+            if (player.keys_.keys != newKeys) {
+                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
+                });
+            }
+
+            player.keys_.keys = newKeys;
             player.keys_.leftRight = spectatorSync.LeftRight;
             player.keys_.upDown = spectatorSync.UpDown;
 
