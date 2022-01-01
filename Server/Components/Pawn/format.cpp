@@ -520,6 +520,31 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
             AddString(&buf_p, llen, get_amxaddr(amx, params[arg]), width, prec);
             arg++;
             break;
+        case 'q': {
+            CHECK_ARGS(0);
+
+            int argLen = 0;
+            amx_StrLen(get_amxaddr(amx, params[arg]), &argLen);
+
+            if (argLen > 0) {
+                ++argLen;
+                std::string strArg;
+                strArg.resize(argLen);
+
+                amx_GetString((char*)strArg.data(), get_amxaddr(amx, params[arg]), false, argLen);
+
+                size_t pos = 0;
+                while ((pos = strArg.find("'", pos)) != std::string::npos) {
+                    strArg.replace(pos, 1, "''");
+                    pos += 2;
+                }
+
+                AddString(&buf_p, llen, strArg.c_str(), width, prec);
+            }
+
+            arg++;
+            break;
+        }
         case '%':
             *buf_p++ = static_cast<D>(ch);
             if (!llen)
