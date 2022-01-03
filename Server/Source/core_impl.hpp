@@ -14,6 +14,7 @@
 #include <sstream>
 #include <thread>
 #include <variant>
+#include <cxxopts.hpp>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
@@ -516,7 +517,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     int EnableLogTimestamp;
     String LogTimestampFormat;
 
-    Core()
+    Core(const cxxopts::ParseResult &cmd)
         : players(*this)
         , components(*this)
         , config(*this)
@@ -530,6 +531,12 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
         loadComponents("components");
         config.init();
+
+        if (cmd.count("script")) {
+            config.setString(
+                "entry_file",
+                cmd["script"].as<std::string>());
+        }
 
         // Don't use config before this point
 
@@ -807,7 +814,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         playerInitRPC.LagCompensation = *LagCompensation;
         playerInitRPC.ServerName = StringView(ServerName);
         IClassesComponent* classes = components.queryComponent<IClassesComponent>();
-        playerInitRPC.SetSpawnInfoCount = classes ? classes->entries().size() : 0;
+        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
         static const StaticArray<uint8_t, 212> emptyModel { 0 };

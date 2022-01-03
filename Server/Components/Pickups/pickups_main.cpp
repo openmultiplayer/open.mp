@@ -92,7 +92,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IPickup* p : storage.entries()) {
+        for (IPickup* p : storage) {
             Pickup* pickup = static_cast<Pickup*>(p);
             if (pickup->streamedFor_.valid(pid)) {
                 pickup->streamedFor_.remove(pid, player);
@@ -144,9 +144,9 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     IEventDispatcher<PickupEventHandler>& getEventDispatcher() override
@@ -157,14 +157,14 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
     /// Get a set of all the available labels
     const FlatPtrHashSet<IPickup>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
-            for (IPickup* p : storage.entries()) {
+            for (IPickup* p : storage) {
                 Pickup* pickup = static_cast<Pickup*>(p);
 
                 const PlayerState state = player.getState();

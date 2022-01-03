@@ -67,7 +67,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     void free() override
     {
         /// Detach player from player labels so they don't try to send an RPC
-        for (IPlayerTextLabel* textLabel : storage.entries()) {
+        for (IPlayerTextLabel* textLabel : storage) {
             PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
             lbl->player = nullptr;
         }
@@ -111,15 +111,15 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     /// Get a set of all the available labels
     const FlatPtrHashSet<IPlayerTextLabel>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 };
 
@@ -251,22 +251,22 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     /// Get a set of all the available labels
     const FlatPtrHashSet<ITextLabel>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
-            for (ITextLabel* textLabel : storage.entries()) {
+            for (ITextLabel* textLabel : storage) {
                 TextLabel* label = static_cast<TextLabel*>(textLabel);
                 const TextLabelAttachmentData& data = label->attachmentData;
                 Vector3 pos;
@@ -297,7 +297,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (ITextLabel* textLabel : storage.entries()) {
+        for (ITextLabel* textLabel : storage) {
             TextLabel* label = static_cast<TextLabel*>(textLabel);
             if (label->attachmentData.playerID == pid) {
                 textLabel->detachFromPlayer(label->pos);
@@ -309,7 +309,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         for (IPlayer* player : players->entries()) {
             IPlayerTextLabelData* data = player->queryData<IPlayerTextLabelData>();
             if (data) {
-                for (IPlayerTextLabel* textLabel : data->entries()) {
+                for (IPlayerTextLabel* textLabel : *data) {
                     PlayerTextLabel* label = static_cast<PlayerTextLabel*>(textLabel);
                     if (label->attachmentData.playerID == pid) {
                         textLabel->detachFromPlayer(label->pos);

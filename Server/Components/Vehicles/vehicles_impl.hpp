@@ -236,8 +236,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IVehicle* v : storage.entries()) {
+        for (IVehicle* v : storage) {
             Vehicle* vehicle = static_cast<Vehicle*>(v);
+            ScopedPoolReleaseLock<IVehicle, Capacity> lock(*this, vehicle->poolID);
             if (vehicle->streamedFor_.valid(pid)) {
                 vehicle->streamedFor_.remove(pid, player);
                 if (vehicle->driver == &player) {
@@ -386,23 +387,24 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     /// Get a set of all the available objects
     const FlatPtrHashSet<IVehicle>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
-            for (IVehicle* v : storage.entries()) {
+            for (IVehicle* v : storage) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
+
                 bool occupied = false;
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = vehicle->pos - player.getPosition();

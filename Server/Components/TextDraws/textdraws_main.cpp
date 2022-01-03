@@ -81,7 +81,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
 
     void free() override
     {
-        for (IPlayerTextDraw* textDraw : storage.entries()) {
+        for (IPlayerTextDraw* textDraw : storage) {
             PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
             td->player = nullptr;
         }
@@ -125,15 +125,15 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     /// Get a set of all the available labels
     const FlatPtrHashSet<IPlayerTextDraw>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 };
 
@@ -300,14 +300,14 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     const FlatPtrHashSet<ITextDraw>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 };
 

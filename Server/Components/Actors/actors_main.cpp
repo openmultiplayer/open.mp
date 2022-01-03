@@ -81,7 +81,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IActor* a : storage.entries()) {
+        for (IActor* a : storage) {
             Actor* actor = static_cast<Actor*>(a);
             if (actor->streamedFor_.valid(pid)) {
                 actor->streamedFor_.remove(pid, player);
@@ -153,9 +153,9 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     IEventDispatcher<ActorEventHandler>& getEventDispatcher() override
@@ -166,14 +166,14 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
     /// Get a set of all the available labels
     const FlatPtrHashSet<IActor>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
-            for (IActor* a : storage.entries()) {
+            for (IActor* a : storage) {
                 Actor* actor = static_cast<Actor*>(a);
 
                 const PlayerState state = player.getState();
