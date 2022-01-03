@@ -9,6 +9,87 @@
 #include <set>
 #include <type_traits>
 
+/* Iterators, to be passed around */
+
+/// A pool iterator which locks/unlocks marked pools
+template <class Type, class StoragePool>
+class MarkedPoolIterator {
+public:
+    using iterator_category = typename FlatPtrHashSet<Type>::iterator::iterator_category;
+    using difference_type = typename FlatPtrHashSet<Type>::iterator::difference_type;
+    using value_type = typename FlatPtrHashSet<Type>::iterator::value_type;
+    using pointer = typename FlatPtrHashSet<Type>::iterator::pointer;
+    using reference = typename FlatPtrHashSet<Type>::iterator::reference;
+
+private:
+    StoragePool& pool; ///< The pool to lock/unlock
+    int lockedID; ///< Cached entry ID that was locked, -1 if entry isn't locked
+    const FlatPtrHashSet<Type>& entries; ///< Pool entries list
+    typename FlatPtrHashSet<Type>::const_iterator iter; ///< Current iterator of pool entries list
+
+    /// Lock the pool and cache the entry ID
+    inline void lock()
+    {
+        assert(lockedID == -1);
+        if (iter != entries.end()) {
+            lockedID = (*iter)->getID();
+            pool.lock(lockedID);
+        }
+    }
+
+    /// If pool is locked, unlock it and clear the entry ID cache
+    inline void unlock()
+    {
+        if (lockedID != -1) {
+            pool.unlock(lockedID);
+            lockedID = -1;
+        }
+    }
+
+public:
+    /// Constructor, locks the pool if possible
+    inline MarkedPoolIterator(StoragePool& pool, const FlatPtrHashSet<Type>& entries, typename FlatPtrHashSet<Type>::const_iterator iter)
+        : pool(pool)
+        , lockedID(-1)
+        , entries(entries)
+        , iter(iter)
+    {
+        lock();
+    }
+
+    /// Destructor, unlocks the pool if locked
+    inline ~MarkedPoolIterator()
+    {
+        unlock();
+    }
+
+    /// Pass-through
+    inline reference operator*() const { return *iter; }
+    /// Pass-through
+    inline pointer operator->() { return iter.operator->(); }
+
+    /// Forwards iterator
+    /// Code order is important - first increase the iterator and then unlock the pool, otherwise the iterator is invalid
+    inline MarkedPoolIterator<Type, StoragePool>& operator++()
+    {
+        ++iter;
+        unlock();
+        lock();
+        return *this;
+    }
+
+    /// Pass-through
+    inline friend bool operator==(const MarkedPoolIterator<Type, StoragePool>& a, const MarkedPoolIterator<Type, StoragePool>& b)
+    {
+        return a.iter == b.iter;
+    };
+    /// Pass-through
+    inline friend bool operator!=(const MarkedPoolIterator<Type, StoragePool>& a, const MarkedPoolIterator<Type, StoragePool>& b)
+    {
+        return a.iter != b.iter;
+    };
+};
+
 /* Interfaces, to be passed around */
 
 template <typename T, size_t Count>
@@ -20,14 +101,14 @@ struct IReadOnlyPool {
 
     /// Get the object at an index
     virtual T& get(int index) = 0;
-
-    /// Get a set of all the available objects
-    virtual const FlatPtrHashSet<T>& entries() = 0;
 };
 
 /// A statically sized pool interface
 template <typename T, size_t Count>
 struct IPool : IReadOnlyPool<T, Count> {
+    /// The iterator type
+    using Iterator = MarkedPoolIterator<T, IPool<T, Count>>;
+
     /// Get the first free index or -1 if no index is available to use
     virtual int findFreeIndex() = 0;
 
@@ -44,7 +125,29 @@ struct IPool : IReadOnlyPool<T, Count> {
     virtual void lock(int index) = 0;
 
     /// Unlock an entry at index and release it if needed
-    virtual void unlock(int index) = 0;
+    virtual bool unlock(int index) = 0;
+
+    /// Return the begin iterator
+    inline Iterator begin()
+    {
+        return Iterator(*this, entries(), entries().begin());
+    }
+
+    /// Return the end iterator
+    inline Iterator end()
+    {
+        return Iterator(*this, entries(), entries().end());
+    }
+
+    /// Return the pool's entry count
+    inline size_t count()
+    {
+        return entries().size();
+    }
+
+protected:
+    /// Get a set of all the available objects
+    virtual const FlatPtrHashSet<T>& entries() = 0;
 };
 
 /// A component interface which allows for writing a pool component
@@ -168,9 +271,10 @@ struct PoolIDProvider {
     int poolID;
 };
 
-template <typename Type, typename Interface, size_t Count>
+template <typename Type, typename Iface, size_t Count>
 struct StaticPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
+    using Interface = Iface;
 
     int findFreeIndex(int from = 0)
     {
@@ -221,16 +325,6 @@ struct StaticPoolStorageBase : public NoCopy {
         return *getPtr(index);
     }
 
-    const FlatPtrHashSet<Interface>& entries()
-    {
-        return allocated_.entries();
-    }
-
-    const FlatPtrHashSet<Interface>& entries() const
-    {
-        return allocated_.entries();
-    }
-
     void remove(int index)
     {
         assert(index < Count);
@@ -246,6 +340,20 @@ struct StaticPoolStorageBase : public NoCopy {
         }
     }
 
+    /// Get the raw entries list
+    /// Don't use this for looping through entries. Use the custom iterators instead.
+    const FlatPtrHashSet<Interface>& _entries()
+    {
+        return allocated_.entries();
+    }
+
+    /// Get the raw entries list
+    /// Don't use this for looping through entries. Use the custom iterators instead.
+    const FlatPtrHashSet<Interface>& _entries() const
+    {
+        return allocated_.entries();
+    }
+
 protected:
     inline Type* getPtr(int index)
     {
@@ -256,9 +364,22 @@ protected:
     UniqueIDArray<Interface, Count> allocated_;
 };
 
-template <typename Type, typename Interface, size_t Count>
+template <typename Type, typename Iface, size_t Count>
 struct DynamicPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
+    using Interface = Iface;
+
+    DynamicPoolStorageBase()
+        : pool_ { nullptr }
+    {
+    }
+
+    ~DynamicPoolStorageBase()
+    {
+        for (Interface* const ptr : allocated_.entries()) {
+            delete static_cast<Type*>(ptr);
+        }
+    }
 
     int findFreeIndex(int from = 0)
     {
@@ -317,11 +438,6 @@ struct DynamicPoolStorageBase : public NoCopy {
         return *pool_[index];
     }
 
-    const FlatPtrHashSet<Interface>& entries() const
-    {
-        return allocated_.entries();
-    }
-
     void remove(int index)
     {
         assert(index < Count);
@@ -330,58 +446,94 @@ struct DynamicPoolStorageBase : public NoCopy {
         pool_[index] = nullptr;
     }
 
-    ~DynamicPoolStorageBase()
+    /// Get the raw entries list
+    /// Don't use this for looping through entries. Use the custom iterators instead.
+    const FlatPtrHashSet<Interface>& _entries() const
     {
-        for (Interface* const ptr : allocated_.entries()) {
-            delete static_cast<Type*>(ptr);
-        }
+        return allocated_.entries();
     }
 
 protected:
-    StaticArray<Type*, Count> pool_ = { nullptr };
+    StaticArray<Type*, Count> pool_;
     UniqueEntryArray<Interface> allocated_;
 };
 
 template <class PoolBase>
 struct ImmediatePoolStorageLifetimeBase final : public PoolBase {
-    void release(int index)
+    inline void release(int index)
     {
         PoolBase::remove(index);
     }
-};
 
-template <class PoolBase>
-struct MarkedPoolStorageLifetimeBase final : public PoolBase {
-    void lock(int index)
+    /// Get the entries list
+    const FlatPtrHashSet<typename PoolBase::Interface>& entries()
     {
-        // Mark as locked
-        marked_.set(index * 2);
+        return PoolBase::allocated_.entries();
     }
 
-    void unlock(int index)
+    /// Get the entries list
+    const FlatPtrHashSet<typename PoolBase::Interface>& entries() const
     {
-        marked_.reset(index * 2);
+        return PoolBase::allocated_.entries();
+    }
+};
+
+template <class PoolBase, typename RefCountType = uint8_t>
+struct MarkedPoolStorageLifetimeBase final : public PoolBase {
+    using Iterator = MarkedPoolIterator<typename PoolBase::Interface, MarkedPoolStorageLifetimeBase<PoolBase, RefCountType>>;
+
+    /// Return the begin iterator
+    inline Iterator begin()
+    {
+        return Iterator(*this, PoolBase::_entries(), PoolBase::_entries().begin());
+    }
+
+    /// Return the end iterator
+    inline Iterator end()
+    {
+        return Iterator(*this, PoolBase::_entries(), PoolBase::_entries().end());
+    }
+
+    MarkedPoolStorageLifetimeBase()
+        : refs_ {}
+    {
+    }
+
+    void lock(int index)
+    {
+        // Increase number of lock refs
+        ++refs_[index];
+        assert(refs_[index] < std::numeric_limits<RefCountType>::max());
+    }
+
+    bool unlock(int index)
+    {
+        assert(refs_[index] > 0);
         // If marked for deletion on unlock, release
-        if (marked_.test(index * 2 + 1)) {
+        if (--refs_[index] == 0 && deleted_.test(index)) {
             release(index, true);
+            return true;
         }
+        return false;
     }
 
     void release(int index, bool force)
     {
         assert(index < PoolBase::Capacity);
         // If locked, mark for deletion on unlock
-        if (marked_.test(index * 2)) {
-            marked_.set(index * 2 + 1);
+        if (refs_[index] > 0) {
+            deleted_.set(index);
         } else { // If not locked, immediately delete
-            marked_.reset(index * 2 + 1);
+            deleted_.reset(index);
             PoolBase::remove(index);
         }
     }
 
 private:
-    /// Pair of bits, bit 1 is whether it's locked, bit 2 is whether it's marked for release on unlock
-    StaticBitset<PoolBase::Capacity * 2> marked_;
+    /// List signifying whether an entry is marked for deletion
+    StaticBitset<PoolBase::Capacity> deleted_;
+    /// List signifying the number of references held for the entry; if 0 and marked for deletion, it's deleted
+    StaticArray<RefCountType, PoolBase::Capacity> refs_;
 };
 
 /// Pool storage which doesn't mark entries for release but immediately releases
@@ -396,10 +548,10 @@ using DynamicPoolStorage = ImmediatePoolStorageLifetimeBase<DynamicPoolStorageBa
 
 /// Pool storage which marks entries for release if locked
 /// Allocates contents statically
-template <typename Type, typename Interface, size_t Count>
-using MarkedPoolStorage = MarkedPoolStorageLifetimeBase<StaticPoolStorageBase<Type, Interface, Count>>;
+template <typename Type, typename Interface, size_t Count, typename RefCountType = uint8_t>
+using MarkedPoolStorage = MarkedPoolStorageLifetimeBase<StaticPoolStorageBase<Type, Interface, Count>, RefCountType>;
 
 /// Pool storage which marks entries for release if locked
 /// Allocates contents dynamically
-template <typename Type, typename Interface, size_t Count>
-using MarkedDynamicPoolStorage = MarkedPoolStorageLifetimeBase<DynamicPoolStorageBase<Type, Interface, Count>>;
+template <typename Type, typename Interface, size_t Count, typename RefCountType = uint8_t>
+using MarkedDynamicPoolStorage = MarkedPoolStorageLifetimeBase<DynamicPoolStorageBase<Type, Interface, Count>, RefCountType>;

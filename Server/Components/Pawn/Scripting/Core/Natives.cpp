@@ -62,7 +62,7 @@ SCRIPT_API(GetVehiclePoolSize, int())
     IVehiclesComponent* vehicles = PawnManager::Get()->vehicles;
     if (vehicles) {
         int highestID = -1;
-        for (IVehicle* vehicle : vehicles->entries()) {
+        for (IVehicle* vehicle : *vehicles) {
             if (highestID < vehicle->getID()) {
                 highestID = vehicle->getID();
             }
@@ -77,7 +77,7 @@ SCRIPT_API(GetActorPoolSize, int())
     IActorsComponent* actors = PawnManager::Get()->actors;
     if (actors) {
         int highestID = -1;
-        for (IActor* actor : actors->entries()) {
+        for (IActor* actor : *actors) {
             if (highestID < actor->getID()) {
                 highestID = actor->getID();
             }

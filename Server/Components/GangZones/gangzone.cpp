@@ -81,9 +81,9 @@ struct GangZonesComponent final : public IGangZonesComponent {
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     IEventDispatcher<GangZoneEventHandler>& getEventDispatcher() override
@@ -94,7 +94,7 @@ struct GangZonesComponent final : public IGangZonesComponent {
     /// Get a set of all the available labels
     const FlatPtrHashSet<IGangZone>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 };
 

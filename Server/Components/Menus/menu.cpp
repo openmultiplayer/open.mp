@@ -97,7 +97,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IMenu* m : storage.entries()) {
+        for (IMenu* m : storage) {
             Menu* menu = static_cast<Menu*>(m);
             if (menu->initedFor_.valid(pid)) {
                 menu->initedFor_.remove(pid, player);
@@ -190,9 +190,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     IEventDispatcher<MenuEventHandler>& getEventDispatcher() override
@@ -203,7 +203,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
     /// Get a set of all the available labels
     const FlatPtrHashSet<IMenu>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 };
 
