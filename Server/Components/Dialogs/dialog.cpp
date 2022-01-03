@@ -54,6 +54,8 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
                 return false;
             }
 
+            data->activeId = DIALOG_INVALID_ID;
+
             self.eventDispatcher.dispatch(
                 &PlayerDialogEventHandler::onDialogResponse,
                 peer,
@@ -62,7 +64,6 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
                 sendDialogResponse.ListItem,
                 sendDialogResponse.Text);
 
-            data->activeId = DIALOG_INVALID_ID;
             return true;
         }
     } dialogResponseHandler;

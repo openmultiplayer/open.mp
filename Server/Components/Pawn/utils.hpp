@@ -85,7 +85,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
     cstr = amx_Address(amx, params[3]);
     atcprintf(output.get(), maxlen - 1, cstr, amx, params, &param);
 
-    if (param <= num) {
+    if (param - 1 < num) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);

@@ -283,7 +283,8 @@ SCRIPT_API(GetPlayerVelocity, bool(IPlayer& player, Vector3& velocity))
 
 SCRIPT_API(GetPlayerCameraPos, bool(IPlayer& player, Vector3& pos))
 {
-    pos = player.getCameraPosition();
+    PlayerAimData data = player.getAimData();
+    pos = data.CamPos;
     return true;
 }
 
@@ -315,9 +316,9 @@ SCRIPT_API(GetPlayerVirtualWorld, int(IPlayer& player))
     return player.getVirtualWorld();
 }
 
-SCRIPT_API(IsPlayerNPC, bool(IPlayer& player))
+SCRIPT_API(IsPlayerNPC, bool(IPlayer* player))
 {
-    return player.isBot();
+    return player != nullptr && player->isBot();
 }
 
 SCRIPT_API(IsPlayerStreamedIn, bool(IPlayer& player, IPlayer& other))
@@ -435,9 +436,9 @@ SCRIPT_API(RemovePlayerMapIcon, bool(IPlayer& player, int iconID))
     return true;
 }
 
-SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, int style, uint32_t colour))
+SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, uint32_t colour, int style))
 {
-    player.setMapIcon(iconID, pos, type, MapIconStyle(style), Colour::FromRGBA(colour));
+    player.setMapIcon(iconID, pos, type, Colour::FromRGBA(colour), MapIconStyle(style));
     return true;
 }
 
@@ -844,6 +845,7 @@ SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
 SCRIPT_API(SendClientCheck, bool(IPlayer& player, int actionType, int address, int offset, int count))
 {
     player.sendClientCheck(actionType, address, offset, count);
+    return true;
 }
 
 SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
