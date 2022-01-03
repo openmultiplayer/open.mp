@@ -535,7 +535,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
 
                 size_t pos = 0;
                 while ((pos = strArg.find('\'', pos)) != std::string::npos) {
-                    strArg.insert(strArg.begin()+pos, '\'');
+                    strArg.insert(strArg.begin() + pos, '\'');
                     pos += 2;
                 }
 
