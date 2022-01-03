@@ -534,8 +534,8 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
                 amx_GetString((char*)strArg.data(), get_amxaddr(amx, params[arg]), false, argLen);
 
                 size_t pos = 0;
-                while ((pos = strArg.find("'", pos)) != std::string::npos) {
-                    strArg.replace(pos, 1, "''");
+                while ((pos = strArg.find('\'', pos)) != std::string::npos) {
+                    strArg.insert(pos, 1, '\'');
                     pos += 2;
                 }
 
