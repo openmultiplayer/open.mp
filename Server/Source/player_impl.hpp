@@ -356,6 +356,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void setSpectating(bool spectating) override
     {
         setState(PlayerState_Spectating);
+
+        if (!spectating)
+            toSpawn_ = true;
+
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
         togglePlayerSpectatingRPC.Enable = spectating;
         sendRPC(togglePlayerSpectatingRPC);
@@ -780,7 +784,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return bulletData_;
     }
 
-    void setMapIcon(int id, Vector3 pos, int type, MapIconStyle style, Colour colour) override
+    void setMapIcon(int id, Vector3 pos, int type, Colour colour, MapIconStyle style) override
     {
         NetCode::RPC::SetPlayerMapIcon RPC;
         RPC.IconID = id;
