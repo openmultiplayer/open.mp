@@ -1,6 +1,5 @@
 #include "core_impl.hpp"
 #include "util.hpp"
-#include <cxxopts.hpp>
 #include <filesystem>
 #include <iostream>
 #include <nlohmann/json.hpp>
@@ -35,13 +34,7 @@ int main(int argc, char** argv)
 
     SET_TICKER_RESOLUTION(1);
 
-    Core* core = new Core();
-
-    if (result.count("script")) {
-        core->config.setString(
-            "entry_file",
-            result["script"].as<std::string>());
-    }
+    Core* core = new Core(result);
 
     core->run();
 }
