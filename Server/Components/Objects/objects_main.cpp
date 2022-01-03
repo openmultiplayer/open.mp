@@ -257,9 +257,9 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     IEventDispatcher<ObjectEventHandler>& getEventDispatcher() override
@@ -270,12 +270,12 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     /// Get a set of all the available objects
     const FlatPtrHashSet<IObject>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     void onConnect(IPlayer& player) override
     {
-        for (IObject* o : storage.entries()) {
+        for (IObject* o : storage) {
             Object* obj = static_cast<Object*>(o);
             obj->createForPlayer(player);
         }
@@ -284,7 +284,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IObject* obj : storage.entries()) {
+        for (IObject* obj : storage) {
             const ObjectAttachmentData& data = obj->getAttachmentData();
             if (data.type == ObjectAttachmentData::Type::Player && data.ID == pid) {
                 obj->resetAttachment();
@@ -295,7 +295,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     void onStreamIn(IPlayer& player, IPlayer& forPlayer) override
     {
         const int pid = player.getID();
-        for (IObject* object : storage.entries()) {
+        for (IObject* object : storage) {
             Object* obj = static_cast<Object*>(object);
             if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
                 NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
@@ -326,7 +326,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     void preSpawn(IPlayer& player) override
     {
         const int pid = player.getID();
-        for (IObject* object : storage.entries()) {
+        for (IObject* object : storage) {
             Object* obj = static_cast<Object*>(object);
             if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
                 obj->resetAttachment();
@@ -442,21 +442,21 @@ struct PlayerObjectData final : public IPlayerObjectData {
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     /// Get a set of all the available objects
     const FlatPtrHashSet<IPlayerObject>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     void free() override
     {
         /// Detach player from player objects so they don't try to send an RPC
-        for (IPlayerObject* object : storage.entries()) {
+        for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
             obj->player_ = nullptr;
         }
@@ -570,7 +570,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
 
 void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 {
-    for (IObject* object : storage.entries()) {
+    for (IObject* object : storage) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed, now)) {
             ScopedPoolReleaseLock lock(*this, *obj);
@@ -581,7 +581,7 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
     for (IPlayer* player : core->getPlayers().entries()) {
         IPlayerObjectData* data = player->queryData<IPlayerObjectData>();
         if (data) {
-            for (IPlayerObject* object : data->entries()) {
+            for (IPlayerObject* object : *data) {
                 PlayerObject* obj = static_cast<PlayerObject*>(object);
                 if (obj->advance(elapsed, now)) {
                     ScopedPoolReleaseLock lock(*data, *obj);

@@ -491,7 +491,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
         });
 
     if (!processed) {
-        network->core->printLn("Received unprocessed RPC %i", ID);
+        network->core->printLn("Received unprocessed RPC %zu", ID);
     }
 }
 

@@ -236,14 +236,14 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         storage.lock(index);
     }
 
-    void unlock(int index) override
+    bool unlock(int index) override
     {
-        storage.unlock(index);
+        return storage.unlock(index);
     }
 
     const FlatPtrHashSet<PlayerClass>& entries() override
     {
-        return storage.entries();
+        return storage._entries();
     }
 
     ~ClassesComponent()
