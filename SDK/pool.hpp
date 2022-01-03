@@ -28,8 +28,9 @@ private:
     typename FlatPtrHashSet<Type>::const_iterator iter; ///< Current iterator of pool entries list
 
     /// Lock the pool and cache the entry ID
-    inline void lock() {
-        assert(lockedID==-1);
+    inline void lock()
+    {
+        assert(lockedID == -1);
         if (iter != entries.end()) {
             lockedID = (*iter)->getID();
             pool.lock(lockedID);
@@ -37,8 +38,9 @@ private:
     }
 
     /// If pool is locked, unlock it and clear the entry ID cache
-    inline void unlock() {
-        if (lockedID!=-1) {
+    inline void unlock()
+    {
+        if (lockedID != -1) {
             pool.unlock(lockedID);
             lockedID = -1;
         }
@@ -47,12 +49,17 @@ private:
 public:
     /// Constructor, locks the pool if possible
     inline MarkedPoolIterator(StoragePool& pool, const FlatPtrHashSet<Type>& entries, typename FlatPtrHashSet<Type>::const_iterator iter)
-        : pool(pool), lockedID(-1), entries(entries), iter(iter) {
+        : pool(pool)
+        , lockedID(-1)
+        , entries(entries)
+        , iter(iter)
+    {
         lock();
     }
 
     /// Destructor, unlocks the pool if locked
-    inline ~MarkedPoolIterator() {
+    inline ~MarkedPoolIterator()
+    {
         unlock();
     }
 
@@ -63,7 +70,8 @@ public:
 
     /// Forwards iterator
     /// Code order is important - first increase the iterator and then unlock the pool, otherwise the iterator is invalid
-    inline MarkedPoolIterator<Type, StoragePool>& operator++() {
+    inline MarkedPoolIterator<Type, StoragePool>& operator++()
+    {
         ++iter;
         unlock();
         lock();
@@ -71,11 +79,13 @@ public:
     }
 
     /// Pass-through
-    inline friend bool operator==(const MarkedPoolIterator<Type, StoragePool>& a, const MarkedPoolIterator<Type, StoragePool>& b) {
+    inline friend bool operator==(const MarkedPoolIterator<Type, StoragePool>& a, const MarkedPoolIterator<Type, StoragePool>& b)
+    {
         return a.iter == b.iter;
     };
     /// Pass-through
-    inline friend bool operator!=(const MarkedPoolIterator<Type, StoragePool>& a, const MarkedPoolIterator<Type, StoragePool>& b) {
+    inline friend bool operator!=(const MarkedPoolIterator<Type, StoragePool>& a, const MarkedPoolIterator<Type, StoragePool>& b)
+    {
         return a.iter != b.iter;
     };
 };
@@ -118,17 +128,20 @@ struct IPool : IReadOnlyPool<T, Count> {
     virtual bool unlock(int index) = 0;
 
     /// Return the begin iterator
-    inline Iterator begin() {
+    inline Iterator begin()
+    {
         return Iterator(*this, entries(), entries().begin());
     }
 
     /// Return the end iterator
-    inline Iterator end() {
+    inline Iterator end()
+    {
         return Iterator(*this, entries(), entries().end());
     }
 
     /// Return the pool's entry count
-    inline size_t count() {
+    inline size_t count()
+    {
         return entries().size();
     }
 
@@ -356,7 +369,8 @@ struct DynamicPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
     using Interface = Iface;
 
-    DynamicPoolStorageBase() : pool_{ nullptr }
+    DynamicPoolStorageBase()
+        : pool_ { nullptr }
     {
     }
 
@@ -469,16 +483,21 @@ struct MarkedPoolStorageLifetimeBase final : public PoolBase {
     using Iterator = MarkedPoolIterator<typename PoolBase::Interface, MarkedPoolStorageLifetimeBase<PoolBase, RefCountType>>;
 
     /// Return the begin iterator
-    inline Iterator begin() {
+    inline Iterator begin()
+    {
         return Iterator(*this, PoolBase::_entries(), PoolBase::_entries().begin());
     }
 
     /// Return the end iterator
-    inline Iterator end() {
+    inline Iterator end()
+    {
         return Iterator(*this, PoolBase::_entries(), PoolBase::_entries().end());
     }
 
-    MarkedPoolStorageLifetimeBase() : refs_{} {}
+    MarkedPoolStorageLifetimeBase()
+        : refs_ {}
+    {
+    }
 
     void lock(int index)
     {
@@ -504,8 +523,7 @@ struct MarkedPoolStorageLifetimeBase final : public PoolBase {
         // If locked, mark for deletion on unlock
         if (refs_[index] > 0) {
             deleted_.set(index);
-        }
-        else { // If not locked, immediately delete
+        } else { // If not locked, immediately delete
             deleted_.reset(index);
             PoolBase::remove(index);
         }

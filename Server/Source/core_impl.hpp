@@ -6,6 +6,7 @@
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <cstdarg>
+#include <cxxopts.hpp>
 #include <events.hpp>
 #include <filesystem>
 #include <fstream>
@@ -14,7 +15,6 @@
 #include <sstream>
 #include <thread>
 #include <variant>
-#include <cxxopts.hpp>
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
@@ -517,7 +517,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     int EnableLogTimestamp;
     String LogTimestampFormat;
 
-    Core(const cxxopts::ParseResult &cmd)
+    Core(const cxxopts::ParseResult& cmd)
         : players(*this)
         , components(*this)
         , config(*this)
