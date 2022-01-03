@@ -823,6 +823,9 @@ struct PlayerUpdateEventHandler {
 
 /// A player pool interface
 struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
+    /// Get a set of all the available players
+    virtual const FlatPtrHashSet<IPlayer>& entries() = 0;
+
     /// Returns a dispatcher to the main player event dispatcher.
     virtual IEventDispatcher<PlayerEventHandler>& getEventDispatcher() = 0;
 
