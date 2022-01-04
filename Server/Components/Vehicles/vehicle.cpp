@@ -117,9 +117,8 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     if (driver != &player) {
         driver = &player;
         PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-        Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
-        if (vehicle) {
-            vehicle->unoccupy(player);
+        if (data->vehicle) {
+            data->vehicle->unoccupy(player);
         }
         data->setVehicle(this, 0);
         updateOccupied();
@@ -176,11 +175,11 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     velocity = trailerSync.Velocity;
     angularVelocity = trailerSync.TurnVelocity;
 
-    IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
+    Vehicle* vehicle = player.queryData<PlayerVehicleData>()->vehicle;
     if (!vehicle) {
         return false;
     } else if (tower != vehicle && !detaching) {
-        tower = static_cast<Vehicle*>(vehicle);
+        tower = vehicle;
         tower->attachTrailer(*this);
         towing = false;
     }
@@ -211,9 +210,8 @@ bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync
     PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
     // Only do heavy processing if switching vehicle or switching between driver and passenger
     if ((data->vehicle != this || driver == &player) && passengers.insert(&player).second) {
-        Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
-        if (vehicle) {
-            vehicle->unoccupy(player);
+        if (data->vehicle) {
+            data->vehicle->unoccupy(player);
         }
         data->setVehicle(this, passengerSync.SeatID);
         updateOccupied();

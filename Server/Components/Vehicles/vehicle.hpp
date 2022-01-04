@@ -6,37 +6,6 @@
 #include <chrono>
 #include <netcode.hpp>
 
-struct PlayerVehicleData final : public IPlayerVehicleData {
-    IVehicle* vehicle = nullptr;
-    int seat = -1;
-    int numStreamed = 0;
-
-    void setVehicle(IVehicle* vehicle, int seat)
-    {
-        this->vehicle = vehicle;
-        this->seat = seat;
-    }
-
-    /// Get the player's vehicle
-    /// Returns nullptr if they aren't in a vehicle
-    IVehicle* getVehicle() override
-    {
-        return vehicle;
-    }
-
-    /// Get the player's seat
-    /// Returns -1 if they aren't in a vehicle.
-    int getSeat() const override
-    {
-        return seat;
-    }
-
-    void free() override
-    {
-        delete this;
-    }
-};
-
 struct VehiclesComponent;
 
 struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
@@ -340,5 +309,36 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int getModel() override
     {
         return spawnData.modelID;
+    }
+};
+
+struct PlayerVehicleData final : public IPlayerVehicleData {
+    Vehicle* vehicle = nullptr;
+    int seat = -1;
+    int numStreamed = 0;
+
+    void setVehicle(Vehicle* vehicle, int seat)
+    {
+        this->vehicle = vehicle;
+        this->seat = seat;
+    }
+
+    /// Get the player's vehicle
+    /// Returns nullptr if they aren't in a vehicle
+    IVehicle* getVehicle() override
+    {
+        return vehicle;
+    }
+
+    /// Get the player's seat
+    /// Returns -1 if they aren't in a vehicle.
+    int getSeat() const override
+    {
+        return seat;
+    }
+
+    void free() override
+    {
+        delete this;
     }
 };
