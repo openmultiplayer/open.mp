@@ -221,9 +221,8 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-            Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
-            if (vehicle) {
-                vehicle->unoccupy(player);
+            if (data->vehicle) {
+                data->vehicle->unoccupy(player);
             }
             data->setVehicle(nullptr, -1);
         }
@@ -232,15 +231,13 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-        Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
-        if (vehicle) {
-            vehicle->unoccupy(player);
+        if (data->vehicle) {
+            data->vehicle->unoccupy(player);
         }
 
         const int pid = player.getID();
         for (IVehicle* v : storage) {
             Vehicle* vehicle = static_cast<Vehicle*>(v);
-            ScopedPoolReleaseLock<IVehicle, Capacity> lock(*this, vehicle->poolID);
             if (vehicle->streamedFor_.valid(pid)) {
                 vehicle->streamedFor_.remove(pid, player);
             }
