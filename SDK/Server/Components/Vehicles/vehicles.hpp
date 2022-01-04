@@ -118,6 +118,9 @@ struct IVehicle : public IEntity {
     /// Returns the current driver of the vehicle
     virtual IPlayer* getDriver() = 0;
 
+    /// Returns the passengers of the vehicle
+    virtual const FlatHashSet<IPlayer*>& getPassengers() = 0;
+
     /// Sets the vehicle's number plate
     virtual void setPlate(StringView plate) = 0;
 
@@ -174,9 +177,6 @@ struct IVehicle : public IEntity {
 
     /// Get the vehicle's respawn delay.
     virtual Seconds getRespawnDelay() = 0;
-
-    /// Checks if the vehicle has had any occupants.
-    virtual bool hasBeenOccupied() = 0;
 
     /// Checks if the vehicle is respawning.
     virtual bool isRespawning() = 0;
