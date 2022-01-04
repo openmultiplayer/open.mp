@@ -94,9 +94,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
                 return false;
             }
 
-            IPlayerVehicleData* data = peer.queryData<IPlayerVehicleData>();
-            IVehicle* vehicle = data->getVehicle();
-            if (vehicle && vehicle->getDriver() == &peer) {
+            PlayerVehicleData* data = peer.queryData<PlayerVehicleData>();
+            Vehicle* vehicle = data->vehicle;
+            if (vehicle && vehicle->driver == &peer) {
                 vehicle->setDamageStatus(onDamageStatus.PanelStatus, onDamageStatus.DoorStatus, onDamageStatus.LightStatus, onDamageStatus.TyreStatus, &peer);
             }
             return true;
@@ -174,7 +174,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
                 NetCode::RPC::SCMEvent enterExitRPC;
                 enterExitRPC.PlayerID = peer.getID();
-                enterExitRPC.VehicleID = vehicle.getID();
+                enterExitRPC.VehicleID = vehicle.poolID;
                 enterExitRPC.EventType = VehicleSCMEvent_EnterExitModShop;
                 enterExitRPC.Arg1 = scmEvent.Arg1;
                 enterExitRPC.Arg2 = scmEvent.Arg2;
@@ -374,9 +374,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     {
         Vehicle& vehicle = storage.get(index);
         if (vehicle.spawnData.modelID == 538 || vehicle.spawnData.modelID == 537) {
-            auto carriages = storage.get(index).getCarriages();
-            for (IVehicle* carriage : carriages) {
-                storage.release(carriage->getID(), false);
+            for (IVehicle* c : vehicle.carriages) {
+                Vehicle* carriage = static_cast<Vehicle*>(c);
+                storage.release(carriage->poolID, false);
             }
         }
         storage.release(index, false);

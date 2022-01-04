@@ -4,7 +4,8 @@
 
 void Vehicle::streamInForPlayer(IPlayer& player)
 {
-    if (streamedFor_.valid(player.getID())) {
+    const int pid = player.getID();
+    if (streamedFor_.valid(pid)) {
         return;
     }
 
@@ -55,7 +56,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
         vehicleRPC.params = params;
         player.sendRPC(vehicleRPC);
     }
-    streamedFor_.add(player.getID(), player);
+    streamedFor_.add(pid, player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
@@ -65,12 +66,12 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 
 void Vehicle::streamOutForPlayer(IPlayer& player)
 {
-    int id = player.getID();
-    if (!streamedFor_.valid(id)) {
+    const int pid = player.getID();
+    if (!streamedFor_.valid(pid)) {
         return;
     }
 
-    streamedFor_.remove(id, player);
+    streamedFor_.remove(pid, player);
     streamOutForClient(player);
 }
 
