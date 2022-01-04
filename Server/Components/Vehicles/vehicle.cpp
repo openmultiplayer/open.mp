@@ -46,7 +46,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     if (tower && !towing) {
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
-        trailerRPC.VehicleID = tower->getID();
+        trailerRPC.VehicleID = tower->poolID;
         player.sendRPC(trailerRPC);
     }
 
@@ -176,7 +176,8 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     velocity = trailerSync.Velocity;
     angularVelocity = trailerSync.TurnVelocity;
 
-    Vehicle* vehicle = player.queryData<PlayerVehicleData>()->vehicle;
+    PlayerVehicleData* playerData = player.queryData<PlayerVehicleData>();
+    Vehicle* vehicle = playerData->vehicle;
     if (!vehicle) {
         return false;
     } else if (tower != vehicle && !detaching) {
@@ -191,7 +192,7 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
         // SA:MP will fail to reattach it, so we have to call the attach RPC again.
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
-        trailerRPC.VehicleID = player.queryData<IPlayerVehicleData>()->getVehicle()->getID();
+        trailerRPC.VehicleID = playerData->vehicle->poolID;
         for (IPlayer* otherplayers : streamedFor_.entries()) {
             if (otherplayers == &player) {
                 continue;
