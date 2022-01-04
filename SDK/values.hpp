@@ -109,5 +109,6 @@ static const std::map<String, Variant<int, String, float, DynamicArray<StringVie
     { "logging_sqlite_queries", false },
     { "logging_cookies", false },
     { "rcon_allow_teleport", false },
-    { "vehicle_friendly_fire", false }
+    { "vehicle_friendly_fire", false },
+    { "vehicle_death_respawn_delay", 10 }
 };

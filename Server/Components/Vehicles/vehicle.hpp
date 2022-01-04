@@ -11,6 +11,12 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
     int seat = -1;
     int numStreamed = 0;
 
+    void setVehicle(IVehicle* vehicle, int seat)
+    {
+        this->vehicle = vehicle;
+        this->seat = seat;
+    }
+
     /// Get the player's vehicle
     /// Returns nullptr if they aren't in a vehicle
     IVehicle* getVehicle() override
@@ -50,13 +56,14 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int32_t bodyColour1 = -1;
     int32_t bodyColour2 = -1;
     IPlayer* driver = nullptr;
+    FlatHashSet<IPlayer*> passengers;
     String numberPlate = "XYZSR998";
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
     TimePoint timeOfDeath;
     bool beenOccupied = false;
-    TimePoint lastOccupied;
+    TimePoint lastOccupiedChange;
     bool respawning = false;
     Vector3 velocity;
     Vector3 angularVelocity;
@@ -137,6 +144,21 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void streamOutForClient(IPlayer& player);
 
+    void unoccupy(IPlayer& player)
+    {
+        if (driver == &player) {
+            driver = nullptr;
+        } else {
+            passengers.erase(&player);
+        }
+        updateOccupied();
+    }
+
+    bool isOccupied() const
+    {
+        return driver != nullptr || passengers.size() != 0;
+    }
+
     /// Update the vehicle's data from a player sync packet.
     bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
 
@@ -164,6 +186,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     IPlayer* getDriver() override
     {
         return driver;
+    }
+
+    /// Returns the passengers of the vehicle
+    const FlatHashSet<IPlayer*>& getPassengers() override
+    {
+        return passengers;
     }
 
     void setPlate(StringView plate) override;
@@ -220,9 +248,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Get the vehicle's respawn delay.
     Seconds getRespawnDelay() override;
 
-    /// Checks if the vehicle has had any occupants.
-    bool hasBeenOccupied() override;
-
     bool isRespawning() override { return respawning; }
 
     // Sets (links) the vehicle to an interior.
@@ -231,11 +256,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     // Gets the vehicle's interior.
     int getInterior() override;
 
-    /// Set if the vehicle has been occupied.
-    void setBeenOccupied(bool occupied)
+    /// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
+    void updateOccupied()
     {
-        this->beenOccupied = occupied;
-        lastOccupied = Time::now();
+        this->beenOccupied = true;
+        lastOccupiedChange = Time::now();
     }
 
     void repair() override
