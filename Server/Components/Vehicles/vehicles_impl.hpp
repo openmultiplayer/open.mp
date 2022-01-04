@@ -5,12 +5,13 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
-    ICore* core;
+struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
+    ICore* core = nullptr;
     MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Capacity> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
     StreamConfigHelper streamConfigHelper;
+    int* deathRespawnDelay = nullptr;
 
     IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override
     {
@@ -93,9 +94,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                 return false;
             }
 
-            IPlayerVehicleData* data = peer.queryData<IPlayerVehicleData>();
-            IVehicle* vehicle = data->getVehicle();
-            if (vehicle && vehicle->getDriver() == &peer) {
+            PlayerVehicleData* data = peer.queryData<PlayerVehicleData>();
+            Vehicle* vehicle = data->vehicle;
+            if (vehicle && vehicle->driver == &peer) {
                 vehicle->setDamageStatus(onDamageStatus.PanelStatus, onDamageStatus.DoorStatus, onDamageStatus.LightStatus, onDamageStatus.TyreStatus, &peer);
             }
             return true;
@@ -173,7 +174,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
                 NetCode::RPC::SCMEvent enterExitRPC;
                 enterExitRPC.PlayerID = peer.getID();
-                enterExitRPC.VehicleID = vehicle.getID();
+                enterExitRPC.VehicleID = vehicle.poolID;
                 enterExitRPC.EventType = VehicleSCMEvent_EnterExitModShop;
                 enterExitRPC.Arg1 = scmEvent.Arg1;
                 enterExitRPC.Arg2 = scmEvent.Arg2;
@@ -220,30 +221,25 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
     {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-            Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
-            if (vehicle) {
-                vehicle->setBeenOccupied(true);
-                if (vehicle->driver == &player) {
-                    vehicle->driver = nullptr;
-                }
+            if (data->vehicle) {
+                data->vehicle->unoccupy(player);
             }
-
-            data->vehicle = nullptr;
-            data->seat = -1;
+            data->setVehicle(nullptr, -1);
         }
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
+        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+        if (data->vehicle) {
+            data->vehicle->unoccupy(player);
+        }
+
         const int pid = player.getID();
         for (IVehicle* v : storage) {
             Vehicle* vehicle = static_cast<Vehicle*>(v);
-            ScopedPoolReleaseLock<IVehicle, Capacity> lock(*this, vehicle->poolID);
             if (vehicle->streamedFor_.valid(pid)) {
                 vehicle->streamedFor_.remove(pid, player);
-                if (vehicle->driver == &player) {
-                    vehicle->driver = nullptr;
-                }
             }
         }
     }
@@ -260,18 +256,21 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
 
     ~VehiclesComponent()
     {
-        core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
-        core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
+        if (core) {
+            core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
+            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
+            core->removePerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
+            core->removePerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
+            core->removePerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
+        }
     }
 
     void onLoad(ICore* core) override
     {
         this->core = core;
+        core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
@@ -281,6 +280,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         core->addPerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
         storage.claimUnusable(0);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
+        deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
     }
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override
@@ -374,9 +374,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
     {
         Vehicle& vehicle = storage.get(index);
         if (vehicle.spawnData.modelID == 538 || vehicle.spawnData.modelID == 537) {
-            auto carriages = storage.get(index).getCarriages();
-            for (IVehicle* carriage : carriages) {
-                storage.release(carriage->getID(), false);
+            for (IVehicle* c : vehicle.carriages) {
+                Vehicle* carriage = static_cast<Vehicle*>(c);
+                storage.release(carriage->poolID, false);
             }
         }
         storage.release(index, false);
@@ -398,6 +398,30 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
         return storage._entries();
     }
 
+    void onTick(Microseconds elapsed, TimePoint now) override
+    {
+        for (IVehicle* v : storage) {
+            Vehicle* vehicle = static_cast<Vehicle*>(v);
+            const Seconds delay = vehicle->getRespawnDelay();
+
+            if (!vehicle->isOccupied()) {
+                if (vehicle->isDead()) {
+                    TimePoint lastInteraction = vehicle->timeOfDeath;
+                    if (vehicle->beenOccupied) {
+                        lastInteraction = std::max(lastInteraction, vehicle->lastOccupiedChange);
+                    }
+                    if (now - lastInteraction >= Seconds(*deathRespawnDelay)) {
+                        vehicle->respawn();
+                    }
+                } else if (vehicle->beenOccupied && delay != Seconds(-1)) {
+                    if (now - vehicle->lastOccupiedChange >= delay) {
+                        vehicle->respawn();
+                    }
+                }
+            }
+        }
+    }
+
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
@@ -405,7 +429,6 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
             for (IVehicle* v : storage) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
 
-                bool occupied = false;
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = vehicle->pos - player.getPosition();
                 const bool shouldBeStreamedIn = state != PlayerState_None && player.getVirtualWorld() == vehicle->virtualWorld_ && glm::dot(dist2D, dist2D) < maxDist;
@@ -415,23 +438,6 @@ struct VehiclesComponent final : public IVehiclesComponent, public PlayerEventHa
                     vehicle->streamInForPlayer(player);
                 } else if (isStreamedIn && !shouldBeStreamedIn) {
                     vehicle->streamOutForPlayer(player);
-                }
-
-                if (!occupied && isStreamedIn && shouldBeStreamedIn) {
-                    PlayerState state = player.getState();
-                    if ((state == PlayerState_Driver || state == PlayerState_Passenger)) {
-                        occupied = player.queryData<IPlayerVehicleData>()->getVehicle() == vehicle;
-                    }
-                }
-
-                if (vehicle->isDead() && vehicle->getRespawnDelay() != Seconds(-1) && !occupied) {
-                    if (now - vehicle->timeOfDeath >= vehicle->getRespawnDelay()) {
-                        vehicle->respawn();
-                    }
-                } else if (!occupied && vehicle->hasBeenOccupied() && vehicle->getRespawnDelay() != Seconds(-1)) {
-                    if (now - vehicle->lastOccupied >= vehicle->getRespawnDelay()) {
-                        vehicle->respawn();
-                    }
                 }
             }
         }
