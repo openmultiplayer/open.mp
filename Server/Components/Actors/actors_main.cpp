@@ -186,7 +186,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
                     ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
                     eventDispatcher.dispatch(
                         &ActorEventHandler::onActorStreamIn,
-                        *actor,
+                        lock.entry,
                         player);
                 } else if (isStreamedIn && !shouldBeStreamedIn) {
                     actor->streamOutForPlayer(player);
