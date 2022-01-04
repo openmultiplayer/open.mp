@@ -4,7 +4,8 @@
 
 void Vehicle::streamInForPlayer(IPlayer& player)
 {
-    if (streamedFor_.valid(player.getID())) {
+    const int pid = player.getID();
+    if (streamedFor_.valid(pid)) {
         return;
     }
 
@@ -45,7 +46,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     if (tower && !towing) {
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
-        trailerRPC.VehicleID = tower->getID();
+        trailerRPC.VehicleID = tower->poolID;
         player.sendRPC(trailerRPC);
     }
 
@@ -55,7 +56,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
         vehicleRPC.params = params;
         player.sendRPC(vehicleRPC);
     }
-    streamedFor_.add(player.getID(), player);
+    streamedFor_.add(pid, player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
@@ -65,12 +66,12 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 
 void Vehicle::streamOutForPlayer(IPlayer& player)
 {
-    int id = player.getID();
-    if (!streamedFor_.valid(id)) {
+    const int pid = player.getID();
+    if (!streamedFor_.valid(pid)) {
         return;
     }
 
-    streamedFor_.remove(id, player);
+    streamedFor_.remove(pid, player);
     streamOutForClient(player);
 }
 
@@ -116,15 +117,12 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 
     if (driver != &player) {
         driver = &player;
-        beenOccupied = true;
         PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-        Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
-        if (vehicle) {
-            vehicle->driver = nullptr;
+        if (data->vehicle) {
+            data->vehicle->unoccupy(player);
         }
-
-        data->vehicle = this;
-        data->seat = 0;
+        data->setVehicle(this, 0);
+        updateOccupied();
     }
     return true;
 }
@@ -178,11 +176,12 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     velocity = trailerSync.Velocity;
     angularVelocity = trailerSync.TurnVelocity;
 
-    IVehicle* vehicle = player.queryData<IPlayerVehicleData>()->getVehicle();
+    PlayerVehicleData* playerData = player.queryData<PlayerVehicleData>();
+    Vehicle* vehicle = playerData->vehicle;
     if (!vehicle) {
         return false;
     } else if (tower != vehicle && !detaching) {
-        tower = static_cast<Vehicle*>(vehicle);
+        tower = vehicle;
         tower->attachTrailer(*this);
         towing = false;
     }
@@ -193,7 +192,7 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
         // SA:MP will fail to reattach it, so we have to call the attach RPC again.
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
-        trailerRPC.VehicleID = player.queryData<IPlayerVehicleData>()->getVehicle()->getID();
+        trailerRPC.VehicleID = playerData->vehicle->poolID;
         for (IPlayer* otherplayers : streamedFor_.entries()) {
             if (otherplayers == &player) {
                 continue;
@@ -210,14 +209,20 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
 
 bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player)
 {
-    if (player.getState() != PlayerState_Passenger) {
-        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-        data->vehicle = this;
+    PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+    // Only do heavy processing if switching vehicle or switching between driver and passenger
+    if ((data->vehicle != this || driver == &player) && passengers.insert(&player).second) {
+        if (data->vehicle) {
+            data->vehicle->unoccupy(player);
+        }
+        data->setVehicle(this, passengerSync.SeatID);
+        updateOccupied();
+    } else if (data->seat != passengerSync.SeatID) {
         data->seat = passengerSync.SeatID;
-        setBeenOccupied(true);
-        return true;
+        updateOccupied();
     }
-    return false;
+
+    return true;
 }
 
 void Vehicle::setPlate(StringView plate)
@@ -498,7 +503,7 @@ void Vehicle::respawn()
     bodyColour2 = -1;
     rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     beenOccupied = false;
-    lastOccupied = TimePoint();
+    lastOccupiedChange = TimePoint();
     timeOfDeath = TimePoint();
     mods.fill(0);
     doorDamage = 0;
@@ -521,11 +526,6 @@ void Vehicle::respawn()
 Seconds Vehicle::getRespawnDelay()
 {
     return spawnData.respawnDelay;
-}
-
-bool Vehicle::hasBeenOccupied()
-{
-    return beenOccupied;
 }
 
 void Vehicle::attachTrailer(IVehicle& trailer)
