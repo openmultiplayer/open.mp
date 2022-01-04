@@ -116,15 +116,13 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
 
     if (driver != &player) {
         driver = &player;
-        beenOccupied = true;
         PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
         Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
         if (vehicle) {
-            vehicle->driver = nullptr;
+            vehicle->unoccupy(player);
         }
-
-        data->vehicle = this;
-        data->seat = 0;
+        data->setVehicle(this, 0);
+        updateOccupied();
     }
     return true;
 }
@@ -210,14 +208,21 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
 
 bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player)
 {
-    if (player.getState() != PlayerState_Passenger) {
-        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
-        data->vehicle = this;
+    PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+    // Only do heavy processing if switching vehicle or switching between driver and passenger
+    if ((data->vehicle != this || driver == &player) && passengers.insert(&player).second) {
+        Vehicle* vehicle = static_cast<Vehicle*>(data->vehicle);
+        if (vehicle) {
+            vehicle->unoccupy(player);
+        }
+        data->setVehicle(this, passengerSync.SeatID);
+        updateOccupied();
+    } else if (data->seat != passengerSync.SeatID) {
         data->seat = passengerSync.SeatID;
-        setBeenOccupied(true);
-        return true;
+        updateOccupied();
     }
-    return false;
+
+    return true;
 }
 
 void Vehicle::setPlate(StringView plate)
@@ -498,7 +503,7 @@ void Vehicle::respawn()
     bodyColour2 = -1;
     rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     beenOccupied = false;
-    lastOccupied = TimePoint();
+    lastOccupiedChange = TimePoint();
     timeOfDeath = TimePoint();
     mods.fill(0);
     doorDamage = 0;
@@ -521,11 +526,6 @@ void Vehicle::respawn()
 Seconds Vehicle::getRespawnDelay()
 {
     return spawnData.respawnDelay;
-}
-
-bool Vehicle::hasBeenOccupied()
-{
-    return beenOccupied;
 }
 
 void Vehicle::attachTrailer(IVehicle& trailer)
