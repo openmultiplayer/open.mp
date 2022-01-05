@@ -80,10 +80,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     bool isBot_;
     bool toSpawn_;
 
-    Player()
-        : pool_(nullptr)
+    Player(PlayerPool* pool, const PeerNetworkData& netData, const PeerRequestParams& params)
+        : pool_(pool)
+        , netData_(netData)
+        , version_(params.version)
+        , versionName_(String(params.versionName))
         , cameraPos_(0.f, 0.f, 0.f)
         , cameraLookAt_(0.f, 0.f, 0.f)
+        , name_(String(params.name))
+        , serial_(String(params.serial))
         , virtualWorld_(0)
         , score_(0)
         , fightingStyle_(PlayerFightingStyle_Normal)
@@ -115,7 +120,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , chatBubbleExpiration_(Time::now())
         , numStreamed_(0)
         , lastGameTimeUpdate_()
-        , isBot_(false)
+        , isBot_(params.bot)
         , toSpawn_(false)
     {
         weapons_.fill({ 0, 0 });

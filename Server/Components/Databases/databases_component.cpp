@@ -32,21 +32,11 @@ void DatabasesComponent::onLoad(ICore* c) { }
 IDatabaseConnection* DatabasesComponent::open(StringView path)
 {
     DatabaseConnection* ret(nullptr);
-    int database_connection_index(databaseConnections.findFreeIndex());
-    // TODO: Properly handle invalid indices
-    if (database_connection_index >= 0) {
-        sqlite3* database_connection_handle(nullptr);
-        // TODO: Properly handle errors
-        if (sqlite3_open_v2(path.data(), &database_connection_handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) == SQLITE_OK) {
-            database_connection_index = databaseConnections.claim(database_connection_index);
-            if (database_connection_index < 0) {
-                sqlite3_close_v2(database_connection_handle);
-                ret = nullptr;
-            } else {
-                ret = &databaseConnections.get(database_connection_index);
-                ret->parentDatabasesComponent = this;
-                ret->databaseConnectionHandle = database_connection_handle;
-            }
+    sqlite3* database_connection_handle(nullptr);
+    if (sqlite3_open_v2(path.data(), &database_connection_handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) == SQLITE_OK) {
+        ret = databaseConnections.emplace(this, database_connection_handle);
+        if (!ret) {
+            sqlite3_close_v2(database_connection_handle);
         }
     }
     return ret;

@@ -112,12 +112,6 @@ struct IPool : IReadOnlyPool<T, Count> {
     /// Get the first free index or -1 if no index is available to use
     virtual int findFreeIndex() = 0;
 
-    /// Claim the first free index
-    virtual int claim() = 0;
-
-    /// Attempt to claim the index at hint and if unavailable, claim the first available index
-    virtual int claim(int hint) = 0;
-
     /// Release the object at an index
     virtual void release(int index) = 0;
 
@@ -276,16 +270,35 @@ struct StaticPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
     using Interface = Iface;
 
+    template <class... Args>
+    Type* emplace(Args&&... args)
+    {
+        int freeIdx = findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        int pid = claimHint(freeIdx, std::forward<Args>(args)...);
+        if (pid == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        return &get(pid);
+    }
+
     int findFreeIndex(int from = 0)
     {
         return allocated_.findFreeIndex(from);
     }
 
-    int claim()
+    template <class... Args>
+    int claim(Args&&... args)
     {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            new (getPtr(freeIdx)) Type();
+            new (getPtr(freeIdx)) Type(std::forward<Args>(args)...);
             allocated_.add(freeIdx, *getPtr(freeIdx));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 getPtr(freeIdx)->poolID = freeIdx;
@@ -294,18 +307,19 @@ struct StaticPoolStorageBase : public NoCopy {
         return freeIdx;
     }
 
-    int claim(int hint)
+    template <class... Args>
+    int claimHint(int hint, Args&&... args)
     {
         assert(hint < Count);
         if (!valid(hint)) {
-            new (getPtr(hint)) Type();
+            new (getPtr(hint)) Type(std::forward<Args>(args)...);
             allocated_.add(hint, *getPtr(hint));
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 getPtr(hint)->poolID = hint;
             }
             return hint;
         } else {
-            return claim();
+            return claim(std::forward<Args>(args)...);
         }
     }
 
@@ -369,6 +383,24 @@ struct DynamicPoolStorageBase : public NoCopy {
     static const size_t Capacity = Count;
     using Interface = Iface;
 
+    template <class... Args>
+    Type* emplace(Args&&... args)
+    {
+        int freeIdx = findFreeIndex();
+        if (freeIdx == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        int pid = claimHint(freeIdx, std::forward<Args>(args)...);
+        if (pid == -1) {
+            // No free index
+            return nullptr;
+        }
+
+        return &get(pid);
+    }
+
     DynamicPoolStorageBase()
         : pool_ { nullptr }
     {
@@ -391,11 +423,12 @@ struct DynamicPoolStorageBase : public NoCopy {
         return -1;
     }
 
-    int claim()
+    template <class... Args>
+    int claim(Args&&... args)
     {
         const int freeIdx = findFreeIndex();
         if (freeIdx >= 0) {
-            pool_[freeIdx] = new Type();
+            pool_[freeIdx] = new Type(std::forward<Args>(args)...);
             allocated_.add(*pool_[freeIdx]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 pool_[freeIdx]->poolID = freeIdx;
@@ -404,18 +437,19 @@ struct DynamicPoolStorageBase : public NoCopy {
         return freeIdx;
     }
 
-    int claim(int hint)
+    template <class... Args>
+    int claimHint(int hint, Args&&... args)
     {
         assert(hint < Count);
         if (!valid(hint)) {
-            pool_[hint] = new Type();
+            pool_[hint] = new Type(std::forward<Args>(args)...);
             allocated_.add(*pool_[hint]);
             if constexpr (std::is_base_of<PoolIDProvider, Type>::value) {
                 pool_[hint]->poolID = hint;
             }
             return hint;
         } else {
-            return claim();
+            return claim(std::forward<Args>(args)...);
         }
     }
 
