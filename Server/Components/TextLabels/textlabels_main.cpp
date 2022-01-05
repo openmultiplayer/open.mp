@@ -13,26 +13,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
     PlayerTextLabel* createInternal(StringView text, Colour colour, Vector3 pos, float drawDist, bool los)
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        PlayerTextLabel& textLabel = storage.get(pid);
-        textLabel.player = &player;
-        textLabel.text = String(text);
-        textLabel.colour = colour;
-        textLabel.pos = pos;
-        textLabel.drawDist = drawDist;
-        textLabel.testLOS = los;
-        return &textLabel;
+        return storage.emplace(player, text, colour, pos, drawDist, los);
     }
 
     IPlayerTextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, bool los) override
@@ -66,10 +47,11 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
     void free() override
     {
-        /// Detach player from player labels so they don't try to send an RPC
         for (IPlayerTextLabel* textLabel : storage) {
+            /// Detach player from player textlabels so they don't try to send an RPC
             PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
-            lbl->player = nullptr;
+            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
+            lbl->playerQuitting = true;
         }
         delete this;
     }
@@ -77,18 +59,6 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
@@ -169,26 +139,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        TextLabel& textLabel = storage.get(pid);
-        textLabel.text = String(text);
-        textLabel.colour = colour;
-        textLabel.pos = pos;
-        textLabel.drawDist = drawDist;
-        textLabel.virtualWorld = vw;
-        textLabel.testLOS = los;
-        return &textLabel;
+        return storage.emplace(text, colour, pos, drawDist, vw, los);
     }
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override
@@ -217,18 +168,6 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override

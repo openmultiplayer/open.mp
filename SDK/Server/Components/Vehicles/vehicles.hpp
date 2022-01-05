@@ -81,7 +81,7 @@ enum VehicleModelInfoType {
 struct IVehicle : public IEntity {
 
     /// Set the inital spawn data of the vehicle
-    virtual void setSpawnData(VehicleSpawnData data) = 0;
+    virtual void setSpawnData(const VehicleSpawnData& data) = 0;
 
     /// Checks if player has the vehicle streamed in for themselves
     virtual bool isStreamedInForPlayer(const IPlayer& player) const = 0;
@@ -250,7 +250,7 @@ struct IVehiclesComponent : public IPoolComponent<IVehicle, VEHICLE_POOL_SIZE> {
     virtual StaticArray<uint8_t, MAX_VEHICLE_MODELS>& models() = 0;
 
     virtual IVehicle* create(int modelID, Vector3 position, float Z = 0.0f, int colour1 = -1, int colour2 = -1, Seconds respawnDelay = Seconds(-1), bool addSiren = false) = 0;
-    virtual IVehicle* create(VehicleSpawnData data) = 0;
+    virtual IVehicle* create(const VehicleSpawnData& data) = 0;
 
     virtual IEventDispatcher<VehicleEventHandler>& getEventDispatcher() = 0;
 };

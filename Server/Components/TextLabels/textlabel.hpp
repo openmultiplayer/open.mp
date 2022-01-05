@@ -12,6 +12,15 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     TextLabelAttachmentData attachmentData;
     bool testLOS;
 
+    TextLabelBase(StringView text, Colour colour, Vector3 pos, float drawDist, bool testLOS)
+        : text(text)
+        , pos(pos)
+        , colour(colour)
+        , drawDist(drawDist)
+        , testLOS(testLOS)
+    {
+    }
+
     virtual void restream() = 0;
 
     int getID() const override
@@ -128,6 +137,12 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     int virtualWorld;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
 
+    TextLabel(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los)
+        : TextLabelBase(text, colour, pos, drawDist, los)
+        , virtualWorld(vw)
+    {
+    }
+
     void restream() override
     {
         for (IPlayer* player : streamedFor_.entries()) {
@@ -173,12 +188,20 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
 };
 
 struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
-    IPlayer* player = nullptr;
+    IPlayer& player;
+    bool playerQuitting;
+
+    PlayerTextLabel(IPlayer& player, StringView text, Colour colour, Vector3 pos, float drawDist, bool testLOS)
+        : TextLabelBase(text, colour, pos, drawDist, testLOS)
+        , player(player)
+        , playerQuitting(false)
+    {
+    }
 
     void restream() override
     {
-        streamOutForClient(*player, true);
-        streamInForClient(*player, true);
+        streamOutForClient(player, true);
+        streamInForClient(player, true);
     }
 
     int getVirtualWorld() const override
@@ -192,8 +215,8 @@ struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
 
     ~PlayerTextLabel()
     {
-        if (player) {
-            streamOutForClient(*player, false);
+        if (!playerQuitting) {
+            streamOutForClient(player, false);
         }
     }
 };

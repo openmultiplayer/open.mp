@@ -1,8 +1,8 @@
 #include "databases_component.hpp"
 
-DatabaseConnection::DatabaseConnection()
-    : parentDatabasesComponent(nullptr)
-    , databaseConnectionHandle(nullptr)
+DatabaseConnection::DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle)
+    : parentDatabasesComponent(parentDatabasesComponent)
+    , databaseConnectionHandle(databaseConnectionHandle)
 {
 }
 
