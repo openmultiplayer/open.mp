@@ -23,6 +23,12 @@ enum DefaultReturnValue {
     DefaultReturnValue_True
 };
 
+/// A struct for different AMX caches
+struct AMXCache {
+    int inited = false; ///< True when the AMX should be used
+    FlatHashMap<String, int> publics; ///< A cache of AMX publics
+};
+
 class PawnScript {
 public:
     PawnScript(int id, std::string const& path, ICore* core);
@@ -164,6 +170,7 @@ public:
 private:
     ICore* serverCore;
     AMX amx_;
+    AMXCache cache_;
     bool loaded_ = false;
 
     inline int PushOne()

@@ -33,6 +33,9 @@ int AMXEXPORT amx_FloatInit(AMX* amx);
 int AMXEXPORT amx_FloatCleanup(AMX* amx);
 }
 
+/// A map of per-AMX caches
+static FlatHashMap<AMX*, AMXCache*> cache;
+
 PawnScript::PawnScript(int id, std::string const& path, ICore* core)
     : serverCore(core)
     , id_(id)
@@ -69,6 +72,7 @@ PawnScript::PawnScript(int id, std::string const& path, ICore* core)
         amx_StringInit(&amx_);
         amx_TimeInit(&amx_);
         amx_FloatInit(&amx_);
+        cache.emplace(std::make_pair<AMX*, AMXCache*>(&amx_, &cache_));
     } else {
         return;
     }
@@ -84,6 +88,7 @@ PawnScript::~PawnScript()
         amx_CoreCleanup(&amx_);
         amx_ArgsCleanup(&amx_);
         aux_FreeProgram(&amx_);
+        cache.erase(&amx_);
     }
 }
 
@@ -328,6 +333,93 @@ Your code is probably missing `main`.  Just add this:
 #else
 #error Unsupported cell size
 #endif
+
+#define USENAMETABLE(hdr) \
+    ((hdr)->defsize == sizeof(AMX_FUNCSTUBNT))
+#define NUMENTRIES(hdr, field, nextfield) \
+    (unsigned)(((hdr)->nextfield - (hdr)->field) / (hdr)->defsize)
+#define GETENTRY(hdr, table, index) \
+    (AMX_FUNCSTUB*)((unsigned char*)(hdr) + (unsigned)(hdr)->table + (unsigned)index * (hdr)->defsize)
+#define GETENTRYNAME(hdr, entry)                                                             \
+    (USENAMETABLE(hdr)                                                                       \
+            ? (char*)((unsigned char*)(hdr) + (unsigned)((AMX_FUNCSTUBNT*)(entry))->nameofs) \
+            : ((AMX_FUNCSTUB*)(entry))->name)
+
+int AMXAPI amx_NumPublics(AMX* amx, int* number)
+{
+    AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
+    assert(hdr != NULL);
+    assert(hdr->magic == AMX_MAGIC);
+    assert(hdr->publics <= hdr->natives);
+    *number = NUMENTRIES(hdr, publics, natives);
+    return AMX_ERR_NONE;
+}
+
+int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
+{
+    AMX_HEADER* hdr;
+    AMX_FUNCSTUB* func;
+
+    hdr = (AMX_HEADER*)amx->base;
+    assert(hdr != NULL);
+    assert(hdr->magic == AMX_MAGIC);
+    assert(hdr->publics <= hdr->natives);
+    if (index >= (cell)NUMENTRIES(hdr, publics, natives))
+        return AMX_ERR_INDEX;
+
+    func = GETENTRY(hdr, publics, index);
+    strcpy(funcname, GETENTRYNAME(hdr, func));
+    return AMX_ERR_NONE;
+}
+
+int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
+{
+    // Attempt to find index in publics cache
+    auto amxIter = cache.find(amx);
+    const bool cacheExists = amxIter != cache.end();
+    if (cacheExists) {
+        const AMXCache& amxCache = *amxIter->second;
+        if (amxCache.inited) {
+            auto lookupIter = amxCache.publics.find(name);
+            if (lookupIter != amxCache.publics.end()) {
+                *index = lookupIter->second;
+                return AMX_ERR_NONE;
+            }
+        }
+    }
+
+    // Cache miss; do the heavy search
+    int first, last, mid, result;
+    char pname[sNAMEMAX + 1];
+
+    amx_NumPublics(amx, &last);
+    last--; /* last valid index is 1 less than the number of functions */
+    first = 0;
+    /* binary search */
+    while (first <= last) {
+        mid = (first + last) / 2;
+        amx_GetPublic(amx, mid, pname);
+        result = strcmp(pname, name);
+        if (result > 0) {
+            last = mid - 1;
+        } else if (result < 0) {
+            first = mid + 1;
+        } else {
+            *index = mid;
+            // Cache public index
+            if (cacheExists) {
+                AMXCache& amxCache = *amxIter->second;
+                if (amxCache.inited) {
+                    amxCache.publics.emplace(std::make_pair<String, int>(name, std::move(mid)));
+                }
+            }
+            return AMX_ERR_NONE;
+        } /* if */
+    } /* while */
+    /* not found, set to an invalid index, so amx_Exec() will fail */
+    *index = INT_MAX;
+    return AMX_ERR_NOTFOUND;
+}
 
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 {

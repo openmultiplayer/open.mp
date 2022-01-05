@@ -144,9 +144,12 @@ void PawnManager::Load(std::string const& name, bool primary)
         if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
             // If there's no `main` ignore it for now.
             PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+        } else {
+            script.cache_.inited = true;
         }
     } else {
         script.Call("OnFilterScriptInit", DefaultReturnValue_False);
+        script.cache_.inited = true;
     }
 
     // TODO: `AMX_EXEC_CONT` support.
