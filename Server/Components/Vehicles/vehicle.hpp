@@ -48,10 +48,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
 
-    Vehicle()
+    Vehicle(VehiclesComponent* pool, const VehicleSpawnData& data)
+        : pool(pool)
     {
         mods.fill(0);
         carriages.fill(nullptr);
+        setSpawnData(data);
     }
 
     ~Vehicle()
@@ -96,7 +98,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         return streamedFor_.valid(player.getID());
     }
 
-    void setSpawnData(VehicleSpawnData data) override
+    void setSpawnData(const VehicleSpawnData& data) override
     {
         spawnData = data;
 

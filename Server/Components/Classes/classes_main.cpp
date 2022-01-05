@@ -3,11 +3,8 @@
 
 static const struct DefaultClass final : public PlayerClass {
     DefaultClass()
+        : PlayerClass(0, 255, Vector3(0.0f, 0.0f, 3.1279f), 0.f, WeaponSlots())
     {
-        team = 255;
-        skin = 0;
-        spawn = Vector3(0.0f, 0.0f, 3.1279f);
-        angle = 0.f;
         weapons.fill(WeaponSlotData { 0, 0 });
     }
 } defClass;
@@ -168,25 +165,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
     PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int cid = storage.claim(freeIdx);
-        if (cid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        PlayerClass& cls = storage.get(cid);
-        cls.skin = skin;
-        cls.team = team;
-        cls.spawn = spawn;
-        cls.angle = angle;
-        cls.weapons = weapons;
-        return &cls;
+        return storage.emplace(skin, team, spawn, angle, weapons);
     }
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override
@@ -202,18 +181,6 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
