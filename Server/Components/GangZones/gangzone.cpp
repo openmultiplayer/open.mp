@@ -22,21 +22,7 @@ struct GangZonesComponent final : public IGangZonesComponent {
 
     IGangZone* create(GangZonePos pos) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        GangZone& gangZone = storage.get(pid);
-        gangZone.pos = pos;
-        return &gangZone;
+        return storage.emplace(pos);
     }
 
     void free() override
@@ -47,18 +33,6 @@ struct GangZonesComponent final : public IGangZonesComponent {
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override

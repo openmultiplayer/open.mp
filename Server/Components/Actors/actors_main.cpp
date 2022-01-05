@@ -91,24 +91,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 
     IActor* create(int skin, Vector3 pos, float angle) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        Actor& actor = storage.get(pid);
-        actor.pos_ = pos;
-        actor.skin_ = skin;
-        actor.angle_ = angle;
-        actor.invulnerable_ = true;
-        return &actor;
+        return storage.emplace(skin, pos, angle);
     }
 
     void free() override
@@ -119,18 +102,6 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override

@@ -16,12 +16,20 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     int shadowSize = 2;
     int outlineSize = 0;
     Colour backgroundColour = Colour::Black();
-    TextDrawStyle style = TextDrawStyle_FontAharoniBold;
+    TextDrawStyle style;
     bool selectable = false;
-    int previewModel = 0;
+    int previewModel;
     GTAQuat previewRotation = GTAQuat(Vector3(0.f));
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
+
+    TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+        : pos(pos)
+        , text(String(text))
+        , style(style)
+        , previewModel(previewModel)
+    {
+    }
 
     int getID() const override
     {
@@ -287,6 +295,8 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
 struct TextDraw final : public TextDrawBase<ITextDraw> {
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
 
+    using TextDrawBase<ITextDraw>::TextDrawBase;
+
     void restream() override
     {
         for (IPlayer* player : shownFor_.entries()) {
@@ -328,18 +338,24 @@ struct TextDraw final : public TextDrawBase<ITextDraw> {
 };
 
 struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
-    IPlayer* player = nullptr;
+    IPlayer& player;
     bool shown = false;
+
+    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+        : TextDrawBase(pos, text, style, previewModel)
+        , player(player)
+    {
+    }
 
     void show() override
     {
-        showForClient(*player, true);
+        showForClient(player, true);
         shown = true;
     }
 
     void hide() override
     {
-        hideForClient(*player, true);
+        hideForClient(player, true);
         shown = false;
     }
 
@@ -351,7 +367,7 @@ struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
     void restream() override
     {
         if (shown) {
-            showForClient(*player, true);
+            showForClient(player, true);
         }
     }
 
@@ -359,14 +375,14 @@ struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
     {
         TextDrawBase<IPlayerTextDraw>::setText(txt);
         if (shown) {
-            setTextForClient(*player, txt, true);
+            setTextForClient(player, txt, true);
         }
     }
 
     ~PlayerTextDraw()
     {
-        if (player) {
-            hideForClient(*player, true);
+        if (shown) {
+            hideForClient(player, true);
         }
     }
 };
