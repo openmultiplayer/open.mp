@@ -51,14 +51,7 @@ SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 posit
             WeaponSlotData { weapon3, weapon3_ammo }
         };
 
-        PlayerClass _class;
-        _class.skin = skin;
-        _class.team = team;
-        _class.spawn = position;
-        _class.angle = angle;
-        _class.weapons = slots;
-
-        classData->setSpawnInfo(_class);
+        classData->setSpawnInfo(PlayerClass(skin, team, position, angle, slots));
     }
     return false;
 }

@@ -9,6 +9,15 @@ struct PlayerClass {
     Vector3 spawn; ///< The class's spawn position
     float angle; ///< The class's angle
     WeaponSlots weapons; ///< The class's weapons
+
+    PlayerClass(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons)
+        : team(team)
+        , skin(skin)
+        , spawn(spawn)
+        , angle(angle)
+        , weapons(weapons)
+    {
+    }
 };
 
 static const UUID PlayerClassData_UUID = UUID(0x185655ded843788b);

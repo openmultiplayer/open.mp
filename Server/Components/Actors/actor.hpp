@@ -13,15 +13,26 @@ struct PlayerActorData final : IPlayerData {
 };
 
 struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
-    int virtualWorld_ = 0;
+    int virtualWorld_;
     int skin_;
     Vector3 pos_;
     float angle_;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
-    float health_ = 100.f;
-    bool invulnerable_ = false;
+    float health_;
+    bool invulnerable_;
     Animation animation_;
-    bool animationLoop_ = false;
+    bool animationLoop_;
+
+    Actor(int skin, Vector3 pos, float angle)
+        : virtualWorld_(0)
+        , skin_(skin)
+        , pos_(pos)
+        , angle_(angle)
+        , health_(100.f)
+        , invulnerable_(true)
+        , animationLoop_(false)
+    {
+    }
 
     void setHealth(float health) override
     {

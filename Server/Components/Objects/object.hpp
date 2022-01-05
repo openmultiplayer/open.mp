@@ -17,8 +17,13 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
     float rotSpeed_;
     bool anyDelayedProcessing_;
 
-    BaseObject()
-        : attachmentData_ { ObjectAttachmentData::Type::None }
+    BaseObject(int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
+        : pos_(position)
+        , rot_(rotation)
+        , model_(modelID)
+        , drawDist_(drawDist)
+        , cameraCol_(cameraCollision)
+        , attachmentData_ { ObjectAttachmentData::Type::None }
         , moving_(false)
         , anyDelayedProcessing_(false)
     {
@@ -196,18 +201,19 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 };
 
 struct Object final : public BaseObject<IObject> {
-    IPlayerPool* players_;
+    IPlayerPool& players_;
     StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
     StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
 
-    Object()
-        : players_(nullptr)
+    Object(IPlayerPool& players, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
+        : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
+        , players_(players)
     {
     }
 
     void restream()
     {
-        for (IPlayer* player : players_->entries()) {
+        for (IPlayer* player : players_.entries()) {
             createObjectForClient(*player);
         }
     }
@@ -234,18 +240,18 @@ struct Object final : public BaseObject<IObject> {
             stopMoving();
         }
 
-        players_->broadcastRPCToAll(move(data));
+        players_.broadcastRPCToAll(move(data));
     }
 
     void stopMoving() override
     {
-        players_->broadcastRPCToAll(stopMove());
+        players_.broadcastRPCToAll(stopMove());
     }
 
     bool advance(Microseconds elapsed, TimePoint now)
     {
         if (anyDelayedProcessing_) {
-            for (IPlayer* player : players_->entries()) {
+            for (IPlayer* player : players_.entries()) {
                 const int pid = player->getID();
                 if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
                     delayedProcessing_.reset(pid);
@@ -260,8 +266,8 @@ struct Object final : public BaseObject<IObject> {
                     }
 
                     if (
-                        attachmentData_.type == ObjectAttachmentData::Type::Player && players_->valid(attachmentData_.ID)) {
-                        IPlayer& other = players_->get(attachmentData_.ID);
+                        attachmentData_.type == ObjectAttachmentData::Type::Player && players_.valid(attachmentData_.ID)) {
+                        IPlayer& other = players_.get(attachmentData_.ID);
                         if (other.isStreamedInForPlayer(*player)) {
                             NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
                             attachObjectToPlayerRPC.ObjectID = poolID;
@@ -306,7 +312,7 @@ struct Object final : public BaseObject<IObject> {
         NetCode::RPC::SetObjectPosition setObjectPositionRPC;
         setObjectPositionRPC.ObjectID = poolID;
         setObjectPositionRPC.Position = position;
-        players_->broadcastRPCToAll(setObjectPositionRPC);
+        players_.broadcastRPCToAll(setObjectPositionRPC);
     }
 
     void setRotation(GTAQuat rotation) override
@@ -316,7 +322,7 @@ struct Object final : public BaseObject<IObject> {
         NetCode::RPC::SetObjectRotation setObjectRotationRPC;
         setObjectRotationRPC.ObjectID = poolID;
         setObjectRotationRPC.Rotation = rot_;
-        players_->broadcastRPCToAll(setObjectRotationRPC);
+        players_.broadcastRPCToAll(setObjectRotationRPC);
     }
 
     void setDrawDistance(float drawDistance) override
@@ -362,26 +368,27 @@ struct Object final : public BaseObject<IObject> {
 
     ~Object()
     {
-        if (players_) {
-            for (IPlayer* player : players_->entries()) {
-                destroyForPlayer(*player);
-            }
+        for (IPlayer* player : players_.entries()) {
+            destroyForPlayer(*player);
         }
     }
 };
 
 struct PlayerObject final : public BaseObject<IPlayerObject> {
-    IPlayer* player_;
+    IPlayer& player_;
     TimePoint delayedProcessingTime_;
+    bool playerQuitting_;
 
-    PlayerObject()
-        : player_(nullptr)
+    PlayerObject(IPlayer& player, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
+        : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
+        , player_(player)
+        , playerQuitting_(false)
     {
     }
 
     void restream()
     {
-        createObjectForClient(*player_);
+        createObjectForClient(player_);
     }
 
     virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override
@@ -391,7 +398,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
             NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
             setPlayerObjectMaterialRPC.ObjectID = poolID;
             setPlayerObjectMaterialRPC.MaterialID = index;
-            player_->sendRPC(setPlayerObjectMaterialRPC);
+            player_.sendRPC(setPlayerObjectMaterialRPC);
         }
     }
 
@@ -402,7 +409,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
             NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
             setPlayerObjectMaterialRPC.ObjectID = poolID;
             setPlayerObjectMaterialRPC.MaterialID = index;
-            player_->sendRPC(setPlayerObjectMaterialRPC);
+            player_.sendRPC(setPlayerObjectMaterialRPC);
         }
     }
 
@@ -412,12 +419,12 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
             stopMoving();
         }
 
-        player_->sendRPC(move(data));
+        player_.sendRPC(move(data));
     }
 
     void stopMoving() override
     {
-        player_->sendRPC(stopMove());
+        player_.sendRPC(stopMove());
     }
 
     bool advance(Microseconds elapsed, TimePoint now)
@@ -431,7 +438,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
                     moveObjectRPC.ObjectID = poolID;
                     moveObjectRPC.CurrentPosition = pos_;
                     moveObjectRPC.MoveData = moveData_;
-                    player_->sendRPC(moveObjectRPC);
+                    player_.sendRPC(moveObjectRPC);
                 }
             }
         }
@@ -441,7 +448,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 
     void createForPlayer()
     {
-        createObjectForClient(*player_);
+        createObjectForClient(player_);
 
         if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
             delayedProcessingTime_ = Time::now() + Seconds(1);
@@ -451,7 +458,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 
     void destroyForPlayer()
     {
-        destroyObjectForClient(*player_);
+        destroyObjectForClient(player_);
     }
 
     void resetAttachment() override
@@ -467,7 +474,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
         NetCode::RPC::SetObjectPosition setObjectPositionRPC;
         setObjectPositionRPC.ObjectID = poolID;
         setObjectPositionRPC.Position = position;
-        player_->sendRPC(setObjectPositionRPC);
+        player_.sendRPC(setObjectPositionRPC);
     }
 
     void setRotation(GTAQuat rotation) override
@@ -477,7 +484,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
         NetCode::RPC::SetObjectRotation setObjectRotationRPC;
         setObjectRotationRPC.ObjectID = poolID;
         setObjectRotationRPC.Rotation = rot_;
-        player_->sendRPC(setObjectRotationRPC);
+        player_.sendRPC(setObjectRotationRPC);
     }
 
     void setDrawDistance(float drawDistance) override
@@ -506,7 +513,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 
     ~PlayerObject()
     {
-        if (player_) {
+        if (!playerQuitting_) {
             destroyForPlayer();
         }
     }

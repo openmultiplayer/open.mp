@@ -315,46 +315,14 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return ret;
     }
 
-    IVehicle* create(VehicleSpawnData data) override
+    IVehicle* create(const VehicleSpawnData& data) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        Vehicle& vehicle = storage.get(pid);
-        vehicle.pool = this;
-        vehicle.setSpawnData(data);
-        return &vehicle;
+        return storage.emplace(this, data);
     }
 
     void free() override
     {
         delete this;
-    }
-
-    int findFreeIndex() override
-    {
-        return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
@@ -368,6 +336,11 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     IVehicle& get(int index) override
     {
         return storage.get(index);
+    }
+
+    int findFreeIndex() override
+    {
+        return storage.findFreeIndex();
     }
 
     void release(int index) override

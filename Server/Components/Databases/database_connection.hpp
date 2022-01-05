@@ -15,7 +15,7 @@ struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvi
     /// Database connection handle
     sqlite3* databaseConnectionHandle;
 
-    DatabaseConnection();
+    DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle);
 
     /// Gets its pool element ID
     /// @return Pool element ID

@@ -68,25 +68,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
 
     IPickup* create(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        Pickup& pickup = storage.get(pid);
-        pickup.pos = pos;
-        pickup.type = type;
-        pickup.virtualWorld = virtualWorld;
-        pickup.modelId = modelId;
-        pickup.isStatic = isStatic;
-        return &pickup;
+        return storage.emplace(modelId, type, pos, virtualWorld, isStatic);
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
@@ -108,18 +90,6 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
