@@ -37,53 +37,21 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
 
     IPlayerTextDraw* create(Vector2 position, StringView text) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        PlayerTextDraw& textDraw = storage.get(pid);
-        textDraw.player = &player;
-        textDraw.text = String(text);
-        textDraw.pos = position;
-        return &textDraw;
+        return storage.emplace(player, position, text);
     }
 
     IPlayerTextDraw* create(Vector2 position, int model) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        PlayerTextDraw& textDraw = storage.get(pid);
-        textDraw.player = &player;
-        textDraw.text = "_";
-        textDraw.style = TextDrawStyle_Preview;
-        textDraw.previewModel = model;
-        textDraw.pos = position;
-        return &textDraw;
+        return storage.emplace(player, position, "_", TextDrawStyle_Preview, model);
     }
 
     void free() override
     {
+        /// Detach player from player textdraws so they don't try to send an RPC
         for (IPlayerTextDraw* textDraw : storage) {
             PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
-            td->player = nullptr;
+            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
+            td->shown = false;
         }
         delete this;
     }
@@ -91,18 +59,6 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
@@ -218,44 +174,12 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
 
     ITextDraw* create(Vector2 position, StringView text) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        TextDraw& textDraw = storage.get(pid);
-        textDraw.text = String(text);
-        textDraw.pos = position;
-        return &textDraw;
+        return storage.emplace(position, text);
     }
 
     ITextDraw* create(Vector2 position, int model) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        TextDraw& textDraw = storage.get(pid);
-        textDraw.text = "_";
-        textDraw.style = TextDrawStyle_Preview;
-        textDraw.previewModel = model;
-        textDraw.pos = position;
-        return &textDraw;
+        return storage.emplace(position, "_", TextDrawStyle_Preview, model);
     }
 
     void free() override
@@ -266,18 +190,6 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override

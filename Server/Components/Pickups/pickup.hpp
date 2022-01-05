@@ -10,6 +10,15 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     bool isStatic;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
 
+    Pickup(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic)
+        : virtualWorld(virtualWorld)
+        , modelId(modelId)
+        , type(type)
+        , pos(pos)
+        , isStatic(isStatic)
+    {
+    }
+
     void restream()
     {
         for (IPlayer* player : streamedFor_.entries()) {

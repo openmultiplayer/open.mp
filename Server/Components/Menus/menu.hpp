@@ -35,6 +35,20 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> initedFor_;
 
+    Menu(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width)
+        : title(String(title))
+        , columnCount(columns)
+        , pos(position)
+        , col1Width(col1Width)
+        , col2Width(col2Width)
+        , menuEnabled(true)
+        , columnHeaders { "" }
+        , columnItemCount { 0 }
+        , columnMenuItems { { { "" } } }
+    {
+        rowEnabled.fill(true);
+    }
+
     void setColumnHeader(StringView header, MenuColumn column) override
     {
         if (column > columnCount) {

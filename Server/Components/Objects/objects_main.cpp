@@ -188,20 +188,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             return nullptr;
         }
 
-        int objid = storage.claim(freeIdx);
+        int objid = storage.claimHint(freeIdx, core->getPlayers(), modelID, position, rotation, drawDist, defCameraCollision);
         if (objid == -1) {
             // No free index
             return nullptr;
         }
 
         Object& obj = storage.get(objid);
-        obj.players_ = &core->getPlayers();
-        obj.pos_ = position;
-        obj.rot_ = rotation;
-        obj.model_ = modelID;
-        obj.drawDist_ = drawDist;
-        obj.cameraCol_ = defCameraCollision;
-
         for (IPlayer* player : core->getPlayers().entries()) {
             obj.createForPlayer(*player);
         }
@@ -217,18 +210,6 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
@@ -378,7 +359,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
             return nullptr;
         }
 
-        int objid = storage.claim(freeIdx);
+        int objid = storage.claimHint(freeIdx, player_, modelID, position, rotation, drawDist, component_.defCameraCollision);
         if (objid == -1) {
             // No free index
             return nullptr;
@@ -387,13 +368,6 @@ struct PlayerObjectData final : public IPlayerObjectData {
         component_.isPlayerObject.set(objid);
 
         PlayerObject& obj = storage.get(objid);
-        obj.player_ = &player_;
-        obj.pos_ = position;
-        obj.rot_ = rotation;
-        obj.model_ = modelID;
-        obj.drawDist_ = drawDist;
-        obj.cameraCol_ = component_.defCameraCollision;
-
         obj.createForPlayer();
 
         return &obj;
@@ -402,18 +376,6 @@ struct PlayerObjectData final : public IPlayerObjectData {
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
@@ -458,7 +420,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
         /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
-            obj->player_ = nullptr;
+            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
+            obj->playerQuitting_ = true;
         }
         delete this;
     }

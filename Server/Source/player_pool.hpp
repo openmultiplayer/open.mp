@@ -775,19 +775,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerWeaponsUpdateHandler;
 
-    [[nodiscard]] IPlayer* initPlayer(int pid, const PeerNetworkData& netData, const PeerRequestParams& params)
+    void initPlayer(Player& player)
     {
-        Player& player = storage.get(pid);
-
-        player.pool_ = this;
         player.streamedFor_.add(player.poolID, player);
-
-        player.netData_ = netData;
-        player.version_ = params.version;
-        player.versionName_ = String(params.versionName);
-        player.name_ = String(params.name);
-        player.serial_ = String(params.serial);
-        player.isBot_ = params.bot;
 
         // Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846)
         static constexpr uint32_t colours[] = {
@@ -892,9 +882,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             0xD8C762FF,
             0xD8C762FF,
         };
-        player.colour_ = Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
-
-        return &player;
+        player.colour_ = Colour::FromRGBA(colours[player.poolID % GLM_COUNTOF(colours)]);
     }
 
     struct PlayerPassengerSyncHandler : public SingleNetworkInOutEventHandler {
@@ -1079,20 +1067,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return { NewConnectionResult_BadName, nullptr };
         }
 
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
+        Player* result = storage.emplace(this, netData, params);
+        if (!result) {
             return { NewConnectionResult_NoPlayerSlot, nullptr };
         }
 
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return { NewConnectionResult_NoPlayerSlot, nullptr };
-            ;
-        }
-
-        return { NewConnectionResult_Success, initPlayer(pid, netData, params) };
+        initPlayer(*result);
+        return { NewConnectionResult_Success, result };
     }
 
     void onPeerConnect(IPlayer& peer) override

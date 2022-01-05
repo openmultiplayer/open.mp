@@ -116,30 +116,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 
     IMenu* create(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width) override
     {
-        int freeIdx = storage.findFreeIndex();
-        if (freeIdx == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        int pid = storage.claim(freeIdx);
-        if (pid == -1) {
-            // No free index
-            return nullptr;
-        }
-
-        Menu& menu = storage.get(pid);
-        menu.title = String(title);
-        menu.pos = position;
-        menu.columnCount = columns;
-        menu.col1Width = col1Width;
-        menu.col2Width = col2Width;
-        menu.menuEnabled = true;
-        menu.rowEnabled.fill(true);
-        menu.columnHeaders = { "" };
-        menu.columnItemCount = { 0 };
-        menu.columnMenuItems = { { { "" } } };
-        return &menu;
+        return storage.emplace(title, position, columns, col1Width, col2Width);
     }
 
     void free() override
@@ -150,18 +127,6 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
     int findFreeIndex() override
     {
         return storage.findFreeIndex();
-    }
-
-    int claim() override
-    {
-        int res = storage.claim();
-        return res;
-    }
-
-    int claim(int hint) override
-    {
-        int res = storage.claim(hint);
-        return res;
     }
 
     bool valid(int index) const override
