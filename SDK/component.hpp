@@ -37,15 +37,19 @@ struct IComponent : public IUUIDProvider {
     /// Get the component's version
     virtual SemanticVersion componentVersion() const = 0;
 
-    /// Called for every component after components have been loaded
-    /// Should be used for storing the core interface, registering player/core event handlers
-    /// Should NOT be used for interacting with other components as they might not have been initialised yet
+    /// Called for every component to load it
+    /// Should be used for caching the core interface, registering player/core event handlers
     virtual void onLoad(ICore* c) = 0;
 
-    /// Called when all components have been initialised
-    /// Should be used for interacting with other components or any more complex logic
+    /// Called when all components have been loaded
+    /// Should be used for querying other components, registering their event handlers
+    /// Should NOT be used for interacting with other components or firing events
     /// @param components Tcomponentgins list to query
     virtual void onInit(IComponentList* components) { }
+
+    /// Called when all components have been initialised
+    /// Should be used for interacting with other components, firing events, or any more complex logic
+    virtual void onReady() { }
 
     /// Frees the component data
     virtual void free() { }
