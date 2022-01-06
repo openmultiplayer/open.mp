@@ -313,17 +313,6 @@ Your code is probably missing `main`.  Just add this:
 }
 */
 
-#define USENAMETABLE(hdr) \
-    ((hdr)->defsize == sizeof(AMX_FUNCSTUBNT))
-#define NUMENTRIES(hdr, field, nextfield) \
-    (unsigned)(((hdr)->nextfield - (hdr)->field) / (hdr)->defsize)
-#define GETENTRY(hdr, table, index) \
-    (AMX_FUNCSTUB*)((unsigned char*)(hdr) + (unsigned)(hdr)->table + (unsigned)index * (hdr)->defsize)
-#define GETENTRYNAME(hdr, entry)                                                             \
-    (USENAMETABLE(hdr)                                                                       \
-            ? (char*)((unsigned char*)(hdr) + (unsigned)((AMX_FUNCSTUBNT*)(entry))->nameofs) \
-            : ((AMX_FUNCSTUB*)(entry))->name)
-
 #if PAWN_CELL_SIZE == 16
 #define CHARMASK (0xffffu << 8 * (2 - sizeof(char)))
 #elif PAWN_CELL_SIZE == 32
@@ -382,8 +371,12 @@ int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
         if (amxCache.inited) {
             auto lookupIter = amxCache.publics.find(name);
             if (lookupIter != amxCache.publics.end()) {
-                *index = lookupIter->second;
-                return AMX_ERR_NONE;
+                // https://github.com/IllidanS4/pawn-conventions/blob/master/guidelines.md#do-not-rely-on-consistency
+                char pname[sNAMEMAX + 1];
+                if (amx_GetPublic(amx, lookupIter->second, pname) == AMX_ERR_NONE && !strcmp(name, pname)) {
+                    *index = lookupIter->second;
+                    return AMX_ERR_NONE;
+                }
             }
         }
     }
@@ -410,7 +403,7 @@ int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
             if (cacheExists) {
                 AMXCache& amxCache = *amxIter->second;
                 if (amxCache.inited) {
-                    amxCache.publics.emplace(std::make_pair<String, int>(name, std::move(mid)));
+                    amxCache.publics[name] = mid;
                 }
             }
             return AMX_ERR_NONE;
