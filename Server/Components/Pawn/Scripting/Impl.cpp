@@ -14,34 +14,82 @@
 
 Scripting::~Scripting()
 {
+    PawnManager* mgr = PawnManager::Get();
+
     // remove event handlers
-    PawnManager::Get()->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
-    PawnManager::Get()->players->getPlayerUpdateDispatcher().removeEventHandler(PlayerEvents::Get());
-    PawnManager::Get()->actors->getEventDispatcher().removeEventHandler(ActorEvents::Get());
-    PawnManager::Get()->checkpoints->getEventDispatcher().removeEventHandler(CheckpointEvents::Get());
-    PawnManager::Get()->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
-    PawnManager::Get()->dialogs->getEventDispatcher().removeEventHandler(DialogEvents::Get());
-    PawnManager::Get()->menus->getEventDispatcher().removeEventHandler(MenuEvents::Get());
-    PawnManager::Get()->textdraws->getEventDispatcher().removeEventHandler(TextDrawEvents::Get());
-    PawnManager::Get()->pickups->getEventDispatcher().removeEventHandler(PickupEvents::Get());
-    PawnManager::Get()->vehicles->getEventDispatcher().removeEventHandler(VehicleEvents::Get());
-    PawnManager::Get()->objects->getEventDispatcher().removeEventHandler(ObjectEvents::Get());
-    PawnManager::Get()->console->getEventDispatcher().removeEventHandler(CoreEvents::Get());
+    if (mgr->players) {
+        mgr->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
+        mgr->players->getPlayerUpdateDispatcher().removeEventHandler(PlayerEvents::Get());
+    }
+    if (mgr->actors) {
+        mgr->actors->getEventDispatcher().removeEventHandler(ActorEvents::Get());
+    }
+    if (mgr->checkpoints) {
+        mgr->checkpoints->getEventDispatcher().removeEventHandler(CheckpointEvents::Get());
+    }
+    if (mgr->classes) {
+        mgr->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
+    }
+    if (mgr->dialogs) {
+        mgr->dialogs->getEventDispatcher().removeEventHandler(DialogEvents::Get());
+    }
+    if (mgr->menus) {
+        mgr->menus->getEventDispatcher().removeEventHandler(MenuEvents::Get());
+    }
+    if (mgr->textdraws) {
+        mgr->textdraws->getEventDispatcher().removeEventHandler(TextDrawEvents::Get());
+    }
+    if (mgr->pickups) {
+        mgr->pickups->getEventDispatcher().removeEventHandler(PickupEvents::Get());
+    }
+    if (mgr->vehicles) {
+        mgr->vehicles->getEventDispatcher().removeEventHandler(VehicleEvents::Get());
+    }
+    if (mgr->objects) {
+        mgr->objects->getEventDispatcher().removeEventHandler(ObjectEvents::Get());
+    }
+    if (mgr->console) {
+        mgr->console->getEventDispatcher().removeEventHandler(CoreEvents::Get());
+    }
 }
 
 void Scripting::addEvents() const
 {
+    PawnManager* mgr = PawnManager::Get();
+
     // add event handlers
-    PawnManager::Get()->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
-    PawnManager::Get()->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
-    PawnManager::Get()->actors->getEventDispatcher().addEventHandler(ActorEvents::Get());
-    PawnManager::Get()->checkpoints->getEventDispatcher().addEventHandler(CheckpointEvents::Get());
-    PawnManager::Get()->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
-    PawnManager::Get()->dialogs->getEventDispatcher().addEventHandler(DialogEvents::Get());
-    PawnManager::Get()->menus->getEventDispatcher().addEventHandler(MenuEvents::Get());
-    PawnManager::Get()->textdraws->getEventDispatcher().addEventHandler(TextDrawEvents::Get());
-    PawnManager::Get()->pickups->getEventDispatcher().addEventHandler(PickupEvents::Get());
-    PawnManager::Get()->vehicles->getEventDispatcher().addEventHandler(VehicleEvents::Get());
-    PawnManager::Get()->objects->getEventDispatcher().addEventHandler(ObjectEvents::Get());
-    PawnManager::Get()->console->getEventDispatcher().addEventHandler(CoreEvents::Get());
+    if (mgr->players) {
+        mgr->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
+        mgr->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
+    }
+    if (mgr->actors) {
+        mgr->actors->getEventDispatcher().addEventHandler(ActorEvents::Get());
+    }
+    if (mgr->checkpoints) {
+        mgr->checkpoints->getEventDispatcher().addEventHandler(CheckpointEvents::Get());
+    }
+    if (mgr->classes) {
+        mgr->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
+    }
+    if (mgr->dialogs) {
+        mgr->dialogs->getEventDispatcher().addEventHandler(DialogEvents::Get());
+    }
+    if (mgr->menus) {
+        mgr->menus->getEventDispatcher().addEventHandler(MenuEvents::Get());
+    }
+    if (mgr->textdraws) {
+        mgr->textdraws->getEventDispatcher().addEventHandler(TextDrawEvents::Get());
+    }
+    if (mgr->pickups) {
+        mgr->pickups->getEventDispatcher().addEventHandler(PickupEvents::Get());
+    }
+    if (mgr->vehicles) {
+        mgr->vehicles->getEventDispatcher().addEventHandler(VehicleEvents::Get());
+    }
+    if (mgr->objects) {
+        mgr->objects->getEventDispatcher().addEventHandler(ObjectEvents::Get());
+    }
+    if (mgr->console) {
+        mgr->console->getEventDispatcher().addEventHandler(CoreEvents::Get());
+    }
 }

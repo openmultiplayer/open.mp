@@ -68,6 +68,14 @@ struct ComponentList : public IComponentList {
             });
     }
 
+    void ready()
+    {
+        std::for_each(components.begin(), components.end(),
+            [](const Pair<UUID, IComponent*>& pair) {
+                pair.second->onReady();
+            });
+    }
+
     auto add(IComponent* component)
     {
         return components.try_emplace(component->getUUID(), component);
@@ -583,6 +591,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         if (consoleComp) {
             components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
         }
+        components.ready();
     }
 
     ~Core()
