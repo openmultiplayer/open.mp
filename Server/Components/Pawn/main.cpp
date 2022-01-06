@@ -127,6 +127,7 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
     void onReady() override
     {
         PawnManager* mgr = PawnManager::Get();
+        PawnPluginManager* pluginMgr = PawnPluginManager::Get();
 
         // read values of plugins, entry_file and side_scripts from config file
         IConfig& config = core->getConfig();
@@ -136,7 +137,7 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
 
         // load plugins
         for (auto& plugin : plugins) {
-            mgr->Load(eventDispatcher, String(plugin));
+            pluginMgr->Load(String(plugin));
         }
 
         // load scripts
