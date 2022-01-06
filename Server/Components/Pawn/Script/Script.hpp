@@ -94,15 +94,12 @@ public:
     inline cell GetFRM() const { return amx_.frm; }
 
     template <typename... T>
-    cell Call(int idx, T... args)
+    void Call(cell& ret, int idx, T... args)
     {
         // Check if the public exists.
         if (idx == INT_MAX) {
-            return 0;
+            return;
         }
-        cell
-            ret
-            = 0;
         int
             err
             = CallChecked(idx, ret, args...);
@@ -112,18 +109,17 @@ public:
         if (err != AMX_ERR_NONE) {
             serverCore->logLn(LogLevel::Error, "%s", aux_StrError(err));
         }
-        return ret;
     }
 
     template <typename... T>
     cell Call(char const* name, DefaultReturnValue defaultRetValue, T... args)
     {
         int idx;
+        cell ret = defaultRetValue;
         if (!FindPublic(name, &idx)) {
-            return Call(idx, args...);
-        } else {
-            return static_cast<cell>(defaultRetValue);
+            Call(ret, idx, args...);
         }
+        return ret;
     }
 
     template <typename... T>
@@ -139,7 +135,6 @@ public:
         cell
             amx_addr
             = GetHEA();
-        ret = AMX_ERR_NONE;
         // Push all the arguments, using templates to resolve the correct function to use.
         int
             err
