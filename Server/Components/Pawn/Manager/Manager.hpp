@@ -13,6 +13,7 @@
 #include <Server/Components/GangZones/gangzones.hpp>
 #include <Server/Components/Menus/menus.hpp>
 #include <Server/Components/Objects/objects.hpp>
+#include <Server/Components/Pawn/pawn.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
@@ -64,9 +65,9 @@ public:
     void SetBasePath(std::string const& path);
     void SetScriptPath(std::string const& path);
 
-    void Load(std::string const& name, bool primary = false);
-    void Reload(std::string const& name);
-    void Unload(std::string const& name);
+    void Load(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name, bool primary = false);
+    void Reload(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name);
+    void Unload(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name);
 
     template <typename... T>
     cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
@@ -261,6 +262,8 @@ public:
     AMX* AMXFromID(int id) const;
     int IDFromAMX(AMX*) const;
 
+    bool OnServerCommand(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& cmd, std::string const& args);
+
 private:
     std::string
         scriptPath_,
@@ -268,12 +271,6 @@ private:
     int
         id_
         = 0;
-
-    friend cell AMX_NATIVE_CALL pawn_Script_CallAll(AMX* amx, cell const* params);
-    friend int ComponentCallGM(char* name);
-    friend int ComponentCallFS(char* name);
-
-    bool OnServerCommand(std::string const& cmd, std::string const& args);
 
     void CheckNatives(PawnScript& script);
 };

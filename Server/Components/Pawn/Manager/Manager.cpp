@@ -44,18 +44,22 @@ PawnManager::~PawnManager()
     }
 }
 
-bool PawnManager::OnServerCommand(std::string const& cmd, std::string const& args)
+bool PawnManager::OnServerCommand(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& cmd, std::string const& args)
 {
     // Legacy commands.
     if (cmd == "loadfs") {
-        Load(args);
+        Load(eventDispatcher, args);
+        return true;
     } else if (cmd == "reloadfs") {
-        Reload(args);
+        Reload(eventDispatcher, args);
+        return true;
     } else if (cmd == "unloadfs") {
-        Unload(args);
+        Unload(eventDispatcher, args);
+        return true;
     } else if (cmd == "changemode") {
-        Unload(entryScript);
-        Load(args, true);
+        Unload(eventDispatcher, entryScript);
+        Load(eventDispatcher, args, true);
+        return true;
     }
     return false;
 }
@@ -90,12 +94,12 @@ void PawnManager::CheckNatives(PawnScript& script)
     while (count--) {
         script.GetNativeByIndex(count, &func);
         if (func.func == nullptr) {
-            PawnManager::Get()->core->logLn(LogLevel::Error, "Function not registered: %s", func.name);
+            core->logLn(LogLevel::Error, "Function not registered: %s", func.name);
         }
     }
 }
 
-void PawnManager::Load(std::string const& name, bool primary)
+void PawnManager::Load(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name, bool primary)
 {
     if (scripts_.count(name)) {
         return;
@@ -110,7 +114,7 @@ void PawnManager::Load(std::string const& name, bool primary)
     std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
 
     if (!ptr.get()->IsLoaded()) {
-        PawnManager::Get()->core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
+        core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
         return;
     }
 
@@ -131,8 +135,8 @@ void PawnManager::Load(std::string const& name, bool primary)
     script.Register("KillTimer", &utils::pawn_killtimer);
 
     pawn_natives::AmxLoad(script.GetAMX());
-
     PawnPluginManager::Get()->AmxLoad(script.GetAMX());
+    eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX());
 
     CheckNatives(script);
 
@@ -143,7 +147,7 @@ void PawnManager::Load(std::string const& name, bool primary)
         int err = script.Exec(nullptr, AMX_EXEC_MAIN);
         if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
             // If there's no `main` ignore it for now.
-            PawnManager::Get()->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+            core->logLn(LogLevel::Error, "%s", aux_StrError(err));
         } else {
             script.cache_.inited = true;
         }
@@ -157,7 +161,7 @@ void PawnManager::Load(std::string const& name, bool primary)
     // cache public pointers.
 }
 
-void PawnManager::Reload(std::string const& name)
+void PawnManager::Reload(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name)
 {
     auto pos = scripts_.find(name);
     bool isEntryScript = entryScript == name;
@@ -171,14 +175,15 @@ void PawnManager::Reload(std::string const& name)
             script.Call("OnFilterScriptExit", DefaultReturnValue_False);
         }
 
+        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
         PawnPluginManager::Get()->AmxUnload(script.GetAMX());
         amxToScript_.erase(script.GetAMX());
         scripts_.erase(pos);
     }
-    Load(name, entryScript == name);
+    Load(eventDispatcher, name, entryScript == name);
 }
 
-void PawnManager::Unload(std::string const& name)
+void PawnManager::Unload(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name)
 {
     auto pos = scripts_.find(name);
     bool isEntryScript = entryScript == name;
@@ -194,6 +199,7 @@ void PawnManager::Unload(std::string const& name)
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
 
+    eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
     PawnPluginManager::Get()->AmxUnload(script.GetAMX());
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
