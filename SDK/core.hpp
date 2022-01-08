@@ -173,28 +173,28 @@ struct ICore {
 
     /// Add a per-RPC event handler for each network for the packet's network ID
     template <class Packet>
-    inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler)
+    inline void addPerRPCEventHandler(SingleNetworkInOutEventHandler* handler, event_order_t priority = EventPriority_Default)
     {
         static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
         const FlatPtrHashSet<INetwork>& networks = getNetworks();
         for (INetwork* network : networks) {
             const int id = Packet::getID(network->getNetworkType());
             if (id != INVALID_PACKET_ID) {
-                network->getPerRPCInOutEventDispatcher().addEventHandler(handler, id);
+                network->getPerRPCInOutEventDispatcher().addEventHandler(handler, id, priority);
             }
         }
     }
 
     /// Add a per-PACKET event handler for each network for the packet's network ID
     template <class Packet>
-    inline void addPerPacketEventHandler(SingleNetworkInOutEventHandler* handler)
+    inline void addPerPacketEventHandler(SingleNetworkInOutEventHandler* handler, event_order_t priority = EventPriority_Default)
     {
         static_assert(is_network_packet<Packet>(), "Packet must derive from NetworkPacketBase");
         const FlatPtrHashSet<INetwork>& networks = getNetworks();
         for (INetwork* network : networks) {
             const int id = Packet::getID(network->getNetworkType());
             if (id != INVALID_PACKET_ID) {
-                network->getPerPacketInOutEventDispatcher().addEventHandler(handler, id);
+                network->getPerPacketInOutEventDispatcher().addEventHandler(handler, id, priority);
             }
         }
     }
@@ -228,11 +228,11 @@ struct ICore {
     }
 
     /// Add a network event handler to all available networks' dispatchers
-    inline void addNetworkEventHandler(NetworkEventHandler* handler)
+    inline void addNetworkEventHandler(NetworkEventHandler* handler, event_order_t priority = EventPriority_Default)
     {
         const FlatPtrHashSet<INetwork>& networks = getNetworks();
         for (INetwork* network : networks) {
-            network->getEventDispatcher().addEventHandler(handler);
+            network->getEventDispatcher().addEventHandler(handler, priority);
         }
     }
 
