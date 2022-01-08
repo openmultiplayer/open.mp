@@ -9,6 +9,7 @@ target_link_libraries(SDK INTERFACE
 target_compile_definitions(SDK INTERFACE
 	GLM_FORCE_SSE2
 	GLM_FORCE_QUAT_DATA_WXYZ
+	NOMINMAX
 )
 
 target_include_directories(SDK INTERFACE .)
