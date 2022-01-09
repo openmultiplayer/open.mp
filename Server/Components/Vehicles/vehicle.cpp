@@ -98,6 +98,7 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     rot = vehicleSync.Rotation;
     health = vehicleSync.Health;
     velocity = vehicleSync.Velocity;
+    landingGear = vehicleSync.LandingGear;
 
     if (spawnData.modelID == 538 || spawnData.modelID == 537) {
         for (IVehicle* vehicle : carriages) {
