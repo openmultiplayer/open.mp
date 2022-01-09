@@ -159,8 +159,9 @@ IActor* Player::getTargetActor()
 void Player::setState(PlayerState state)
 {
     if (state_ != state) {
+        PlayerState oldstate = state_;
         state_ = state;
-        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, state_);
+        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, oldstate);
     }
 }
 
