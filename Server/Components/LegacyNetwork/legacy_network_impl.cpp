@@ -646,6 +646,10 @@ void RakNetLegacyNetwork::init(ICore* c)
 
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
+    if (maxPlayers > 1000) {
+        maxPlayers = 1000;
+    }
+
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
