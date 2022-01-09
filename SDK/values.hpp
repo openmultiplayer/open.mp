@@ -89,6 +89,7 @@ static const std::map<String, Variant<int, String, float, DynamicArray<StringVie
     { "server_name", "open.mp server" },
     { "entry_file", "test.amx" },
     { "side_scripts", DynamicArray<StringView> {} },
+    { "legacy_plugins", DynamicArray<StringView> {} },
     { "player_time_update_rate", 30000 },
     { "stream_rate", 1000 },
     { "stream_distance", 200.f },
