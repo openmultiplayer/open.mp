@@ -511,6 +511,12 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
         restream();
     }
 
+    void attachToObject(IPlayerObject& object, Vector3 offset, Vector3 rotation) override
+    {
+        setAttachmentData(ObjectAttachmentData::Type::Object, object.getID(), offset, rotation, true);
+        restream();
+    }
+
     ~PlayerObject()
     {
         if (!playerQuitting_) {

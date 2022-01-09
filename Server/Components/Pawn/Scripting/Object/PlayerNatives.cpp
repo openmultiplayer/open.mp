@@ -33,6 +33,12 @@ SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& obje
     return false;
 }
 
+SCRIPT_API(AttachPlayerObjectToObject, bool(IPlayer& player, IPlayerObject& object, IPlayerObject& attachedTo, Vector3 offset, Vector3 rotation))
+{
+    object.attachToObject(attachedTo, offset, rotation);
+    return true;
+}
+
 SCRIPT_API(SetPlayerObjectPos, bool(IPlayer& player, IPlayerObject& object, Vector3 position))
 {
     object.setPosition(position);
