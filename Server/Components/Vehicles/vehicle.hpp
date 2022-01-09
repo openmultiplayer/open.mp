@@ -24,6 +24,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t paintJob;
     int32_t bodyColour1 = -1;
     int32_t bodyColour2 = -1;
+    uint8_t landingGear = 1;
     IPlayer* driver = nullptr;
     FlatHashSet<IPlayer*> passengers;
     String numberPlate = "XYZSR998";
@@ -311,6 +312,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     int getModel() override
     {
         return spawnData.modelID;
+    }
+
+    /// Gets the current landing gear state from a ID_VEHICLE_SYNC packet from the latest driver.
+    uint8_t getLandingGearState() override
+    {
+        return landingGear;
     }
 };
 
