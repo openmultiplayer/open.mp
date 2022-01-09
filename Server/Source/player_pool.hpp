@@ -1091,7 +1091,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = player.poolID;
         playerJoinPacket.Col = player.colour_;
-        playerJoinPacket.IsNPC = false;
+        playerJoinPacket.IsNPC = player.isBot_;
         playerJoinPacket.Name = StringView(player.name_);
         for (IPlayer* other : storage.entries()) {
             if (&peer == other) {
@@ -1104,7 +1104,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             NetCode::RPC::PlayerJoin otherJoinPacket;
             otherJoinPacket.PlayerID = otherPlayer->poolID;
             otherJoinPacket.Col = otherPlayer->colour_;
-            otherJoinPacket.IsNPC = false;
+            otherJoinPacket.IsNPC = otherPlayer->isBot_;
             otherJoinPacket.Name = StringView(otherPlayer->name_);
             peer.sendRPC(otherJoinPacket);
         }
