@@ -221,6 +221,9 @@ struct IVehicle : public IEntity {
 
     /// Gets the current model ID of the vehicle.
     virtual int getModel() = 0;
+
+    /// Gets the current landing gear state from a ID_VEHICLE_SYNC packet from the latest driver.
+    virtual uint8_t getLandingGearState() = 0;
 };
 
 /// A vehicle event handler
