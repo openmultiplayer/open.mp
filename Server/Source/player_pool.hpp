@@ -270,9 +270,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
                     player.team_ = cls.team;
                     player.skin_ = cls.skin;
-                    player.weapons_[0] = cls.weapons[0];
-                    player.weapons_[1] = cls.weapons[1];
-                    player.weapons_[2] = cls.weapons[2];
+
                     const WeaponSlots& weapons = cls.weapons;
                     for (size_t i = 3; i < weapons.size(); ++i) {
                         if (weapons[i].id == 0) {
@@ -284,6 +282,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     }
                 }
 
+                player.setArmedWeapon(0);
                 self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
                 // Make sure to restream player on spawn
