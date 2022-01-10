@@ -19,6 +19,12 @@
 #include <string>
 #include <utility>
 #include <vector>
+#ifdef major
+    #undef major
+#endif
+#ifdef minor
+    #undef minor
+#endif
 
 typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
