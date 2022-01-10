@@ -501,7 +501,9 @@ void RakNetLegacyNetwork::ban(const IBanEntry& entry, Milliseconds expire)
     if (!entry.address.ipv6) {
         char out[16] { 0 };
         if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
-            rakNetServer.AddToBanList(out, expire.count());
+            if (memcmp(out, "127.0.0.1", 10u)) {
+                rakNetServer.AddToBanList(out, expire.count());
+            }
         }
     }
 }
