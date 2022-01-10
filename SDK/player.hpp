@@ -87,6 +87,7 @@ enum PlayerBulletHitType : uint8_t {
     PlayerBulletHitType_Player = 1,
     PlayerBulletHitType_Vehicle = 2,
     PlayerBulletHitType_Object = 3,
+    PlayerBulletHitType_PlayerObject = 4,
 };
 
 enum BodyPart {
