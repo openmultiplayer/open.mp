@@ -70,7 +70,7 @@ void Query::buildServerInfoBuffer()
     writeToBuffer(output, offset, static_cast<uint8_t>('i'));
     writeToBuffer(output, offset, static_cast<uint8_t>(passworded));
     writeToBuffer(output, offset, static_cast<uint16_t>(core->getPlayers().players().size()));
-    writeToBuffer(output, offset, maxPlayers);
+    writeToBuffer(output, offset, static_cast<uint16_t>(maxPlayers - core->getPlayers().bots().size()));
 
     // Write server name
     writeToBuffer(output, offset, serverNameLength);
@@ -93,10 +93,15 @@ void Query::updateServerInfoBufferPlayerCount(IPlayer* except)
 
     if (serverInfoBuffer) {
         char* output = serverInfoBuffer.get();
-        size_t playerCountOffset = BASE_QUERY_SIZE + sizeof(uint8_t);
+        size_t offset = BASE_QUERY_SIZE + sizeof(uint8_t);
         uint16_t playerCount = (except && !except->isBot()) ? core->getPlayers().players().size() - 1 : core->getPlayers().players().size();
         assert(playerCount <= maxPlayers);
-        writeToBuffer(output, playerCountOffset, playerCount);
+        uint16_t realPlayers = maxPlayers - core->getPlayers().bots().size();
+        if (except && except->isBot()) {
+            ++realPlayers;
+        }
+        writeToBuffer(output, offset, playerCount);
+        writeToBuffer(output, offset, realPlayers);
     }
 }
 
