@@ -299,10 +299,15 @@ void AddInt(U** buf_p, size_t& maxlen, int val, int width, int flags)
         unsignedVal /= 10;
     } while (unsignedVal);
 
-    if (signedVal < 0)
-        text[digits++] = '-';
-
     buf = *buf_p;
+
+    if (signedVal < 0) {
+        if (flags & ZEROPAD) {
+            *buf++ = '-';
+        } else {
+            text[digits++] = '-';
+        }
+    }
 
     if (!(flags & LADJUST)) {
         while (digits < width && maxlen) {
