@@ -31,7 +31,7 @@ SCRIPT_API(GetSVarString, bool(const std::string& varname, std::string& output))
 {
     GET_VAR_COMP(component, false);
     output = String(component->getString(varname));
-    return true;
+    return output.length();
 }
 
 SCRIPT_API(SetSVarFloat, bool(const std::string& varname, float value))
