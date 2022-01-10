@@ -378,24 +378,24 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void onScoreChange(IPlayer& player, int score) override
     {
-        query.preparePlayerListForQuery();
+        query.buildPlayerDependentBuffers();
     }
 
     void onNameChange(IPlayer& player, StringView oldName) override
     {
-        query.preparePlayerListForQuery();
+        query.buildPlayerDependentBuffers();
     }
 
     void update() override;
 
     void onConnect(IPlayer& player) override
     {
-        query.preparePlayerListForQuery();
+        query.buildPlayerDependentBuffers();
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        query.refreshPlayerListNextQuery();
+        query.buildPlayerDependentBuffers(&player);
     }
 
     NetworkStats getStatistics(int playerIndex = -1) override;
