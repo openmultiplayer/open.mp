@@ -21,7 +21,8 @@ void Query::buildPlayerInfoBuffer(IPlayer* except)
     }
 
     const FlatPtrHashSet<IPlayer>& players = core->getPlayers().players();
-    const uint16_t playerCount = except ? players.size() - 1 : players.size();
+    const uint16_t playerCount = (except && !except->isBot()) ? players.size() - 1 : players.size();
+    assert(playerCount <= maxPlayers);
     playerListBufferLength = BASE_QUERY_SIZE + sizeof(uint16_t) + (sizeof(uint8_t) + MAX_PLAYER_NAME) * playerCount;
     playerListBuffer.reset(new char[playerListBufferLength]);
     size_t offset = QUERY_TYPE_INDEX;
@@ -84,7 +85,7 @@ void Query::buildServerInfoBuffer()
     writeToBuffer(output, languageName.c_str(), offset, languageNameLength);
 }
 
-void Query::updateServerInfoBufferPlayerCount(bool disconnecting)
+void Query::updateServerInfoBufferPlayerCount(IPlayer* except)
 {
     if (core == nullptr) {
         return;
@@ -93,7 +94,8 @@ void Query::updateServerInfoBufferPlayerCount(bool disconnecting)
     if (serverInfoBuffer) {
         char* output = serverInfoBuffer.get();
         size_t playerCountOffset = BASE_QUERY_SIZE + sizeof(uint8_t);
-        uint16_t playerCount = disconnecting ? core->getPlayers().players().size() - 1 : core->getPlayers().players().size();
+        uint16_t playerCount = (except && !except->isBot()) ? core->getPlayers().players().size() - 1 : core->getPlayers().players().size();
+        assert(playerCount <= maxPlayers);
         writeToBuffer(output, playerCountOffset, playerCount);
     }
 }

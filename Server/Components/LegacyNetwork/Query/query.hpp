@@ -18,7 +18,7 @@ public:
     void buildPlayerDependentBuffers(IPlayer* except = nullptr)
     {
         buildPlayerInfoBuffer(except);
-        updateServerInfoBufferPlayerCount(except != nullptr);
+        updateServerInfoBufferPlayerCount(except);
     }
 
     void buildConfigDependentBuffers()
@@ -112,7 +112,7 @@ private:
     void writeToBuffer(char* output, char const* src, size_t& offset, size_t size);
 
     void buildPlayerInfoBuffer(IPlayer* except = nullptr);
-    void updateServerInfoBufferPlayerCount(bool disconnecting);
+    void updateServerInfoBufferPlayerCount(IPlayer* except = nullptr);
     void buildServerInfoBuffer();
     void buildRulesBuffer();
 };
