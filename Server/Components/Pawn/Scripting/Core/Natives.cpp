@@ -269,7 +269,7 @@ SCRIPT_API(GetNetworkStats, bool(std::string& output))
         << "Messages waiting for ack: " << stats.messagesOnResendQueue << std::endl
         << "Messages resent: " << stats.messageResends << std::endl
         << "Bytes resent: " << stats.messagesTotalBytesResent << std::endl
-        << "Packetloss: " << std::setprecision(1) << stats.packetloss << std::endl
+        << "Packetloss: " << std::setprecision(1) << std::fixed << stats.packetloss << "%" << std::endl
         << "Messages received: " << stats.messagesReceived << std::endl
         << "Bytes received: " << stats.bytesReceived << std::endl
         << "Acks received:" << stats.acknowlegementsReceived << std::endl
@@ -298,7 +298,7 @@ SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
         << "Messages waiting for ack: " << stats.messagesOnResendQueue << std::endl
         << "Messages resent: " << stats.messageResends << std::endl
         << "Bytes resent: " << stats.messagesTotalBytesResent << std::endl
-        << "Packetloss: " << std::setprecision(1) << stats.packetloss << std::endl
+        << "Packetloss: " << std::setprecision(1) << std::fixed << stats.packetloss << "%" << std::endl
         << "Messages received: " << stats.messagesReceived << std::endl
         << "Bytes received: " << stats.bytesReceived << std::endl
         << "Acks received:" << stats.acknowlegementsReceived << std::endl
