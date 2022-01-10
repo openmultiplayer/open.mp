@@ -180,8 +180,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
-            self.eventDispatcher.dispatch(&PlayerEventHandler::onInteriorChange, peer, onPlayerInteriorChangeRPC.Interior, player.interior_);
+            uint32_t oldInterior = player.interior_;
+
             player.interior_ = onPlayerInteriorChangeRPC.Interior;
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onInteriorChange, peer, player.interior_, oldInterior);
 
             return true;
         }
