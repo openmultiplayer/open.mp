@@ -77,7 +77,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerChatBubble chatBubble_;
     uint8_t numStreamed_;
     TimePoint lastGameTimeUpdate_;
-    bool isBot_;
+    const bool isBot_;
     bool toSpawn_;
 
     Player(PlayerPool* pool, const PeerNetworkData& netData, const PeerRequestParams& params)
