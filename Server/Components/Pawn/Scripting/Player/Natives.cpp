@@ -573,17 +573,17 @@ SCRIPT_API(GetPlayerFacingAngle, bool(IPlayer& player, float& angle))
     return true;
 }
 
-SCRIPT_API(GetPlayerIp, bool(IPlayer& player, std::string& ip))
+SCRIPT_API(GetPlayerIp, int(IPlayer& player, std::string& ip))
 {
     PeerNetworkData data = player.getNetworkData();
     if (!data.networkID.address.ipv6) {
         char out[16] { 0 };
         if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
             ip = out;
-            return true;
+            return ip.length();
         }
     }
-    return false;
+    return -1;
 }
 
 SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
@@ -864,10 +864,10 @@ SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
     throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(gpci, bool(IPlayer& player, std::string& output))
+SCRIPT_API(gpci, int(IPlayer& player, std::string& output))
 {
     output = String(player.getSerial());
-    return true;
+    return output.length();
 }
 
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
@@ -915,8 +915,8 @@ SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std
     return true;
 }
 
-SCRIPT_API(GetPlayerVersion, bool(IPlayer& player, std::string& version))
+SCRIPT_API(GetPlayerVersion, int(IPlayer& player, std::string& version))
 {
     version = String(player.getClientVersionName());
-    return true;
+    return version.length();
 }
