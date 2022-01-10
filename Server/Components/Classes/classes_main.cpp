@@ -41,6 +41,7 @@ struct PlayerClassData final : IPlayerClassData {
         setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
         setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
+        cls = info;
         player.sendRPC(setSpawnInfoRPC);
     }
 
