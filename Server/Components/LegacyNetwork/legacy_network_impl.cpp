@@ -654,6 +654,7 @@ void RakNetLegacyNetwork::init(ICore* c)
 
     query.setCore(c);
     query.setRuleValue("version", "0.3.7-R2 open.mp");
+    query.setMaxPlayers(maxPlayers);
 
     update();
 
@@ -686,7 +687,6 @@ void RakNetLegacyNetwork::init(ICore* c)
     rakNetServer.StartOccasionalPing();
 
     SAMPRakNet::SetPort(port);
-    query.setMaxPlayers(maxPlayers);
 }
 
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
