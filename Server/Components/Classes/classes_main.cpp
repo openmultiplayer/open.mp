@@ -41,6 +41,7 @@ struct PlayerClassData final : IPlayerClassData {
         setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
         setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
 
+        cls = info;
         player.sendRPC(setSpawnInfoRPC);
     }
 
@@ -165,6 +166,18 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
     PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
+        if (count() == IClassesComponent::Capacity) {
+            PlayerClass* lastClass = &storage.get(IClassesComponent::Capacity - 1);
+
+            lastClass->skin = skin;
+            lastClass->team = team;
+            lastClass->spawn = spawn;
+            lastClass->angle = angle;
+            lastClass->weapons = weapons;
+
+            return lastClass;
+        }
+
         return storage.emplace(skin, team, spawn, angle, weapons);
     }
 
