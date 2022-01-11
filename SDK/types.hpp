@@ -20,6 +20,17 @@
 #include <utility>
 #include <vector>
 
+/* Fix Ubuntu 18.04 build - possibly remove when EOL depending on which
+ * other distributions we might want to support (18.04 uses glibc 2.27)
+ * (see: https://sourceware.org/bugzilla/show_bug.cgi?id=19239%22)
+ */
+#ifdef major
+#undef major
+#endif
+#ifdef minor
+#undef minor
+#endif
+
 typedef glm::vec2 Vector2;
 typedef glm::vec3 Vector3;
 typedef glm::vec4 Vector4;
