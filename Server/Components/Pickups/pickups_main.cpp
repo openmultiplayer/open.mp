@@ -139,7 +139,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
 
                 const PlayerState state = player.getState();
                 const Vector3 dist3D = pickup->pos - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_Spectating && state != PlayerState_None && player.getVirtualWorld() == pickup->virtualWorld && glm::dot(dist3D, dist3D) < maxDist;
+                const bool shouldBeStreamedIn = state != PlayerState_Spectating && state != PlayerState_None && (player.getVirtualWorld() == pickup->virtualWorld || pickup->virtualWorld == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
                 const bool isStreamedIn = pickup->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
