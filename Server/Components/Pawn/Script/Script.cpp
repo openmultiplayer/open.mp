@@ -361,10 +361,10 @@ int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
     return AMX_ERR_NONE;
 }
 
-int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
+__declspec(noinline) int amx_FindPublic_impl(AMX* amx, const char* name, int* index)
 {
     // Attempt to find index in publics cache
-    /*auto amxIter = cache.find(amx);
+    auto amxIter = cache.find(amx);
     const bool cacheExists = amxIter != cache.end();
     if (cacheExists) {
         const AMXCache& amxCache = *amxIter->second;
@@ -379,7 +379,7 @@ int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
                 }
             }
         }
-    }*/
+    }
 
     // Cache miss; do the heavy search
     int first, last, mid, result;
@@ -400,18 +400,23 @@ int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
         } else {
             *index = mid;
             // Cache public index
-            /*if (cacheExists) {
+            if (cacheExists) {
                 AMXCache& amxCache = *amxIter->second;
                 if (amxCache.inited) {
                     amxCache.publics[name] = mid;
                 }
-            }*/
+            }
             return AMX_ERR_NONE;
         } /* if */
     } /* while */
     /* not found, set to an invalid index, so amx_Exec() will fail */
     *index = INT_MAX;
     return AMX_ERR_NOTFOUND;
+}
+
+int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
+{
+    return amx_FindPublic_impl(amx, name, index);
 }
 
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
