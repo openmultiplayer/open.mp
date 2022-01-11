@@ -141,10 +141,10 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
         }
 
         // load scripts
-        mgr->Load(eventDispatcher, String(entryFile), true);
         for (auto& script : sideScripts) {
             mgr->Load(eventDispatcher, String(script), false);
         }
+        mgr->Load(eventDispatcher, String(entryFile), true);
     }
 
     const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const override

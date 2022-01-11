@@ -3,7 +3,7 @@
 #include <sdk.hpp>
 
 /// Player class interface
-struct PlayerClass {
+struct PlayerClass : PoolIDProvider {
     int team; ///< The class's team
     int skin; ///< The class's skin ID
     Vector3 spawn; ///< The class's spawn position
