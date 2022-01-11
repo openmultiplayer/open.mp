@@ -659,6 +659,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
                 break;
             case PlayerBulletHitType_Object:
+            case PlayerBulletHitType_PlayerObject:
                 if (self.objectsComponent && self.objectsComponent->valid(player.bulletData_.hitID)) {
                     ScopedPoolReleaseLock lock(*self.objectsComponent, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
@@ -666,6 +667,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                             return handler->onShotObject(player, lock.entry, player.bulletData_);
                         });
                 } else {
+                    player.bulletData_.hitType = PlayerBulletHitType_PlayerObject;
                     IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
                     if (data && data->valid(player.bulletData_.hitID)) {
                         ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
