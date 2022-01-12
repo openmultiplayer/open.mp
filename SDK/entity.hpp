@@ -12,7 +12,7 @@ struct IIDProvider {
 };
 
 /// A base entity interface
-struct IEntity : public IIDProvider {
+struct IEntity : virtual IExtensible, public IIDProvider {
     /// Get the entity's position
     virtual Vector3 getPosition() const = 0;
 
