@@ -6,6 +6,76 @@
 #define BUILD_NUMBER 0
 #endif
 
+/// Should always be used in classes inheriting IExtension
+#define PROVIDE_EXT_UUID(uuid)                 \
+    static constexpr UUID ExtensionIID = uuid; \
+    UUID getExtensionID() override { return ExtensionIID; }
+
+/// A class which should be inherited by extensions returned by IExtensible
+struct IExtension {
+    /// Get the extension's UUID
+    virtual UUID getExtensionID() = 0;
+};
+
+/// A class which should be inherited by classes which want to be extensible without breaking the ABI
+struct IExtensible {
+    /// Try to get an extension by its UUID
+    /// @return A pointer to the extension or nullptr if it's not supported
+    virtual IExtension const* getExtension(UUID id) const { return nullptr; }
+
+    /// Query an extension by its type
+    /// Don't call directly, use global queryExtension() instead
+    /// @typeparam ExtensionT The extension type, must derive from IExtension
+    template <class ExtensionT>
+    ExtensionT* _queryExtension() const
+    {
+        static_assert(std::is_base_of<IExtension, ExtensionT>::value, "queryExtension parameter must inherit from IExtension");
+        return static_cast<ExtensionT*>(getExtension(ExtensionT::ExtensionIID));
+    }
+
+    /// Query an extension by its type
+    /// Don't call directly, use global queryExtension() instead
+    /// @typeparam ExtensionT The extension type, must derive from IExtension
+    template <class ExtensionT>
+    ExtensionT* _queryExtension()
+    {
+        static_assert(std::is_base_of<IExtension, ExtensionT>::value, "queryExtension parameter must inherit from IExtension");
+        return const_cast<ExtensionT*>(static_cast<ExtensionT const*>(getExtension(ExtensionT::ExtensionIID)));
+    }
+};
+
+/// Query an extension by its type
+/// @typeparam ExtensionT The extension type, must derive from IExtension
+template <class ExtensionT>
+ExtensionT* queryExtension(IExtensible* extensible)
+{
+    return extensible->_queryExtension<ExtensionT>();
+}
+
+/// Query an extension by its type
+/// @typeparam ExtensionT The extension type, must derive from IExtension
+template <class ExtensionT>
+ExtensionT* queryExtension(const IExtensible* extensible)
+{
+    return extensible->_queryExtension<ExtensionT>();
+}
+
+/// Query an extension by its type
+/// @typeparam ExtensionT The extension type, must derive from IExtension
+template <class ExtensionT>
+ExtensionT* queryExtension(IExtensible& extensible)
+{
+    return extensible._queryExtension<ExtensionT>();
+}
+
+/// Query an extension by its type
+/// @typeparam ExtensionT The extension type, must derive from IExtension
+template <class ExtensionT>
+ExtensionT* queryExtension(const IExtensible& extensible)
+{
+    return extensible._queryExtension<ExtensionT>();
+}
+
 /// Should always be used in classes inheriting IUUIDProvider
 #define PROVIDE_UUID(uuid)            \
     static constexpr UUID IID = uuid; \
@@ -27,7 +97,7 @@ struct ICore;
 struct IComponentList;
 
 /// A component interface
-struct IComponent : public IUUIDProvider {
+struct IComponent : virtual IExtensible, public IUUIDProvider {
     /// Get the component's name
     virtual StringView componentName() const = 0;
 
@@ -55,7 +125,7 @@ struct IComponent : public IUUIDProvider {
     virtual void free() { }
 };
 
-struct IComponentList {
+struct IComponentList : public IExtensible {
     /// Query a component by its ID
     /// @param id The UUID of the component
     /// @return A pointer to the component or nullptr if not available

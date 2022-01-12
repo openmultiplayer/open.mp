@@ -93,7 +93,7 @@ public:
 /* Interfaces, to be passed around */
 
 template <typename T, size_t Count>
-struct IReadOnlyPool {
+struct IReadOnlyPool : virtual IExtensible {
     static const size_t Capacity = Count;
 
     /// Check if an index is claimed
