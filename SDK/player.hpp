@@ -824,7 +824,7 @@ struct PlayerUpdateEventHandler {
 };
 
 /// A player pool interface
-struct IPlayerPool : public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
+struct IPlayerPool : virtual IExtensible, public IReadOnlyPool<IPlayer, PLAYER_POOL_SIZE> {
     /// Get a set of all the available players
     virtual const FlatPtrHashSet<IPlayer>& entries() = 0;
 
