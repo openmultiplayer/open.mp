@@ -701,12 +701,15 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
         buf[0] = 0;
         vsnprintf(buf.data(), buf.length(), fmt, args);
+
+#ifdef BUILD_WINDOWS
         if (!CharToOemBuff(buf.data(), buf.data(), buf.length())) {
             // Try to convert not in-place
             std::unique_ptr<char[]> oem = std::make_unique<char[]>(buf.length());
             CharToOemBuff(buf.data(), oem.get(), buf.length());
             strncpy(buf.data(), oem.get(), buf.length());
         }
+#endif
 
         FILE* stream
             = stdout;
