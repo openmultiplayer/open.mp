@@ -471,7 +471,7 @@ struct IBanEntry {
 };
 
 /// A network interface for various network-related functions
-struct INetwork {
+struct INetwork : virtual IExtensible {
     /// Get the network type of the network
     /// @return The network type of the network
     virtual ENetworkType getNetworkType() const = 0;
@@ -536,6 +536,17 @@ struct INetworkComponent : public IComponent {
     virtual INetwork* getNetwork() = 0;
 };
 
+static const UUID NetworkQueryExtension_UUID = UUID(0xfd46e147ea474971);
+struct INetworkQueryExtension : public IExtension {
+    PROVIDE_EXT_UUID(NetworkQueryExtension_UUID);
+
+    /// Add a rule to the network rules
+    virtual void addRule(StringView rule, StringView value) = 0;
+
+    /// Remove a rule from the network rules
+    virtual void removeRule(StringView rule) = 0;
+};
+
 /// Peer network data
 struct PeerNetworkData {
     /// Peer network ID
@@ -549,7 +560,7 @@ struct PeerNetworkData {
 };
 
 /// A network peer interface
-struct INetworkPeer {
+struct INetworkPeer : virtual IExtensible {
 
     virtual const PeerNetworkData& getNetworkData() const = 0;
 
