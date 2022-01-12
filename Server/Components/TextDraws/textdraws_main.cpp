@@ -86,6 +86,11 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         return storage.unlock(index);
     }
 
+    IEventDispatcher<PoolEventHandler<IPlayerTextDraw>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     /// Get a set of all the available labels
     const FlatPtrHashSet<IPlayerTextDraw>& entries() override
     {
@@ -220,6 +225,11 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
     const FlatPtrHashSet<ITextDraw>& entries() override
     {
         return storage._entries();
+    }
+
+    IEventDispatcher<PoolEventHandler<ITextDraw>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
     }
 };
 

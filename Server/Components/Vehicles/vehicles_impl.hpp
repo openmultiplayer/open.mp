@@ -371,6 +371,11 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return storage._entries();
     }
 
+    IEventDispatcher<PoolEventHandler<IVehicle>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     void onTick(Microseconds elapsed, TimePoint now) override
     {
         for (IVehicle* v : storage) {

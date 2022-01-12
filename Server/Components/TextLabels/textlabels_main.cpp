@@ -91,6 +91,11 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     {
         return storage._entries();
     }
+
+    IEventDispatcher<PoolEventHandler<IPlayerTextLabel>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
 };
 
 struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
@@ -199,6 +204,11 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
     const FlatPtrHashSet<ITextLabel>& entries() override
     {
         return storage._entries();
+    }
+
+    IEventDispatcher<PoolEventHandler<ITextLabel>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override

@@ -129,6 +129,11 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         return storage.unlock(index);
     }
 
+    IEventDispatcher<PoolEventHandler<IActor>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     IEventDispatcher<ActorEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;

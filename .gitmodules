@@ -13,3 +13,6 @@
 [submodule "lib/ttmath"]
 	path = lib/ttmath
 	url = https://github.com/openmultiplayer/ttmath
+[submodule "SDK"]
+	path = SDK
+	url = https://github.com/openmultiplayer/open.mp-sdk

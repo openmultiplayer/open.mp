@@ -376,6 +376,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerPlaySound playerPlaySoundRPC;
         playerPlaySoundRPC.SoundID = sound;
         playerPlaySoundRPC.Position = pos;
+        sendRPC(playerPlaySoundRPC);
     }
 
     uint32_t lastPlayedSound() const override
