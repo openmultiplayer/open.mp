@@ -33,7 +33,7 @@ enum class SettableCoreDataType {
     AdminPassword,
 };
 
-struct IConfig {
+struct IConfig : public IExtensible {
     /// Get a variable as a string
     virtual const StringView getString(StringView key) const = 0;
 
@@ -105,7 +105,7 @@ enum LogLevel {
 };
 
 /// The core interface
-struct ICore {
+struct ICore : public IExtensible {
     /// Get the SDK version
     virtual SemanticVersion getSDKVersion() = 0;
 
