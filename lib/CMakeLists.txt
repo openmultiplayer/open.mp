@@ -152,17 +152,9 @@ add_subdirectory(ttmath)
 GroupSourcesByFolder(ttmath)
 set_property(TARGET ttmath PROPERTY FOLDER "lib")
 
-# GLM
-# ---
-add_conan_lib(CONAN_PKG::glm glm/0.9.9.8)
-
 # JSON
 # ----
 add_conan_lib(CONAN_PKG::nlohmann_json nlohmann_json/3.9.1)
-
-# Abseil
-# ------
-add_conan_lib(CONAN_PKG::abseil abseil/20210324.2)
 
 # SQLite 3
 # --------
