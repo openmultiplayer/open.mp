@@ -13,6 +13,7 @@ struct IUnknown;
 #define LIBRARY_GET_ADDR GetProcAddress
 #define LIBRARY_FREE FreeLibrary
 static LARGE_INTEGER yo;
+#define BUILD_WINDOWS
 #else
 #include <dlfcn.h>
 #include <stdlib.h>
