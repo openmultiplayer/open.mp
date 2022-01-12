@@ -283,9 +283,17 @@ struct RakNetLegacyBitStream final : public INetworkBitStream {
     }
 };
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler {
+struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
+
+    const IExtension* getExtension(UUID id) const override
+    {
+        if (id == INetworkQueryExtension::ExtensionIID) {
+            return static_cast<const INetworkQueryExtension*>(this);
+        }
+        return nullptr;
+    }
 
     ENetworkType getNetworkType() const override
     {
@@ -396,6 +404,16 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         query.buildPlayerDependentBuffers(&player);
+    }
+
+    void addRule(StringView rule, StringView value) override
+    {
+        query.setRuleValue(String(rule), String(value));
+    }
+
+    void removeRule(StringView rule) override
+    {
+        query.removeRule(rule);
     }
 
     NetworkStats getStatistics(int playerIndex = -1) override;
