@@ -226,6 +226,11 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return storage._entries();
     }
 
+    IEventDispatcher<PoolEventHandler<PlayerClass>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     ~ClassesComponent()
     {
         core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);

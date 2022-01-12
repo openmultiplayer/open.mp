@@ -119,6 +119,11 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         return storage.unlock(index);
     }
 
+    IEventDispatcher<PoolEventHandler<IPickup>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     IEventDispatcher<PickupEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;
