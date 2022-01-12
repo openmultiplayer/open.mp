@@ -409,11 +409,13 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void addRule(StringView rule, StringView value) override
     {
         query.setRuleValue(String(rule), String(value));
+        query.buildRulesBuffer();
     }
 
     void removeRule(StringView rule) override
     {
         query.removeRule(rule);
+        query.buildRulesBuffer();
     }
 
     NetworkStats getStatistics(int playerIndex = -1) override;

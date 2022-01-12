@@ -14,6 +14,7 @@ public:
     }
 
     Span<const char> handleQuery(Span<const char> buffer, uint32_t address);
+    void buildRulesBuffer();
 
     void buildPlayerDependentBuffers(IPlayer* except = nullptr)
     {
@@ -114,5 +115,4 @@ private:
     void buildPlayerInfoBuffer(IPlayer* except = nullptr);
     void updateServerInfoBufferPlayerCount(IPlayer* except = nullptr);
     void buildServerInfoBuffer();
-    void buildRulesBuffer();
 };
