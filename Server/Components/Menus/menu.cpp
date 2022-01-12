@@ -160,6 +160,11 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         return storage.unlock(index);
     }
 
+    IEventDispatcher<PoolEventHandler<IMenu>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     IEventDispatcher<MenuEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;

@@ -243,6 +243,11 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         return storage.unlock(index);
     }
 
+    IEventDispatcher<PoolEventHandler<IObject>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     IEventDispatcher<ObjectEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;
@@ -402,6 +407,11 @@ struct PlayerObjectData final : public IPlayerObjectData {
     void lock(int index) override
     {
         storage.lock(index);
+    }
+
+    IEventDispatcher<PoolEventHandler<IPlayerObject>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
     }
 
     bool unlock(int index) override

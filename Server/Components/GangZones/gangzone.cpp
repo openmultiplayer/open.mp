@@ -60,6 +60,11 @@ struct GangZonesComponent final : public IGangZonesComponent {
         return storage.unlock(index);
     }
 
+    IEventDispatcher<PoolEventHandler<IGangZone>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     IEventDispatcher<GangZoneEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;
