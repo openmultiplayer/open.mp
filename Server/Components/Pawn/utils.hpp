@@ -70,8 +70,6 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
     int
         num
         = params[0] / sizeof(cell);
-    cell*
-        cstr;
 
     if (num < 3) {
         PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `format`: %u < %u", num, 3);
@@ -80,7 +78,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
     int maxlen = params[2];
 
     int param = 4;
-    cell* coutput = cstr = amx_Address(amx, params[1]);
+    cell* coutput = amx_Address(amx, params[1]);
     cell* cinput = amx_Address(amx, params[3]);
     atcprintf(coutput, maxlen - 1, cinput, amx, params, &param);
 
