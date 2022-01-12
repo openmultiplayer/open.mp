@@ -642,14 +642,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         va_end(args);
     }
 
-    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* fmt, va_list args)
+    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* message)
     {
         if (iso8601[0]) {
             fputs(iso8601, stream);
             fputs(" ", stream);
         }
         fputs(prefix, stream);
-        vfprintf(stream, fmt, args);
+        fputs(message, stream);
         fputs("\n", stream);
         fflush(stream);
     }
@@ -690,14 +690,35 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::gmtime(&now));
         }
 
-        FILE* stream = stdout;
+        char main[4096];
+        std::unique_ptr<char[]> fallback; // In case the string is larger than 4096
+        Span<char> buf(main, sizeof(main));
+        const int len = vsnprintf(nullptr, 0, fmt, args);
+        if (len > sizeof(main)) {
+            // Stack won't fit our string; allocate space for it
+            fallback.reset(new char[len]);
+            buf = Span<char>(fallback.get(), len);
+        }
+        buf[0] = 0;
+        vsnprintf(buf.data(), buf.length(), fmt, args);
+
+#ifdef BUILD_WINDOWS
+        if (!CharToOemBuff(buf.data(), buf.data(), buf.length())) {
+            // Try to convert not in-place
+            std::unique_ptr<char[]> oem = std::make_unique<char[]>(buf.length());
+            CharToOemBuff(buf.data(), oem.get(), buf.length());
+            strncpy(buf.data(), oem.get(), buf.length());
+        }
+#endif
+
+        FILE* stream
+            = stdout;
         if (level == LogLevel::Error) {
             stream = stderr;
         }
-        logToStream(stream, iso8601, prefix, fmt, args);
+        logToStream(stream, iso8601, prefix, buf.data());
         if (logFile) {
-            logToStream(logFile, iso8601, prefix, fmt, args);
-            fflush(logFile);
+            logToStream(logFile, iso8601, prefix, buf.data());
         }
     }
 

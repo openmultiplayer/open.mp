@@ -501,7 +501,9 @@ void RakNetLegacyNetwork::ban(const IBanEntry& entry, Milliseconds expire)
     if (!entry.address.ipv6) {
         char out[16] { 0 };
         if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
-            rakNetServer.AddToBanList(out, expire.count());
+            if (memcmp(out, "127.0.0.1", 10u)) {
+                rakNetServer.AddToBanList(out, expire.count());
+            }
         }
     }
 }
@@ -648,6 +650,10 @@ void RakNetLegacyNetwork::init(ICore* c)
 
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
+    if (maxPlayers > 1000) {
+        maxPlayers = 1000;
+    }
+
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");

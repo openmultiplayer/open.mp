@@ -181,8 +181,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
-            self.eventDispatcher.dispatch(&PlayerEventHandler::onInteriorChange, peer, onPlayerInteriorChangeRPC.Interior, player.interior_);
+            uint32_t oldInterior = player.interior_;
+
             player.interior_ = onPlayerInteriorChangeRPC.Interior;
+            self.eventDispatcher.dispatch(&PlayerEventHandler::onInteriorChange, peer, player.interior_, oldInterior);
 
             return true;
         }
@@ -269,9 +271,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
                     player.team_ = cls.team;
                     player.skin_ = cls.skin;
-                    player.weapons_[0] = cls.weapons[0];
-                    player.weapons_[1] = cls.weapons[1];
-                    player.weapons_[2] = cls.weapons[2];
+
                     const WeaponSlots& weapons = cls.weapons;
                     for (size_t i = 3; i < weapons.size(); ++i) {
                         if (weapons[i].id == 0) {
@@ -283,6 +283,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     }
                 }
 
+                player.setArmedWeapon(0);
                 self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
                 // Make sure to restream player on spawn
@@ -660,6 +661,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
                 break;
             case PlayerBulletHitType_Object:
+            case PlayerBulletHitType_PlayerObject:
                 if (self.objectsComponent && self.objectsComponent->valid(player.bulletData_.hitID)) {
                     ScopedPoolReleaseLock lock(*self.objectsComponent, player.bulletData_.hitID);
                     allowed = self.eventDispatcher.stopAtFalse(
@@ -667,6 +669,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                             return handler->onShotObject(player, lock.entry, player.bulletData_);
                         });
                 } else {
+                    player.bulletData_.hitType = PlayerBulletHitType_PlayerObject;
                     IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
                     if (data && data->valid(player.bulletData_.hitID)) {
                         ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
@@ -1104,7 +1107,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::PlayerJoin playerJoinPacket;
         playerJoinPacket.PlayerID = player.poolID;
         playerJoinPacket.Col = player.colour_;
-        playerJoinPacket.IsNPC = false;
+        playerJoinPacket.IsNPC = player.isBot_;
         playerJoinPacket.Name = StringView(player.name_);
         for (IPlayer* other : storage.entries()) {
             if (&peer == other) {
@@ -1117,7 +1120,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             NetCode::RPC::PlayerJoin otherJoinPacket;
             otherJoinPacket.PlayerID = otherPlayer->poolID;
             otherJoinPacket.Col = otherPlayer->colour_;
-            otherJoinPacket.IsNPC = false;
+            otherJoinPacket.IsNPC = otherPlayer->isBot_;
             otherJoinPacket.Name = StringView(otherPlayer->name_);
             peer.sendRPC(otherJoinPacket);
         }

@@ -11,9 +11,10 @@ if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
 	)
 endif()
 
+set(CMAKE_CXX_STANDARD 17)
+
 # MSVC
 if(MSVC)
-	set(CMAKE_CXX_STANDARD 17)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
 	add_compile_options("/clang:-v")
 	add_link_options("/LARGEADDRESSAWARE")
