@@ -23,12 +23,49 @@ void handler(int s)
     }
 }
 
+#ifdef BUILD_WINDOWS
+typedef BOOL(WINAPI* MiniDumpWriteDump_t)(
+    HANDLE hProcess,
+    DWORD ProcessId,
+    HANDLE hFile,
+    MINIDUMP_TYPE DumpType,
+    PMINIDUMP_EXCEPTION_INFORMATION ExceptionParam,
+    PMINIDUMP_USER_STREAM_INFORMATION UserStreamParam,
+    PMINIDUMP_CALLBACK_INFORMATION CallbackParam);
+
+LONG WINAPI ExceptionHandler(PEXCEPTION_POINTERS apExceptionInfo)
+{
+    HMODULE mhLib = LoadLibrary("dbghelp.dll");
+    MiniDumpWriteDump_t MiniDumpWriteDump = reinterpret_cast<MiniDumpWriteDump_t>(GetProcAddress(mhLib, "MiniDumpWriteDump"));
+
+    HANDLE hFile = CreateFile(
+        "omp_minidump.dmp",
+        GENERIC_WRITE,
+        FILE_SHARE_WRITE,
+        NULL,
+        CREATE_ALWAYS,
+        FILE_ATTRIBUTE_NORMAL,
+        NULL);
+
+    MINIDUMP_EXCEPTION_INFORMATION ExInfo;
+    ExInfo.ThreadId = GetCurrentThreadId();
+    ExInfo.ExceptionPointers = apExceptionInfo;
+    ExInfo.ClientPointers = FALSE;
+
+    MiniDumpWriteDump(GetCurrentProcess(), GetCurrentProcessId(), hFile, MiniDumpWithIndirectlyReferencedMemory, &ExInfo, NULL, NULL);
+    CloseHandle(hFile);
+
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+#endif
+
 int main(int argc, char** argv)
 {
     signal(SIGINT, &handler);
     signal(SIGTERM, &handler);
 #ifdef BUILD_WINDOWS
     signal(SIGBREAK, &handler);
+    SetUnhandledExceptionFilter(&ExceptionHandler);
 #endif
 
     cxxopts::Options options(argv[0], "The open.mp game server");
