@@ -1,7 +1,7 @@
 #include "legacy_network_impl.hpp"
 #include <sdk.hpp>
 
-struct RakNetLegacyNetworkComponent : INetworkComponent {
+struct RakNetLegacyNetworkComponent final : INetworkComponent {
     RakNetLegacyNetwork legacyNetwork;
 
     void onLoad(ICore* core) override
@@ -27,6 +27,11 @@ struct RakNetLegacyNetworkComponent : INetworkComponent {
     UUID getUUID() override
     {
         return 0xea9799fd79cf8442;
+    }
+
+    void free() override
+    {
+        delete this;
     }
 };
 

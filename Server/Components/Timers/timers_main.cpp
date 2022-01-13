@@ -67,10 +67,15 @@ struct TimersComponent final : public ITimersComponent, public CoreEventHandler 
         }
     }
 
+    void free() override
+    {
+        delete this;
+    }
+
     std::set<Timer*> timers;
-} component;
+};
 
 COMPONENT_ENTRY_POINT()
 {
-    return &component;
+    return new TimersComponent();
 }

@@ -322,9 +322,13 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
         return true;
     }
 
-} component;
+    void free() override
+    {
+        delete this;
+    }
+};
 
 COMPONENT_ENTRY_POINT()
 {
-    return &component;
+    return new LegacyConfigComponent();
 }

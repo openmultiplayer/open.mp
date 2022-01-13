@@ -130,15 +130,20 @@ struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, Play
         core->getPlayers().getEventDispatcher().addEventHandler(this);
     }
 
+    void free() override
+    {
+        delete this;
+    }
+
     ~VariablesComponent()
     {
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
         }
     }
-} component;
+};
 
 COMPONENT_ENTRY_POINT()
 {
-    return &component;
+    return new VariablesComponent();
 }
