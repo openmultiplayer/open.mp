@@ -88,7 +88,7 @@ void Vehicle::streamOutForClient(IPlayer& player)
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
 }
 
-bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player)
+bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, IPlayer& player)
 {
     if (respawning) {
         return false;
@@ -128,7 +128,7 @@ bool Vehicle::updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSy
     return true;
 }
 
-bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player)
+bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupiedSync, IPlayer& player)
 {
     if ((isTrailer() && tower->getDriver() != nullptr && tower->getDriver() != &player) || respawning) {
         return false;
@@ -167,7 +167,7 @@ bool Vehicle::updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& 
     return allowed;
 }
 
-bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& trailerSync, IPlayer& player)
+bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync, IPlayer& player)
 {
     if (!streamedFor_.valid(player.getID())) {
         return false;
@@ -208,7 +208,7 @@ bool Vehicle::updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& tr
     return allowed;
 }
 
-bool Vehicle::updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player)
+bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player)
 {
     PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
     // Only do heavy processing if switching vehicle or switching between driver and passenger

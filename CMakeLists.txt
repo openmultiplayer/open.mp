@@ -115,4 +115,5 @@ endfunction()
 
 add_subdirectory(lib)
 add_subdirectory(SDK)
+add_subdirectory(Shared)
 add_subdirectory(Server)
