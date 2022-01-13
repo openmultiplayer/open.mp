@@ -79,6 +79,11 @@ struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
     /// @returns Database result set
     IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) override;
 
+    void free() override
+    {
+        delete this;
+    }
+
 private:
     /// Database connections
     /// TODO: Replace with a pool type that grows dynamically
