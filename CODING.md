@@ -2,7 +2,7 @@
 
 ### Always try to pass by reference unless you're passing:
 * Basic types (int, char, etc.)
-* StringView
+* StringView/Span
 * Vector2/Vector3/Vector4/GTAQuat
 
 ### ALWAYS pass these by const reference in the SDK headers:
