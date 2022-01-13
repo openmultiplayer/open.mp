@@ -190,9 +190,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     /// Puts the player inside this vehicle.
     void putPlayer(IPlayer& player, int SeatID) override;
 
-    /// Removes the player from the vehicle.
-    void removePlayer(IPlayer& player) override;
-
     /// Set the vehicle's Z angle.
     void setZAngle(float angle) override;
 

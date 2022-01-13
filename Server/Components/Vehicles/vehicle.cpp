@@ -407,12 +407,6 @@ int Vehicle::getInterior()
     return interior;
 }
 
-void Vehicle::removePlayer(IPlayer& player)
-{
-    NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
-    player.sendRPC(removePlayerFromVehicleRPC);
-}
-
 void Vehicle::setZAngle(float angle)
 {
     const Vector3 euler = rot.ToEuler();
