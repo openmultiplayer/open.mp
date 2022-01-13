@@ -984,6 +984,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return enableCameraTargeting_;
     }
 
+    void removeFromVehicle() override
+    {
+        NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
+        sendRPC(removePlayerFromVehicleRPC);
+    }
+
     IPlayer* getCameraTargetPlayer() override;
 
     IVehicle* getCameraTargetVehicle() override;

@@ -424,9 +424,9 @@ SCRIPT_API(RemoveBuildingForPlayer, bool(IPlayer& player, uint32_t model, Vector
     return true;
 }
 
-SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player, IVehicle& vehicle))
+SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
-    vehicle.removePlayer(player);
+    player.removeFromVehicle();
     return true;
 }
 
