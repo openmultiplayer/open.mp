@@ -279,6 +279,21 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
                 if (idx != -1) {
                     line = line.substr(0, idx);
                 }
+
+                // Remove all spaces from the beginning of the string
+                while (line.size() && isspace(line.front())) {
+                    line.erase(line.begin());
+                }
+                // Remove all spaces from the end of the string
+                while (line.size() && isspace(line.back())) {
+                    line.pop_back();
+                }
+
+                // Skip empty lines
+                if (line.size() == 0) {
+                    return true;
+                }
+
                 // Get the setting name
                 String name = line;
                 idx = name.find_first_of(' ');
