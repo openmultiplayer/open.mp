@@ -78,15 +78,26 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
     int maxlen = params[2];
 
     int param = 4;
-    cell* coutput = amx_Address(amx, params[1]);
     cell* cinput = amx_Address(amx, params[3]);
-    atcprintf(coutput, maxlen - 1, cinput, amx, params, &param);
+
+    cell staticOutput[4096];
+    cell* output = staticOutput;
+    std::unique_ptr<cell[]> dynamicOutput;
+    if (maxlen * sizeof(cell) > sizeof(staticOutput)) {
+        dynamicOutput = std::make_unique<cell[]>(maxlen);
+        output = dynamicOutput.get();
+    }
+
+    size_t len = atcprintf(output, maxlen - 1, cinput, amx, params, &param);
 
     if (param - 1 < num) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
     }
+
+    cell* coutput = amx_Address(amx, params[1]);
+    memcpy(coutput, output, (len + 1) * sizeof(cell));
 
     return 1;
 }
