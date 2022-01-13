@@ -5,6 +5,8 @@
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler {
     ICore& core;
     PoolStorage<Player, IPlayer, IPlayerPool::Capacity> storage;
+    FlatPtrHashSet<IPlayer> playerList;
+    FlatPtrHashSet<IPlayer> botList;
     DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
     DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
     IVehiclesComponent* vehiclesComponent = nullptr;
@@ -16,7 +18,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     int* markersLimit;
     float* markersLimitRadius;
     int* gameTimeUpdateRate;
-    int numBots = 0;
     int maxBots = 0;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
@@ -1033,6 +1034,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return storage.entries();
     }
 
+    const FlatPtrHashSet<IPlayer>& players() override
+    {
+        return playerList;
+    }
+
+    const FlatPtrHashSet<IPlayer>& bots() override
+    {
+        return botList;
+    }
+
     IEventDispatcher<PlayerEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;
@@ -1051,10 +1062,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override
     {
         if (params.bot) {
-            if (numBots >= maxBots) {
+            if (botList.size() >= maxBots) {
                 return { NewConnectionResult_NoPlayerSlot, nullptr };
             }
-            ++numBots;
         }
 
         if (params.name.length() < MIN_PLAYER_NAME || params.name.length() > MAX_PLAYER_NAME) {
@@ -1074,6 +1084,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         if (!result) {
             return { NewConnectionResult_NoPlayerSlot, nullptr };
         }
+
+        auto& secondaryPool = result->isBot_ ? botList : playerList;
+        secondaryPool.emplace(result);
 
         initPlayer(*result);
         return { NewConnectionResult_Success, result };
@@ -1149,9 +1162,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
-            if (player.isBot_) {
-                --numBots;
-            }
+            auto& secondaryPool = player.isBot_ ? botList : playerList;
+            secondaryPool.erase(&player);
 
             storage.release(player.poolID);
         }
