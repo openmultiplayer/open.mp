@@ -305,7 +305,7 @@ struct Config final : IEarlyConfig {
                 obj["reason"] = entry.getReason();
                 char iso8601[28] = { 0 };
                 std::time_t now = WorldTime::to_time_t(entry.time);
-                std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::gmtime(&now));
+                std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
                 obj["time"] = iso8601;
                 top.push_back(obj);
             }
