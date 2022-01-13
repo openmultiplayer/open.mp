@@ -56,10 +56,9 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
     reinterpret_cast<void*>(&amx_UTF8Put),
 };
 
-struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEventHandler {
+struct PawnComponent final : public IPawnComponent, public CoreEventHandler, ConsoleEventHandler {
     ICore* core = nullptr;
     Scripting scriptingInstance;
-    DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
 
     StringView componentName() const override
     {
@@ -73,7 +72,7 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
 
     IEventDispatcher<PawnEventHandler>& getEventDispatcher() override
     {
-        return eventDispatcher;
+        return PawnManager::Get()->eventDispatcher;
     }
 
     void onLoad(ICore* c) override
@@ -83,7 +82,7 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
         PawnManager::Get()->core = core;
         PawnManager::Get()->config = &core->getConfig();
         PawnManager::Get()->players = &core->getPlayers();
-        PawnPluginManager::Get()->core = core;
+        PawnManager::Get()->pluginManager.core = core;
         core->getEventDispatcher().addEventHandler(this);
 
         // Set AMXFILE environment variable to "{current_dir}/scriptfiles"
@@ -127,7 +126,7 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
     void onReady() override
     {
         PawnManager* mgr = PawnManager::Get();
-        PawnPluginManager* pluginMgr = PawnPluginManager::Get();
+        PawnPluginManager& pluginMgr = PawnManager::Get()->pluginManager;
 
         // read values of plugins, entry_file and side_scripts from config file
         IConfig& config = core->getConfig();
@@ -137,14 +136,14 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
 
         // load plugins
         for (auto& plugin : plugins) {
-            pluginMgr->Load(String(plugin));
+            pluginMgr.Load(String(plugin));
         }
 
         // load scripts
         for (auto& script : sideScripts) {
-            mgr->Load(eventDispatcher, String(script), false);
+            mgr->Load(String(script), false);
         }
-        mgr->Load(eventDispatcher, String(entryFile), true);
+        mgr->Load(String(entryFile), true);
     }
 
     const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const override
@@ -154,12 +153,19 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
 
     bool onConsoleText(StringView command, StringView parameters) override
     {
-        return PawnManager::Get()->OnServerCommand(eventDispatcher, String(command), String(parameters));
+        return PawnManager::Get()->OnServerCommand(String(command), String(parameters));
     }
 
     void onTick(Microseconds elapsed, TimePoint now) override
     {
-        PawnPluginManager::Get()->ProcessTick();
+        PawnManager::Get()->pluginManager.ProcessTick();
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (component == PawnManager::Get()->console) {
+            PawnManager::Get()->console = nullptr;
+        }
     }
 
     ~PawnComponent()
@@ -170,10 +176,13 @@ struct PawnComponent : public IPawnComponent, public CoreEventHandler, ConsoleEv
         if (PawnManager::Get()->console) {
             PawnManager::Get()->console->getEventDispatcher().removeEventHandler(this);
         }
+        PawnManager::Destroy();
     }
-} component;
+
+    void free() override { delete this; }
+};
 
 COMPONENT_ENTRY_POINT()
 {
-    return &component;
+    return new PawnComponent();
 }
