@@ -18,6 +18,7 @@ target_compile_definitions(Server PRIVATE
 
 target_link_libraries(Server PUBLIC
 	SDK
+	NetCode
 )
 
 target_link_libraries(Server PRIVATE

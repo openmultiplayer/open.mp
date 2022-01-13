@@ -734,7 +734,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
-            bool vehicleOk = self.vehiclesComponent->get(vehicleSync.VehicleID).updateFromSync(vehicleSync, player);
+            bool vehicleOk = self.vehiclesComponent->get(vehicleSync.VehicleID).updateFromDriverSync(vehicleSync, player);
             player.setState(PlayerState_Driver);
 
             if (vehicleOk) {
