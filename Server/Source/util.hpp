@@ -6,6 +6,7 @@
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 struct IUnknown;
 #include <Windows.h>
+#include <Dbghelp.h>
 #include <shellapi.h>
 #include <timeapi.h>
 #define SET_TICKER_RESOLUTION(ms) timeBeginPeriod(ms)
