@@ -172,12 +172,7 @@ struct Config final : IEarlyConfig {
                         if (PeerAddress::FromString(address, arrVal["address"].get<String>())) {
                             std::tm time = {};
                             std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
-                            time_t t =
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-                                _mkgmtime(&time);
-#else
-                                timegm(&time);
-#endif
+                            time_t t = mktime(&time);
 
                             bans.emplace_back(
                                 BanEntry(
@@ -305,7 +300,7 @@ struct Config final : IEarlyConfig {
                 obj["reason"] = entry.getReason();
                 char iso8601[28] = { 0 };
                 std::time_t now = WorldTime::to_time_t(entry.time);
-                std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::gmtime(&now));
+                std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
                 obj["time"] = iso8601;
                 top.push_back(obj);
             }
