@@ -291,7 +291,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
 
                 // Skip empty lines
                 if (line.size() == 0) {
-                    return true;
+                    continue;
                 }
 
                 // Get the setting name
