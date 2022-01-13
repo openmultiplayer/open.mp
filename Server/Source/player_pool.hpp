@@ -372,10 +372,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
             StringView msg = playerRequestCommandMessage.message;
-            bool send = self.eventDispatcher.anyTrue(
-                [&peer, msg](PlayerEventHandler* handler) {
-                    return handler->onCommandText(peer, msg);
-                });
+            bool send = msg.size() > 1 && self.eventDispatcher.anyTrue([&peer, msg](PlayerEventHandler* handler) {
+                return handler->onCommandText(peer, msg);
+            });
 
             if (!send) {
                 peer.sendClientMessage(Colour::White(), "SERVER: Unknown command.");
@@ -443,15 +442,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 newKeys = footSync.Keys;
                 break;
             }
+
+            player.keys_.leftRight = footSync.LeftRight;
+            player.keys_.upDown = footSync.UpDown;
+
             if (player.keys_.keys != newKeys) {
-                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
+                const uint32_t oldKeys = player.keys_.keys;
+                player.keys_.keys = newKeys;
+                self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
 
-            player.keys_.keys = newKeys;
-            player.keys_.leftRight = footSync.LeftRight;
-            player.keys_.upDown = footSync.UpDown;
             player.health_ = footSync.HealthArmour.x;
             player.armour_ = footSync.HealthArmour.y;
             player.armedWeapon_ = footSync.Weapon;
@@ -500,15 +502,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             player.pos_ = spectatorSync.Position;
 
-            if (player.keys_.keys != newKeys) {
-                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
-                });
-            }
-
-            player.keys_.keys = newKeys;
             player.keys_.leftRight = spectatorSync.LeftRight;
             player.keys_.upDown = spectatorSync.UpDown;
+
+            if (player.keys_.keys != newKeys) {
+                const uint32_t oldKeys = player.keys_.keys;
+                player.keys_.keys = newKeys;
+                self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, oldKeys);
+                });
+            }
 
             player.setState(PlayerState_Spectating);
 
@@ -723,14 +726,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 break;
             }
 
-            if (player.keys_.keys != newKeys) {
-                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
-                });
-            }
-            player.keys_.keys = newKeys;
             player.keys_.leftRight = vehicleSync.LeftRight;
             player.keys_.upDown = vehicleSync.UpDown;
+
+            if (player.keys_.keys != newKeys) {
+                const uint32_t oldKeys = player.keys_.keys;
+                player.keys_.keys = newKeys;
+                self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, oldKeys);
+                });
+            }
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
@@ -926,14 +931,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 newKeys = passengerSync.Keys;
                 break;
             }
-            if (player.keys_.keys != newKeys) {
-                self.eventDispatcher.all([&peer, &player, &newKeys](PlayerEventHandler* handler) {
-                    handler->onKeyStateChange(peer, newKeys, player.keys_.keys);
-                });
-            }
-            player.keys_.keys = newKeys;
+
             player.keys_.leftRight = passengerSync.LeftRight;
             player.keys_.upDown = passengerSync.UpDown;
+
+            if (player.keys_.keys != newKeys) {
+                const uint32_t oldKeys = player.keys_.keys;
+                player.keys_.keys = newKeys;
+                self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler) {
+                    handler->onKeyStateChange(peer, newKeys, oldKeys);
+                });
+            }
             player.health_ = passengerSync.HealthArmour.x;
             player.armour_ = passengerSync.HealthArmour.y;
             player.armedWeapon_ = passengerSync.WeaponID;
