@@ -88,7 +88,7 @@ namespace RPC {
             }
 
             bs.write(NetworkBitStreamValue::UINT8(MaterialsUsed.count()));
-            for (int i = 0; i < MaterialsUsed.count(); ++i) {
+            for (int i = 0; i < MaterialsUsed.size(); ++i) {
                 if (MaterialsUsed.test(i)) {
                     const ObjectMaterial& data = Materials[i];
                     bs.write(NetworkBitStreamValue::UINT8(data.data.type));
