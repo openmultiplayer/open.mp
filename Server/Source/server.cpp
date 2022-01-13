@@ -27,7 +27,9 @@ int main(int argc, char** argv)
 {
     signal(SIGINT, &handler);
     signal(SIGTERM, &handler);
+#ifdef BUILD_WINDOWS
     signal(SIGBREAK, &handler);
+#endif
 
     cxxopts::Options options(argv[0], "The open.mp game server");
 
