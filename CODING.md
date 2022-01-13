@@ -6,7 +6,7 @@
 * Vector2/Vector3/Vector4/GTAQuat
 
 ### ALWAYS pass these by const reference in the SDK headers:
-* Any ABI-stable dynamic memory allocating objects (StaticString, FlatHashMap, FlatHashSet, etc.)
+* Any ABI-stable dynamic memory allocating objects (StaticArray, FlatHashMap, FlatHashSet, etc.)
 
 ### NEVER use these in the SDK headers:
 * Any ABI-unstable objects from STL (String, DynamicArray, etc.)
