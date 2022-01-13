@@ -170,7 +170,6 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
     ~PawnComponent()
     {
-        core->printLn("unloaded");
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
         }
