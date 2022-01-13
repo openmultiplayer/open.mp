@@ -132,15 +132,15 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     }
 
     /// Update the vehicle's data from a player sync packet.
-    bool updateFromSync(const NetCode::Packet::PlayerVehicleSync& vehicleSync, IPlayer& player) override;
+    bool updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, IPlayer& player) override;
 
     /// Update the vehicle's data from an unoccupied sync packet.
-    bool updateFromUnoccupied(const NetCode::Packet::PlayerUnoccupiedSync& unoccupiedSync, IPlayer& player) override;
+    bool updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupiedSync, IPlayer& player) override;
 
     /// Update the vehicle from a trailer sync packet
-    bool updateFromTrailerSync(const NetCode::Packet::PlayerTrailerSync& unoccupiedSync, IPlayer& player) override;
+    bool updateFromTrailerSync(const VehicleTrailerSyncPacket& unoccupiedSync, IPlayer& player) override;
 
-    bool updateFromPassengerSync(const NetCode::Packet::PlayerPassengerSync& passengerSync, IPlayer& player) override;
+    bool updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player) override;
 
     /// Sets the vehicle's body colour
     void setColour(int col1, int col2) override;
