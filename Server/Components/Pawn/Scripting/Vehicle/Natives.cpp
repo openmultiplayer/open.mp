@@ -310,7 +310,7 @@ SCRIPT_API(IsValidVehicle, bool(IVehicle* vehicle))
     return vehicle != nullptr;
 }
 
-SCRIPT_API(AddStaticVehicle, bool(int modelid, Vector3 spawn, float angle, int colour1, int colour2))
+SCRIPT_API(AddStaticVehicle, int(int modelid, Vector3 spawn, float angle, int colour1, int colour2))
 {
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {
@@ -322,7 +322,7 @@ SCRIPT_API(AddStaticVehicle, bool(int modelid, Vector3 spawn, float angle, int c
     return INVALID_VEHICLE_ID;
 }
 
-SCRIPT_API(AddStaticVehicleEx, bool(int modelid, Vector3 spawn, float angle, int colour1, int colour2, int respawnDelay, bool addSiren))
+SCRIPT_API(AddStaticVehicleEx, int(int modelid, Vector3 spawn, float angle, int colour1, int colour2, int respawnDelay, bool addSiren))
 {
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {

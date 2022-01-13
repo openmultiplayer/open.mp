@@ -268,8 +268,35 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
         std::ifstream cfg("server.cfg");
         if (cfg.good()) {
             for (String line; std::getline(cfg, line);) {
+                int idx;
+                // Ignore // comments
+                idx = line.find("//");
+                if (idx != -1) {
+                    line = line.substr(0, idx);
+                }
+                // Ignore # comments
+                idx = line.find_first_of('#');
+                if (idx != -1) {
+                    line = line.substr(0, idx);
+                }
+
+                // Remove all spaces from the beginning of the string
+                while (line.size() && isspace(line.front())) {
+                    line.erase(line.begin());
+                }
+                // Remove all spaces from the end of the string
+                while (line.size() && isspace(line.back())) {
+                    line.pop_back();
+                }
+
+                // Skip empty lines
+                if (line.size() == 0) {
+                    continue;
+                }
+
+                // Get the setting name
                 String name = line;
-                int idx = name.find_first_of(' ');
+                idx = name.find_first_of(' ');
                 if (idx != -1) {
                     name = line.substr(0, idx);
                 }
