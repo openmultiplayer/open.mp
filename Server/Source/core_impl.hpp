@@ -76,6 +76,18 @@ struct ComponentList : public IComponentList {
             });
     }
 
+    void free()
+    {
+        for (auto it = components.begin(); it != components.end();) {
+            std::for_each(components.begin(), components.end(),
+                [it](const Pair<UUID, IComponent*>& pair) {
+                    pair.second->onFree(it->second);
+                });
+            it->second->free();
+            components.erase(it++);
+        }
+    }
+
     auto add(IComponent* component)
     {
         return components.try_emplace(component->getUUID(), component);
@@ -369,6 +381,11 @@ struct Config final : IEarlyConfig {
         }
     }
 
+    void clear()
+    {
+        providers.clear();
+    }
+
 private:
     ICore& core;
     FlatPtrHashSet<IConfigProviderComponent> providers;
@@ -490,7 +507,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     ComponentList components;
     Config config;
     FILE* logFile;
-    bool run_;
+    std::atomic_bool run_;
     unsigned ticksPerSecond;
     unsigned ticksThisSecond;
     TimePoint ticksPerSecondLastUpdate;
@@ -598,9 +615,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     {
         IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
         if (consoleComp) {
-            components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+            components.queryComponent<IConsoleComponent>()->getEventDispatcher().removeEventHandler(this);
         }
         players.getEventDispatcher().removeEventHandler(this);
+
+        networks.clear();
+        config.clear();
+        components.free();
+
         if (logFile) {
             fclose(logFile);
         }

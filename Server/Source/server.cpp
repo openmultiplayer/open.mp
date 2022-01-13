@@ -4,9 +4,33 @@
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sdk.hpp>
+#include <signal.h>
+#include <thread>
+
+Core* core = nullptr;
+std::atomic_bool done = false;
+
+void handler(int s)
+{
+    signal(s, &handler);
+    if (core) {
+        core->run_ = false;
+    }
+
+    // Spin lock until done
+    while (!done) {
+        std::this_thread::sleep_for(Milliseconds(1));
+    }
+}
 
 int main(int argc, char** argv)
 {
+    signal(SIGINT, &handler);
+    signal(SIGTERM, &handler);
+#ifdef BUILD_WINDOWS
+    signal(SIGBREAK, &handler);
+#endif
+
     cxxopts::Options options(argv[0], "The open.mp game server");
 
     options.add_options()(
@@ -34,7 +58,10 @@ int main(int argc, char** argv)
 
     SET_TICKER_RESOLUTION(1);
 
-    Core* core = new Core(result);
-
+    core = new Core(result);
     core->run();
+    delete core;
+    done = true;
+
+    return 0;
 }

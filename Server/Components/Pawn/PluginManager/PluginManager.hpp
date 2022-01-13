@@ -7,7 +7,7 @@
 #include "../Plugin/Plugin.h"
 #include "../Singleton.hpp"
 
-class PawnPluginManager : public Singleton<PawnPluginManager> {
+class PawnPluginManager {
 public:
     FlatHashMap<String, std::unique_ptr<PawnPlugin>> plugins_;
     ICore* core = nullptr;

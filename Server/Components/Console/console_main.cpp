@@ -20,12 +20,17 @@ StringView trim(StringView view)
 }
 
 struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
+    struct ThreadProcData {
+        std::atomic_bool valid;
+        ConsoleComponent* component;
+    };
+
     ICore* core = nullptr;
     DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
-    std::thread consoleThread;
     std::mutex cmdMutex;
     std::atomic_bool newCmd;
     String cmd;
+    ThreadProcData* threadData;
 
     struct PlayerRconCommandHandler : public SingleNetworkInOutEventHandler {
         ConsoleComponent& self;
@@ -95,7 +100,8 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
     }
 
     ConsoleComponent()
-        : playerRconCommandHandler(*this)
+        : threadData(nullptr)
+        , playerRconCommandHandler(*this)
     {
     }
 
@@ -113,25 +119,29 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
         core->addPerPacketEventHandler<NetCode::Packet::PlayerRconCommand>(&playerRconCommandHandler);
 
-        consoleThread = std::thread(ThreadProc, this);
+        threadData = new ThreadProcData { true, this };
+        std::thread(ThreadProc, threadData).detach();
     }
 
-    static void ThreadProc(ConsoleComponent* component)
+    static void ThreadProc(ThreadProcData* threadData)
     {
         String line;
         while (true) {
             std::getline(std::cin, line);
-            std::scoped_lock<std::mutex> lock(component->cmdMutex);
-            component->cmd = line;
-            component->newCmd = true;
+            if (threadData->valid) {
+                std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
+                threadData->component->cmd = line;
+                threadData->component->newCmd = true;
+            } else {
+                delete threadData;
+                return;
+            }
         }
     }
 
     ~ConsoleComponent()
     {
-        if (consoleThread.joinable()) {
-            consoleThread.join();
-        }
+        threadData->valid = false;
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
@@ -190,9 +200,14 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         // todo: add commands
         return false;
     }
-} component;
+
+    void free() override
+    {
+        delete this;
+    }
+};
 
 COMPONENT_ENTRY_POINT()
 {
-    return &component;
+    return new ConsoleComponent();
 }
