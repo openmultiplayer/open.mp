@@ -632,6 +632,8 @@ void RakNetLegacyNetwork::update()
     query.setPassworded(!password.empty());
     rakNetServer.SetPassword(password.empty() ? 0 : password.data());
 
+    query.buildConfigDependentBuffers();
+
     int mtu = *config.getInt("network_mtu");
     rakNetServer.SetMTUSize(mtu);
 }
@@ -655,8 +657,10 @@ void RakNetLegacyNetwork::init(ICore* c)
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
-    query = Query(c);
+
+    query.setCore(c);
     query.setRuleValue("version", "0.3.7-R2 open.mp");
+    query.setMaxPlayers(maxPlayers);
 
     update();
 
@@ -689,7 +693,6 @@ void RakNetLegacyNetwork::init(ICore* c)
     rakNetServer.StartOccasionalPing();
 
     SAMPRakNet::SetPort(port);
-    query.setMaxPlayers(maxPlayers);
 }
 
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
