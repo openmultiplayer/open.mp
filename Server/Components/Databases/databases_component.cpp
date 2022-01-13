@@ -1,7 +1,5 @@
 #include "databases_component.hpp"
 
-DatabasesComponent databaseComponent;
-
 DatabasesComponent::DatabasesComponent()
 {
     databaseConnections.claimUnusable(0);
@@ -123,5 +121,5 @@ IDatabaseResultSet& DatabasesComponent::getDatabaseResultSetByID(int databaseRes
 
 COMPONENT_ENTRY_POINT()
 {
-    return &databaseComponent;
+    return new DatabasesComponent();
 }

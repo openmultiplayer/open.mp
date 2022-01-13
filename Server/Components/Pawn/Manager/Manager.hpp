@@ -27,6 +27,7 @@
 #include <memory>
 #include <string>
 
+#include "../PluginManager/PluginManager.hpp"
 #include "../Script/Script.hpp"
 #include "../Singleton.hpp"
 
@@ -53,6 +54,8 @@ public:
     ITimersComponent* timers = nullptr;
     IVariablesComponent* vars = nullptr;
     IVehiclesComponent* vehicles = nullptr;
+    DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
+    PawnPluginManager pluginManager;
 
     PawnManager();
     ~PawnManager();
@@ -65,9 +68,9 @@ public:
     void SetBasePath(std::string const& path);
     void SetScriptPath(std::string const& path);
 
-    void Load(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name, bool primary = false);
-    void Reload(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name);
-    void Unload(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& name);
+    void Load(std::string const& name, bool primary = false);
+    void Reload(std::string const& name);
+    void Unload(std::string const& name);
 
     template <typename... T>
     cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
@@ -262,7 +265,7 @@ public:
     AMX* AMXFromID(int id) const;
     int IDFromAMX(AMX*) const;
 
-    bool OnServerCommand(DefaultEventDispatcher<PawnEventHandler>& eventDispatcher, std::string const& cmd, std::string const& args);
+    bool OnServerCommand(std::string const& cmd, std::string const& args);
 
 private:
     std::string
