@@ -1,7 +1,7 @@
 #include "../Types.hpp"
+#include <Server/Components/Vehicles/vehicle_components.hpp>
+#include <Server/Components/Vehicles/vehicle_models.hpp>
 #include <sdk.hpp>
-#include <vehicle_components.hpp>
-#include <vehicle_models.hpp>
 
 SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colour1, int colour2, int respawnDelay, bool addSiren))
 {

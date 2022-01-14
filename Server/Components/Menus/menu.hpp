@@ -1,6 +1,9 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Menus/menus.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
+
+using namespace Impl;
 
 struct PlayerMenuData final : IPlayerMenuData {
     uint8_t menuId = INVALID_MENU_ID;

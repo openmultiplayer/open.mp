@@ -2,6 +2,7 @@
 
 #include "Manager/Manager.hpp"
 #include <amx/amx.h>
+#include <Impl/pool_impl.hpp>
 
 struct PawnTimerHandler;
 

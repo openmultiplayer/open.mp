@@ -1,6 +1,9 @@
 #include <Server/Components/GangZones/gangzones.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
     GangZonePos pos;

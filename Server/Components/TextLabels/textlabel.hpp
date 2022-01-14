@@ -2,6 +2,9 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 template <class T>
 struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {

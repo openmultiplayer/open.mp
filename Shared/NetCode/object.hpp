@@ -10,9 +10,9 @@ namespace RPC {
     struct SetPlayerObjectMaterial final : NetworkPacketBase<84> {
         int ObjectID;
         int MaterialID;
-        ObjectMaterial& MaterialData;
+        ObjectMaterialData& MaterialData;
 
-        SetPlayerObjectMaterial(ObjectMaterial& materialData)
+        SetPlayerObjectMaterial(ObjectMaterialData& materialData)
             : MaterialData(materialData)
         {
         }
@@ -25,23 +25,23 @@ namespace RPC {
         void write(INetworkBitStream& bs) const
         {
             bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.type));
+            bs.write(NetworkBitStreamValue::UINT8(MaterialData.type));
             bs.write(NetworkBitStreamValue::UINT8(MaterialID));
 
-            if (MaterialData.data.type == ObjectMaterialData::Type::Default) {
-                bs.write(NetworkBitStreamValue::UINT16(MaterialData.data.model));
-                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.txdOrText)));
-                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textureOrFont)));
-                bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.materialColour.ARGB()));
-            } else if (MaterialData.data.type == ObjectMaterialData::Type::Text) {
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.materialSize));
-                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textureOrFont)));
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.fontSize));
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.bold));
-                bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.fontColour.ARGB()));
-                bs.write(NetworkBitStreamValue::UINT32(MaterialData.data.backgroundColour.ARGB()));
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.data.alignment));
-                bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(MaterialData.txdOrText)));
+            if (MaterialData.type == ObjectMaterialData::Type::Default) {
+                bs.write(NetworkBitStreamValue::UINT16(MaterialData.model));
+                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textOrTXD)));
+                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.fontOrTexture)));
+                bs.write(NetworkBitStreamValue::UINT32(MaterialData.materialColour.ARGB()));
+            } else if (MaterialData.type == ObjectMaterialData::Type::Text) {
+                bs.write(NetworkBitStreamValue::UINT8(MaterialData.materialSize));
+                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.fontOrTexture)));
+                bs.write(NetworkBitStreamValue::UINT8(MaterialData.fontSize));
+                bs.write(NetworkBitStreamValue::UINT8(MaterialData.bold));
+                bs.write(NetworkBitStreamValue::UINT32(MaterialData.fontColour.ARGB()));
+                bs.write(NetworkBitStreamValue::UINT32(MaterialData.backgroundColour.ARGB()));
+                bs.write(NetworkBitStreamValue::UINT8(MaterialData.alignment));
+                bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(MaterialData.textOrTXD)));
             }
         }
     };
@@ -54,11 +54,11 @@ namespace RPC {
         float DrawDistance;
         bool CameraCollision;
         ObjectAttachmentData AttachmentData;
-        StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS> Materials;
+        StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> Materials;
         StaticBitset<MAX_OBJECT_MATERIAL_SLOTS>& MaterialsUsed;
 
         CreateObject(
-            StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS>& materials,
+            StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS>& materials,
             StaticBitset<MAX_OBJECT_MATERIAL_SLOTS>& materialsUsed)
             : Materials(materials)
             , MaterialsUsed(materialsUsed)
@@ -90,24 +90,24 @@ namespace RPC {
             bs.write(NetworkBitStreamValue::UINT8(MaterialsUsed.count()));
             for (int i = 0; i < MaterialsUsed.size(); ++i) {
                 if (MaterialsUsed.test(i)) {
-                    const ObjectMaterial& data = Materials[i];
-                    bs.write(NetworkBitStreamValue::UINT8(data.data.type));
+                    const ObjectMaterialData& data = Materials[i];
+                    bs.write(NetworkBitStreamValue::UINT8(data.type));
                     bs.write(NetworkBitStreamValue::UINT8(i));
 
-                    if (data.data.type == ObjectMaterialData::Type::Default) {
-                        bs.write(NetworkBitStreamValue::UINT16(data.data.model));
-                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.txdOrText)));
-                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textureOrFont)));
-                        bs.write(NetworkBitStreamValue::UINT32(data.data.materialColour.ARGB()));
-                    } else if (data.data.type == ObjectMaterialData::Type::Text) {
-                        bs.write(NetworkBitStreamValue::UINT8(data.data.materialSize));
-                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textureOrFont)));
-                        bs.write(NetworkBitStreamValue::UINT8(data.data.fontSize));
-                        bs.write(NetworkBitStreamValue::UINT8(data.data.bold));
-                        bs.write(NetworkBitStreamValue::UINT32(data.data.fontColour.ARGB()));
-                        bs.write(NetworkBitStreamValue::UINT32(data.data.backgroundColour.ARGB()));
-                        bs.write(NetworkBitStreamValue::UINT8(data.data.alignment));
-                        bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(data.txdOrText)));
+                    if (data.type == ObjectMaterialData::Type::Default) {
+                        bs.write(NetworkBitStreamValue::UINT16(data.model));
+                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textOrTXD)));
+                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.fontOrTexture)));
+                        bs.write(NetworkBitStreamValue::UINT32(data.materialColour.ARGB()));
+                    } else if (data.type == ObjectMaterialData::Type::Text) {
+                        bs.write(NetworkBitStreamValue::UINT8(data.materialSize));
+                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.fontOrTexture)));
+                        bs.write(NetworkBitStreamValue::UINT8(data.fontSize));
+                        bs.write(NetworkBitStreamValue::UINT8(data.bold));
+                        bs.write(NetworkBitStreamValue::UINT32(data.fontColour.ARGB()));
+                        bs.write(NetworkBitStreamValue::UINT32(data.backgroundColour.ARGB()));
+                        bs.write(NetworkBitStreamValue::UINT8(data.alignment));
+                        bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(data.textOrTXD)));
                     }
                 }
             }

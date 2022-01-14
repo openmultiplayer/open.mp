@@ -1102,9 +1102,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     void onPeerConnect(IPlayer& peer) override
     {
-        char out[16] = { 0 };
-        PeerAddress::ToString(peer.getNetworkData().networkID.address, out, sizeof(out));
-        eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, out, peer.getNetworkData().networkID.port);
+        PeerAddress::AddressString addressString;
+        PeerAddress::ToString(peer.getNetworkData().networkID.address, addressString);
+        eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, peer.getNetworkData().networkID.port);
 
         // Don't process player, about to be disconnected
         if (peer.getState() == PlayerState_Kicked) {

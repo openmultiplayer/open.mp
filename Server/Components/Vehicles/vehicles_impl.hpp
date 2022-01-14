@@ -1,9 +1,11 @@
 #pragma once
 
 #include "vehicle.hpp"
-#include "vehicle_components.hpp"
+#include <Server/Components/Vehicles/vehicle_components.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
+
+using namespace Impl;
 
 struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core = nullptr;

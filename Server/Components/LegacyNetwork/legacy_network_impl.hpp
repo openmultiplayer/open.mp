@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Query/query.hpp"
+#include <Impl/network_impl.hpp>
 #include <core.hpp>
 #include <glm/glm.hpp>
 #include <map>
@@ -10,6 +11,9 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/StringCompressor.h>
+
+using namespace Impl;
+
 #define MAGNITUDE_EPSILON 0.00001f
 
 struct Core;
@@ -432,8 +436,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return rakNetServer.GetLastPing(rid);
     }
 
-    void ban(const IBanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
-    void unban(const IBanEntry& entry) override;
+    void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
+    void unban(const BanEntry& entry) override;
 
     typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
 
