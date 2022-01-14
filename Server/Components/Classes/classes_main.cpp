@@ -1,6 +1,6 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <netcode.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
@@ -62,11 +62,13 @@ struct Class final : public IClass, public PoolIDProvider {
     {
     }
 
-    int getID() const override {
+    int getID() const override
+    {
         return poolID;
     }
 
-    const PlayerClass& getClass() override {
+    const PlayerClass& getClass() override
+    {
         return cls;
     }
 };
