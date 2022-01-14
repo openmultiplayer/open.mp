@@ -305,7 +305,7 @@ struct Config final : IEarlyConfig {
         }
         std::ofstream file(BansFileName);
         if (file.good()) {
-            file << top.dump(4);
+            file << top.dump(4, ' ', false, nlohmann::detail::error_handler_t::ignore);
         }
     }
 
@@ -1021,6 +1021,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         if (command == "exit") {
             run_ = false;
             return true;
+        }
+        if (command == "banip" && !parameters.empty()) {
+            const BanEntry entry(parameters, "BANIP", "Console");
+            for (INetwork* network : networks) {
+                network->ban(entry);
+            }
+            config.addBan(entry);
+            config.writeBans();
         }
         return false;
     }
