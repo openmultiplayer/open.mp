@@ -2,8 +2,8 @@
 #include <Impl/events_impl.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <atomic>
-#include <codecvt>
 #include <iostream>
+#include <locale>
 #include <mutex>
 #include <netcode.hpp>
 #include <network.hpp>
