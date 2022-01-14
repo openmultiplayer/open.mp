@@ -375,7 +375,7 @@ SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
     PeerNetworkData data = player.getNetworkData();
     PeerAddress::AddressString addressString;
     if (PeerAddress::ToString(data.networkID.address, addressString)) {
-        std::string ip_port(addressString);
+        String ip_port((StringView(addressString)));
         ip_port += ":";
         ip_port += std::to_string(data.networkID.port);
         output = ip_port;
