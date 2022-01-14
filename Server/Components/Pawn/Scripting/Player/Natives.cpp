@@ -887,6 +887,9 @@ SCRIPT_API(Kick, bool(IPlayer& player))
 
 SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, std::string const& string, int time, int style))
 {
+    if (string.empty()) {
+        return false;
+    }
     player.sendGameText(string, Milliseconds(time), style);
     return true;
 }
