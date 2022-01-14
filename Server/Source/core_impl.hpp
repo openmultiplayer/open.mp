@@ -289,8 +289,10 @@ struct Config final : IEarlyConfig {
         bans.erase(bans.begin() + index);
     }
 
-    void writeBans() const override
+    void writeBans() override
     {
+        optimiseBans();
+
         nlohmann::json top = nlohmann::json::array();
         for (const BanEntry& entry : bans) {
             nlohmann::json obj;
