@@ -379,6 +379,8 @@ struct Config final : IEarlyConfig {
         for (IConfigProviderComponent* provider : providers) {
             provider->configure(*this);
         }
+
+        this->setInt("max_players", glm::clamp(*this->getInt("max_players"), 1, 1000));
     }
 
     void clear()

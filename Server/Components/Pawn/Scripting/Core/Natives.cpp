@@ -190,6 +190,9 @@ SCRIPT_API(GameModeExit, bool())
 
 SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
 {
+    if (string.empty()) {
+        return false;
+    }
     PawnManager::Get()->players->sendGameTextToAll(string, Milliseconds(time), style);
     return true;
 }
