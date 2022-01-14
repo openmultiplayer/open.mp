@@ -571,7 +571,7 @@ SCRIPT_API(GetPlayerIp, int(IPlayer& player, std::string& ip))
     if (!data.networkID.address.ipv6) {
         PeerAddress::AddressString addressString;
         if (PeerAddress::ToString(data.networkID.address, addressString)) {
-            ip = addressString;
+            ip = StringView(addressString);
             return ip.length();
         }
     }
