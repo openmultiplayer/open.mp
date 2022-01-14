@@ -45,16 +45,25 @@ bool PeerAddress::FromString(PeerAddress& out, StringView string)
 
 bool PeerAddress::ToString(const PeerAddress& in, AddressString& address)
 {
-    address.reserve(AddressString::UsableStaticSize);
     if (in.ipv6) {
         in6_addr addr;
         for (int i = 0; i < 16; ++i) {
             addr.s6_addr[i] = in.v6.bytes[i];
         }
-        return inet_ntop(AF_INET6, &addr, address.data(), address.length()) != nullptr;
+        char output[INET6_ADDRSTRLEN] {};
+        bool res = inet_ntop(AF_INET6, &addr, output, INET6_ADDRSTRLEN) != nullptr;
+        if (res) {
+            address = AddressString(output);
+        }
+        return res;
     } else {
         in_addr addr;
         addr.s_addr = in.v4;
-        return inet_ntop(AF_INET, &addr, address.data(), address.length()) != nullptr;
+        char output[INET_ADDRSTRLEN] {};
+        bool res = inet_ntop(AF_INET, &addr, output, INET_ADDRSTRLEN) != nullptr;
+        if (res) {
+            address = AddressString(output);
+        }
+        return res;
     }
 }
