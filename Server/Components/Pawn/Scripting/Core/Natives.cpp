@@ -2,6 +2,7 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include "../Types.hpp"
+#include <Impl/network_impl.hpp>
 #include <iomanip>
 #include <math.h>
 #include <sstream>
@@ -121,10 +122,7 @@ SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 
 SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 {
-    PeerAddress address;
-    address.ipv6 = false;
-    PeerAddress::FromString(address, ipAddress);
-    BanEntry entry(address);
+    BanEntry entry(ipAddress);
     for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
         network->ban(entry, Milliseconds(timeMS));
     }
@@ -133,10 +131,7 @@ SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 
 SCRIPT_API(UnBlockIpAddress, bool(std::string const& ipAddress))
 {
-    PeerAddress address;
-    address.ipv6 = false;
-    PeerAddress::FromString(address, ipAddress);
-    BanEntry entry(address);
+    BanEntry entry(ipAddress);
     for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
         network->unban(entry);
     }
@@ -378,10 +373,9 @@ SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
 {
     PeerNetworkData data = player.getNetworkData();
-
-    char out[16] { 0 };
-    if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
-        std::string ip_port = out;
+    PeerAddress::AddressString addressString;
+    if (PeerAddress::ToString(data.networkID.address, addressString)) {
+        std::string ip_port(addressString);
         ip_port += ":";
         ip_port += std::to_string(data.networkID.port);
         output = ip_port;

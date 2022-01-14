@@ -2,6 +2,7 @@
 
 #include "player_pool.hpp"
 #include "util.hpp"
+#include <Impl/network_impl.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
@@ -167,25 +168,21 @@ struct Config final : IEarlyConfig {
                 if (!props.is_null() && !props.is_discarded() && props.is_array()) {
                     const auto& arr = props.get<nlohmann::json::array_t>();
                     for (const auto& arrVal : arr) {
-                        PeerAddress address;
-                        address.ipv6 = arrVal["ipv6"].get<bool>();
-                        if (PeerAddress::FromString(address, arrVal["address"].get<String>())) {
-                            std::tm time = {};
-                            std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
-                            time_t t =
+                        std::tm time = {};
+                        std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
+                        time_t t =
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-                                _mkgmtime(&time);
+                            _mkgmtime(&time);
 #else
-                                timegm(&time);
+                            timegm(&time);
 #endif
 
-                            bans.emplace_back(
-                                BanEntry(
-                                    address,
-                                    arrVal["player"].get<String>(),
-                                    arrVal["reason"].get<String>(),
-                                    WorldTime::from_time_t(t)));
-                        }
+                        bans.emplace_back(
+                            BanEntry(
+                                arrVal["address"].get<String>(),
+                                arrVal["player"].get<String>(),
+                                arrVal["reason"].get<String>(),
+                                WorldTime::from_time_t(t)));
                     }
                 }
             }
@@ -282,9 +279,9 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    void addBan(const IBanEntry& entry) override
+    void addBan(const BanEntry& entry) override
     {
-        bans.emplace_back(BanEntry(entry.address, entry.getPlayerName(), entry.getReason()));
+        bans.emplace_back(BanEntry(entry.address, entry.name, entry.reason));
     }
 
     void removeBan(size_t index) override
@@ -295,20 +292,16 @@ struct Config final : IEarlyConfig {
     void writeBans() const override
     {
         nlohmann::json top = nlohmann::json::array();
-        for (const IBanEntry& entry : bans) {
+        for (const BanEntry& entry : bans) {
             nlohmann::json obj;
-            char address[40] = { 0 };
-            if (PeerAddress::ToString(entry.address, address, sizeof(address))) {
-                obj["ipv6"] = entry.address.ipv6;
-                obj["address"] = address;
-                obj["player"] = entry.getPlayerName();
-                obj["reason"] = entry.getReason();
-                char iso8601[28] = { 0 };
-                std::time_t now = WorldTime::to_time_t(entry.time);
-                std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
-                obj["time"] = iso8601;
-                top.push_back(obj);
-            }
+            obj["address"] = entry.address;
+            obj["player"] = entry.name;
+            obj["reason"] = entry.reason;
+            char iso8601[28] = { 0 };
+            std::time_t now = WorldTime::to_time_t(entry.time);
+            std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
+            obj["time"] = iso8601;
+            top.push_back(obj);
         }
         std::ofstream file(BansFileName);
         if (file.good()) {
@@ -316,12 +309,13 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    size_t getBansCount() const override
+    size_t
+    getBansCount() const override
     {
         return bans.size();
     }
 
-    const IBanEntry& getBan(size_t index) const override
+    const BanEntry& getBan(size_t index) const override
     {
         return bans[index];
     }

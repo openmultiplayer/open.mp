@@ -707,9 +707,9 @@ namespace RPC {
 
     struct ApplyPlayerAnimation final : NetworkPacketBase<86> {
         int PlayerID;
-        const IAnimation& Anim;
+        const AnimationData& Anim;
 
-        ApplyPlayerAnimation(const IAnimation& anim)
+        ApplyPlayerAnimation(const AnimationData& anim)
             : Anim(anim)
         {
         }
@@ -722,15 +722,14 @@ namespace RPC {
         void write(INetworkBitStream& bs) const
         {
             bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.getLib()));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Anim.getName()));
-            const AnimationTimeData& data = Anim.getTimeData();
-            bs.write(NetworkBitStreamValue::FLOAT(data.delta));
-            bs.write(NetworkBitStreamValue::BIT(data.loop));
-            bs.write(NetworkBitStreamValue::BIT(data.lockX));
-            bs.write(NetworkBitStreamValue::BIT(data.lockY));
-            bs.write(NetworkBitStreamValue::BIT(data.freeze));
-            bs.write(NetworkBitStreamValue::UINT32(data.time));
+            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.lib)));
+            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.name)));
+            bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
+            bs.write(NetworkBitStreamValue::BIT(Anim.loop));
+            bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
+            bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
+            bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
+            bs.write(NetworkBitStreamValue::UINT32(Anim.time));
         }
     };
 

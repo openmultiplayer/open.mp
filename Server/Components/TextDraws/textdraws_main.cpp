@@ -1,5 +1,8 @@
 #include "textdraw.hpp"
 #include <netcode.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct PlayerTextDrawData final : IPlayerTextDrawData {
     IPlayer& player;

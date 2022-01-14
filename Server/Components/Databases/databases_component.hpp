@@ -1,6 +1,9 @@
 #pragma once
 
 #include "database_connection.hpp"
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
 
