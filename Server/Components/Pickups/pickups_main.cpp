@@ -1,4 +1,7 @@
 #include "pickup.hpp"
+#include <Impl/events_impl.hpp>
+
+using namespace Impl;
 
 struct PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core;

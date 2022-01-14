@@ -1,5 +1,7 @@
 #include "menu.hpp"
 
+using namespace Impl;
+
 struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
     ICore* core;
     MarkedPoolStorage<Menu, IMenu, IMenusComponent::Capacity> storage;

@@ -1,5 +1,8 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <netcode.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 static const struct DefaultClass final : public PlayerClass {
     DefaultClass()
@@ -51,8 +54,25 @@ struct PlayerClassData final : IPlayerClassData {
     }
 };
 
+struct Class final : public IClass, public PoolIDProvider {
+    PlayerClass cls;
+
+    Class(const PlayerClass& cls)
+        : cls(cls)
+    {
+    }
+
+    int getID() const override {
+        return poolID;
+    }
+
+    const PlayerClass& getClass() override {
+        return cls;
+    }
+};
+
 struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
-    MarkedPoolStorage<PlayerClass, PlayerClass, IClassesComponent::Capacity> storage;
+    MarkedPoolStorage<Class, IClass, IClassesComponent::Capacity> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
@@ -93,7 +113,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                         peer.sendRPC(playerRequestClassResponse);
                     }
                 } else if (self.storage.valid(playerRequestClassPacket.Classid)) {
-                    const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid);
+                    const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid).cls;
                     IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
@@ -164,21 +184,21 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    PlayerClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
+    IClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
         if (count() == IClassesComponent::Capacity) {
-            PlayerClass* lastClass = &storage.get(IClassesComponent::Capacity - 1);
+            Class* lastClass = &storage.get(IClassesComponent::Capacity - 1);
 
-            lastClass->skin = skin;
-            lastClass->team = team;
-            lastClass->spawn = spawn;
-            lastClass->angle = angle;
-            lastClass->weapons = weapons;
+            lastClass->cls.skin = skin;
+            lastClass->cls.team = team;
+            lastClass->cls.spawn = spawn;
+            lastClass->cls.angle = angle;
+            lastClass->cls.weapons = weapons;
 
             return lastClass;
         }
 
-        return storage.emplace(skin, team, spawn, angle, weapons);
+        return storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
     }
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override
@@ -201,7 +221,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return storage.valid(index);
     }
 
-    PlayerClass& get(int index) override
+    IClass& get(int index) override
     {
         return storage.get(index);
     }
@@ -221,12 +241,12 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return storage.unlock(index);
     }
 
-    const FlatPtrHashSet<PlayerClass>& entries() override
+    const FlatPtrHashSet<IClass>& entries() override
     {
         return storage._entries();
     }
 
-    IEventDispatcher<PoolEventHandler<PlayerClass>>& getPoolEventDispatcher() override
+    IEventDispatcher<PoolEventHandler<IClass>>& getPoolEventDispatcher() override
     {
         return storage.getEventDispatcher();
     }

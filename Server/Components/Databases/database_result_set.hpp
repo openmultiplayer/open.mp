@@ -1,6 +1,9 @@
 #pragma once
 
 #include "database_result_set_row.hpp"
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
 

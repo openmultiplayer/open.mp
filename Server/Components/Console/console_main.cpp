@@ -1,4 +1,5 @@
 #include "console_impl.hpp"
+#include <Impl/events_impl.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <atomic>
 #include <iostream>
@@ -7,6 +8,8 @@
 #include <network.hpp>
 #include <sdk.hpp>
 #include <thread>
+
+using namespace Impl;
 
 StringView trim(StringView view)
 {

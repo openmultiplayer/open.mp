@@ -190,7 +190,7 @@
 namespace pawn_natives {
 POOL_PARAM(IPlayer, players);
 POOL_PARAM(IActor, actors);
-POOL_PARAM(PlayerClass, classes);
+POOL_PARAM(IClass, classes);
 POOL_PARAM(IGangZone, gangzones);
 POOL_PARAM(IMenu, menus);
 POOL_PARAM(IObject, objects);

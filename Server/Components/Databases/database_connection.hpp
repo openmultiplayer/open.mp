@@ -4,6 +4,9 @@
 #include <sqlite3.h>
 
 #include "database_result_set.hpp"
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct DatabasesComponent;
 

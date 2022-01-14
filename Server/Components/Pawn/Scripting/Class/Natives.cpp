@@ -14,10 +14,10 @@ SCRIPT_API(AddPlayerClass, int(int modelid, Vector3 position, float angle, uint8
             WeaponSlotData { weapon3, weapon3_ammo }
         };
 
-        PlayerClass* _class = component->create(modelid, NO_TEAM, position, angle, slots);
+        IClass* _class = component->create(modelid, NO_TEAM, position, angle, slots);
 
         if (_class) {
-            return _class->poolID;
+            return _class->getID();
         }
     }
 
@@ -35,9 +35,9 @@ SCRIPT_API(AddPlayerClassEx, int(int teamid, int modelid, Vector3 position, floa
             WeaponSlotData { weapon3, weapon3_ammo }
         };
 
-        PlayerClass* _class = component->create(modelid, teamid, position, angle, slots);
+        IClass* _class = component->create(modelid, teamid, position, angle, slots);
         if (_class) {
-            return _class->poolID;
+            return _class->getID();
         }
     }
     return 0;

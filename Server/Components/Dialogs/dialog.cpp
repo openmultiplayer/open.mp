@@ -1,5 +1,8 @@
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <netcode.hpp>
+#include <Impl/events_impl.hpp>
+
+using namespace Impl;
 
 struct PlayerDialogData final : public IPlayerDialogData {
     uint16_t activeId = 0xFFFF;

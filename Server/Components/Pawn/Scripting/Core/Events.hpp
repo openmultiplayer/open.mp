@@ -19,12 +19,10 @@ struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
     void onRconLoginAttempt(IPlayer& player, const StringView& password, bool success) override
     {
         PeerNetworkData data = player.getNetworkData();
-        char out[16] { 0 };
-        if (!data.networkID.address.ipv6) {
-            PeerAddress::ToString(data.networkID.address, out, sizeof(out));
-        }
+        PeerAddress::AddressString addressString;
+        PeerAddress::ToString(data.networkID.address, addressString);
 
-        PawnManager::Get()->CallInSides("OnRconLoginAttempt", DefaultReturnValue_True, out, password, success);
-        PawnManager::Get()->CallInEntry("OnRconLoginAttempt", DefaultReturnValue_True, out, password, success);
+        PawnManager::Get()->CallInSides("OnRconLoginAttempt", DefaultReturnValue_True, addressString.data(), password, success);
+        PawnManager::Get()->CallInEntry("OnRconLoginAttempt", DefaultReturnValue_True, addressString.data(), password, success);
     }
 };

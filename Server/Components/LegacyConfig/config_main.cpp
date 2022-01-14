@@ -1,3 +1,4 @@
+#include <Impl/network_impl.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <atomic>
 #include <filesystem>
@@ -256,11 +257,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
             for (String line; std::getline(bans, line);) {
                 size_t first = line.find_first_of(' ');
                 if (first != -1) {
-                    PeerAddress address;
-                    address.ipv6 = false;
-                    if (PeerAddress::FromString(address, line.substr(0, first))) {
-                        config.addBan(BanEntry(address, "LEGACY", "LEGACY"));
-                    }
+                    config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
                 }
             }
         }
