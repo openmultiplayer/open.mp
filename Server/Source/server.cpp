@@ -66,6 +66,7 @@ int main(int argc, char** argv)
 #ifdef BUILD_WINDOWS
     signal(SIGBREAK, &handler);
     SetUnhandledExceptionFilter(&ExceptionHandler);
+    _setmode(_fileno(stdin), _O_U16TEXT);
 #endif
 
     cxxopts::Options options(argv[0], "The open.mp game server");
