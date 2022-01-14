@@ -294,9 +294,9 @@ struct Config final : IEarlyConfig {
         nlohmann::json top = nlohmann::json::array();
         for (const BanEntry& entry : bans) {
             nlohmann::json obj;
-            obj["address"] = entry.address;
-            obj["player"] = entry.name;
-            obj["reason"] = entry.reason;
+            obj["address"] = String(entry.address);
+            obj["player"] = String(entry.name);
+            obj["reason"] = String(entry.reason);
             char iso8601[28] = { 0 };
             std::time_t now = WorldTime::to_time_t(entry.time);
             std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
