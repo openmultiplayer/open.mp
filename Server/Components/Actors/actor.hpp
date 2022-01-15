@@ -1,6 +1,9 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
+
+using namespace Impl;
 
 struct PlayerActorData final : IPlayerData {
     PROVIDE_UUID(0xd1bb1d1f96c7e572)
@@ -20,7 +23,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
     float health_;
     bool invulnerable_;
-    Animation animation_;
+    AnimationData animation_;
     bool animationLoop_;
 
     Actor(int skin, Vector3 pos, float angle)
@@ -62,17 +65,15 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         return invulnerable_;
     }
 
-    void applyAnimation(const IAnimation& animation) override
+    void applyAnimation(const AnimationData& animation) override
     {
-        animation_.lib = String(animation.getLib());
-        animation_.name = String(animation.getName());
-        animation_.timeData = animation.getTimeData();
+        animation_ = animation;
 
-        if (animation_.timeData.loop || animation_.timeData.freeze) {
+        if (animation_.loop || animation_.freeze) {
             animationLoop_ = true;
         } else {
             animationLoop_ = false;
-            animation_.timeData.time = 0;
+            animation_.time = 0;
         }
 
         NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation);
@@ -83,7 +84,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 
-    const Animation& getAnimation() const override
+    const AnimationData& getAnimation() const override
     {
         return animation_;
     }

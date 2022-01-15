@@ -1,10 +1,12 @@
 #pragma once
 
-#include "vehicle_colours.hpp"
-#include "vehicle_params.hpp"
+#include "Server/Components/Vehicles/vehicle_colours.hpp"
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <chrono>
 #include <netcode.hpp>
+
+using namespace Impl;
 
 struct VehiclesComponent;
 

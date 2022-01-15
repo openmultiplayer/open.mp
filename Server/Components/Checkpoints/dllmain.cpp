@@ -1,5 +1,8 @@
 #include "checkpoint.hpp"
 #include <sdk.hpp>
+#include <Impl/events_impl.hpp>
+
+using namespace Impl;
 
 struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
     DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;

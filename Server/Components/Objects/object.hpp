@@ -1,6 +1,9 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
+
+using namespace Impl;
 
 template <class ObjectType>
 struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
@@ -10,7 +13,7 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
     float drawDist_;
     bool cameraCol_;
     ObjectAttachmentData attachmentData_;
-    StaticArray<ObjectMaterial, MAX_OBJECT_MATERIAL_SLOTS> materials_;
+    StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> materials_;
     StaticBitset<MAX_OBJECT_MATERIAL_SLOTS> materialsUsed_;
     bool moving_;
     ObjectMoveData moveData_;
@@ -39,7 +42,7 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
         return attachmentData_;
     }
 
-    bool getMaterialData(int index, const IObjectMaterial*& out) const override
+    bool getMaterialData(int index, const ObjectMaterialData*& out) const override
     {
         if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
             return false;
@@ -95,25 +98,25 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
     void setMtl(int index, int model, StringView txd, StringView texture, Colour colour)
     {
         materialsUsed_.set(index);
-        materials_[index].data.type = ObjectMaterialData::Type::Default;
-        materials_[index].data.model = model;
-        materials_[index].txdOrText = String(txd);
-        materials_[index].textureOrFont = String(texture);
-        materials_[index].data.materialColour = colour;
+        materials_[index].type = ObjectMaterialData::Type::Default;
+        materials_[index].model = model;
+        materials_[index].textOrTXD = txd;
+        materials_[index].fontOrTexture = texture;
+        materials_[index].materialColour = colour;
     }
 
     void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
     {
         materialsUsed_.set(index);
-        materials_[index].data.type = ObjectMaterialData::Type::Text;
-        materials_[index].txdOrText = String(text);
-        materials_[index].data.materialSize = size;
-        materials_[index].textureOrFont = String(fontFace);
-        materials_[index].data.fontSize = fontSize;
-        materials_[index].data.bold = bold;
-        materials_[index].data.fontColour = fontColour;
-        materials_[index].data.backgroundColour = backColour;
-        materials_[index].data.alignment = align;
+        materials_[index].type = ObjectMaterialData::Type::Text;
+        materials_[index].textOrTXD = text;
+        materials_[index].materialSize = size;
+        materials_[index].fontOrTexture = fontFace;
+        materials_[index].fontSize = fontSize;
+        materials_[index].bold = bold;
+        materials_[index].fontColour = fontColour;
+        materials_[index].backgroundColour = backColour;
+        materials_[index].alignment = align;
     }
 
     void setAttachmentData(ObjectAttachmentData::Type type, int id, Vector3 offset, Vector3 rotation, bool sync)

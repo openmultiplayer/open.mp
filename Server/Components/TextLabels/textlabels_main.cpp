@@ -1,6 +1,9 @@
 #include "textlabel.hpp"
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct PlayerTextLabelData final : IPlayerTextLabelData {
     IPlayer& player;
