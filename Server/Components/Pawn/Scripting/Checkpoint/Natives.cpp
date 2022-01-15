@@ -9,7 +9,7 @@ SCRIPT_API(SetPlayerCheckpoint, bool(IPlayer& player, Vector3 position, float si
     if (playerCheckpointData) {
         IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
         cp.setPosition(position);
-        cp.setRadius(size / 2.0f); // samp native receives diameter so we turn this into radius
+        cp.setRadius(size); //samp native receives radius not diameter
         cp.enable();
         return true;
     }
