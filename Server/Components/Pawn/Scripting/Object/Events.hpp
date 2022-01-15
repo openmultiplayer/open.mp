@@ -11,7 +11,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
 
     void onPlayerObjectMoved(IPlayer& player, IPlayerObject& object) override
     {
-        PawnManager::Get()->CallAllInSidesFirst("OnPlayerObjectMoved", DefaultReturnValue_True, object.getID());
+        PawnManager::Get()->CallAllInSidesFirst("OnPlayerObjectMoved", DefaultReturnValue_True, player.getID(), object.getID());
     }
 
     void onObjectEdited(IPlayer& player, IObject& object, ObjectEditResponse response, Vector3 offset, Vector3 rotation) override
@@ -75,7 +75,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
             position.x, position.y, position.z);
         if (!ret) {
             PawnManager::Get()->CallInEntry(
-                "OnPlayerEditObject",
+                "OnPlayerSelectObject",
                 DefaultReturnValue_True,
                 player.getID(), 1, object.getID(), model,
                 position.x, position.y, position.z);
@@ -90,7 +90,7 @@ struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents> 
             position.x, position.y, position.z);
         if (!ret) {
             PawnManager::Get()->CallInEntry(
-                "OnPlayerEditObject",
+                "OnPlayerSelectObject",
                 DefaultReturnValue_True,
                 player.getID(), 2, object.getID(), model,
                 position.x, position.y, position.z);
