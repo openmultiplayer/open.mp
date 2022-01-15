@@ -1,12 +1,17 @@
 #include "console_impl.hpp"
+#include <Impl/events_impl.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <atomic>
+#include <codecvt>
 #include <iostream>
+#include <locale>
 #include <mutex>
 #include <netcode.hpp>
 #include <network.hpp>
 #include <sdk.hpp>
 #include <thread>
+
+using namespace Impl;
 
 StringView trim(StringView view)
 {
@@ -125,12 +130,13 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
     static void ThreadProc(ThreadProcData* threadData)
     {
-        String line;
+        std::wstring line;
         while (true) {
-            std::getline(std::cin, line);
+            std::getline(std::wcin, line);
             if (threadData->valid) {
                 std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
-                threadData->component->cmd = line;
+
+                threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
                 threadData->component->newCmd = true;
             } else {
                 delete threadData;

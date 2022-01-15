@@ -1,4 +1,5 @@
 #include "player_pool.hpp"
+#include <Impl/network_impl.hpp>
 
 IPlayerPool* Player::getPool() const
 {
@@ -224,7 +225,9 @@ void Player::streamOutForPlayer(IPlayer& other)
 
 void Player::ban(StringView reason)
 {
-    const BanEntry entry(netData_.networkID.address, name_, reason);
+    PeerAddress::AddressString address;
+    PeerAddress::ToString(netData_.networkID.address, address);
+    const BanEntry entry(address, name_, reason);
     for (INetwork* network : pool_->core.getNetworks()) {
         network->ban(entry);
     }

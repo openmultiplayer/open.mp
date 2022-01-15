@@ -20,6 +20,7 @@
 #include <Server/Components/Timers/timers.hpp>
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Impl/events_impl.hpp>
 #include <sdk.hpp>
 
 #include <algorithm>
@@ -30,6 +31,8 @@
 #include "../PluginManager/PluginManager.hpp"
 #include "../Script/Script.hpp"
 #include "../Singleton.hpp"
+
+using namespace Impl;
 
 class PawnManager : public Singleton<PawnManager> {
 public:

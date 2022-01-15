@@ -507,16 +507,8 @@ SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool toggle))
 
 SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
 {
-    Animation data;
-    data.lib = animlib;
-    data.name = animname;
-    data.timeData.delta = delta;
-    data.timeData.loop = loop;
-    data.timeData.lockX = lockX;
-    data.timeData.lockY = lockY;
-    data.timeData.freeze = freeze;
-    data.timeData.time = time;
-    player.applyAnimation(data, PlayerAnimationSyncType(sync));
+    const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
+    player.applyAnimation(animationData, PlayerAnimationSyncType(sync));
     return true;
 }
 
@@ -577,9 +569,9 @@ SCRIPT_API(GetPlayerIp, int(IPlayer& player, std::string& ip))
 {
     PeerNetworkData data = player.getNetworkData();
     if (!data.networkID.address.ipv6) {
-        char out[16] { 0 };
-        if (PeerAddress::ToString(data.networkID.address, out, sizeof(out))) {
-            ip = out;
+        PeerAddress::AddressString addressString;
+        if (PeerAddress::ToString(data.networkID.address, addressString)) {
+            ip = String(StringView(addressString));
             return ip.length();
         }
     }

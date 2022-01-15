@@ -1,6 +1,9 @@
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 template <class T>
 struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {

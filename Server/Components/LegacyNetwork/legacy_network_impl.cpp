@@ -385,10 +385,10 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 PeerAddress address;
                 address.v4 = rpcParams->sender.binaryAddress;
 
-                char out[16] { 0 };
-                PeerAddress::ToString(address, out, sizeof(out));
+                PeerAddress::AddressString addressString;
+                PeerAddress::ToString(address, addressString);
 
-                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %s", out);
+                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %s", addressString.data());
                 network->rakNetServer.Kick(rpcParams->sender);
             }
 
@@ -495,28 +495,17 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     }
 }
 
-void RakNetLegacyNetwork::ban(const IBanEntry& entry, Milliseconds expire)
+void RakNetLegacyNetwork::ban(const BanEntry& entry, Milliseconds expire)
 {
     // Only support ipv4
-    if (!entry.address.ipv6) {
-        char out[16] { 0 };
-        if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
-            if (memcmp(out, "127.0.0.1", 10u)) {
-                rakNetServer.AddToBanList(out, expire.count());
-            }
-        }
+    if (entry.address != StringView("127.0.0.1")) {
+        rakNetServer.AddToBanList(entry.address.data(), expire.count());
     }
 }
 
-void RakNetLegacyNetwork::unban(const IBanEntry& entry)
+void RakNetLegacyNetwork::unban(const BanEntry& entry)
 {
-    // Only support ipv4
-    if (!entry.address.ipv6) {
-        char out[16] { 0 };
-        if (PeerAddress::ToString(entry.address, out, sizeof(out))) {
-            rakNetServer.RemoveFromBanList(out);
-        }
-    }
+    rakNetServer.RemoveFromBanList(entry.address.data());
 }
 
 NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex)
