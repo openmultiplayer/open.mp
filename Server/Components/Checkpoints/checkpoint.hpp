@@ -60,7 +60,7 @@ struct PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerSta
 
         NetCode::RPC::SetCheckpoint setCP;
         setCP.position = getPosition();
-        setCP.size = getRadius() * 2; // samp client asks for diameter for normal checkpoints
+        setCP.size = getRadius(); // samp client asks for radius (not diameter) for checkpoints
         player_.sendRPC(setCP);
     }
 
