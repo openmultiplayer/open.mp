@@ -1,6 +1,9 @@
 #include <Server/Components/Pickups/pickups.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     int virtualWorld;

@@ -14,6 +14,9 @@
 #include <types.hpp>
 #include <unordered_map>
 #include <values.hpp>
+#include <Impl/pool_impl.hpp>
+
+using namespace Impl;
 
 struct PlayerPool;
 
@@ -441,7 +444,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return lastPlayedAudio_;
     }
 
-    void applyAnimation(const IAnimation& animation, PlayerAnimationSyncType syncType) override
+    void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
     {
         NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC(animation);
         applyPlayerAnimationRPC.PlayerID = poolID;

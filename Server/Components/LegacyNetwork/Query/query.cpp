@@ -147,12 +147,12 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t address)
     }
 
     if (logQueries) {
-        char out[16] = { 0 };
+        PeerAddress::AddressString addrString;
         PeerAddress addr;
         addr.ipv6 = false;
         addr.v4 = address;
-        PeerAddress::ToString(addr, out, sizeof(out));
-        core->printLn("[query:%c] from %s", buffer[QUERY_TYPE_INDEX], out);
+        PeerAddress::ToString(addr, addrString);
+        core->printLn("[query:%c] from %s", buffer[QUERY_TYPE_INDEX], addrString.data());
     }
 
     // Ping

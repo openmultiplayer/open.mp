@@ -1,5 +1,7 @@
 #include "gangzone.hpp"
 
+using namespace Impl;
+
 struct GangZonesComponent final : public IGangZonesComponent {
     ICore* core;
     MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Capacity> storage;
