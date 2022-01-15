@@ -17,10 +17,12 @@ void handler(int s)
         core->run_ = false;
     }
 
+#ifdef BUILD_WINDOWS
     // Spin lock until done
     while (!done) {
         std::this_thread::sleep_for(Milliseconds(1));
     }
+#endif
 }
 
 #ifdef BUILD_WINDOWS
