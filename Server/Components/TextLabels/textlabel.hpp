@@ -219,7 +219,7 @@ struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
     ~PlayerTextLabel()
     {
         if (!playerQuitting) {
-            streamOutForClient(player, false);
+            streamOutForClient(player, true);
         }
     }
 };
