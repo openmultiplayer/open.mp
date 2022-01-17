@@ -25,9 +25,9 @@
 
 #include <openssl/sha.h>
 
-typedef std::map<String, Variant<int, String, float, DynamicArray<String>>> ConfigStorage;
+typedef Variant<int, String, float, DynamicArray<String>> ConfigStorage;
 
-static const ConfigStorage Defaults {
+static const std::map<String, ConfigStorage> Defaults {
     { "max_players", 50 },
     { "sleep", 5 },
     { "port", 7777 },
@@ -261,38 +261,38 @@ struct Config final : IEarlyConfig {
     const StringView
     getString(StringView key) const override
     {
-        ConfigStorage::const_iterator it;
-        if (!getFromKey(key, 1, it)) {
+        const ConfigStorage* res = nullptr;
+        if (!getFromKey(key, 1, res)) {
             return StringView();
         }
-        return StringView(variant_get<String>(it->second));
+        return StringView(variant_get<String>(*res));
     }
 
     int* getInt(StringView key) override
     {
-        ConfigStorage::iterator it;
-        if (!getFromKey(key, 0, it)) {
+        ConfigStorage* res = nullptr;
+        if (!getFromKey(key, 0, res)) {
             return 0;
         }
-        return &variant_get<int>(it->second);
+        return &variant_get<int>(*res);
     }
 
     float* getFloat(StringView key) override
     {
-        ConfigStorage::iterator it;
-        if (!getFromKey(key, 2, it)) {
+        ConfigStorage* res = nullptr;
+        if (!getFromKey(key, 2, res)) {
             return 0;
         }
-        return &variant_get<float>(it->second);
+        return &variant_get<float>(*res);
     }
 
     size_t getStringsCount(StringView key) const override
     {
-        ConfigStorage::const_iterator it;
-        if (!getFromKey(key, 3, it)) {
+        const ConfigStorage* res = nullptr;
+        if (!getFromKey(key, 3, res)) {
             return 0;
         }
-        return variant_get<DynamicArray<String>>(it->second).size();
+        return variant_get<DynamicArray<String>>(*res).size();
     }
 
     size_t getStrings(StringView key, Span<StringView> output) const override
@@ -301,12 +301,12 @@ struct Config final : IEarlyConfig {
             return 0;
         }
 
-        ConfigStorage::const_iterator it;
-        if (!getFromKey(key, 3, it)) {
+        const ConfigStorage* res = nullptr;
+        if (!getFromKey(key, 3, res)) {
             return 0;
         }
 
-        const auto& strings = variant_get<DynamicArray<String>>(it->second);
+        const auto& strings = variant_get<DynamicArray<String>>(*res);
         const size_t size = std::min(output.size(), strings.size());
         for (size_t i = 0; i < size; ++i) {
             output[i] = strings[i];
@@ -316,11 +316,11 @@ struct Config final : IEarlyConfig {
 
     const DynamicArray<String>* getStrings(StringView key) const
     {
-        ConfigStorage::iterator it;
-        if (!getFromKey(key, 3, it)) {
+        const ConfigStorage* res = nullptr;
+        if (!getFromKey(key, 3, res)) {
             return nullptr;
         }
-        return &variant_get<DynamicArray<String>>(it->second);
+        return &variant_get<DynamicArray<String>>(*res);
     }
 
     void setString(StringView key, StringView value) override
@@ -442,34 +442,36 @@ struct Config final : IEarlyConfig {
     }
 
 private:
-    bool getFromKey(StringView input, int index, ConfigStorage::const_iterator& output) const
+    bool getFromKey(StringView input, int index, const ConfigStorage*& output) const
     {
-        output = processed.find(String(input));
-        if (output == processed.end()) {
+        auto it = processed.find(String(input));
+        if (it == processed.end()) {
             return false;
         }
-        if (output->second.index() != index) {
+        if (it->second.index() != index) {
             return false;
         }
 
+        output = &it->second;
         return true;
     }
 
-    bool getFromKey(StringView input, int index, ConfigStorage::iterator& output)
+    bool getFromKey(StringView input, int index, ConfigStorage*& output)
     {
-        output = processed.find(String(input));
-        if (output == processed.end()) {
+        auto it = processed.find(String(input));
+        if (it == processed.end()) {
             return false;
         }
-        if (output->second.index() != index) {
+        if (it->second.index() != index) {
             return false;
         }
 
+        output = &it->second;
         return true;
     }
 
     DynamicArray<BanEntry> bans;
-    ConfigStorage processed;
+    std::map<String, ConfigStorage> processed;
     FlatHashMap<String, Pair<bool, String>> aliases;
 };
 
