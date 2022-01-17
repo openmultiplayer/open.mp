@@ -25,11 +25,76 @@
 
 #include <openssl/sha.h>
 
+typedef std::map<String, Variant<int, String, float, DynamicArray<String>>> ConfigStorage;
+
+static const ConfigStorage Defaults {
+    { "max_players", 50 },
+    { "sleep", 5 },
+    { "port", 7777 },
+    { "bind", "" },
+    { "password", "" },
+    { "enable_zone_names", false },
+    { "use_player_ped_anims", false },
+    { "allow_interior_weapons", true },
+    { "use_limit_global_chat_radius", false },
+    { "limit_global_chat_radius", 200.0f },
+    { "enable_stunt_bonus", true },
+    { "name_tag_draw_distance", 70.0f },
+    { "disable_interior_enter_exits", false },
+    { "disable_name_tag_los", false },
+    { "manual_vehicle_engine_and_lights", false },
+    { "show_name_tags", true },
+    { "show_player_markers", PlayerMarkerMode_Global },
+    { "limit_player_markers", false },
+    { "player_markers_draw_distance", 250.f },
+    { "player_markers_update_rate", 2500 },
+    { "world_time", 12 },
+    { "weather", 10 },
+    { "gravity", 0.008f },
+    { "lan_mode", false },
+    { "death_drop_amount", 0 },
+    { "instagib", false },
+    { "on_foot_rate", 30 },
+    { "in_car_rate", 30 },
+    { "weapon_rate", 30 },
+    { "multiplier", 10 },
+    { "lag_compensation", true },
+    { "server_name", "open.mp server" },
+    { "mode_name", "" },
+    { "map_name", "" },
+    { "language", "" },
+    { "player_time_update_rate", 30000 },
+    { "stream_rate", 1000 },
+    { "stream_distance", 200.f },
+    { "max_bots", 0 },
+    { "cookie_reseed_time", 300000 },
+    { "player_timeout", 10000 },
+    { "announce", true },
+    { "logging", true },
+    { "enable_rcon", false },
+    { "enable_query", true },
+    { "website", "open.mp" },
+    { "network_mtu", 576 },
+    { "logging_timestamp", true },
+    { "logging_timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
+    { "logging_queries", false },
+    { "logging_chat", true },
+    { "logging_sqlite", false },
+    { "logging_sqlite_queries", false },
+    { "logging_cookies", false },
+    { "rcon_allow_teleport", false },
+    { "vehicle_friendly_fire", false },
+    { "vehicle_death_respawn_delay", 10 },
+    { "pawn.entry_file", "test.amx" },
+    { "pawn.side_scripts", DynamicArray<String> {} },
+    { "pawn.legacy_plugins", DynamicArray<String> {} },
+};
+
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
 template <typename... Args>
 struct adl_serializer<Variant<Args...>> {
-    static void to_json(json& j, Variant<Args...> const& v)
+    static void to_json(ordered_json& j, Variant<Args...> const& v)
     {
         absl_omp::visit([&](auto&& value) {
             j = std::forward<decltype(value)>(value);
@@ -42,22 +107,25 @@ struct adl_serializer<Variant<Args...>> {
 struct ComponentList : public IComponentList {
     using IComponentList::queryComponent;
 
-    ComponentList(ICore& core)
-        : core(core)
-    {
-    }
-
     IComponent* queryComponent(UUID id) override
     {
         auto it = components.find(id);
         return it == components.end() ? nullptr : it->second;
     }
 
-    void load()
+    void configure(ICore& core, IEarlyConfig& config)
     {
         std::for_each(components.begin(), components.end(),
-            [this](const Pair<UUID, IComponent*>& pair) {
-                pair.second->onLoad(&core);
+            [&core, &config](const Pair<UUID, IComponent*>& pair) {
+                pair.second->provideConfiguration(core, config);
+            });
+    }
+
+    void load(ICore* core)
+    {
+        std::for_each(components.begin(), components.end(),
+            [core](const Pair<UUID, IComponent*>& pair) {
+                pair.second->onLoad(core);
             });
     }
 
@@ -101,7 +169,6 @@ struct ComponentList : public IComponentList {
 
 private:
     FlatHashMap<UUID, IComponent*> components;
-    ICore& core;
 };
 
 static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
@@ -110,8 +177,34 @@ struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
-    Config(ICore& core)
-        : core(core)
+    void processNode(const nlohmann::json::object_t& node, String ns = "")
+    {
+        for (const auto& kv : node) {
+            String key = ns + kv.first;
+            const nlohmann::json& v = kv.second;
+            if (v.is_number_integer()) {
+                processed[key].emplace<int>(v.get<int>());
+            } else if (v.is_boolean()) {
+                processed[key].emplace<int>(v.get<bool>());
+            } else if (v.is_number_float()) {
+                processed[key].emplace<float>(v.get<float>());
+            } else if (v.is_string()) {
+                processed[key].emplace<String>(v.get<String>());
+            } else if (v.is_array()) {
+                auto& vec = processed[key].emplace<DynamicArray<String>>();
+                const auto& arr = v.get<nlohmann::json::array_t>();
+                for (const auto& arrVal : arr) {
+                    if (arrVal.is_string()) {
+                        vec.emplace_back(arrVal.get<String>());
+                    }
+                }
+            } else if (v.is_object()) {
+                processNode(v.get<nlohmann::json::object_t>(), key + '.');
+            }
+        }
+    }
+
+    Config()
     {
         {
             std::ifstream ifs(ConfigFileName);
@@ -124,32 +217,8 @@ struct Config final : IEarlyConfig {
                 if (props.is_null() || props.is_discarded() || !props.is_object()) {
                     processed = Defaults;
                 } else {
-                    const auto& obj = props.get<nlohmann::json::object_t>();
-                    for (const auto& kv : obj) {
-                        const nlohmann::json& v = kv.second;
-                        if (v.is_number_integer()) {
-                            processed[kv.first].emplace<int>(v.get<int>());
-                        } else if (v.is_boolean()) {
-                            processed[kv.first].emplace<int>(v.get<bool>());
-                        } else if (v.is_number_float()) {
-                            processed[kv.first].emplace<float>(v.get<float>());
-                        } else if (v.is_string()) {
-                            processed[kv.first].emplace<String>(v.get<String>());
-                        } else if (v.is_array()) {
-                            auto& vec = processed[kv.first].emplace<DynamicArray<StringView>>();
-                            ownAllocations.insert(kv.first);
-                            const auto& arr = v.get<nlohmann::json::array_t>();
-                            for (const auto& arrVal : arr) {
-                                if (arrVal.is_string()) {
-                                    // Allocate persistent memory for the StringView array
-                                    String val = arrVal.get<String>();
-                                    char* data = new char[val.length() + 1];
-                                    strcpy(data, val.c_str());
-                                    vec.emplace_back(StringView(data, val.length()));
-                                }
-                            }
-                        }
-                    }
+                    const auto& root = props.get<nlohmann::json::object_t>();
+                    processNode(root);
                 }
             }
             // Fill any values missing in config with defaults
@@ -189,26 +258,11 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    ~Config()
+    const StringView
+    getString(StringView key) const override
     {
-        // Free strings allocated for the StringView array
-        for (const auto& kv : processed) {
-            if (kv.second.index() == 3 && ownAllocations.find(kv.first) != ownAllocations.end()) {
-                const auto& arr = variant_get<DynamicArray<StringView>>(kv.second);
-                for (auto& v : arr) {
-                    delete[] v.data();
-                }
-            }
-        }
-    }
-
-    const StringView getString(StringView key) const override
-    {
-        auto it = processed.find(String(key));
-        if (it == processed.end()) {
-            return StringView();
-        }
-        if (it->second.index() != 1) {
+        ConfigStorage::iterator it;
+        if (!getFromKey(key, 1, it)) {
             return StringView();
         }
         return StringView(variant_get<String>(it->second));
@@ -216,11 +270,8 @@ struct Config final : IEarlyConfig {
 
     int* getInt(StringView key) override
     {
-        auto it = processed.find(String(key));
-        if (it == processed.end()) {
-            return nullptr;
-        }
-        if (it->second.index() != 0) {
+        ConfigStorage::iterator it;
+        if (!getFromKey(key, 0, it)) {
             return 0;
         }
         return &variant_get<int>(it->second);
@@ -228,27 +279,48 @@ struct Config final : IEarlyConfig {
 
     float* getFloat(StringView key) override
     {
-        auto it = processed.find(String(key));
-        if (it == processed.end()) {
-            return 0;
-        }
-        if (it->second.index() != 2) {
+        ConfigStorage::iterator it;
+        if (!getFromKey(key, 2, it)) {
             return 0;
         }
         return &variant_get<float>(it->second);
     }
 
-    Span<const StringView> getStrings(StringView key) const override
+    size_t getStringsCount(StringView key) const override
     {
-        auto it = processed.find(String(key));
-        if (it == processed.end()) {
-            return Span<StringView>();
+        ConfigStorage::iterator it;
+        if (!getFromKey(key, 3, it)) {
+            return 0;
         }
-        if (it->second.index() != 3) {
-            return Span<StringView>();
+        return variant_get<DynamicArray<String>>(it->second).size();
+    }
+
+    size_t getStrings(StringView key, Span<StringView> output) const override
+    {
+        if (!output.size()) {
+            return 0;
         }
-        const DynamicArray<StringView>& vw = variant_get<DynamicArray<StringView>>(it->second);
-        return Span<const StringView>(vw.data(), vw.size());
+
+        ConfigStorage::iterator it;
+        if (!getFromKey(key, 3, it)) {
+            return 0;
+        }
+
+        const auto& strings = variant_get<DynamicArray<String>>(it->second);
+        const size_t size = std::min(output.size(), strings.size());
+        for (size_t i = 0; i < size; ++i) {
+            output[i] = strings[i];
+        }
+        return size;
+    }
+
+    const DynamicArray<String>* getStrings(StringView key) const
+    {
+        ConfigStorage::iterator it;
+        if (!getFromKey(key, 3, it)) {
+            return nullptr;
+        }
+        return &variant_get<DynamicArray<String>>(it->second);
     }
 
     void setString(StringView key, StringView value) override
@@ -268,14 +340,9 @@ struct Config final : IEarlyConfig {
 
     void setStrings(StringView key, Span<const StringView> value) override
     {
-        ownAllocations.insert(String(key));
-        DynamicArray<StringView>& vec = processed[String(key)].emplace<DynamicArray<StringView>>();
+        auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
         for (const StringView v : value) {
-            // Allocate persistent memory for the StringView array
-            String val(v);
-            char* data = new char[val.length() + 1];
-            strcpy(data, val.c_str());
-            vec.emplace_back(StringView(data, val.length()));
+            vec.emplace_back(String(v));
         }
     }
 
@@ -322,11 +389,6 @@ struct Config final : IEarlyConfig {
         return bans[index];
     }
 
-    ICore& getCore() override
-    {
-        return core;
-    }
-
     void optimiseBans()
     {
         std::sort(bans.begin(), bans.end());
@@ -343,53 +405,59 @@ struct Config final : IEarlyConfig {
         }
 
         std::ofstream ofs(ConfigFileName);
-        nlohmann::json json;
+        nlohmann::ordered_json json;
 
         if (ofs.good()) {
             for (const auto& kv : Defaults) {
-                json[kv.first] = kv.second;
+                nlohmann::ordered_json* sub = &json;
+                size_t cur = String::npos, prev = 0;
+                // Process hierarchy
+                while ((cur = kv.first.find('.', prev)) != String::npos) {
+                    String substr = kv.first.substr(prev, cur - prev);
+                    sub = &(*sub)[substr];
+                    prev = cur + sizeof('.');
+                }
+                // Set the leaf's value
+                (*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
             }
             ofs << json.dump(4) << std::endl;
         }
         return true;
     }
 
+    void addAlias(StringView alias, StringView key, bool deprecated = false) override
+    {
+        if (key != alias) {
+            aliases[String(alias)] = std::make_pair(deprecated, String(key));
+        }
+    }
+
     Pair<bool, StringView> getNameFromAlias(StringView alias) const override
     {
-        for (IConfigProviderComponent* provider : providers) {
-            auto res = provider->getNameFromAlias(alias);
-            if (!res.second.empty()) {
-                return res;
-            }
+        auto it = aliases.find(alias);
+        if (it == aliases.end()) {
+            return std::make_pair(false, StringView());
         }
-        return std::make_pair(true, StringView());
-    }
-
-    void addProvider(IConfigProviderComponent* provider)
-    {
-        providers.insert(provider);
-    }
-
-    void init()
-    {
-        for (IConfigProviderComponent* provider : providers) {
-            provider->configure(*this);
-        }
-
-        this->setInt("max_players", glm::clamp(*this->getInt("max_players"), 1, 1000));
-    }
-
-    void clear()
-    {
-        providers.clear();
+        return std::make_pair(it->second.first, StringView(it->second.second));
     }
 
 private:
-    ICore& core;
-    FlatPtrHashSet<IConfigProviderComponent> providers;
+    bool getFromKey(StringView input, int index, ConfigStorage::const_iterator& output) const
+    {
+        output = processed.find(String(input));
+        if (output == processed.end()) {
+            return false;
+        }
+        if (output->second.index() != index) {
+            return false;
+        }
+
+        return true;
+    }
+
     DynamicArray<BanEntry> bans;
-    std::map<String, Variant<int, String, float, DynamicArray<StringView>>> processed;
-    FlatHashSet<String> ownAllocations;
+    ConfigStorage processed;
+    FlatHashMap<String, Pair<bool, String>> aliases;
 };
 
 struct HTTPAsyncIO {
@@ -542,8 +610,6 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
     Core(const cxxopts::ParseResult& cmd)
         : players(*this)
-        , components(*this)
-        , config(*this)
         , logFile(nullptr)
         , run_(true)
         , ticksPerSecond(0u)
@@ -553,11 +619,13 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         players.getEventDispatcher().addEventHandler(this);
 
         loadComponents("components");
-        config.init();
+
+        components.configure(*this, config);
+        config.setInt("max_players", glm::clamp(*config.getInt("max_players"), 1, 1000));
 
         if (cmd.count("script")) {
             config.setString(
-                "entry_file",
+                "pawn.entry_file",
                 cmd["script"].as<std::string>());
         }
 
@@ -598,7 +666,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
         config.optimiseBans();
         config.writeBans();
-        components.load();
+        components.load(this);
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
 
@@ -618,7 +686,6 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         players.getEventDispatcher().removeEventHandler(this);
 
         networks.clear();
-        config.clear();
         components.free();
 
         if (logFile) {
@@ -924,8 +991,6 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
         if (component->componentType() == ComponentType::Network) {
             networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
-        } else if (component->componentType() == ComponentType::ConfigProvider) {
-            config.addProvider(static_cast<IConfigProviderComponent*>(component));
         }
     }
 
@@ -958,8 +1023,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     {
         std::filesystem::create_directory(path);
 
-        Span<const StringView> componentsCfg = config.getStrings("components");
-        if (componentsCfg.empty()) {
+        auto componentsCfg = config.getStrings("components");
+        if (!componentsCfg || componentsCfg->empty()) {
             for (auto& p : std::filesystem::directory_iterator(path)) {
                 if (p.path().extension() == LIBRARY_EXT) {
                     IComponent* component = loadComponent(p);
@@ -969,7 +1034,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
                 }
             }
         } else {
-            for (const StringView component : componentsCfg) {
+            for (const StringView component : *componentsCfg) {
                 auto file = std::filesystem::path(path) / component.data();
                 if (!file.has_extension()) {
                     file.replace_extension(LIBRARY_EXT);
