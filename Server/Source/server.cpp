@@ -69,7 +69,6 @@ int main(int argc, char** argv)
     signal(SIGBREAK, &handler);
     SetUnhandledExceptionFilter(&ExceptionHandler);
     _setmode(_fileno(stdin), _O_U16TEXT);
-#else
     setlocale(LC_ALL, "");
 #endif
 
