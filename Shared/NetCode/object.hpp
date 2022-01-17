@@ -77,7 +77,7 @@ namespace RPC {
             bs.write(NetworkBitStreamValue::VEC3(Position));
             bs.write(NetworkBitStreamValue::VEC3(Rotation));
             bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
-            bs.write(NetworkBitStreamValue::UINT8(CameraCollision));
+            bs.write(NetworkBitStreamValue::UINT8(!CameraCollision));
 
             bs.write(NetworkBitStreamValue::UINT16(AttachmentData.type == ObjectAttachmentData::Type::Vehicle ? AttachmentData.ID : INVALID_VEHICLE_ID));
             bs.write(NetworkBitStreamValue::UINT16(AttachmentData.type == ObjectAttachmentData::Type::Object ? AttachmentData.ID : INVALID_OBJECT_ID));
