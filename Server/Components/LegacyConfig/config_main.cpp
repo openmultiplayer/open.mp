@@ -68,9 +68,9 @@ const FlatHashMap<StringView, ParamType> types = {
 const FlatHashMap<StringView, StringView> dictionary = {
     { "rcon", "enable_rcon" },
     { "rcon_password", "rcon_password" },
-    { "gamemode", "entry_file" },
-    { "filterscripts", "side_scripts" },
-    { "plugins", "legacy_plugins" },
+    { "gamemode", "pawn.entry_file" },
+    { "filterscripts", "pawn.side_scripts" },
+    { "plugins", "pawn.legacy_plugins" },
     { "announce", "announce" },
     { "query", "enable_query" },
     { "hostname", "server_name" },
@@ -109,7 +109,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "lagcompmode", "lag_compensation" }
 };
 
-struct LegacyConfigComponent final : public IConfigProviderComponent {
+struct LegacyConfigComponent final : public IComponent {
     PROVIDE_UUID(0x24ef6216838f9ffc);
 
     StringView componentName() const override
@@ -122,17 +122,9 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    Pair<bool, StringView> getNameFromAlias(StringView alias) const override
-    {
-        auto it = dictionary.find(alias);
-        if (it == dictionary.end()) {
-            return std::make_pair(true, StringView());
-        } else {
-            return std::make_pair(it->first != it->second, it->second);
-        }
-    }
+    void onLoad(ICore* c) override { }
 
-    bool processCustom(IEarlyConfig& config, String name, String right)
+    bool processCustom(ILogger& logger, IEarlyConfig& config, String name, String right)
     {
         if (name.find("gamemode") == 0) {
             auto it = dictionary.find("gamemode");
@@ -179,7 +171,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
         }
 
         if (name.find("echo") == 0) {
-            config.getCore().printLn("%s", right.c_str());
+            logger.printLn("%s", right.c_str());
             return true;
         }
 
@@ -245,7 +237,7 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
         return false;
     }
 
-    bool configure(IEarlyConfig& config) override
+    void provideConfiguration(ILogger& logger, IEarlyConfig& config) override
     {
         if (config.getString("bot_exe").empty()) {
             config.setString("bot_exe", "samp-npc");
@@ -260,6 +252,10 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
                     config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
                 }
             }
+        }
+
+        for (auto& kv : dictionary) {
+            config.addAlias(kv.first, kv.second, true);
         }
 
         std::ifstream cfg("server.cfg");
@@ -302,21 +298,19 @@ struct LegacyConfigComponent final : public IConfigProviderComponent {
                 if (typeIt != types.end()) {
                     // Process default dictionary items
                     if (typeIt->second == ParamType::Custom) {
-                        if (!processCustom(config, name, line.substr(idx + 1))) {
-                            config.getCore().logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
+                        if (!processCustom(logger, config, name, line.substr(idx + 1))) {
+                            logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                         }
                     } else if (typeIt->second == ParamType::Obsolete) {
-                        config.getCore().logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
+                        logger.logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
                     } else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
-                        config.getCore().logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
+                        logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                     }
-                } else if (!processCustom(config, name, line.substr(idx + 1))) {
-                    config.getCore().logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
+                } else if (!processCustom(logger, config, name, line.substr(idx + 1))) {
+                    logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                 }
             }
         }
-        // todo read server.cfg, process it
-        return true;
     }
 
     void free() override

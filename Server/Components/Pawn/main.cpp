@@ -130,19 +130,22 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
         // read values of plugins, entry_file and side_scripts from config file
         IConfig& config = core->getConfig();
-        Span<const StringView> plugins = config.getStrings("legacy_plugins");
-        StringView entryFile = config.getString("entry_file");
-        Span<const StringView> sideScripts = config.getStrings("side_scripts");
 
         // load plugins
+        DynamicArray<StringView> plugins(config.getStringsCount("pawn.legacy_plugins"));
+        config.getStrings("pawn.legacy_plugins", Span<StringView>(plugins.data(), plugins.size()));
         for (auto& plugin : plugins) {
             pluginMgr.Load(String(plugin));
         }
 
         // load scripts
+        DynamicArray<StringView> sideScripts(config.getStringsCount("pawn.side_scripts"));
+        config.getStrings("pawn.side_scripts", Span<StringView>(sideScripts.data(), sideScripts.size()));
         for (auto& script : sideScripts) {
             mgr->Load(String(script), false);
         }
+
+        StringView entryFile = config.getString("pawn.entry_file");
         mgr->Load(String(entryFile), true);
     }
 
