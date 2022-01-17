@@ -261,7 +261,7 @@ struct Config final : IEarlyConfig {
     const StringView
     getString(StringView key) const override
     {
-        ConfigStorage::iterator it;
+        ConfigStorage::const_iterator it;
         if (!getFromKey(key, 1, it)) {
             return StringView();
         }
@@ -288,7 +288,7 @@ struct Config final : IEarlyConfig {
 
     size_t getStringsCount(StringView key) const override
     {
-        ConfigStorage::iterator it;
+        ConfigStorage::const_iterator it;
         if (!getFromKey(key, 3, it)) {
             return 0;
         }
@@ -301,7 +301,7 @@ struct Config final : IEarlyConfig {
             return 0;
         }
 
-        ConfigStorage::iterator it;
+        ConfigStorage::const_iterator it;
         if (!getFromKey(key, 3, it)) {
             return 0;
         }
@@ -443,6 +443,19 @@ struct Config final : IEarlyConfig {
 
 private:
     bool getFromKey(StringView input, int index, ConfigStorage::const_iterator& output) const
+    {
+        output = processed.find(String(input));
+        if (output == processed.end()) {
+            return false;
+        }
+        if (output->second.index() != index) {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool getFromKey(StringView input, int index, ConfigStorage::iterator& output)
     {
         output = processed.find(String(input));
         if (output == processed.end()) {
