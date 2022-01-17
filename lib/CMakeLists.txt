@@ -1,57 +1,3 @@
-# Conan third-party libraries
-
-if (NOT CROSS_BUILD)
-	if (MSVC_CXX_ARCHITECTURE_ID)
-		string(TOLOWER ${MSVC_CXX_ARCHITECTURE_ID} LOWERCASE_CMAKE_SYSTEM_PROCESSOR)
-		if (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "(x64|x86_64|amd64)")
-			set(CROSS_BUILD_ARCH x86_64)
-		elseif (LOWERCASE_CMAKE_SYSTEM_PROCESSOR MATCHES "(i[3-6]86|x86)")
-			set(CROSS_BUILD_ARCH x86)
-		else ()
-			message(FATAL_ERROR "Unknown CPU '${LOWERCASE_CMAKE_SYSTEM_PROCESSOR}'")
-		endif ()
-	else ()
-		set(CROSS_BUILD_ARCH x86)
-	endif ()
-endif()
-
-include(cmake-conan/conan.cmake)
-
-# Automatically download and set up paths to a library on Conan
-# Works for multi-configuration
-function(add_conan_lib pkg_name conan_pkg)
-	set(CONAN_DISABLE_CHECK_COMPILER TRUE)
-
-	conan_check(REQUIRED)
-
-	conan_cmake_run(
-		REQUIRES ${conan_pkg}
-		ARCH ${CROSS_BUILD_ARCH}
-		BASIC_SETUP CMAKE_TARGETS
-		BUILD missing
-	)
-
-	set_target_properties(${pkg_name} PROPERTIES IMPORTED_GLOBAL TRUE)
-endfunction()
-
-# Automatically download and set up paths to a library on Conan
-# Works for multi-configuration
-function(add_conan_lib_opt pkg_name conan_pkg opt)
-	set(CONAN_DISABLE_CHECK_COMPILER TRUE)
-
-	conan_check(REQUIRED)
-
-	conan_cmake_run(
-		REQUIRES ${conan_pkg}
-		ARCH ${CROSS_BUILD_ARCH}
-		BASIC_SETUP CMAKE_TARGETS
-		BUILD missing
-		OPTIONS ${${opt}}
-	)
-
-	set_target_properties(${pkg_name} PROPERTIES IMPORTED_GLOBAL TRUE)
-endfunction()
-
 # PAWN runtime
 # ------------
 if(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -126,9 +72,7 @@ if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 				-D_CRT_SECURE_NO_WARNINGS
 				-D_CRT_NONSTDC_NO_DEPRECATE
 		)
-		if(NOT BORLAND)
-			target_link_libraries(pawn-runtime PRIVATE winmm)
-		endif()
+		target_link_libraries(pawn-runtime PRIVATE winmm)
 	endif()
 
 	set_property(TARGET pawn-runtime PROPERTY FOLDER "lib")
@@ -152,22 +96,34 @@ add_subdirectory(ttmath)
 GroupSourcesByFolder(ttmath)
 set_property(TARGET ttmath PROPERTY FOLDER "lib")
 
+# Conan third-party libraries
+include(cmake-conan/conan.cmake)
+include(cmake-conan/conan-omp.cmake)
+
 # JSON
 # ----
-add_conan_lib(CONAN_PKG::nlohmann_json nlohmann_json/3.9.1)
+conan_omp_add_lib(nlohmann_json 3.9.1)
 
 # SQLite 3
 # --------
-add_conan_lib(CONAN_PKG::sqlite3 sqlite3/3.36.0)
+conan_omp_add_lib(sqlite3 3.36.0)
 
 # cpp-httplib
 # ---
-add_conan_lib(CONAN_PKG::cpp-httplib cpp-httplib/0.9.0)
+conan_omp_add_lib(cpp-httplib 0.9.0)
 
 # OpenSSL
 # -------
-add_conan_lib_opt(CONAN_PKG::openssl openssl/1.1.1k openssl:shared=False)
+conan_omp_add_lib(openssl 1.1.1k)
 
 # cxxopts
 # ----
-add_conan_lib(CONAN_PKG::cxxopts cxxopts/2.2.1)
+conan_omp_add_lib(cxxopts 2.2.1)
+
+# ICU
+# ---
+conan_omp_add_lib(icu 70.1)
+
+if(WIN32)
+	target_link_options(CONAN_PKG::icu INTERFACE "/SAFESEH:NO")
+endif()
