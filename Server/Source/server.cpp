@@ -70,6 +70,7 @@ int main(int argc, char** argv)
     SetUnhandledExceptionFilter(&ExceptionHandler);
     _setmode(_fileno(stdin), _O_U16TEXT);
 #endif
+    setlocale(LC_ALL, "");
 
     cxxopts::Options options(argv[0], "The open.mp game server");
 
