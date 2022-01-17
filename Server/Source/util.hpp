@@ -2,6 +2,8 @@
 
 #include <filesystem>
 #include <types.hpp>
+#include <unicode/ucsdet.h>
+#include <unicode/unistr.h>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 struct IUnknown;
@@ -106,4 +108,23 @@ unsigned GetTickCount()
     return (tp.tv_sec - initialTime.tv_sec) * 1000 + (tp.tv_usec - initialTime.tv_usec) / 1000;
 #endif
 }
+
+String toUTF8(StringView input)
+{
+    static UErrorCode detstatus = U_ZERO_ERROR;
+    static UCharsetDetector* detector = ucsdet_open(&detstatus);
+    if (U_FAILURE(detstatus)) {
+        return String(input);
+    }
+    UErrorCode status = U_ZERO_ERROR;
+    ucsdet_setText(detector, input.data(), input.length(), &status);
+    const char* cp = ucsdet_getName(ucsdet_detect(detector, &status), &status);
+    if (U_FAILURE(status)) {
+        return String(input);
+    }
+    String output;
+    icu::UnicodeString(input.data(), input.length(), cp).toUTF8String(output);
+    return output;
+}
+
 }
