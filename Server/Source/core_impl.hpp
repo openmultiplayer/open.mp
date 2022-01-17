@@ -31,7 +31,7 @@ template <typename... Args>
 struct adl_serializer<Variant<Args...>> {
     static void to_json(json& j, Variant<Args...> const& v)
     {
-        absl::visit([&](auto&& value) {
+        absl_omp::visit([&](auto&& value) {
             j = std::forward<decltype(value)>(value);
         },
             v);
@@ -194,7 +194,7 @@ struct Config final : IEarlyConfig {
         // Free strings allocated for the StringView array
         for (const auto& kv : processed) {
             if (kv.second.index() == 3 && ownAllocations.find(kv.first) != ownAllocations.end()) {
-                const auto& arr = absl::get<DynamicArray<StringView>>(kv.second);
+                const auto& arr = variant_get<DynamicArray<StringView>>(kv.second);
                 for (auto& v : arr) {
                     delete[] v.data();
                 }
@@ -211,7 +211,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 1) {
             return StringView();
         }
-        return StringView(absl::get<String>(it->second));
+        return StringView(variant_get<String>(it->second));
     }
 
     int* getInt(StringView key) override
@@ -223,7 +223,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 0) {
             return 0;
         }
-        return &absl::get<int>(it->second);
+        return &variant_get<int>(it->second);
     }
 
     float* getFloat(StringView key) override
@@ -235,7 +235,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 2) {
             return 0;
         }
-        return &absl::get<float>(it->second);
+        return &variant_get<float>(it->second);
     }
 
     Span<const StringView> getStrings(StringView key) const override
@@ -247,7 +247,7 @@ struct Config final : IEarlyConfig {
         if (it->second.index() != 3) {
             return Span<StringView>();
         }
-        const DynamicArray<StringView>& vw = absl::get<DynamicArray<StringView>>(it->second);
+        const DynamicArray<StringView>& vw = variant_get<DynamicArray<StringView>>(it->second);
         return Span<const StringView>(vw.data(), vw.size());
     }
 
@@ -296,9 +296,9 @@ struct Config final : IEarlyConfig {
         nlohmann::json top = nlohmann::json::array();
         for (const BanEntry& entry : bans) {
             nlohmann::json obj;
-            obj["address"] = StringView(entry.address);
-            obj["player"] = StringView(entry.name);
-            obj["reason"] = StringView(entry.reason);
+            obj["address"] = utils::toUTF8(entry.address);
+            obj["player"] = utils::toUTF8(entry.name);
+            obj["reason"] = utils::toUTF8(entry.reason);
             char iso8601[28] = { 0 };
             std::time_t now = WorldTime::to_time_t(entry.time);
             std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
