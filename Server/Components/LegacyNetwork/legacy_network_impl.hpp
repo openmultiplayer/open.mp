@@ -291,7 +291,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
-    const IExtension* getExtension(UUID id) const override
+    const IExtension* getExtension(UniqueID id) const override
     {
         if (id == INetworkQueryExtension::ExtensionIID) {
             return static_cast<const INetworkQueryExtension*>(this);

@@ -24,7 +24,7 @@ struct RakNetLegacyNetworkComponent final : INetworkComponent {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    UUID getUUID() override
+    UniqueID getUniqueID() override
     {
         return 0xea9799fd79cf8442;
     }
