@@ -6,7 +6,7 @@
 using namespace Impl;
 
 struct PlayerActorData final : IPlayerData {
-    PROVIDE_UUID(0xd1bb1d1f96c7e572)
+    PROVIDE_UniqueID(0xd1bb1d1f96c7e572)
     uint8_t numStreamed = 0;
 
     void free() override
