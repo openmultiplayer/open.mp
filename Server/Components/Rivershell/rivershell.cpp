@@ -17,7 +17,7 @@ static constexpr Seconds RESUPPLY_COOLDOWN = Seconds(30);
 static constexpr Seconds RESPAWN_COOLDOWN = Seconds(20);
 
 struct RivershellPlayerData final : public IPlayerData {
-    PROVIDE_UniqueID(0x0e5b18f964deec4e);
+    PROVIDE_UID(0x0e5b18f964deec4e);
 
     void free() override
     {
@@ -46,7 +46,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
 
     PlayerClass* teamClasses[Team_Num][2] = { { nullptr } };
 
-    UniqueID getUniqueID() override
+    UID getUID() override
     {
         return 0x5ea395b11220dc50;
     }
