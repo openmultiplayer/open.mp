@@ -40,7 +40,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     FlatHashMap<UID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Colour colour_;
-    UIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
     int virtualWorld_;
     int team_;
     int skin_;

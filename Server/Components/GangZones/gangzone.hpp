@@ -8,7 +8,7 @@ using namespace Impl;
 struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
     GangZonePos pos;
     Colour col;
-    UIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
 
     GangZone(GangZonePos pos)
         : pos(pos)

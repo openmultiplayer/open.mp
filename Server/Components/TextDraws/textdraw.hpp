@@ -296,7 +296,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
 };
 
 struct TextDraw final : public TextDrawBase<ITextDraw> {
-    UIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> shownFor_;
 
     using TextDrawBase<ITextDraw>::TextDrawBase;
 

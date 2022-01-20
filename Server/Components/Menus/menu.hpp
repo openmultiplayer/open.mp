@@ -36,7 +36,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
     StaticArray<uint8_t, 2> columnItemCount;
     StaticArray<StaticArray<String, MAX_MENU_ITEMS>, 2> columnMenuItems;
 
-    UIDArray<IPlayer, IPlayerPool::Capacity> initedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> initedFor_;
 
     Menu(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width)
         : title(String(title))
