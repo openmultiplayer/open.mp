@@ -11,7 +11,7 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     PickupType type;
     Vector3 pos;
     bool isStatic;
-    UIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
 
     Pickup(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic)
         : virtualWorld(virtualWorld)
