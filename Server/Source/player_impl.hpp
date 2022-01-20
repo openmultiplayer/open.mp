@@ -37,10 +37,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     GTAQuat rot_;
     String name_;
     String serial_;
-    FlatHashMap<UniqueID, IPlayerData*> playerData_;
+    FlatHashMap<UID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Colour colour_;
-    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
     int virtualWorld_;
     int team_;
     int skin_;
@@ -618,7 +618,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return interior_;
     }
 
-    IPlayerData* queryData(UniqueID uuid) const override
+    IPlayerData* queryData(UID uuid) const override
     {
         auto it = playerData_.find(uuid);
         return it == playerData_.end() ? nullptr : it->second;
@@ -626,7 +626,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void addData(IPlayerData* playerData) override
     {
-        playerData_.try_emplace(playerData->getUniqueID(), playerData);
+        playerData_.try_emplace(playerData->getUID(), playerData);
     }
 
     void streamInForPlayer(IPlayer& other) override;

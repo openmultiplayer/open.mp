@@ -107,7 +107,7 @@ struct adl_serializer<Variant<Args...>> {
 struct ComponentList : public IComponentList {
     using IComponentList::queryComponent;
 
-    IComponent* queryComponent(UniqueID id) override
+    IComponent* queryComponent(UID id) override
     {
         auto it = components.find(id);
         return it == components.end() ? nullptr : it->second;
@@ -116,7 +116,7 @@ struct ComponentList : public IComponentList {
     void configure(ICore& core, IEarlyConfig& config)
     {
         std::for_each(components.begin(), components.end(),
-            [&core, &config](const Pair<UniqueID, IComponent*>& pair) {
+            [&core, &config](const Pair<UID, IComponent*>& pair) {
                 pair.second->provideConfiguration(core, config);
             });
     }
@@ -124,7 +124,7 @@ struct ComponentList : public IComponentList {
     void load(ICore* core)
     {
         std::for_each(components.begin(), components.end(),
-            [core](const Pair<UniqueID, IComponent*>& pair) {
+            [core](const Pair<UID, IComponent*>& pair) {
                 pair.second->onLoad(core);
             });
     }
@@ -132,7 +132,7 @@ struct ComponentList : public IComponentList {
     void init()
     {
         std::for_each(components.begin(), components.end(),
-            [this](const Pair<UniqueID, IComponent*>& pair) {
+            [this](const Pair<UID, IComponent*>& pair) {
                 pair.second->onInit(this);
             });
     }
@@ -140,7 +140,7 @@ struct ComponentList : public IComponentList {
     void ready()
     {
         std::for_each(components.begin(), components.end(),
-            [](const Pair<UniqueID, IComponent*>& pair) {
+            [](const Pair<UID, IComponent*>& pair) {
                 pair.second->onReady();
             });
     }
@@ -149,7 +149,7 @@ struct ComponentList : public IComponentList {
     {
         for (auto it = components.begin(); it != components.end();) {
             std::for_each(components.begin(), components.end(),
-                [it](const Pair<UniqueID, IComponent*>& pair) {
+                [it](const Pair<UID, IComponent*>& pair) {
                     pair.second->onFree(it->second);
                 });
             it->second->free();
@@ -159,7 +159,7 @@ struct ComponentList : public IComponentList {
 
     auto add(IComponent* component)
     {
-        return components.try_emplace(component->getUniqueID(), component);
+        return components.try_emplace(component->getUID(), component);
     }
 
     size_t size() const
@@ -168,7 +168,7 @@ struct ComponentList : public IComponentList {
     }
 
 private:
-    FlatHashMap<UniqueID, IComponent*> components;
+    FlatHashMap<UID, IComponent*> components;
 };
 
 static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
@@ -1002,7 +1002,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     {
         auto res = components.add(component);
         if (!res.second) {
-            printLn("Tried to add plug-ins %s and %s with conflicting UniqueID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUniqueID());
+            printLn("Tried to add plug-ins %s and %s with conflicting UID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUID());
         }
         if (component->componentType() == ComponentType::Network) {
             networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
@@ -1025,7 +1025,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
         IComponent* component = OnComponentLoad();
         if (component != nullptr) {
-            printLn("\tSuccessfully loaded component %s with UniqueID %016llx", component->componentName().data(), component->getUniqueID());
+            printLn("\tSuccessfully loaded component %s with UID %016llx", component->componentName().data(), component->getUID());
             return component;
         } else {
             printLn("\tFailed to load component.");

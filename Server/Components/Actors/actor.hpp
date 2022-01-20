@@ -6,7 +6,7 @@
 using namespace Impl;
 
 struct PlayerActorData final : IPlayerData {
-    PROVIDE_UniqueID(0xd1bb1d1f96c7e572)
+    PROVIDE_UID(0xd1bb1d1f96c7e572)
     uint8_t numStreamed = 0;
 
     void free() override
@@ -20,7 +20,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     int skin_;
     Vector3 pos_;
     float angle_;
-    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
     float health_;
     bool invulnerable_;
     AnimationData animation_;

@@ -12,9 +12,9 @@ struct DatabasesTestComponent final : public IComponent, public NoCopy {
     /// Core
     ICore* core;
 
-    /// Gets the component UniqueID
-    /// @returns COmponent UniqueID
-    UniqueID getUniqueID() override
+    /// Gets the component UID
+    /// @returns COmponent UID
+    UID getUID() override
     {
         return 0x0c2b19225d039d45;
     }
