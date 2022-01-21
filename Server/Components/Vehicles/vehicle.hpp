@@ -46,7 +46,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         Vehicle* tower;
     };
     StaticArray<IVehicle*, 3> carriages;
-    bool detaching = false;
     VehicleParams params;
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
@@ -266,7 +265,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void setTower(Vehicle* tower)
     {
-        detaching = true;
         this->tower = tower;
         towing = false;
     }

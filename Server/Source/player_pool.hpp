@@ -739,11 +739,20 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.health_ = vehicleSync.PlayerHealthArmour.x;
             player.armour_ = vehicleSync.PlayerHealthArmour.y;
             player.armedWeapon_ = vehicleSync.WeaponID;
-            bool vehicleOk = self.vehiclesComponent->get(vehicleSync.VehicleID).updateFromDriverSync(vehicleSync, player);
+            IVehicle& vehicle = self.vehiclesComponent->get(vehicleSync.VehicleID);
+            bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
             player.setState(PlayerState_Driver);
 
             if (vehicleOk) {
                 vehicleSync.PlayerID = player.poolID;
+
+                if (vehicleSync.TrailerID) {
+                    IVehicle* trailer = vehicle.getTrailer();
+                    if (trailer) {
+                        vehicleSync.HasTrailer = true;
+                        vehicleSync.TrailerID = trailer->getID();
+                    }
+                }
 
                 TimePoint now = Time::now();
                 bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
@@ -1020,6 +1029,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             if (vehicle.updateFromTrailerSync(trailerSync, peer)) {
+                trailerSync.PlayerID = player.poolID;
                 player.broadcastPacketToStreamed(trailerSync);
             }
             return true;
