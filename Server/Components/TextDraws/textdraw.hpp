@@ -1,14 +1,14 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
 template <class T>
 struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     Vector2 pos;
-    String text;
+    HybridString<64> text;
     Colour letterColour = Colour(0xE1, 0xE1, 0xE1);
     Vector2 letterSize = Vector2(0.48f, 1.12f);
     Vector2 textSize = Vector2(1280.f);
@@ -28,7 +28,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
 
     TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : pos(pos)
-        , text(String(text))
+        , text(text)
         , style(style)
         , previewModel(previewModel)
     {
@@ -52,7 +52,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
 
     void setText(StringView txt) override
     {
-        text = String(txt);
+        text = txt;
     }
 
     StringView getText() const override

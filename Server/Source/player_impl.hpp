@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
@@ -14,14 +15,13 @@
 #include <types.hpp>
 #include <unordered_map>
 #include <values.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
 struct PlayerPool;
 
 struct PlayerChatBubble {
-    String text;
+    HybridString<128> text;
     Colour colour;
     float drawDist;
 };
@@ -30,13 +30,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool* pool_;
     PeerNetworkData netData_;
     uint32_t version_;
-    String versionName_;
+    HybridString<16> versionName_;
     Vector3 pos_;
     Vector3 cameraPos_;
     Vector3 cameraLookAt_;
     GTAQuat rot_;
-    String name_;
-    String serial_;
+    HybridString<MAX_PLAYER_NAME + 1> name_;
+    HybridString<16> serial_;
     FlatHashMap<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Colour colour_;
@@ -63,9 +63,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     Minutes time_;
     bool clockToggled_;
     PlayerBulletData bulletData_;
-    String shopName_;
+    HybridString<16> shopName_;
     int drunkLevel_;
-    String lastPlayedAudio_;
+    HybridString<16> lastPlayedAudio_;
     unsigned interior_;
     unsigned wantedLevel_;
     int weather_;
@@ -87,11 +87,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         : pool_(pool)
         , netData_(netData)
         , version_(params.version)
-        , versionName_(String(params.versionName))
+        , versionName_(params.versionName)
         , cameraPos_(0.f, 0.f, 0.f)
         , cameraLookAt_(0.f, 0.f, 0.f)
-        , name_(String(params.name))
-        , serial_(String(params.serial))
+        , name_(params.name)
+        , serial_(params.serial)
         , virtualWorld_(0)
         , score_(0)
         , fightingStyle_(PlayerFightingStyle_Normal)
@@ -389,7 +389,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override
     {
-        lastPlayedAudio_ = String(url);
+        lastPlayedAudio_ = url;
         NetCode::RPC::PlayAudioStreamForPlayer playAudioStreamRPC;
         playAudioStreamRPC.URL = url;
         playAudioStreamRPC.Usepos = usePos;
@@ -890,7 +890,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setShopName(StringView name) override
     {
-        shopName_ = String(name);
+        shopName_ = name;
         NetCode::RPC::SetPlayerShopName setPlayerShopNameRPC;
         setPlayerShopNameRPC.Name = name;
         sendRPC(setPlayerShopNameRPC);
@@ -904,7 +904,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void setChatBubble(StringView text, const Colour& colour, float drawDist, Milliseconds expire) override
     {
         chatBubbleExpiration_ = Time::now() + expire;
-        chatBubble_.text = String(text);
+        chatBubble_.text = text;
         chatBubble_.drawDist = drawDist;
         chatBubble_.colour = colour;
 
