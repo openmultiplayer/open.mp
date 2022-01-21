@@ -36,7 +36,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.BodyColour2 = bodyColour2;
     player.sendRPC(streamIn);
 
-    if (numberPlate != "XYZSR998") {
+    if (numberPlate != StringView("XYZSR998")) {
         NetCode::RPC::SetVehiclePlate plateRPC;
         plateRPC.VehicleID = poolID;
         plateRPC.plate = numberPlate;
@@ -228,7 +228,7 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 
 void Vehicle::setPlate(StringView plate)
 {
-    numberPlate = String(plate);
+    numberPlate = plate;
     NetCode::RPC::SetVehiclePlate plateRPC;
     plateRPC.VehicleID = poolID;
     plateRPC.plate = numberPlate;

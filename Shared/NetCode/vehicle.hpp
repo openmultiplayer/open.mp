@@ -214,7 +214,7 @@ namespace RPC {
 
     struct SetVehiclePlate final : NetworkPacketBase<123> {
         int VehicleID;
-        String plate;
+        HybridString<16> plate;
 
         bool read(INetworkBitStream& bs)
         {
