@@ -101,7 +101,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerInitMenu playerInitMenu;
         playerInitMenu.MenuID = poolID;
         playerInitMenu.HasTwoColumns = columnCount >= 1;
-        playerInitMenu.Title = StringView(title);
+        playerInitMenu.Title = title;
         playerInitMenu.Position = pos;
         playerInitMenu.Col1Width = col1Width;
         playerInitMenu.Col2Width = col2Width;
@@ -135,7 +135,8 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
             StringView(columnMenuItems[1][9]), StringView(columnMenuItems[1][10]), StringView(columnMenuItems[1][11])
         };
 
-        player.sendRPC(playerInitMenu);
+        PacketHelper::send(playerInitMenu, player);
+
         initedFor_.add(player.getID(), player);
     }
 
@@ -146,7 +147,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         }
         NetCode::RPC::PlayerShowMenu playerShowMenu;
         playerShowMenu.MenuID = poolID;
-        player.sendRPC(playerShowMenu);
+        PacketHelper::send(playerShowMenu, player);
 
         IPlayerMenuData* data = player.queryData<IPlayerMenuData>();
         data->setMenuID(poolID);
@@ -156,7 +157,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
     {
         NetCode::RPC::PlayerHideMenu playerHideMenu;
         playerHideMenu.MenuID = poolID;
-        player.sendRPC(playerHideMenu);
+        PacketHelper::send(playerHideMenu, player);
 
         IPlayerMenuData* data = player.queryData<IPlayerMenuData>();
         data->setMenuID(INVALID_MENU_ID);

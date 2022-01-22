@@ -44,7 +44,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerRconCommand packet;
             if (!packet.read(bs)) {
@@ -52,9 +52,9 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
             }
 
             StringView command = trim(packet.cmd);
-            PlayerConsoleData* data = peer.queryData<PlayerConsoleData>();
+            PlayerConsoleData* pdata = peer.queryData<PlayerConsoleData>();
 
-            if (data->hasConsoleAccess()) {
+            if (pdata->hasConsoleAccess()) {
                 if (command.size() < 1) {
                     peer.sendClientMessage(Colour::White(), "You forgot the RCON command!");
                     return true;
@@ -73,7 +73,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
                         bool success = false;
 
                         if (password == self.core->getConfig().getString("rcon_password")) {
-                            data->setConsoleAccessibility(true);
+                            pdata->setConsoleAccessibility(true);
                             self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%s) has logged in.", peer.getID(), peer.getName().data());
                             peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
                             success = true;
@@ -122,7 +122,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         this->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
 
-        core->addPerPacketEventHandler<NetCode::Packet::PlayerRconCommand>(&playerRconCommandHandler);
+        NetCode::Packet::PlayerRconCommand::addEventHandler(*core, &playerRconCommandHandler);
 
         threadData = new ThreadProcData { true, this };
         std::thread(ThreadProc, threadData).detach();
@@ -152,7 +152,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
             core->getEventDispatcher().removeEventHandler(this);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
 
-            core->removePerPacketEventHandler<NetCode::Packet::PlayerRconCommand>(&playerRconCommandHandler);
+            NetCode::Packet::PlayerRconCommand::removeEventHandler(*core, &playerRconCommandHandler);
         }
     }
 
