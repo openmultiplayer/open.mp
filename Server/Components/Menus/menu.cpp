@@ -20,7 +20,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerSelectedMenuRow onPlayerSelectedMenuRow;
             if (!onPlayerSelectedMenuRow.read(bs)) {
@@ -49,7 +49,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerExitedMenu onPlayerExitedMenu;
             if (!onPlayerExitedMenu.read(bs)) {
@@ -92,8 +92,8 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         this->core = core;
         players = &core->getPlayers();
         players->getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerSelectedMenuRow>(&playerSelectedMenuRowEventHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitedMenu>(&playerExitedMenuEventHandler);
+        NetCode::RPC::OnPlayerSelectedMenuRow::addEventHandler(*core, &playerSelectedMenuRowEventHandler);
+        NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
@@ -111,8 +111,8 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
     {
         if (core) {
             players->getEventDispatcher().removeEventHandler(this);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectedMenuRow>(&playerSelectedMenuRowEventHandler);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitedMenu>(&playerExitedMenuEventHandler);
+            NetCode::RPC::OnPlayerSelectedMenuRow::removeEventHandler(*core, &playerSelectedMenuRowEventHandler);
+            NetCode::RPC::OnPlayerExitedMenu::removeEventHandler(*core, &playerExitedMenuEventHandler);
         }
     }
 

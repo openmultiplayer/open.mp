@@ -274,7 +274,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         playerShowTextDrawRPC.Color1 = previewVehicleColours.first;
         playerShowTextDrawRPC.Color2 = previewVehicleColours.second;
         playerShowTextDrawRPC.Text = StringView(text);
-        player.sendRPC(playerShowTextDrawRPC);
+        PacketHelper::send(playerShowTextDrawRPC, player);
     }
 
     void hideForClient(IPlayer& player, bool isPlayerTextDraw)
@@ -282,7 +282,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerHideTextDraw playerHideTextDrawRPC;
         playerHideTextDrawRPC.PlayerTextDraw = isPlayerTextDraw;
         playerHideTextDrawRPC.TextDrawID = poolID;
-        player.sendRPC(playerHideTextDrawRPC);
+        PacketHelper::send(playerHideTextDrawRPC, player);
     }
 
     void setTextForClient(IPlayer& player, StringView txt, bool isPlayerTextDraw)
@@ -291,7 +291,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         playerTextDrawSetStringRPC.PlayerTextDraw = isPlayerTextDraw;
         playerTextDrawSetStringRPC.TextDrawID = poolID;
         playerTextDrawSetStringRPC.Text = txt;
-        player.sendRPC(playerTextDrawSetStringRPC);
+        PacketHelper::send(playerTextDrawSetStringRPC, player);
     }
 };
 

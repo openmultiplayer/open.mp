@@ -1,6 +1,6 @@
+#include <Impl/events_impl.hpp>
 #include <Server/Components/Dialogs/dialogs.hpp>
 #include <netcode.hpp>
-#include <Impl/events_impl.hpp>
 
 using namespace Impl;
 
@@ -16,7 +16,7 @@ struct PlayerDialogData final : public IPlayerDialogData {
         showDialog.FirstButton = button1;
         showDialog.SecondButton = button2;
         showDialog.Info = info;
-        player.sendRPC(showDialog);
+        PacketHelper::send(showDialog, player);
 
         // set player's active dialog id to keep track of its validity later on response
         activeId = id;
@@ -44,7 +44,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerDialogResponse sendDialogResponse;
             if (!sendDialogResponse.read(bs)) {
@@ -95,7 +95,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
     {
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDialogResponse>(&dialogResponseHandler);
+        NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
     }
 
     void free() override
@@ -106,7 +106,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
     ~DialogsComponent()
     {
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDialogResponse>(&dialogResponseHandler);
+        NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
     }
 
     IEventDispatcher<PlayerDialogEventHandler>& getEventDispatcher() override

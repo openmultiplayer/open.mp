@@ -6,58 +6,58 @@
 
 namespace NetCode {
 namespace RPC {
-    struct SetCheckpoint final : NetworkPacketBase<107> {
+    struct SetCheckpoint : NetworkPacketBase<107, NetworkPacketType::RPC> {
         Vector3 position;
         float size;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(position));
-            bs.write(NetworkBitStreamValue::FLOAT(size));
+            bs.writeVEC3(position);
+            bs.writeFLOAT(size);
         }
     };
 
-    struct DisableCheckpoint final : NetworkPacketBase<37> {
-        bool read(INetworkBitStream& bs)
+    struct DisableCheckpoint : NetworkPacketBase<37, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const { }
+        void write(NetworkBitStream& bs) const { }
     };
 
-    struct SetRaceCheckpoint final : NetworkPacketBase<38> {
+    struct SetRaceCheckpoint : NetworkPacketBase<38, NetworkPacketType::RPC> {
         uint8_t type;
         Vector3 position;
         Vector3 nextPosition;
         float size;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(type));
-            bs.write(NetworkBitStreamValue::VEC3(position));
-            bs.write(NetworkBitStreamValue::VEC3(nextPosition));
-            bs.write(NetworkBitStreamValue::FLOAT(size));
+            bs.writeUINT8(type);
+            bs.writeVEC3(position);
+            bs.writeVEC3(nextPosition);
+            bs.writeFLOAT(size);
         }
     };
 
-    struct DisableRaceCheckpoint final : NetworkPacketBase<39> {
-        bool read(INetworkBitStream& bs)
+    struct DisableRaceCheckpoint : NetworkPacketBase<39, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const { }
+        void write(NetworkBitStream& bs) const { }
     };
 }
 }

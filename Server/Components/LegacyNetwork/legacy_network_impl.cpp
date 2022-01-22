@@ -18,7 +18,6 @@ RakNetLegacyNetwork::RakNetLegacyNetwork()
     : Network(256, 256)
     , core(nullptr)
     , rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface())
-    , wlbs(wbs)
 {
     rakNetServer.SetMTUSize(512);
 
@@ -47,7 +46,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork()
     RPCHOOK(22);
     RPCHOOK(23);
     RPCHOOK(24);
-    rakNetServer.RegisterAsRemoteProcedureCall(NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy), &RakNetLegacyNetwork::OnPlayerConnect, this);
+    rakNetServer.RegisterAsRemoteProcedureCall(NetCode::RPC::PlayerConnect::PacketID, &RakNetLegacyNetwork::OnPlayerConnect, this);
     RPCHOOK(26);
     RPCHOOK(27);
     RPCHOOK(28);
@@ -76,7 +75,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork()
     RPCHOOK(51);
     RPCHOOK(52);
     RPCHOOK(53);
-    rakNetServer.RegisterAsRemoteProcedureCall(NetCode::RPC::NPCConnect::getID(ENetworkType_RakNetLegacy), &RakNetLegacyNetwork::OnNPCConnect, this);
+    rakNetServer.RegisterAsRemoteProcedureCall(NetCode::RPC::NPCConnect::PacketID, &RakNetLegacyNetwork::OnNPCConnect, this);
     RPCHOOK(55);
     RPCHOOK(56);
     RPCHOOK(57);
@@ -290,17 +289,17 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
     RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
 }
 
-static RakNet::BitStream GetBitStream(RakNet::RPCParameters& rpcParams)
+static NetworkBitStream GetBitStream(RakNet::RPCParameters& rpcParams)
 {
     unsigned int
         bits
         = rpcParams.numberOfBitsOfData;
     if (bits == 0)
-        return RakNet::BitStream();
+        return NetworkBitStream();
     unsigned int
         bytes
         = (bits - 1) / 8 + 1;
-    return RakNet::BitStream(rpcParams.input, bytes, false);
+    return NetworkBitStream(rpcParams.input, bytes, false);
 }
 
 enum LegacyClientVersion {
@@ -361,17 +360,16 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
     SAMPRakNet::RemoteSystemData remoteSystemData = network->rakNetServer.GetSAMPDataFromPlayerID(rpcParams->sender);
     if (remoteSystemData.authType == SAMPRakNet::AuthType_Player) {
-        RakNet::BitStream bs = GetBitStream(*rpcParams);
-        RakNetLegacyBitStream lbs(bs);
+        NetworkBitStream bs = GetBitStream(*rpcParams);
         NetCode::RPC::PlayerConnect playerConnectRPC;
-        if (playerConnectRPC.read(lbs)) {
+        if (playerConnectRPC.read(bs)) {
 
             bool serialIsInvalid = true;
             String serial;
             ttmath::UInt<100> serialNumber;
             ttmath::uint remainder = 0;
 
-            serialNumber.FromString(playerConnectRPC.Key.data, 16);
+            serialNumber.FromString(String(StringView(playerConnectRPC.Key)), 16);
             serialNumber.DivInt(1001, remainder);
 
             if (remainder == 0) {
@@ -395,16 +393,16 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
             if (newPeer) {
                 network->inOutEventDispatcher.all(
-                    [newPeer, &lbs](NetworkInOutEventHandler* handler) {
-                        lbs.reset(BSResetRead);
-                        handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy), lbs);
+                    [newPeer, &bs](NetworkInOutEventHandler* handler) {
+                        bs.resetReadPointer();
+                        handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
                     });
 
                 network->rpcInOutEventDispatcher.all(
-                    NetCode::RPC::PlayerConnect::getID(ENetworkType_RakNetLegacy),
-                    [newPeer, &lbs](SingleNetworkInOutEventHandler* handler) {
-                        lbs.reset(BSResetRead);
-                        handler->received(*newPeer, lbs);
+                    NetCode::RPC::PlayerConnect::PacketID,
+                    [newPeer, &bs](SingleNetworkInOutEventHandler* handler) {
+                        bs.resetReadPointer();
+                        handler->received(*newPeer, bs);
                     });
 
                 network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
@@ -421,23 +419,22 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
     SAMPRakNet::RemoteSystemData remoteSystemData = network->rakNetServer.GetSAMPDataFromPlayerID(rpcParams->sender);
     if (remoteSystemData.authType == SAMPRakNet::AuthType_NPC) {
-        RakNet::BitStream bs = GetBitStream(*rpcParams);
-        RakNetLegacyBitStream lbs(bs);
+        NetworkBitStream bs = GetBitStream(*rpcParams);
         NetCode::RPC::NPCConnect NPCConnectRPC;
-        if (NPCConnectRPC.read(lbs)) {
+        if (NPCConnectRPC.read(bs)) {
             IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
             if (newPeer) {
                 network->inOutEventDispatcher.all(
-                    [newPeer, &lbs](NetworkInOutEventHandler* handler) {
-                        lbs.reset(BSResetRead);
-                        handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::getID(ENetworkType_RakNetLegacy), lbs);
+                    [newPeer, &bs](NetworkInOutEventHandler* handler) {
+                        bs.resetReadPointer();
+                        handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
                     });
 
                 network->rpcInOutEventDispatcher.all(
-                    NetCode::RPC::NPCConnect::getID(ENetworkType_RakNetLegacy),
-                    [newPeer, &lbs](SingleNetworkInOutEventHandler* handler) {
-                        lbs.reset(BSResetRead);
-                        handler->received(*newPeer, lbs);
+                    NetCode::RPC::NPCConnect::PacketID,
+                    [newPeer, &bs](SingleNetworkInOutEventHandler* handler) {
+                        bs.resetReadPointer();
+                        handler->received(*newPeer, bs);
                     });
 
                 network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
@@ -473,21 +470,20 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 
     IPlayer& player = pos->second;
 
-    RakNet::BitStream bs = GetBitStream(*rpcParams);
-    RakNetLegacyBitStream lbs(bs);
+    NetworkBitStream bs = GetBitStream(*rpcParams);
 
     bool processed = false;
     network->inOutEventDispatcher.all(
-        [&player, &lbs, &processed](NetworkInOutEventHandler* handler) {
-            lbs.reset(BSResetRead);
-            processed |= handler->receivedRPC(player, ID, lbs);
+        [&player, &bs, &processed](NetworkInOutEventHandler* handler) {
+            bs.resetReadPointer();
+            processed |= handler->receivedRPC(player, ID, bs);
         });
 
     network->rpcInOutEventDispatcher.all(
         ID,
-        [&player, &lbs, &processed](SingleNetworkInOutEventHandler* handler) {
-            lbs.reset(BSResetRead);
-            processed |= handler->received(player, lbs);
+        [&player, &bs, &processed](SingleNetworkInOutEventHandler* handler) {
+            bs.resetReadPointer();
+            processed |= handler->received(player, bs);
         });
 
     if (!processed) {
@@ -687,7 +683,7 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
         auto pos = playerFromRID.find(pkt->playerId);
         if (pos != playerFromRID.end()) {
             IPlayer& player = pos->second;
-            RakNet::BitStream bs(pkt->data, pkt->length, false);
+            NetworkBitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
             if (bs.Read(type)) {
                 if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {
@@ -697,14 +693,12 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
                 }
                 inOutEventDispatcher.all([&player, type, &bs](NetworkInOutEventHandler* handler) {
                     bs.SetReadOffset(8); // Ignore packet ID
-                    RakNetLegacyBitStream lbs(bs);
-                    handler->receivedPacket(player, type, lbs);
+                    handler->receivedPacket(player, type, bs);
                 });
 
                 packetInOutEventDispatcher.all(type, [&player, &bs](SingleNetworkInOutEventHandler* handler) {
                     bs.SetReadOffset(8); // Ignore packet ID
-                    RakNetLegacyBitStream lbs(bs);
-                    handler->received(player, lbs);
+                    handler->received(player, bs);
                 });
             }
         }

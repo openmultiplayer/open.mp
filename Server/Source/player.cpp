@@ -12,7 +12,7 @@ void Player::setColour(Colour colour)
     NetCode::RPC::SetPlayerColor setPlayerColorRPC;
     setPlayerColorRPC.PlayerID = poolID;
     setPlayerColorRPC.Col = colour;
-    pool_->broadcastRPCToAll(setPlayerColorRPC);
+    PacketHelper::broadcast(setPlayerColorRPC, *pool_);
 }
 
 EPlayerNameStatus Player::setName(StringView name)
@@ -31,7 +31,7 @@ EPlayerNameStatus Player::setName(StringView name)
     setPlayerNameRPC.PlayerID = poolID;
     setPlayerNameRPC.Name = StringView(name_);
     setPlayerNameRPC.Success = true;
-    pool_->broadcastRPCToAll(setPlayerNameRPC);
+    PacketHelper::broadcast(setPlayerNameRPC, *pool_);
     return EPlayerNameStatus::Updated;
 }
 
@@ -40,7 +40,7 @@ void Player::updateMarkers(Milliseconds updateRate, bool limit, float radius, Ti
     if (duration_cast<Milliseconds>(now - lastMarkerUpdate_) > updateRate) {
         lastMarkerUpdate_ = now;
         NetCode::Packet::PlayerMarkersSync markersSync(*pool_, *this, limit, radius);
-        sendPacket(markersSync);
+        PacketHelper::send(markersSync, *this);
     }
 }
 
@@ -190,8 +190,8 @@ void Player::streamInForPlayer(IPlayer& other)
             playerStreamInRPC.Pos = pos_;
             playerStreamInRPC.Angle = rot_.ToEuler().z;
             playerStreamInRPC.FightingStyle = fightingStyle_;
-            playerStreamInRPC.SkillLevel = NetworkArray<uint16_t>(skillLevels_);
-            other.sendRPC(playerStreamInRPC);
+            playerStreamInRPC.SkillLevel = skillLevels_;
+            PacketHelper::send(playerStreamInRPC, other);
 
             const Milliseconds expire = duration_cast<Milliseconds>(chatBubbleExpiration_ - Time::now());
             if (expire.count() > 0) {
@@ -201,7 +201,7 @@ void Player::streamInForPlayer(IPlayer& other)
                 RPC.DrawDistance = chatBubble_.drawDist;
                 RPC.ExpireTime = expire.count();
                 RPC.Text = StringView(chatBubble_.text);
-                other.sendRPC(RPC);
+                PacketHelper::send(RPC, other);
             }
 
             pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
@@ -217,7 +217,7 @@ void Player::streamOutForPlayer(IPlayer& other)
         streamedFor_.remove(pid, other);
         NetCode::RPC::PlayerStreamOut playerStreamOutRPC;
         playerStreamOutRPC.PlayerID = poolID;
-        other.sendRPC(playerStreamOutRPC);
+        PacketHelper::send(playerStreamOutRPC, other);
 
         pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, *this, other);
     }

@@ -6,29 +6,29 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerRequestClass final : NetworkPacketBase<128> {
+    struct PlayerRequestClass : NetworkPacketBase<128, NetworkPacketType::RPC> {
         int Classid;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::UINT16>(Classid);
+            return bs.readUINT16(Classid);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(Classid));
+            bs.writeUINT16(Classid);
         }
     };
 
-    struct PlayerRequestClassResponse final : NetworkPacketBase<128> {
+    struct PlayerRequestClassResponse : NetworkPacketBase<128, NetworkPacketType::RPC> {
         uint8_t Selectable;
         uint8_t TeamID;
         uint32_t ModelID;
         uint8_t Unknown1;
         Vector3 Spawn;
         float ZAngle;
-        NetworkArray<uint32_t> Weapons;
-        NetworkArray<uint32_t> Ammos;
+        StaticArray<uint32_t, 3> Weapons;
+        StaticArray<uint32_t, 3> Ammos;
 
         /// Default constructor
         PlayerRequestClassResponse() { }
@@ -42,86 +42,86 @@ namespace RPC {
             ZAngle = angle;
         }
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT8>(Selectable);
-            bs.read<NetworkBitStreamValueType::UINT8>(TeamID);
-            bs.read<NetworkBitStreamValueType::UINT32>(ModelID);
-            bs.read<NetworkBitStreamValueType::UINT8>(Unknown1);
-            bs.read<NetworkBitStreamValueType::VEC3>(Spawn);
-            bs.read<NetworkBitStreamValueType::FLOAT>(ZAngle);
-            bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32>(Weapons);
-            return bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT32>(Ammos);
+            bs.readUINT8(Selectable);
+            bs.readUINT8(TeamID);
+            bs.readUINT32(ModelID);
+            bs.readUINT8(Unknown1);
+            bs.readVEC3(Spawn);
+            bs.readFLOAT(ZAngle);
+            bs.readArray(Span<uint32_t>(Weapons));
+            return bs.readArray(Span<uint32_t>(Ammos));
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Selectable));
-            bs.write(NetworkBitStreamValue::UINT8(TeamID));
-            bs.write(NetworkBitStreamValue::UINT32(ModelID));
-            bs.write(NetworkBitStreamValue::UINT8(Unknown1));
-            bs.write(NetworkBitStreamValue::VEC3(Spawn));
-            bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
-            bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Weapons));
-            bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
+            bs.writeUINT8(Selectable);
+            bs.writeUINT8(TeamID);
+            bs.writeUINT32(ModelID);
+            bs.writeUINT8(Unknown1);
+            bs.writeVEC3(Spawn);
+            bs.writeFLOAT(ZAngle);
+            bs.writeArray(Span<const uint32_t>(Weapons));
+            bs.writeArray(Span<const uint32_t>(Ammos));
         }
     };
 
-    struct SetSpawnInfo final : NetworkPacketBase<68> {
+    struct SetSpawnInfo : NetworkPacketBase<68, NetworkPacketType::RPC> {
         uint8_t TeamID;
         uint32_t ModelID;
         uint8_t Unknown1;
         Vector3 Spawn;
         float ZAngle;
-        NetworkArray<uint32_t> Weapons;
-        NetworkArray<uint32_t> Ammos;
+        StaticArray<uint32_t, 3> Weapons;
+        StaticArray<uint32_t, 3> Ammos;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(TeamID));
-            bs.write(NetworkBitStreamValue::UINT32(ModelID));
-            bs.write(NetworkBitStreamValue::UINT8(Unknown1));
-            bs.write(NetworkBitStreamValue::VEC3(Spawn));
-            bs.write(NetworkBitStreamValue::FLOAT(ZAngle));
-            bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Weapons));
-            bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT32(Ammos));
+            bs.writeUINT8(TeamID);
+            bs.writeUINT32(ModelID);
+            bs.writeUINT8(Unknown1);
+            bs.writeVEC3(Spawn);
+            bs.writeFLOAT(ZAngle);
+            bs.writeArray(Span<const uint32_t>(Weapons));
+            bs.writeArray(Span<const uint32_t>(Ammos));
         }
     };
 
-    struct PlayerRequestSpawn final : NetworkPacketBase<129> {
-        bool read(INetworkBitStream& bs)
+    struct PlayerRequestSpawn : NetworkPacketBase<129, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return true;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerRequestSpawnResponse final : NetworkPacketBase<129> {
+    struct PlayerRequestSpawnResponse : NetworkPacketBase<129, NetworkPacketType::RPC> {
         uint32_t Allow;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::UINT32>(Allow);
+            return bs.readUINT32(Allow);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Allow));
+            bs.writeUINT32(Allow);
         }
     };
 
-    struct ImmediatelySpawnPlayer final : NetworkPacketBase<129> {
-        void write(INetworkBitStream& bs) const
+    struct ImmediatelySpawnPlayer : NetworkPacketBase<129, NetworkPacketType::RPC> {
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(2));
+            bs.writeUINT32(2);
         }
     };
 }
