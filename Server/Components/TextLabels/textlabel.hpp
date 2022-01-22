@@ -124,7 +124,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         showTextLabelRPC.PlayerAttachID = attachmentData.playerID;
         showTextLabelRPC.VehicleAttachID = attachmentData.vehicleID;
         showTextLabelRPC.Text = StringView(text);
-        player.sendRPC(showTextLabelRPC);
+        PacketHelper::send(showTextLabelRPC, player);
     }
 
     void streamOutForClient(IPlayer& player, bool isPlayerTextLabel)
@@ -132,7 +132,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerHideTextLabel hideTextLabelRPC;
         hideTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
         hideTextLabelRPC.TextLabelID = poolID;
-        player.sendRPC(hideTextLabelRPC);
+        PacketHelper::send(hideTextLabelRPC, player);
     }
 };
 

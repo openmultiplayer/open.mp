@@ -43,10 +43,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetActorHealthForPlayer RPC;
         RPC.ActorID = poolID;
         RPC.Health = health_;
-
-        for (IPlayer* player : streamedFor_.entries()) {
-            player->sendRPC(RPC);
-        }
+        PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
     }
 
     float getHealth() const override
@@ -78,10 +75,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
 
         NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation);
         RPC.ActorID = poolID;
-
-        for (IPlayer* player : streamedFor_.entries()) {
-            player->sendRPC(RPC);
-        }
+        PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
     }
 
     const AnimationData& getAnimation() const override
@@ -97,10 +91,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
 
         NetCode::RPC::ClearActorAnimationsForPlayer RPC;
         RPC.ActorID = poolID;
-
-        for (IPlayer* player : streamedFor_.entries()) {
-            player->sendRPC(RPC);
-        }
+        PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
     }
 
     void restream()
@@ -167,10 +158,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetActorPosForPlayer RPC;
         RPC.ActorID = poolID;
         RPC.Pos = position;
-
-        for (IPlayer* player : streamedFor_.entries()) {
-            player->sendRPC(RPC);
-        }
+        PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
     }
 
     GTAQuat getRotation() const override
@@ -185,10 +173,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetActorFacingAngleForPlayer RPC;
         RPC.ActorID = poolID;
         RPC.Angle = angle_;
-
-        for (IPlayer* player : streamedFor_.entries()) {
-            player->sendRPC(RPC);
-        }
+        PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
     }
 
     void setSkin(int id) override
@@ -211,12 +196,12 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         showActorForPlayerRPC.Invulnerable = invulnerable_;
         showActorForPlayerRPC.Position = pos_;
         showActorForPlayerRPC.SkinID = skin_;
-        player.sendRPC(showActorForPlayerRPC);
+        PacketHelper::send(showActorForPlayerRPC, player);
 
         if (animationLoop_) {
             NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
             RPC.ActorID = poolID;
-            player.sendRPC(RPC);
+            PacketHelper::send(RPC, player);
         }
     }
 
@@ -224,7 +209,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     {
         NetCode::RPC::HideActorForPlayer RPC;
         RPC.ActorID = poolID;
-        player.sendRPC(RPC);
+        PacketHelper::send(RPC, player);
     }
 
     ~Actor()
