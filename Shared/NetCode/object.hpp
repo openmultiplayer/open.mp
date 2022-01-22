@@ -77,7 +77,7 @@ namespace RPC {
             bs.writeVEC3(Position);
             bs.writeVEC3(Rotation);
             bs.writeFLOAT(DrawDistance);
-            bs.writeUINT8(CameraCollision);
+            bs.writeUINT8(!CameraCollision);
 
             bs.writeUINT16(AttachmentData.type == ObjectAttachmentData::Type::Vehicle ? AttachmentData.ID : INVALID_VEHICLE_ID);
             bs.writeUINT16(AttachmentData.type == ObjectAttachmentData::Type::Object ? AttachmentData.ID : INVALID_OBJECT_ID);
