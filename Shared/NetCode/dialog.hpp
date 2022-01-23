@@ -6,45 +6,45 @@
 
 namespace NetCode {
 namespace RPC {
-    struct ShowDialog final : NetworkPacketBase<61> {
+    struct ShowDialog : NetworkPacketBase<61, NetworkPacketType::RPC> {
         int ID;
         uint8_t Style;
-        NetworkString Title;
-        NetworkString FirstButton;
-        NetworkString SecondButton;
-        NetworkString Info;
+        HybridString<32> Title;
+        HybridString<32> FirstButton;
+        HybridString<32> SecondButton;
+        HybridString<256> Info;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ID));
-            bs.write(NetworkBitStreamValue::UINT8(Style));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Title));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(FirstButton));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(SecondButton));
-            bs.write(NetworkBitStreamValue::COMPRESSED_STR(Info));
+            bs.writeUINT16(ID);
+            bs.writeUINT8(Style);
+            bs.writeDynStr8(Title);
+            bs.writeDynStr8(FirstButton);
+            bs.writeDynStr8(SecondButton);
+            bs.WriteCompressedStr(Info);
         }
     };
 
-    struct OnPlayerDialogResponse final : NetworkPacketBase<62> {
+    struct OnPlayerDialogResponse : NetworkPacketBase<62, NetworkPacketType::RPC> {
         uint16_t ID;
         uint8_t Response;
         uint16_t ListItem;
-        NetworkString Text;
+        HybridString<256> Text;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(ID);
-            bs.read<NetworkBitStreamValueType::UINT8>(Response);
-            bs.read<NetworkBitStreamValueType::UINT16>(ListItem);
-            return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Text);
+            bs.readUINT16(ID);
+            bs.readUINT8(Response);
+            bs.readUINT16(ListItem);
+            return bs.readDynStr8(Text);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };

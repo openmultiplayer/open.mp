@@ -27,7 +27,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             Player& player = static_cast<Player&>(peer);
 
@@ -38,7 +38,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
             playerRequestSpawnResponse.Allow = player.toSpawn_;
-            peer.sendRPC(playerRequestSpawnResponse);
+            PacketHelper::send(playerRequestSpawnResponse, peer);
 
             return true;
         }
@@ -51,10 +51,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries());
-            peer.sendRPC(sendPlayerScoresAndPingsRPC);
+            PacketHelper::send(sendPlayerScoresAndPingsRPC, peer);
             return true;
         }
     } playerRequestScoresAndPingsRPCHandler;
@@ -66,7 +66,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerClickMap onPlayerClickMapRPC;
             if (!onPlayerClickMapRPC.read(bs)) {
@@ -85,7 +85,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerClickPlayer onPlayerClickPlayerRPC;
             if (!onPlayerClickPlayerRPC.read(bs)) {
@@ -110,7 +110,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerGiveTakeDamage onPlayerGiveTakeDamageRPC;
             if (!onPlayerGiveTakeDamageRPC.read(bs)) {
@@ -173,7 +173,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerInteriorChange onPlayerInteriorChangeRPC;
             if (!onPlayerInteriorChangeRPC.read(bs)) {
@@ -197,7 +197,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerDeath onPlayerDeathRPC;
             if (!onPlayerDeathRPC.read(bs)) {
@@ -219,7 +219,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             NetCode::RPC::PlayerDeath playerDeathRPC;
             playerDeathRPC.PlayerID = player.poolID;
-            self.broadcastRPCToAll(playerDeathRPC, &peer);
+            PacketHelper::broadcast(playerDeathRPC, self, &peer);
 
             return true;
         }
@@ -232,7 +232,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerCameraTarget onPlayerCameraTargetRPC;
             if (!onPlayerCameraTargetRPC.read(bs)) {
@@ -256,7 +256,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             Player& player = static_cast<Player&>(peer);
             if (player.toSpawn_ || player.isBot_) {
@@ -316,7 +316,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             logChat = config.getInt("logging_chat");
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::PlayerRequestChatMessage playerChatMessageRequest;
             if (!playerChatMessageRequest.read(bs)) {
@@ -327,7 +327,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             std::regex filter = std::regex("(~(k|K)|%)");
             // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
             std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            String filteredMessage = std::regex_replace(static_cast<String>(playerChatMessageRequest.message), filter, "#");
+            String filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filter, "#");
             filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
 
             bool send = self.eventDispatcher.stopAtFalse(
@@ -365,7 +365,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::PlayerRequestCommandMessage playerRequestCommandMessage;
             if (!playerRequestCommandMessage.read(bs)) {
@@ -391,7 +391,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::ClientCheck rpc;
             if (!rpc.read(bs)) {
@@ -415,7 +415,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerFootSync footSync;
             if (!footSync.read(bs)) {
@@ -477,7 +477,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if (allowedupdate) {
-                peer.broadcastPacketToStreamed(footSync);
+                PacketHelper::broadcastToStreamed(footSync, peer, true);
             }
             return true;
         }
@@ -490,7 +490,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerSpectatorSync spectatorSync;
             if (!spectatorSync.read(bs)) {
@@ -536,7 +536,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerAimSync aimSync;
             if (!aimSync.read(bs)) {
@@ -559,7 +559,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     aimSync.CamMode = 4u;
 
                 aimSync.PlayerID = player.poolID;
-                peer.broadcastPacketToStreamed(aimSync);
+                PacketHelper::broadcastToStreamed(aimSync, peer, true);
             }
             return true;
         }
@@ -572,7 +572,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerStatsSync statsSync;
             if (!statsSync.read(bs)) {
@@ -594,7 +594,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerBulletSync bulletSync;
             if (!bulletSync.read(bs)) {
@@ -687,7 +687,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (allowed) {
                 bulletSync.PlayerID = player.poolID;
-                peer.broadcastPacketToStreamed(bulletSync);
+                PacketHelper::broadcastToStreamed(bulletSync, peer, true);
             }
             return true;
         }
@@ -700,7 +700,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerVehicleSync vehicleSync;
 
@@ -761,7 +761,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     });
 
                 if (allowedupdate) {
-                    peer.broadcastPacketToStreamed(vehicleSync);
+                    PacketHelper::broadcastToStreamed(vehicleSync, peer, true);
                 }
             }
             return true;
@@ -775,7 +775,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerWeaponsUpdate weaponsUpdatePacket;
             if (!weaponsUpdatePacket.read(bs)) {
@@ -910,7 +910,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerPassengerSync passengerSync;
 
@@ -964,7 +964,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (allowedupdate) {
                 passengerSync.PlayerID = player.poolID;
-                player.broadcastPacketToStreamed(passengerSync);
+                PacketHelper::broadcastToStreamed(passengerSync, peer, true);
             }
             return true;
         }
@@ -977,7 +977,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync;
 
@@ -998,7 +998,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (vehicle.updateFromUnoccupied(unoccupiedSync, peer)) {
                 unoccupiedSync.PlayerID = player.poolID;
-                player.broadcastPacketToStreamed(unoccupiedSync);
+                PacketHelper::broadcastToStreamed(unoccupiedSync, peer, true);
             }
             return true;
         }
@@ -1011,7 +1011,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerTrailerSync trailerSync;
 
@@ -1030,7 +1030,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (vehicle.updateFromTrailerSync(trailerSync, peer)) {
                 trailerSync.PlayerID = player.poolID;
-                player.broadcastPacketToStreamed(trailerSync);
+                PacketHelper::broadcastToStreamed(trailerSync, peer, true);
             }
             return true;
         }
@@ -1127,12 +1127,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerJoinPacket.Col = player.colour_;
         playerJoinPacket.IsNPC = player.isBot_;
         playerJoinPacket.Name = StringView(player.name_);
+        PacketHelper::broadcastToSome(playerJoinPacket, storage.entries(), &peer);
+
         for (IPlayer* other : storage.entries()) {
             if (&peer == other) {
                 continue;
             }
-
-            other->sendRPC(playerJoinPacket);
 
             Player* otherPlayer = static_cast<Player*>(other);
             NetCode::RPC::PlayerJoin otherJoinPacket;
@@ -1140,7 +1140,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             otherJoinPacket.Col = otherPlayer->colour_;
             otherJoinPacket.IsNPC = otherPlayer->isBot_;
             otherJoinPacket.Name = StringView(otherPlayer->name_);
-            peer.sendRPC(otherJoinPacket);
+            PacketHelper::send(otherJoinPacket, peer);
         }
 
         eventDispatcher.all(
@@ -1176,7 +1176,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             NetCode::RPC::PlayerQuit packet;
             packet.PlayerID = player.poolID;
             packet.Reason = reason;
-            broadcastRPCToAll(packet);
+            PacketHelper::broadcast(packet, *this);
 
             eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
@@ -1235,8 +1235,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     {
         NetCode::RPC::SendClientMessage RPC;
         RPC.Col = colour;
-        RPC.Message = NetworkString(message);
-        broadcastRPCToAll(RPC);
+        RPC.Message = message;
+        PacketHelper::broadcast(RPC, *this);
     }
 
     void sendChatMessageToAll(IPlayer& from, StringView message) override
@@ -1244,16 +1244,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::PlayerChatMessage RPC;
         RPC.PlayerID = static_cast<Player&>(from).poolID;
         RPC.message = message;
-        broadcastRPCToAll(RPC);
+        PacketHelper::broadcast(RPC, *this);
     }
 
     void sendGameTextToAll(StringView message, Milliseconds time, int style) override
     {
         NetCode::RPC::SendGameText RPC;
-        RPC.Text = NetworkString(message);
+        RPC.Text = message;
         RPC.Time = time.count();
         RPC.Style = style;
-        broadcastRPCToAll(RPC);
+        PacketHelper::broadcast(RPC, *this);
     }
 
     void sendDeathMessageToAll(IPlayer* killer, IPlayer& killee, int weapon) override
@@ -1265,7 +1265,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
         }
         sendDeathMessageRPC.reason = weapon;
-        broadcastRPCToAll(sendDeathMessageRPC);
+        PacketHelper::broadcast(sendDeathMessageRPC, *this);
     }
 
     void createExplosionForAll(Vector3 vec, int type, float radius) override
@@ -1274,7 +1274,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         createExplosionRPC.vec = vec;
         createExplosionRPC.type = type;
         createExplosionRPC.radius = radius;
-        broadcastRPCToAll(createExplosionRPC);
+        PacketHelper::broadcast(createExplosionRPC, *this);
     }
 
     void init(IComponentList& components)
@@ -1291,29 +1291,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         playerUpdateDispatcher.addEventHandler(this);
         core.addNetworkEventHandler(this);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerChatMessage>(&playerTextRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::PlayerCommandMessage>(&playerCommandRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerCameraTarget>(&playerCameraTargetRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
-        core.addPerRPCEventHandler<NetCode::RPC::ClientCheck>(&clientCheckResponseRPCHandler);
+        NetCode::RPC::PlayerSpawn::addEventHandler(core, &playerSpawnRPCHandler);
+        NetCode::RPC::PlayerRequestSpawn::addEventHandler(core, &playerRequestSpawnRPCHandler);
+        NetCode::RPC::PlayerChatMessage::addEventHandler(core, &playerTextRPCHandler);
+        NetCode::RPC::PlayerCommandMessage::addEventHandler(core, &playerCommandRPCHandler);
+        NetCode::RPC::OnPlayerDeath::addEventHandler(core, &playerDeathRPCHandler);
+        NetCode::RPC::OnPlayerCameraTarget::addEventHandler(core, &playerCameraTargetRPCHandler);
+        NetCode::RPC::OnPlayerGiveTakeDamage::addEventHandler(core, &playerGiveTakeDamageRPCHandler);
+        NetCode::RPC::OnPlayerInteriorChange::addEventHandler(core, &playerInteriorChangeRPCHandler);
+        NetCode::RPC::OnPlayerRequestScoresAndPings::addEventHandler(core, &playerRequestScoresAndPingsRPCHandler);
+        NetCode::RPC::OnPlayerClickMap::addEventHandler(core, &onPlayerClickMapRPCHandler);
+        NetCode::RPC::OnPlayerClickPlayer::addEventHandler(core, &onPlayerClickPlayerRPCHandler);
+        NetCode::RPC::ClientCheck::addEventHandler(core, &clientCheckResponseRPCHandler);
 
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerSpectatorSync>(&playerSpectatorHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
-        core.addPerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
+        NetCode::Packet::PlayerFootSync::addEventHandler(core, &playerFootSyncHandler);
+        NetCode::Packet::PlayerSpectatorSync::addEventHandler(core, &playerSpectatorHandler);
+        NetCode::Packet::PlayerAimSync::addEventHandler(core, &playerAimSyncHandler);
+        NetCode::Packet::PlayerBulletSync::addEventHandler(core, &playerBulletSyncHandler);
+        NetCode::Packet::PlayerStatsSync::addEventHandler(core, &playerStatsSyncHandler);
+        NetCode::Packet::PlayerVehicleSync::addEventHandler(core, &playerVehicleSyncHandler);
+        NetCode::Packet::PlayerPassengerSync::addEventHandler(core, &playerPassengerSyncHandler);
+        NetCode::Packet::PlayerUnoccupiedSync::addEventHandler(core, &playerUnoccupiedSyncHandler);
+        NetCode::Packet::PlayerTrailerSync::addEventHandler(core, &playerTrailerSyncHandler);
+        NetCode::Packet::PlayerWeaponsUpdate::addEventHandler(core, &playerWeaponsUpdateHandler);
 
         vehiclesComponent = components.queryComponent<IVehiclesComponent>();
         objectsComponent = components.queryComponent<IObjectsComponent>();
@@ -1360,28 +1360,28 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     {
         playerUpdateDispatcher.removeEventHandler(this);
 
-        core.removePerRPCEventHandler<NetCode::RPC::PlayerSpawn>(&playerSpawnRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestSpawn>(&playerRequestSpawnRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestChatMessage>(&playerTextRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::PlayerRequestCommandMessage>(&playerCommandRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerDeath>(&playerDeathRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerCameraTarget>(&playerCameraTargetRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerGiveTakeDamage>(&playerGiveTakeDamageRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerInteriorChange>(&playerInteriorChangeRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerRequestScoresAndPings>(&playerRequestScoresAndPingsRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickMap>(&onPlayerClickMapRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::OnPlayerClickPlayer>(&onPlayerClickPlayerRPCHandler);
-        core.removePerRPCEventHandler<NetCode::RPC::ClientCheck>(&clientCheckResponseRPCHandler);
+        NetCode::RPC::PlayerSpawn::removeEventHandler(core, &playerSpawnRPCHandler);
+        NetCode::RPC::PlayerRequestSpawn::removeEventHandler(core, &playerRequestSpawnRPCHandler);
+        NetCode::RPC::PlayerRequestChatMessage::removeEventHandler(core, &playerTextRPCHandler);
+        NetCode::RPC::PlayerRequestCommandMessage::removeEventHandler(core, &playerCommandRPCHandler);
+        NetCode::RPC::OnPlayerDeath::removeEventHandler(core, &playerDeathRPCHandler);
+        NetCode::RPC::OnPlayerCameraTarget::removeEventHandler(core, &playerCameraTargetRPCHandler);
+        NetCode::RPC::OnPlayerGiveTakeDamage::removeEventHandler(core, &playerGiveTakeDamageRPCHandler);
+        NetCode::RPC::OnPlayerInteriorChange::removeEventHandler(core, &playerInteriorChangeRPCHandler);
+        NetCode::RPC::OnPlayerRequestScoresAndPings::removeEventHandler(core, &playerRequestScoresAndPingsRPCHandler);
+        NetCode::RPC::OnPlayerClickMap::removeEventHandler(core, &onPlayerClickMapRPCHandler);
+        NetCode::RPC::OnPlayerClickPlayer::removeEventHandler(core, &onPlayerClickPlayerRPCHandler);
+        NetCode::RPC::ClientCheck::removeEventHandler(core, &clientCheckResponseRPCHandler);
 
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerFootSync>(&playerFootSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerAimSync>(&playerAimSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerBulletSync>(&playerBulletSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerStatsSync>(&playerStatsSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerVehicleSync>(&playerVehicleSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerPassengerSync>(&playerPassengerSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerUnoccupiedSync>(&playerUnoccupiedSyncHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerWeaponsUpdate>(&playerWeaponsUpdateHandler);
-        core.removePerPacketEventHandler<NetCode::Packet::PlayerTrailerSync>(&playerTrailerSyncHandler);
+        NetCode::Packet::PlayerFootSync::removeEventHandler(core, &playerFootSyncHandler);
+        NetCode::Packet::PlayerAimSync::removeEventHandler(core, &playerAimSyncHandler);
+        NetCode::Packet::PlayerBulletSync::removeEventHandler(core, &playerBulletSyncHandler);
+        NetCode::Packet::PlayerStatsSync::removeEventHandler(core, &playerStatsSyncHandler);
+        NetCode::Packet::PlayerVehicleSync::removeEventHandler(core, &playerVehicleSyncHandler);
+        NetCode::Packet::PlayerPassengerSync::removeEventHandler(core, &playerPassengerSyncHandler);
+        NetCode::Packet::PlayerUnoccupiedSync::removeEventHandler(core, &playerUnoccupiedSyncHandler);
+        NetCode::Packet::PlayerWeaponsUpdate::removeEventHandler(core, &playerWeaponsUpdateHandler);
+        NetCode::Packet::PlayerTrailerSync::removeEventHandler(core, &playerTrailerSyncHandler);
         core.removeNetworkEventHandler(this);
     }
 };

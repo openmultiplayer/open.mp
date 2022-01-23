@@ -6,47 +6,47 @@
 
 namespace NetCode {
 namespace RPC {
-    struct ShowGangZone final : NetworkPacketBase<108> {
+    struct ShowGangZone : NetworkPacketBase<108, NetworkPacketType::RPC> {
         int ID;
         Vector2 Min;
         Vector2 Max;
         Colour Col;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ID));
-            bs.write(NetworkBitStreamValue::VEC2(Min));
-            bs.write(NetworkBitStreamValue::VEC2(Max));
-            bs.write(NetworkBitStreamValue::UINT32(Col.ABGR()));
+            bs.writeUINT16(ID);
+            bs.writeVEC2(Min);
+            bs.writeVEC2(Max);
+            bs.writeUINT32(Col.ABGR());
         }
     };
 
-    struct HideGangZone final : NetworkPacketBase<120> {
+    struct HideGangZone : NetworkPacketBase<120, NetworkPacketType::RPC> {
         int ID;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ID));
+            bs.writeUINT16(ID);
         }
     };
 
-    struct FlashGangZone final : NetworkPacketBase<121> {
+    struct FlashGangZone : NetworkPacketBase<121, NetworkPacketType::RPC> {
         int ID;
         Colour Col;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ID));
-            bs.write(NetworkBitStreamValue::UINT32(Col.ABGR()));
+            bs.writeUINT16(ID);
+            bs.writeUINT32(Col.ABGR());
         }
     };
 
-    struct StopFlashGangZone final : NetworkPacketBase<85> {
+    struct StopFlashGangZone : NetworkPacketBase<85, NetworkPacketType::RPC> {
         int ID;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ID));
+            bs.writeUINT16(ID);
         }
     };
 }

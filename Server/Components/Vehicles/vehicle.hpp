@@ -29,7 +29,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t landingGear = 1;
     IPlayer* driver = nullptr;
     FlatHashSet<IPlayer*> passengers;
-    String numberPlate = "XYZSR998";
+    HybridString<16> numberPlate = StringView("XYZSR998");
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;

@@ -1,7 +1,7 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
@@ -106,14 +106,14 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
         createPickupRPC.Model = modelId;
         createPickupRPC.Type = type;
         createPickupRPC.Position = pos;
-        player.sendRPC(createPickupRPC);
+        PacketHelper::send(createPickupRPC, player);
     }
 
     void streamOutForClient(IPlayer& player)
     {
         NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
         destroyPickupRPC.PickupID = poolID;
-        player.sendRPC(destroyPickupRPC);
+        PacketHelper::send(destroyPickupRPC, player);
     }
 
     ~Pickup()

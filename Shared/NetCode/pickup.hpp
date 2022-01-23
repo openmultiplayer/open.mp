@@ -6,49 +6,49 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerCreatePickup final : NetworkPacketBase<95> {
+    struct PlayerCreatePickup : NetworkPacketBase<95, NetworkPacketType::RPC> {
         int PickupID;
         int Model;
         int Type;
         Vector3 Position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::INT32(PickupID));
-            bs.write(NetworkBitStreamValue::INT32(Model));
-            bs.write(NetworkBitStreamValue::INT32(Type));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
+            bs.writeINT32(PickupID);
+            bs.writeINT32(Model);
+            bs.writeINT32(Type);
+            bs.writeVEC3(Position);
         }
     };
 
-    struct PlayerDestroyPickup final : NetworkPacketBase<63> {
+    struct PlayerDestroyPickup : NetworkPacketBase<63, NetworkPacketType::RPC> {
         int PickupID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::INT32(PickupID));
+            bs.writeINT32(PickupID);
         }
     };
 
-    struct OnPlayerPickUpPickup final : NetworkPacketBase<131> {
+    struct OnPlayerPickUpPickup : NetworkPacketBase<131, NetworkPacketType::RPC> {
         int PickupID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::INT32>(PickupID);
+            return bs.readINT32(PickupID);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };

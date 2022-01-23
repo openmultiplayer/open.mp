@@ -41,11 +41,11 @@ struct PlayerClassData final : IPlayerClassData {
         setSpawnInfoRPC.ModelID = info.skin;
         setSpawnInfoRPC.Spawn = info.spawn;
         setSpawnInfoRPC.ZAngle = info.angle;
-        setSpawnInfoRPC.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
-        setSpawnInfoRPC.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
+        setSpawnInfoRPC.Weapons = weaponIDsArray;
+        setSpawnInfoRPC.Ammos = weaponAmmoArray;
 
         cls = info;
-        player.sendRPC(setSpawnInfoRPC);
+        PacketHelper::send(setSpawnInfoRPC, player);
     }
 
     void free() override
@@ -86,7 +86,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
             : self(self)
         {
         }
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::PlayerRequestClass playerRequestClassPacket;
             if (!playerRequestClassPacket.read(bs)) {
@@ -109,10 +109,9 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                         NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
                         playerRequestClassResponse.Selectable = true;
                         playerRequestClassResponse.Unknown1 = 0;
-                        playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
-                        playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
-
-                        peer.sendRPC(playerRequestClassResponse);
+                        playerRequestClassResponse.Weapons = weaponIDsArray;
+                        playerRequestClassResponse.Ammos = weaponAmmoArray;
+                        PacketHelper::send(playerRequestClassResponse, peer);
                     }
                 } else if (self.storage.valid(playerRequestClassPacket.Classid)) {
                     const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid).cls;
@@ -127,10 +126,9 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                     NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
-                    playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
-                    playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
-
-                    peer.sendRPC(playerRequestClassResponse);
+                    playerRequestClassResponse.Weapons = weaponIDsArray;
+                    playerRequestClassResponse.Ammos = weaponAmmoArray;
+                    PacketHelper::send(playerRequestClassResponse, peer);
                 } else {
                     const WeaponSlots& weapons = defClass.weapons;
                     StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
@@ -138,20 +136,18 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                     NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(defClass.team, defClass.skin, defClass.spawn, defClass.angle);
                     playerRequestClassResponse.Selectable = true;
                     playerRequestClassResponse.Unknown1 = 0;
-                    playerRequestClassResponse.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
-                    playerRequestClassResponse.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
-
-                    peer.sendRPC(playerRequestClassResponse);
+                    playerRequestClassResponse.Weapons = weaponIDsArray;
+                    playerRequestClassResponse.Ammos = weaponAmmoArray;
+                    PacketHelper::send(playerRequestClassResponse, peer);
                 }
             } else {
                 StaticArray<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
                 NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponseNotAllowed;
                 playerRequestClassResponseNotAllowed.Selectable = false;
-                playerRequestClassResponseNotAllowed.Weapons = NetworkArray<uint32_t>(weaponIDsArray);
-                playerRequestClassResponseNotAllowed.Ammos = NetworkArray<uint32_t>(weaponAmmoArray);
-
-                peer.sendRPC(playerRequestClassResponseNotAllowed);
+                playerRequestClassResponseNotAllowed.Weapons = weaponIDsArray;
+                playerRequestClassResponseNotAllowed.Ammos = weaponAmmoArray;
+                PacketHelper::send(playerRequestClassResponseNotAllowed, peer);
             }
 
             self.inClassRequest = false;
@@ -167,7 +163,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
     void onLoad(ICore* c) override
     {
         core = c;
-        core->addPerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
+        NetCode::RPC::PlayerRequestClass::addEventHandler(*core, &onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
     }
 
@@ -255,7 +251,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
     ~ClassesComponent()
     {
-        core->removePerRPCEventHandler<NetCode::RPC::PlayerRequestClass>(&onPlayerRequestClassHandler);
+        NetCode::RPC::PlayerRequestClass::removeEventHandler(*core, &onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
     }
 };

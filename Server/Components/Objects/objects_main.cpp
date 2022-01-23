@@ -16,7 +16,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerSelectObject onPlayerSelectObjectRPC;
             if (!onPlayerSelectObjectRPC.read(bs)) {
@@ -55,7 +55,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEditObject onPlayerEditObjectRPC;
             if (!onPlayerEditObjectRPC.read(bs)) {
@@ -100,7 +100,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEditAttachedObject onPlayerEditAttachedObjectRPC;
             if (!onPlayerEditAttachedObjectRPC.read(bs)) {
@@ -136,18 +136,18 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         this->core = core;
         core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerSelectObject>(&playerSelectObjectEventHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEditObject>(&playerEditObjectEventHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEditAttachedObject>(&playerEditAttachedObjectEventHandler);
+        NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
+        NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
+        NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
     }
 
     ~ObjectComponent()
     {
         core->getEventDispatcher().removeEventHandler(this);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectObject>(&playerSelectObjectEventHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEditObject>(&playerEditObjectEventHandler);
-        core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEditAttachedObject>(&playerEditAttachedObjectEventHandler);
+        NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
+        NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
+        NetCode::RPC::OnPlayerEditAttachedObject::removeEventHandler(*core, &playerEditAttachedObjectEventHandler);
     }
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override;
@@ -289,7 +289,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 attachObjectToPlayerRPC.PlayerID = obj->attachmentData_.ID;
                 attachObjectToPlayerRPC.Offset = obj->attachmentData_.offset;
                 attachObjectToPlayerRPC.Rotation = obj->attachmentData_.rotation;
-                forPlayer.sendRPC(attachObjectToPlayerRPC);
+                PacketHelper::send(attachObjectToPlayerRPC, forPlayer);
             }
         }
 
@@ -302,7 +302,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     setPlayerAttachedObjectRPC.Index = i;
                     setPlayerAttachedObjectRPC.Create = true;
                     setPlayerAttachedObjectRPC.AttachmentData = objectData->getAttachedObject(i);
-                    forPlayer.sendRPC(setPlayerAttachedObjectRPC);
+                    PacketHelper::send(setPlayerAttachedObjectRPC, forPlayer);
                 }
             }
         }
@@ -441,7 +441,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         inObjectEdit_ = false;
         inObjectSelection_ = true;
         NetCode::RPC::PlayerBeginObjectSelect playerBeginObjectSelectRPC;
-        player_.sendRPC(playerBeginObjectSelectRPC);
+        PacketHelper::send(playerBeginObjectSelectRPC, player_);
     }
 
     bool selectingObject() const override
@@ -459,7 +459,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         inObjectSelection_ = false;
         inObjectEdit_ = false;
         NetCode::RPC::PlayerCancelObjectEdit playerCancelObjectEditRPC;
-        player_.sendRPC(playerCancelObjectEditRPC);
+        PacketHelper::send(playerCancelObjectEditRPC, player_);
     }
 
     void editObject(IObject& object) override
@@ -470,7 +470,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         NetCode::RPC::PlayerBeginObjectEdit playerBeginObjectEditRPC;
         playerBeginObjectEditRPC.PlayerObject = false;
         playerBeginObjectEditRPC.ObjectID = static_cast<Object&>(object).poolID;
-        player_.sendRPC(playerBeginObjectEditRPC);
+        PacketHelper::send(playerBeginObjectEditRPC, player_);
     }
 
     void editObject(IPlayerObject& object) override
@@ -481,7 +481,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         NetCode::RPC::PlayerBeginObjectEdit playerBeginObjectEditRPC;
         playerBeginObjectEditRPC.PlayerObject = true;
         playerBeginObjectEditRPC.ObjectID = static_cast<PlayerObject&>(object).poolID;
-        player_.sendRPC(playerBeginObjectEditRPC);
+        PacketHelper::send(playerBeginObjectEditRPC, player_);
     }
 
     void setAttachedObject(int index, const ObjectAttachmentSlotData& data) override
@@ -495,11 +495,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
             setPlayerAttachedObjectRPC.Index = index;
             setPlayerAttachedObjectRPC.Create = true;
             setPlayerAttachedObjectRPC.AttachmentData = data;
-
-            IPlayerPool* players = player_.getPool();
-            if (players) {
-                player_.broadcastRPCToStreamed(setPlayerAttachedObjectRPC);
-            }
+            PacketHelper::broadcastToStreamed(setPlayerAttachedObjectRPC, player_);
         }
     }
 
@@ -511,11 +507,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         setPlayerAttachedObjectRPC.PlayerID = player_.getID();
         setPlayerAttachedObjectRPC.Index = index;
         setPlayerAttachedObjectRPC.Create = false;
-
-        IPlayerPool* players = player_.getPool();
-        if (players) {
-            player_.broadcastRPCToStreamed(setPlayerAttachedObjectRPC);
-        }
+        PacketHelper::broadcastToStreamed(setPlayerAttachedObjectRPC, player_);
     }
 
     bool hasAttachedObject(int index) const override
@@ -536,7 +528,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
 
             NetCode::RPC::PlayerBeginAttachedObjectEdit playerBeginAttachedObjectEditRPC;
             playerBeginAttachedObjectEditRPC.Index = index;
-            player_.sendRPC(playerBeginAttachedObjectEditRPC);
+            PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
         }
     }
 };
