@@ -22,7 +22,6 @@
 
 /// Forward declaration
 namespace Encoding {
-class BitStream;
 
 namespace DataStructures {
     class HuffmanEncodingTree;
@@ -72,12 +71,6 @@ public:
     /// \param[in] skip If there is too much data to fit in the output, drop the remainder
     bool DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, int languageID, unsigned& stringBitLength, bool skip);
 
-    /// Used so I can allocate and deallocate this singleton at runtime
-    static void AddReference(void);
-
-    /// Used so I can allocate and deallocate this singleton at runtime
-    static void RemoveReference(void);
-
 private:
     /// Private Constructor
     StringCompressor();
@@ -87,8 +80,6 @@ private:
 
     /// Pointer to the huffman encoding trees.
     DataStructures::Map<int, DataStructures::HuffmanEncodingTree*> huffmanEncodingTrees;
-
-    static int referenceCount;
 };
 }
 
