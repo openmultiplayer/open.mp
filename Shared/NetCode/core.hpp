@@ -6,106 +6,106 @@
 
 namespace NetCode {
 namespace RPC {
-    struct Invalid final : NetworkPacketBase<0> {
-        bool read(INetworkBitStream& bs)
+    struct Invalid : NetworkPacketBase<0, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             assert(false);
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
             assert(false);
         }
     };
 
-    struct PlayerConnect final : NetworkPacketBase<25> {
+    struct PlayerConnect : NetworkPacketBase<25, NetworkPacketType::RPC> {
         uint32_t VersionNumber;
         uint8_t Modded;
-        NetworkString Name;
+        HybridString<MAX_PLAYER_NAME + 1> Name;
         uint32_t ChallengeResponse;
-        NetworkString Key;
-        NetworkString VersionString;
+        HybridString<16> Key;
+        HybridString<16> VersionString;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT32>(VersionNumber);
-            bs.read<NetworkBitStreamValueType::UINT8>(Modded);
-            bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Name);
-            bs.read<NetworkBitStreamValueType::UINT32>(ChallengeResponse);
-            bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Key);
-            return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(VersionString);
+            bs.readUINT32(VersionNumber);
+            bs.readUINT8(Modded);
+            bs.readDynStr8(Name);
+            bs.readUINT32(ChallengeResponse);
+            bs.readDynStr8(Key);
+            return bs.readDynStr8(VersionString);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(VersionNumber));
-            bs.write(NetworkBitStreamValue::UINT8(Modded));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
-            bs.write(NetworkBitStreamValue::UINT32(ChallengeResponse));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Key));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(VersionString));
+            bs.writeUINT32(VersionNumber);
+            bs.writeUINT8(Modded);
+            bs.writeDynStr8(Name);
+            bs.writeUINT32(ChallengeResponse);
+            bs.writeDynStr8(Key);
+            bs.writeDynStr8(VersionString);
         }
     };
 
-    struct NPCConnect final : NetworkPacketBase<54> {
+    struct NPCConnect : NetworkPacketBase<54, NetworkPacketType::RPC> {
         uint32_t VersionNumber;
         uint8_t Modded;
-        NetworkString Name;
+        HybridString<MAX_PLAYER_NAME + 1> Name;
         uint32_t ChallengeResponse;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT32>(VersionNumber);
-            bs.read<NetworkBitStreamValueType::UINT8>(Modded);
-            bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Name);
-            return bs.read<NetworkBitStreamValueType::UINT32>(ChallengeResponse);
+            bs.readUINT32(VersionNumber);
+            bs.readUINT8(Modded);
+            bs.readDynStr8(Name);
+            return bs.readUINT32(ChallengeResponse);
         }
     };
 
-    struct PlayerJoin final : NetworkPacketBase<137> {
+    struct PlayerJoin : NetworkPacketBase<137, NetworkPacketType::RPC> {
         int PlayerID;
         Colour Col;
         bool IsNPC;
-        NetworkString Name;
+        HybridString<MAX_PLAYER_NAME + 1> Name;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
+            bs.readUINT16(PlayerID);
             uint32_t rgba;
-            bs.read<NetworkBitStreamValueType::UINT32>(rgba);
+            bs.readUINT32(rgba);
             Col = Colour::FromRGBA(rgba);
-            bs.read<NetworkBitStreamValueType::UINT8>(IsNPC);
-            return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(Name);
+            bs.readUINT8(IsNPC);
+            return bs.readDynStr8(Name);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
-            bs.write(NetworkBitStreamValue::UINT8(IsNPC));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
+            bs.writeUINT16(uint16_t(PlayerID));
+            bs.writeUINT32(Col.RGBA());
+            bs.writeUINT8(IsNPC);
+            bs.writeDynStr8(Name);
         }
     };
 
-    struct PlayerQuit final : NetworkPacketBase<138> {
+    struct PlayerQuit : NetworkPacketBase<138, NetworkPacketType::RPC> {
         int PlayerID;
         uint8_t Reason;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
-            return bs.read<NetworkBitStreamValueType::UINT8>(Reason);
+            bs.readUINT16(PlayerID);
+            return bs.readUINT8(Reason);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-            bs.write(NetworkBitStreamValue::UINT8(Reason));
+            bs.writeUINT16(uint16_t(PlayerID));
+            bs.writeUINT8(Reason);
         }
     };
 
-    struct PlayerInit final : NetworkPacketBase<139> {
+    struct PlayerInit : NetworkPacketBase<139, NetworkPacketType::RPC> {
         bool EnableZoneNames;
         bool UsePlayerPedAnims;
         bool AllowInteriorWeapons;
@@ -131,135 +131,135 @@ namespace RPC {
         uint32_t WeaponRate;
         uint32_t Multiplier;
         uint32_t LagCompensation;
-        NetworkString ServerName;
-        NetworkArray<uint8_t> VehicleModels;
+        HybridString<64> ServerName;
+        StaticArray<uint8_t, MAX_VEHICLE_MODELS> VehicleModels;
         bool EnableVehicleFriendlyFire;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::BIT>(EnableZoneNames);
-            bs.read<NetworkBitStreamValueType::BIT>(UsePlayerPedAnims);
-            bs.read<NetworkBitStreamValueType::BIT>(AllowInteriorWeapons);
-            bs.read<NetworkBitStreamValueType::BIT>(UseLimitGlobalChatRadius);
-            bs.read<NetworkBitStreamValueType::FLOAT>(LimitGlobalChatRadius);
-            bs.read<NetworkBitStreamValueType::BIT>(EnableStuntBonus);
-            bs.read<NetworkBitStreamValueType::FLOAT>(SetNameTagDrawDistance);
-            bs.read<NetworkBitStreamValueType::BIT>(DisableInteriorEnterExits);
-            bs.read<NetworkBitStreamValueType::BIT>(DisableNameTagLOS);
-            bs.read<NetworkBitStreamValueType::BIT>(ManualVehicleEngineAndLights);
-            bs.read<NetworkBitStreamValueType::UINT32>(SetSpawnInfoCount);
-            bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
-            bs.read<NetworkBitStreamValueType::BIT>(ShowNameTags);
-            bs.read<NetworkBitStreamValueType::UINT32>(ShowPlayerMarkers);
-            bs.read<NetworkBitStreamValueType::UINT8>(SetWorldTime);
-            bs.read<NetworkBitStreamValueType::UINT8>(SetWeather);
-            bs.read<NetworkBitStreamValueType::FLOAT>(SetGravity);
-            bs.read<NetworkBitStreamValueType::BIT>(LanMode);
-            bs.read<NetworkBitStreamValueType::UINT32>(SetDeathDropAmount);
-            bs.read<NetworkBitStreamValueType::BIT>(Instagib);
-            bs.read<NetworkBitStreamValueType::UINT32>(OnFootRate);
-            bs.read<NetworkBitStreamValueType::UINT32>(InCarRate);
-            bs.read<NetworkBitStreamValueType::UINT32>(WeaponRate);
-            bs.read<NetworkBitStreamValueType::UINT32>(Multiplier);
-            bs.read<NetworkBitStreamValueType::UINT32>(LagCompensation);
-            bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(ServerName);
-            bs.read<NetworkBitStreamValueType::FIXED_LEN_ARR_UINT8>(VehicleModels);
-            return bs.read<NetworkBitStreamValueType::UINT32>(EnableVehicleFriendlyFire);
+            bs.readBIT(EnableZoneNames);
+            bs.readBIT(UsePlayerPedAnims);
+            bs.readBIT(AllowInteriorWeapons);
+            bs.readBIT(UseLimitGlobalChatRadius);
+            bs.readFLOAT(LimitGlobalChatRadius);
+            bs.readBIT(EnableStuntBonus);
+            bs.readFLOAT(SetNameTagDrawDistance);
+            bs.readBIT(DisableInteriorEnterExits);
+            bs.readBIT(DisableNameTagLOS);
+            bs.readBIT(ManualVehicleEngineAndLights);
+            bs.readUINT32(SetSpawnInfoCount);
+            bs.readUINT16(PlayerID);
+            bs.readBIT(ShowNameTags);
+            bs.readUINT32(ShowPlayerMarkers);
+            bs.readUINT8(SetWorldTime);
+            bs.readUINT8(SetWeather);
+            bs.readFLOAT(SetGravity);
+            bs.readBIT(LanMode);
+            bs.readUINT32(SetDeathDropAmount);
+            bs.readBIT(Instagib);
+            bs.readUINT32(OnFootRate);
+            bs.readUINT32(InCarRate);
+            bs.readUINT32(WeaponRate);
+            bs.readUINT32(Multiplier);
+            bs.readUINT32(LagCompensation);
+            bs.readDynStr8(ServerName);
+            bs.readArray(Span<uint8_t>(VehicleModels));
+            return bs.readUINT32(EnableVehicleFriendlyFire);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(EnableZoneNames));
-            bs.write(NetworkBitStreamValue::BIT(UsePlayerPedAnims));
-            bs.write(NetworkBitStreamValue::BIT(AllowInteriorWeapons));
-            bs.write(NetworkBitStreamValue::BIT(UseLimitGlobalChatRadius));
-            bs.write(NetworkBitStreamValue::FLOAT(LimitGlobalChatRadius));
-            bs.write(NetworkBitStreamValue::BIT(EnableStuntBonus));
-            bs.write(NetworkBitStreamValue::FLOAT(SetNameTagDrawDistance));
-            bs.write(NetworkBitStreamValue::BIT(DisableInteriorEnterExits));
-            bs.write(NetworkBitStreamValue::BIT(DisableNameTagLOS));
-            bs.write(NetworkBitStreamValue::BIT(ManualVehicleEngineAndLights));
-            bs.write(NetworkBitStreamValue::UINT32(SetSpawnInfoCount));
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-            bs.write(NetworkBitStreamValue::BIT(ShowNameTags));
-            bs.write(NetworkBitStreamValue::UINT32(ShowPlayerMarkers));
-            bs.write(NetworkBitStreamValue::UINT8(SetWorldTime));
-            bs.write(NetworkBitStreamValue::UINT8(SetWeather));
-            bs.write(NetworkBitStreamValue::FLOAT(SetGravity));
-            bs.write(NetworkBitStreamValue::BIT(LanMode));
-            bs.write(NetworkBitStreamValue::UINT32(SetDeathDropAmount));
-            bs.write(NetworkBitStreamValue::BIT(Instagib));
-            bs.write(NetworkBitStreamValue::UINT32(OnFootRate));
-            bs.write(NetworkBitStreamValue::UINT32(InCarRate));
-            bs.write(NetworkBitStreamValue::UINT32(WeaponRate));
-            bs.write(NetworkBitStreamValue::UINT32(Multiplier));
-            bs.write(NetworkBitStreamValue::UINT32(LagCompensation));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(ServerName));
-            bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT8(VehicleModels));
-            bs.write(NetworkBitStreamValue::UINT32(EnableVehicleFriendlyFire));
+            bs.writeBIT(EnableZoneNames); // 1
+            bs.writeBIT(UsePlayerPedAnims); // 2
+            bs.writeBIT(AllowInteriorWeapons); // 3
+            bs.writeBIT(UseLimitGlobalChatRadius); // 4
+            bs.writeFLOAT(LimitGlobalChatRadius); // 36
+            bs.writeBIT(EnableStuntBonus); // 37
+            bs.writeFLOAT(SetNameTagDrawDistance); // 69
+            bs.writeBIT(DisableInteriorEnterExits); // 70
+            bs.writeBIT(DisableNameTagLOS); // 71
+            bs.writeBIT(ManualVehicleEngineAndLights); // 72
+            bs.writeUINT32(SetSpawnInfoCount); // 104
+            bs.writeUINT16(PlayerID); // 120
+            bs.writeBIT(ShowNameTags); // 121
+            bs.writeUINT32(ShowPlayerMarkers); // 153
+            bs.writeUINT8(SetWorldTime); // 161
+            bs.writeUINT8(SetWeather); // 169
+            bs.writeFLOAT(SetGravity); // 201
+            bs.writeBIT(LanMode); // 202
+            bs.writeUINT32(SetDeathDropAmount); // 234
+            bs.writeBIT(Instagib); // 235
+            bs.writeUINT32(OnFootRate); // 267
+            bs.writeUINT32(InCarRate); // 299
+            bs.writeUINT32(WeaponRate); // 331
+            bs.writeUINT32(Multiplier); // 363
+            bs.writeUINT32(LagCompensation); // 395
+            bs.writeDynStr8(ServerName);
+            bs.writeArray(Span<const uint8_t>(VehicleModels));
+            bs.writeUINT32(EnableVehicleFriendlyFire);
         }
     };
 
-    struct GivePlayerWeapon final : NetworkPacketBase<22> {
+    struct GivePlayerWeapon : NetworkPacketBase<22, NetworkPacketType::RPC> {
         uint32_t Weapon;
         uint32_t Ammo;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT32>(Weapon);
-            return bs.read<NetworkBitStreamValueType::UINT32>(Ammo);
+            bs.readUINT32(Weapon);
+            return bs.readUINT32(Ammo);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Weapon));
-            bs.write(NetworkBitStreamValue::UINT32(Ammo));
+            bs.writeUINT32(Weapon);
+            bs.writeUINT32(Ammo);
         }
     };
 
-    struct ResetPlayerWeapons final : NetworkPacketBase<21> {
-        bool read(INetworkBitStream& bs)
+    struct ResetPlayerWeapons : NetworkPacketBase<21, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return true;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct SetPlayerArmedWeapon final : NetworkPacketBase<67> {
+    struct SetPlayerArmedWeapon : NetworkPacketBase<67, NetworkPacketType::RPC> {
         uint32_t Weapon;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::UINT32>(Weapon);
+            return bs.readUINT32(Weapon);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Weapon));
+            bs.writeUINT32(Weapon);
         }
     };
 
-    struct SetPlayerChatBubble final : NetworkPacketBase<59> {
+    struct SetPlayerChatBubble : NetworkPacketBase<59, NetworkPacketType::RPC> {
         int PlayerID;
         Colour Col;
         float DrawDistance;
         uint32_t ExpireTime;
-        NetworkString Text;
+        HybridString<128> Text;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
-            bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
-            bs.write(NetworkBitStreamValue::UINT32(ExpireTime));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Text));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT32(Col.RGBA());
+            bs.writeFLOAT(DrawDistance);
+            bs.writeUINT32(ExpireTime);
+            bs.writeDynStr8(Text);
         }
     };
 
-    struct PlayerStreamIn final : NetworkPacketBase<32> {
+    struct PlayerStreamIn : NetworkPacketBase<32, NetworkPacketType::RPC> {
         int PlayerID;
         uint8_t Team;
         uint32_t Skin;
@@ -267,445 +267,447 @@ namespace RPC {
         float Angle;
         Colour Col;
         uint8_t FightingStyle;
-        NetworkArray<uint16_t> SkillLevel;
+        StaticArray<uint16_t, NUM_SKILL_LEVELS> SkillLevel;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT8(Team));
-            bs.write(NetworkBitStreamValue::UINT32(Skin));
-            bs.write(NetworkBitStreamValue::VEC3(Pos));
-            bs.write(NetworkBitStreamValue::FLOAT(Angle));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
-            bs.write(NetworkBitStreamValue::UINT8(FightingStyle));
-            bs.write(NetworkBitStreamValue::FIXED_LEN_ARR_UINT16(SkillLevel));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT8(Team);
+            bs.writeUINT32(Skin);
+            bs.writeVEC3(Pos);
+            bs.writeFLOAT(Angle);
+            bs.writeUINT32(Col.RGBA());
+            bs.writeUINT8(FightingStyle);
+            bs.writeArray(Span<const uint16_t>(SkillLevel));
         }
     };
 
-    struct PlayerStreamOut final : NetworkPacketBase<163> {
+    struct PlayerStreamOut : NetworkPacketBase<163, NetworkPacketType::RPC> {
         int PlayerID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+            bs.writeUINT16(PlayerID);
         }
     };
 
-    struct SetPlayerName final : NetworkPacketBase<11> {
+    struct SetPlayerName : NetworkPacketBase<11, NetworkPacketType::RPC> {
         int PlayerID;
-        NetworkString Name;
+        HybridString<MAX_PLAYER_NAME + 1> Name;
         uint8_t Success;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(Name));
-            bs.write(NetworkBitStreamValue::UINT8(Success));
+            bs.writeUINT16(PlayerID);
+            bs.writeDynStr8(Name);
+            bs.writeUINT8(Success);
         }
     };
 
-    struct SendClientMessage final : NetworkPacketBase<93> {
-        NetworkString Message;
+    struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC> {
+        HybridString<128> Message;
         Colour Col;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(Message));
+            bs.writeUINT32(Col.RGBA());
+            bs.writeDynStr32(Message);
         }
     };
 
-    struct PlayerRequestChatMessage final : NetworkPacketBase<101> {
-        NetworkString message;
-        bool read(INetworkBitStream& bs)
+    struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC> {
+
+        HybridString<128> message;
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_8>(message);
+            return bs.readDynStr8(message);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerChatMessage final : NetworkPacketBase<101> {
+    struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC> {
         int PlayerID;
-        NetworkString message;
-        bool read(INetworkBitStream& bs)
+        HybridString<128> message;
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(message));
+            bs.writeUINT16(PlayerID);
+            bs.writeDynStr8(message);
         }
     };
 
-    struct PlayerRequestCommandMessage final : NetworkPacketBase<50> {
-        NetworkString message;
-        bool read(INetworkBitStream& bs)
+    struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC> {
+
+        HybridString<128> message;
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_32>(message);
+            return bs.readDynStr32(message);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerCommandMessage final : NetworkPacketBase<50> {
-        NetworkString message;
+    struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC> {
+        HybridString<128> message;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(message));
+            bs.writeDynStr32(message);
         }
     };
 
-    struct SendDeathMessage final : NetworkPacketBase<55> {
+    struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC> {
         bool HasKiller;
         int KillerID;
         int PlayerID;
         int reason;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(HasKiller ? KillerID : INVALID_PLAYER_ID));
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT8(reason));
+            bs.writeUINT16(HasKiller ? KillerID : INVALID_PLAYER_ID);
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT8(reason);
         }
     };
 
-    struct SendGameTimeUpdate final : NetworkPacketBase<60> {
+    struct SendGameTimeUpdate : NetworkPacketBase<60, NetworkPacketType::RPC> {
         long long Time;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::INT32(Time));
+            bs.writeINT32(Time);
         }
     };
 
-    struct SetPlayerWeather final : NetworkPacketBase<152> {
+    struct SetPlayerWeather : NetworkPacketBase<152, NetworkPacketType::RPC> {
         uint8_t WeatherID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(WeatherID));
+            bs.writeUINT8(WeatherID);
         }
     };
 
-    struct SetWorldBounds final : NetworkPacketBase<17> {
+    struct SetWorldBounds : NetworkPacketBase<17, NetworkPacketType::RPC> {
         Vector4 coords;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC4(coords));
+            bs.writeVEC4(coords);
         }
     };
 
-    struct SetPlayerColor final : NetworkPacketBase<72> {
+    struct SetPlayerColor : NetworkPacketBase<72, NetworkPacketType::RPC> {
         int PlayerID;
         Colour Col;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT32(Col.RGBA());
         }
     };
 
-    struct SetPlayerPosition final : NetworkPacketBase<12> {
+    struct SetPlayerPosition : NetworkPacketBase<12, NetworkPacketType::RPC> {
         Vector3 Pos;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(Pos));
+            bs.writeVEC3(Pos);
         }
     };
 
-    struct SetPlayerCameraPosition final : NetworkPacketBase<157> {
+    struct SetPlayerCameraPosition : NetworkPacketBase<157, NetworkPacketType::RPC> {
         Vector3 Pos;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(Pos));
+            bs.writeVEC3(Pos);
         }
     };
 
-    struct SetPlayerCameraLookAt final : NetworkPacketBase<158> {
+    struct SetPlayerCameraLookAt : NetworkPacketBase<158, NetworkPacketType::RPC> {
         Vector3 Pos;
         uint8_t cutType;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(Pos));
+            bs.writeVEC3(Pos);
         }
     };
 
-    struct SetPlayerCameraBehindPlayer final : NetworkPacketBase<162> {
-        bool read(INetworkBitStream& bs)
+    struct SetPlayerCameraBehindPlayer : NetworkPacketBase<162, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct InterpolateCamera final : NetworkPacketBase<82> {
+    struct InterpolateCamera : NetworkPacketBase<82, NetworkPacketType::RPC> {
         bool PosSet;
         Vector3 From;
         Vector3 To;
         int Time;
         int Cut;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(PosSet));
-            bs.write(NetworkBitStreamValue::VEC3(From));
-            bs.write(NetworkBitStreamValue::VEC3(To));
-            bs.write(NetworkBitStreamValue::UINT32(Time));
-            bs.write(NetworkBitStreamValue::UINT8(Cut));
+            bs.writeBIT(PosSet);
+            bs.writeVEC3(From);
+            bs.writeVEC3(To);
+            bs.writeUINT32(Time);
+            bs.writeUINT8(Cut);
         }
     };
 
-    struct AttachCameraToObject final : NetworkPacketBase<81> {
+    struct AttachCameraToObject : NetworkPacketBase<81, NetworkPacketType::RPC> {
         int ObjectID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
+            bs.writeUINT16(ObjectID);
         }
     };
 
-    struct SetPlayerPositionFindZ final : NetworkPacketBase<13> {
+    struct SetPlayerPositionFindZ : NetworkPacketBase<13, NetworkPacketType::RPC> {
         Vector3 Pos;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(Pos));
+            bs.writeVEC3(Pos);
         }
     };
 
-    struct SetPlayerFacingAngle final : NetworkPacketBase<19> {
+    struct SetPlayerFacingAngle : NetworkPacketBase<19, NetworkPacketType::RPC> {
         float Angle;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::FLOAT(Angle));
+            bs.writeFLOAT(Angle);
         }
     };
 
-    struct SetPlayerTeam final : NetworkPacketBase<69> {
+    struct SetPlayerTeam : NetworkPacketBase<69, NetworkPacketType::RPC> {
         int PlayerID;
         uint8_t Team;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT8(Team));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT8(Team);
         }
     };
 
-    struct SetPlayerFightingStyle final : NetworkPacketBase<89> {
+    struct SetPlayerFightingStyle : NetworkPacketBase<89, NetworkPacketType::RPC> {
         int PlayerID;
         uint8_t Style;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT8(Style));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT8(Style);
         }
     };
 
-    struct SetPlayerSkillLevel final : NetworkPacketBase<34> {
+    struct SetPlayerSkillLevel : NetworkPacketBase<34, NetworkPacketType::RPC> {
         int PlayerID;
         uint32_t SkillType;
         uint16_t SkillLevel;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT32(SkillType));
-            bs.write(NetworkBitStreamValue::UINT16(SkillLevel));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT32(SkillType);
+            bs.writeUINT16(SkillLevel);
         }
     };
 
-    struct SetPlayerSkin final : NetworkPacketBase<153> {
+    struct SetPlayerSkin : NetworkPacketBase<153, NetworkPacketType::RPC> {
         int PlayerID;
         uint32_t Skin;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT32(Skin));
+            bs.writeUINT32(PlayerID);
+            bs.writeUINT32(Skin);
         }
     };
 
-    struct SetPlayerHealth final : NetworkPacketBase<14> {
+    struct SetPlayerHealth : NetworkPacketBase<14, NetworkPacketType::RPC> {
         float Health;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::FLOAT(Health));
+            bs.writeFLOAT(Health);
         }
     };
 
-    struct SetPlayerArmour final : NetworkPacketBase<66> {
+    struct SetPlayerArmour : NetworkPacketBase<66, NetworkPacketType::RPC> {
         float Armour;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::FLOAT(Armour));
+            bs.writeFLOAT(Armour);
         }
     };
 
-    struct SetPlayerSpecialAction final : NetworkPacketBase<88> {
+    struct SetPlayerSpecialAction : NetworkPacketBase<88, NetworkPacketType::RPC> {
         int Action;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Action));
+            bs.writeUINT8(Action);
         }
     };
 
-    struct SetPlayerVelocity final : NetworkPacketBase<90> {
+    struct SetPlayerVelocity : NetworkPacketBase<90, NetworkPacketType::RPC> {
         Vector3 Velocity;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(Velocity));
+            bs.writeVEC3(Velocity);
         }
     };
 
-    struct ApplyPlayerAnimation final : NetworkPacketBase<86> {
+    struct ApplyPlayerAnimation : NetworkPacketBase<86, NetworkPacketType::RPC> {
         int PlayerID;
         const AnimationData& Anim;
 
@@ -714,237 +716,237 @@ namespace RPC {
         {
         }
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.lib)));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(Anim.name)));
-            bs.write(NetworkBitStreamValue::FLOAT(Anim.delta));
-            bs.write(NetworkBitStreamValue::BIT(Anim.loop));
-            bs.write(NetworkBitStreamValue::BIT(Anim.lockX));
-            bs.write(NetworkBitStreamValue::BIT(Anim.lockY));
-            bs.write(NetworkBitStreamValue::BIT(Anim.freeze));
-            bs.write(NetworkBitStreamValue::UINT32(Anim.time));
+            bs.writeUINT16(PlayerID);
+            bs.writeDynStr8(StringView(Anim.lib));
+            bs.writeDynStr8(StringView(Anim.name));
+            bs.writeFLOAT(Anim.delta);
+            bs.writeBIT(Anim.loop);
+            bs.writeBIT(Anim.lockX);
+            bs.writeBIT(Anim.lockY);
+            bs.writeBIT(Anim.freeze);
+            bs.writeUINT32(Anim.time);
         }
     };
 
-    struct ClearPlayerAnimations final : NetworkPacketBase<87> {
+    struct ClearPlayerAnimations : NetworkPacketBase<87, NetworkPacketType::RPC> {
         int PlayerID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+            bs.writeUINT16(PlayerID);
         }
     };
 
-    struct TogglePlayerControllable final : NetworkPacketBase<15> {
+    struct TogglePlayerControllable : NetworkPacketBase<15, NetworkPacketType::RPC> {
         bool Enable;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Enable));
+            bs.writeUINT8(Enable);
         }
     };
 
-    struct TogglePlayerSpectating final : NetworkPacketBase<124> {
+    struct TogglePlayerSpectating : NetworkPacketBase<124, NetworkPacketType::RPC> {
         bool Enable;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Enable));
+            bs.writeUINT32(Enable);
         }
     };
 
-    struct PlayerPlaySound final : NetworkPacketBase<16> {
+    struct PlayerPlaySound : NetworkPacketBase<16, NetworkPacketType::RPC> {
         uint32_t SoundID;
         Vector3 Position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(SoundID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
+            bs.writeUINT32(SoundID);
+            bs.writeVEC3(Position);
         }
     };
 
-    struct GivePlayerMoney final : NetworkPacketBase<18> {
+    struct GivePlayerMoney : NetworkPacketBase<18, NetworkPacketType::RPC> {
         int32_t Money;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::INT32(Money));
+            bs.writeINT32(Money);
         }
     };
 
-    struct ResetPlayerMoney final : NetworkPacketBase<20> {
-        bool read(INetworkBitStream& bs)
+    struct ResetPlayerMoney : NetworkPacketBase<20, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct SetPlayerTime final : NetworkPacketBase<29> {
+    struct SetPlayerTime : NetworkPacketBase<29, NetworkPacketType::RPC> {
         uint8_t Hour;
         uint8_t Minute;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Hour));
-            bs.write(NetworkBitStreamValue::UINT8(Minute));
+            bs.writeUINT8(Hour);
+            bs.writeUINT8(Minute);
         }
     };
 
-    struct TogglePlayerClock final : NetworkPacketBase<30> {
+    struct TogglePlayerClock : NetworkPacketBase<30, NetworkPacketType::RPC> {
         bool Toggle;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Toggle));
+            bs.writeUINT8(Toggle);
         }
     };
 
-    struct OnPlayerDeath final : NetworkPacketBase<53> {
+    struct OnPlayerDeath : NetworkPacketBase<53, NetworkPacketType::RPC> {
+
         uint8_t Reason;
         uint16_t KillerID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT8>(Reason);
-            return bs.read<NetworkBitStreamValueType::UINT16>(KillerID);
+            bs.readUINT8(Reason);
+            return bs.readUINT16(KillerID);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct OnPlayerCameraTarget final : NetworkPacketBase<168> {
+    struct OnPlayerCameraTarget : NetworkPacketBase<168, NetworkPacketType::RPC> {
+
         int TargetObjectID;
         int TargetVehicleID;
         int TargetPlayerID;
         int TargetActorID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(TargetObjectID);
-            bs.read<NetworkBitStreamValueType::UINT16>(TargetVehicleID);
-            bs.read<NetworkBitStreamValueType::UINT16>(TargetPlayerID);
-            return bs.read<NetworkBitStreamValueType::UINT16>(TargetActorID);
+            bs.readUINT16(TargetObjectID);
+            bs.readUINT16(TargetVehicleID);
+            bs.readUINT16(TargetPlayerID);
+            return bs.readUINT16(TargetActorID);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerDeath final : NetworkPacketBase<166> {
+    struct PlayerDeath : NetworkPacketBase<166, NetworkPacketType::RPC> {
         int PlayerID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
+            bs.writeUINT16(PlayerID);
         }
     };
 
-    struct SetPlayerShopName final : NetworkPacketBase<33> {
-        NetworkString Name;
+    struct SetPlayerShopName : NetworkPacketBase<33, NetworkPacketType::RPC> {
+        StaticString<0x20> Name;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            String nameFixed(Name);
-            nameFixed.resize(0x20);
-            bs.write(NetworkBitStreamValue::FIXED_LEN_STR(NetworkString(nameFixed)));
+            bs.writeArray(Name.data());
         }
     };
 
-    struct SetPlayerDrunkLevel final : NetworkPacketBase<35> {
+    struct SetPlayerDrunkLevel : NetworkPacketBase<35, NetworkPacketType::RPC> {
         int32_t Level;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::INT32(Level));
+            bs.writeINT32(Level);
         }
     };
 
-    struct PlayAudioStreamForPlayer final : NetworkPacketBase<41> {
-        NetworkString URL;
+    struct PlayAudioStreamForPlayer : NetworkPacketBase<41, NetworkPacketType::RPC> {
+        HybridString<128> URL;
         Vector3 Position;
         float Distance;
         bool Usepos;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(URL));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::FLOAT(Distance));
-            bs.write(NetworkBitStreamValue::UINT8(Usepos));
+            bs.writeDynStr8(URL);
+            bs.writeVEC3(Position);
+            bs.writeFLOAT(Distance);
+            bs.writeUINT8(Usepos);
         }
     };
 
-    struct PlayCrimeReport final : NetworkPacketBase<112> {
+    struct PlayCrimeReport : NetworkPacketBase<112, NetworkPacketType::RPC> {
         int Suspect;
         int InVehicle;
         int VehicleModel;
@@ -952,50 +954,50 @@ namespace RPC {
         int CrimeID;
         Vector3 Position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(Suspect));
-            bs.write(NetworkBitStreamValue::UINT32(InVehicle));
-            bs.write(NetworkBitStreamValue::UINT32(VehicleModel));
-            bs.write(NetworkBitStreamValue::UINT32(VehicleColour));
-            bs.write(NetworkBitStreamValue::UINT32(CrimeID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
+            bs.writeUINT16(Suspect);
+            bs.writeUINT32(InVehicle);
+            bs.writeUINT32(VehicleModel);
+            bs.writeUINT32(VehicleColour);
+            bs.writeUINT32(CrimeID);
+            bs.writeVEC3(Position);
         }
     };
 
-    struct StopAudioStreamForPlayer final : NetworkPacketBase<42> {
-        bool read(INetworkBitStream& bs)
+    struct StopAudioStreamForPlayer : NetworkPacketBase<42, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct SetPlayerAmmo final : NetworkPacketBase<145> {
+    struct SetPlayerAmmo : NetworkPacketBase<145, NetworkPacketType::RPC> {
         uint8_t Weapon;
         uint16_t Ammo;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Weapon));
-            bs.write(NetworkBitStreamValue::UINT16(Ammo));
+            bs.writeUINT8(Weapon);
+            bs.writeUINT16(Ammo);
         }
     };
 
-    struct SendPlayerScoresAndPings final : NetworkPacketBase<155> {
+    struct SendPlayerScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC> {
         const FlatPtrHashSet<IPlayer>& Players;
 
         SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players)
@@ -1003,380 +1005,390 @@ namespace RPC {
         {
         }
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
             for (IPlayer* player : Players) {
-                bs.write(NetworkBitStreamValue::UINT16(player->getID()));
-                bs.write(NetworkBitStreamValue::INT32(player->getScore()));
-                bs.write(NetworkBitStreamValue::UINT32(player->getPing()));
+                bs.writeUINT16(player->getID());
+                bs.writeINT32(player->getScore());
+                bs.writeUINT32(player->getPing());
             }
         }
     };
 
-    struct OnPlayerRequestScoresAndPings final : NetworkPacketBase<155> {
-        bool read(INetworkBitStream& bs)
+    struct OnPlayerRequestScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct RemoveBuildingForPlayer final : NetworkPacketBase<43> {
+    struct RemoveBuildingForPlayer : NetworkPacketBase<43, NetworkPacketType::RPC> {
         unsigned ModelID;
         Vector3 Position;
         float Radius;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(ModelID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::FLOAT(Radius));
+            bs.writeUINT32(ModelID);
+            bs.writeVEC3(Position);
+            bs.writeFLOAT(Radius);
         }
     };
 
-    struct CreateExplosion final : NetworkPacketBase<79> {
+    struct CreateExplosion : NetworkPacketBase<79, NetworkPacketType::RPC> {
         Vector3 vec;
         uint16_t type;
         float radius;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::VEC3(vec));
-            bs.write(NetworkBitStreamValue::UINT16(type));
-            bs.write(NetworkBitStreamValue::FLOAT(radius));
+            bs.writeVEC3(vec);
+            bs.writeUINT16(type);
+            bs.writeFLOAT(radius);
         }
     };
 
-    struct SetPlayerInterior final : NetworkPacketBase<156> {
+    struct SetPlayerInterior : NetworkPacketBase<156, NetworkPacketType::RPC> {
         unsigned Interior;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Interior));
+            bs.writeUINT8(Interior);
         }
     };
 
-    struct SetPlayerWantedLevel final : NetworkPacketBase<133> {
+    struct SetPlayerWantedLevel : NetworkPacketBase<133, NetworkPacketType::RPC> {
         unsigned Level;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Level));
+            bs.writeUINT8(Level);
         }
     };
 
-    struct ToggleWidescreen final : NetworkPacketBase<111> {
+    struct ToggleWidescreen : NetworkPacketBase<111, NetworkPacketType::RPC> {
         bool enable;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(enable));
+            bs.writeBIT(enable);
         }
     };
 
-    struct OnPlayerGiveTakeDamage final : NetworkPacketBase<115> {
+    struct OnPlayerGiveTakeDamage : NetworkPacketBase<115, NetworkPacketType::RPC> {
         bool Taking;
         int PlayerID;
         float Damage;
         uint32_t WeaponID;
         uint32_t Bodypart;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::BIT>(Taking);
-            bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
-            bs.read<NetworkBitStreamValueType::FLOAT>(Damage);
-            bs.read<NetworkBitStreamValueType::UINT32>(WeaponID);
-            return bs.read<NetworkBitStreamValueType::UINT32>(Bodypart);
+            bs.readBIT(Taking);
+            bs.readUINT16(PlayerID);
+            bs.readFLOAT(Damage);
+            bs.readUINT32(WeaponID);
+            return bs.readUINT32(Bodypart);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct OnPlayerInteriorChange final : NetworkPacketBase<118> {
+    struct OnPlayerInteriorChange : NetworkPacketBase<118, NetworkPacketType::RPC> {
+
         unsigned Interior;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::UINT8>(Interior);
+            return bs.readUINT8(Interior);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct SetPlayerCameraTargeting final : NetworkPacketBase<170> {
+    struct SetPlayerCameraTargeting : NetworkPacketBase<170, NetworkPacketType::RPC> {
         bool Enabled;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(Enabled));
+            bs.writeBIT(Enabled);
         }
     };
 
-    struct SCMEvent final : NetworkPacketBase<96> {
+    struct SCMEvent : NetworkPacketBase<96, NetworkPacketType::RPC> {
         int PlayerID;
         int VehicleID;
         uint32_t Arg1;
         uint32_t Arg2;
         uint32_t EventType;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT32>(VehicleID);
-            bs.read<NetworkBitStreamValueType::UINT32>(Arg1);
-            bs.read<NetworkBitStreamValueType::UINT32>(Arg2);
-            bs.read<NetworkBitStreamValueType::UINT32>(EventType);
+            bs.readUINT32(VehicleID);
+            bs.readUINT32(Arg1);
+            bs.readUINT32(Arg2);
+            bs.readUINT32(EventType);
             return true;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT32(EventType));
-            bs.write(NetworkBitStreamValue::UINT32(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT32(Arg1));
-            bs.write(NetworkBitStreamValue::UINT32(Arg2));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT32(EventType);
+            bs.writeUINT32(VehicleID);
+            bs.writeUINT32(Arg1);
+            bs.writeUINT32(Arg2);
         }
     };
 
-    struct SendGameText final : NetworkPacketBase<73> {
+    struct SendGameText : NetworkPacketBase<73, NetworkPacketType::RPC> {
         int Time;
         int Style;
-        NetworkString Text;
+        HybridString<64> Text;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Style));
-            bs.write(NetworkBitStreamValue::UINT32(Time));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_32(Text));
+            bs.writeUINT32(Style);
+            bs.writeUINT32(Time);
+            bs.writeDynStr32(Text);
         }
     };
 
-    struct SetPlayerGravity final : NetworkPacketBase<146> {
+    struct SetPlayerGravity : NetworkPacketBase<146, NetworkPacketType::RPC> {
         float Gravity;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::FLOAT(Gravity));
+            bs.writeFLOAT(Gravity);
         }
     };
 
-    struct SetPlayerMapIcon final : NetworkPacketBase<56> {
+    struct SetPlayerMapIcon : NetworkPacketBase<56, NetworkPacketType::RPC> {
         int IconID;
         Vector3 Pos;
         uint8_t Type;
         Colour Col;
         uint8_t Style;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(IconID));
-            bs.write(NetworkBitStreamValue::VEC3(Pos));
-            bs.write(NetworkBitStreamValue::UINT8(Type));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
-            bs.write(NetworkBitStreamValue::UINT8(Style));
+            bs.writeUINT8(IconID);
+            bs.writeVEC3(Pos);
+            bs.writeUINT8(Type);
+            bs.writeUINT32(Col.RGBA());
+            bs.writeUINT8(Style);
         }
     };
 
-    struct RemovePlayerMapIcon final : NetworkPacketBase<144> {
+    struct RemovePlayerMapIcon : NetworkPacketBase<144, NetworkPacketType::RPC> {
         int IconID;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(IconID));
+            bs.writeUINT8(IconID);
         }
     };
 
-    struct ShowPlayerNameTagForPlayer final : NetworkPacketBase<80> {
+    struct ShowPlayerNameTagForPlayer : NetworkPacketBase<80, NetworkPacketType::RPC> {
         int PlayerID;
         bool Show;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT8(Show));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT8(Show);
         }
     };
 
-    struct EnableStuntBonusForPlayer final : NetworkPacketBase<104> {
+    struct EnableStuntBonusForPlayer : NetworkPacketBase<104, NetworkPacketType::RPC> {
         bool Enable;
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(Enable));
+            bs.writeBIT(Enable);
         }
     };
 
-    struct OnPlayerClickMap final : NetworkPacketBase<119> {
+    struct OnPlayerClickMap : NetworkPacketBase<119, NetworkPacketType::RPC> {
+
         Vector3 Pos;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::VEC3>(Pos);
+            return bs.readVEC3(Pos);
         }
     };
 
-    struct OnPlayerClickPlayer final : NetworkPacketBase<23> {
+    struct OnPlayerClickPlayer : NetworkPacketBase<23, NetworkPacketType::RPC> {
         int PlayerID;
         uint8_t Source;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(PlayerID);
-            return bs.read<NetworkBitStreamValueType::UINT8>(Source);
+            bs.readUINT16(PlayerID);
+            return bs.readUINT8(Source);
         }
     };
 
-    struct DisableRemoteVehicleCollisions final : NetworkPacketBase<167> {
+    struct DisableRemoteVehicleCollisions : NetworkPacketBase<167, NetworkPacketType::RPC> {
+
         bool Disable;
-        bool read(INetworkBitStream& bs) const
+        bool read(NetworkBitStream& bs) const
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(Disable));
+            bs.writeBIT(Disable);
         }
     };
 
-    struct PlayerSpawn final : NetworkPacketBase<52> {
-        bool read(INetworkBitStream& bs)
+    struct PlayerSpawn : NetworkPacketBase<52, NetworkPacketType::RPC> {
+
+        bool read(NetworkBitStream& bs)
         {
             return true;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct ForcePlayerClassSelection final : NetworkPacketBase<74> {
-        bool read(INetworkBitStream& bs)
+    struct ForcePlayerClassSelection : NetworkPacketBase<74, NetworkPacketType::RPC> {
+
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerSpectatePlayer final : NetworkPacketBase<126> {
+    struct PlayerSpectatePlayer : NetworkPacketBase<126, NetworkPacketType::RPC> {
+
         int PlayerID;
         PlayerSpectateMode SpecCamMode;
 
-        bool read(INetworkBitStream& bs) const
+        bool read(NetworkBitStream& bs) const
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT8(int(SpecCamMode));
         }
     };
 
-    struct PlayerSpectateVehicle final : NetworkPacketBase<127> {
+    struct PlayerSpectateVehicle : NetworkPacketBase<127, NetworkPacketType::RPC> {
+
         int VehicleID;
         PlayerSpectateMode SpecCamMode;
 
-        bool read(INetworkBitStream& bs) const
+        bool read(NetworkBitStream& bs) const
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT8(SpecCamMode));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT8(int(SpecCamMode));
         }
     };
 
-    struct SetPlayerWorldTime final : NetworkPacketBase<94> {
+    struct SetPlayerWorldTime : NetworkPacketBase<94, NetworkPacketType::RPC> {
+
         Hours Time;
 
-        bool read(INetworkBitStream& bs) const
+        bool read(NetworkBitStream& bs) const
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Time.count()));
+            bs.writeUINT8(Time.count());
         }
     };
 
-    struct ClientCheck final : NetworkPacketBase<103> {
+    struct ClientCheck : NetworkPacketBase<103, NetworkPacketType::RPC> {
+
         int Type;
         int Address;
         int Offset;
         int Count;
         int Results;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT8>(Type);
-            bs.read<NetworkBitStreamValueType::UINT32>(Address);
-            bs.read<NetworkBitStreamValueType::UINT16>(Results);
+            bs.readUINT8(Type);
+            bs.readUINT32(Address);
+            bs.readUINT16(Results);
             return true;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Type));
-            bs.write(NetworkBitStreamValue::UINT32(Address));
-            bs.write(NetworkBitStreamValue::UINT16(Offset));
-            bs.write(NetworkBitStreamValue::UINT16(Count));
+            bs.writeUINT8(Type);
+            bs.writeUINT32(Address);
+            bs.writeUINT16(Offset);
+            bs.writeUINT16(Count);
         }
     };
 }
 
 namespace Packet {
-    struct PlayerFootSync final : NetworkPacketBase<207> {
+    struct PlayerFootSync : NetworkPacketBase<207, NetworkPacketType::Packet> {
+
         int PlayerID;
         uint16_t LeftRight;
         uint16_t UpDown;
@@ -1397,20 +1409,20 @@ namespace Packet {
         uint16_t AnimationFlags;
         PlayerSurfingData SurfingData;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
-            bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
-            bs.read<NetworkBitStreamValueType::UINT16>(Keys);
-            bs.read<NetworkBitStreamValueType::VEC3>(Position);
-            bs.read<NetworkBitStreamValueType::GTA_QUAT>(Rotation);
-            bs.read<NetworkBitStreamValueType::HP_ARMOR_COMPRESSED>(HealthArmour);
-            bs.read<NetworkBitStreamValueType::UINT8>(WeaponAdditionalKey);
-            bs.read<NetworkBitStreamValueType::UINT8>(SpecialAction);
-            bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
-            bs.read<NetworkBitStreamValueType::VEC3>(SurfingData.offset);
+            bs.readUINT16(LeftRight);
+            bs.readUINT16(UpDown);
+            bs.readUINT16(Keys);
+            bs.readVEC3(Position);
+            bs.readGTAQuat(Rotation);
+            bs.readCompressedPercentPair(HealthArmour);
+            bs.readUINT8(WeaponAdditionalKey);
+            bs.readUINT8(SpecialAction);
+            bs.readVEC3(Velocity);
+            bs.readVEC3(SurfingData.offset);
             uint16_t surfingID;
-            bs.read<NetworkBitStreamValueType::UINT16>(surfingID);
+            bs.readUINT16(surfingID);
             SurfingData.ID = surfingID;
             if (SurfingData.ID < VEHICLE_POOL_SIZE) {
                 SurfingData.type = PlayerSurfingData::Type::Vehicle;
@@ -1420,34 +1432,34 @@ namespace Packet {
             } else {
                 SurfingData.type = PlayerSurfingData::Type::None;
             }
-            bs.read<NetworkBitStreamValueType::UINT16>(AnimationID);
-            return bs.read<NetworkBitStreamValueType::UINT16>(AnimationFlags);
+            bs.readUINT16(AnimationID);
+            return bs.readUINT16(AnimationFlags);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(uint16_t(PlayerID));
 
-            bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
+            bs.writeBIT(LeftRight > 0);
             if (LeftRight) {
-                bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+                bs.writeUINT16(LeftRight);
             }
 
-            bs.write(NetworkBitStreamValue::BIT(UpDown > 0));
+            bs.writeBIT(UpDown > 0);
             if (UpDown) {
-                bs.write(NetworkBitStreamValue::UINT16(UpDown));
+                bs.writeUINT16(UpDown);
             }
 
-            bs.write(NetworkBitStreamValue::UINT16(Keys));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
-            bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(HealthArmour));
-            bs.write(NetworkBitStreamValue::UINT8(WeaponAdditionalKey));
-            bs.write(NetworkBitStreamValue::UINT8(SpecialAction));
-            bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
+            bs.writeUINT16(Keys);
+            bs.writeVEC3(Position);
+            bs.writeGTAQuat(Rotation);
+            bs.writeCompressedPercentPair(HealthArmour);
+            bs.writeUINT8(WeaponAdditionalKey);
+            bs.writeUINT8(SpecialAction);
+            bs.writeCompressedVEC3(Velocity);
 
-            bs.write(NetworkBitStreamValue::BIT(SurfingData.type != PlayerSurfingData::Type::None));
+            bs.writeBIT(SurfingData.type != PlayerSurfingData::Type::None);
             if (SurfingData.type != PlayerSurfingData::Type::None) {
                 int id = 0;
                 if (SurfingData.type == PlayerSurfingData::Type::Vehicle) {
@@ -1455,19 +1467,20 @@ namespace Packet {
                 } else if (SurfingData.type == PlayerSurfingData::Type::Object) {
                     id = SurfingData.ID + VEHICLE_POOL_SIZE;
                 }
-                bs.write(NetworkBitStreamValue::UINT16(id));
-                bs.write(NetworkBitStreamValue::VEC3(SurfingData.offset));
+                bs.writeUINT16(id);
+                bs.writeVEC3(SurfingData.offset);
             }
 
-            bs.write(NetworkBitStreamValue::BIT(AnimationID > 0));
+            bs.writeBIT(AnimationID > 0);
             if (AnimationID) {
-                bs.write(NetworkBitStreamValue::UINT16(AnimationID));
-                bs.write(NetworkBitStreamValue::UINT16(AnimationFlags));
+                bs.writeUINT16(AnimationID);
+                bs.writeUINT16(AnimationFlags);
             }
         }
     };
 
-    struct PlayerAimSync final : NetworkPacketBase<203> {
+    struct PlayerAimSync : NetworkPacketBase<203, NetworkPacketType::Packet> {
+
         int PlayerID;
         uint8_t CamMode;
         Vector3 CamFrontVector;
@@ -1482,30 +1495,31 @@ namespace Packet {
         };
         uint8_t AspectRatio;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT8>(CamMode);
-            bs.read<NetworkBitStreamValueType::VEC3>(CamFrontVector);
-            bs.read<NetworkBitStreamValueType::VEC3>(CamPos);
-            bs.read<NetworkBitStreamValueType::FLOAT>(AimZ);
-            bs.read<NetworkBitStreamValueType::UINT8>(ZoomWepState);
-            return bs.read<NetworkBitStreamValueType::UINT8>(AspectRatio);
+            bs.readUINT8(CamMode);
+            bs.readVEC3(CamFrontVector);
+            bs.readVEC3(CamPos);
+            bs.readFLOAT(AimZ);
+            bs.readUINT8(ZoomWepState);
+            return bs.readUINT8(AspectRatio);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-            bs.write(NetworkBitStreamValue::UINT8(CamMode));
-            bs.write(NetworkBitStreamValue::VEC3(CamFrontVector));
-            bs.write(NetworkBitStreamValue::VEC3(CamPos));
-            bs.write(NetworkBitStreamValue::FLOAT(AimZ));
-            bs.write(NetworkBitStreamValue::UINT8(ZoomWepState));
-            bs.write(NetworkBitStreamValue::UINT8(AspectRatio));
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(uint16_t(PlayerID));
+            bs.writeUINT8(CamMode);
+            bs.writeVEC3(CamFrontVector);
+            bs.writeVEC3(CamPos);
+            bs.writeFLOAT(AimZ);
+            bs.writeUINT8(ZoomWepState);
+            bs.writeUINT8(AspectRatio);
         }
     };
 
-    struct PlayerBulletSync final : NetworkPacketBase<206> {
+    struct PlayerBulletSync : NetworkPacketBase<206, NetworkPacketType::Packet> {
+
         int PlayerID;
         uint8_t HitType;
         uint16_t HitID;
@@ -1514,62 +1528,63 @@ namespace Packet {
         Vector3 Offset;
         uint8_t WeaponID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT8>(HitType);
-            bs.read<NetworkBitStreamValueType::UINT16>(HitID);
-            bs.read<NetworkBitStreamValueType::VEC3>(Origin);
-            bs.read<NetworkBitStreamValueType::VEC3>(HitPos);
-            bs.read<NetworkBitStreamValueType::VEC3>(Offset);
-            return bs.read<NetworkBitStreamValueType::UINT8>(WeaponID);
+            bs.readUINT8(HitType);
+            bs.readUINT16(HitID);
+            bs.readVEC3(Origin);
+            bs.readVEC3(HitPos);
+            bs.readVEC3(Offset);
+            return bs.readUINT8(WeaponID);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-            bs.write(NetworkBitStreamValue::UINT8(HitType));
-            bs.write(NetworkBitStreamValue::UINT16(HitID));
-            bs.write(NetworkBitStreamValue::VEC3(Origin));
-            bs.write(NetworkBitStreamValue::VEC3(HitPos));
-            bs.write(NetworkBitStreamValue::VEC3(Offset));
-            bs.write(NetworkBitStreamValue::UINT8(WeaponID));
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(uint16_t(PlayerID));
+            bs.writeUINT8(HitType);
+            bs.writeUINT16(HitID);
+            bs.writeVEC3(Origin);
+            bs.writeVEC3(HitPos);
+            bs.writeVEC3(Offset);
+            bs.writeUINT8(WeaponID);
         }
     };
 
-    struct PlayerStatsSync final : NetworkPacketBase<205> {
+    struct PlayerStatsSync : NetworkPacketBase<205, NetworkPacketType::Packet> {
+
         int32_t Money;
         int32_t DrunkLevel;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::INT32>(Money);
-            return bs.read<NetworkBitStreamValueType::INT32>(DrunkLevel);
+            bs.readINT32(Money);
+            return bs.readINT32(DrunkLevel);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::INT32(Money));
-            bs.write(NetworkBitStreamValue::INT32(DrunkLevel));
+            bs.writeINT32(Money);
+            bs.writeINT32(DrunkLevel);
         }
     };
 
-    struct PlayerWeaponsUpdate final : NetworkPacketBase<204> {
+    struct PlayerWeaponsUpdate : NetworkPacketBase<204, NetworkPacketType::Packet> {
         int TargetPlayer;
         int TargetActor;
         int WeaponDataCount = 0;
         StaticArray<Pair<uint8_t, WeaponSlotData>, MAX_WEAPON_SLOTS> WeaponData;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(TargetPlayer);
-            bool res = bs.read<NetworkBitStreamValueType::UINT16>(TargetActor);
+            bs.readUINT16(TargetPlayer);
+            bool res = bs.readUINT16(TargetActor);
 
             uint8_t slot;
             WeaponSlotData data;
-            while (WeaponDataCount < WeaponData.size() && bs.read<NetworkBitStreamValueType::UINT8>(slot)) {
+            while (WeaponDataCount < WeaponData.size() && bs.readUINT8(slot)) {
                 if (
-                    slot < MAX_WEAPON_SLOTS && bs.read<NetworkBitStreamValueType::UINT8>(data.id) && bs.read<NetworkBitStreamValueType::UINT16>(data.ammo)) {
+                    slot < MAX_WEAPON_SLOTS && bs.readUINT8(data.id) && bs.readUINT16(data.ammo)) {
                     WeaponData[WeaponDataCount++] = std::make_pair(slot, data);
                 } else { // Malformed packet
                     return false;
@@ -1579,7 +1594,8 @@ namespace Packet {
         }
     };
 
-    struct PlayerMarkersSync final : NetworkPacketBase<208> {
+    struct PlayerMarkersSync : NetworkPacketBase<208, NetworkPacketType::Packet> {
+
         IPlayerPool& Pool;
         IPlayer& FromPlayer;
         bool Limit;
@@ -1593,14 +1609,14 @@ namespace Packet {
         {
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
             const int virtualWorld = FromPlayer.getVirtualWorld();
             const Vector3 pos = FromPlayer.getPosition();
             const FlatPtrHashSet<IPlayer>& players = Pool.entries();
-            bs.write(NetworkBitStreamValue::UINT8(NetCode::Packet::PlayerMarkersSync::getID(bs.getNetworkType())));
+            bs.writeUINT8(NetCode::Packet::PlayerMarkersSync::PacketID);
             // TODO isNPC
-            bs.write(NetworkBitStreamValue::UINT32(players.size() - 1));
+            bs.writeUINT32(players.size() - 1);
             for (IPlayer* other : players) {
                 if (other == &FromPlayer) {
                     continue;
@@ -1610,47 +1626,48 @@ namespace Packet {
                 const PlayerState otherState = other->getState();
                 bool streamMarker = otherState != PlayerState_None && otherState != PlayerState_Spectating && virtualWorld == other->getVirtualWorld() && (!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
 
-                bs.write(NetworkBitStreamValue::UINT16(other->getID()));
-                bs.write(NetworkBitStreamValue::BIT(streamMarker));
+                bs.writeUINT16(other->getID());
+                bs.writeBIT(streamMarker);
                 if (streamMarker) {
-                    bs.write(NetworkBitStreamValue::INT16(otherPos.x));
-                    bs.write(NetworkBitStreamValue::INT16(otherPos.y));
-                    bs.write(NetworkBitStreamValue::INT16(otherPos.z));
+                    bs.writeINT16(int(otherPos.x));
+                    bs.writeINT16(int(otherPos.y));
+                    bs.writeINT16(int(otherPos.z));
                 }
             }
         }
     };
 
-    struct PlayerSpectatorSync final : NetworkPacketBase<212> {
+    struct PlayerSpectatorSync : NetworkPacketBase<212, NetworkPacketType::Packet> {
+
         uint16_t LeftRight;
         uint16_t UpDown;
         uint16_t Keys;
         Vector3 Position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
-            bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
-            bs.read<NetworkBitStreamValueType::UINT16>(Keys);
-            return bs.read<NetworkBitStreamValueType::VEC3>(Position);
+            bs.readUINT16(LeftRight);
+            bs.readUINT16(UpDown);
+            bs.readUINT16(Keys);
+            return bs.readVEC3(Position);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
+            bs.writeUINT8(PacketID);
 
-            bs.write(NetworkBitStreamValue::BIT(LeftRight > 0));
+            bs.writeBIT(LeftRight > 0);
             if (LeftRight) {
-                bs.write(NetworkBitStreamValue::UINT16(LeftRight));
+                bs.writeUINT16(LeftRight);
             }
 
-            bs.write(NetworkBitStreamValue::BIT(UpDown > 0));
+            bs.writeBIT(UpDown > 0);
             if (UpDown) {
-                bs.write(NetworkBitStreamValue::UINT16(UpDown));
+                bs.writeUINT16(UpDown);
             }
 
-            bs.write(NetworkBitStreamValue::UINT16(Keys));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
+            bs.writeUINT16(Keys);
+            bs.writeVEC3(Position);
         }
     };
 }

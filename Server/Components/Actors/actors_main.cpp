@@ -14,7 +14,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerDamageActor onPlayerDamageActorRPC;
             if (!onPlayerDamageActorRPC.read(bs)) {
@@ -60,7 +60,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         players = &core->getPlayers();
         players->getEventDispatcher().addEventHandler(this);
         players->getPlayerUpdateDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
+        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor::PacketID>(&playerDamageActorEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
@@ -69,7 +69,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor>(&playerDamageActorEventHandler);
+            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor::PacketID>(&playerDamageActorEventHandler);
         }
     }
 

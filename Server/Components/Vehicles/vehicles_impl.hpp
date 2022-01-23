@@ -27,7 +27,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
             if (!onPlayerEnterVehicleRPC.read(bs) || !self.storage.valid(onPlayerEnterVehicleRPC.VehicleID)) {
@@ -47,7 +47,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
             enterVehicleRPC.PlayerID = peer.getID();
             enterVehicleRPC.VehicleID = onPlayerEnterVehicleRPC.VehicleID;
             enterVehicleRPC.Passenger = onPlayerEnterVehicleRPC.Passenger;
-            peer.broadcastRPCToStreamed(enterVehicleRPC, true);
+            PacketHelper::broadcastToStreamed(enterVehicleRPC, peer, true);
             return true;
         }
     } playerEnterVehicleHandler;
@@ -59,7 +59,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
             if (!onPlayerExitVehicleRPC.read(bs) || !self.storage.valid(onPlayerExitVehicleRPC.VehicleID)) {
@@ -77,7 +77,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
             NetCode::RPC::ExitVehicle exitVehicleRPC;
             exitVehicleRPC.PlayerID = peer.getID();
             exitVehicleRPC.VehicleID = onPlayerExitVehicleRPC.VehicleID;
-            peer.broadcastRPCToStreamed(exitVehicleRPC, true);
+            PacketHelper::broadcastToStreamed(exitVehicleRPC, peer, true);
             return true;
         }
     } playerExitVehicleHandler;
@@ -89,7 +89,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
             if (!onDamageStatus.read(bs) || !self.storage.valid(onDamageStatus.VehicleID)) {
@@ -112,7 +112,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SCMEvent scmEvent;
             if (!scmEvent.read(bs) || !self.storage.valid(scmEvent.VehicleID)) {
@@ -152,7 +152,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
                     NetCode::RPC::RemoveVehicleComponent modRPC;
                     modRPC.VehicleID = scmEvent.VehicleID;
                     modRPC.Component = scmEvent.Arg1;
-                    peer.sendRPC(modRPC);
+                    PacketHelper::send(modRPC, peer);
                 }
                 break;
             }
@@ -180,12 +180,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
                 enterExitRPC.EventType = VehicleSCMEvent_EnterExitModShop;
                 enterExitRPC.Arg1 = scmEvent.Arg1;
                 enterExitRPC.Arg2 = scmEvent.Arg2;
-
-                for (IPlayer* player : vehicle.streamedFor_.entries()) {
-                    if (player != &peer) {
-                        player->sendRPC(enterExitRPC);
-                    }
-                }
+                PacketHelper::broadcastToSome(enterExitRPC, vehicle.streamedFor_.entries(), &peer);
                 break;
             }
             }
@@ -200,7 +195,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::VehicleDeath vehicleDeath;
             if (!vehicleDeath.read(bs) || !self.storage.valid(vehicleDeath.VehicleID)) {
@@ -261,11 +256,11 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         if (core) {
             core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
-            core->removePerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
-            core->removePerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
-            core->removePerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
+            NetCode::RPC::OnPlayerEnterVehicle::removeEventHandler(*core, &playerEnterVehicleHandler);
+            NetCode::RPC::OnPlayerExitVehicle::removeEventHandler(*core, &playerExitVehicleHandler);
+            NetCode::RPC::SetVehicleDamageStatus::removeEventHandler(*core, &vehicleDamageStatusHandler);
+            NetCode::RPC::SCMEvent::removeEventHandler(*core, &playerSCMEventHandler);
+            NetCode::RPC::VehicleDeath::removeEventHandler(*core, &vehicleDeathHandler);
         }
     }
 
@@ -275,11 +270,11 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerEnterVehicle>(&playerEnterVehicleHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerExitVehicle>(&playerExitVehicleHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::SetVehicleDamageStatus>(&vehicleDamageStatusHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::SCMEvent>(&playerSCMEventHandler);
-        core->addPerRPCEventHandler<NetCode::RPC::VehicleDeath>(&vehicleDeathHandler);
+        NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);
+        NetCode::RPC::OnPlayerExitVehicle::addEventHandler(*core, &playerExitVehicleHandler);
+        NetCode::RPC::SetVehicleDamageStatus::addEventHandler(*core, &vehicleDamageStatusHandler);
+        NetCode::RPC::SCMEvent::addEventHandler(*core, &playerSCMEventHandler);
+        NetCode::RPC::VehicleDeath::addEventHandler(*core, &vehicleDeathHandler);
         storage.claimUnusable(0);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
         deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
