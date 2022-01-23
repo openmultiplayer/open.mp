@@ -584,7 +584,14 @@ void RakNetLegacyNetwork::update()
     IConfig& config = core->getConfig();
 
     cookieSeedTime = Milliseconds(*config.getInt("cookie_reseed_time"));
+
     SAMPRakNet::SetTimeout(*config.getInt("player_timeout"));
+    SAMPRakNet::SetMinConnectionTime(*config.getInt("min_connection_time"));
+    SAMPRakNet::SetMessagesLimit(*config.getInt("messages_limit"));
+    SAMPRakNet::SetMessageHoleLimit(*config.getInt("message_hole_limit"));
+    SAMPRakNet::SetAcksLimit(*config.getInt("acks_limit"));
+    SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network_limits_ban_time"));
+
     SAMPRakNet::SetLogCookies(*config.getInt("logging_cookies"));
 
     query.setLogQueries(*config.getInt("logging_queries"));
