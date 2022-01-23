@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "exports.hpp"
 #include "gtaquat.hpp"
 #include "types.hpp"
 #include <assert.h>
