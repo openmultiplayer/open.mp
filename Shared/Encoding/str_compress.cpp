@@ -23,29 +23,13 @@
 
 using namespace Encoding;
 
-StringCompressor* StringCompressor::instance = 0;
-int StringCompressor::referenceCount = 0;
-
-void StringCompressor::AddReference(void)
-{
-    if (++referenceCount == 1) {
-        instance = new StringCompressor;
-    }
-}
-void StringCompressor::RemoveReference(void)
-{
-    assert(referenceCount > 0);
-
-    if (referenceCount > 0) {
-        if (--referenceCount == 0) {
-            delete instance;
-            instance = 0;
-        }
-    }
-}
+StringCompressor* StringCompressor::instance = nullptr;
 
 StringCompressor* StringCompressor::Instance(void)
 {
+    if (instance == nullptr) {
+        instance = new StringCompressor();
+    }
     return instance;
 }
 
