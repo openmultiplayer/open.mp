@@ -631,6 +631,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         , ticksThisSecond(0u)
         , EnableLogTimestamp(false)
     {
+        // Initialize start time
+        getTickCount();
         players.getEventDispatcher().addEventHandler(this);
 
         loadComponents("components");
@@ -849,7 +851,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         *SetGravity = gravity;
         NetCode::RPC::SetPlayerGravity RPC;
         RPC.Gravity = gravity;
-        players.broadcastRPCToAll(RPC);
+        PacketHelper::broadcast(RPC, players);
 
         updateNetworks();
     }
@@ -859,7 +861,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         *SetWeather = weather;
         NetCode::RPC::SetPlayerWeather RPC;
         RPC.WeatherID = weather;
-        players.broadcastRPCToAll(RPC);
+        PacketHelper::broadcast(RPC, players);
 
         updateNetworks();
     }
@@ -869,7 +871,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         *SetWorldTime = time.count();
         NetCode::RPC::SetPlayerWorldTime RPC;
         RPC.Time = time;
-        players.broadcastRPCToAll(RPC);
+        PacketHelper::broadcast(RPC, players);
     }
 
     void toggleStuntBonus(bool toggle) override
@@ -877,7 +879,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         *EnableStuntBonus = toggle;
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
         RPC.Enable = toggle;
-        players.broadcastRPCToAll(RPC);
+        PacketHelper::broadcast(RPC, players);
     }
 
     void setData(SettableCoreDataType type, StringView data) override
@@ -949,10 +951,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
         playerInitRPC.PlayerID = player.getID();
         IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        static const StaticArray<uint8_t, 212> emptyModel { 0 };
-        playerInitRPC.VehicleModels = vehicles ? NetworkArray<uint8_t>(vehicles->models()) : NetworkArray<uint8_t>(emptyModel);
+        static const StaticArray<uint8_t, 212> emptyModels { 0 };
+        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
         playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
-        player.sendRPC(playerInitRPC);
+        PacketHelper::send(playerInitRPC, player);
     }
 
     void connectBot(StringView name, StringView script) override
