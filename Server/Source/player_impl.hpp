@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
@@ -14,14 +15,13 @@
 #include <types.hpp>
 #include <unordered_map>
 #include <values.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
 struct PlayerPool;
 
 struct PlayerChatBubble {
-    String text;
+    HybridString<128> text;
     Colour colour;
     float drawDist;
 };
@@ -30,13 +30,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool* pool_;
     PeerNetworkData netData_;
     uint32_t version_;
-    String versionName_;
+    HybridString<16> versionName_;
     Vector3 pos_;
     Vector3 cameraPos_;
     Vector3 cameraLookAt_;
     GTAQuat rot_;
-    String name_;
-    String serial_;
+    HybridString<MAX_PLAYER_NAME + 1> name_;
+    HybridString<16> serial_;
     FlatHashMap<UUID, IPlayerData*> playerData_;
     WeaponSlots weapons_;
     Colour colour_;
@@ -63,9 +63,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     Minutes time_;
     bool clockToggled_;
     PlayerBulletData bulletData_;
-    String shopName_;
+    HybridString<16> shopName_;
     int drunkLevel_;
-    String lastPlayedAudio_;
+    HybridString<16> lastPlayedAudio_;
     unsigned interior_;
     unsigned wantedLevel_;
     int weather_;
@@ -87,11 +87,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         : pool_(pool)
         , netData_(netData)
         , version_(params.version)
-        , versionName_(String(params.versionName))
+        , versionName_(params.versionName)
         , cameraPos_(0.f, 0.f, 0.f)
         , cameraLookAt_(0.f, 0.f, 0.f)
-        , name_(String(params.name))
-        , serial_(String(params.serial))
+        , name_(params.name)
+        , serial_(params.serial)
         , virtualWorld_(0)
         , score_(0)
         , fightingStyle_(PlayerFightingStyle_Normal)
@@ -135,7 +135,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void spawn() override
     {
         toSpawn_ = true;
-        sendRPC(NetCode::RPC::ImmediatelySpawnPlayer());
+        NetCode::RPC::ImmediatelySpawnPlayer RPC;
+        PacketHelper::send(RPC, *this);
     }
 
     uint32_t getClientVersion() const override
@@ -165,7 +166,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         drunkLevel_ = level;
         NetCode::RPC::SetPlayerDrunkLevel setPlayerDrunkLevelRPC;
         setPlayerDrunkLevelRPC.Level = level;
-        sendRPC(setPlayerDrunkLevelRPC);
+        PacketHelper::send(setPlayerDrunkLevelRPC, *this);
     }
 
     int getDrunkLevel() const override
@@ -177,7 +178,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         NetCode::RPC::PlayerCommandMessage sendCommand;
         sendCommand.message = message;
-        sendRPC(sendCommand);
+        PacketHelper::send(sendCommand, *this);
     }
 
     void setWeather(int WeatherID) override
@@ -185,14 +186,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         weather_ = WeatherID;
         NetCode::RPC::SetPlayerWeather setPlayerWeatherRPC;
         setPlayerWeatherRPC.WeatherID = WeatherID;
-        sendRPC(setPlayerWeatherRPC);
+        PacketHelper::send(setPlayerWeatherRPC, *this);
     }
 
     void setWorldTime(Hours time) override
     {
         NetCode::RPC::SetPlayerWorldTime RPC;
         RPC.Time = time;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     void setWorldBounds(Vector4 coords) override
@@ -200,14 +201,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         worldBounds_ = coords;
         NetCode::RPC::SetWorldBounds setWorldBoundsRPC;
         setWorldBoundsRPC.coords = coords;
-        sendRPC(setWorldBoundsRPC);
+        PacketHelper::send(setWorldBoundsRPC, *this);
     }
 
     void toggleStuntBonus(bool toggle) override
     {
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
         RPC.Enable = toggle;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     Vector4 getWorldBounds() const override
@@ -226,7 +227,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         createExplosionRPC.vec = vec;
         createExplosionRPC.type = type;
         createExplosionRPC.radius = radius;
-        sendRPC(createExplosionRPC);
+        PacketHelper::send(createExplosionRPC, *this);
     }
 
     void sendDeathMessage(IPlayer& player, IPlayer* killer, int weapon) override
@@ -238,7 +239,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
         }
         sendDeathMessageRPC.reason = weapon;
-        sendRPC(sendDeathMessageRPC);
+        PacketHelper::send(sendDeathMessageRPC, *this);
     }
 
     void setWidescreen(bool enable) override
@@ -246,7 +247,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         widescreen_ = enable;
         NetCode::RPC::ToggleWidescreen toggleWidescreenRPC;
         toggleWidescreenRPC.enable = enable;
-        sendRPC(toggleWidescreenRPC);
+        PacketHelper::send(toggleWidescreenRPC, *this);
     }
 
     bool getWidescreen() const override
@@ -259,7 +260,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         clockToggled_ = toggle;
         NetCode::RPC::TogglePlayerClock togglePlayerClockRPC;
         togglePlayerClockRPC.Toggle = toggle;
-        sendRPC(togglePlayerClockRPC);
+        PacketHelper::send(togglePlayerClockRPC, *this);
     }
 
     bool clockToggled() const override
@@ -278,14 +279,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         money_ += money;
         NetCode::RPC::GivePlayerMoney givePlayerMoneyRPC;
         givePlayerMoneyRPC.Money = money;
-        sendRPC(givePlayerMoneyRPC);
+        PacketHelper::send(givePlayerMoneyRPC, *this);
     }
 
     void resetMoney() override
     {
         money_ = 0;
         NetCode::RPC::ResetPlayerMoney resetPlayerMoneyRPC;
-        sendRPC(resetPlayerMoneyRPC);
+        PacketHelper::send(resetPlayerMoneyRPC, *this);
     }
 
     int getMoney() override
@@ -299,7 +300,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerTime setPlayerTimeRPC;
         setPlayerTimeRPC.Hour = hr.count();
         setPlayerTimeRPC.Minute = min.count();
-        sendRPC(setPlayerTimeRPC);
+        PacketHelper::send(setPlayerTimeRPC, *this);
     }
 
     virtual Pair<Hours, Minutes> getTime() const override
@@ -314,7 +315,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerTeam setPlayerTeamRPC;
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
-        broadcastRPCToStreamed(setPlayerTeamRPC, true /* skipFrom */);
+        PacketHelper::broadcastToStreamed(setPlayerTeamRPC, *this, true /* skipFrom */);
     }
 
     int getTeam() const override
@@ -335,7 +336,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
         setPlayerSkinRPC.PlayerID = poolID;
         setPlayerSkinRPC.Skin = skin;
-        broadcastRPCToStreamed(setPlayerSkinRPC, false /* skipFrom */);
+        PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
     }
 
     int getSkin() const override
@@ -353,7 +354,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         controllable_ = controllable;
         NetCode::RPC::TogglePlayerControllable togglePlayerControllableRPC;
         togglePlayerControllableRPC.Enable = controllable;
-        sendRPC(togglePlayerControllableRPC);
+        PacketHelper::send(togglePlayerControllableRPC, *this);
     }
 
     bool getControllable() const override
@@ -370,7 +371,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
         togglePlayerSpectatingRPC.Enable = spectating;
-        sendRPC(togglePlayerSpectatingRPC);
+        PacketHelper::send(togglePlayerSpectatingRPC, *this);
     }
 
     void playSound(uint32_t sound, Vector3 pos) override
@@ -379,7 +380,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerPlaySound playerPlaySoundRPC;
         playerPlaySoundRPC.SoundID = sound;
         playerPlaySoundRPC.Position = pos;
-        sendRPC(playerPlaySoundRPC);
+        PacketHelper::send(playerPlaySoundRPC, *this);
     }
 
     uint32_t lastPlayedSound() const override
@@ -389,13 +390,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void playAudio(StringView url, bool usePos, Vector3 pos, float distance) override
     {
-        lastPlayedAudio_ = String(url);
+        lastPlayedAudio_ = url;
         NetCode::RPC::PlayAudioStreamForPlayer playAudioStreamRPC;
         playAudioStreamRPC.URL = url;
         playAudioStreamRPC.Usepos = usePos;
         playAudioStreamRPC.Position = pos;
         playAudioStreamRPC.Distance = distance;
-        sendRPC(playAudioStreamRPC);
+        PacketHelper::send(playAudioStreamRPC, *this);
     }
 
     bool playerCrimeReport(IPlayer& suspect, int crime) override
@@ -416,7 +417,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             rpc.VehicleColour = colours.first;
             rpc.CrimeID = crime;
             rpc.Position = vehicle->getPosition();
-            sendRPC(rpc);
+            PacketHelper::send(rpc, *this);
             return true;
         } else if (suspectState == PlayerState_Spawned || suspectState == PlayerState_OnFoot) {
             NetCode::RPC::PlayCrimeReport rpc;
@@ -426,7 +427,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             rpc.VehicleColour = 0;
             rpc.CrimeID = crime;
             rpc.Position = suspect.getPosition();
-            sendRPC(rpc);
+            PacketHelper::send(rpc, *this);
             return true;
         } else {
             return false;
@@ -436,7 +437,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     virtual void stopAudio() override
     {
         NetCode::RPC::StopAudioStreamForPlayer stopAudioStreamRPC;
-        sendRPC(stopAudioStreamRPC);
+        PacketHelper::send(stopAudioStreamRPC, *this);
     }
 
     StringView lastPlayedAudio() const override
@@ -450,9 +451,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         applyPlayerAnimationRPC.PlayerID = poolID;
 
         if (syncType == PlayerAnimationSyncType_NoSync) {
-            sendRPC(applyPlayerAnimationRPC);
+            PacketHelper::send(applyPlayerAnimationRPC, *this);
         } else {
-            broadcastRPCToStreamed(applyPlayerAnimationRPC, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
+            PacketHelper::broadcastToStreamed(applyPlayerAnimationRPC, *this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
         }
     }
 
@@ -462,9 +463,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         clearPlayerAnimationsRPC.PlayerID = poolID;
 
         if (syncType == PlayerAnimationSyncType_NoSync) {
-            sendRPC(clearPlayerAnimationsRPC);
+            PacketHelper::send(clearPlayerAnimationsRPC, *this);
         } else {
-            broadcastRPCToStreamed(clearPlayerAnimationsRPC, false /* skipFrom */);
+            PacketHelper::broadcastToStreamed(clearPlayerAnimationsRPC, *this, false /* skipFrom */);
         }
     }
 
@@ -478,7 +479,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         health_ = health;
         NetCode::RPC::SetPlayerHealth setPlayerHealthRPC;
         setPlayerHealthRPC.Health = health;
-        sendRPC(setPlayerHealthRPC);
+        PacketHelper::send(setPlayerHealthRPC, *this);
     }
 
     float getHealth() const override
@@ -491,7 +492,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         armour_ = armour;
         NetCode::RPC::SetPlayerArmour setPlayerArmourRPC;
         setPlayerArmourRPC.Armour = armour;
-        sendRPC(setPlayerArmourRPC);
+        PacketHelper::send(setPlayerArmourRPC, *this);
     }
 
     float getArmour() const override
@@ -503,7 +504,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         NetCode::RPC::SetPlayerGravity RPC;
         RPC.Gravity = gravity;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     void setAction(PlayerSpecialAction action) override
@@ -511,7 +512,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         action_ = action;
         NetCode::RPC::SetPlayerSpecialAction setPlayerSpecialActionRPC;
         setPlayerSpecialActionRPC.Action = action;
-        sendRPC(setPlayerSpecialActionRPC);
+        PacketHelper::send(setPlayerSpecialActionRPC, *this);
     }
 
     PlayerSpecialAction getAction() const override
@@ -524,7 +525,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         velocity_ = velocity;
         NetCode::RPC::SetPlayerVelocity setPlayerVelocityRPC;
         setPlayerVelocityRPC.Velocity = velocity;
-        sendRPC(setPlayerVelocityRPC);
+        PacketHelper::send(setPlayerVelocityRPC, *this);
     }
 
     Vector3 getVelocity() const override
@@ -551,7 +552,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPlayerSkillLevelRPC.PlayerID = poolID;
             setPlayerSkillLevelRPC.SkillType = skill;
             setPlayerSkillLevelRPC.SkillLevel = level;
-            broadcastRPCToStreamed(setPlayerSkillLevelRPC, false /* skipFrom */);
+            PacketHelper::broadcastToStreamed(setPlayerSkillLevelRPC, *this, false /* skipFrom */);
         }
     }
 
@@ -568,13 +569,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         removeBuildingForPlayerRPC.ModelID = model;
         removeBuildingForPlayerRPC.Position = pos;
         removeBuildingForPlayerRPC.Radius = radius;
-        sendRPC(removeBuildingForPlayerRPC);
+        PacketHelper::send(removeBuildingForPlayerRPC, *this);
     }
 
     void forceClassSelection() override
     {
         NetCode::RPC::ForcePlayerClassSelection forcePlayerClassSelectionRPC;
-        sendRPC(forcePlayerClassSelectionRPC);
+        PacketHelper::send(forcePlayerClassSelectionRPC, *this);
     }
 
     const Colour& getColour() const override
@@ -589,7 +590,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerColor RPC;
         RPC.PlayerID = static_cast<Player&>(other).poolID;
         RPC.Col = colour;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     virtual void setWantedLevel(unsigned level) override
@@ -597,7 +598,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         wantedLevel_ = level;
         NetCode::RPC::SetPlayerWantedLevel setPlayerWantedLevelRPC;
         setPlayerWantedLevelRPC.Level = level;
-        sendRPC(setPlayerWantedLevelRPC);
+        PacketHelper::send(setPlayerWantedLevelRPC, *this);
     }
 
     virtual unsigned getWantedLevel() const override
@@ -610,7 +611,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         interior_ = interior;
         NetCode::RPC::SetPlayerInterior setPlayerInteriorRPC;
         setPlayerInteriorRPC.Interior = interior;
-        sendRPC(setPlayerInteriorRPC);
+        PacketHelper::send(setPlayerInteriorRPC, *this);
     }
 
     virtual unsigned getInterior() const override
@@ -638,7 +639,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void streamOutForPlayer(IPlayer& other) override;
 
-    const FlatPtrHashSet<IPlayer>& streamedForPlayers() override
+    const FlatPtrHashSet<IPlayer>& streamedForPlayers() const override
     {
         return streamedFor_.entries();
     }
@@ -654,7 +655,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
         setPlayerFightingStyleRPC.PlayerID = poolID;
         setPlayerFightingStyleRPC.Style = style;
-        broadcastRPCToStreamed(setPlayerFightingStyleRPC, false /* skipFrom */);
+        PacketHelper::broadcastToStreamed(setPlayerFightingStyleRPC, *this, false /* skipFrom */);
     }
 
     EPlayerNameStatus setName(StringView name) override;
@@ -685,7 +686,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         // then we receive updates by them when they send on foot sync packets
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
-        sendRPC(setPlayerPosRPC);
+        PacketHelper::send(setPlayerPosRPC, *this);
     }
 
     void setCameraPosition(Vector3 position) override
@@ -693,7 +694,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         cameraPos_ = position;
         NetCode::RPC::SetPlayerCameraPosition setCameraPosRPC;
         setCameraPosRPC.Pos = position;
-        sendRPC(setCameraPosRPC);
+        PacketHelper::send(setCameraPosRPC, *this);
     }
 
     Vector3 getCameraPosition() override
@@ -707,7 +708,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         cutType_ = cutType;
         NetCode::RPC::SetPlayerCameraLookAt setCameraLookAtPosRPC;
         setCameraLookAtPosRPC.Pos = position;
-        sendRPC(setCameraLookAtPosRPC);
+        PacketHelper::send(setCameraLookAtPosRPC, *this);
     }
 
     Vector3 getCameraLookAt() override
@@ -718,7 +719,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void setCameraBehind() override
     {
         NetCode::RPC::SetPlayerCameraBehindPlayer setPlayerCameraBehindPlayerRPC;
-        sendRPC(setPlayerCameraBehindPlayerRPC);
+        PacketHelper::send(setPlayerCameraBehindPlayerRPC, *this);
     }
 
     void interpolateCameraPosition(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) override
@@ -729,7 +730,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rpc.To = to;
         rpc.Time = time;
         rpc.Cut = cutType;
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     void interpolateCameraLookAt(Vector3 from, Vector3 to, int time, PlayerCameraCutType cutType) override
@@ -740,21 +741,21 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rpc.To = to;
         rpc.Time = time;
         rpc.Cut = cutType;
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     void attachCameraToObject(IObject& object) override
     {
         NetCode::RPC::AttachCameraToObject rpc;
         rpc.ObjectID = object.getID();
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     void attachCameraToObject(IPlayerObject& object) override
     {
         NetCode::RPC::AttachCameraToObject rpc;
         rpc.ObjectID = object.getID();
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     void setPositionFindZ(Vector3 position) override
@@ -762,7 +763,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         pos_ = position;
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
-        sendRPC(setPlayerPosRPC);
+        PacketHelper::send(setPlayerPosRPC, *this);
     }
 
     GTAQuat getRotation() const override
@@ -775,7 +776,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rot_ = rotation * rotTransform_;
         NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
         setPlayerFacingAngleRPC.Angle = rot_.ToEuler().z;
-        sendRPC(setPlayerFacingAngleRPC);
+        PacketHelper::send(setPlayerFacingAngleRPC, *this);
     }
 
     const PlayerKeyData& getKeyData() const override
@@ -801,14 +802,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         RPC.Type = type;
         RPC.Style = style;
         RPC.Col = colour;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     void unsetMapIcon(int id) override
     {
         NetCode::RPC::RemovePlayerMapIcon RPC;
         RPC.IconID = id;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     void toggleOtherNameTag(IPlayer& other, bool toggle) override
@@ -816,7 +817,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::ShowPlayerNameTagForPlayer RPC;
         RPC.PlayerID = static_cast<Player&>(other).poolID;
         RPC.Show = toggle;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     void giveWeapon(WeaponSlotData weapon) override
@@ -839,7 +840,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
         givePlayerWeaponRPC.Weapon = weapon.id;
         givePlayerWeaponRPC.Ammo = weapon.ammo;
-        sendRPC(givePlayerWeaponRPC);
+        PacketHelper::send(givePlayerWeaponRPC, *this);
     }
 
     void setWeaponAmmo(WeaponSlotData data) override
@@ -850,7 +851,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
             setPlayerAmmoRPC.Weapon = data.id;
             setPlayerAmmoRPC.Ammo = data.ammo;
-            sendRPC(setPlayerAmmoRPC);
+            PacketHelper::send(setPlayerAmmoRPC, *this);
         }
     }
 
@@ -862,14 +863,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void resetWeapons() override
     {
         weapons_.fill({ 0, 0 });
-        sendRPC(NetCode::RPC::ResetPlayerWeapons());
+        NetCode::RPC::ResetPlayerWeapons RPC;
+        PacketHelper::send(RPC, *this);
     }
 
     void setArmedWeapon(uint32_t weapon) override
     {
         NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
         setPlayerArmedWeaponRPC.Weapon = weapon;
-        sendRPC(setPlayerArmedWeaponRPC);
+        PacketHelper::send(setPlayerArmedWeaponRPC, *this);
     }
 
     uint32_t getArmedWeapon() const override
@@ -890,10 +892,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setShopName(StringView name) override
     {
-        shopName_ = String(name);
+        shopName_ = name;
         NetCode::RPC::SetPlayerShopName setPlayerShopNameRPC;
         setPlayerShopNameRPC.Name = name;
-        sendRPC(setPlayerShopNameRPC);
+        PacketHelper::send(setPlayerShopNameRPC, *this);
     }
 
     StringView getShopName() const override
@@ -904,7 +906,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void setChatBubble(StringView text, const Colour& colour, float drawDist, Milliseconds expire) override
     {
         chatBubbleExpiration_ = Time::now() + expire;
-        chatBubble_.text = String(text);
+        chatBubble_.text = text;
         chatBubble_.drawDist = drawDist;
         chatBubble_.colour = colour;
 
@@ -914,7 +916,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         RPC.DrawDistance = drawDist;
         RPC.ExpireTime = expire.count();
         RPC.Text = text;
-        broadcastRPCToStreamed(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     void sendClientMessage(const Colour& colour, StringView message) const override
@@ -922,7 +924,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SendClientMessage sendClientMessage;
         sendClientMessage.Col = colour;
         sendClientMessage.Message = message;
-        sendRPC(sendClientMessage);
+        PacketHelper::send(sendClientMessage, *this);
     }
 
     void sendChatMessage(IPlayer& sender, StringView message) const override
@@ -930,7 +932,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerChatMessage sendChatMessage;
         sendChatMessage.PlayerID = static_cast<Player&>(sender).poolID;
         sendChatMessage.message = message;
-        sendRPC(sendChatMessage);
+        PacketHelper::send(sendChatMessage, *this);
     }
 
     void sendGameText(StringView message, Milliseconds time, int style) const override
@@ -939,7 +941,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         gameText.Time = time.count();
         gameText.Style = style;
         gameText.Text = message;
-        sendRPC(gameText);
+        PacketHelper::send(gameText, *this);
     }
 
     int getVirtualWorld() const override
@@ -965,7 +967,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             lastGameTimeUpdate_ = now;
             NetCode::RPC::SendGameTimeUpdate RPC;
             RPC.Time = duration_cast<Milliseconds>(now.time_since_epoch()).count();
-            sendRPC(RPC);
+            PacketHelper::send(RPC, *this);
         }
     }
 
@@ -979,7 +981,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
         NetCode::RPC::SetPlayerCameraTargeting RPC;
         RPC.Enabled = toggle;
-        sendRPC(RPC);
+        PacketHelper::send(RPC, *this);
     }
 
     bool hasCameraTargeting() const override
@@ -990,7 +992,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void removeFromVehicle() override
     {
         NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
-        sendRPC(removePlayerFromVehicleRPC);
+        PacketHelper::send(removePlayerFromVehicleRPC, *this);
     }
 
     IPlayer* getCameraTargetPlayer() override;
@@ -1009,7 +1011,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         NetCode::RPC::DisableRemoteVehicleCollisions collisionsRPC;
         collisionsRPC.Disable = !collide;
-        sendRPC(collisionsRPC);
+        PacketHelper::send(collisionsRPC, *this);
     }
 
     void spectatePlayer(IPlayer& target, PlayerSpectateMode mode) override
@@ -1025,7 +1027,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerSpectatePlayer rpc;
         rpc.PlayerID = static_cast<Player&>(target).poolID;
         rpc.SpecCamMode = mode;
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) override
@@ -1041,7 +1043,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerSpectateVehicle rpc;
         rpc.VehicleID = target.getID();
         rpc.SpecCamMode = mode;
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     void sendClientCheck(int actionType, int address, int offset, int count) override
@@ -1051,7 +1053,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rpc.Address = address;
         rpc.Offset = offset;
         rpc.Count = count;
-        sendRPC(rpc);
+        PacketHelper::send(rpc, *this);
     }
 
     ~Player()
