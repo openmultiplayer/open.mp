@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerShowTextDraw final : NetworkPacketBase<134> {
+    struct PlayerShowTextDraw : NetworkPacketBase<134, NetworkPacketType::RPC> {
         bool PlayerTextDraw;
         int TextDrawID;
         bool UseBox;
@@ -27,93 +27,93 @@ namespace RPC {
         float Zoom;
         int Color1;
         int Color2;
-        NetworkString Text;
+        HybridString<256> Text;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
             uint8_t flags = UseBox | (Alignment << 1) | (Proportional << 4);
-            bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID));
-            bs.write(NetworkBitStreamValue::UINT8(flags));
-            bs.write(NetworkBitStreamValue::VEC2(LetterSize));
-            bs.write(NetworkBitStreamValue::UINT32(LetterColour.ABGR()));
-            bs.write(NetworkBitStreamValue::VEC2(TextSize));
-            bs.write(NetworkBitStreamValue::UINT32(BoxColour.ABGR()));
-            bs.write(NetworkBitStreamValue::UINT8(Shadow));
-            bs.write(NetworkBitStreamValue::UINT8(Outline));
-            bs.write(NetworkBitStreamValue::UINT32(BackColour.ABGR()));
-            bs.write(NetworkBitStreamValue::UINT8(Style));
-            bs.write(NetworkBitStreamValue::UINT8(Selectable));
-            bs.write(NetworkBitStreamValue::VEC2(Position));
-            bs.write(NetworkBitStreamValue::UINT16(Model));
-            bs.write(NetworkBitStreamValue::VEC3(Rotation));
-            bs.write(NetworkBitStreamValue::FLOAT(Zoom));
-            bs.write(NetworkBitStreamValue::INT16(Color1));
-            bs.write(NetworkBitStreamValue::INT16(Color2));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
+            bs.writeUINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID);
+            bs.writeUINT8(flags);
+            bs.writeVEC2(LetterSize);
+            bs.writeUINT32(LetterColour.ABGR());
+            bs.writeVEC2(TextSize);
+            bs.writeUINT32(BoxColour.ABGR());
+            bs.writeUINT8(Shadow);
+            bs.writeUINT8(Outline);
+            bs.writeUINT32(BackColour.ABGR());
+            bs.writeUINT8(Style);
+            bs.writeUINT8(Selectable);
+            bs.writeVEC2(Position);
+            bs.writeUINT16(Model);
+            bs.writeVEC3(Rotation);
+            bs.writeFLOAT(Zoom);
+            bs.writeINT16(Color1);
+            bs.writeINT16(Color2);
+            bs.writeDynStr16(Text);
         }
     };
 
-    struct PlayerHideTextDraw final : NetworkPacketBase<135> {
+    struct PlayerHideTextDraw : NetworkPacketBase<135, NetworkPacketType::RPC> {
         bool PlayerTextDraw;
         int TextDrawID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID));
+            bs.writeUINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID);
         }
     };
 
-    struct PlayerTextDrawSetString final : NetworkPacketBase<105> {
+    struct PlayerTextDrawSetString : NetworkPacketBase<105, NetworkPacketType::RPC> {
         bool PlayerTextDraw;
         int TextDrawID;
-        NetworkString Text;
+        HybridString<256> Text;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_16(Text));
+            bs.writeUINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID);
+            bs.writeDynStr16(Text);
         }
     };
 
-    struct PlayerBeginTextDrawSelect final : NetworkPacketBase<83> {
+    struct PlayerBeginTextDrawSelect : NetworkPacketBase<83, NetworkPacketType::RPC> {
         Colour Col;
         bool Enable;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(Enable));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
+            bs.writeBIT(Enable);
+            bs.writeUINT32(Col.RGBA());
         }
     };
 
-    struct OnPlayerSelectTextDraw final : NetworkPacketBase<83> {
+    struct OnPlayerSelectTextDraw : NetworkPacketBase<83, NetworkPacketType::RPC> {
         bool PlayerTextDraw;
         bool Invalid;
         int TextDrawID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bool res = bs.read<NetworkBitStreamValueType::UINT16>(TextDrawID);
+            bool res = bs.readUINT16(TextDrawID);
             Invalid = TextDrawID == INVALID_TEXTDRAW;
             if (!Invalid) {
                 PlayerTextDraw = TextDrawID >= GLOBAL_TEXTDRAW_POOL_SIZE;
@@ -124,7 +124,7 @@ namespace RPC {
             return res;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };

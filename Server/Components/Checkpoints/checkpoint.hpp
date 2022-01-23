@@ -61,7 +61,7 @@ struct PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerSta
         NetCode::RPC::SetCheckpoint setCP;
         setCP.position = getPosition();
         setCP.size = getRadius(); // samp client asks for radius (not diameter) for checkpoints
-        player_.sendRPC(setCP);
+        PacketHelper::send(setCP, player_);
     }
 
     void disable() override
@@ -70,7 +70,7 @@ struct PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerSta
         setPlayerInside(false);
 
         NetCode::RPC::DisableCheckpoint disableCP;
-        player_.sendRPC(disableCP);
+        PacketHelper::send(disableCP, player_);
     }
 
     bool isEnabled() const override
@@ -124,7 +124,7 @@ struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChe
         setRaceCP.position = getPosition();
         setRaceCP.nextPosition = nextPosition_;
         setRaceCP.size = getRadius(); // samp client asks for radius for race checkpoints
-        player_.sendRPC(setRaceCP);
+        PacketHelper::send(setRaceCP, player_);
     }
 
     void disable() override
@@ -133,7 +133,7 @@ struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChe
         enabled_ = false;
 
         NetCode::RPC::DisableRaceCheckpoint disableRaceCP;
-        player_.sendRPC(disableRaceCP);
+        PacketHelper::send(disableRaceCP, player_);
     }
 
     bool isEnabled() const override

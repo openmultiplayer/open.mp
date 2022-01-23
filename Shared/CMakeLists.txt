@@ -1,11 +1,11 @@
 set(PROJECT Shared)
 
-add_library(NetCode INTERFACE)
+add_library(NetCode STATIC)
 
-target_link_libraries(NetCode INTERFACE SDK)
+target_link_libraries(NetCode PUBLIC SDK)
 
-target_include_directories(NetCode INTERFACE .)
+target_include_directories(NetCode PUBLIC .)
 
-file(GLOB_RECURSE netcode_source_list "*.hpp")
+file(GLOB_RECURSE netcode_source_list "*.cpp" "*.hpp")
 
 set_property(TARGET NetCode PROPERTY SOURCES ${netcode_source_list})
