@@ -110,7 +110,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
 };
 
 struct LegacyConfigComponent final : public IComponent {
-    PROVIDE_UUID(0x24ef6216838f9ffc);
+    PROVIDE_UID(0x24ef6216838f9ffc);
 
     StringView componentName() const override
     {

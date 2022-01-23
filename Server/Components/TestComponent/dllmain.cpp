@@ -74,7 +74,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         }
     };
 
-    UUID getUUID() override
+    UID getUID() override
     {
         return 0xd4a033a9c68adc86;
     }
