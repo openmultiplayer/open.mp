@@ -21,7 +21,7 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeUINT16(ID);
+            bs.writeINT16(ID);
             bs.writeUINT8(Style);
             bs.writeDynStr8(Title);
             bs.writeDynStr8(FirstButton);
@@ -31,14 +31,14 @@ namespace RPC {
     };
 
     struct OnPlayerDialogResponse : NetworkPacketBase<62, NetworkPacketType::RPC> {
-        uint16_t ID;
+        int ID;
         uint8_t Response;
         uint16_t ListItem;
         HybridString<256> Text;
 
         bool read(NetworkBitStream& bs)
         {
-            bs.readUINT16(ID);
+            bs.readINT16(ID);
             bs.readUINT8(Response);
             bs.readUINT16(ListItem);
             return bs.readDynStr8(Text);
