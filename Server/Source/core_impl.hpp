@@ -631,6 +631,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         , ticksThisSecond(0u)
         , EnableLogTimestamp(false)
     {
+        // Initialize start time
+        getTickCount();
         players.getEventDispatcher().addEventHandler(this);
 
         loadComponents("components");
