@@ -62,7 +62,7 @@ SCRIPT_API(GetPVarsUpperIndex, int(IPlayer& player))
 SCRIPT_API(GetPVarNameAtIndex, bool(IPlayer& player, int index, std::string& varname))
 {
     GET_PLAYER_VAR_COMP(component, false);
-    return component->getKeyAtIndex(index, varname);
+    return component->getKeyAtIndex(index, StringView(varname));
 }
 
 SCRIPT_API(GetPVarType, int(IPlayer& player, const std::string& varname))

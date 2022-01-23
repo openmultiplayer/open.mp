@@ -1,7 +1,7 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/GangZones/gangzones.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
@@ -46,14 +46,14 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
         NetCode::RPC::FlashGangZone flashGangZoneRPC;
         flashGangZoneRPC.ID = poolID;
         flashGangZoneRPC.Col = colour;
-        player.sendRPC(flashGangZoneRPC);
+        PacketHelper::send(flashGangZoneRPC, player);
     }
 
     void stopFlashForPlayer(IPlayer& player) override
     {
         NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
         stopFlashGangZoneRPC.ID = poolID;
-        player.sendRPC(stopFlashGangZoneRPC);
+        PacketHelper::send(stopFlashGangZoneRPC, player);
     }
 
     int getID() const override
@@ -79,14 +79,14 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
         showGangZoneRPC.Min = pos.min;
         showGangZoneRPC.Max = pos.max;
         showGangZoneRPC.Col = colour;
-        player.sendRPC(showGangZoneRPC);
+        PacketHelper::send(showGangZoneRPC, player);
     }
 
     void hideForClient(IPlayer& player)
     {
         NetCode::RPC::HideGangZone hideGangZoneRPC;
         hideGangZoneRPC.ID = poolID;
-        player.sendRPC(hideGangZoneRPC);
+        PacketHelper::send(hideGangZoneRPC, player);
     }
 
     ~GangZone()

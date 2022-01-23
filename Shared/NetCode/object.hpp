@@ -7,7 +7,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct SetPlayerObjectMaterial final : NetworkPacketBase<84> {
+    struct SetPlayerObjectMaterial : NetworkPacketBase<84, NetworkPacketType::RPC> {
         int ObjectID;
         int MaterialID;
         ObjectMaterialData& MaterialData;
@@ -17,36 +17,36 @@ namespace RPC {
         {
         }
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::UINT8(MaterialData.type));
-            bs.write(NetworkBitStreamValue::UINT8(MaterialID));
+            bs.writeUINT16(ObjectID);
+            bs.writeUINT8(int(MaterialData.type));
+            bs.writeUINT8(MaterialID);
 
             if (MaterialData.type == ObjectMaterialData::Type::Default) {
-                bs.write(NetworkBitStreamValue::UINT16(MaterialData.model));
-                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.textOrTXD)));
-                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.fontOrTexture)));
-                bs.write(NetworkBitStreamValue::UINT32(MaterialData.materialColour.ARGB()));
+                bs.writeUINT16(MaterialData.model);
+                bs.writeDynStr8(StringView(MaterialData.textOrTXD));
+                bs.writeDynStr8(StringView(MaterialData.fontOrTexture));
+                bs.writeUINT32(MaterialData.materialColour.ARGB());
             } else if (MaterialData.type == ObjectMaterialData::Type::Text) {
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.materialSize));
-                bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(MaterialData.fontOrTexture)));
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.fontSize));
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.bold));
-                bs.write(NetworkBitStreamValue::UINT32(MaterialData.fontColour.ARGB()));
-                bs.write(NetworkBitStreamValue::UINT32(MaterialData.backgroundColour.ARGB()));
-                bs.write(NetworkBitStreamValue::UINT8(MaterialData.alignment));
-                bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(MaterialData.textOrTXD)));
+                bs.writeUINT8(MaterialData.materialSize);
+                bs.writeDynStr8(StringView(MaterialData.fontOrTexture));
+                bs.writeUINT8(MaterialData.fontSize);
+                bs.writeUINT8(MaterialData.bold);
+                bs.writeUINT32(MaterialData.fontColour.ARGB());
+                bs.writeUINT32(MaterialData.backgroundColour.ARGB());
+                bs.writeUINT8(MaterialData.alignment);
+                bs.WriteCompressedStr(StringView(MaterialData.textOrTXD));
             }
         }
     };
 
-    struct CreateObject final : NetworkPacketBase<44> {
+    struct CreateObject : NetworkPacketBase<44, NetworkPacketType::RPC> {
         int ObjectID;
         int ModelID;
         Vector3 Position;
@@ -65,298 +65,298 @@ namespace RPC {
         {
         }
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::INT32(ModelID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::VEC3(Rotation));
-            bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
-            bs.write(NetworkBitStreamValue::UINT8(!CameraCollision));
+            bs.writeUINT16(ObjectID);
+            bs.writeINT32(ModelID);
+            bs.writeVEC3(Position);
+            bs.writeVEC3(Rotation);
+            bs.writeFLOAT(DrawDistance);
+            bs.writeUINT8(!CameraCollision);
 
-            bs.write(NetworkBitStreamValue::UINT16(AttachmentData.type == ObjectAttachmentData::Type::Vehicle ? AttachmentData.ID : INVALID_VEHICLE_ID));
-            bs.write(NetworkBitStreamValue::UINT16(AttachmentData.type == ObjectAttachmentData::Type::Object ? AttachmentData.ID : INVALID_OBJECT_ID));
+            bs.writeUINT16(AttachmentData.type == ObjectAttachmentData::Type::Vehicle ? AttachmentData.ID : INVALID_VEHICLE_ID);
+            bs.writeUINT16(AttachmentData.type == ObjectAttachmentData::Type::Object ? AttachmentData.ID : INVALID_OBJECT_ID);
             if (AttachmentData.type == ObjectAttachmentData::Type::Vehicle || AttachmentData.type == ObjectAttachmentData::Type::Object) {
-                bs.write(NetworkBitStreamValue::VEC3(AttachmentData.offset));
-                bs.write(NetworkBitStreamValue::VEC3(AttachmentData.rotation));
-                bs.write(NetworkBitStreamValue::UINT8(AttachmentData.syncRotation));
+                bs.writeVEC3(AttachmentData.offset);
+                bs.writeVEC3(AttachmentData.rotation);
+                bs.writeUINT8(AttachmentData.syncRotation);
             }
 
-            bs.write(NetworkBitStreamValue::UINT8(MaterialsUsed.count()));
+            bs.writeUINT8(MaterialsUsed.count());
             for (int i = 0; i < MaterialsUsed.size(); ++i) {
                 if (MaterialsUsed.test(i)) {
                     const ObjectMaterialData& data = Materials[i];
-                    bs.write(NetworkBitStreamValue::UINT8(data.type));
-                    bs.write(NetworkBitStreamValue::UINT8(i));
+                    bs.writeUINT8(int(data.type));
+                    bs.writeUINT8(i);
 
                     if (data.type == ObjectMaterialData::Type::Default) {
-                        bs.write(NetworkBitStreamValue::UINT16(data.model));
-                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.textOrTXD)));
-                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.fontOrTexture)));
-                        bs.write(NetworkBitStreamValue::UINT32(data.materialColour.ARGB()));
+                        bs.writeUINT16(data.model);
+                        bs.writeDynStr8(StringView(data.textOrTXD));
+                        bs.writeDynStr8(StringView(data.fontOrTexture));
+                        bs.writeUINT32(data.materialColour.ARGB());
                     } else if (data.type == ObjectMaterialData::Type::Text) {
-                        bs.write(NetworkBitStreamValue::UINT8(data.materialSize));
-                        bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(data.fontOrTexture)));
-                        bs.write(NetworkBitStreamValue::UINT8(data.fontSize));
-                        bs.write(NetworkBitStreamValue::UINT8(data.bold));
-                        bs.write(NetworkBitStreamValue::UINT32(data.fontColour.ARGB()));
-                        bs.write(NetworkBitStreamValue::UINT32(data.backgroundColour.ARGB()));
-                        bs.write(NetworkBitStreamValue::UINT8(data.alignment));
-                        bs.write(NetworkBitStreamValue::COMPRESSED_STR(StringView(data.textOrTXD)));
+                        bs.writeUINT8(data.materialSize);
+                        bs.writeDynStr8(StringView(data.fontOrTexture));
+                        bs.writeUINT8(data.fontSize);
+                        bs.writeUINT8(data.bold);
+                        bs.writeUINT32(data.fontColour.ARGB());
+                        bs.writeUINT32(data.backgroundColour.ARGB());
+                        bs.writeUINT8(data.alignment);
+                        bs.WriteCompressedStr(data.textOrTXD);
                     }
                 }
             }
         }
     };
 
-    struct DestroyObject final : NetworkPacketBase<47> {
+    struct DestroyObject : NetworkPacketBase<47, NetworkPacketType::RPC> {
         int ObjectID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
+            bs.writeUINT16(ObjectID);
         }
     };
 
-    struct MoveObject final : NetworkPacketBase<99> {
+    struct MoveObject : NetworkPacketBase<99, NetworkPacketType::RPC> {
         int ObjectID;
         Vector3 CurrentPosition;
         ObjectMoveData MoveData;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::VEC3(CurrentPosition));
-            bs.write(NetworkBitStreamValue::VEC3(MoveData.targetPos));
-            bs.write(NetworkBitStreamValue::FLOAT(MoveData.speed));
-            bs.write(NetworkBitStreamValue::VEC3(MoveData.targetRot));
+            bs.writeUINT16(ObjectID);
+            bs.writeVEC3(CurrentPosition);
+            bs.writeVEC3(MoveData.targetPos);
+            bs.writeFLOAT(MoveData.speed);
+            bs.writeVEC3(MoveData.targetRot);
         }
     };
 
-    struct StopObject final : NetworkPacketBase<122> {
+    struct StopObject : NetworkPacketBase<122, NetworkPacketType::RPC> {
         int ObjectID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
+            bs.writeUINT16(ObjectID);
         }
     };
 
-    struct SetObjectPosition final : NetworkPacketBase<45> {
+    struct SetObjectPosition : NetworkPacketBase<45, NetworkPacketType::RPC> {
         int ObjectID;
         Vector3 Position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
+            bs.writeUINT16(ObjectID);
+            bs.writeVEC3(Position);
         }
     };
 
-    struct SetObjectRotation final : NetworkPacketBase<46> {
+    struct SetObjectRotation : NetworkPacketBase<46, NetworkPacketType::RPC> {
         int ObjectID;
         Vector3 Rotation;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::VEC3(Rotation));
+            bs.writeUINT16(ObjectID);
+            bs.writeVEC3(Rotation);
         }
     };
 
-    struct AttachObjectToPlayer final : NetworkPacketBase<75> {
+    struct AttachObjectToPlayer : NetworkPacketBase<75, NetworkPacketType::RPC> {
         int ObjectID;
         int PlayerID;
         Vector3 Offset;
         Vector3 Rotation;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::VEC3(Offset));
-            bs.write(NetworkBitStreamValue::VEC3(Rotation));
+            bs.writeUINT16(ObjectID);
+            bs.writeUINT16(PlayerID);
+            bs.writeVEC3(Offset);
+            bs.writeVEC3(Rotation);
         }
     };
 
-    struct SetPlayerAttachedObject final : NetworkPacketBase<113> {
+    struct SetPlayerAttachedObject : NetworkPacketBase<113, NetworkPacketType::RPC> {
         int PlayerID;
         int Index;
         bool Create;
         ObjectAttachmentSlotData AttachmentData;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT32(Index));
-            bs.write(NetworkBitStreamValue::BIT(Create));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT32(Index);
+            bs.writeBIT(Create);
             if (Create) {
-                bs.write(NetworkBitStreamValue::UINT32(AttachmentData.model));
-                bs.write(NetworkBitStreamValue::UINT32(AttachmentData.bone));
-                bs.write(NetworkBitStreamValue::VEC3(AttachmentData.offset));
-                bs.write(NetworkBitStreamValue::VEC3(AttachmentData.rotation));
-                bs.write(NetworkBitStreamValue::VEC3(AttachmentData.scale));
-                bs.write(NetworkBitStreamValue::UINT32(AttachmentData.colour1.ARGB()));
-                bs.write(NetworkBitStreamValue::UINT32(AttachmentData.colour2.ARGB()));
+                bs.writeUINT32(AttachmentData.model);
+                bs.writeUINT32(AttachmentData.bone);
+                bs.writeVEC3(AttachmentData.offset);
+                bs.writeVEC3(AttachmentData.rotation);
+                bs.writeVEC3(AttachmentData.scale);
+                bs.writeUINT32(AttachmentData.colour1.ARGB());
+                bs.writeUINT32(AttachmentData.colour2.ARGB());
             }
         }
     };
 
-    struct PlayerBeginObjectSelect final : NetworkPacketBase<27> {
-        bool read(INetworkBitStream& bs)
+    struct PlayerBeginObjectSelect : NetworkPacketBase<27, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct OnPlayerSelectObject final : NetworkPacketBase<27> {
+    struct OnPlayerSelectObject : NetworkPacketBase<27, NetworkPacketType::RPC> {
         int SelectType;
         int ObjectID;
         int Model;
         Vector3 Position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT32>(SelectType);
-            bs.read<NetworkBitStreamValueType::UINT16>(ObjectID);
-            bs.read<NetworkBitStreamValueType::UINT32>(Model);
-            return bs.read<NetworkBitStreamValueType::VEC3>(Position);
+            bs.readUINT32(SelectType);
+            bs.readUINT16(ObjectID);
+            bs.readUINT32(Model);
+            return bs.readVEC3(Position);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerCancelObjectEdit final : NetworkPacketBase<28> {
-        bool read(INetworkBitStream& bs)
+    struct PlayerCancelObjectEdit : NetworkPacketBase<28, NetworkPacketType::RPC> {
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerBeginObjectEdit final : NetworkPacketBase<117> {
+    struct PlayerBeginObjectEdit : NetworkPacketBase<117, NetworkPacketType::RPC> {
         bool PlayerObject;
         int ObjectID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::BIT(PlayerObject));
-            bs.write(NetworkBitStreamValue::UINT16(ObjectID));
+            bs.writeBIT(PlayerObject);
+            bs.writeUINT16(ObjectID);
         }
     };
 
-    struct OnPlayerEditObject final : NetworkPacketBase<117> {
+    struct OnPlayerEditObject : NetworkPacketBase<117, NetworkPacketType::RPC> {
         bool PlayerObject;
         int ObjectID;
         int Response;
         Vector3 Offset;
         Vector3 Rotation;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::BIT>(PlayerObject);
-            bs.read<NetworkBitStreamValueType::UINT16>(ObjectID);
-            bs.read<NetworkBitStreamValueType::UINT32>(Response);
-            bs.read<NetworkBitStreamValueType::VEC3>(Offset);
-            return bs.read<NetworkBitStreamValueType::VEC3>(Rotation);
+            bs.readBIT(PlayerObject);
+            bs.readUINT16(ObjectID);
+            bs.readUINT32(Response);
+            bs.readVEC3(Offset);
+            return bs.readVEC3(Rotation);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct PlayerBeginAttachedObjectEdit final : NetworkPacketBase<116> {
+    struct PlayerBeginAttachedObjectEdit : NetworkPacketBase<116, NetworkPacketType::RPC> {
         unsigned Index;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT32(Index));
+            bs.writeUINT32(Index);
         }
     };
 
-    struct OnPlayerEditAttachedObject final : NetworkPacketBase<116> {
+    struct OnPlayerEditAttachedObject : NetworkPacketBase<116, NetworkPacketType::RPC> {
         unsigned Response;
         unsigned Index;
         ObjectAttachmentSlotData AttachmentData;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT32>(Response);
-            bs.read<NetworkBitStreamValueType::UINT32>(Index);
-            bs.read<NetworkBitStreamValueType::UINT32>(AttachmentData.model);
-            bs.read<NetworkBitStreamValueType::UINT32>(AttachmentData.bone);
-            bs.read<NetworkBitStreamValueType::VEC3>(AttachmentData.offset);
-            bs.read<NetworkBitStreamValueType::VEC3>(AttachmentData.rotation);
-            bs.read<NetworkBitStreamValueType::VEC3>(AttachmentData.scale);
+            bs.readUINT32(Response);
+            bs.readUINT32(Index);
+            bs.readUINT32(AttachmentData.model);
+            bs.readUINT32(AttachmentData.bone);
+            bs.readVEC3(AttachmentData.offset);
+            bs.readVEC3(AttachmentData.rotation);
+            bs.readVEC3(AttachmentData.scale);
             uint32_t argb;
-            bs.read<NetworkBitStreamValueType::UINT32>(argb);
+            bs.readUINT32(argb);
             AttachmentData.colour1 = Colour::FromARGB(argb);
-            bool res = bs.read<NetworkBitStreamValueType::UINT32>(argb);
+            bool res = bs.readUINT32(argb);
             AttachmentData.colour2 = Colour::FromARGB(argb);
             return res;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };

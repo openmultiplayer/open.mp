@@ -6,15 +6,15 @@
 
 namespace NetCode {
 namespace Packet {
-    struct PlayerRconCommand final : NetworkPacketBase<201> {
-        NetworkString cmd;
+    struct PlayerRconCommand : NetworkPacketBase<201, NetworkPacketType::Packet> {
+        HybridString<64> cmd;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::DYNAMIC_LEN_STR_32>(cmd);
+            return bs.readDynStr32(cmd);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
