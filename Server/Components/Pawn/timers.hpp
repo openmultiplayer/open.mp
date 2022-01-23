@@ -1,8 +1,8 @@
 #pragma once
 
 #include "Manager/Manager.hpp"
-#include <amx/amx.h>
 #include <Impl/pool_impl.hpp>
+#include <amx/amx.h>
 
 struct PawnTimerHandler;
 
@@ -66,8 +66,8 @@ private:
 
 struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
     AMX* amx;
-    String callback;
-    String fmt;
+    HybridString<sNAMEMAX + 1> callback;
+    HybridString<64> fmt;
     DynamicArray<cell> params;
     DynamicArray<cell> data;
 
@@ -94,7 +94,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
         if (hasParams) {
             // Not enough space in this heap.  Try again later.
             if ((err = amx_Allot(amx, data.size(), &out, &in)) != AMX_ERR_NONE) {
-                PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): Not enough space in heap for %s timer: %s", callback.c_str(), aux_StrError(err));
+                PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): Not enough space in heap for %s timer: %s", callback.data(), aux_StrError(err));
                 amx_RaiseError(amx, err);
                 return;
             }
@@ -118,7 +118,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
 
         int funcidx;
         // Step 4: Call the function.
-        if ((err = amx_FindPublic(amx, callback.c_str(), &funcidx)) == AMX_ERR_NONE && (err = amx_Exec(amx, &ret, funcidx)) == AMX_ERR_NONE) {
+        if ((err = amx_FindPublic(amx, callback.data(), &funcidx)) == AMX_ERR_NONE && (err = amx_Exec(amx, &ret, funcidx)) == AMX_ERR_NONE) {
             if (hasParams) {
                 // Step 5: Retrieve reference parameters.
                 for (size_t i = 0, len = params.size(); i != len; ++i) {
@@ -130,7 +130,7 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
                 }
             }
         } else {
-            PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): There was a problem in calling %s: %s", callback.c_str(), aux_StrError(err));
+            PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): There was a problem in calling %s: %s", callback.data(), aux_StrError(err));
             amx_RaiseError(amx, err);
         }
 

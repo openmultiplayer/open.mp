@@ -62,7 +62,7 @@ SCRIPT_API(GetSVarsUpperIndex, int())
 SCRIPT_API(GetSVarNameAtIndex, bool(int index, std::string& varname))
 {
     GET_VAR_COMP(component, false);
-    return component->getKeyAtIndex(index, varname);
+    return component->getKeyAtIndex(index, StringView(varname));
 }
 
 SCRIPT_API(GetSVarType, int(const std::string& varname))

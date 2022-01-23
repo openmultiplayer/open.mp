@@ -17,7 +17,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerPickUpPickup onPlayerPickUpPickupRPC;
             if (!onPlayerPickUpPickupRPC.read(bs)) {
@@ -56,7 +56,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         players = &core->getPlayers();
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerPickUpPickup>(&playerPickUpPickupEventHandler);
+        NetCode::RPC::OnPlayerPickUpPickup::addEventHandler(*core, &playerPickUpPickupEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
@@ -65,7 +65,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerPickUpPickup>(&playerPickUpPickupEventHandler);
+            NetCode::RPC::OnPlayerPickUpPickup::removeEventHandler(*core, &playerPickUpPickupEventHandler);
         }
     }
 

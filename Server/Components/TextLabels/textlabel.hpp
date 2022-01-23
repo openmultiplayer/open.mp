@@ -1,14 +1,14 @@
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
 template <class T>
 struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
-    String text;
+    HybridString<32> text;
     Vector3 pos;
     Colour colour;
     float drawDist;
@@ -48,7 +48,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
 
     void setText(StringView txt) override
     {
-        text = String(txt);
+        text = txt;
         restream();
     }
 
@@ -124,7 +124,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         showTextLabelRPC.PlayerAttachID = attachmentData.playerID;
         showTextLabelRPC.VehicleAttachID = attachmentData.vehicleID;
         showTextLabelRPC.Text = StringView(text);
-        player.sendRPC(showTextLabelRPC);
+        PacketHelper::send(showTextLabelRPC, player);
     }
 
     void streamOutForClient(IPlayer& player, bool isPlayerTextLabel)
@@ -132,7 +132,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         NetCode::RPC::PlayerHideTextLabel hideTextLabelRPC;
         hideTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
         hideTextLabelRPC.TextLabelID = poolID;
-        player.sendRPC(hideTextLabelRPC);
+        PacketHelper::send(hideTextLabelRPC, player);
     }
 };
 

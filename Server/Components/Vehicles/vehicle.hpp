@@ -29,7 +29,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint8_t landingGear = 1;
     IPlayer* driver = nullptr;
     FlatHashSet<IPlayer*> passengers;
-    String numberPlate = "XYZSR998";
+    HybridString<16> numberPlate = StringView("XYZSR998");
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
@@ -46,7 +46,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         Vehicle* tower;
     };
     StaticArray<IVehicle*, 3> carriages;
-    bool detaching = false;
     VehicleParams params;
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
@@ -266,7 +265,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     void setTower(Vehicle* tower)
     {
-        detaching = true;
         this->tower = tower;
         towing = false;
     }
