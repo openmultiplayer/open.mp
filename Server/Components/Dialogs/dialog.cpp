@@ -5,7 +5,7 @@
 using namespace Impl;
 
 struct PlayerDialogData final : public IPlayerDialogData {
-    int activeId = -1;
+    int activeId = INVALID_DIALOG_ID;
 
     void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
     {
@@ -53,11 +53,11 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
 
             // If the dialog id doesn't match what the server is expecting, ignore it
             PlayerDialogData* data = peer.queryData<PlayerDialogData>();
-            if (!data || data->getActiveID() == DIALOG_INVALID_ID || data->getActiveID() != sendDialogResponse.ID) {
+            if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID) {
                 return false;
             }
 
-            data->activeId = DIALOG_INVALID_ID;
+            data->activeId = INVALID_DIALOG_ID;
 
             self.eventDispatcher.dispatch(
                 &PlayerDialogEventHandler::onDialogResponse,
