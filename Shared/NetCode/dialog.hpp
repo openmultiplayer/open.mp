@@ -33,14 +33,14 @@ namespace RPC {
     struct OnPlayerDialogResponse : NetworkPacketBase<62, NetworkPacketType::RPC> {
         int ID;
         uint8_t Response;
-        uint16_t ListItem;
+        int ListItem;
         HybridString<256> Text;
 
         bool read(NetworkBitStream& bs)
         {
             bs.readINT16(ID);
             bs.readUINT8(Response);
-            bs.readUINT16(ListItem);
+            bs.readINT16(ListItem);
             return bs.readDynStr8(Text);
         }
 
