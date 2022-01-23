@@ -5,9 +5,9 @@
 using namespace Impl;
 
 struct PlayerDialogData final : public IPlayerDialogData {
-    uint16_t activeId = 0xFFFF;
+    int activeId = -1;
 
-    void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
+    void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
     {
         NetCode::RPC::ShowDialog showDialog;
         showDialog.ID = id;
@@ -22,7 +22,7 @@ struct PlayerDialogData final : public IPlayerDialogData {
         activeId = id;
     }
 
-    uint16_t getActiveID() const override
+    int getActiveID() const override
     {
         return activeId;
     }
