@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerShowTextLabel final : NetworkPacketBase<36> {
+    struct PlayerShowTextLabel : NetworkPacketBase<36, NetworkPacketType::RPC> {
         bool PlayerTextLabel;
         int TextLabelID;
         Colour Col;
@@ -15,38 +15,38 @@ namespace RPC {
         bool LOS;
         int PlayerAttachID;
         int VehicleAttachID;
-        NetworkString Text;
+        HybridString<64> Text;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? TEXT_LABEL_POOL_SIZE + TextLabelID : TextLabelID));
-            bs.write(NetworkBitStreamValue::UINT32(Col.RGBA()));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::FLOAT(DrawDistance));
-            bs.write(NetworkBitStreamValue::UINT8(LOS));
-            bs.write(NetworkBitStreamValue::UINT16(PlayerAttachID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleAttachID));
-            bs.write(NetworkBitStreamValue::COMPRESSED_STR(Text));
+            bs.writeUINT16(PlayerTextLabel ? TEXT_LABEL_POOL_SIZE + TextLabelID : TextLabelID);
+            bs.writeUINT32(Col.RGBA());
+            bs.writeVEC3(Position);
+            bs.writeFLOAT(DrawDistance);
+            bs.writeUINT8(LOS);
+            bs.writeUINT16(PlayerAttachID);
+            bs.writeUINT16(VehicleAttachID);
+            bs.WriteCompressedStr(Text);
         }
     };
 
-    struct PlayerHideTextLabel final : NetworkPacketBase<58> {
+    struct PlayerHideTextLabel : NetworkPacketBase<58, NetworkPacketType::RPC> {
         bool PlayerTextLabel;
         int TextLabelID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerTextLabel ? TEXT_LABEL_POOL_SIZE + TextLabelID : TextLabelID));
+            bs.writeUINT16(PlayerTextLabel ? TEXT_LABEL_POOL_SIZE + TextLabelID : TextLabelID);
         }
     };
 }

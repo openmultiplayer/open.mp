@@ -1,6 +1,6 @@
 #include "textdraw.hpp"
-#include <netcode.hpp>
 #include <Impl/pool_impl.hpp>
+#include <netcode.hpp>
 
 using namespace Impl;
 
@@ -21,7 +21,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         NetCode::RPC::PlayerBeginTextDrawSelect beginTextDrawSelectRPC;
         beginTextDrawSelectRPC.Enable = true;
         beginTextDrawSelectRPC.Col = highlight;
-        player.sendRPC(beginTextDrawSelectRPC);
+        PacketHelper::send(beginTextDrawSelectRPC, player);
     }
 
     bool isSelecting() const override
@@ -35,7 +35,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         NetCode::RPC::PlayerBeginTextDrawSelect beginTextDrawSelectRPC;
         beginTextDrawSelectRPC.Enable = false;
         beginTextDrawSelectRPC.Col = Colour::None();
-        player.sendRPC(beginTextDrawSelectRPC);
+        PacketHelper::send(beginTextDrawSelectRPC, player);
     }
 
     IPlayerTextDraw* create(Vector2 position, StringView text) override
@@ -123,7 +123,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         {
         }
 
-        bool received(IPlayer& peer, INetworkBitStream& bs) override
+        bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerSelectTextDraw RPC;
             if (!RPC.read(bs)) {
@@ -159,14 +159,14 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
     {
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);
+        NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
     }
 
     ~TextDrawsComponent()
     {
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerSelectTextDraw>(&playerSelectTextDrawEventHandler);
+            NetCode::RPC::OnPlayerSelectTextDraw::removeEventHandler(*core, &playerSelectTextDrawEventHandler);
         }
     }
 
