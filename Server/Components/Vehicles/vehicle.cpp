@@ -157,7 +157,6 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
     if (tower && !towing) {
         tower->detachTrailer();
         tower = nullptr;
-        detaching = true;
     }
     if (allowed) {
         pos = unoccupiedSync.Position;
@@ -181,7 +180,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
     Vehicle* vehicle = playerData->vehicle;
     if (!vehicle) {
         return false;
-    } else if (tower != vehicle && !detaching) {
+    } else if (tower != vehicle) {
         tower = vehicle;
         tower->attachTrailer(*this);
         towing = false;
