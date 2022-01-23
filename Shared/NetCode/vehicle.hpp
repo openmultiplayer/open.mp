@@ -7,83 +7,88 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PutPlayerInVehicle final : NetworkPacketBase<70> {
+    struct PutPlayerInVehicle : NetworkPacketBase<70, NetworkPacketType::RPC> {
+
         int VehicleID;
         int SeatID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT8(SeatID));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT8(SeatID);
         }
     };
 
-    struct SetVehicleHealth final : NetworkPacketBase<147> {
+    struct SetVehicleHealth : NetworkPacketBase<147, NetworkPacketType::RPC> {
+
         int VehicleID;
         float health;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::FLOAT(health));
+            bs.writeUINT16(VehicleID);
+            bs.writeFLOAT(health);
         }
     };
 
-    struct LinkVehicleToInterior final : NetworkPacketBase<65> {
+    struct LinkVehicleToInterior : NetworkPacketBase<65, NetworkPacketType::RPC> {
+
         int VehicleID;
         int InteriorID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT8(InteriorID));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT8(InteriorID);
         }
     };
 
-    struct SetVehicleZAngle final : NetworkPacketBase<160> {
+    struct SetVehicleZAngle : NetworkPacketBase<160, NetworkPacketType::RPC> {
+
         int VehicleID;
         float angle;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::FLOAT(angle));
+            bs.writeUINT16(VehicleID);
+            bs.writeFLOAT(angle);
         }
     };
 
-    struct RemovePlayerFromVehicle final : NetworkPacketBase<71> {
+    struct RemovePlayerFromVehicle : NetworkPacketBase<71, NetworkPacketType::RPC> {
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct StreamInVehicle final : NetworkPacketBase<164> {
+    struct StreamInVehicle : NetworkPacketBase<164, NetworkPacketType::RPC> {
+
         int VehicleID;
         int ModelID;
         Vector3 Position;
@@ -102,403 +107,421 @@ namespace RPC {
         int32_t BodyColour1;
         int32_t BodyColour2;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
             if (ModelID == 570 || ModelID == 569) {
                 return; // SA:MP Legacy, trains have their carriages already implemented so we just store them, not stream them in.
             }
 
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT32(ModelID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::FLOAT(Angle));
-            bs.write(NetworkBitStreamValue::UINT8(Colour1));
-            bs.write(NetworkBitStreamValue::UINT8(Colour2));
-            bs.write(NetworkBitStreamValue::FLOAT(Health));
-            bs.write(NetworkBitStreamValue::UINT8(Interior));
-            bs.write(NetworkBitStreamValue::UINT32(DoorDamage));
-            bs.write(NetworkBitStreamValue::UINT32(PanelDamage));
-            bs.write(NetworkBitStreamValue::UINT8(LightDamage));
-            bs.write(NetworkBitStreamValue::UINT8(TyreDamage));
-            bs.write(NetworkBitStreamValue::UINT8(Siren));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT32(ModelID);
+            bs.writeVEC3(Position);
+            bs.writeFLOAT(Angle);
+            bs.writeUINT8(Colour1);
+            bs.writeUINT8(Colour2);
+            bs.writeFLOAT(Health);
+            bs.writeUINT8(Interior);
+            bs.writeUINT32(DoorDamage);
+            bs.writeUINT32(PanelDamage);
+            bs.writeUINT8(LightDamage);
+            bs.writeUINT8(TyreDamage);
+            bs.writeUINT8(Siren);
             for (int mod : Mods) {
-                bs.write(NetworkBitStreamValue::UINT8(mod ? uint8_t(mod - 999) : 0));
+                bs.writeUINT8(mod ? uint8_t(mod - 999) : 0);
             }
-            bs.write(NetworkBitStreamValue::UINT8(Paintjob));
-            bs.write(NetworkBitStreamValue::UINT32(BodyColour1));
-            bs.write(NetworkBitStreamValue::UINT32(BodyColour2));
+            bs.writeUINT8(Paintjob);
+            bs.writeUINT32(BodyColour1);
+            bs.writeUINT32(BodyColour2);
         }
     };
 
-    struct StreamOutVehicle final : NetworkPacketBase<165> {
+    struct StreamOutVehicle : NetworkPacketBase<165, NetworkPacketType::RPC> {
+
         int VehicleID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+            bs.writeUINT16(VehicleID);
         }
     };
 
-    struct OnPlayerEnterVehicle final : NetworkPacketBase<26> {
+    struct OnPlayerEnterVehicle : NetworkPacketBase<26, NetworkPacketType::RPC> {
+
         int VehicleID;
         uint8_t Passenger;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
-            return bs.read<NetworkBitStreamValueType::UINT8>(Passenger);
+            bs.readUINT16(VehicleID);
+            return bs.readUINT8(Passenger);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct EnterVehicle final : NetworkPacketBase<26> {
+    struct EnterVehicle : NetworkPacketBase<26, NetworkPacketType::RPC> {
+
         int PlayerID;
         int VehicleID;
         uint8_t Passenger;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT8(Passenger));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT8(Passenger);
         }
     };
 
-    struct OnPlayerExitVehicle final : NetworkPacketBase<154> {
+    struct OnPlayerExitVehicle : NetworkPacketBase<154, NetworkPacketType::RPC> {
+
         int VehicleID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+            return bs.readUINT16(VehicleID);
             ;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct ExitVehicle final : NetworkPacketBase<154> {
+    struct ExitVehicle : NetworkPacketBase<154, NetworkPacketType::RPC> {
+
         int PlayerID;
         int VehicleID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT16(VehicleID);
         }
     };
 
-    struct SetVehiclePlate final : NetworkPacketBase<123> {
+    struct SetVehiclePlate : NetworkPacketBase<123, NetworkPacketType::RPC> {
+
         int VehicleID;
-        String plate;
+        HybridString<16> plate;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::DYNAMIC_LEN_STR_8(StringView(plate)));
+            bs.writeUINT16(VehicleID);
+            bs.writeDynStr8(StringView(plate));
         }
     };
 
-    struct SetVehiclePosition final : NetworkPacketBase<159> {
+    struct SetVehiclePosition : NetworkPacketBase<159, NetworkPacketType::RPC> {
+
         int VehicleID;
         Vector3 position;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::VEC3(position));
+            bs.writeUINT16(VehicleID);
+            bs.writeVEC3(position);
         }
     };
 
-    struct SetVehicleDamageStatus final : NetworkPacketBase<106> {
+    struct SetVehicleDamageStatus : NetworkPacketBase<106, NetworkPacketType::RPC> {
+
         int VehicleID;
         uint32_t DoorStatus;
         uint32_t PanelStatus;
         uint8_t LightStatus;
         uint8_t TyreStatus;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
-            bs.read<NetworkBitStreamValueType::UINT32>(PanelStatus);
-            bs.read<NetworkBitStreamValueType::UINT32>(DoorStatus);
-            bs.read<NetworkBitStreamValueType::UINT8>(LightStatus);
-            return bs.read<NetworkBitStreamValueType::UINT8>(TyreStatus);
+            bs.readUINT16(VehicleID);
+            bs.readUINT32(PanelStatus);
+            bs.readUINT32(DoorStatus);
+            bs.readUINT8(LightStatus);
+            return bs.readUINT8(TyreStatus);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT32(PanelStatus));
-            bs.write(NetworkBitStreamValue::UINT32(DoorStatus));
-            bs.write(NetworkBitStreamValue::UINT8(LightStatus));
-            bs.write(NetworkBitStreamValue::UINT8(TyreStatus));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT32(PanelStatus);
+            bs.writeUINT32(DoorStatus);
+            bs.writeUINT8(LightStatus);
+            bs.writeUINT8(TyreStatus);
         }
     };
 
-    struct RemoveVehicleComponent final : NetworkPacketBase<57> {
+    struct RemoveVehicleComponent : NetworkPacketBase<57, NetworkPacketType::RPC> {
+
         int VehicleID;
         int Component;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT16(Component));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT16(Component);
         }
     };
 
-    struct VehicleDeath final : NetworkPacketBase<136> {
+    struct VehicleDeath : NetworkPacketBase<136, NetworkPacketType::RPC> {
+
         int VehicleID;
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
-            return bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
+            return bs.readUINT16(VehicleID);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
         }
     };
 
-    struct AttachTrailer final : NetworkPacketBase<148> {
+    struct AttachTrailer : NetworkPacketBase<148, NetworkPacketType::RPC> {
+
         int VehicleID;
         int TrailerID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(TrailerID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+            bs.writeUINT16(TrailerID);
+            bs.writeUINT16(VehicleID);
         }
     };
 
-    struct DetachTrailer final : NetworkPacketBase<149> {
+    struct DetachTrailer : NetworkPacketBase<149, NetworkPacketType::RPC> {
+
         int VehicleID;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
+            bs.writeUINT16(VehicleID);
         }
     };
 
-    struct SetVehicleVelocity final : NetworkPacketBase<91> {
+    struct SetVehicleVelocity : NetworkPacketBase<91, NetworkPacketType::RPC> {
+
         uint8_t Type;
         Vector3 Velocity;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(Type));
-            bs.write(NetworkBitStreamValue::VEC3(Velocity));
+            bs.writeUINT8(Type);
+            bs.writeVEC3(Velocity);
         }
     };
 
-    struct SetVehicleParams final : NetworkPacketBase<24> {
+    struct SetVehicleParams : NetworkPacketBase<24, NetworkPacketType::RPC> {
+
         int VehicleID;
         VehicleParams params;
 
-        bool read(INetworkBitStream& bs)
+        bool read(NetworkBitStream& bs)
         {
             return false;
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT8(params.engine));
-            bs.write(NetworkBitStreamValue::UINT8(params.lights));
-            bs.write(NetworkBitStreamValue::UINT8(params.alarm));
-            bs.write(NetworkBitStreamValue::UINT8(params.doors));
-            bs.write(NetworkBitStreamValue::UINT8(params.bonnet));
-            bs.write(NetworkBitStreamValue::UINT8(params.boot));
-            bs.write(NetworkBitStreamValue::UINT8(params.objective));
-            bs.write(NetworkBitStreamValue::UINT8(params.siren));
-            bs.write(NetworkBitStreamValue::UINT8(params.doorDriver));
-            bs.write(NetworkBitStreamValue::UINT8(params.doorPassenger));
-            bs.write(NetworkBitStreamValue::UINT8(params.doorBackLeft));
-            bs.write(NetworkBitStreamValue::UINT8(params.doorBackRight));
-            bs.write(NetworkBitStreamValue::UINT8(params.windowDriver));
-            bs.write(NetworkBitStreamValue::UINT8(params.windowPassenger));
-            bs.write(NetworkBitStreamValue::UINT8(params.windowBackLeft));
-            bs.write(NetworkBitStreamValue::UINT8(params.windowBackRight));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT8(params.engine);
+            bs.writeUINT8(params.lights);
+            bs.writeUINT8(params.alarm);
+            bs.writeUINT8(params.doors);
+            bs.writeUINT8(params.bonnet);
+            bs.writeUINT8(params.boot);
+            bs.writeUINT8(params.objective);
+            bs.writeUINT8(params.siren);
+            bs.writeUINT8(params.doorDriver);
+            bs.writeUINT8(params.doorPassenger);
+            bs.writeUINT8(params.doorBackLeft);
+            bs.writeUINT8(params.doorBackRight);
+            bs.writeUINT8(params.windowDriver);
+            bs.writeUINT8(params.windowPassenger);
+            bs.writeUINT8(params.windowBackLeft);
+            bs.writeUINT8(params.windowBackRight);
         }
     };
 }
 
 namespace Packet {
-    struct PlayerVehicleSync final : NetworkPacketBase<200>, VehicleDriverSyncPacket {
-        bool read(INetworkBitStream& bs)
+    struct PlayerVehicleSync : NetworkPacketBase<200, NetworkPacketType::RPC>, VehicleDriverSyncPacket {
+
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
-            bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
-            bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
-            bs.read<NetworkBitStreamValueType::UINT16>(Keys);
-            bs.read<NetworkBitStreamValueType::GTA_QUAT>(Rotation);
-            bs.read<NetworkBitStreamValueType::VEC3>(Position);
-            bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
-            bs.read<NetworkBitStreamValueType::FLOAT>(Health);
-            bs.read<NetworkBitStreamValueType::HP_ARMOR_COMPRESSED>(PlayerHealthArmour);
-            bs.read<NetworkBitStreamValueType::UINT8>(AdditionalKeyWeapon);
-            bs.read<NetworkBitStreamValueType::UINT8>(Siren);
-            bs.read<NetworkBitStreamValueType::UINT8>(LandingGear);
-            bs.read<NetworkBitStreamValueType::UINT16>(TrailerID);
-            return bs.read<NetworkBitStreamValueType::UINT32>(HydraThrustAngle);
+            bs.readUINT16(VehicleID);
+            bs.readUINT16(LeftRight);
+            bs.readUINT16(UpDown);
+            bs.readUINT16(Keys);
+            bs.readGTAQuat(Rotation);
+            bs.readVEC3(Position);
+            bs.readVEC3(Velocity);
+            bs.readFLOAT(Health);
+            bs.readCompressedPercentPair(PlayerHealthArmour);
+            bs.readUINT8(AdditionalKeyWeapon);
+            bs.readUINT8(Siren);
+            bs.readUINT8(LandingGear);
+            bs.readUINT16(TrailerID);
+            return bs.readUINT32(HydraThrustAngle);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(PlayerID)));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT16(LeftRight));
-            bs.write(NetworkBitStreamValue::UINT16(UpDown));
-            bs.write(NetworkBitStreamValue::UINT16(Keys));
-            bs.write(NetworkBitStreamValue::GTA_QUAT(Rotation));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::VEC3_SAMP(Velocity));
-            bs.write(NetworkBitStreamValue::UINT16(uint16_t(Health)));
-            bs.write(NetworkBitStreamValue::HP_ARMOR_COMPRESSED(PlayerHealthArmour));
-            bs.write(NetworkBitStreamValue::UINT8(AdditionalKeyWeapon));
-            bs.write(NetworkBitStreamValue::BIT(Siren));
-            bs.write(NetworkBitStreamValue::BIT(LandingGear));
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(uint16_t(PlayerID));
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT16(LeftRight);
+            bs.writeUINT16(UpDown);
+            bs.writeUINT16(Keys);
+            bs.writeGTAQuat(Rotation);
+            bs.writeVEC3(Position);
+            bs.writeCompressedVEC3(Velocity);
+            bs.writeUINT16(uint16_t(Health));
+            bs.writeCompressedPercentPair(PlayerHealthArmour);
+            bs.writeUINT8(AdditionalKeyWeapon);
+            bs.writeBIT(Siren);
+            bs.writeBIT(LandingGear);
 
-            bs.write(NetworkBitStreamValue::BIT(HydraThrustAngle > 0));
+            bs.writeBIT(HydraThrustAngle > 0);
             if (HydraThrustAngle) {
-                bs.write(NetworkBitStreamValue::UINT32(HydraThrustAngle));
+                bs.writeUINT32(HydraThrustAngle);
             }
 
-            bs.write(NetworkBitStreamValue::BIT(HasTrailer));
+            bs.writeBIT(HasTrailer);
             if (HasTrailer) {
-                bs.write(NetworkBitStreamValue::UINT16(TrailerID));
+                bs.writeUINT16(TrailerID);
             }
         }
     };
 
-    struct PlayerPassengerSync final : NetworkPacketBase<211>, VehiclePassengerSyncPacket {
-        bool read(INetworkBitStream& bs)
+    struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::RPC>, VehiclePassengerSyncPacket {
+
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
-            bs.read<NetworkBitStreamValueType::UINT16>(DriveBySeatAdditionalKeyWeapon);
-            bs.read<NetworkBitStreamValueType::HP_ARMOR_COMPRESSED>(HealthArmour);
-            bs.read<NetworkBitStreamValueType::UINT16>(LeftRight);
-            bs.read<NetworkBitStreamValueType::UINT16>(UpDown);
-            bs.read<NetworkBitStreamValueType::UINT16>(Keys);
-            return bs.read<NetworkBitStreamValueType::VEC3>(Position);
+            bs.readUINT16(VehicleID);
+            bs.readUINT16(DriveBySeatAdditionalKeyWeapon);
+            bs.readCompressedPercentPair(HealthArmour);
+            bs.readUINT16(LeftRight);
+            bs.readUINT16(UpDown);
+            bs.readUINT16(Keys);
+            return bs.readVEC3(Position);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT16(DriveBySeatAdditionalKeyWeapon));
-            bs.write(NetworkBitStreamValue::UINT8(HealthArmour.x));
-            bs.write(NetworkBitStreamValue::UINT8(HealthArmour.y));
-            bs.write(NetworkBitStreamValue::UINT16(LeftRight));
-            bs.write(NetworkBitStreamValue::UINT16(UpDown));
-            bs.write(NetworkBitStreamValue::UINT16(Keys));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-        }
-    };
-
-    struct PlayerUnoccupiedSync final : NetworkPacketBase<209>, VehicleUnoccupiedSyncPacket {
-        bool read(INetworkBitStream& bs)
-        {
-            bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
-            bs.read<NetworkBitStreamValueType::UINT8>(SeatID);
-            bs.read<NetworkBitStreamValueType::VEC3>(Roll);
-            bs.read<NetworkBitStreamValueType::VEC3>(Rotation);
-            bs.read<NetworkBitStreamValueType::VEC3>(Position);
-            bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
-            bs.read<NetworkBitStreamValueType::VEC3>(AngularVelocity);
-            return bs.read<NetworkBitStreamValueType::FLOAT>(Health);
-        }
-
-        void write(INetworkBitStream& bs) const
-        {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::UINT8(SeatID));
-            bs.write(NetworkBitStreamValue::VEC3(Roll));
-            bs.write(NetworkBitStreamValue::VEC3(Rotation));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::VEC3(Velocity));
-            bs.write(NetworkBitStreamValue::VEC3(AngularVelocity));
-            bs.write(NetworkBitStreamValue::FLOAT(Health));
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT16(DriveBySeatAdditionalKeyWeapon);
+            bs.writeUINT8(int(HealthArmour.x));
+            bs.writeUINT8(int(HealthArmour.y));
+            bs.writeUINT16(LeftRight);
+            bs.writeUINT16(UpDown);
+            bs.writeUINT16(Keys);
+            bs.writeVEC3(Position);
         }
     };
 
-    struct PlayerTrailerSync final : NetworkPacketBase<210>, VehicleTrailerSyncPacket {
-        bool read(INetworkBitStream& bs)
+    struct PlayerUnoccupiedSync : NetworkPacketBase<209, NetworkPacketType::RPC>, VehicleUnoccupiedSyncPacket {
+
+        bool read(NetworkBitStream& bs)
         {
-            bs.read<NetworkBitStreamValueType::UINT16>(VehicleID);
-            bs.read<NetworkBitStreamValueType::VEC3>(Position);
-            bs.read<NetworkBitStreamValueType::VEC4>(Quat);
-            bs.read<NetworkBitStreamValueType::VEC3>(Velocity);
-            return bs.read<NetworkBitStreamValueType::VEC3>(TurnVelocity);
+            bs.readUINT16(VehicleID);
+            bs.readUINT8(SeatID);
+            bs.readVEC3(Roll);
+            bs.readVEC3(Rotation);
+            bs.readVEC3(Position);
+            bs.readVEC3(Velocity);
+            bs.readVEC3(AngularVelocity);
+            return bs.readFLOAT(Health);
         }
 
-        void write(INetworkBitStream& bs) const
+        void write(NetworkBitStream& bs) const
         {
-            bs.write(NetworkBitStreamValue::UINT8(getID(bs.getNetworkType())));
-            bs.write(NetworkBitStreamValue::UINT16(PlayerID));
-            bs.write(NetworkBitStreamValue::UINT16(VehicleID));
-            bs.write(NetworkBitStreamValue::VEC3(Position));
-            bs.write(NetworkBitStreamValue::VEC4(Quat));
-            bs.write(NetworkBitStreamValue::VEC3(Velocity));
-            bs.write(NetworkBitStreamValue::VEC3(TurnVelocity));
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT16(VehicleID);
+            bs.writeUINT8(SeatID);
+            bs.writeVEC3(Roll);
+            bs.writeVEC3(Rotation);
+            bs.writeVEC3(Position);
+            bs.writeVEC3(Velocity);
+            bs.writeVEC3(AngularVelocity);
+            bs.writeFLOAT(Health);
+        }
+    };
+
+    struct PlayerTrailerSync : NetworkPacketBase<210, NetworkPacketType::RPC>, VehicleTrailerSyncPacket {
+
+        bool read(NetworkBitStream& bs)
+        {
+            bs.readUINT16(VehicleID);
+            bs.readVEC3(Position);
+            bs.readVEC4(Quat);
+            bs.readVEC3(Velocity);
+            return bs.readVEC3(TurnVelocity);
+        }
+
+        void write(NetworkBitStream& bs) const
+        {
+            bs.writeUINT8(PacketID);
+            bs.writeUINT16(PlayerID);
+            bs.writeUINT16(VehicleID);
+            bs.writeVEC3(Position);
+            bs.writeVEC4(Quat);
+            bs.writeVEC3(Velocity);
+            bs.writeVEC3(TurnVelocity);
         }
     };
 }

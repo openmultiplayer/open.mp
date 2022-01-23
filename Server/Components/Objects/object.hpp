@@ -138,14 +138,14 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
         createObjectRPC.DrawDistance = drawDist_;
         createObjectRPC.CameraCollision = cameraCol_;
         createObjectRPC.AttachmentData = attachmentData_;
-        player.sendRPC(createObjectRPC);
+        PacketHelper::send(createObjectRPC, player);
     }
 
     void destroyObjectForClient(IPlayer& player)
     {
         NetCode::RPC::DestroyObject destroyObjectRPC;
         destroyObjectRPC.ObjectID = poolID;
-        player.sendRPC(destroyObjectRPC);
+        PacketHelper::send(destroyObjectRPC, player);
     }
 
     NetCode::RPC::MoveObject move(const ObjectMoveData& data)
@@ -243,12 +243,12 @@ struct Object final : public BaseObject<IObject> {
             stopMoving();
         }
 
-        players_.broadcastRPCToAll(move(data));
+        PacketHelper::broadcast(move(data), players_);
     }
 
     void stopMoving() override
     {
-        players_.broadcastRPCToAll(stopMove());
+        PacketHelper::broadcast(stopMove(), players_);
     }
 
     bool advance(Microseconds elapsed, TimePoint now)
@@ -265,7 +265,7 @@ struct Object final : public BaseObject<IObject> {
                         moveObjectRPC.ObjectID = poolID;
                         moveObjectRPC.CurrentPosition = pos_;
                         moveObjectRPC.MoveData = moveData_;
-                        player->sendRPC(moveObjectRPC);
+                        PacketHelper::send(moveObjectRPC, *player);
                     }
 
                     if (
@@ -277,7 +277,7 @@ struct Object final : public BaseObject<IObject> {
                             attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
                             attachObjectToPlayerRPC.Offset = attachmentData_.offset;
                             attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-                            player->sendRPC(attachObjectToPlayerRPC);
+                            PacketHelper::send(attachObjectToPlayerRPC, *player);
                         }
                     }
                 }
@@ -315,7 +315,7 @@ struct Object final : public BaseObject<IObject> {
         NetCode::RPC::SetObjectPosition setObjectPositionRPC;
         setObjectPositionRPC.ObjectID = poolID;
         setObjectPositionRPC.Position = position;
-        players_.broadcastRPCToAll(setObjectPositionRPC);
+        PacketHelper::broadcast(setObjectPositionRPC, players_);
     }
 
     void setRotation(GTAQuat rotation) override
@@ -325,7 +325,7 @@ struct Object final : public BaseObject<IObject> {
         NetCode::RPC::SetObjectRotation setObjectRotationRPC;
         setObjectRotationRPC.ObjectID = poolID;
         setObjectRotationRPC.Rotation = rot_;
-        players_.broadcastRPCToAll(setObjectRotationRPC);
+        PacketHelper::broadcast(setObjectRotationRPC, players_);
     }
 
     void setDrawDistance(float drawDistance) override
@@ -366,7 +366,7 @@ struct Object final : public BaseObject<IObject> {
         attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
         attachObjectToPlayerRPC.Offset = attachmentData_.offset;
         attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
-        player.broadcastRPCToStreamed(attachObjectToPlayerRPC);
+        PacketHelper::broadcastToStreamed(attachObjectToPlayerRPC, player);
     }
 
     ~Object()
@@ -401,7 +401,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
             NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
             setPlayerObjectMaterialRPC.ObjectID = poolID;
             setPlayerObjectMaterialRPC.MaterialID = index;
-            player_.sendRPC(setPlayerObjectMaterialRPC);
+            PacketHelper::send(setPlayerObjectMaterialRPC, player_);
         }
     }
 
@@ -412,7 +412,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
             NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(materials_[index]);
             setPlayerObjectMaterialRPC.ObjectID = poolID;
             setPlayerObjectMaterialRPC.MaterialID = index;
-            player_.sendRPC(setPlayerObjectMaterialRPC);
+            PacketHelper::send(setPlayerObjectMaterialRPC, player_);
         }
     }
 
@@ -422,12 +422,12 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
             stopMoving();
         }
 
-        player_.sendRPC(move(data));
+        PacketHelper::send(move(data), player_);
     }
 
     void stopMoving() override
     {
-        player_.sendRPC(stopMove());
+        PacketHelper::send(stopMove(), player_);
     }
 
     bool advance(Microseconds elapsed, TimePoint now)
@@ -441,7 +441,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
                     moveObjectRPC.ObjectID = poolID;
                     moveObjectRPC.CurrentPosition = pos_;
                     moveObjectRPC.MoveData = moveData_;
-                    player_.sendRPC(moveObjectRPC);
+                    PacketHelper::send(moveObjectRPC, player_);
                 }
             }
         }
@@ -477,7 +477,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
         NetCode::RPC::SetObjectPosition setObjectPositionRPC;
         setObjectPositionRPC.ObjectID = poolID;
         setObjectPositionRPC.Position = position;
-        player_.sendRPC(setObjectPositionRPC);
+        PacketHelper::send(setObjectPositionRPC, player_);
     }
 
     void setRotation(GTAQuat rotation) override
@@ -487,7 +487,7 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
         NetCode::RPC::SetObjectRotation setObjectRotationRPC;
         setObjectRotationRPC.ObjectID = poolID;
         setObjectRotationRPC.Rotation = rot_;
-        player_.sendRPC(setObjectRotationRPC);
+        PacketHelper::send(setObjectRotationRPC, player_);
     }
 
     void setDrawDistance(float drawDistance) override
