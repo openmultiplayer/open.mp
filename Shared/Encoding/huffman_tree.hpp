@@ -19,7 +19,7 @@
 
 #include "bitstream.hpp"
 #include "huffman_tree_node.hpp"
-#include "linked_list.hpp"
+#include <list>
 
 namespace Encoding {
 namespace DataStructures {
@@ -60,7 +60,7 @@ namespace DataStructures {
 
         CharacterEncoding encodingTable[256];
 
-        void InsertNodeIntoSortedList(HuffmanEncodingTreeNode* node, LinkedList<HuffmanEncodingTreeNode*>* huffmanEncodingTreeNodeList) const;
+        void InsertNodeIntoSortedList(HuffmanEncodingTreeNode* node, std::list<HuffmanEncodingTreeNode*>& huffmanEncodingTreeNodeList) const;
     };
 }
 }
