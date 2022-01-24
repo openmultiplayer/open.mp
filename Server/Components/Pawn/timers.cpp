@@ -86,7 +86,7 @@ int PawnTimerImpl::setTimerEx(const char* callback, Milliseconds interval, bool 
 int PawnTimerImpl::newTimerExError(PawnTimerHandler* handler, AMX* amx, int err, StringView message)
 {
     amx_RaiseError(amx, err);
-    PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: %s: %s", message.data(), aux_StrError(err));
+    PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: %.*s: %s", PRINT_VIEW(message), aux_StrError(err));
     delete handler;
     return 0;
 }

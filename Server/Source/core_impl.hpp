@@ -183,6 +183,7 @@ struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
     IUnicodeComponent* unicode = nullptr;
+    ICore& core;
 
     void processNode(const nlohmann::json::object_t& node, String ns = "")
     {
@@ -211,7 +212,8 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    Config()
+    Config(ICore& core)
+        : core(core)
     {
         {
             std::ifstream ifs(ConfigFileName);
@@ -226,16 +228,24 @@ struct Config final : IEarlyConfig {
                 } else {
                     const auto& root = props.get<nlohmann::json::object_t>();
                     processNode(root);
-                }
-            }
-            // Fill any values missing in config with defaults
-            for (const auto& kv : Defaults) {
-                if (processed.find(kv.first) != processed.end()) {
-                    continue;
-                }
 
-                processed.emplace(kv.first, kv.second);
+                    // Fill any values missing in config with defaults
+                    for (const auto& kv : Defaults) {
+                        if (processed.find(kv.first) != processed.end()) {
+                            continue;
+                        }
+
+                        processed.emplace(kv.first, kv.second);
+                    }
+                }
             }
+
+            const SemanticVersion version = core.getVersion();
+            String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
+            if (version.prerel != 0) {
+                versionStr += "." + std::to_string(version.prerel);
+            }
+            processed["version"].emplace<String>(versionStr);
         }
         {
             std::ifstream ifs(BansFileName);
@@ -640,6 +650,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
     Core(const cxxopts::ParseResult& cmd)
         : players(*this)
+        , config(*this)
         , logFile(nullptr)
         , run_(true)
         , ticksPerSecond(0u)
@@ -1023,7 +1034,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     {
         auto res = components.add(component);
         if (!res.second) {
-            printLn("Tried to add plug-ins %s and %s with conflicting UID %16llx", component->componentName().data(), res.first->second->componentName().data(), component->getUID());
+            printLn("Tried to add plug-ins %.*s and %.*s with conflicting UID %16llx", PRINT_VIEW(component->componentName()), PRINT_VIEW(res.first->second->componentName()), component->getUID());
         }
         if (component->componentType() == ComponentType::Network) {
             networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
@@ -1048,8 +1059,8 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         if (component != nullptr) {
             SemanticVersion ver = component->componentVersion();
             printLn(
-                "\tSuccessfully loaded component %s (%u.%u.%u.%u) with UID %016llx",
-                component->componentName().data(),
+                "\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
+                PRINT_VIEW(component->componentName()),
                 ver.major,
                 ver.minor,
                 ver.patch,
