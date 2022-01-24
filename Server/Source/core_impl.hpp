@@ -646,8 +646,11 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         , ticksThisSecond(0u)
         , EnableLogTimestamp(false)
     {
+        printLn("Starting open.mp server (%u.%u.%u.%u)", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel);
+
         // Initialize start time
         getTickCount();
+
         players.getEventDispatcher().addEventHandler(this);
 
         loadComponents("components");
@@ -736,7 +739,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         return ticksPerSecond;
     }
 
-    SemanticVersion getSDKVersion() override
+    SemanticVersion getVersion() override
     {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
@@ -1043,7 +1046,15 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
         IComponent* component = OnComponentLoad();
         if (component != nullptr) {
-            printLn("\tSuccessfully loaded component %s with UID %016llx", component->componentName().data(), component->getUID());
+            SemanticVersion ver = component->componentVersion();
+            printLn(
+                "\tSuccessfully loaded component %s (%u.%u.%u.%u) with UID %016llx",
+                component->componentName().data(),
+                ver.major,
+                ver.minor,
+                ver.patch,
+                ver.prerel,
+                component->getUID());
             return component;
         } else {
             printLn("\tFailed to load component.");
