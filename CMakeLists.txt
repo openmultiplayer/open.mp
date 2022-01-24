@@ -113,6 +113,12 @@ function(GroupSourcesByFolder target)
 	endif()
 endfunction()
 
+set(BUILD_PAWN_COMPONENT TRUE CACHE BOOL "Whether to build the PAWN component")
+set(BUILD_UNICODE_COMPONENT TRUE CACHE BOOL "Whether to build the Unicode component")
+set(BUILD_LEGACY_COMPONENTS TRUE CACHE BOOL "Whether to build the legacy components")
+set(BUILD_TEST_COMPONENTS FALSE CACHE BOOL "Whether to build the test component")
+set(BUILD_SQLITE_COMPONENT TRUE CACHE BOOL "Whether to build the SQLite component")
+
 add_subdirectory(lib)
 add_subdirectory(SDK)
 add_subdirectory(Shared)
