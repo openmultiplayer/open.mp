@@ -472,7 +472,7 @@ SCRIPT_API(SetWorldTime, bool(int hour))
     return true;
 }
 
-SCRIPT_API(SHA256_PassHash, bool(std::string const& password, std::string const& salt, std::string& output))
+SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& salt, std::string& output))
 {
     PawnManager::Get()->core->logLn(LogLevel::Warning, "Using unsafe hashing function SHA256_PassHash");
 
@@ -480,10 +480,10 @@ SCRIPT_API(SHA256_PassHash, bool(std::string const& password, std::string const&
     bool res = PawnManager::Get()->core->sha256(password, salt, hash);
     if (res) {
         output = hash.data();
-        return true;
+        return output.length();
     }
     output = "";
-    return false;
+    return 0;
 }
 
 SCRIPT_API(ShowNameTags, bool(bool show))
