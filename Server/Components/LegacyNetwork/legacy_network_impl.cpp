@@ -692,7 +692,7 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
             IPlayer& player = pos->second;
             NetworkBitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
-            if (bs.Read(type)) {
+            if (bs.readUINT8(type)) {
                 if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {
                     OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Quit);
                 } else if (type == RakNet::ID_CONNECTION_LOST) {

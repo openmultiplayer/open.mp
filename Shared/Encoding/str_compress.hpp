@@ -18,14 +18,10 @@
 #pragma once
 
 #include "bitstream.hpp"
-#include "map.hpp"
+#include "huffman_tree.hpp"
 
 /// Forward declaration
 namespace Encoding {
-
-namespace DataStructures {
-    class HuffmanEncodingTree;
-}
 
 /// \brief Writes and reads strings to and from bitstreams.
 ///
@@ -33,53 +29,41 @@ namespace DataStructures {
 /// You can call GenerateTreeFromStrings to compress and decompress other languages efficiently as well.
 class StringCompressor {
 public:
-    /// Destructor
-    ~StringCompressor();
-
     /// static function because only static functions can access static members
     /// The RakPeer constructor adds a reference to this class, so don't call this until an instance of RakPeer exists, or unless you call AddReference yourself.
     /// \return the unique instance of the StringCompressor
     static StringCompressor* Instance(void);
-
-    /// Given an array of strings, such as a chat log, generate the optimal encoding tree for it.
-    /// This function is optional and if it is not called a default tree will be used instead.
-    /// \param[in] input An array of bytes which should point to text.
-    /// \param[in] inputLength Length of \a input
-    /// \param[in] languageID An identifier for the language / string table to generate the tree for.  English is automatically created with ID 0 in the constructor.
-    void GenerateTreeFromStrings(unsigned char* input, unsigned inputLength, int languageID);
 
     /// Writes input to output, compressed.  Takes care of the null terminator for you.
     /// \param[in] input Pointer to an ASCII string
     /// \param[in] maxCharsToWrite The max number of bytes to write of \a input.  Use 0 to mean no limit.
     /// \param[out] output The bitstream to write the compressed string to
     /// \param[in] languageID Which language to use
-    void EncodeString(const char* input, int maxCharsToWrite, NetworkBitStream* output, int languageID = 0);
+    void EncodeString(const char* input, int maxCharsToWrite, NetworkBitStream* output);
 
     /// Writes input to output, uncompressed.  Takes care of the null terminator for you.
     /// \param[out] output A block of bytes to receive the output
     /// \param[in] maxCharsToWrite Size, in bytes, of \a output .  A NULL terminator will always be appended to the output string.  If the maxCharsToWrite is not large enough, the string will be truncated.
     /// \param[in] input The bitstream containing the compressed string
-    /// \param[in] languageID Which language to use
-    bool DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, int languageID = 0);
+    bool DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input);
 
     /// Writes input to output, uncompressed.  Takes care of the null terminator for you.  Can be resumed by tracking stringBitLength.
     /// \param[out] output A block of bytes to receive the output
     /// \param[in] maxCharsToWrite Size, in bytes, of \a output .  A NULL terminator will always be appended to the output string.  If the maxCharsToWrite is not large enough, the string will be truncated.
     /// \param[in] input The bitstream containing the compressed string
-    /// \param[in] languageID Which language to use
     /// \param[in] stringBitLength How many bits were not previously decoded
     /// \param[in] skip If there is too much data to fit in the output, drop the remainder
-    bool DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, int languageID, unsigned& stringBitLength, bool skip);
+    bool DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, unsigned& stringBitLength, bool skip);
 
 private:
     /// Private Constructor
     StringCompressor();
 
+    /// Pointer to the huffman encoding trees.
+    DataStructures::HuffmanEncodingTree huffmanEncodingTree;
+
     /// Singleton instance
     static StringCompressor* instance;
-
-    /// Pointer to the huffman encoding trees.
-    DataStructures::Map<int, DataStructures::HuffmanEncodingTree*> huffmanEncodingTrees;
 };
 }
 
