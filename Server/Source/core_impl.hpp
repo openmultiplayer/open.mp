@@ -238,6 +238,8 @@ struct Config final : IEarlyConfig {
                         processed.emplace(kv.first, kv.second);
                     }
                 }
+            } else {
+                processed = Defaults;
             }
 
             const SemanticVersion version = core.getVersion();
