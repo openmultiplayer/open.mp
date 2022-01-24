@@ -9,7 +9,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     StaticBitset<IObjectsComponent::Capacity> isPlayerObject;
     bool defCameraCollision = true;
 
-    struct PlayerSelectObjectEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerSelectObjectEventHandler : public SingleNetworkInEventHandler {
         ObjectComponent& self;
         PlayerSelectObjectEventHandler(ObjectComponent& self)
             : self(self)
@@ -48,7 +48,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     } playerSelectObjectEventHandler;
 
-    struct PlayerEditObjectEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerEditObjectEventHandler : public SingleNetworkInEventHandler {
         ObjectComponent& self;
         PlayerEditObjectEventHandler(ObjectComponent& self)
             : self(self)
@@ -94,7 +94,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     } playerEditObjectEventHandler;
 
-    struct PlayerEditAttachedObjectEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerEditAttachedObjectEventHandler : public SingleNetworkInEventHandler {
         ObjectComponent& self;
         PlayerEditAttachedObjectEventHandler(ObjectComponent& self)
             : self(self)
