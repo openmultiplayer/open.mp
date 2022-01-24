@@ -1,11 +1,8 @@
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	add_subdirectory(Pawn)
-endif()
+
 add_subdirectory(Actors)
 add_subdirectory(Checkpoints)
 add_subdirectory(Classes)
 add_subdirectory(Console)
-add_subdirectory(Databases)
 add_subdirectory(Dialogs)
 add_subdirectory(GangZones)
 add_subdirectory(Menus)
@@ -17,11 +14,28 @@ add_subdirectory(Timers)
 add_subdirectory(Variables)
 add_subdirectory(Vehicles)
 
+# Pawn
+if(BUILD_PAWN_COMPONENT)
+	add_subdirectory(Pawn)
+endif()
+
+# SQLite
+if(BUILD_SQLITE_COMPONENT)
+	add_subdirectory(Databases)
+endif()
+
+if(BUILD_UNICODE_COMPONENT)
+	add_subdirectory(Unicode)
+endif()
+
 # Legacy
+if(BUILD_LEGACY_COMPONENTS)
 add_subdirectory(LegacyNetwork)
 add_subdirectory(LegacyConfig)
+endif()
 
 # Test
-#add_subdirectory(DatabasesTest)
-#add_subdirectory(TestComponent)
-#add_subdirectory(Rivershell)
+if(BUILD_TEST_COMPONENTS)
+	add_subdirectory(DatabasesTest)
+	add_subdirectory(TestComponent)
+endif()
