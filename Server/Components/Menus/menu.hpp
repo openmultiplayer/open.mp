@@ -61,23 +61,26 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         columnHeaders.at(column) = String(header);
     }
 
-    void addMenuItem(StringView itemText, MenuColumn column) override
+    int addMenuItem(StringView itemText, MenuColumn column) override
     {
         if (column > columnCount) {
-            return;
+            return -1;
         }
 
         uint8_t itemCount = columnItemCount.at(column);
 
         if (itemCount >= MAX_MENU_ITEMS) {
-            return;
+            return -1;
         }
+
+        const int res = itemCount;
 
         columnMenuItems.at(column).at(itemCount) = String(itemText);
         itemCount++;
         columnItemCount.at(column) = itemCount;
 
         initedFor_.clear();
+        return res;
     }
 
     void disableMenuRow(MenuRow row) override
