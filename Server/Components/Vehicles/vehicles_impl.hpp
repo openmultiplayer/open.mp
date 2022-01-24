@@ -30,7 +30,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
-            if (!onPlayerEnterVehicleRPC.read(bs) || !self.storage.valid(onPlayerEnterVehicleRPC.VehicleID)) {
+            if (!onPlayerEnterVehicleRPC.read(bs) || !self.valid(onPlayerEnterVehicleRPC.VehicleID)) {
                 return false;
             }
 
@@ -62,7 +62,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
-            if (!onPlayerExitVehicleRPC.read(bs) || !self.storage.valid(onPlayerExitVehicleRPC.VehicleID)) {
+            if (!onPlayerExitVehicleRPC.read(bs) || !self.valid(onPlayerExitVehicleRPC.VehicleID)) {
                 return false;
             }
 
@@ -92,7 +92,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
-            if (!onDamageStatus.read(bs) || !self.storage.valid(onDamageStatus.VehicleID)) {
+            if (!onDamageStatus.read(bs) || !self.valid(onDamageStatus.VehicleID)) {
                 return false;
             }
 
@@ -115,7 +115,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SCMEvent scmEvent;
-            if (!scmEvent.read(bs) || !self.storage.valid(scmEvent.VehicleID)) {
+            if (!scmEvent.read(bs) || !self.valid(scmEvent.VehicleID)) {
                 return false;
             }
 
@@ -198,7 +198,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::VehicleDeath vehicleDeath;
-            if (!vehicleDeath.read(bs) || !self.storage.valid(vehicleDeath.VehicleID)) {
+            if (!vehicleDeath.read(bs) || !self.valid(vehicleDeath.VehicleID)) {
                 return false;
             }
 
