@@ -1,84 +1,87 @@
-# PAWN runtime
-# ------------
-if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-	set(PAWN_RUNTIME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pawn/source/amx")
-	add_library(pawn-runtime STATIC
-		${PAWN_RUNTIME_SRC_DIR}/amx.c
-		${PAWN_RUNTIME_SRC_DIR}/amxargs.c
-		${PAWN_RUNTIME_SRC_DIR}/amxaux.c
-		${PAWN_RUNTIME_SRC_DIR}/amxcons.c
-		${PAWN_RUNTIME_SRC_DIR}/amxcore.c
-		${PAWN_RUNTIME_SRC_DIR}/amxfile.c
-		${PAWN_RUNTIME_SRC_DIR}/amxstring.c
-		${PAWN_RUNTIME_SRC_DIR}/amxtime.c
-		${PAWN_RUNTIME_SRC_DIR}/amxfloat.c
-	)
-	target_compile_options(pawn-runtime
-		PRIVATE "-Wno-unused-function"
-	)
-	target_include_directories(pawn-runtime 
-		PRIVATE ${PAWN_RUNTIME_SRC_DIR}
-		INTERFACE "${PAWN_RUNTIME_SRC_DIR}/.."
-	)
+if(BUILD_PAWN_COMPONENT)
+	# PAWN runtime
+	# ------------
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+		set(PAWN_RUNTIME_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/pawn/source/amx")
+		add_library(pawn-runtime STATIC
+			${PAWN_RUNTIME_SRC_DIR}/amx.c
+			${PAWN_RUNTIME_SRC_DIR}/amxargs.c
+			${PAWN_RUNTIME_SRC_DIR}/amxaux.c
+			${PAWN_RUNTIME_SRC_DIR}/amxcons.c
+			${PAWN_RUNTIME_SRC_DIR}/amxcore.c
+			${PAWN_RUNTIME_SRC_DIR}/amxfile.c
+			${PAWN_RUNTIME_SRC_DIR}/amxstring.c
+			${PAWN_RUNTIME_SRC_DIR}/amxtime.c
+			${PAWN_RUNTIME_SRC_DIR}/amxfloat.c
+		)
+		target_compile_options(pawn-runtime
+			PRIVATE "-Wno-unused-function"
+		)
+		target_include_directories(pawn-runtime 
+			PRIVATE ${PAWN_RUNTIME_SRC_DIR}
+			INTERFACE "${PAWN_RUNTIME_SRC_DIR}/.."
+		)
 
-	include(CheckIncludeFile)
-	check_include_file("unistd.h" HAVE_UNISTD_H)
-	if(HAVE_UNISTD_H)
-		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_UNISTD_H)
-	endif()
-	check_include_file("inttypes.h" HAVE_INTTYPES_H)
-	if(HAVE_INTTYPES_H)
-		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_INTTYPES_H)
-	endif()
-	check_include_file("stdint.h" HAVE_STDINT_H)
-	if(HAVE_STDINT_H)
-		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_STDINT_H)
-	endif()
-	check_include_file("alloca.h" HAVE_ALLOCA_H)
-	if(HAVE_ALLOCA_H)
-		target_compile_definitions(pawn-runtime PUBLIC -DHAVE_ALLOCA_H)
-	endif()
+		include(CheckIncludeFile)
+		check_include_file("unistd.h" HAVE_UNISTD_H)
+		if(HAVE_UNISTD_H)
+			target_compile_definitions(pawn-runtime PUBLIC -DHAVE_UNISTD_H)
+		endif()
+		check_include_file("inttypes.h" HAVE_INTTYPES_H)
+		if(HAVE_INTTYPES_H)
+			target_compile_definitions(pawn-runtime PUBLIC -DHAVE_INTTYPES_H)
+		endif()
+		check_include_file("stdint.h" HAVE_STDINT_H)
+		if(HAVE_STDINT_H)
+			target_compile_definitions(pawn-runtime PUBLIC -DHAVE_STDINT_H)
+		endif()
+		check_include_file("alloca.h" HAVE_ALLOCA_H)
+		if(HAVE_ALLOCA_H)
+			target_compile_definitions(pawn-runtime PUBLIC -DHAVE_ALLOCA_H)
+		endif()
 
-	if (MSVC)
+		if (MSVC)
+			target_compile_definitions(pawn-runtime
+				PRIVATE
+					-D_CRT_SECURE_NO_WARNINGS
+			)
+		endif()
+
 		target_compile_definitions(pawn-runtime
 			PRIVATE
-				-D_CRT_SECURE_NO_WARNINGS
+				-DFLOATPOINT
+				-DAMX_STRING_LIB
+
+				# Disable default amx_FindPublic implementation because we want our own more performant one
+				AMX_ALIGN AMX_ALLOT AMX_CLEANUP AMX_CLONE AMX_DEFCALLBACK AMX_EXEC AMX_FLAGS AMX_GETADDR
+				AMX_INIT AMX_MEMINFO AMX_NAMELENGTH AMX_NATIVEINFO AMX_PUSHXXX
+				AMX_RAISEERROR AMX_REGISTER AMX_SETCALLBACK AMX_SETDEBUGHOOK
+				AMX_XXXNATIVES AMX_XXXPUBVARS AMX_XXXSTRING AMX_XXXTAGS AMX_XXXUSERDATA AMX_UTF8XXX
 		)
+
+		if(UNIX)
+			# TODO: set fvisibility for gcc/clang
+			target_compile_definitions(pawn-runtime PUBLIC -DLINUX)
+			check_include_file("ffi.h" HAVE_FFI_H)
+			target_include_directories(pawn-runtime PUBLIC "${PAWN_RUNTIME_SRC_DIR}/../linux")
+			target_sources(pawn-runtime PRIVATE "${PAWN_RUNTIME_SRC_DIR}/../linux/getch.c")
+		endif()
+
+		if(WIN32)
+			target_compile_definitions(pawn-runtime
+				PRIVATE
+					-D_CRT_SECURE_NO_WARNINGS
+					-D_CRT_NONSTDC_NO_DEPRECATE
+			)
+			target_link_libraries(pawn-runtime PRIVATE winmm)
+		endif()
+
+		set_property(TARGET pawn-runtime PROPERTY FOLDER "lib")
+		set_property(TARGET pawn-runtime PROPERTY POSITION_INDEPENDENT_CODE ON)
 	endif()
-
-	target_compile_definitions(pawn-runtime
-		PRIVATE
-			-DFLOATPOINT
-			-DAMX_STRING_LIB
-
-			# Disable default amx_FindPublic implementation because we want our own more performant one
-			AMX_ALIGN AMX_ALLOT AMX_CLEANUP AMX_CLONE AMX_DEFCALLBACK AMX_EXEC AMX_FLAGS AMX_GETADDR
-			AMX_INIT AMX_MEMINFO AMX_NAMELENGTH AMX_NATIVEINFO AMX_PUSHXXX
-			AMX_RAISEERROR AMX_REGISTER AMX_SETCALLBACK AMX_SETDEBUGHOOK
-			AMX_XXXNATIVES AMX_XXXPUBVARS AMX_XXXSTRING AMX_XXXTAGS AMX_XXXUSERDATA AMX_UTF8XXX
-	)
-
-	if(UNIX)
-		# TODO: set fvisibility for gcc/clang
-		target_compile_definitions(pawn-runtime PUBLIC -DLINUX)
-		check_include_file("ffi.h" HAVE_FFI_H)
-		target_include_directories(pawn-runtime PUBLIC "${PAWN_RUNTIME_SRC_DIR}/../linux")
-		target_sources(pawn-runtime PRIVATE "${PAWN_RUNTIME_SRC_DIR}/../linux/getch.c")
-	endif()
-
-	if(WIN32)
-		target_compile_definitions(pawn-runtime
-			PRIVATE
-				-D_CRT_SECURE_NO_WARNINGS
-				-D_CRT_NONSTDC_NO_DEPRECATE
-		)
-		target_link_libraries(pawn-runtime PRIVATE winmm)
-	endif()
-
-	set_property(TARGET pawn-runtime PROPERTY FOLDER "lib")
-	set_property(TARGET pawn-runtime PROPERTY POSITION_INDEPENDENT_CODE ON)
 endif()
 
+if(BUILD_LEGACY_COMPONENTS)
 # RakNet
 # ------
 add_subdirectory(RakNet)
@@ -89,6 +92,7 @@ target_compile_options(raknet
 		"-Wno-bitwise-op-parentheses"
 		"-Wno-#pragma-messages"
 )
+endif()
 
 # ttmath
 # ------
@@ -104,10 +108,6 @@ include(cmake-conan/conan-omp.cmake)
 # ----
 conan_omp_add_lib(nlohmann_json 3.9.1)
 
-# SQLite 3
-# --------
-conan_omp_add_lib(sqlite3 3.36.0)
-
 # cpp-httplib
 # ---
 conan_omp_add_lib(cpp-httplib 0.9.0)
@@ -120,10 +120,18 @@ conan_omp_add_lib(openssl 1.1.1k)
 # ----
 conan_omp_add_lib(cxxopts 2.2.1)
 
-# ICU
-# ---
-conan_omp_add_lib(icu 70.1)
+if(BUILD_SQLITE_COMPONENT)
+	# SQLite 3
+	# --------
+	conan_omp_add_lib(sqlite3 3.36.0)
+endif()
 
-if(WIN32)
-	target_link_options(CONAN_PKG::icu INTERFACE "/SAFESEH:NO")
+if(BUILD_UNICODE_COMPONENT)
+	# ICU
+	# ---
+	conan_omp_add_lib(icu 70.1)
+
+	if(WIN32)
+		target_link_options(CONAN_PKG::icu INTERFACE "/SAFESEH:NO")
+	endif()
 endif()

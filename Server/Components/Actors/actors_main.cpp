@@ -60,7 +60,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         players = &core->getPlayers();
         players->getEventDispatcher().addEventHandler(this);
         players->getPlayerUpdateDispatcher().addEventHandler(this);
-        core->addPerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor::PacketID>(&playerDamageActorEventHandler);
+        NetCode::RPC::OnPlayerDamageActor::addEventHandler(*core, &playerDamageActorEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
@@ -69,7 +69,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
-            core->removePerRPCEventHandler<NetCode::RPC::OnPlayerDamageActor::PacketID>(&playerDamageActorEventHandler);
+            NetCode::RPC::OnPlayerDamageActor::removeEventHandler(*core, &playerDamageActorEventHandler);
         }
     }
 
