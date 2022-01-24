@@ -7,7 +7,7 @@ SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colo
 {
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {
-        IVehicle* vehicle = vehicles->create(modelid, pos, rotation, colour1, colour2, Seconds(respawnDelay), addSiren);
+        IVehicle* vehicle = vehicles->create(false, modelid, pos, rotation, colour1, colour2, Seconds(respawnDelay), addSiren);
         if (vehicle) {
             return vehicle->getID();
         }
@@ -314,7 +314,7 @@ SCRIPT_API(AddStaticVehicle, int(int modelid, Vector3 spawn, float angle, int co
 {
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {
-        IVehicle* vehicle = vehicles->create(modelid, spawn, angle, colour1, colour2, Seconds(120), false);
+        IVehicle* vehicle = vehicles->create(true, modelid, spawn, angle, colour1, colour2, Seconds(120), false);
         if (vehicle) {
             return vehicle->getID();
         }
@@ -326,7 +326,7 @@ SCRIPT_API(AddStaticVehicleEx, int(int modelid, Vector3 spawn, float angle, int 
 {
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {
-        IVehicle* vehicle = vehicles->create(modelid, spawn, angle, colour1, colour2, Seconds(respawnDelay), addSiren);
+        IVehicle* vehicle = vehicles->create(true, modelid, spawn, angle, colour1, colour2, Seconds(respawnDelay), addSiren);
         if (vehicle) {
             return vehicle->getID();
         }
