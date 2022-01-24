@@ -20,10 +20,9 @@ SCRIPT_API(DestroyMenu, bool(IMenu& menu))
     return true;
 }
 
-SCRIPT_API(AddMenuItem, bool(IMenu& menu, uint8_t column, const std::string& text))
+SCRIPT_API(AddMenuItem, int(IMenu& menu, uint8_t column, const std::string& text))
 {
-    menu.addMenuItem(text, column);
-    return true;
+    return menu.addMenuItem(text, column);
 }
 
 SCRIPT_API(SetMenuColumnHeader, bool(IMenu& menu, uint8_t column, const std::string& headerTitle))
