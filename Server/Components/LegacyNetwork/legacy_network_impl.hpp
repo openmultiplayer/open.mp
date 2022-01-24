@@ -2,6 +2,7 @@
 
 #include "Query/query.hpp"
 #include <Impl/network_impl.hpp>
+#include <bitstream.hpp>
 #include <core.hpp>
 #include <glm/glm.hpp>
 #include <map>
@@ -35,7 +36,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return ENetworkType_RakNetLegacy;
     }
 
-    void disconnect(const INetworkPeer& peer) override
+    void disconnect(const IPlayer& peer) override
     {
         const PeerNetworkData& netData = peer.getNetworkData();
         if (netData.network != this) {
@@ -47,21 +48,64 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         rakNetServer.Kick(rid);
     }
 
-    bool sendPacket(const INetworkPeer& peer, Span<uint8_t> data) override
+    bool sendPacket(IPlayer& peer, Span<uint8_t> data) override
     {
         const PeerNetworkData& netData = peer.getNetworkData();
         if (netData.network != this) {
             return false;
         }
 
+        // Don't use constructor because it takes bytes; we want bits
+        NetworkBitStream bs;
+        bs.SetData(data.data());
+        bs.SetWriteOffset(data.size());
+        bs.SetReadOffset(0);
+
+        uint8_t type;
+        if (bs.readUINT8(type)) {
+            if (!outEventDispatcher.stopAtFalse([&peer, type, &bs](NetworkOutEventHandler* handler) {
+                    bs.SetReadOffset(8); // Ignore packet ID
+                    return handler->sentPacket(&peer, type, bs);
+                })) {
+                return false;
+            }
+
+            if (!packetOutEventDispatcher.stopAtFalse(type, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
+                    bs.SetReadOffset(8); // Ignore packet ID
+                    return handler->sent(&peer, bs);
+                })) {
+                return false;
+            }
+        }
+
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-        return rakNetServer.Send((const char*)data.data(), BITS_TO_BYTES(data.length()), RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
+        return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
     }
 
-    bool broadcastRPC(int id, Span<uint8_t> data, const INetworkPeer* exceptPeer) override
+    bool broadcastRPC(int id, Span<uint8_t> data, const IPlayer* exceptPeer) override
     {
         if (id == INVALID_PACKET_ID) {
+            return false;
+        }
+
+        // Don't use constructor because it takes bytes; we want bits
+        NetworkBitStream bs;
+        bs.SetData(data.data());
+        bs.SetWriteOffset(data.size());
+        bs.SetReadOffset(0);
+
+        if (!outEventDispatcher.stopAtFalse([id, &bs](NetworkOutEventHandler* handler) {
+                bs.resetReadPointer();
+                return handler->sentRPC(nullptr, id, bs);
+            })) {
+            return false;
+        }
+
+        if (!rpcOutEventDispatcher.stopAtFalse(id, [&bs](SingleNetworkOutEventHandler* handler) {
+                bs.resetReadPointer();
+                return handler->sent(nullptr, bs);
+            })) {
             return false;
         }
 
@@ -78,7 +122,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         return rakNetServer.RPC(id, (const char*)data.data(), data.length(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(const INetworkPeer& peer, int id, Span<uint8_t> data) override
+    bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data) override
     {
         if (id == INVALID_PACKET_ID) {
             return false;
@@ -89,9 +133,29 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
             return false;
         }
 
+        // Don't use constructor because it takes bytes; we want bits
+        NetworkBitStream bs;
+        bs.SetData(data.data());
+        bs.SetWriteOffset(data.size());
+        bs.SetReadOffset(0);
+
+        if (!outEventDispatcher.stopAtFalse([&peer, id, &bs](NetworkOutEventHandler* handler) {
+                bs.resetReadPointer();
+                return handler->sentRPC(&peer, id, bs);
+            })) {
+            return false;
+        }
+
+        if (!rpcOutEventDispatcher.stopAtFalse(id, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
+                bs.resetReadPointer();
+                return handler->sent(&peer, bs);
+            })) {
+            return false;
+        }
+
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-        return rakNetServer.RPC(id, (const char*)data.data(), data.length(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
     static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
@@ -141,7 +205,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     NetworkStats getStatistics(int playerIndex = -1) override;
 
-    unsigned getPing(const INetworkPeer& peer) override
+    unsigned getPing(const IPlayer& peer) override
     {
         const PeerNetworkData& netData = peer.getNetworkData();
         if (netData.network != this) {

@@ -20,7 +20,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return eventDispatcher;
     }
 
-    struct PlayerEnterVehicleHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerEnterVehicleHandler : public SingleNetworkInEventHandler {
         VehiclesComponent& self;
         PlayerEnterVehicleHandler(VehiclesComponent& self)
             : self(self)
@@ -52,7 +52,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         }
     } playerEnterVehicleHandler;
 
-    struct PlayerExitVehicleHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerExitVehicleHandler : public SingleNetworkInEventHandler {
         VehiclesComponent& self;
         PlayerExitVehicleHandler(VehiclesComponent& self)
             : self(self)
@@ -82,7 +82,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         }
     } playerExitVehicleHandler;
 
-    struct PlayerUpdateVehicleDamageStatus : public SingleNetworkInOutEventHandler {
+    struct PlayerUpdateVehicleDamageStatus : public SingleNetworkInEventHandler {
         VehiclesComponent& self;
         PlayerUpdateVehicleDamageStatus(VehiclesComponent& self)
             : self(self)
@@ -105,7 +105,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         }
     } vehicleDamageStatusHandler;
 
-    struct PlayerSCMEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerSCMEventHandler : public SingleNetworkInEventHandler {
         VehiclesComponent& self;
         PlayerSCMEventHandler(VehiclesComponent& self)
             : self(self)
@@ -188,7 +188,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         }
     } playerSCMEventHandler;
 
-    struct VehicleDeathHandler final : public SingleNetworkInOutEventHandler {
+    struct VehicleDeathHandler final : public SingleNetworkInEventHandler {
         VehiclesComponent& self;
         VehicleDeathHandler(VehiclesComponent& self)
             : self(self)
