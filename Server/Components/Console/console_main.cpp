@@ -60,7 +60,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
                     return true;
                 }
 
-                self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player [%s] sent command: %s", peer.getName().data(), command.data());
+                self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player [%.*s] sent command: %.*s", PRINT_VIEW(peer.getName()), PRINT_VIEW(command));
 
                 self.send(command);
             } else {
@@ -74,11 +74,11 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
                         if (password == self.core->getConfig().getString("rcon_password")) {
                             pdata->setConsoleAccessibility(true);
-                            self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%s) has logged in.", peer.getID(), peer.getName().data());
+                            self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%.*s) has logged in.", peer.getID(), PRINT_VIEW(peer.getName()));
                             peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
                             success = true;
                         } else {
-                            self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%s) <%s> failed login.", peer.getID(), peer.getName().data(), password.data());
+                            self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%.*s) <%.*s> failed login.", peer.getID(), PRINT_VIEW(peer.getName()), PRINT_VIEW(password));
                             peer.sendClientMessage(Colour::White(), "SERVER: Bad admin password. Repeated attempts will get you banned.");
                             success = false;
                         }
