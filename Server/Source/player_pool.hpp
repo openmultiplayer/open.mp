@@ -327,8 +327,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             std::regex filter = std::regex("(~(k|K)|%)");
             // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
             std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            String filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filter, "#");
-            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+            String filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filterColourNodes, "");
 
             bool send = self.eventDispatcher.stopAtFalse(
                 [&peer, &filteredMessage](PlayerEventHandler* handler) {
@@ -337,7 +336,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (send) {
                 if (*logChat) {
-                    self.core.printLn("%s: %s", peer.getName().data(), filteredMessage.c_str());
+                    self.core.printLn("%.*s: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
                 }
 
                 if (*limitGlobalChatRadius) {

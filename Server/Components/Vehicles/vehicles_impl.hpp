@@ -300,8 +300,11 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         return preloadModels;
     }
 
-    IVehicle* create(int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override
+    IVehicle* create(bool isStatic, int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override
     {
+        if (!isStatic && (modelID == 538 || modelID == 537)) {
+            return nullptr;
+        }
         IVehicle* ret = create(VehicleSpawnData { modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;

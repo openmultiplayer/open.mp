@@ -379,14 +379,16 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 }
             }
 
-            if (serialIsInvalid) {
+            const bool versionIsInvalid = (playerConnectRPC.VersionString.length() > 24);
+
+            if (serialIsInvalid || versionIsInvalid) {
                 PeerAddress address;
                 address.v4 = rpcParams->sender.binaryAddress;
 
                 PeerAddress::AddressString addressString;
                 PeerAddress::ToString(address, addressString);
 
-                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %s", addressString.data());
+                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", addressString.length(), addressString.data());
                 network->rakNetServer.Kick(rpcParams->sender);
             }
 
