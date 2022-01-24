@@ -13,7 +13,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         return new PlayerMenuData();
     }
 
-    struct PlayerSelectedMenuRowEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerSelectedMenuRowEventHandler : public SingleNetworkInEventHandler {
         MenusComponent& self;
         PlayerSelectedMenuRowEventHandler(MenusComponent& self)
             : self(self)
@@ -42,7 +42,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         }
     } playerSelectedMenuRowEventHandler;
 
-    struct PlayerExitedMenuEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerExitedMenuEventHandler : public SingleNetworkInEventHandler {
         MenusComponent& self;
         PlayerExitedMenuEventHandler(MenusComponent& self)
             : self(self)

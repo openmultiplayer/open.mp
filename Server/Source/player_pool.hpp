@@ -20,7 +20,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     int* gameTimeUpdateRate;
     int maxBots = 0;
 
-    struct PlayerRequestSpawnRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerRequestSpawnRPCHandler(PlayerPool& self)
             : self(self)
@@ -44,7 +44,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerRequestSpawnRPCHandler;
 
-    struct PlayerRequestScoresAndPingsRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerRequestScoresAndPingsRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerRequestScoresAndPingsRPCHandler(PlayerPool& self)
             : self(self)
@@ -59,7 +59,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerRequestScoresAndPingsRPCHandler;
 
-    struct OnPlayerClickMapRPCHandler : public SingleNetworkInOutEventHandler {
+    struct OnPlayerClickMapRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         OnPlayerClickMapRPCHandler(PlayerPool& self)
             : self(self)
@@ -78,7 +78,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } onPlayerClickMapRPCHandler;
 
-    struct OnPlayerClickPlayerRPCHandler : public SingleNetworkInOutEventHandler {
+    struct OnPlayerClickPlayerRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         OnPlayerClickPlayerRPCHandler(PlayerPool& self)
             : self(self)
@@ -103,7 +103,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } onPlayerClickPlayerRPCHandler;
 
-    struct PlayerGiveTakeDamageRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerGiveTakeDamageRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerGiveTakeDamageRPCHandler(PlayerPool& self)
             : self(self)
@@ -166,7 +166,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerGiveTakeDamageRPCHandler;
 
-    struct PlayerInteriorChangeRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerInteriorChangeRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerInteriorChangeRPCHandler(PlayerPool& self)
             : self(self)
@@ -190,7 +190,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerInteriorChangeRPCHandler;
 
-    struct PlayerDeathRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerDeathRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerDeathRPCHandler(PlayerPool& self)
             : self(self)
@@ -225,7 +225,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerDeathRPCHandler;
 
-    struct PlayerCameraTargetRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerCameraTargetRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerCameraTargetRPCHandler(PlayerPool& self)
             : self(self)
@@ -249,7 +249,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerCameraTargetRPCHandler;
 
-    struct PlayerSpawnRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerSpawnRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerSpawnRPCHandler(PlayerPool& self)
             : self(self)
@@ -298,7 +298,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerSpawnRPCHandler;
 
-    struct PlayerTextRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerTextRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         int* limitGlobalChatRadius;
         float* globalChatRadiusLimit;
@@ -357,7 +357,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerTextRPCHandler;
 
-    struct PlayerCommandRPCHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerCommandRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerCommandRPCHandler(PlayerPool& self)
             : self(self)
@@ -383,7 +383,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerCommandRPCHandler;
 
-    struct ClientCheckResponseRPCHandler : public SingleNetworkInOutEventHandler {
+    struct ClientCheckResponseRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         ClientCheckResponseRPCHandler(PlayerPool& self)
             : self(self)
@@ -407,7 +407,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } clientCheckResponseRPCHandler;
 
-    struct PlayerFootSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerFootSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerFootSyncHandler(PlayerPool& self)
             : self(self)
@@ -482,7 +482,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerFootSyncHandler;
 
-    struct PlayerSpectatorHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerSpectatorHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerSpectatorHandler(PlayerPool& self)
             : self(self)
@@ -528,7 +528,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerSpectatorHandler;
 
-    struct PlayerAimSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerAimSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerAimSyncHandler(PlayerPool& self)
             : self(self)
@@ -564,7 +564,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerAimSyncHandler;
 
-    struct PlayerStatsSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerStatsSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerStatsSyncHandler(PlayerPool& self)
             : self(self)
@@ -586,7 +586,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerStatsSyncHandler;
 
-    struct PlayerBulletSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerBulletSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerBulletSyncHandler(PlayerPool& self)
             : self(self)
@@ -692,7 +692,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerBulletSyncHandler;
 
-    struct PlayerVehicleSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerVehicleSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerVehicleSyncHandler(PlayerPool& self)
             : self(self)
@@ -767,7 +767,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerVehicleSyncHandler;
 
-    struct PlayerWeaponsUpdate : public SingleNetworkInOutEventHandler {
+    struct PlayerWeaponsUpdate : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerWeaponsUpdate(PlayerPool& self)
             : self(self)
@@ -902,7 +902,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         player.colour_ = Colour::FromRGBA(colours[player.poolID % GLM_COUNTOF(colours)]);
     }
 
-    struct PlayerPassengerSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerPassengerSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerPassengerSyncHandler(PlayerPool& self)
             : self(self)
@@ -969,7 +969,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerPassengerSyncHandler;
 
-    struct PlayerUnoccupiedSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerUnoccupiedSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerUnoccupiedSyncHandler(PlayerPool& self)
             : self(self)
@@ -1003,7 +1003,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerUnoccupiedSyncHandler;
 
-    struct PlayerTrailerSyncHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerTrailerSyncHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
         PlayerTrailerSyncHandler(PlayerPool& self)
             : self(self)
