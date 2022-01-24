@@ -396,7 +396,7 @@ namespace RPC {
 }
 
 namespace Packet {
-    struct PlayerVehicleSync : NetworkPacketBase<200, NetworkPacketType::RPC>, VehicleDriverSyncPacket {
+    struct PlayerVehicleSync : NetworkPacketBase<200, NetworkPacketType::Packet>, VehicleDriverSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
@@ -445,7 +445,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::RPC>, VehiclePassengerSyncPacket {
+    struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::Packet>, VehiclePassengerSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
@@ -473,7 +473,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerUnoccupiedSync : NetworkPacketBase<209, NetworkPacketType::RPC>, VehicleUnoccupiedSyncPacket {
+    struct PlayerUnoccupiedSync : NetworkPacketBase<209, NetworkPacketType::Packet>, VehicleUnoccupiedSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
@@ -502,7 +502,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerTrailerSync : NetworkPacketBase<210, NetworkPacketType::RPC>, VehicleTrailerSyncPacket {
+    struct PlayerTrailerSync : NetworkPacketBase<210, NetworkPacketType::Packet>, VehicleTrailerSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
