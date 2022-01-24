@@ -350,7 +350,10 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     }
 
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
-    player.queryData<PlayerVehicleData>()->vehicle = this;
+
+    //We don't want to update player's vehicle right now, let sync packets do it.
+    //player.queryData<PlayerVehicleData>()->vehicle = this;
+
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
     PacketHelper::send(putPlayerInVehicleRPC, player);

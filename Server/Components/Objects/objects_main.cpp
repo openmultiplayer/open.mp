@@ -64,6 +64,11 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
             IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
             if (data && data->editingObject()) {
+
+                if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final) {
+                    data->endObjectEdit();
+                }
+
                 if (onPlayerEditObjectRPC.PlayerObject && data->valid(onPlayerEditObjectRPC.ObjectID)) {
                     ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
                     self.eventDispatcher.dispatch(
@@ -82,10 +87,6 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                         ObjectEditResponse(onPlayerEditObjectRPC.Response),
                         onPlayerEditObjectRPC.Offset,
                         onPlayerEditObjectRPC.Rotation);
-                }
-
-                if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final) {
-                    data->endObjectEdit();
                 }
             }
 
