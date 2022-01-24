@@ -32,8 +32,8 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
 
     void onIncomingConnection(IPlayer& player, StringView ipAddress, unsigned short port) override
     {
-        PawnManager::Get()->CallInSidesWhile0("onIncomingConnection", player.getID(), ipAddress, port);
-        PawnManager::Get()->CallInEntry("onIncomingConnection", DefaultReturnValue_True, player.getID(), ipAddress, port);
+        PawnManager::Get()->CallInSidesWhile0("OnIncomingConnection", player.getID(), ipAddress, port);
+        PawnManager::Get()->CallInEntry("OnIncomingConnection", DefaultReturnValue_True, player.getID(), ipAddress, port);
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
