@@ -5,6 +5,7 @@
 #include <Impl/network_impl.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/Unicode/unicode.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <cstdarg>
 #include <cxxopts.hpp>
@@ -181,6 +182,7 @@ static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
+    IUnicodeComponent* unicode = nullptr;
 
     void processNode(const nlohmann::json::object_t& node, String ns = "")
     {
@@ -261,6 +263,11 @@ struct Config final : IEarlyConfig {
                 }
             }
         }
+    }
+
+    void init(IComponentList& components)
+    {
+        unicode = components.queryComponent<IUnicodeComponent>();
     }
 
     const StringView
@@ -368,9 +375,12 @@ struct Config final : IEarlyConfig {
         nlohmann::json top = nlohmann::json::array();
         for (const BanEntry& entry : bans) {
             nlohmann::json obj;
-            obj["address"] = utils::toUTF8(entry.address);
-            obj["player"] = utils::toUTF8(entry.name);
-            obj["reason"] = utils::toUTF8(entry.reason);
+            OptimisedString addressUTF8 = unicode ? unicode->toUTF8(entry.address) : OptimisedString(entry.address);
+            OptimisedString nameUTF8 = unicode ? unicode->toUTF8(entry.name) : OptimisedString(entry.name);
+            OptimisedString reasonUTF8 = unicode ? unicode->toUTF8(entry.reason) : OptimisedString(entry.reason);
+            obj["address"] = StringView(addressUTF8);
+            obj["player"] = StringView(nameUTF8);
+            obj["reason"] = StringView(reasonUTF8);
             char iso8601[28] = { 0 };
             std::time_t now = WorldTime::to_time_t(entry.time);
             std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
@@ -689,12 +699,13 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         config.optimiseBans();
         config.writeBans();
         components.load(this);
+        config.init(components);
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
 
         IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
         if (consoleComp) {
-            components.queryComponent<IConsoleComponent>()->getEventDispatcher().addEventHandler(this);
+            consoleComp->getEventDispatcher().addEventHandler(this);
         }
         components.ready();
     }

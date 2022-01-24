@@ -12,7 +12,6 @@ function(add_server_component name)
 	target_link_libraries(${PROJECT_NAME} PRIVATE
 		SDK
 		NetCode
-		Server
 	)
 
 	GroupSourcesByFolder(${PROJECT_NAME})
