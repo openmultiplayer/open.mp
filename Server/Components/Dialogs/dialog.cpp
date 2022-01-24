@@ -5,9 +5,9 @@
 using namespace Impl;
 
 struct PlayerDialogData final : public IPlayerDialogData {
-    uint16_t activeId = 0xFFFF;
+    int activeId = INVALID_DIALOG_ID;
 
-    void show(IPlayer& player, uint16_t id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
+    void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
     {
         NetCode::RPC::ShowDialog showDialog;
         showDialog.ID = id;
@@ -22,7 +22,7 @@ struct PlayerDialogData final : public IPlayerDialogData {
         activeId = id;
     }
 
-    uint16_t getActiveID() const override
+    int getActiveID() const override
     {
         return activeId;
     }
@@ -53,11 +53,11 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
 
             // If the dialog id doesn't match what the server is expecting, ignore it
             PlayerDialogData* data = peer.queryData<PlayerDialogData>();
-            if (!data || data->getActiveID() == DIALOG_INVALID_ID || data->getActiveID() != sendDialogResponse.ID) {
+            if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID) {
                 return false;
             }
 
-            data->activeId = DIALOG_INVALID_ID;
+            data->activeId = INVALID_DIALOG_ID;
 
             self.eventDispatcher.dispatch(
                 &PlayerDialogEventHandler::onDialogResponse,

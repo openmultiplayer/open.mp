@@ -76,13 +76,7 @@ public:
     void resetWritePointer(void);
 
 public:
-    inline void writeBIT(bool data)
-    {
-        if (data)
-            Write1();
-        else
-            Write0();
-    }
+    inline void writeBIT(bool data);
 
     template <typename T, typename U = std::enable_if_t<std::is_integral_v<T>, T>>
     inline void writeUINT8(T data)
@@ -363,6 +357,102 @@ public:
         return Read(data.data(), len);
     }
 
+    /// Write numberToWrite bits from the input source Right aligned
+    /// data means in the case of a partial byte, the bits are aligned
+    /// from the right (bit 0) rather than the left (as in the normal
+    /// internal representation) You would set this to true when
+    /// writing user data, and false when copying bitstream data, such
+    /// as writing one bitstream to another
+    /// \param[in] input The data
+    /// \param[in] numberOfBitsToWrite The number of bits to write
+    /// \param[in] rightAlignedBits if true data will be right aligned
+    void WriteBits(const unsigned char* input, int numberOfBitsToWrite, const bool rightAlignedBits = true);
+
+    /// Write any integral type to a bitstream.  Undefine __BITSTREAM_NATIVE_END if you need endian swapping.
+    /// If you are not using __BITSTREAM_NATIVE_END the opposite is true for types larger than 1 byte
+    /// For floating point, this is lossy, using 2 bytes for a float and 4 for a double.  The range must be between -1 and +1.
+    /// For non-floating point, this is lossless, but only has benefit if you use less than half the range of the type
+    /// \param[in] var The value to write
+    template <class templateType>
+    void WriteCompressed(templateType var);
+
+    /// Read \a numberOfBitsToRead bits to the output source
+    /// alignBitsToRight should be set to true to convert internal
+    /// bitstream data to userdata. It should be false if you used
+    /// DoWriteBits with rightAlignedBits false
+    /// \param[in] output The resulting bits array
+    /// \param[in] numberOfBitsToRead The number of bits to read
+    /// \param[in] alignBitsToRight if true bits will be right aligned.
+    /// \return true if there is enough bits to read
+    bool ReadBits(unsigned char* output, int numberOfBitsToRead, const bool alignBitsToRight = true);
+
+    /// Reads 1 bit and returns true if that bit is 1 and false if it is 0
+    bool ReadBit(void);
+
+    /// Read any integral type from a bitstream.  Undefine __BITSTREAM_NATIVE_END if you need endian swapping.
+    /// For floating point, this is lossy, using 2 bytes for a float and 4 for a double.  The range must be between -1 and +1.
+    /// For non-floating point, this is lossless, but only has benefit if you use less than half the range of the type
+    /// If you are not using __BITSTREAM_NATIVE_END the opposite is true for types larger than 1 byte
+    /// \param[in] var The value to read
+    template <class templateType>
+    bool ReadCompressed(templateType& var);
+
+    ///This is good to call when you are done with the stream to make
+    /// sure you didn't leave any data left over void
+    void AssertStreamEmpty(void);
+
+    /// printf the bits in the stream.  Great for debugging.
+    void PrintBits(void) const;
+
+    /// Ignore data we don't intend to read
+    /// \param[in] numberOfBits The number of bits to ignore
+    void IgnoreBits(const int numberOfBits);
+
+    ///Move the write pointer to a position on the array.
+    /// \param[in] offset the offset from the start of the array.
+    /// \attention
+    /// Dangerous if you don't know what you are doing!
+    /// For efficiency reasons you can only write mid-stream if your data is byte aligned.
+    void SetWriteOffset(const int offset);
+
+    /// Returns the length in bits of the stream
+    inline int GetNumberOfBitsUsed(void) const { return GetWriteOffset(); }
+    inline int GetWriteOffset(void) const { return numberOfBitsUsed; }
+
+    ///Returns the length in bytes of the stream
+    inline int GetNumberOfBytesUsed(void) const { return BITS_TO_BYTES(numberOfBitsUsed); }
+
+    ///Returns the number of bits into the stream that we have read
+    inline int GetReadOffset(void) const { return readOffset; }
+
+    // Sets the read bit index
+    inline void SetReadOffset(int newReadOffset) { readOffset = newReadOffset; }
+
+    ///Returns the number of bits left in the stream that haven't been read
+    inline int GetNumberOfUnreadBits(void) const { return readOffset > numberOfBitsUsed ? 0 : numberOfBitsUsed - readOffset; }
+
+    /// Makes a copy of the internal data for you \a _data will point to
+    /// the stream. Returns the length in bits of the stream. Partial
+    /// bytes are left aligned
+    /// \param[out] _data The allocated copy of GetData()
+    int CopyData(unsigned char** _data) const;
+
+    /// Set the stream to some initial data.
+    /// \internal
+    void SetData(unsigned char* input);
+
+    /// Gets the data that NetworkBitStream is writing to / reading from
+    /// Partial bytes are left aligned.
+    /// \return A pointer to the internal state
+    inline unsigned char* GetData(void) const { return data; }
+
+private:
+    /// Write a 0
+    void Write0(void);
+
+    /// Write a 1
+    void Write1(void);
+
     /// Bidirectional serialize/deserialize any integral type to/from a bitstream.  Undefine __BITSTREAM_NATIVE_END if you need endian swapping.
     /// \param[in] writeToBitstream true to write from your data to this bitstream.  False to read from this bitstream and write to your data
     /// \param[in] var The value to write
@@ -477,6 +567,17 @@ public:
     template <class templateType>
     void Write(templateType var);
 
+    /// Write a bool to a bitstream
+    /// \param[in] var The value to write
+    template <>
+    inline void Write(bool var)
+    {
+        if (var)
+            Write1();
+        else
+            Write0();
+    }
+
     /// Write any integral type to a bitstream.  If the current value is different from the last value
     /// the current value will be written.  Otherwise, a single bit will be written
     /// \param[in] currentValue The current value to write
@@ -488,14 +589,6 @@ public:
     /// \param[in] currentValue The current value to write
     template <class templateType>
     void WriteDelta(templateType currentValue);
-
-    /// Write any integral type to a bitstream.  Undefine __BITSTREAM_NATIVE_END if you need endian swapping.
-    /// If you are not using __BITSTREAM_NATIVE_END the opposite is true for types larger than 1 byte
-    /// For floating point, this is lossy, using 2 bytes for a float and 4 for a double.  The range must be between -1 and +1.
-    /// For non-floating point, this is lossless, but only has benefit if you use less than half the range of the type
-    /// \param[in] var The value to write
-    template <class templateType>
-    void WriteCompressed(templateType var);
 
     /// Write any integral type to a bitstream.  If the current value is different from the last value
     /// the current value will be written.  Otherwise, a single bit will be written
@@ -522,14 +615,6 @@ public:
     /// \param[in] var The value to read
     template <class templateType>
     bool ReadDelta(templateType& var);
-
-    /// Read any integral type from a bitstream.  Undefine __BITSTREAM_NATIVE_END if you need endian swapping.
-    /// For floating point, this is lossy, using 2 bytes for a float and 4 for a double.  The range must be between -1 and +1.
-    /// For non-floating point, this is lossless, but only has benefit if you use less than half the range of the type
-    /// If you are not using __BITSTREAM_NATIVE_END the opposite is true for types larger than 1 byte
-    /// \param[in] var The value to read
-    template <class templateType>
-    bool ReadCompressed(templateType& var);
 
     /// Read any integral type from a bitstream.  If the written value differed from the value compared against in the write function,
     /// var will be updated.  Otherwise it will retain the current value.
@@ -626,66 +711,6 @@ public:
         templateType& m10, templateType& m11, templateType& m12,
         templateType& m20, templateType& m21, templateType& m22);
 
-    ///This is good to call when you are done with the stream to make
-    /// sure you didn't leave any data left over void
-    void AssertStreamEmpty(void);
-
-    /// printf the bits in the stream.  Great for debugging.
-    void PrintBits(void) const;
-
-    /// Ignore data we don't intend to read
-    /// \param[in] numberOfBits The number of bits to ignore
-    void IgnoreBits(const int numberOfBits);
-
-    ///Move the write pointer to a position on the array.
-    /// \param[in] offset the offset from the start of the array.
-    /// \attention
-    /// Dangerous if you don't know what you are doing!
-    /// For efficiency reasons you can only write mid-stream if your data is byte aligned.
-    void SetWriteOffset(const int offset);
-
-    /// Returns the length in bits of the stream
-    inline int GetNumberOfBitsUsed(void) const { return GetWriteOffset(); }
-    inline int GetWriteOffset(void) const { return numberOfBitsUsed; }
-
-    ///Returns the length in bytes of the stream
-    inline int GetNumberOfBytesUsed(void) const { return BITS_TO_BYTES(numberOfBitsUsed); }
-
-    ///Returns the number of bits into the stream that we have read
-    inline int GetReadOffset(void) const { return readOffset; }
-
-    // Sets the read bit index
-    inline void SetReadOffset(int newReadOffset) { readOffset = newReadOffset; }
-
-    ///Returns the number of bits left in the stream that haven't been read
-    inline int GetNumberOfUnreadBits(void) const { return readOffset > numberOfBitsUsed ? 0 : numberOfBitsUsed - readOffset; }
-
-    /// Makes a copy of the internal data for you \a _data will point to
-    /// the stream. Returns the length in bits of the stream. Partial
-    /// bytes are left aligned
-    /// \param[out] _data The allocated copy of GetData()
-    int CopyData(unsigned char** _data) const;
-
-    /// Set the stream to some initial data.
-    /// \internal
-    void SetData(unsigned char* input);
-
-    /// Gets the data that NetworkBitStream is writing to / reading from
-    /// Partial bytes are left aligned.
-    /// \return A pointer to the internal state
-    inline unsigned char* GetData(void) const { return data; }
-
-    /// Write numberToWrite bits from the input source Right aligned
-    /// data means in the case of a partial byte, the bits are aligned
-    /// from the right (bit 0) rather than the left (as in the normal
-    /// internal representation) You would set this to true when
-    /// writing user data, and false when copying bitstream data, such
-    /// as writing one bitstream to another
-    /// \param[in] input The data
-    /// \param[in] numberOfBitsToWrite The number of bits to write
-    /// \param[in] rightAlignedBits if true data will be right aligned
-    void WriteBits(const unsigned char* input, int numberOfBitsToWrite, const bool rightAlignedBits = true);
-
     /// Align the bitstream to the byte boundary and then write the
     /// specified number of bits.  This is faster than DoWriteBits but
     /// wastes the bits to do the alignment and requires you to call
@@ -716,25 +741,6 @@ public:
     /// boundaries so so WriteAlignedBits and ReadAlignedBits both
     /// calculate the same offset when aligning.
     void AlignReadToByteBoundary(void);
-
-    /// Read \a numberOfBitsToRead bits to the output source
-    /// alignBitsToRight should be set to true to convert internal
-    /// bitstream data to userdata. It should be false if you used
-    /// DoWriteBits with rightAlignedBits false
-    /// \param[in] output The resulting bits array
-    /// \param[in] numberOfBitsToRead The number of bits to read
-    /// \param[in] alignBitsToRight if true bits will be right aligned.
-    /// \return true if there is enough bits to read
-    bool ReadBits(unsigned char* output, int numberOfBitsToRead, const bool alignBitsToRight = true);
-
-    /// Write a 0
-    void Write0(void);
-
-    /// Write a 1
-    void Write1(void);
-
-    /// Reads 1 bit and returns true if that bit is 1 and false if it is 0
-    bool ReadBit(void);
 
     /// If we used the constructor version with copy data off, this
     /// *makes sure it is set to on and the data pointed to is copied.
@@ -1420,6 +1426,11 @@ inline void NetworkBitStream::writeCompressedVEC3(Vector3 data)
         WriteCompressed(data.y);
         WriteCompressed(data.z);
     }
+}
+
+inline void NetworkBitStream::writeBIT(bool data)
+{
+    Write<bool>(data);
 }
 
 inline bool NetworkBitStream::readBIT(bool& data)

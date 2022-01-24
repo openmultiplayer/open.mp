@@ -14,7 +14,7 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeUINT16(ID);
+            bs.writeINT16(ID);
             bs.writeVEC2(Min);
             bs.writeVEC2(Max);
             bs.writeUINT32(Col.ABGR());
@@ -26,7 +26,7 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeUINT16(ID);
+            bs.writeINT16(ID);
         }
     };
 
@@ -36,7 +36,7 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeUINT16(ID);
+            bs.writeINT16(ID);
             bs.writeUINT32(Col.ABGR());
         }
     };
@@ -46,7 +46,7 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeUINT16(ID);
+            bs.writeINT16(ID);
         }
     };
 }

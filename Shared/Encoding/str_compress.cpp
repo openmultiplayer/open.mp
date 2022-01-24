@@ -23,29 +23,13 @@
 
 using namespace Encoding;
 
-StringCompressor* StringCompressor::instance = 0;
-int StringCompressor::referenceCount = 0;
-
-void StringCompressor::AddReference(void)
-{
-    if (++referenceCount == 1) {
-        instance = new StringCompressor;
-    }
-}
-void StringCompressor::RemoveReference(void)
-{
-    assert(referenceCount > 0);
-
-    if (referenceCount > 0) {
-        if (--referenceCount == 0) {
-            delete instance;
-            instance = 0;
-        }
-    }
-}
+StringCompressor* StringCompressor::instance = nullptr;
 
 StringCompressor* StringCompressor::Instance(void)
 {
+    if (instance == nullptr) {
+        instance = new StringCompressor();
+    }
     return instance;
 }
 
@@ -313,53 +297,12 @@ unsigned int englishCharacterFrequencies[256] = {
 
 StringCompressor::StringCompressor()
 {
-    DataStructures::Map<int, DataStructures::HuffmanEncodingTree*>::IMPLEMENT_DEFAULT_COMPARISON();
-
     // Make a default tree immediately, since this is used for RPC possibly from multiple threads at the same time
-    DataStructures::HuffmanEncodingTree* huffmanEncodingTree = new DataStructures::HuffmanEncodingTree;
-    huffmanEncodingTree->GenerateFromFrequencyTable(englishCharacterFrequencies);
-    huffmanEncodingTrees.Set(0, huffmanEncodingTree);
-}
-void StringCompressor::GenerateTreeFromStrings(unsigned char* input, unsigned inputLength, int languageID)
-{
-    DataStructures::HuffmanEncodingTree* huffmanEncodingTree;
-    if (huffmanEncodingTrees.Has(languageID)) {
-        huffmanEncodingTree = huffmanEncodingTrees.Get(languageID);
-        delete huffmanEncodingTree;
-    }
-
-    unsigned index;
-    unsigned int frequencyTable[256];
-
-    if (inputLength == 0)
-        return;
-
-    // Zero out the frequency table
-    memset(frequencyTable, 0, sizeof(frequencyTable));
-
-    // Generate the frequency table from the strings
-    for (index = 0; index < inputLength; index++)
-        frequencyTable[input[index]]++;
-
-    // Build the tree
-    huffmanEncodingTree = new DataStructures::HuffmanEncodingTree;
-    huffmanEncodingTree->GenerateFromFrequencyTable(frequencyTable);
-    huffmanEncodingTrees.Set(languageID, huffmanEncodingTree);
+    huffmanEncodingTree.GenerateFromFrequencyTable(englishCharacterFrequencies);
 }
 
-StringCompressor::~StringCompressor()
+void StringCompressor::EncodeString(const char* input, int maxCharsToWrite, NetworkBitStream* output)
 {
-    for (unsigned i = 0; i < huffmanEncodingTrees.Size(); i++)
-        delete huffmanEncodingTrees[i];
-}
-
-void StringCompressor::EncodeString(const char* input, int maxCharsToWrite, NetworkBitStream* output, int languageID)
-{
-    DataStructures::HuffmanEncodingTree* huffmanEncodingTree;
-    if (huffmanEncodingTrees.Has(languageID) == false)
-        return;
-    huffmanEncodingTree = huffmanEncodingTrees.Get(languageID);
-
     if (input == 0) {
         output->WriteCompressed((unsigned short)0);
         return;
@@ -376,7 +319,7 @@ void StringCompressor::EncodeString(const char* input, int maxCharsToWrite, Netw
     else
         charsToWrite = maxCharsToWrite - 1;
 
-    huffmanEncodingTree->EncodeArray((unsigned char*)input, charsToWrite, &encodedBitStream);
+    huffmanEncodingTree.EncodeArray((unsigned char*)input, charsToWrite, &encodedBitStream);
 
     stringBitLength = (unsigned short)encodedBitStream.GetNumberOfBitsUsed();
 
@@ -385,13 +328,8 @@ void StringCompressor::EncodeString(const char* input, int maxCharsToWrite, Netw
     output->WriteBits(encodedBitStream.GetData(), stringBitLength);
 }
 
-bool StringCompressor::DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, int languageID, unsigned& stringBitLength, bool skip)
+bool StringCompressor::DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, unsigned& stringBitLength, bool skip)
 {
-    DataStructures::HuffmanEncodingTree* huffmanEncodingTree;
-    if (huffmanEncodingTrees.Has(languageID) == false)
-        return false;
-    huffmanEncodingTree = huffmanEncodingTrees.Get(languageID);
-
     //unsigned short stringBitLength;
     int bytesInStream;
 
@@ -409,15 +347,15 @@ bool StringCompressor::DecodeString(char* output, int maxCharsToWrite, NetworkBi
     if (input->GetNumberOfUnreadBits() < stringBitLength)
         return false;
 
-    bytesInStream = huffmanEncodingTree->DecodeArray(input, stringBitLength, maxCharsToWrite - 1, (unsigned char*)output, skip);
+    bytesInStream = huffmanEncodingTree.DecodeArray(input, stringBitLength, maxCharsToWrite - 1, (unsigned char*)output, skip);
 
     output[bytesInStream] = 0;
 
     return true;
 }
 
-bool StringCompressor::DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input, int languageID)
+bool StringCompressor::DecodeString(char* output, int maxCharsToWrite, NetworkBitStream* input)
 {
     unsigned stringBitLength = 0;
-    return DecodeString(output, maxCharsToWrite, input, languageID, stringBitLength, true);
+    return DecodeString(output, maxCharsToWrite, input, stringBitLength, true);
 }
