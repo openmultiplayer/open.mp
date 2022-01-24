@@ -26,7 +26,6 @@ target_link_libraries(Server PRIVATE
 	CONAN_PKG::cpp-httplib
 	CONAN_PKG::openssl
 	CONAN_PKG::cxxopts
-	CONAN_PKG::icu
 )
 
 if(MSVC)
