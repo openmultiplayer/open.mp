@@ -651,7 +651,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         // Initialize start time
         getTickCount();
 
-        players.getEventDispatcher().addEventHandler(this);
+        players.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow);
 
         loadComponents("components");
 
