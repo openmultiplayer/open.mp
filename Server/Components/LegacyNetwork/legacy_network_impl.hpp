@@ -115,7 +115,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
                 const PeerNetworkData::NetworkID& nid = netData.networkID;
                 const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 
-                return rakNetServer.RPC(id, (const char*)data.data(), data.length(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+                return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
             }
         }
 
