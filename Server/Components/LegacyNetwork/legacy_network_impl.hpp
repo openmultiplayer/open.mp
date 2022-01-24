@@ -119,7 +119,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
             }
         }
 
-        return rakNetServer.RPC(id, (const char*)data.data(), data.length(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
     bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data) override
