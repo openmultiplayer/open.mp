@@ -34,7 +34,7 @@ struct PlayerDialogData final : public IPlayerDialogData {
 };
 
 struct DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
-    ICore* core;
+    ICore* core = nullptr;
     DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;
 
     struct DialogResponseHandler : public SingleNetworkInEventHandler {
@@ -105,8 +105,10 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
 
     ~DialogsComponent()
     {
-        core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
+        if (core) {
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
+        }
     }
 
     IEventDispatcher<PlayerDialogEventHandler>& getEventDispatcher() override

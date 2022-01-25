@@ -3,7 +3,7 @@
 using namespace Impl;
 
 struct GangZonesComponent final : public IGangZonesComponent {
-    ICore* core;
+    ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Capacity> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 

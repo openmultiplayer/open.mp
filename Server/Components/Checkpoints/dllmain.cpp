@@ -1,12 +1,12 @@
 #include "checkpoint.hpp"
-#include <sdk.hpp>
 #include <Impl/events_impl.hpp>
+#include <sdk.hpp>
 
 using namespace Impl;
 
 struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
     DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
-    ICore* core;
+    ICore* core = nullptr;
 
     DefaultEventDispatcher<PlayerCheckpointEventHandler>& getEventDispatcher() override
     {
@@ -121,8 +121,10 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 
     ~CheckpointsComponent()
     {
-        core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
+        if (core) {
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
+        }
     }
 };
 
