@@ -80,7 +80,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
     bool skipDefaultClassRequest;
     ICore* core;
 
-    struct PlayerRequestClassHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerRequestClassHandler : public SingleNetworkInEventHandler {
         ClassesComponent& self;
         PlayerRequestClassHandler(ClassesComponent& self)
             : self(self)

@@ -10,7 +10,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;
 
-    struct PlayerPickUpPickupEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerPickUpPickupEventHandler : public SingleNetworkInEventHandler {
         PickupsComponent& self;
         PlayerPickUpPickupEventHandler(PickupsComponent& self)
             : self(self)

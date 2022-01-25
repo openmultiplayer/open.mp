@@ -174,7 +174,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return drunkLevel_;
     }
 
-    void sendCommand(StringView message) const override
+    void sendCommand(StringView message) override
     {
         NetCode::RPC::PlayerCommandMessage sendCommand;
         sendCommand.message = message;
@@ -919,7 +919,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(RPC, *this);
     }
 
-    void sendClientMessage(const Colour& colour, StringView message) const override
+    void sendClientMessage(const Colour& colour, StringView message) override
     {
         NetCode::RPC::SendClientMessage sendClientMessage;
         sendClientMessage.Col = colour;
@@ -927,7 +927,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(sendClientMessage, *this);
     }
 
-    void sendChatMessage(IPlayer& sender, StringView message) const override
+    void sendChatMessage(IPlayer& sender, StringView message) override
     {
         NetCode::RPC::PlayerChatMessage sendChatMessage;
         sendChatMessage.PlayerID = static_cast<Player&>(sender).poolID;
@@ -935,7 +935,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(sendChatMessage, *this);
     }
 
-    void sendGameText(StringView message, Milliseconds time, int style) const override
+    void sendGameText(StringView message, Milliseconds time, int style) override
     {
         NetCode::RPC::SendGameText gameText;
         gameText.Time = time.count();
