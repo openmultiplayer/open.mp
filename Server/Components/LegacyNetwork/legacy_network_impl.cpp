@@ -394,18 +394,22 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 
             IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
             if (newPeer) {
-                network->inOutEventDispatcher.all(
-                    [newPeer, &bs](NetworkInOutEventHandler* handler) {
-                        bs.resetReadPointer();
-                        handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
-                    });
+                if (!network->inEventDispatcher.stopAtFalse(
+                        [newPeer, &bs](NetworkInEventHandler* handler) {
+                            bs.resetReadPointer();
+                            return handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
+                        })) {
+                    return;
+                }
 
-                network->rpcInOutEventDispatcher.all(
-                    NetCode::RPC::PlayerConnect::PacketID,
-                    [newPeer, &bs](SingleNetworkInOutEventHandler* handler) {
-                        bs.resetReadPointer();
-                        handler->received(*newPeer, bs);
-                    });
+                if (!network->rpcInEventDispatcher.stopAtFalse(
+                        NetCode::RPC::PlayerConnect::PacketID,
+                        [newPeer, &bs](SingleNetworkInEventHandler* handler) {
+                            bs.resetReadPointer();
+                            return handler->received(*newPeer, bs);
+                        })) {
+                    return;
+                }
 
                 network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
                 return;
@@ -426,18 +430,22 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
         if (NPCConnectRPC.read(bs)) {
             IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
             if (newPeer) {
-                network->inOutEventDispatcher.all(
-                    [newPeer, &bs](NetworkInOutEventHandler* handler) {
-                        bs.resetReadPointer();
-                        handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
-                    });
+                if (!network->inEventDispatcher.stopAtFalse(
+                        [newPeer, &bs](NetworkInEventHandler* handler) {
+                            bs.resetReadPointer();
+                            return handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
+                        })) {
+                    return;
+                }
 
-                network->rpcInOutEventDispatcher.all(
-                    NetCode::RPC::NPCConnect::PacketID,
-                    [newPeer, &bs](SingleNetworkInOutEventHandler* handler) {
-                        bs.resetReadPointer();
-                        handler->received(*newPeer, bs);
-                    });
+                if (!network->rpcInEventDispatcher.stopAtFalse(
+                        NetCode::RPC::NPCConnect::PacketID,
+                        [newPeer, &bs](SingleNetworkInEventHandler* handler) {
+                            bs.resetReadPointer();
+                            return handler->received(*newPeer, bs);
+                        })) {
+                    return;
+                }
 
                 network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
                 return;
@@ -474,21 +482,24 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 
     NetworkBitStream bs = GetBitStream(*rpcParams);
 
-    bool processed = false;
-    network->inOutEventDispatcher.all(
-        [&player, &bs, &processed](NetworkInOutEventHandler* handler) {
-            bs.resetReadPointer();
-            processed |= handler->receivedRPC(player, ID, bs);
-        });
+    if (!network->inEventDispatcher.stopAtFalse(
+            [&player, &bs](NetworkInEventHandler* handler) {
+                bs.resetReadPointer();
+                return handler->receivedRPC(player, ID, bs);
+            })) {
+        return;
+    }
 
-    network->rpcInOutEventDispatcher.all(
-        ID,
-        [&player, &bs, &processed](SingleNetworkInOutEventHandler* handler) {
-            bs.resetReadPointer();
-            processed |= handler->received(player, bs);
-        });
+    if (!network->rpcInEventDispatcher.stopAtFalse(
+            ID,
+            [&player, &bs](SingleNetworkInEventHandler* handler) {
+                bs.resetReadPointer();
+                return handler->received(player, bs);
+            })) {
+        return;
+    }
 
-    if (!processed) {
+    if (network->inEventDispatcher.count() == 0 && network->rpcInEventDispatcher.count(ID) == 0) {
         network->core->printLn("Received unprocessed RPC %zu", ID);
     }
 }
@@ -695,20 +706,23 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
             NetworkBitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
             if (bs.readUINT8(type)) {
+                const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
+                    bs.SetReadOffset(8); // Ignore packet ID
+                    return handler->receivedPacket(player, type, bs);
+                });
+
+                if (res) {
+                    packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
+                        return handler->received(player, bs);
+                    });
+                }
+
                 if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {
                     OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Quit);
                 } else if (type == RakNet::ID_CONNECTION_LOST) {
                     OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Timeout);
                 }
-                inOutEventDispatcher.all([&player, type, &bs](NetworkInOutEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    handler->receivedPacket(player, type, bs);
-                });
-
-                packetInOutEventDispatcher.all(type, [&player, &bs](SingleNetworkInOutEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    handler->received(player, bs);
-                });
             }
         }
         rakNetServer.DeallocatePacket(pkt);

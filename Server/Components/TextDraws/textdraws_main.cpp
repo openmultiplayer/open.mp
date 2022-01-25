@@ -116,7 +116,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    struct PlayerSelectTextDrawEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerSelectTextDrawEventHandler : public SingleNetworkInEventHandler {
         TextDrawsComponent& self;
         PlayerSelectTextDrawEventHandler(TextDrawsComponent& self)
             : self(self)
