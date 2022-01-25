@@ -37,7 +37,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
     ICore* core;
     DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;
 
-    struct DialogResponseHandler : public SingleNetworkInOutEventHandler {
+    struct DialogResponseHandler : public SingleNetworkInEventHandler {
         DialogsComponent& self;
         DialogResponseHandler(DialogsComponent& self)
             : self(self)

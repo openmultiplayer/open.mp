@@ -37,7 +37,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
     String cmd;
     ThreadProcData* threadData;
 
-    struct PlayerRconCommandHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerRconCommandHandler : public SingleNetworkInEventHandler {
         ConsoleComponent& self;
         PlayerRconCommandHandler(ConsoleComponent& self)
             : self(self)

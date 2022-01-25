@@ -18,21 +18,21 @@ struct NetworkPacketBase {
     static constexpr const int PacketID = PktID;
     static constexpr const NetworkPacketType PacketType = PktType;
 
-    constexpr static void addEventHandler(ICore& core, SingleNetworkInOutEventHandler* handler, event_order_t priority = EventPriority_Default)
+    constexpr static void addEventHandler(ICore& core, SingleNetworkInEventHandler* handler, event_order_t priority = EventPriority_Default)
     {
         if (PacketType == NetworkPacketType::RPC) {
-            core.addPerRPCEventHandler<PacketID>(handler, priority);
+            core.addPerRPCInEventHandler<PacketID>(handler, priority);
         } else if (PacketType == NetworkPacketType::Packet) {
-            core.addPerPacketEventHandler<PacketID>(handler, priority);
+            core.addPerPacketInEventHandler<PacketID>(handler, priority);
         }
     }
 
-    constexpr static void removeEventHandler(ICore& core, SingleNetworkInOutEventHandler* handler, event_order_t priority = EventPriority_Default)
+    constexpr static void removeEventHandler(ICore& core, SingleNetworkInEventHandler* handler, event_order_t priority = EventPriority_Default)
     {
         if (PacketType == NetworkPacketType::RPC) {
-            core.removePerRPCEventHandler<PacketID>(handler);
+            core.removePerRPCInEventHandler<PacketID>(handler);
         } else if (PacketType == NetworkPacketType::Packet) {
-            core.removePerPacketEventHandler<PacketID>(handler);
+            core.removePerPacketInEventHandler<PacketID>(handler);
         }
     }
 };
@@ -50,7 +50,7 @@ struct PacketHelper {
     /// @param packet The packet to send
     /// @param peer The peer to send the packet to
     template <typename Packet, typename E = std::enable_if_t<is_network_packet<Packet>::value>>
-    static bool send(const Packet& packet, const INetworkPeer& peer)
+    static bool send(const Packet& packet, IPlayer& peer)
     {
         NetworkBitStream bs;
         packet.write(bs);
@@ -86,7 +86,7 @@ struct PacketHelper {
     /// @param player The player whose streamed players to send to
     /// @param skipFrom Whether to skip the player when sending the packet
     template <typename Packet, typename E = std::enable_if_t<is_network_packet<Packet>::value>>
-    static void broadcastToStreamed(const Packet& packet, const IPlayer& player, bool skipFrom = false)
+    static void broadcastToStreamed(const Packet& packet, IPlayer& player, bool skipFrom = false)
     {
         NetworkBitStream bs;
         packet.write(bs);

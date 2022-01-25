@@ -7,7 +7,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
     IPlayerPool* players;
     StreamConfigHelper streamConfigHelper;
 
-    struct PlayerDamageActorEventHandler : public SingleNetworkInOutEventHandler {
+    struct PlayerDamageActorEventHandler : public SingleNetworkInEventHandler {
         ActorsComponent& self;
         PlayerDamageActorEventHandler(ActorsComponent& self)
             : self(self)
