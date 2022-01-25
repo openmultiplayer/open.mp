@@ -100,7 +100,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                         return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
                     })) {
                 if (self.skipDefaultClassRequest) {
-                    IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
+                    IPlayerClassData* clsData = queryData<IPlayerClassData>(peer);
                     if (clsData) {
                         const PlayerClass& cls = clsData->getClass();
                         const WeaponSlots& weapons = cls.weapons;
@@ -115,7 +115,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                     }
                 } else if (self.storage.valid(playerRequestClassPacket.Classid)) {
                     const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid).cls;
-                    IPlayerClassData* clsData = peer.queryData<IPlayerClassData>();
+                    IPlayerClassData* clsData = queryData<IPlayerClassData>(peer);
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
                         clsDataCast->cls = cls;
@@ -199,9 +199,9 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         return storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerClassData(player, inClassRequest, skipDefaultClassRequest);
+        player.addData(new PlayerClassData(player, inClassRequest, skipDefaultClassRequest));
     }
 
     void free() override

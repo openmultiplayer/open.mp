@@ -23,7 +23,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 return false;
             }
 
-            IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
+            IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
             if (data && data->selectingObject()) {
                 if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Global || self.valid(onPlayerSelectObjectRPC.ObjectID)) {
                     ScopedPoolReleaseLock lock(self, onPlayerSelectObjectRPC.ObjectID);
@@ -62,7 +62,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 return false;
             }
 
-            IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
+            IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
             if (data && data->editingObject()) {
 
                 if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final) {
@@ -108,7 +108,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 return false;
             }
 
-            IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
+            IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
             if (data && data->editingObject() && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index)) {
                 self.eventDispatcher.dispatch(
                     &ObjectEventHandler::onPlayerAttachedObjectEdited,
@@ -153,7 +153,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         }
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override;
+    void onConnect(IPlayer& player) override;
 
     void setDefaultCameraCollision(bool collision) override
     {
@@ -262,14 +262,6 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         return storage._entries();
     }
 
-    void onConnect(IPlayer& player) override
-    {
-        for (IObject* o : storage) {
-            Object* obj = static_cast<Object*>(o);
-            obj->createForPlayer(player);
-        }
-    }
-
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
@@ -296,7 +288,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             }
         }
 
-        IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
+        IPlayerObjectData* objectData = queryData<IPlayerObjectData>(player);
         if (objectData) {
             for (int i = 0; i < MAX_ATTACHED_OBJECT_SLOTS; ++i) {
                 if (objectData->hasAttachedObject(i)) {
@@ -322,7 +314,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             }
         }
 
-        IPlayerObjectData* objectData = player.queryData<IPlayerObjectData>();
+        IPlayerObjectData* objectData = queryData<IPlayerObjectData>(player);
         if (objectData) {
             for (int i = 0; i < MAX_ATTACHED_OBJECT_SLOTS; ++i) {
                 if (objectData->hasAttachedObject(i)) {
@@ -547,7 +539,7 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
     }
 
     for (IPlayer* player : core->getPlayers().entries()) {
-        IPlayerObjectData* data = player->queryData<IPlayerObjectData>();
+        IPlayerObjectData* data = queryData<IPlayerObjectData>(player);
         if (data) {
             for (IPlayerObject* object : *data) {
                 PlayerObject* obj = static_cast<PlayerObject*>(object);
@@ -560,9 +552,14 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
     }
 }
 
-IPlayerData* ObjectComponent::onPlayerDataRequest(IPlayer& player)
+void ObjectComponent::onConnect(IPlayer& player)
 {
-    return new PlayerObjectData(*this, player);
+    player.addData(new PlayerObjectData(*this, player));
+
+    for (IObject* o : storage) {
+        Object* obj = static_cast<Object*>(o);
+        obj->createForPlayer(player);
+    }
 }
 
 COMPONENT_ENTRY_POINT()

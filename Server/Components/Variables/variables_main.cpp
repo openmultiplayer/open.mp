@@ -108,9 +108,9 @@ struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
 struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, PlayerEventHandler {
     ICore* core = nullptr;
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerVariableData();
+        player.addData(new PlayerVariableData());
     }
 
     StringView componentName() const override
