@@ -347,6 +347,15 @@ struct Config final : IEarlyConfig {
         return &variant_get<DynamicArray<String>>(*res);
     }
 
+    ConfigOptionType getType(StringView key) const override
+    {
+        auto it = processed.find(String(key));
+        if (it == processed.end()) {
+            return ConfigOptionType_None;
+        }
+        return ConfigOptionType(it->second.index());
+    }
+
     void setString(StringView key, StringView value) override
     {
         processed[String(key)] = String(value);
