@@ -228,7 +228,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
-        if (data->vehicle) {
+        if (data && data->vehicle) {
             data->vehicle->unoccupy(player);
         }
 
