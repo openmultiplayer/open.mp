@@ -8,9 +8,9 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
     DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
     IPlayerPool* players = nullptr;
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerMenuData();
+        player.addData(new PlayerMenuData());
     }
 
     struct PlayerSelectedMenuRowEventHandler : public SingleNetworkInEventHandler {
@@ -28,7 +28,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
             }
 
             // Return false if menu id was invalid;
-            IPlayerMenuData* data = peer.queryData<IPlayerMenuData>();
+            IPlayerMenuData* data = queryData<IPlayerMenuData>(peer);
             if (!self.valid(data->getMenuID()) || data->getMenuID() == INVALID_MENU_ID) {
                 data->setMenuID(INVALID_MENU_ID);
                 return false;
@@ -57,7 +57,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
             }
 
             // Return false if menu id was invalid;
-            IPlayerMenuData* data = peer.queryData<IPlayerMenuData>();
+            IPlayerMenuData* data = queryData<IPlayerMenuData>(peer);
             if (!self.valid(data->getMenuID()) || data->getMenuID() == INVALID_MENU_ID) {
                 data->setMenuID(INVALID_MENU_ID);
                 return false;

@@ -102,7 +102,7 @@ SCRIPT_API(IsObjectMoving, bool(IObject& object))
 
 SCRIPT_API(EditObject, bool(IPlayer& player, IObject& object))
 {
-    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    IPlayerObjectData* playerData = queryData<IPlayerObjectData>(player);
     if (playerData) {
         playerData->editObject(object);
         return true;
@@ -112,7 +112,7 @@ SCRIPT_API(EditObject, bool(IPlayer& player, IObject& object))
 
 SCRIPT_API(SelectObject, bool(IPlayer& player))
 {
-    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    IPlayerObjectData* playerData = queryData<IPlayerObjectData>(player);
     if (playerData) {
         playerData->beginObjectSelection();
         return true;
@@ -122,7 +122,7 @@ SCRIPT_API(SelectObject, bool(IPlayer& player))
 
 SCRIPT_API(CancelEdit, bool(IPlayer& player))
 {
-    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    IPlayerObjectData* playerData = queryData<IPlayerObjectData>(player);
     if (playerData) {
         playerData->endObjectEdit();
         return true;
