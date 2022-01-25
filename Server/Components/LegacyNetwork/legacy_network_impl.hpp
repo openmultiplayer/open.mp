@@ -222,7 +222,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
 
-    ICore* core;
+    ICore* core = nullptr;
     Query query;
     RakNet::RakServerInterface& rakNetServer;
     PlayerFromRIDMap playerFromRID;

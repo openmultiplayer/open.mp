@@ -171,6 +171,15 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
         }
     }
 
+    void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
+    {
+        if (defaults) {
+            config.setString("pawn.entry_file", "test.amx");
+            config.setStrings("pawn.side_scripts", Span<StringView>());
+            config.setStrings("pawn.legacy_plugins", Span<StringView>());
+        }
+    }
+
     ~PawnComponent()
     {
         if (core) {

@@ -1,7 +1,7 @@
 #include "textlabel.hpp"
+#include <Impl/pool_impl.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
-#include <Impl/pool_impl.hpp>
 
 using namespace Impl;
 
@@ -102,7 +102,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 };
 
 struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
-    ICore* core;
+    ICore* core = nullptr;
     MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsComponent::Capacity> storage;
     IVehiclesComponent* vehicles = nullptr;
     IPlayerPool* players = nullptr;

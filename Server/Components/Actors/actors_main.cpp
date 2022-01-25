@@ -1,7 +1,7 @@
 #include "actor.hpp"
 
 struct ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
-    ICore* core;
+    ICore* core = nullptr;
     MarkedPoolStorage<Actor, IActor, IActorsComponent::Capacity> storage;
     DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
     IPlayerPool* players;

@@ -4,7 +4,7 @@
 using namespace Impl;
 
 struct PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
-    ICore* core;
+    ICore* core = nullptr;
     MarkedPoolStorage<Pickup, IPickup, IPickupsComponent::Capacity> storage;
     DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
     IPlayerPool* players = nullptr;
