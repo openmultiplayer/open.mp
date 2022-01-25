@@ -237,77 +237,80 @@ struct LegacyConfigComponent final : public IComponent {
         return false;
     }
 
-    void provideConfiguration(ILogger& logger, IEarlyConfig& config) override
+    void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
     {
-        if (config.getString("bot_exe").empty()) {
-            config.setString("bot_exe", "samp-npc");
-        }
+        // Don't provide defaults for generating the config file
+        if (!defaults) {
+            if (config.getString("bot_exe").empty()) {
+                config.setString("bot_exe", "samp-npc");
+            }
 
-        // someone can parse samp.ban properly, I didn't care to
-        std::ifstream bans("samp.ban");
-        if (bans.good()) {
-            for (String line; std::getline(bans, line);) {
-                size_t first = line.find_first_of(' ');
-                if (first != -1) {
-                    config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
+            // someone can parse samp.ban properly, I didn't care to
+            std::ifstream bans("samp.ban");
+            if (bans.good()) {
+                for (String line; std::getline(bans, line);) {
+                    size_t first = line.find_first_of(' ');
+                    if (first != -1) {
+                        config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
+                    }
                 }
             }
-        }
 
-        for (auto& kv : dictionary) {
-            config.addAlias(kv.first, kv.second, true);
-        }
+            for (auto& kv : dictionary) {
+                config.addAlias(kv.first, kv.second, true);
+            }
 
-        std::ifstream cfg("server.cfg");
-        if (cfg.good()) {
-            for (String line; std::getline(cfg, line);) {
-                int idx;
-                // Ignore // comments
-                idx = line.find("//");
-                if (idx != -1) {
-                    line = line.substr(0, idx);
-                }
-                // Ignore # comments
-                idx = line.find_first_of('#');
-                if (idx != -1) {
-                    line = line.substr(0, idx);
-                }
+            std::ifstream cfg("server.cfg");
+            if (cfg.good()) {
+                for (String line; std::getline(cfg, line);) {
+                    int idx;
+                    // Ignore // comments
+                    idx = line.find("//");
+                    if (idx != -1) {
+                        line = line.substr(0, idx);
+                    }
+                    // Ignore # comments
+                    idx = line.find_first_of('#');
+                    if (idx != -1) {
+                        line = line.substr(0, idx);
+                    }
 
-                // Remove all spaces from the beginning of the string
-                while (line.size() && isspace(line.front())) {
-                    line.erase(line.begin());
-                }
-                // Remove all spaces from the end of the string
-                while (line.size() && isspace(line.back())) {
-                    line.pop_back();
-                }
+                    // Remove all spaces from the beginning of the string
+                    while (line.size() && isspace(line.front())) {
+                        line.erase(line.begin());
+                    }
+                    // Remove all spaces from the end of the string
+                    while (line.size() && isspace(line.back())) {
+                        line.pop_back();
+                    }
 
-                // Skip empty lines
-                if (line.size() == 0) {
-                    continue;
-                }
+                    // Skip empty lines
+                    if (line.size() == 0) {
+                        continue;
+                    }
 
-                // Get the setting name
-                String name = line;
-                idx = name.find_first_of(' ');
-                if (idx != -1) {
-                    name = line.substr(0, idx);
-                }
+                    // Get the setting name
+                    String name = line;
+                    idx = name.find_first_of(' ');
+                    if (idx != -1) {
+                        name = line.substr(0, idx);
+                    }
 
-                auto typeIt = types.find(name);
-                if (typeIt != types.end()) {
-                    // Process default dictionary items
-                    if (typeIt->second == ParamType::Custom) {
-                        if (!processCustom(logger, config, name, line.substr(idx + 1))) {
+                    auto typeIt = types.find(name);
+                    if (typeIt != types.end()) {
+                        // Process default dictionary items
+                        if (typeIt->second == ParamType::Custom) {
+                            if (!processCustom(logger, config, name, line.substr(idx + 1))) {
+                                logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
+                            }
+                        } else if (typeIt->second == ParamType::Obsolete) {
+                            logger.logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
+                        } else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
                             logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                         }
-                    } else if (typeIt->second == ParamType::Obsolete) {
-                        logger.logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
-                    } else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
+                    } else if (!processCustom(logger, config, name, line.substr(idx + 1))) {
                         logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                     }
-                } else if (!processCustom(logger, config, name, line.substr(idx + 1))) {
-                    logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                 }
             }
         }

@@ -78,7 +78,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
-    ICore* core;
+    ICore* core = nullptr;
 
     struct PlayerRequestClassHandler : public SingleNetworkInEventHandler {
         ClassesComponent& self;
@@ -251,8 +251,10 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
     ~ClassesComponent()
     {
-        NetCode::RPC::PlayerRequestClass::removeEventHandler(*core, &onPlayerRequestClassHandler);
-        core->getPlayers().getEventDispatcher().removeEventHandler(this);
+        if (core) {
+            NetCode::RPC::PlayerRequestClass::removeEventHandler(*core, &onPlayerRequestClassHandler);
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+        }
     }
 };
 

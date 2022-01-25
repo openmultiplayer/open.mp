@@ -3,7 +3,7 @@
 #include <netcode.hpp>
 
 struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
-    ICore* core;
+    ICore* core = nullptr;
     MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Capacity> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
     StaticBitset<IObjectsComponent::Capacity> isPlayerObject;
@@ -144,11 +144,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
     ~ObjectComponent()
     {
-        core->getEventDispatcher().removeEventHandler(this);
-        core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
-        NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
-        NetCode::RPC::OnPlayerEditAttachedObject::removeEventHandler(*core, &playerEditAttachedObjectEventHandler);
+        if (core) {
+            core->getEventDispatcher().removeEventHandler(this);
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
+            NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
+            NetCode::RPC::OnPlayerEditAttachedObject::removeEventHandler(*core, &playerEditAttachedObjectEventHandler);
+        }
     }
 
     IPlayerData* onPlayerDataRequest(IPlayer& player) override;

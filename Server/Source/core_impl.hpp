@@ -91,9 +91,6 @@ static const std::map<String, ConfigStorage> Defaults {
     { "rcon_allow_teleport", false },
     { "vehicle_friendly_fire", false },
     { "vehicle_death_respawn_delay", 10 },
-    { "pawn.entry_file", "test.amx" },
-    { "pawn.side_scripts", DynamicArray<String> {} },
-    { "pawn.legacy_plugins", DynamicArray<String> {} },
 };
 
 // Provide automatic Defaults → JSON conversion in Config
@@ -119,11 +116,11 @@ struct ComponentList : public IComponentList {
         return it == components.end() ? nullptr : it->second;
     }
 
-    void configure(ICore& core, IEarlyConfig& config)
+    void configure(ICore& core, IEarlyConfig& config, bool defaults)
     {
         std::for_each(components.begin(), components.end(),
-            [&core, &config](const Pair<UID, IComponent*>& pair) {
-                pair.second->provideConfiguration(core, config);
+            [&core, &config, defaults](const Pair<UID, IComponent*>& pair) {
+                pair.second->provideConfiguration(core, config, defaults);
             });
     }
 
@@ -212,68 +209,72 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    Config(ICore& core)
+    Config(ICore& core, bool defaultsOnly = false)
         : core(core)
     {
-        {
-            std::ifstream ifs(ConfigFileName);
-            if (ifs.good()) {
-                nlohmann::json props;
-                try {
-                    props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-                } catch (std::ios_base::failure) {
-                } // Is a directory?
-                if (props.is_null() || props.is_discarded() || !props.is_object()) {
-                    processed = Defaults;
-                } else {
-                    const auto& root = props.get<nlohmann::json::object_t>();
-                    processNode(root);
+        if (!defaultsOnly) {
+            {
+                std::ifstream ifs(ConfigFileName);
+                if (ifs.good()) {
+                    nlohmann::json props;
+                    try {
+                        props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+                    } catch (std::ios_base::failure) {
+                    } // Is a directory?
+                    if (props.is_null() || props.is_discarded() || !props.is_object()) {
+                        processed = Defaults;
+                    } else {
+                        const auto& root = props.get<nlohmann::json::object_t>();
+                        processNode(root);
 
-                    // Fill any values missing in config with defaults
-                    for (const auto& kv : Defaults) {
-                        if (processed.find(kv.first) != processed.end()) {
-                            continue;
+                        // Fill any values missing in config with defaults
+                        for (const auto& kv : Defaults) {
+                            if (processed.find(kv.first) != processed.end()) {
+                                continue;
+                            }
+
+                            processed.emplace(kv.first, kv.second);
                         }
-
-                        processed.emplace(kv.first, kv.second);
                     }
+                } else {
+                    processed = Defaults;
                 }
-            } else {
-                processed = Defaults;
-            }
 
-            const SemanticVersion version = core.getVersion();
-            String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
-            if (version.prerel != 0) {
-                versionStr += "." + std::to_string(version.prerel);
+                const SemanticVersion version = core.getVersion();
+                String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
+                if (version.prerel != 0) {
+                    versionStr += "." + std::to_string(version.prerel);
+                }
+                processed["version"].emplace<String>(versionStr);
             }
-            processed["version"].emplace<String>(versionStr);
-        }
-        {
-            std::ifstream ifs(BansFileName);
-            if (ifs.good()) {
-                nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-                if (!props.is_null() && !props.is_discarded() && props.is_array()) {
-                    const auto& arr = props.get<nlohmann::json::array_t>();
-                    for (const auto& arrVal : arr) {
-                        std::tm time = {};
-                        std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
-                        time_t t =
+            {
+                std::ifstream ifs(BansFileName);
+                if (ifs.good()) {
+                    nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+                    if (!props.is_null() && !props.is_discarded() && props.is_array()) {
+                        const auto& arr = props.get<nlohmann::json::array_t>();
+                        for (const auto& arrVal : arr) {
+                            std::tm time = {};
+                            std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
+                            time_t t =
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-                            _mkgmtime(&time);
+                                _mkgmtime(&time);
 #else
-                            timegm(&time);
+                                timegm(&time);
 #endif
 
-                        bans.emplace_back(
-                            BanEntry(
-                                arrVal["address"].get<String>(),
-                                arrVal["player"].get<String>(),
-                                arrVal["reason"].get<String>(),
-                                WorldTime::from_time_t(t)));
+                            bans.emplace_back(
+                                BanEntry(
+                                    arrVal["address"].get<String>(),
+                                    arrVal["player"].get<String>(),
+                                    arrVal["reason"].get<String>(),
+                                    WorldTime::from_time_t(t)));
+                        }
                     }
                 }
             }
+        } else {
+            processed = Defaults;
         }
     }
 
@@ -286,7 +287,7 @@ struct Config final : IEarlyConfig {
     getString(StringView key) const override
     {
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 1, res)) {
+        if (!getFromKey(key, ConfigOptionType_String, res)) {
             return StringView();
         }
         return StringView(variant_get<String>(*res));
@@ -295,7 +296,7 @@ struct Config final : IEarlyConfig {
     int* getInt(StringView key) override
     {
         ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 0, res)) {
+        if (!getFromKey(key, ConfigOptionType_Int, res)) {
             return 0;
         }
         return &variant_get<int>(*res);
@@ -304,7 +305,7 @@ struct Config final : IEarlyConfig {
     float* getFloat(StringView key) override
     {
         ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 2, res)) {
+        if (!getFromKey(key, ConfigOptionType_Float, res)) {
             return 0;
         }
         return &variant_get<float>(*res);
@@ -313,7 +314,7 @@ struct Config final : IEarlyConfig {
     size_t getStringsCount(StringView key) const override
     {
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 3, res)) {
+        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return 0;
         }
         return variant_get<DynamicArray<String>>(*res).size();
@@ -326,7 +327,7 @@ struct Config final : IEarlyConfig {
         }
 
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 3, res)) {
+        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return 0;
         }
 
@@ -341,10 +342,19 @@ struct Config final : IEarlyConfig {
     const DynamicArray<String>* getStrings(StringView key) const
     {
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 3, res)) {
+        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return nullptr;
         }
         return &variant_get<DynamicArray<String>>(*res);
+    }
+
+    ConfigOptionType getType(StringView key) const override
+    {
+        auto it = processed.find(String(key));
+        if (it == processed.end()) {
+            return ConfigOptionType_None;
+        }
+        return ConfigOptionType(it->second.index());
     }
 
     void setString(StringView key, StringView value) override
@@ -422,8 +432,10 @@ struct Config final : IEarlyConfig {
         bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
     }
 
-    static bool writeDefault()
+    static bool writeDefault(ICore& core, ComponentList& components)
     {
+        core.printLn("Generating %s...", ConfigFileName);
+
         // Creates default config.json file if it doesn't exist
         // Returns true if a config file was written, false otherwise
         std::ifstream ifs(ConfigFileName);
@@ -434,8 +446,11 @@ struct Config final : IEarlyConfig {
         std::ofstream ofs(ConfigFileName);
         nlohmann::ordered_json json;
 
+        Config config(core, true /* defaultsOnly */);
+        components.configure(core, config, true /* defaults */);
+
         if (ofs.good()) {
-            for (const auto& kv : Defaults) {
+            for (const auto& kv : config.options()) {
                 nlohmann::ordered_json* sub = &json;
                 size_t cur = String::npos, prev = 0;
                 // Process hierarchy
@@ -495,6 +510,11 @@ private:
 
         output = &it->second;
         return true;
+    }
+
+    const std::map<String, ConfigStorage>& options() const
+    {
+        return processed;
     }
 
     DynamicArray<BanEntry> bans;
@@ -668,7 +688,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
 
         loadComponents("components");
 
-        components.configure(*this, config);
+        if (cmd.count("write-config")) {
+            // Generate config
+            Config::writeDefault(*this, components);
+            run_ = false;
+            return;
+        }
+
+        components.configure(*this, config, false);
         config.setInt("max_players", glm::clamp(*config.getInt("max_players"), 1, 1000));
 
         if (cmd.count("script")) {
