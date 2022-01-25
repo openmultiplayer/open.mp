@@ -264,7 +264,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
                 self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
 
-                IPlayerClassData* classData = peer.queryData<IPlayerClassData>();
+                IPlayerClassData* classData = queryData<IPlayerClassData>(peer);
                 if (classData) {
                     const PlayerClass& cls = classData->getClass();
                     player.pos_ = cls.spawn;
@@ -672,7 +672,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                         });
                 } else {
                     player.bulletData_.hitType = PlayerBulletHitType_PlayerObject;
-                    IPlayerObjectData* data = peer.queryData<IPlayerObjectData>();
+                    IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
                     if (data && data->valid(player.bulletData_.hitID)) {
                         ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
                         allowed = self.eventDispatcher.stopAtFalse(
@@ -991,7 +991,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             } else if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || peer.queryData<IPlayerVehicleData>()->getVehicle() != &vehicle)) {
+            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || queryData<IPlayerVehicleData>(peer)->getVehicle() != &vehicle)) {
                 return false;
             }
 
@@ -1021,7 +1021,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             IVehicle& vehicle = self.vehiclesComponent->get(trailerSync.VehicleID);
             PlayerState state = player.getState();
-            if (state != PlayerState_Driver || peer.queryData<IPlayerVehicleData>()->getVehicle() == nullptr) {
+            if (state != PlayerState_Driver || queryData<IPlayerVehicleData>(peer)->getVehicle() == nullptr) {
                 return false;
             } else if (vehicle.getDriver() != nullptr) {
                 return false;
@@ -1141,14 +1141,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             otherJoinPacket.Name = StringView(otherPlayer->name_);
             PacketHelper::send(otherJoinPacket, peer);
         }
-
-        eventDispatcher.all(
-            [&peer](PlayerEventHandler* handler) {
-                IPlayerData* data = handler->onPlayerDataRequest(peer);
-                if (data) {
-                    peer.addData(data);
-                }
-            });
 
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }

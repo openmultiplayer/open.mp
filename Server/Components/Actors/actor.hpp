@@ -1,3 +1,4 @@
+#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
@@ -5,7 +6,7 @@
 
 using namespace Impl;
 
-struct PlayerActorData final : IPlayerData {
+struct PlayerActorData final : IExtraData {
     PROVIDE_UID(0xd1bb1d1f96c7e572)
     uint8_t numStreamed = 0;
 
@@ -25,6 +26,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     bool invulnerable_;
     AnimationData animation_;
     bool animationLoop_;
+    ExtraDataProvider extraData_;
 
     Actor(int skin, Vector3 pos, float angle)
         : virtualWorld_(0)
@@ -35,6 +37,16 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         , invulnerable_(true)
         , animationLoop_(false)
     {
+    }
+
+    IExtraData* findData(UID uuid) const override
+    {
+        return extraData_.findData(uuid);
+    }
+
+    void addData(IExtraData* playerData) override
+    {
+        return extraData_.addData(playerData);
     }
 
     void setHealth(float health) override
@@ -111,7 +123,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     {
         const int pid = player.getID();
         if (!streamedFor_.valid(pid)) {
-            uint8_t& numStreamed = player.queryData<PlayerActorData>()->numStreamed;
+            uint8_t& numStreamed = queryData<PlayerActorData>(player)->numStreamed;
             if (numStreamed <= MAX_STREAMED_ACTORS) {
                 ++numStreamed;
                 streamedFor_.add(pid, player);
@@ -124,7 +136,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     {
         const int pid = player.getID();
         if (streamedFor_.valid(pid)) {
-            uint8_t& numStreamed = player.queryData<PlayerActorData>()->numStreamed;
+            uint8_t& numStreamed = queryData<PlayerActorData>(player)->numStreamed;
             --numStreamed;
             streamedFor_.remove(pid, player);
             streamOutForClient(player);
@@ -215,7 +227,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     ~Actor()
     {
         for (IPlayer* player : streamedFor_.entries()) {
-            --player->queryData<PlayerActorData>()->numStreamed;
+            --queryData<PlayerActorData>(player)->numStreamed;
             streamOutForClient(*player);
         }
     }

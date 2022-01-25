@@ -13,15 +13,14 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
         return eventDispatcher;
     }
 
-    // Set up dummy checkpoint data for when the player connects
-    PlayerCheckpointData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerCheckpointData(player);
+        player.addData(new PlayerCheckpointData(player));
     }
 
     static void processPlayerCheckpoint(CheckpointsComponent& component, IPlayer& player)
     {
-        PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
+        PlayerCheckpointData* playerCheckpointData = queryData<PlayerCheckpointData>(player);
         if (playerCheckpointData) {
             IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
             if (cp.isEnabled()) {
@@ -50,7 +49,7 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 
     static void processPlayerRaceCheckpoint(CheckpointsComponent& component, IPlayer& player)
     {
-        PlayerCheckpointData* playerCheckpointData = player.queryData<PlayerCheckpointData>();
+        PlayerCheckpointData* playerCheckpointData = queryData<PlayerCheckpointData>(player);
         if (playerCheckpointData) {
             IPlayerRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
             if (cp.isEnabled()) {
