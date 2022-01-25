@@ -3,7 +3,7 @@
 using namespace Impl;
 
 struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
-    ICore* core;
+    ICore* core = nullptr;
     MarkedPoolStorage<Menu, IMenu, IMenusComponent::Capacity> storage;
     DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
     IPlayerPool* players = nullptr;

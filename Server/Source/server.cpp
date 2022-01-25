@@ -92,11 +92,6 @@ int main(int argc, char** argv)
         return 0;
     }
 
-    if (result.count("write-config")) {
-        // Generate config
-        return !Config::writeDefault();
-    }
-
     SET_TICKER_RESOLUTION(1);
 
     core = new Core(result);

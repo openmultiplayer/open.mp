@@ -147,7 +147,9 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
     ~ConsoleComponent()
     {
-        threadData->valid = false;
+        if (threadData) {
+            threadData->valid = false;
+        }
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);

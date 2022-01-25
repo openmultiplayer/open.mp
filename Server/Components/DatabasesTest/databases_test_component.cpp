@@ -10,7 +10,7 @@ const char* testQuery("SELECT * FROM `test`");
 struct DatabasesTestComponent final : public IComponent, public NoCopy {
 
     /// Core
-    ICore* core;
+    ICore* core = nullptr;
 
     /// Gets the component UID
     /// @returns COmponent UID
