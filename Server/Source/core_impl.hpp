@@ -286,7 +286,7 @@ struct Config final : IEarlyConfig {
     getString(StringView key) const override
     {
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 1, res)) {
+        if (!getFromKey(key, ConfigOptionType_String, res)) {
             return StringView();
         }
         return StringView(variant_get<String>(*res));
@@ -295,7 +295,7 @@ struct Config final : IEarlyConfig {
     int* getInt(StringView key) override
     {
         ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 0, res)) {
+        if (!getFromKey(key, ConfigOptionType_Int, res)) {
             return 0;
         }
         return &variant_get<int>(*res);
@@ -304,7 +304,7 @@ struct Config final : IEarlyConfig {
     float* getFloat(StringView key) override
     {
         ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 2, res)) {
+        if (!getFromKey(key, ConfigOptionType_Float, res)) {
             return 0;
         }
         return &variant_get<float>(*res);
@@ -313,7 +313,7 @@ struct Config final : IEarlyConfig {
     size_t getStringsCount(StringView key) const override
     {
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 3, res)) {
+        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return 0;
         }
         return variant_get<DynamicArray<String>>(*res).size();
@@ -326,7 +326,7 @@ struct Config final : IEarlyConfig {
         }
 
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 3, res)) {
+        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return 0;
         }
 
@@ -341,7 +341,7 @@ struct Config final : IEarlyConfig {
     const DynamicArray<String>* getStrings(StringView key) const
     {
         const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, 3, res)) {
+        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return nullptr;
         }
         return &variant_get<DynamicArray<String>>(*res);
