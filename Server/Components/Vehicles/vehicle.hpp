@@ -64,7 +64,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     {
         const auto& entries = streamedFor_.entries();
         for (IPlayer* player : entries) {
-            streamOutForPlayer(*player);
+            streamOutForClient(*player);
         }
     }
 
