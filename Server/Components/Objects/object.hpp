@@ -1,3 +1,4 @@
+#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>

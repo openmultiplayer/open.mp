@@ -1,5 +1,6 @@
 #pragma once
 
+#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Classes/classes.hpp>

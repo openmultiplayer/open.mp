@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Server/Components/Vehicles/vehicle_colours.hpp"
+#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <chrono>

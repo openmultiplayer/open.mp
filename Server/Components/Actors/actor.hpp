@@ -1,3 +1,4 @@
+#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
