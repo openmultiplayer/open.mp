@@ -152,7 +152,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         playerShowMenu.MenuID = poolID;
         PacketHelper::send(playerShowMenu, player);
 
-        IPlayerMenuData* data = player.queryData<IPlayerMenuData>();
+        IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
         data->setMenuID(poolID);
     }
 
@@ -162,7 +162,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         playerHideMenu.MenuID = poolID;
         PacketHelper::send(playerHideMenu, player);
 
-        IPlayerMenuData* data = player.queryData<IPlayerMenuData>();
+        IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
         data->setMenuID(INVALID_MENU_ID);
     }
 

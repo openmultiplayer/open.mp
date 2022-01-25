@@ -5,7 +5,7 @@
 
 SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, Vector2 position, const std::string& text))
 {
-    IPlayerTextDrawData* playerTextDraws = player.queryData<IPlayerTextDrawData>();
+    IPlayerTextDrawData* playerTextDraws = queryData<IPlayerTextDrawData>(player);
     if (playerTextDraws) {
         IPlayerTextDraw* textdraw = playerTextDraws->create(position, text);
         if (textdraw) {
@@ -17,7 +17,7 @@ SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, Vector2 position, const st
 
 SCRIPT_API(PlayerTextDrawDestroy, bool(IPlayer& player, IPlayerTextDraw& textdraw))
 {
-    IPlayerTextDrawData* playerTextDraws = player.queryData<IPlayerTextDrawData>();
+    IPlayerTextDrawData* playerTextDraws = queryData<IPlayerTextDrawData>(player);
     if (playerTextDraws) {
         playerTextDraws->release(textdraw.getID());
         return true;

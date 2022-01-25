@@ -4,7 +4,7 @@
 
 SCRIPT_API(CreatePlayerObject, int(IPlayer& player, int modelid, Vector3 position, Vector3 rotation, float drawDistance))
 {
-    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    IPlayerObjectData* playerData = queryData<IPlayerObjectData>(player);
     if (playerData) {
         IPlayerObject* object = playerData->create(modelid, position, rotation, drawDistance);
         if (object) {
@@ -16,7 +16,7 @@ SCRIPT_API(CreatePlayerObject, int(IPlayer& player, int modelid, Vector3 positio
 
 SCRIPT_API(DestroyPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    IPlayerObjectData* playerData = queryData<IPlayerObjectData>(player);
     playerData->release(object.getID());
     return true;
 }
@@ -103,7 +103,7 @@ SCRIPT_API(IsPlayerObjectMoving, bool(IPlayer& player, IPlayerObject& object))
 
 SCRIPT_API(EditPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-    IPlayerObjectData* playerData = player.queryData<IPlayerObjectData>();
+    IPlayerObjectData* playerData = queryData<IPlayerObjectData>(player);
     if (playerData) {
         playerData->editObject(object);
         return true;
