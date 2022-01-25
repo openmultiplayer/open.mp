@@ -4,7 +4,7 @@
 #include <unicode/unistr.h>
 
 struct UnicodeComponent final : public IUnicodeComponent {
-    ICore* core;
+    ICore* core = nullptr;
 
     void onLoad(ICore* core) override
     {
