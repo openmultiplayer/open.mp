@@ -139,11 +139,22 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
 struct TextLabel final : public TextLabelBase<ITextLabel> {
     int virtualWorld;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    ExtraDataProvider extraData_;
 
     TextLabel(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los)
         : TextLabelBase(text, colour, pos, drawDist, los)
         , virtualWorld(vw)
     {
+    }
+
+    IExtraData* findData(UID uuid) const override
+    {
+        return extraData_.findData(uuid);
+    }
+
+    void addData(IExtraData* playerData) override
+    {
+        return extraData_.addData(playerData);
     }
 
     void restream() override
@@ -193,12 +204,23 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
 struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
     IPlayer& player;
     bool playerQuitting;
+    ExtraDataProvider extraData_;
 
     PlayerTextLabel(IPlayer& player, StringView text, Colour colour, Vector3 pos, float drawDist, bool testLOS)
         : TextLabelBase(text, colour, pos, drawDist, testLOS)
         , player(player)
         , playerQuitting(false)
     {
+    }
+
+    IExtraData* findData(UID uuid) const override
+    {
+        return extraData_.findData(uuid);
+    }
+
+    void addData(IExtraData* playerData) override
+    {
+        return extraData_.addData(playerData);
     }
 
     void restream() override

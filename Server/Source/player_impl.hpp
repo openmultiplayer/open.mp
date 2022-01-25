@@ -37,7 +37,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     GTAQuat rot_;
     HybridString<MAX_PLAYER_NAME + 1> name_;
     HybridString<16> serial_;
-    FlatHashMap<UID, IPlayerData*> playerData_;
+    ExtraDataProvider extraData_;
     WeaponSlots weapons_;
     Colour colour_;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
@@ -403,7 +403,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         PlayerState suspectState = suspect.getState();
         IVehicle* vehicle = nullptr;
-        IPlayerVehicleData* data = suspect.queryData<IPlayerVehicleData>();
+        IPlayerVehicleData* data = queryData<IPlayerVehicleData>(suspect);
         if (data) {
             vehicle = data->getVehicle();
         }
@@ -619,15 +619,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return interior_;
     }
 
-    IPlayerData* queryData(UID uuid) const override
+    IExtraData* findData(UID uuid) const override
     {
-        auto it = playerData_.find(uuid);
-        return it == playerData_.end() ? nullptr : it->second;
+        return extraData_.findData(uuid);
     }
 
-    void addData(IPlayerData* playerData) override
+    void addData(IExtraData* playerData) override
     {
-        playerData_.try_emplace(playerData->getUID(), playerData);
+        return extraData_.addData(playerData);
     }
 
     void streamInForPlayer(IPlayer& other) override;
@@ -1054,12 +1053,5 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rpc.Offset = offset;
         rpc.Count = count;
         PacketHelper::send(rpc, *this);
-    }
-
-    ~Player()
-    {
-        for (auto& v : playerData_) {
-            v.second->free();
-        }
     }
 };

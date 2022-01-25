@@ -49,6 +49,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     VehicleParams params;
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
+    ExtraDataProvider extraData_;
 
     Vehicle(VehiclesComponent* pool, const VehicleSpawnData& data)
         : pool(pool)
@@ -64,6 +65,16 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         for (IPlayer* player : entries) {
             streamOutForPlayer(*player);
         }
+    }
+
+    IExtraData* findData(UID uuid) const override
+    {
+        return extraData_.findData(uuid);
+    }
+
+    void addData(IExtraData* playerData) override
+    {
+        return extraData_.addData(playerData);
     }
 
     virtual int getVirtualWorld() const override

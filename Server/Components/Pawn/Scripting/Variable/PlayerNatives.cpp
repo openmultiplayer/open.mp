@@ -2,9 +2,9 @@
 #include "sdk.hpp"
 #include <iostream>
 
-#define GET_PLAYER_VAR_COMP(comp, ret)                                   \
-    IPlayerVariableData* comp = player.queryData<IPlayerVariableData>(); \
-    if (comp == nullptr)                                                 \
+#define GET_PLAYER_VAR_COMP(comp, ret)                                  \
+    IPlayerVariableData* comp = queryData<IPlayerVariableData>(player); \
+    if (comp == nullptr)                                                \
         return ret;
 
 SCRIPT_API(SetPVarInt, bool(IPlayer& player, const std::string& varname, int value))

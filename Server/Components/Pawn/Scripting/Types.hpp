@@ -103,7 +103,7 @@
     struct ParamLookup<type> {                                                                                                             \
         static type& ValReq(IPlayer& player, cell ref)                                                                                     \
         {                                                                                                                                  \
-            auto data = player.queryData<dataType>();                                                                                      \
+            auto data = queryData<dataType>(player);                                                                                       \
             if (data && data->valid(ref)) {                                                                                                \
                 return data->get(ref);                                                                                                     \
             }                                                                                                                              \
@@ -112,7 +112,7 @@
                                                                                                                                            \
         static type* Val(IPlayer& player, cell ref) noexcept                                                                               \
         {                                                                                                                                  \
-            auto data = player.queryData<dataType>();                                                                                      \
+            auto data = queryData<dataType>(player);                                                                                       \
             if (data && data->valid(ref)) {                                                                                                \
                 return &data->get(ref);                                                                                                    \
             }                                                                                                                              \

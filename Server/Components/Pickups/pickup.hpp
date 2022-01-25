@@ -12,6 +12,7 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
     Vector3 pos;
     bool isStatic;
     UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    ExtraDataProvider extraData_;
 
     Pickup(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic)
         : virtualWorld(virtualWorld)
@@ -20,6 +21,16 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
         , pos(pos)
         , isStatic(isStatic)
     {
+    }
+
+    IExtraData* findData(UID uuid) const override
+    {
+        return extraData_.findData(uuid);
+    }
+
+    void addData(IExtraData* playerData) override
+    {
+        return extraData_.addData(playerData);
     }
 
     void restream()
