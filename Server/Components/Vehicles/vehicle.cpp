@@ -9,7 +9,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
         return;
     }
 
-    int& numStreamed = player.queryData<PlayerVehicleData>()->numStreamed;
+    int& numStreamed = queryData<PlayerVehicleData>(player)->numStreamed;
     if (numStreamed >= MAX_STREAMED_VEHICLES) {
         return;
     }
@@ -81,7 +81,7 @@ void Vehicle::streamOutForClient(IPlayer& player)
     streamOut.VehicleID = poolID;
     PacketHelper::send(streamOut, player);
 
-    PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+    PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
     --data->numStreamed;
 
     ScopedPoolReleaseLock lock(*pool, *this);
@@ -118,7 +118,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
     if (driver != &player) {
         driver = &player;
-        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+        PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
         if (data->vehicle) {
             data->vehicle->unoccupy(player);
         }
@@ -140,7 +140,7 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
                 continue;
             }
             PlayerState state = comparable->getState();
-            if ((state == PlayerState_Driver || state == PlayerState_Passenger) && comparable->queryData<IPlayerVehicleData>()->getVehicle() == this) {
+            if ((state == PlayerState_Driver || state == PlayerState_Passenger) && queryData<IPlayerVehicleData>(comparable)->getVehicle() == this) {
                 return false;
             }
             if (glm::distance(comparable->getPosition(), pos) < playerDistance) {
@@ -176,7 +176,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
     velocity = trailerSync.Velocity;
     angularVelocity = trailerSync.TurnVelocity;
 
-    PlayerVehicleData* playerData = player.queryData<PlayerVehicleData>();
+    PlayerVehicleData* playerData = queryData<PlayerVehicleData>(player);
     Vehicle* vehicle = playerData->vehicle;
     if (!vehicle) {
         return false;
@@ -204,7 +204,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 
 bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player)
 {
-    PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+    PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
     // Only do heavy processing if switching vehicle or switching between driver and passenger
     if ((data->vehicle != this || driver == &player) && passengers.insert(&player).second) {
         if (data->vehicle) {
@@ -352,7 +352,7 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
 
     //We don't want to update player's vehicle right now, let sync packets do it.
-    //player.queryData<PlayerVehicleData>()->vehicle = this;
+    //queryData<PlayerVehicleData>(player)->vehicle = this;
 
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;

@@ -52,7 +52,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
             }
 
             StringView command = trim(packet.cmd);
-            PlayerConsoleData* pdata = peer.queryData<PlayerConsoleData>();
+            PlayerConsoleData* pdata = queryData<PlayerConsoleData>(peer);
 
             if (pdata->hasConsoleAccess()) {
                 if (command.size() < 1) {
@@ -94,9 +94,9 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         }
     } playerRconCommandHandler;
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerConsoleData();
+        player.addData(new PlayerConsoleData());
     }
 
     StringView componentName() const override

@@ -96,7 +96,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
                 return false;
             }
 
-            PlayerVehicleData* data = peer.queryData<PlayerVehicleData>();
+            PlayerVehicleData* data = queryData<PlayerVehicleData>(peer);
             Vehicle* vehicle = data->vehicle;
             if (vehicle && vehicle->driver == &peer) {
                 vehicle->setDamageStatus(onDamageStatus.PanelStatus, onDamageStatus.DoorStatus, onDamageStatus.LightStatus, onDamageStatus.TyreStatus, &peer);
@@ -217,7 +217,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
     {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
-            PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+            PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
             if (data->vehicle) {
                 data->vehicle->unoccupy(player);
             }
@@ -227,7 +227,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        PlayerVehicleData* data = player.queryData<PlayerVehicleData>();
+        PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
         if (data && data->vehicle) {
             data->vehicle->unoccupy(player);
         }
@@ -280,9 +280,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerVehicleData();
+        player.addData(new PlayerVehicleData());
     }
 
     StringView componentName() const override

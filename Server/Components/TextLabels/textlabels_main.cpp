@@ -140,9 +140,9 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         }
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerTextLabelData(player);
+        player.addData(new PlayerTextLabelData(player));
     }
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override
@@ -259,7 +259,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
             }
         }
         for (IPlayer* player : players->entries()) {
-            IPlayerTextLabelData* data = player->queryData<IPlayerTextLabelData>();
+            IPlayerTextLabelData* data = queryData<IPlayerTextLabelData>(player);
             if (data) {
                 for (IPlayerTextLabel* textLabel : *data) {
                     PlayerTextLabel* label = static_cast<PlayerTextLabel*>(textLabel);

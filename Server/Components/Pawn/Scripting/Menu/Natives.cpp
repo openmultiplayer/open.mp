@@ -57,7 +57,7 @@ SCRIPT_API(DisableMenuRow, bool(IMenu& menu, uint8_t row))
 
 SCRIPT_API(GetPlayerMenu, int(IPlayer& player))
 {
-    IPlayerMenuData* menuData = player.queryData<IPlayerMenuData>();
+    IPlayerMenuData* menuData = queryData<IPlayerMenuData>(player);
     return menuData->getMenuID();
 }
 

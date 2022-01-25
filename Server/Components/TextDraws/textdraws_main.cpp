@@ -130,7 +130,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
                 return false;
             }
 
-            PlayerTextDrawData* data = peer.queryData<PlayerTextDrawData>();
+            PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
             if (data && data->selecting) {
                 if (RPC.Invalid) {
                     self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
@@ -170,9 +170,9 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         }
     }
 
-    IPlayerData* onPlayerDataRequest(IPlayer& player) override
+    void onConnect(IPlayer& player) override
     {
-        return new PlayerTextDrawData(player);
+        player.addData(new PlayerTextDrawData(player));
     }
 
     IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() override
