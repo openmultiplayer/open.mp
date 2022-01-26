@@ -683,7 +683,7 @@ SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& lef
 SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
-    if (data.type == PlayerSurfingData::Type::Vehicle) {
+    if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Vehicle) {
         return data.ID;
     }
     return INVALID_VEHICLE_ID;
@@ -692,7 +692,7 @@ SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
 SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
-    if (data.type == PlayerSurfingData::Type::Object) {
+    if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Object) {
         return data.ID;
     }
     return INVALID_OBJECT_ID;
