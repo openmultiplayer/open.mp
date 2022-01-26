@@ -228,7 +228,7 @@ inline cell AMX_NATIVE_CALL pawn_Script_Call(AMX* amx, cell const* params)
         }
     }
     cell
-        ret;
+        ret = 0;
     if (amx_Exec(amx, &ret, index) != AMX_ERR_NONE) {
         ret = 0;
     }
@@ -298,7 +298,7 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallOne(AMX* amx, cell const* params)
         }
     }
     cell
-        ret;
+        ret = 0;
     if (amx_Exec(amx, &ret, index) != AMX_ERR_NONE) {
         ret = 0;
     }
