@@ -324,10 +324,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             // Filters ~k, ~K (uppercase), and %. Replace with #.
-            std::regex filter = std::regex("(~(k|K)|%)");
+            std::regex filter = std::regex("~(k|K)");
             // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
             std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            String filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filterColourNodes, "");
+            String filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filter, "#");
+            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
 
             bool send = self.eventDispatcher.stopAtFalse(
                 [&peer, &filteredMessage](PlayerEventHandler* handler) {
