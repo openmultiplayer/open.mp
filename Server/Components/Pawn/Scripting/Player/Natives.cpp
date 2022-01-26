@@ -98,9 +98,13 @@ SCRIPT_API(StopAudioStreamForPlayer, bool(IPlayer& player))
     return true;
 }
 
-SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer& killee, int weapon))
+SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer* killee, int weapon))
 {
-    PawnManager::Get()->players->sendDeathMessageToAll(killer, killee, weapon);
+    if (killee) {
+        PawnManager::Get()->players->sendDeathMessageToAll(killer, *killee, weapon);
+    } else {
+        PawnManager::Get()->players->sendEmptyDeathMessageToAll();
+    }
     return true;
 }
 
@@ -904,9 +908,13 @@ SCRIPT_API(BanEx, bool(IPlayer& player, std::string const& reason))
     return true;
 }
 
-SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer& killee, int weapon))
+SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer* killee, int weapon))
 {
-    player.sendDeathMessage(killee, killer, weapon);
+    if (killee) {
+        player.sendDeathMessage(*killee, killer, weapon);
+    } else {
+        player.sendEmptyDeathMessage();
+    }
     return true;
 }
 
