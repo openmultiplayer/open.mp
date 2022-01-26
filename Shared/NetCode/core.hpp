@@ -1424,7 +1424,10 @@ namespace Packet {
             uint16_t surfingID;
             bs.readUINT16(surfingID);
             SurfingData.ID = surfingID;
-            if (SurfingData.ID < VEHICLE_POOL_SIZE) {
+
+            if (SurfingData.ID < 1) {
+                SurfingData.type = PlayerSurfingData::Type::None;
+            } else if (SurfingData.ID < VEHICLE_POOL_SIZE) {
                 SurfingData.type = PlayerSurfingData::Type::Vehicle;
             } else if (SurfingData.ID < VEHICLE_POOL_SIZE + OBJECT_POOL_SIZE) {
                 SurfingData.ID -= VEHICLE_POOL_SIZE;
