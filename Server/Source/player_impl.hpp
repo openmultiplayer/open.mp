@@ -243,6 +243,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(sendDeathMessageRPC, *this);
     }
 
+    void sendEmptyDeathMessage() override {
+        NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+        sendDeathMessageRPC.PlayerID = PLAYER_POOL_SIZE;
+        sendDeathMessageRPC.HasKiller = false;
+        sendDeathMessageRPC.reason = 0;
+        PacketHelper::send(sendDeathMessageRPC, *this);
+    }
+
     void setWidescreen(bool enable) override
     {
         widescreen_ = enable;

@@ -1260,6 +1260,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PacketHelper::broadcast(sendDeathMessageRPC, *this);
     }
 
+    void sendEmptyDeathMessageToAll() override {
+        NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
+        sendDeathMessageRPC.PlayerID = PLAYER_POOL_SIZE;
+        sendDeathMessageRPC.HasKiller = false;
+        sendDeathMessageRPC.reason = 0;
+        PacketHelper::broadcast(sendDeathMessageRPC, *this);
+    }
+
     void createExplosionForAll(Vector3 vec, int type, float radius) override
     {
         NetCode::RPC::CreateExplosion createExplosionRPC;
