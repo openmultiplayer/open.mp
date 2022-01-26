@@ -850,7 +850,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         char iso8601[32] = { 0 };
         if (EnableLogTimestamp && !LogTimestampFormat.empty()) {
             std::time_t now = WorldTime::to_time_t(WorldTime::now());
-            std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::gmtime(&now));
+            std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::localtime(&now));
         }
 
         char main[4096];
