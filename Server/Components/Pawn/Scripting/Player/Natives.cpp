@@ -684,7 +684,10 @@ SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
     if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Vehicle) {
-        return data.ID;
+        IVehiclesComponent* vehicles = PawnManager::Get()->vehicles;
+        if (vehicles && vehicles->valid(data.ID)) {
+            return data.ID;
+        }
     }
     return INVALID_VEHICLE_ID;
 }
@@ -693,7 +696,10 @@ SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
     if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Object) {
-        return data.ID;
+        IObjectsComponent* objects = PawnManager::Get()->objects;
+        if (objects && objects->valid(data.ID)) {
+            return data.ID;
+        }
     }
     return INVALID_OBJECT_ID;
 }
