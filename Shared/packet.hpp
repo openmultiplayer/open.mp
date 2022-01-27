@@ -98,6 +98,16 @@ struct PacketHelper {
         }
     }
 
+    /// Broadcast a sync packet
+    template <typename Packet, typename E = std::enable_if_t<is_network_packet<Packet>::value>>
+    static void broadcastSyncPacket(const Packet& packet, IPlayer& player)
+    {
+        static_assert(Packet::PacketType == NetworkPacketType::Packet, "broadcastSyncPacket can only be used with NetworkPacketType::Packet");
+        NetworkBitStream bs;
+        packet.write(bs);
+        return player.broadcastSyncPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
+    }
+
     /// Attempt to send a packet derived from NetworkPacketBase to all players in the player pool
     /// @param packet The packet to send
     /// @param players The player pool
