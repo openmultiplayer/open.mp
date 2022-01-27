@@ -7,7 +7,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PutPlayerInVehicle : NetworkPacketBase<70, NetworkPacketType::RPC> {
+    struct PutPlayerInVehicle : NetworkPacketBase<70, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         int SeatID;
@@ -24,7 +24,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehicleHealth : NetworkPacketBase<147, NetworkPacketType::RPC> {
+    struct SetVehicleHealth : NetworkPacketBase<147, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         float health;
@@ -41,7 +41,7 @@ namespace RPC {
         }
     };
 
-    struct LinkVehicleToInterior : NetworkPacketBase<65, NetworkPacketType::RPC> {
+    struct LinkVehicleToInterior : NetworkPacketBase<65, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         int InteriorID;
@@ -58,7 +58,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehicleZAngle : NetworkPacketBase<160, NetworkPacketType::RPC> {
+    struct SetVehicleZAngle : NetworkPacketBase<160, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         float angle;
@@ -75,7 +75,7 @@ namespace RPC {
         }
     };
 
-    struct RemovePlayerFromVehicle : NetworkPacketBase<71, NetworkPacketType::RPC> {
+    struct RemovePlayerFromVehicle : NetworkPacketBase<71, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         bool read(NetworkBitStream& bs)
         {
@@ -87,7 +87,7 @@ namespace RPC {
         }
     };
 
-    struct StreamInVehicle : NetworkPacketBase<164, NetworkPacketType::RPC> {
+    struct StreamInVehicle : NetworkPacketBase<164, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         int ModelID;
@@ -140,7 +140,7 @@ namespace RPC {
         }
     };
 
-    struct StreamOutVehicle : NetworkPacketBase<165, NetworkPacketType::RPC> {
+    struct StreamOutVehicle : NetworkPacketBase<165, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
 
@@ -155,7 +155,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerEnterVehicle : NetworkPacketBase<26, NetworkPacketType::RPC> {
+    struct OnPlayerEnterVehicle : NetworkPacketBase<26, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         uint8_t Passenger;
@@ -171,7 +171,7 @@ namespace RPC {
         }
     };
 
-    struct EnterVehicle : NetworkPacketBase<26, NetworkPacketType::RPC> {
+    struct EnterVehicle : NetworkPacketBase<26, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int PlayerID;
         int VehicleID;
@@ -190,7 +190,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerExitVehicle : NetworkPacketBase<154, NetworkPacketType::RPC> {
+    struct OnPlayerExitVehicle : NetworkPacketBase<154, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
 
@@ -205,7 +205,7 @@ namespace RPC {
         }
     };
 
-    struct ExitVehicle : NetworkPacketBase<154, NetworkPacketType::RPC> {
+    struct ExitVehicle : NetworkPacketBase<154, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int PlayerID;
         int VehicleID;
@@ -222,7 +222,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehiclePlate : NetworkPacketBase<123, NetworkPacketType::RPC> {
+    struct SetVehiclePlate : NetworkPacketBase<123, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         HybridString<16> plate;
@@ -239,7 +239,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehiclePosition : NetworkPacketBase<159, NetworkPacketType::RPC> {
+    struct SetVehiclePosition : NetworkPacketBase<159, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         Vector3 position;
@@ -256,7 +256,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehicleDamageStatus : NetworkPacketBase<106, NetworkPacketType::RPC> {
+    struct SetVehicleDamageStatus : NetworkPacketBase<106, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         uint32_t DoorStatus;
@@ -283,7 +283,7 @@ namespace RPC {
         }
     };
 
-    struct RemoveVehicleComponent : NetworkPacketBase<57, NetworkPacketType::RPC> {
+    struct RemoveVehicleComponent : NetworkPacketBase<57, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         int Component;
@@ -300,7 +300,7 @@ namespace RPC {
         }
     };
 
-    struct VehicleDeath : NetworkPacketBase<136, NetworkPacketType::RPC> {
+    struct VehicleDeath : NetworkPacketBase<136, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         bool read(NetworkBitStream& bs)
@@ -313,7 +313,7 @@ namespace RPC {
         }
     };
 
-    struct AttachTrailer : NetworkPacketBase<148, NetworkPacketType::RPC> {
+    struct AttachTrailer : NetworkPacketBase<148, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         int TrailerID;
@@ -330,7 +330,7 @@ namespace RPC {
         }
     };
 
-    struct DetachTrailer : NetworkPacketBase<149, NetworkPacketType::RPC> {
+    struct DetachTrailer : NetworkPacketBase<149, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
 
@@ -345,7 +345,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehicleVelocity : NetworkPacketBase<91, NetworkPacketType::RPC> {
+    struct SetVehicleVelocity : NetworkPacketBase<91, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         uint8_t Type;
         Vector3 Velocity;
@@ -362,7 +362,7 @@ namespace RPC {
         }
     };
 
-    struct SetVehicleParams : NetworkPacketBase<24, NetworkPacketType::RPC> {
+    struct SetVehicleParams : NetworkPacketBase<24, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         VehicleParams params;
@@ -396,7 +396,7 @@ namespace RPC {
 }
 
 namespace Packet {
-    struct PlayerVehicleSync : NetworkPacketBase<200, NetworkPacketType::Packet>, VehicleDriverSyncPacket {
+    struct PlayerVehicleSync : NetworkPacketBase<200, NetworkPacketType::Packet, OrderingChannel_SyncPacket>, VehicleDriverSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
@@ -445,7 +445,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::Packet>, VehiclePassengerSyncPacket {
+    struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::Packet, OrderingChannel_SyncPacket>, VehiclePassengerSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
@@ -473,7 +473,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerUnoccupiedSync : NetworkPacketBase<209, NetworkPacketType::Packet>, VehicleUnoccupiedSyncPacket {
+    struct PlayerUnoccupiedSync : NetworkPacketBase<209, NetworkPacketType::Packet, OrderingChannel_SyncPacket>, VehicleUnoccupiedSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {
@@ -502,7 +502,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerTrailerSync : NetworkPacketBase<210, NetworkPacketType::Packet>, VehicleTrailerSyncPacket {
+    struct PlayerTrailerSync : NetworkPacketBase<210, NetworkPacketType::Packet, OrderingChannel_SyncPacket>, VehicleTrailerSyncPacket {
 
         bool read(NetworkBitStream& bs)
         {

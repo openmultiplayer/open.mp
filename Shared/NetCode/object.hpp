@@ -7,7 +7,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct SetPlayerObjectMaterial : NetworkPacketBase<84, NetworkPacketType::RPC> {
+    struct SetPlayerObjectMaterial : NetworkPacketBase<84, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         int MaterialID;
         ObjectMaterialData& MaterialData;
@@ -46,7 +46,7 @@ namespace RPC {
         }
     };
 
-    struct CreateObject : NetworkPacketBase<44, NetworkPacketType::RPC> {
+    struct CreateObject : NetworkPacketBase<44, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         int ModelID;
         Vector3 Position;
@@ -114,7 +114,7 @@ namespace RPC {
         }
     };
 
-    struct DestroyObject : NetworkPacketBase<47, NetworkPacketType::RPC> {
+    struct DestroyObject : NetworkPacketBase<47, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
 
         bool read(NetworkBitStream& bs)
@@ -128,7 +128,7 @@ namespace RPC {
         }
     };
 
-    struct MoveObject : NetworkPacketBase<99, NetworkPacketType::RPC> {
+    struct MoveObject : NetworkPacketBase<99, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         Vector3 CurrentPosition;
         ObjectMoveData MoveData;
@@ -148,7 +148,7 @@ namespace RPC {
         }
     };
 
-    struct StopObject : NetworkPacketBase<122, NetworkPacketType::RPC> {
+    struct StopObject : NetworkPacketBase<122, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
 
         bool read(NetworkBitStream& bs)
@@ -162,7 +162,7 @@ namespace RPC {
         }
     };
 
-    struct SetObjectPosition : NetworkPacketBase<45, NetworkPacketType::RPC> {
+    struct SetObjectPosition : NetworkPacketBase<45, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         Vector3 Position;
 
@@ -178,7 +178,7 @@ namespace RPC {
         }
     };
 
-    struct SetObjectRotation : NetworkPacketBase<46, NetworkPacketType::RPC> {
+    struct SetObjectRotation : NetworkPacketBase<46, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         Vector3 Rotation;
 
@@ -194,7 +194,7 @@ namespace RPC {
         }
     };
 
-    struct AttachObjectToPlayer : NetworkPacketBase<75, NetworkPacketType::RPC> {
+    struct AttachObjectToPlayer : NetworkPacketBase<75, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         int PlayerID;
         Vector3 Offset;
@@ -214,7 +214,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerAttachedObject : NetworkPacketBase<113, NetworkPacketType::RPC> {
+    struct SetPlayerAttachedObject : NetworkPacketBase<113, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         int Index;
         bool Create;
@@ -242,7 +242,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerBeginObjectSelect : NetworkPacketBase<27, NetworkPacketType::RPC> {
+    struct PlayerBeginObjectSelect : NetworkPacketBase<27, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -253,7 +253,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerSelectObject : NetworkPacketBase<27, NetworkPacketType::RPC> {
+    struct OnPlayerSelectObject : NetworkPacketBase<27, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int SelectType;
         int ObjectID;
         int Model;
@@ -272,7 +272,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerCancelObjectEdit : NetworkPacketBase<28, NetworkPacketType::RPC> {
+    struct PlayerCancelObjectEdit : NetworkPacketBase<28, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -283,7 +283,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerBeginObjectEdit : NetworkPacketBase<117, NetworkPacketType::RPC> {
+    struct PlayerBeginObjectEdit : NetworkPacketBase<117, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerObject;
         int ObjectID;
 
@@ -299,7 +299,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerEditObject : NetworkPacketBase<117, NetworkPacketType::RPC> {
+    struct OnPlayerEditObject : NetworkPacketBase<117, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerObject;
         int ObjectID;
         int Response;
@@ -320,7 +320,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerBeginAttachedObjectEdit : NetworkPacketBase<116, NetworkPacketType::RPC> {
+    struct PlayerBeginAttachedObjectEdit : NetworkPacketBase<116, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         unsigned Index;
 
         bool read(NetworkBitStream& bs)
@@ -334,7 +334,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerEditAttachedObject : NetworkPacketBase<116, NetworkPacketType::RPC> {
+    struct OnPlayerEditAttachedObject : NetworkPacketBase<116, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         unsigned Response;
         unsigned Index;
         ObjectAttachmentSlotData AttachmentData;

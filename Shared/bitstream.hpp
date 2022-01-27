@@ -19,28 +19,22 @@
 
 #include "gtaquat.hpp"
 #include "types.hpp"
-#include <assert.h>
-#include <float.h>
-#include <math.h>
+#include <cassert>
+#include <cmath>
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#endif
+constexpr int bitsToBytes(int bits) {
+    return (((bits) + 7) >> 3);
+}
 
-/// Given a number of bits, return how many bytes are needed to represent that.
-#ifndef BITS_TO_BYTES
-#define BITS_TO_BYTES(x) (((x) + 7) >> 3)
-#endif
-#ifndef BYTES_TO_BITS
-#define BYTES_TO_BITS(x) ((x) << 3)
-#endif
-
-#define MAGNITUDE_EPSILON 0.00001f
-
-/// Arbitrary size, just picking something likely to be larger than most packets
-#define NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE 256
+constexpr int bytesToBits(int bytes) {
+    return ((bytes) << 3);
+}
 
 class NetworkBitStream {
+    /// Arbitrary size, just picking something likely to be larger than most packets
+    constexpr static const size_t StackAllocationSize = 256;
+    constexpr static const float CompressedVecMagnitudeEpsilon = 0.00001f;
+
 public:
     /// Default Constructor
     NetworkBitStream();
@@ -316,7 +310,7 @@ public:
     template <typename T, typename U = std::enable_if_t<std::is_integral_v<T>, T>>
     inline bool readArray(Span<T> data)
     {
-        if (data.size() * sizeof(T) > unsigned(BITS_TO_BYTES(GetNumberOfUnreadBits()))) {
+        if (data.size() * sizeof(T) > unsigned(bitsToBytes(GetNumberOfUnreadBits()))) {
             return false;
         }
 
@@ -350,7 +344,7 @@ public:
         if (!Read(len)) {
             return false;
         }
-        if (len > unsigned(BITS_TO_BYTES(GetNumberOfUnreadBits()))) {
+        if (len > unsigned(bitsToBytes(GetNumberOfUnreadBits()))) {
             return false;
         }
         data.reserve(len);
@@ -420,7 +414,7 @@ public:
     inline int GetWriteOffset(void) const { return numberOfBitsUsed; }
 
     ///Returns the length in bytes of the stream
-    inline int GetNumberOfBytesUsed(void) const { return BITS_TO_BYTES(numberOfBitsUsed); }
+    inline int GetNumberOfBytesUsed(void) const { return bitsToBytes(numberOfBitsUsed); }
 
     ///Returns the number of bits into the stream that we have read
     inline int GetReadOffset(void) const { return readOffset; }
@@ -772,8 +766,8 @@ private:
     /// true if the internal buffer is copy of the data passed to the constructor
     bool copyData;
 
-    /// BitStreams that use less than NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE use the stack, rather than the heap to store data.  It switches over if NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE is exceeded
-    unsigned char stackData[NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE];
+    /// BitStreams that use less than StackAllocationSize use the stack, rather than the heap to store data.  It switches over if StackAllocationSize is exceeded
+    unsigned char stackData[StackAllocationSize];
 };
 
 template <class templateType>
@@ -901,9 +895,6 @@ inline bool NetworkBitStream::SerializeBits(bool writeToBitstream, unsigned char
 template <class templateType>
 inline void NetworkBitStream::Write(templateType var)
 {
-#ifdef _MSC_VER
-#pragma warning(disable : 4127) // conditional expression is constant
-#endif
     WriteBits((unsigned char*)&var, sizeof(templateType) * 8, true);
 }
 
@@ -928,9 +919,6 @@ inline void NetworkBitStream::WriteDelta(templateType currentValue, templateType
 template <>
 inline void NetworkBitStream::WriteDelta(bool currentValue, bool lastValue)
 {
-#ifdef _MSC_VER
-#pragma warning(disable : 4100) // warning C4100: 'lastValue' : unreferenced formal parameter
-#endif
     Write(currentValue);
 }
 
@@ -951,9 +939,6 @@ inline void NetworkBitStream::WriteDelta(templateType currentValue)
 template <class templateType>
 inline void NetworkBitStream::WriteCompressed(templateType var)
 {
-#ifdef _MSC_VER
-#pragma warning(disable : 4127) // conditional expression is constant
-#endif
     WriteCompressed((unsigned char*)&var, sizeof(templateType) * 8, true);
 }
 
@@ -1014,9 +999,6 @@ inline void NetworkBitStream::WriteCompressedDelta(templateType currentValue, te
 template <>
 inline void NetworkBitStream::WriteCompressedDelta(bool currentValue, bool lastValue)
 {
-#ifdef _MSC_VER
-#pragma warning(disable : 4100) // warning C4100: 'lastValue' : unreferenced formal parameter
-#endif
     Write(currentValue);
 }
 
@@ -1040,9 +1022,6 @@ inline void NetworkBitStream::WriteCompressedDelta(bool currentValue)
 template <class templateType>
 inline bool NetworkBitStream::Read(templateType& var)
 {
-#ifdef _MSC_VER
-#pragma warning(disable : 4127) // conditional expression is constant
-#endif
     return ReadBits((unsigned char*)&var, sizeof(templateType) * 8, true);
 }
 
@@ -1095,9 +1074,6 @@ inline bool NetworkBitStream::ReadDelta(bool& var)
 template <class templateType>
 inline bool NetworkBitStream::ReadCompressed(templateType& var)
 {
-#ifdef _MSC_VER
-#pragma warning(disable : 4127) // conditional expression is constant
-#endif
     return ReadCompressed((unsigned char*)&var, sizeof(templateType) * 8, true);
 }
 
@@ -1232,10 +1208,6 @@ void NetworkBitStream::WriteOrthMatrix(
     double qx;
     double qy;
     double qz;
-
-#ifdef _MSC_VER
-#pragma warning(disable : 4100) // m10, m01 : unreferenced formal parameter
-#endif
 
     // Convert matrix to quat
     // http://www.euclideanspace.com/maths/geometry/rotations/conversions/matrixToQuaternion/
@@ -1420,7 +1392,7 @@ inline void NetworkBitStream::writeCompressedVEC3(Vector3 data)
 {
     float magnitude = glm::length(data);
     Write(magnitude);
-    if (magnitude > MAGNITUDE_EPSILON) {
+    if (magnitude > CompressedVecMagnitudeEpsilon) {
         data /= magnitude;
         WriteCompressed(data.x);
         WriteCompressed(data.y);
@@ -1437,7 +1409,3 @@ inline bool NetworkBitStream::readBIT(bool& data)
 {
     return Read<bool>(data);
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif

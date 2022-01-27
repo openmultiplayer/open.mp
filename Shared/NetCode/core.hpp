@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct Invalid : NetworkPacketBase<0, NetworkPacketType::RPC> {
+    struct Invalid : NetworkPacketBase<0, NetworkPacketType::RPC, OrderingChannel_Internal> {
         bool read(NetworkBitStream& bs)
         {
             assert(false);
@@ -19,7 +19,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerConnect : NetworkPacketBase<25, NetworkPacketType::RPC> {
+    struct PlayerConnect : NetworkPacketBase<25, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint32_t VersionNumber;
         uint8_t Modded;
         HybridString<MAX_PLAYER_NAME + 1> Name;
@@ -48,7 +48,7 @@ namespace RPC {
         }
     };
 
-    struct NPCConnect : NetworkPacketBase<54, NetworkPacketType::RPC> {
+    struct NPCConnect : NetworkPacketBase<54, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint32_t VersionNumber;
         uint8_t Modded;
         HybridString<MAX_PLAYER_NAME + 1> Name;
@@ -63,7 +63,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerJoin : NetworkPacketBase<137, NetworkPacketType::RPC> {
+    struct PlayerJoin : NetworkPacketBase<137, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         Colour Col;
         bool IsNPC;
@@ -88,7 +88,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerQuit : NetworkPacketBase<138, NetworkPacketType::RPC> {
+    struct PlayerQuit : NetworkPacketBase<138, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint8_t Reason;
 
@@ -105,7 +105,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerInit : NetworkPacketBase<139, NetworkPacketType::RPC> {
+    struct PlayerInit : NetworkPacketBase<139, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool EnableZoneNames;
         bool UsePlayerPedAnims;
         bool AllowInteriorWeapons;
@@ -200,7 +200,7 @@ namespace RPC {
         }
     };
 
-    struct GivePlayerWeapon : NetworkPacketBase<22, NetworkPacketType::RPC> {
+    struct GivePlayerWeapon : NetworkPacketBase<22, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint32_t Weapon;
         uint32_t Ammo;
 
@@ -217,7 +217,7 @@ namespace RPC {
         }
     };
 
-    struct ResetPlayerWeapons : NetworkPacketBase<21, NetworkPacketType::RPC> {
+    struct ResetPlayerWeapons : NetworkPacketBase<21, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return true;
@@ -228,7 +228,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerArmedWeapon : NetworkPacketBase<67, NetworkPacketType::RPC> {
+    struct SetPlayerArmedWeapon : NetworkPacketBase<67, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint32_t Weapon;
 
         bool read(NetworkBitStream& bs)
@@ -242,7 +242,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerChatBubble : NetworkPacketBase<59, NetworkPacketType::RPC> {
+    struct SetPlayerChatBubble : NetworkPacketBase<59, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         Colour Col;
         float DrawDistance;
@@ -259,7 +259,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerStreamIn : NetworkPacketBase<32, NetworkPacketType::RPC> {
+    struct PlayerStreamIn : NetworkPacketBase<32, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint8_t Team;
         uint32_t Skin;
@@ -287,7 +287,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerStreamOut : NetworkPacketBase<163, NetworkPacketType::RPC> {
+    struct PlayerStreamOut : NetworkPacketBase<163, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
 
         bool read(NetworkBitStream& bs)
@@ -301,7 +301,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerName : NetworkPacketBase<11, NetworkPacketType::RPC> {
+    struct SetPlayerName : NetworkPacketBase<11, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         HybridString<MAX_PLAYER_NAME + 1> Name;
         uint8_t Success;
@@ -319,7 +319,7 @@ namespace RPC {
         }
     };
 
-    struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC> {
+    struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC, OrderingChannel_Unordered> {
         HybridString<128> Message;
         Colour Col;
 
@@ -335,7 +335,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC> {
+    struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_Unordered> {
 
         HybridString<128> message;
         bool read(NetworkBitStream& bs)
@@ -348,7 +348,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC> {
+    struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_Unordered> {
         int PlayerID;
         HybridString<128> message;
         bool read(NetworkBitStream& bs)
@@ -363,7 +363,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC> {
+    struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_Unordered> {
 
         HybridString<128> message;
         bool read(NetworkBitStream& bs)
@@ -376,7 +376,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC> {
+    struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_Unordered> {
         HybridString<128> message;
 
         bool read(NetworkBitStream& bs)
@@ -390,7 +390,7 @@ namespace RPC {
         }
     };
 
-    struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC> {
+    struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC, OrderingChannel_Unordered> {
         bool HasKiller;
         int KillerID;
         int PlayerID;
@@ -409,7 +409,7 @@ namespace RPC {
         }
     };
 
-    struct SendGameTimeUpdate : NetworkPacketBase<60, NetworkPacketType::RPC> {
+    struct SendGameTimeUpdate : NetworkPacketBase<60, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         long long Time;
 
         bool read(NetworkBitStream& bs)
@@ -423,7 +423,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerWeather : NetworkPacketBase<152, NetworkPacketType::RPC> {
+    struct SetPlayerWeather : NetworkPacketBase<152, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t WeatherID;
 
         bool read(NetworkBitStream& bs)
@@ -437,7 +437,7 @@ namespace RPC {
         }
     };
 
-    struct SetWorldBounds : NetworkPacketBase<17, NetworkPacketType::RPC> {
+    struct SetWorldBounds : NetworkPacketBase<17, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector4 coords;
 
         bool read(NetworkBitStream& bs)
@@ -451,7 +451,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerColor : NetworkPacketBase<72, NetworkPacketType::RPC> {
+    struct SetPlayerColor : NetworkPacketBase<72, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         Colour Col;
 
@@ -467,7 +467,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerPosition : NetworkPacketBase<12, NetworkPacketType::RPC> {
+    struct SetPlayerPosition : NetworkPacketBase<12, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 Pos;
 
         bool read(NetworkBitStream& bs)
@@ -481,7 +481,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerCameraPosition : NetworkPacketBase<157, NetworkPacketType::RPC> {
+    struct SetPlayerCameraPosition : NetworkPacketBase<157, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 Pos;
 
         bool read(NetworkBitStream& bs)
@@ -495,7 +495,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerCameraLookAt : NetworkPacketBase<158, NetworkPacketType::RPC> {
+    struct SetPlayerCameraLookAt : NetworkPacketBase<158, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 Pos;
         uint8_t cutType;
 
@@ -510,7 +510,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerCameraBehindPlayer : NetworkPacketBase<162, NetworkPacketType::RPC> {
+    struct SetPlayerCameraBehindPlayer : NetworkPacketBase<162, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -521,7 +521,7 @@ namespace RPC {
         }
     };
 
-    struct InterpolateCamera : NetworkPacketBase<82, NetworkPacketType::RPC> {
+    struct InterpolateCamera : NetworkPacketBase<82, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PosSet;
         Vector3 From;
         Vector3 To;
@@ -543,7 +543,7 @@ namespace RPC {
         }
     };
 
-    struct AttachCameraToObject : NetworkPacketBase<81, NetworkPacketType::RPC> {
+    struct AttachCameraToObject : NetworkPacketBase<81, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
 
         bool read(NetworkBitStream& bs)
@@ -557,7 +557,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerPositionFindZ : NetworkPacketBase<13, NetworkPacketType::RPC> {
+    struct SetPlayerPositionFindZ : NetworkPacketBase<13, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 Pos;
 
         bool read(NetworkBitStream& bs)
@@ -571,7 +571,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerFacingAngle : NetworkPacketBase<19, NetworkPacketType::RPC> {
+    struct SetPlayerFacingAngle : NetworkPacketBase<19, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         float Angle;
 
         bool read(NetworkBitStream& bs)
@@ -585,7 +585,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerTeam : NetworkPacketBase<69, NetworkPacketType::RPC> {
+    struct SetPlayerTeam : NetworkPacketBase<69, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint8_t Team;
 
@@ -601,7 +601,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerFightingStyle : NetworkPacketBase<89, NetworkPacketType::RPC> {
+    struct SetPlayerFightingStyle : NetworkPacketBase<89, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint8_t Style;
 
@@ -617,7 +617,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerSkillLevel : NetworkPacketBase<34, NetworkPacketType::RPC> {
+    struct SetPlayerSkillLevel : NetworkPacketBase<34, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint32_t SkillType;
         uint16_t SkillLevel;
@@ -635,7 +635,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerSkin : NetworkPacketBase<153, NetworkPacketType::RPC> {
+    struct SetPlayerSkin : NetworkPacketBase<153, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint32_t Skin;
 
@@ -651,7 +651,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerHealth : NetworkPacketBase<14, NetworkPacketType::RPC> {
+    struct SetPlayerHealth : NetworkPacketBase<14, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         float Health;
 
         bool read(NetworkBitStream& bs)
@@ -665,7 +665,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerArmour : NetworkPacketBase<66, NetworkPacketType::RPC> {
+    struct SetPlayerArmour : NetworkPacketBase<66, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         float Armour;
 
         bool read(NetworkBitStream& bs)
@@ -679,7 +679,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerSpecialAction : NetworkPacketBase<88, NetworkPacketType::RPC> {
+    struct SetPlayerSpecialAction : NetworkPacketBase<88, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int Action;
 
         bool read(NetworkBitStream& bs)
@@ -693,7 +693,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerVelocity : NetworkPacketBase<90, NetworkPacketType::RPC> {
+    struct SetPlayerVelocity : NetworkPacketBase<90, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 Velocity;
 
         bool read(NetworkBitStream& bs)
@@ -707,7 +707,7 @@ namespace RPC {
         }
     };
 
-    struct ApplyPlayerAnimation : NetworkPacketBase<86, NetworkPacketType::RPC> {
+    struct ApplyPlayerAnimation : NetworkPacketBase<86, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         const AnimationData& Anim;
 
@@ -735,7 +735,7 @@ namespace RPC {
         }
     };
 
-    struct ClearPlayerAnimations : NetworkPacketBase<87, NetworkPacketType::RPC> {
+    struct ClearPlayerAnimations : NetworkPacketBase<87, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
 
         bool read(NetworkBitStream& bs)
@@ -749,7 +749,7 @@ namespace RPC {
         }
     };
 
-    struct TogglePlayerControllable : NetworkPacketBase<15, NetworkPacketType::RPC> {
+    struct TogglePlayerControllable : NetworkPacketBase<15, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Enable;
 
         bool read(NetworkBitStream& bs)
@@ -763,7 +763,7 @@ namespace RPC {
         }
     };
 
-    struct TogglePlayerSpectating : NetworkPacketBase<124, NetworkPacketType::RPC> {
+    struct TogglePlayerSpectating : NetworkPacketBase<124, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Enable;
 
         bool read(NetworkBitStream& bs)
@@ -777,7 +777,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerPlaySound : NetworkPacketBase<16, NetworkPacketType::RPC> {
+    struct PlayerPlaySound : NetworkPacketBase<16, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint32_t SoundID;
         Vector3 Position;
 
@@ -793,7 +793,7 @@ namespace RPC {
         }
     };
 
-    struct GivePlayerMoney : NetworkPacketBase<18, NetworkPacketType::RPC> {
+    struct GivePlayerMoney : NetworkPacketBase<18, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int32_t Money;
 
         bool read(NetworkBitStream& bs)
@@ -807,7 +807,7 @@ namespace RPC {
         }
     };
 
-    struct ResetPlayerMoney : NetworkPacketBase<20, NetworkPacketType::RPC> {
+    struct ResetPlayerMoney : NetworkPacketBase<20, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -818,7 +818,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerTime : NetworkPacketBase<29, NetworkPacketType::RPC> {
+    struct SetPlayerTime : NetworkPacketBase<29, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t Hour;
         uint8_t Minute;
 
@@ -834,7 +834,7 @@ namespace RPC {
         }
     };
 
-    struct TogglePlayerClock : NetworkPacketBase<30, NetworkPacketType::RPC> {
+    struct TogglePlayerClock : NetworkPacketBase<30, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Toggle;
 
         bool read(NetworkBitStream& bs)
@@ -848,7 +848,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerDeath : NetworkPacketBase<53, NetworkPacketType::RPC> {
+    struct OnPlayerDeath : NetworkPacketBase<53, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         uint8_t Reason;
         uint16_t KillerID;
@@ -864,7 +864,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerCameraTarget : NetworkPacketBase<168, NetworkPacketType::RPC> {
+    struct OnPlayerCameraTarget : NetworkPacketBase<168, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int TargetObjectID;
         int TargetVehicleID;
@@ -884,7 +884,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerDeath : NetworkPacketBase<166, NetworkPacketType::RPC> {
+    struct PlayerDeath : NetworkPacketBase<166, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
 
         bool read(NetworkBitStream& bs)
@@ -898,7 +898,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerShopName : NetworkPacketBase<33, NetworkPacketType::RPC> {
+    struct SetPlayerShopName : NetworkPacketBase<33, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         StaticString<0x20> Name;
 
         bool read(NetworkBitStream& bs)
@@ -912,7 +912,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerDrunkLevel : NetworkPacketBase<35, NetworkPacketType::RPC> {
+    struct SetPlayerDrunkLevel : NetworkPacketBase<35, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int32_t Level;
 
         bool read(NetworkBitStream& bs)
@@ -926,7 +926,7 @@ namespace RPC {
         }
     };
 
-    struct PlayAudioStreamForPlayer : NetworkPacketBase<41, NetworkPacketType::RPC> {
+    struct PlayAudioStreamForPlayer : NetworkPacketBase<41, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         HybridString<128> URL;
         Vector3 Position;
         float Distance;
@@ -946,7 +946,7 @@ namespace RPC {
         }
     };
 
-    struct PlayCrimeReport : NetworkPacketBase<112, NetworkPacketType::RPC> {
+    struct PlayCrimeReport : NetworkPacketBase<112, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int Suspect;
         int InVehicle;
         int VehicleModel;
@@ -970,7 +970,7 @@ namespace RPC {
         }
     };
 
-    struct StopAudioStreamForPlayer : NetworkPacketBase<42, NetworkPacketType::RPC> {
+    struct StopAudioStreamForPlayer : NetworkPacketBase<42, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -981,7 +981,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerAmmo : NetworkPacketBase<145, NetworkPacketType::RPC> {
+    struct SetPlayerAmmo : NetworkPacketBase<145, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t Weapon;
         uint16_t Ammo;
 
@@ -997,7 +997,7 @@ namespace RPC {
         }
     };
 
-    struct SendPlayerScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC> {
+    struct SendPlayerScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         const FlatPtrHashSet<IPlayer>& Players;
 
         SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players)
@@ -1020,7 +1020,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerRequestScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC> {
+    struct OnPlayerRequestScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -1031,7 +1031,7 @@ namespace RPC {
         }
     };
 
-    struct RemoveBuildingForPlayer : NetworkPacketBase<43, NetworkPacketType::RPC> {
+    struct RemoveBuildingForPlayer : NetworkPacketBase<43, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         unsigned ModelID;
         Vector3 Position;
         float Radius;
@@ -1049,7 +1049,7 @@ namespace RPC {
         }
     };
 
-    struct CreateExplosion : NetworkPacketBase<79, NetworkPacketType::RPC> {
+    struct CreateExplosion : NetworkPacketBase<79, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 vec;
         uint16_t type;
         float radius;
@@ -1067,7 +1067,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerInterior : NetworkPacketBase<156, NetworkPacketType::RPC> {
+    struct SetPlayerInterior : NetworkPacketBase<156, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         unsigned Interior;
 
         bool read(NetworkBitStream& bs)
@@ -1081,7 +1081,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerWantedLevel : NetworkPacketBase<133, NetworkPacketType::RPC> {
+    struct SetPlayerWantedLevel : NetworkPacketBase<133, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         unsigned Level;
 
         bool read(NetworkBitStream& bs)
@@ -1095,7 +1095,7 @@ namespace RPC {
         }
     };
 
-    struct ToggleWidescreen : NetworkPacketBase<111, NetworkPacketType::RPC> {
+    struct ToggleWidescreen : NetworkPacketBase<111, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool enable;
 
         bool read(NetworkBitStream& bs)
@@ -1109,7 +1109,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerGiveTakeDamage : NetworkPacketBase<115, NetworkPacketType::RPC> {
+    struct OnPlayerGiveTakeDamage : NetworkPacketBase<115, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Taking;
         int PlayerID;
         float Damage;
@@ -1130,7 +1130,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerInteriorChange : NetworkPacketBase<118, NetworkPacketType::RPC> {
+    struct OnPlayerInteriorChange : NetworkPacketBase<118, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         unsigned Interior;
 
@@ -1144,7 +1144,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerCameraTargeting : NetworkPacketBase<170, NetworkPacketType::RPC> {
+    struct SetPlayerCameraTargeting : NetworkPacketBase<170, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Enabled;
 
         void write(NetworkBitStream& bs) const
@@ -1153,7 +1153,7 @@ namespace RPC {
         }
     };
 
-    struct SCMEvent : NetworkPacketBase<96, NetworkPacketType::RPC> {
+    struct SCMEvent : NetworkPacketBase<96, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         int VehicleID;
         uint32_t Arg1;
@@ -1179,7 +1179,7 @@ namespace RPC {
         }
     };
 
-    struct SendGameText : NetworkPacketBase<73, NetworkPacketType::RPC> {
+    struct SendGameText : NetworkPacketBase<73, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int Time;
         int Style;
         HybridString<64> Text;
@@ -1197,7 +1197,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerGravity : NetworkPacketBase<146, NetworkPacketType::RPC> {
+    struct SetPlayerGravity : NetworkPacketBase<146, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         float Gravity;
 
         void write(NetworkBitStream& bs) const
@@ -1206,7 +1206,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerMapIcon : NetworkPacketBase<56, NetworkPacketType::RPC> {
+    struct SetPlayerMapIcon : NetworkPacketBase<56, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int IconID;
         Vector3 Pos;
         uint8_t Type;
@@ -1223,7 +1223,7 @@ namespace RPC {
         }
     };
 
-    struct RemovePlayerMapIcon : NetworkPacketBase<144, NetworkPacketType::RPC> {
+    struct RemovePlayerMapIcon : NetworkPacketBase<144, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int IconID;
 
         void write(NetworkBitStream& bs) const
@@ -1232,7 +1232,7 @@ namespace RPC {
         }
     };
 
-    struct ShowPlayerNameTagForPlayer : NetworkPacketBase<80, NetworkPacketType::RPC> {
+    struct ShowPlayerNameTagForPlayer : NetworkPacketBase<80, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         bool Show;
 
@@ -1243,7 +1243,7 @@ namespace RPC {
         }
     };
 
-    struct EnableStuntBonusForPlayer : NetworkPacketBase<104, NetworkPacketType::RPC> {
+    struct EnableStuntBonusForPlayer : NetworkPacketBase<104, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Enable;
 
         void write(NetworkBitStream& bs) const
@@ -1252,7 +1252,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerClickMap : NetworkPacketBase<119, NetworkPacketType::RPC> {
+    struct OnPlayerClickMap : NetworkPacketBase<119, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         Vector3 Pos;
 
@@ -1262,7 +1262,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerClickPlayer : NetworkPacketBase<23, NetworkPacketType::RPC> {
+    struct OnPlayerClickPlayer : NetworkPacketBase<23, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint8_t Source;
 
@@ -1273,7 +1273,7 @@ namespace RPC {
         }
     };
 
-    struct DisableRemoteVehicleCollisions : NetworkPacketBase<167, NetworkPacketType::RPC> {
+    struct DisableRemoteVehicleCollisions : NetworkPacketBase<167, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         bool Disable;
         bool read(NetworkBitStream& bs) const
@@ -1287,7 +1287,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerSpawn : NetworkPacketBase<52, NetworkPacketType::RPC> {
+    struct PlayerSpawn : NetworkPacketBase<52, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         bool read(NetworkBitStream& bs)
         {
@@ -1299,7 +1299,7 @@ namespace RPC {
         }
     };
 
-    struct ForcePlayerClassSelection : NetworkPacketBase<74, NetworkPacketType::RPC> {
+    struct ForcePlayerClassSelection : NetworkPacketBase<74, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         bool read(NetworkBitStream& bs)
         {
@@ -1311,7 +1311,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerSpectatePlayer : NetworkPacketBase<126, NetworkPacketType::RPC> {
+    struct PlayerSpectatePlayer : NetworkPacketBase<126, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int PlayerID;
         PlayerSpectateMode SpecCamMode;
@@ -1328,7 +1328,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerSpectateVehicle : NetworkPacketBase<127, NetworkPacketType::RPC> {
+    struct PlayerSpectateVehicle : NetworkPacketBase<127, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int VehicleID;
         PlayerSpectateMode SpecCamMode;
@@ -1345,7 +1345,7 @@ namespace RPC {
         }
     };
 
-    struct SetPlayerWorldTime : NetworkPacketBase<94, NetworkPacketType::RPC> {
+    struct SetPlayerWorldTime : NetworkPacketBase<94, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         Hours Time;
 
@@ -1360,7 +1360,7 @@ namespace RPC {
         }
     };
 
-    struct ClientCheck : NetworkPacketBase<103, NetworkPacketType::RPC> {
+    struct ClientCheck : NetworkPacketBase<103, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         int Type;
         int Address;
@@ -1387,7 +1387,7 @@ namespace RPC {
 }
 
 namespace Packet {
-    struct PlayerFootSync : NetworkPacketBase<207, NetworkPacketType::Packet> {
+    struct PlayerFootSync : NetworkPacketBase<207, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         int PlayerID;
         uint16_t LeftRight;
@@ -1482,7 +1482,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerAimSync : NetworkPacketBase<203, NetworkPacketType::Packet> {
+    struct PlayerAimSync : NetworkPacketBase<203, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         int PlayerID;
         uint8_t CamMode;
@@ -1521,7 +1521,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerBulletSync : NetworkPacketBase<206, NetworkPacketType::Packet> {
+    struct PlayerBulletSync : NetworkPacketBase<206, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         int PlayerID;
         uint8_t HitType;
@@ -1554,7 +1554,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerStatsSync : NetworkPacketBase<205, NetworkPacketType::Packet> {
+    struct PlayerStatsSync : NetworkPacketBase<205, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         int32_t Money;
         int32_t DrunkLevel;
@@ -1572,7 +1572,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerWeaponsUpdate : NetworkPacketBase<204, NetworkPacketType::Packet> {
+    struct PlayerWeaponsUpdate : NetworkPacketBase<204, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
         int TargetPlayer;
         int TargetActor;
         int WeaponDataCount = 0;
@@ -1597,7 +1597,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerMarkersSync : NetworkPacketBase<208, NetworkPacketType::Packet> {
+    struct PlayerMarkersSync : NetworkPacketBase<208, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         IPlayerPool& Pool;
         IPlayer& FromPlayer;
@@ -1640,7 +1640,7 @@ namespace Packet {
         }
     };
 
-    struct PlayerSpectatorSync : NetworkPacketBase<212, NetworkPacketType::Packet> {
+    struct PlayerSpectatorSync : NetworkPacketBase<212, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         uint16_t LeftRight;
         uint16_t UpDown;

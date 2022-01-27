@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerShowTextLabel : NetworkPacketBase<36, NetworkPacketType::RPC> {
+    struct PlayerShowTextLabel : NetworkPacketBase<36, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerTextLabel;
         int TextLabelID;
         Colour Col;
@@ -35,7 +35,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerHideTextLabel : NetworkPacketBase<58, NetworkPacketType::RPC> {
+    struct PlayerHideTextLabel : NetworkPacketBase<58, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerTextLabel;
         int TextLabelID;
 

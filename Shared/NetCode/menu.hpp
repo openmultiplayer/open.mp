@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerInitMenu : NetworkPacketBase<76, NetworkPacketType::RPC> {
+    struct PlayerInitMenu : NetworkPacketBase<76, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t MenuID;
         bool HasTwoColumns;
         StaticString<MAX_MENU_TEXT_LENGTH> Title;
@@ -77,7 +77,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerShowMenu : NetworkPacketBase<77, NetworkPacketType::RPC> {
+    struct PlayerShowMenu : NetworkPacketBase<77, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t MenuID;
 
         bool read(NetworkBitStream& bs)
@@ -91,7 +91,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerHideMenu : NetworkPacketBase<78, NetworkPacketType::RPC> {
+    struct PlayerHideMenu : NetworkPacketBase<78, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t MenuID;
 
         bool read(NetworkBitStream& bs)
@@ -105,7 +105,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerSelectedMenuRow : NetworkPacketBase<132, NetworkPacketType::RPC> {
+    struct OnPlayerSelectedMenuRow : NetworkPacketBase<132, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t MenuRow;
 
         bool read(NetworkBitStream& bs)
@@ -118,7 +118,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerExitedMenu : NetworkPacketBase<140, NetworkPacketType::RPC> {
+    struct OnPlayerExitedMenu : NetworkPacketBase<140, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return true;

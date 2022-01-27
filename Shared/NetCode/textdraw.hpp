@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerShowTextDraw : NetworkPacketBase<134, NetworkPacketType::RPC> {
+    struct PlayerShowTextDraw : NetworkPacketBase<134, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerTextDraw;
         int TextDrawID;
         bool UseBox;
@@ -58,7 +58,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerHideTextDraw : NetworkPacketBase<135, NetworkPacketType::RPC> {
+    struct PlayerHideTextDraw : NetworkPacketBase<135, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerTextDraw;
         int TextDrawID;
 
@@ -73,7 +73,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerTextDrawSetString : NetworkPacketBase<105, NetworkPacketType::RPC> {
+    struct PlayerTextDrawSetString : NetworkPacketBase<105, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerTextDraw;
         int TextDrawID;
         HybridString<256> Text;
@@ -90,7 +90,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerBeginTextDrawSelect : NetworkPacketBase<83, NetworkPacketType::RPC> {
+    struct PlayerBeginTextDrawSelect : NetworkPacketBase<83, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Colour Col;
         bool Enable;
 
@@ -106,7 +106,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerSelectTextDraw : NetworkPacketBase<83, NetworkPacketType::RPC> {
+    struct OnPlayerSelectTextDraw : NetworkPacketBase<83, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool PlayerTextDraw;
         bool Invalid;
         int TextDrawID;
