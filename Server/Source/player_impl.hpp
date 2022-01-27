@@ -27,6 +27,19 @@ struct PlayerChatBubble {
     float drawDist;
 };
 
+enum class PrimarySyncUpdateType {
+    None,
+    OnFoot,
+    Driver,
+    Passenger,
+};
+
+enum SecondarySyncUpdateType {
+    SecondarySyncUpdateType_Aim = (1 << 0),
+    SecondarySyncUpdateType_Unoccupied = (1 << 1),
+    SecondarySyncUpdateType_Trailer = (1 << 2),
+};
+
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool* pool_;
     PeerNetworkData netData_;
@@ -84,6 +97,23 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     const bool isBot_;
     bool toSpawn_;
 
+    PrimarySyncUpdateType primarySyncUpdateType_;
+    int secondarySyncUpdateType_;
+
+    union {
+        union {
+            NetCode::Packet::PlayerFootSync footSync_;
+            NetCode::Packet::PlayerSpectatorSync spectatorSync_;
+            NetCode::Packet::PlayerVehicleSync vehicleSync_;
+            NetCode::Packet::PlayerPassengerSync passengerSync_;
+        };
+        struct {
+            NetCode::Packet::PlayerAimSync aimSync_;
+            NetCode::Packet::PlayerTrailerSync trailerSync_;
+            NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
+        };
+    };
+
     Player(PlayerPool* pool, const PeerNetworkData& netData, const PeerRequestParams& params)
         : pool_(pool)
         , netData_(netData)
@@ -126,6 +156,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , lastGameTimeUpdate_()
         , isBot_(params.bot)
         , toSpawn_(false)
+        , primarySyncUpdateType_(PrimarySyncUpdateType::None)
+        , secondarySyncUpdateType_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -222,7 +254,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return weather_;
     }
 
-        /// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
+    /// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
     /// @param packet The packet to send
     void broadcastRPCToStreamed(int id, Span<uint8_t> data, int channel, bool skipFrom = false) const override
     {
@@ -247,6 +279,33 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         }
     }
 
+    inline bool shouldSendSyncPacket(Player* other) const
+    {
+        const Vector3 distVec = pos_ - other->pos_;
+        const float distSqr = glm::dot(distVec, distVec);
+        if (distSqr < 250.f * 250.f) {
+            return true;
+        } else {
+            // 50% probability
+            return rand() % 2 == 0;
+        }
+    }
+
+    /// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
+    /// @param packet The packet to send
+    void broadcastSyncPacket(Span<uint8_t> data, int channel) const override
+    {
+        for (IPlayer* p : streamedFor_.entries()) {
+            Player* player = static_cast<Player*>(p);
+            if (player == this) {
+                continue;
+            }
+            if (shouldSendSyncPacket(player)) {
+                player->sendPacket(data, channel);
+            }
+        }
+    }
+
     void createExplosion(Vector3 vec, int type, float radius) override
     {
         NetCode::RPC::CreateExplosion createExplosionRPC;
@@ -268,7 +327,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(sendDeathMessageRPC, *this);
     }
 
-    void sendEmptyDeathMessage() override {
+    void sendEmptyDeathMessage() override
+    {
         NetCode::RPC::SendDeathMessage sendDeathMessageRPC;
         sendDeathMessageRPC.PlayerID = PLAYER_POOL_SIZE;
         sendDeathMessageRPC.HasKiller = false;

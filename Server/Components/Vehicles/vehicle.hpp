@@ -107,6 +107,11 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         rot = rotation;
     }
 
+    const FlatPtrHashSet<IPlayer>& streamedForPlayers() const override
+    {
+        return streamedFor_.entries();
+    }
+
     bool isStreamedInForPlayer(const IPlayer& player) const override
     {
         return streamedFor_.valid(player.getID());
