@@ -28,30 +28,11 @@
 #include <arpa/inet.h>
 #endif
 
-// Was included for memset which now comes from string.h instead
-/*
-#if defined ( __APPLE__ ) || defined ( __APPLE_CC__ )
-	#include <malloc/malloc.h>
-#elif !defined(_COMPATIBILITY_2)
-	#include <malloc.h>
-#endif
-
-	*/
-
-// MSWin uses _copysign, others use copysign...
-#ifndef _WIN32
-#define _copysign copysign
-#endif
-
-#ifdef _MSC_VER
-#pragma warning(push)
-#endif
-
 NetworkBitStream::NetworkBitStream()
 {
     numberOfBitsUsed = 0;
     //numberOfBitsAllocated = 32 * 8;
-    numberOfBitsAllocated = NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE * 8;
+    numberOfBitsAllocated = StackAllocationSize * 8;
     readOffset = 0;
     //data = ( unsigned char* ) malloc( 32 );
     data = (unsigned char*)stackData;
@@ -66,9 +47,9 @@ NetworkBitStream::NetworkBitStream(int initialBytesToAllocate)
 {
     numberOfBitsUsed = 0;
     readOffset = 0;
-    if (initialBytesToAllocate <= NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE) {
+    if (initialBytesToAllocate <= StackAllocationSize) {
         data = (unsigned char*)stackData;
-        numberOfBitsAllocated = NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE * 8;
+        numberOfBitsAllocated = StackAllocationSize * 8;
     } else {
         data = (unsigned char*)malloc(initialBytesToAllocate);
         numberOfBitsAllocated = initialBytesToAllocate << 3;
@@ -89,9 +70,9 @@ NetworkBitStream::NetworkBitStream(unsigned char* _data, unsigned int lengthInBy
 
     if (copyData) {
         if (lengthInBytes > 0) {
-            if (lengthInBytes < NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE) {
+            if (lengthInBytes < StackAllocationSize) {
                 data = (unsigned char*)stackData;
-                numberOfBitsAllocated = NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE << 3;
+                numberOfBitsAllocated = StackAllocationSize << 3;
             } else {
                 data = (unsigned char*)malloc(lengthInBytes);
             }
@@ -116,7 +97,7 @@ void NetworkBitStream::SetNumberOfBitsAllocated(const unsigned int lengthInBits)
 
 NetworkBitStream::~NetworkBitStream()
 {
-    if (copyData && numberOfBitsAllocated > NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE << 3)
+    if (copyData && numberOfBitsAllocated > StackAllocationSize << 3)
         free(data); // Use realloc and free so we are more efficient than delete and new for resizing
 }
 
@@ -127,7 +108,7 @@ void NetworkBitStream::reset(void)
     // is a dangerous operation (may result in leaks).
 
     if (numberOfBitsUsed > 0) {
-        //  memset(data, 0, BITS_TO_BYTES(numberOfBitsUsed));
+        //  memset(data, 0, bitsToBytes(numberOfBitsUsed));
     }
 
     // Don't free memory here for speed efficiency
@@ -139,7 +120,7 @@ void NetworkBitStream::reset(void)
 
     //data=(unsigned char*)malloc(1);
     // if (numberOfBitsAllocated>0)
-    //  memset(data, 0, BITS_TO_BYTES(numberOfBitsAllocated));
+    //  memset(data, 0, bitsToBytes(numberOfBitsAllocated));
 }
 
 // Write an array or casted stream
@@ -150,9 +131,9 @@ void NetworkBitStream::Write(const char* input, const int numberOfBytes)
 
     // Optimization:
     if ((numberOfBitsUsed & 7) == 0) {
-        AddBitsAndReallocate(BYTES_TO_BITS(numberOfBytes));
-        memcpy(data + BITS_TO_BYTES(numberOfBitsUsed), input, numberOfBytes);
-        numberOfBitsUsed += BYTES_TO_BITS(numberOfBytes);
+        AddBitsAndReallocate(bytesToBits(numberOfBytes));
+        memcpy(data + bitsToBytes(numberOfBitsUsed), input, numberOfBytes);
+        numberOfBitsUsed += bytesToBits(numberOfBytes);
     } else {
         WriteBits((unsigned char*)input, numberOfBytes * 8, true);
     }
@@ -250,9 +231,6 @@ void NetworkBitStream::Write1(void)
     numberOfBitsUsed++;
 }
 
-#ifdef _MSC_VER
-#pragma warning(disable : 4800) // warning C4100: <variable name> : unreferenced formal parameter
-#endif
 // Returns true if the next data read is a 1, false if it is a 0
 bool NetworkBitStream::ReadBit(void)
 {
@@ -440,7 +418,7 @@ bool NetworkBitStream::ReadBits(unsigned char* output, int numberOfBitsToRead, c
 
     int offset = 0;
 
-    memset(output, 0, BITS_TO_BYTES(numberOfBitsToRead));
+    memset(output, 0, bitsToBytes(numberOfBitsToRead));
 
     readOffsetMod8 = readOffset & 7;
 
@@ -557,15 +535,15 @@ void NetworkBitStream::AddBitsAndReallocate(const int numberOfBitsToWrite)
 
         // Less memory efficient but saves on news and deletes
         newNumberOfBitsAllocated = (numberOfBitsToWrite + numberOfBitsUsed) * 2;
-        //		int newByteOffset = BITS_TO_BYTES( numberOfBitsAllocated );
+        //		int newByteOffset = bitsToBytes( numberOfBitsAllocated );
         // Use realloc and free so we are more efficient than delete and new for resizing
-        int amountToAllocate = BITS_TO_BYTES(newNumberOfBitsAllocated);
+        int amountToAllocate = bitsToBytes(newNumberOfBitsAllocated);
         if (data == (unsigned char*)stackData) {
-            if (amountToAllocate > NETWORK_BITSTREAM_STACK_ALLOCATION_SIZE) {
+            if (amountToAllocate > StackAllocationSize) {
                 data = (unsigned char*)malloc(amountToAllocate);
 
                 // need to copy the stack data over to our new memory area too
-                memcpy((void*)data, (void*)stackData, BITS_TO_BYTES(numberOfBitsAllocated));
+                memcpy((void*)data, (void*)stackData, bitsToBytes(numberOfBitsAllocated));
             }
         } else {
             data = (unsigned char*)realloc(data, amountToAllocate);
@@ -593,7 +571,7 @@ void NetworkBitStream::PrintBits(void) const
         return;
     }
 
-    for (int counter = 0; counter < BITS_TO_BYTES(numberOfBitsUsed); counter++) {
+    for (int counter = 0; counter < bitsToBytes(numberOfBitsUsed); counter++) {
         int stop;
 
         if (counter == (numberOfBitsUsed - 1) >> 3)
@@ -621,8 +599,8 @@ int NetworkBitStream::CopyData(unsigned char** _data) const
 
     assert(numberOfBitsUsed > 0);
 
-    *_data = new unsigned char[BITS_TO_BYTES(numberOfBitsUsed)];
-    memcpy(*_data, data, sizeof(unsigned char) * (BITS_TO_BYTES(numberOfBitsUsed)));
+    *_data = new unsigned char[bitsToBytes(numberOfBitsUsed)];
+    memcpy(*_data, data, sizeof(unsigned char) * (bitsToBytes(numberOfBitsUsed)));
     return numberOfBitsUsed;
 }
 
@@ -653,7 +631,7 @@ int NetworkBitStream::GetNumberOfBitsUsed( void ) const
 // Returns the length in bytes of the stream
 int NetworkBitStream::GetNumberOfBytesUsed( void ) const
 {
-	return BITS_TO_BYTES( numberOfBitsUsed );
+	return bitsToBytes( numberOfBitsUsed );
 }
 
 // Returns the number of bits into the stream that we have read
@@ -688,11 +666,11 @@ void NetworkBitStream::AssertCopyData(void)
         copyData = true;
 
         if (numberOfBitsAllocated > 0) {
-            unsigned char* newdata = (unsigned char*)malloc(BITS_TO_BYTES(numberOfBitsAllocated));
+            unsigned char* newdata = (unsigned char*)malloc(bitsToBytes(numberOfBitsAllocated));
 
             assert(data);
 
-            memcpy(newdata, data, BITS_TO_BYTES(numberOfBitsAllocated));
+            memcpy(newdata, data, bitsToBytes(numberOfBitsAllocated));
             data = newdata;
         }
 
@@ -705,7 +683,3 @@ void NetworkBitStream::WriteCompressedStr(StringView data)
 {
     stringCompressor->EncodeString(data.data(), data.length() + 1, this);
 }
-
-#ifdef _MSC_VER
-#pragma warning(pop)
-#endif

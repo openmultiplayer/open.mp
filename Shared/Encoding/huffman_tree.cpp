@@ -22,10 +22,6 @@
 
 using namespace Encoding;
 
-#ifdef _MSC_VER
-#pragma warning(push)
-#endif
-
 DataStructures::HuffmanEncodingTree::HuffmanEncodingTree()
 {
     root = nullptr;
@@ -98,9 +94,6 @@ void DataStructures::HuffmanEncodingTree::GenerateFromFrequencyTable(unsigned in
 
     // 2.  While there is more than one tree, take the two smallest trees and merge them so that the two trees are the left and right
     // children of a new node, where the new node has the weight the sum of the weight of the left and right child nodes.
-#ifdef _MSC_VER
-#pragma warning(disable : 4127) // warning C4127: conditional expression is constant
-#endif
     while (1) {
         HuffmanEncodingTreeNode *lesser, *greater;
         lesser = huffmanEncodingTreeNodeList.front();
@@ -237,7 +230,7 @@ void DataStructures::HuffmanEncodingTree::DecodeArray(unsigned char* input, unsi
     if (sizeInBits <= 0)
         return;
 
-    NetworkBitStream bitStream(input, BITS_TO_BYTES(sizeInBits), false);
+    NetworkBitStream bitStream(input, bitsToBytes(sizeInBits), false);
 
     currentNode = root;
 

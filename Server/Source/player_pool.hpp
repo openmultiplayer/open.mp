@@ -4,6 +4,7 @@
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler {
     ICore& core;
+    const FlatPtrHashSet<INetwork>& networks;
     PoolStorage<Player, IPlayer, IPlayerPool::Capacity> storage;
     FlatPtrHashSet<IPlayer> playerList;
     FlatPtrHashSet<IPlayer> botList;
@@ -1072,9 +1073,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return playerUpdateDispatcher;
     }
 
-    const FlatPtrHashSet<INetwork>& getNetworks() override
+    void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr) override
     {
-        return core.getNetworks();
+        for (INetwork* network : networks) {
+            network->broadcastRPC(id, data, channel, skipFrom);
+        }
     }
 
     Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override
@@ -1181,6 +1184,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     PlayerPool(ICore& core)
         : core(core)
+        , networks(core.getNetworks())
         , playerRequestSpawnRPCHandler(*this)
         , playerRequestScoresAndPingsRPCHandler(*this)
         , onPlayerClickMapRPCHandler(*this)

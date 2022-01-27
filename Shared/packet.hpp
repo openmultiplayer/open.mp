@@ -13,10 +13,11 @@ enum class NetworkPacketType {
 /// Class used for declaring netcode packets
 /// Provides an array of packet IDs
 /// @typeparam PacketIDs A list of packet IDs for each network in the ENetworkType enum
-template <int PktID, NetworkPacketType PktType>
+template <int PktID, NetworkPacketType PktType, int PktChannel>
 struct NetworkPacketBase {
     static constexpr const int PacketID = PktID;
     static constexpr const NetworkPacketType PacketType = PktType;
+    static constexpr const int PacketChannel = PktChannel;
 
     constexpr static void addEventHandler(ICore& core, SingleNetworkInEventHandler* handler, event_order_t priority = EventPriority_Default)
     {
@@ -38,8 +39,8 @@ struct NetworkPacketBase {
 };
 
 std::false_type is_network_packet_impl(...);
-template <int PktID, NetworkPacketType PktType>
-std::true_type is_network_packet_impl(NetworkPacketBase<PktID, PktType> const volatile&);
+template <int PktID, NetworkPacketType PktType, int PktChannel>
+std::true_type is_network_packet_impl(NetworkPacketBase<PktID, PktType, PktChannel> const volatile&);
 /// Get whether a class derives from NetworkPacketBase
 /// @typeparam T The class to check
 template <typename T>
@@ -55,9 +56,9 @@ struct PacketHelper {
         NetworkBitStream bs;
         packet.write(bs);
         if constexpr (Packet::PacketType == NetworkPacketType::RPC) {
-            return peer.sendRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()));
+            return peer.sendRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
         } else if constexpr (Packet::PacketType == NetworkPacketType::Packet) {
-            return peer.sendPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()));
+            return peer.sendPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
         }
     }
 
@@ -73,9 +74,9 @@ struct PacketHelper {
         for (IPlayer* peer : players) {
             if (peer != skipFrom) {
                 if constexpr (Packet::PacketType == NetworkPacketType::RPC) {
-                    peer->sendRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()));
+                    peer->sendRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
                 } else if constexpr (Packet::PacketType == NetworkPacketType::Packet) {
-                    peer->sendPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()));
+                    peer->sendPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
                 }
             }
         }
@@ -91,9 +92,9 @@ struct PacketHelper {
         NetworkBitStream bs;
         packet.write(bs);
         if constexpr (Packet::PacketType == NetworkPacketType::RPC) {
-            return player.broadcastRPCToStreamed(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), skipFrom);
+            return player.broadcastRPCToStreamed(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, skipFrom);
         } else if constexpr (Packet::PacketType == NetworkPacketType::Packet) {
-            return player.broadcastPacketToStreamed(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), skipFrom);
+            return player.broadcastPacketToStreamed(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, skipFrom);
         }
     }
 
@@ -107,7 +108,7 @@ struct PacketHelper {
         NetworkBitStream bs;
         packet.write(bs);
         if constexpr (Packet::PacketType == NetworkPacketType::RPC) {
-            players.broadcastRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), skipFrom);
+            players.broadcastRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, skipFrom);
         }
     }
 };
