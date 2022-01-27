@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerCreatePickup : NetworkPacketBase<95, NetworkPacketType::RPC> {
+    struct PlayerCreatePickup : NetworkPacketBase<95, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PickupID;
         int Model;
         int Type;
@@ -26,7 +26,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerDestroyPickup : NetworkPacketBase<63, NetworkPacketType::RPC> {
+    struct PlayerDestroyPickup : NetworkPacketBase<63, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PickupID;
 
         bool read(NetworkBitStream& bs)
@@ -40,7 +40,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerPickUpPickup : NetworkPacketBase<131, NetworkPacketType::RPC> {
+    struct OnPlayerPickUpPickup : NetworkPacketBase<131, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PickupID;
 
         bool read(NetworkBitStream& bs)

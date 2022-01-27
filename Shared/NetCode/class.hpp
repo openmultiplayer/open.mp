@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct PlayerRequestClass : NetworkPacketBase<128, NetworkPacketType::RPC> {
+    struct PlayerRequestClass : NetworkPacketBase<128, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int Classid;
 
         bool read(NetworkBitStream& bs)
@@ -20,7 +20,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerRequestClassResponse : NetworkPacketBase<128, NetworkPacketType::RPC> {
+    struct PlayerRequestClassResponse : NetworkPacketBase<128, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t Selectable;
         uint8_t TeamID;
         uint32_t ModelID;
@@ -67,7 +67,7 @@ namespace RPC {
         }
     };
 
-    struct SetSpawnInfo : NetworkPacketBase<68, NetworkPacketType::RPC> {
+    struct SetSpawnInfo : NetworkPacketBase<68, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t TeamID;
         uint32_t ModelID;
         uint8_t Unknown1;
@@ -93,7 +93,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerRequestSpawn : NetworkPacketBase<129, NetworkPacketType::RPC> {
+    struct PlayerRequestSpawn : NetworkPacketBase<129, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return true;
@@ -104,7 +104,7 @@ namespace RPC {
         }
     };
 
-    struct PlayerRequestSpawnResponse : NetworkPacketBase<129, NetworkPacketType::RPC> {
+    struct PlayerRequestSpawnResponse : NetworkPacketBase<129, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint32_t Allow;
 
         bool read(NetworkBitStream& bs)
@@ -118,7 +118,7 @@ namespace RPC {
         }
     };
 
-    struct ImmediatelySpawnPlayer : NetworkPacketBase<129, NetworkPacketType::RPC> {
+    struct ImmediatelySpawnPlayer : NetworkPacketBase<129, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         void write(NetworkBitStream& bs) const
         {
             bs.writeUINT32(2);
