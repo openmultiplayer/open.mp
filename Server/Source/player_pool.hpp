@@ -1419,8 +1419,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 uint16_t keys = player->passengerSync_.Keys;
                 if (player->passengerSync_.WeaponID == 43 /* camera */) {
                     player->passengerSync_.Keys &= 0xFB;
-                    PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
                 }
+                PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
                 player->passengerSync_.Keys = keys;
 
                 break;
