@@ -25,19 +25,19 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
             IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
             if (data && data->selectingObject()) {
-                if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Global) {
-                    ScopedPoolReleaseLock lock(self, onPlayerSelectObjectRPC.ObjectID);
-                    if (lock.entry) {
-                        self.eventDispatcher.dispatch(
-                            &ObjectEventHandler::onObjectSelected,
-                            peer,
-                            *lock.entry,
-                            onPlayerSelectObjectRPC.Model,
-                            onPlayerSelectObjectRPC.Position);
-                    }
-                } else if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Player) {
-                    ScopedPoolReleaseLock lock(*data, onPlayerSelectObjectRPC.ObjectID);
-                    if (lock.entry) {
+                IObject* obj = self.get(onPlayerSelectObjectRPC.ObjectID);
+                if (obj) {
+                    ScopedPoolReleaseLock lock(self, *obj);
+                    self.eventDispatcher.dispatch(
+                        &ObjectEventHandler::onObjectSelected,
+                        peer,
+                        *lock.entry,
+                        onPlayerSelectObjectRPC.Model,
+                        onPlayerSelectObjectRPC.Position);
+                } else {
+                    IPlayerObject* playerObj = data->get(onPlayerSelectObjectRPC.ObjectID);
+                    if (playerObj) {
+                        ScopedPoolReleaseLock lock(*data, *playerObj);
                         self.eventDispatcher.dispatch(
                             &ObjectEventHandler::onPlayerObjectSelected,
                             peer,
