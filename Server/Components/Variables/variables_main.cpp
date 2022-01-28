@@ -7,7 +7,7 @@ template <class ToInherit>
 struct VariableStorageBase : public ToInherit {
     void setString(StringView key, StringView value) override
     {
-        data_[key].emplace<String>(value);
+        data_[key].template emplace<String>(value);
     }
     const StringView getString(StringView key) const override
     {
@@ -23,7 +23,7 @@ struct VariableStorageBase : public ToInherit {
 
     void setInt(StringView key, int value) override
     {
-        data_[key].emplace<int>(value);
+        data_[key].template emplace<int>(value);
     }
 
     int getInt(StringView key) const override
@@ -40,7 +40,7 @@ struct VariableStorageBase : public ToInherit {
 
     void setFloat(StringView key, float value) override
     {
-        data_[key].emplace<float>(value);
+        data_[key].template emplace<float>(value);
     }
 
     float getFloat(StringView key) const override
