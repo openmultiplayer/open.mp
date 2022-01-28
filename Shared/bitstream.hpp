@@ -22,11 +22,13 @@
 #include <cassert>
 #include <cmath>
 
-constexpr int bitsToBytes(int bits) {
+constexpr int bitsToBytes(int bits)
+{
     return (((bits) + 7) >> 3);
 }
 
-constexpr int bytesToBits(int bytes) {
+constexpr int bytesToBits(int bytes)
+{
     return ((bytes) << 3);
 }
 
@@ -561,17 +563,6 @@ private:
     template <class templateType>
     void Write(templateType var);
 
-    /// Write a bool to a bitstream
-    /// \param[in] var The value to write
-    template <>
-    inline void Write(bool var)
-    {
-        if (var)
-            Write1();
-        else
-            Write0();
-    }
-
     /// Write any integral type to a bitstream.  If the current value is different from the last value
     /// the current value will be written.  Otherwise, a single bit will be written
     /// \param[in] currentValue The current value to write
@@ -769,6 +760,17 @@ private:
     /// BitStreams that use less than StackAllocationSize use the stack, rather than the heap to store data.  It switches over if StackAllocationSize is exceeded
     unsigned char stackData[StackAllocationSize];
 };
+
+/// Write a bool to a bitstream
+/// \param[in] var The value to write
+template <>
+inline void NetworkBitStream::Write(bool var)
+{
+    if (var)
+        Write1();
+    else
+        Write0();
+}
 
 template <class templateType>
 inline bool NetworkBitStream::Serialize(bool writeToBitstream, templateType& var)
