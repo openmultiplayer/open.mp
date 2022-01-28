@@ -1511,7 +1511,7 @@ namespace Packet {
         void write(NetworkBitStream& bs) const
         {
             bs.writeUINT8(PacketID);
-            bs.writeUINT16(uint16_t(PlayerID));
+            bs.writeUINT16(PlayerID);
             bs.writeUINT8(CamMode);
             bs.writeVEC3(CamFrontVector);
             bs.writeVEC3(CamPos);

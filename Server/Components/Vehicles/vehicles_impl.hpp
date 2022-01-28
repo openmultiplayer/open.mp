@@ -9,7 +9,7 @@ using namespace Impl;
 
 struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<Vehicle, IVehicle, IVehiclesComponent::Capacity> storage;
+    MarkedPoolStorage<Vehicle, IVehicle, 1, VEHICLE_POOL_SIZE> storage;
     DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
     StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
     StreamConfigHelper streamConfigHelper;
@@ -30,18 +30,20 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
-            if (!onPlayerEnterVehicleRPC.read(bs) || !self.valid(onPlayerEnterVehicleRPC.VehicleID)) {
+            if (!onPlayerEnterVehicleRPC.read(bs)) {
                 return false;
             }
 
-            {
-                ScopedPoolReleaseLock lock(self, onPlayerEnterVehicleRPC.VehicleID);
-                self.eventDispatcher.dispatch(
-                    &VehicleEventHandler::onPlayerEnterVehicle,
-                    peer,
-                    lock.entry,
-                    onPlayerEnterVehicleRPC.Passenger);
+            ScopedPoolReleaseLock lock(self, onPlayerEnterVehicleRPC.VehicleID);
+            if (!lock.entry) {
+                return false;
             }
+
+            self.eventDispatcher.dispatch(
+                &VehicleEventHandler::onPlayerEnterVehicle,
+                peer,
+                *lock.entry,
+                onPlayerEnterVehicleRPC.Passenger);
 
             NetCode::RPC::EnterVehicle enterVehicleRPC;
             enterVehicleRPC.PlayerID = peer.getID();
@@ -62,17 +64,19 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
-            if (!onPlayerExitVehicleRPC.read(bs) || !self.valid(onPlayerExitVehicleRPC.VehicleID)) {
+            if (!onPlayerExitVehicleRPC.read(bs)) {
                 return false;
             }
 
-            {
-                ScopedPoolReleaseLock lock(self, onPlayerExitVehicleRPC.VehicleID);
-                self.eventDispatcher.dispatch(
-                    &VehicleEventHandler::onPlayerExitVehicle,
-                    peer,
-                    lock.entry);
+            ScopedPoolReleaseLock lock(self, onPlayerExitVehicleRPC.VehicleID);
+            if (!lock.entry) {
+                return false;
             }
+
+            self.eventDispatcher.dispatch(
+                &VehicleEventHandler::onPlayerExitVehicle,
+                peer,
+                *lock.entry);
 
             NetCode::RPC::ExitVehicle exitVehicleRPC;
             exitVehicleRPC.PlayerID = peer.getID();
@@ -92,7 +96,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
-            if (!onDamageStatus.read(bs) || !self.valid(onDamageStatus.VehicleID)) {
+            if (!onDamageStatus.read(bs) || !self.get(onDamageStatus.VehicleID)) {
                 return false;
             }
 
@@ -115,11 +119,17 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SCMEvent scmEvent;
-            if (!scmEvent.read(bs) || !self.valid(scmEvent.VehicleID)) {
+            if (!scmEvent.read(bs)) {
                 return false;
             }
 
-            Vehicle& vehicle = self.storage.get(scmEvent.VehicleID);
+            // TODO: make sure to mark claimed unusable as invalid
+            Vehicle* vehiclePtr = self.storage.get(scmEvent.VehicleID);
+            if (!vehiclePtr) {
+                return false;
+            }
+
+            Vehicle& vehicle = *vehiclePtr;
             if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
             }
@@ -198,11 +208,16 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::VehicleDeath vehicleDeath;
-            if (!vehicleDeath.read(bs) || !self.valid(vehicleDeath.VehicleID)) {
+            if (!vehicleDeath.read(bs)) {
                 return false;
             }
 
-            Vehicle& vehicle = self.storage.get(vehicleDeath.VehicleID);
+            Vehicle* vehiclePtr = self.storage.get(vehicleDeath.VehicleID);
+            if (!vehiclePtr) {
+                return false;
+            }
+
+            Vehicle& vehicle = *vehiclePtr;
             if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
             } else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer) {
@@ -275,7 +290,6 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         NetCode::RPC::SetVehicleDamageStatus::addEventHandler(*core, &vehicleDamageStatusHandler);
         NetCode::RPC::SCMEvent::addEventHandler(*core, &playerSCMEventHandler);
         NetCode::RPC::VehicleDeath::addEventHandler(*core, &vehicleDeathHandler);
-        storage.claimUnusable(0);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
         deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
     }
@@ -325,34 +339,32 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         delete this;
     }
 
-    bool valid(int index) const override
+    IVehicle* get(int index) override
     {
         if (index == 0) {
-            return false;
+            return nullptr;
         }
-        return storage.valid(index);
-    }
-
-    IVehicle& get(int index) override
-    {
         return storage.get(index);
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
     void release(int index) override
     {
-        Vehicle& vehicle = storage.get(index);
-        if (vehicle.spawnData.modelID == 538 || vehicle.spawnData.modelID == 537) {
-            for (IVehicle* c : vehicle.carriages) {
-                Vehicle* carriage = static_cast<Vehicle*>(c);
-                storage.release(carriage->poolID, false);
+        Vehicle* vehiclePtr = storage.get(index);
+        if (vehiclePtr) {
+            Vehicle& vehicle = *vehiclePtr;
+            if (vehicle.spawnData.modelID == 538 || vehicle.spawnData.modelID == 537) {
+                for (IVehicle* c : vehicle.carriages) {
+                    Vehicle* carriage = static_cast<Vehicle*>(c);
+                    storage.release(carriage->poolID, false);
+                }
             }
+            storage.release(index, false);
         }
-        storage.release(index, false);
     }
 
     void lock(int index) override

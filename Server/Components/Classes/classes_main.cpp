@@ -74,7 +74,7 @@ struct Class final : public IClass, public PoolIDProvider {
 };
 
 struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
-    MarkedPoolStorage<Class, IClass, IClassesComponent::Capacity> storage;
+    MarkedPoolStorage<Class, IClass, 0, CLASS_POOL_SIZE> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
     bool skipDefaultClassRequest;
@@ -113,8 +113,8 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                         playerRequestClassResponse.Ammos = weaponAmmoArray;
                         PacketHelper::send(playerRequestClassResponse, peer);
                     }
-                } else if (self.storage.valid(playerRequestClassPacket.Classid)) {
-                    const PlayerClass& cls = self.storage.get(playerRequestClassPacket.Classid).cls;
+                } else if (Class* clsPtr = (self.storage.get(playerRequestClassPacket.Classid))) {
+                    const PlayerClass& cls = clsPtr->cls;
                     IPlayerClassData* clsData = queryData<IPlayerClassData>(peer);
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
@@ -184,8 +184,8 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
     IClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
-        if (count() == IClassesComponent::Capacity) {
-            Class* lastClass = &storage.get(IClassesComponent::Capacity - 1);
+        if (storage._entries().size() == CLASS_POOL_SIZE) {
+            Class* lastClass = storage.get(storage.Upper - 1);
 
             lastClass->cls.skin = skin;
             lastClass->cls.team = team;
@@ -209,17 +209,12 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    IClass& get(int index) override
+    IClass* get(int index) override
     {
         return storage.get(index);
     }

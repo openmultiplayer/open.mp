@@ -59,7 +59,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamedFor_.add(pid, player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, lock.entry, player);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, *lock.entry, player);
 
     respawning = false;
 }
@@ -85,7 +85,7 @@ void Vehicle::streamOutForClient(IPlayer& player)
     --data->numStreamed;
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, lock.entry, player);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, *lock.entry, player);
 }
 
 bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, IPlayer& player)
@@ -269,7 +269,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
 
     if (vehicleUpdater) {
         ScopedPoolReleaseLock lock(*pool, *this);
-        pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, lock.entry, *vehicleUpdater);
+        pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, *lock.entry, *vehicleUpdater);
     }
 
     PacketHelper::broadcastToSome(damageStatus, streamedFor_.entries(), vehicleUpdater);
@@ -444,7 +444,7 @@ void Vehicle::setDead(IPlayer& killer)
     dead = true;
     timeOfDeath = Time::now();
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, lock.entry, killer);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, *lock.entry, killer);
 }
 
 bool Vehicle::isDead()
@@ -484,7 +484,7 @@ void Vehicle::respawn()
     params = VehicleParams {};
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, lock.entry);
+    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, *lock.entry);
 }
 
 Seconds Vehicle::getRespawnDelay()

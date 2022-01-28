@@ -4,7 +4,7 @@ using namespace Impl;
 
 struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<Menu, IMenu, IMenusComponent::Capacity> storage;
+    MarkedPoolStorage<Menu, IMenu, 1, MENU_POOL_SIZE> storage;
     DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
     IPlayerPool* players = nullptr;
 
@@ -29,7 +29,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 
             // Return false if menu id was invalid;
             IPlayerMenuData* data = queryData<IPlayerMenuData>(peer);
-            if (!self.valid(data->getMenuID()) || data->getMenuID() == INVALID_MENU_ID) {
+            if (!self.storage.get(data->getMenuID())) {
                 data->setMenuID(INVALID_MENU_ID);
                 return false;
             }
@@ -58,7 +58,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
 
             // Return false if menu id was invalid;
             IPlayerMenuData* data = queryData<IPlayerMenuData>(peer);
-            if (!self.valid(data->getMenuID()) || data->getMenuID() == INVALID_MENU_ID) {
+            if (!self.storage.get(data->getMenuID())) {
                 data->setMenuID(INVALID_MENU_ID);
                 return false;
             }
@@ -84,7 +84,6 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         : playerSelectedMenuRowEventHandler(*this)
         , playerExitedMenuEventHandler(*this)
     {
-        storage.claimUnusable(0);
     }
 
     void onLoad(ICore* core) override
@@ -126,21 +125,16 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
+    IMenu* get(int index) override
     {
         if (index == 0) {
-            return false;
+            return nullptr;
         }
-        return storage.valid(index);
-    }
-
-    IMenu& get(int index) override
-    {
         return storage.get(index);
     }
 

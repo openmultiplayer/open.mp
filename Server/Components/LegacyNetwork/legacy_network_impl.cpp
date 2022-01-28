@@ -533,7 +533,7 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex)
             return stats;
         }
 
-        player = &core->getPlayers().get(playerIndex);
+        player = core->getPlayers().get(playerIndex);
         // Return empty statistics structure if player is not found
         if (player == nullptr) {
             return stats;
