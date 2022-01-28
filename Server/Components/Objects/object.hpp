@@ -210,8 +210,8 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
 
 struct Object final : public BaseObject<IObject> {
     IPlayerPool& players_;
-    StaticBitset<IPlayerPool::Capacity> delayedProcessing_;
-    StaticArray<TimePoint, IPlayerPool::Capacity> delayedProcessingTime_;
+    StaticBitset<PLAYER_POOL_SIZE> delayedProcessing_;
+    StaticArray<TimePoint, PLAYER_POOL_SIZE> delayedProcessingTime_;
     ExtraDataProvider extraData_;
 
     Object(IPlayerPool& players, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
@@ -285,9 +285,9 @@ struct Object final : public BaseObject<IObject> {
                     }
 
                     if (
-                        attachmentData_.type == ObjectAttachmentData::Type::Player && players_.valid(attachmentData_.ID)) {
-                        IPlayer& other = players_.get(attachmentData_.ID);
-                        if (other.isStreamedInForPlayer(*player)) {
+                        attachmentData_.type == ObjectAttachmentData::Type::Player) {
+                        IPlayer* other = players_.get(attachmentData_.ID);
+                        if (other && other->isStreamedInForPlayer(*player)) {
                             NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
                             attachObjectToPlayerRPC.ObjectID = poolID;
                             attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;

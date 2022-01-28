@@ -54,7 +54,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     ExtraDataProvider extraData_;
     WeaponSlots weapons_;
     Colour colour_;
-    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     int virtualWorld_;
     int team_;
     int skin_;
@@ -101,18 +101,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int secondarySyncUpdateType_;
 
     union {
-        union {
-            NetCode::Packet::PlayerFootSync footSync_;
-            NetCode::Packet::PlayerSpectatorSync spectatorSync_;
-            NetCode::Packet::PlayerVehicleSync vehicleSync_;
-            NetCode::Packet::PlayerPassengerSync passengerSync_;
-        };
-        struct {
-            NetCode::Packet::PlayerAimSync aimSync_;
-            NetCode::Packet::PlayerTrailerSync trailerSync_;
-            NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
-        };
+        NetCode::Packet::PlayerFootSync footSync_;
+        NetCode::Packet::PlayerSpectatorSync spectatorSync_;
+        NetCode::Packet::PlayerVehicleSync vehicleSync_;
+        NetCode::Packet::PlayerPassengerSync passengerSync_;
     };
+    NetCode::Packet::PlayerAimSync aimSync_;
+    NetCode::Packet::PlayerTrailerSync trailerSync_;
+    NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
 
     Player(PlayerPool* pool, const PeerNetworkData& netData, const PeerRequestParams& params)
         : pool_(pool)

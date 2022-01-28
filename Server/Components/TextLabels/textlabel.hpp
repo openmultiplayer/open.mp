@@ -139,7 +139,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
 
 struct TextLabel final : public TextLabelBase<ITextLabel> {
     int virtualWorld;
-    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     ExtraDataProvider extraData_;
 
     TextLabel(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los)

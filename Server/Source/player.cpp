@@ -50,16 +50,16 @@ IPlayer* Player::getCameraTargetPlayer()
         return nullptr;
     }
 
-    if (!pool_->valid(targetPlayer_)) {
+    IPlayer* target = pool_->get(targetPlayer_);
+    if (!target) {
         return nullptr;
     }
 
-    IPlayer& target = pool_->storage.get(targetPlayer_);
-    if (!target.isStreamedInForPlayer(*this)) {
+    if (!target->isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
-    return &target;
+    return target;
 }
 
 IVehicle* Player::getCameraTargetVehicle()
@@ -73,16 +73,16 @@ IVehicle* Player::getCameraTargetVehicle()
         return nullptr;
     }
 
-    if (!component->valid(cameraTargetVehicle_)) {
+    IVehicle* target = component->get(cameraTargetVehicle_);
+    if (!target) {
         return nullptr;
     }
 
-    IVehicle& target = component->get(cameraTargetVehicle_);
-    if (!target.isStreamedInForPlayer(*this)) {
+    if (!target->isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
-    return &target;
+    return target;
 }
 
 IObject* Player::getCameraTargetObject()
@@ -96,25 +96,21 @@ IObject* Player::getCameraTargetObject()
         return nullptr;
     }
 
-    if (!component->valid(cameraTargetObject_)) {
-        return nullptr;
-    }
-
-    return &component->get(cameraTargetObject_);
+    return component->get(cameraTargetObject_);
 }
 
 IPlayer* Player::getTargetPlayer()
 {
-    if (!pool_->valid(targetPlayer_)) {
+    IPlayer* target = pool_->get(targetPlayer_);
+    if (!target) {
         return nullptr;
     }
 
-    IPlayer& target = pool_->get(targetPlayer_);
-    if (!target.isStreamedInForPlayer(*this)) {
+    if (!target->isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
-    return &target;
+    return target;
 }
 
 IActor* Player::getCameraTargetActor()
@@ -125,16 +121,16 @@ IActor* Player::getCameraTargetActor()
         return nullptr;
     }
 
-    if (!component->valid(cameraTargetActor_)) {
+    IActor* target = component->get(cameraTargetActor_);
+    if (!target) {
         return nullptr;
     }
 
-    IActor& target = component->get(cameraTargetActor_);
-    if (!target.isStreamedInForPlayer(*this)) {
+    if (!target->isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
-    return &target;
+    return target;
 }
 
 IActor* Player::getTargetActor()
@@ -145,16 +141,16 @@ IActor* Player::getTargetActor()
         return nullptr;
     }
 
-    if (!component->valid(targetActor_)) {
+    IActor* target = component->get(cameraTargetActor_);
+    if (!target) {
         return nullptr;
     }
 
-    IActor& target = component->get(targetActor_);
-    if (!target.isStreamedInForPlayer(*this)) {
+    if (!target->isStreamedInForPlayer(*this)) {
         return nullptr;
     }
 
-    return &target;
+    return target;
 }
 
 void Player::setState(PlayerState state)
