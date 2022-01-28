@@ -2,21 +2,14 @@
 
 DatabasesComponent::DatabasesComponent()
 {
-    databaseConnections.claimUnusable(0);
-    databaseResultSets.claimUnusable(0);
 }
 
 /// Creates a  result set
 /// @returns Result set if successful, otherwise "nullptr"
 IDatabaseResultSet* DatabasesComponent::createResultSet()
 {
-    IDatabaseResultSet* ret(nullptr);
     int result_set_index(databaseResultSets.claim());
-    /// TODO: Handle invalid indices properly
-    if (result_set_index >= 0) {
-        ret = &databaseResultSets.get(result_set_index);
-    }
-    return ret;
+    return databaseResultSets.get(result_set_index);
 }
 
 /// Called for every component after components have been loaded
@@ -46,12 +39,13 @@ IDatabaseConnection* DatabasesComponent::open(StringView path)
 bool DatabasesComponent::close(IDatabaseConnection& connection)
 {
     int database_connection_index(connection.getID());
-    bool ret(databaseConnections.valid(database_connection_index));
-    if (ret) {
-        databaseConnections.get(database_connection_index).close();
+    DatabaseConnection* res = databaseConnections.get(database_connection_index);
+    if (res) {
+        res->close();
         databaseConnections.remove(database_connection_index);
+        return true;
     }
-    return ret;
+    return false;
 }
 
 /// Frees the specified result set
@@ -59,12 +53,7 @@ bool DatabasesComponent::close(IDatabaseConnection& connection)
 /// @returns "true" if result set has been successfully freed, otherwise "false"
 bool DatabasesComponent::freeResultSet(IDatabaseResultSet& resultSet)
 {
-    int database_result_set_index(resultSet.getID());
-    bool ret(databaseResultSets.valid(database_result_set_index));
-    if (ret) {
-        databaseResultSets.remove(database_result_set_index);
-    }
-    return ret;
+    return databaseResultSets.remove(resultSet.getID());
 }
 
 /// Gets the number of database connections
@@ -82,7 +71,7 @@ bool DatabasesComponent::isDatabaseConnectionIDValid(int databaseConnectionID) c
     if (databaseConnectionID == 0) {
         return false;
     }
-    return databaseConnections.valid(databaseConnectionID);
+    return databaseConnections.get(databaseConnectionID) != nullptr;
 }
 
 /// Gets a database connection by ID
@@ -90,7 +79,7 @@ bool DatabasesComponent::isDatabaseConnectionIDValid(int databaseConnectionID) c
 /// @returns Database connection
 IDatabaseConnection& DatabasesComponent::getDatabaseConnectionByID(int databaseConnectionID)
 {
-    return databaseConnections.get(databaseConnectionID);
+    return *databaseConnections.get(databaseConnectionID);
 }
 
 /// Gets the number of database result sets
@@ -108,7 +97,7 @@ bool DatabasesComponent::isDatabaseResultSetIDValid(int databaseResultSetID) con
     if (databaseResultSetID == 0) {
         return false;
     }
-    return databaseResultSets.valid(databaseResultSetID);
+    return databaseResultSets.get(databaseResultSetID) != nullptr;
 }
 
 /// Gets a database result set by ID
@@ -116,7 +105,7 @@ bool DatabasesComponent::isDatabaseResultSetIDValid(int databaseResultSetID) con
 /// @returns Database result set
 IDatabaseResultSet& DatabasesComponent::getDatabaseResultSetByID(int databaseResultSetID)
 {
-    return databaseResultSets.get(databaseResultSetID);
+    return *databaseResultSets.get(databaseResultSetID);
 }
 
 COMPONENT_ENTRY_POINT()

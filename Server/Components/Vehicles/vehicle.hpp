@@ -16,7 +16,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     GTAQuat rot;
     int virtualWorld_ = 0;
     VehicleSpawnData spawnData;
-    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
     float health = 1000.0f;
     uint8_t interior = 0;

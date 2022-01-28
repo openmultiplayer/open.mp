@@ -7,7 +7,7 @@ using namespace Impl;
 
 struct PlayerTextLabelData final : IPlayerTextLabelData {
     IPlayer& player;
-    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, ITextLabelsComponent::Capacity> storage;
+    MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
 
     PlayerTextLabelData(IPlayer& player)
         : player(player)
@@ -59,17 +59,12 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    IPlayerTextLabel& get(int index) override
+    IPlayerTextLabel* get(int index) override
     {
         return storage.get(index);
     }
@@ -103,7 +98,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
 
 struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<TextLabel, ITextLabel, ITextLabelsComponent::Capacity> storage;
+    MarkedPoolStorage<TextLabel, ITextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
     IVehiclesComponent* vehicles = nullptr;
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;
@@ -173,17 +168,12 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    ITextLabel& get(int index) override
+    ITextLabel* get(int index) override
     {
         return storage.get(index);
     }
@@ -221,13 +211,15 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
             for (ITextLabel* textLabel : storage) {
                 TextLabel* label = static_cast<TextLabel*>(textLabel);
                 const TextLabelAttachmentData& data = label->attachmentData;
-                Vector3 pos;
-                if (players->valid(data.playerID)) {
-                    pos = players->get(data.playerID).getPosition();
-                } else if (vehicles && vehicles->valid(data.vehicleID)) {
-                    pos = vehicles->get(data.vehicleID).getPosition();
-                } else {
-                    pos = label->pos;
+                Vector3 pos = label->pos;
+                IPlayer* textLabelPlayer = players->get(data.playerID);
+                if (textLabelPlayer) {
+                    pos = textLabelPlayer->getPosition();
+                } else if (vehicles) {
+                    IVehicle* textLabelVehicle = vehicles->get(data.vehicleID);
+                    if (textLabelVehicle) {
+                        pos = textLabelVehicle->getPosition();
+                    }
                 }
 
                 const PlayerState state = player.getState();
