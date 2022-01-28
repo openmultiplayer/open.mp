@@ -388,7 +388,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 PeerAddress::AddressString addressString;
                 PeerAddress::ToString(address, addressString);
 
-                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", addressString.length(), addressString.data());
+                network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
                 network->rakNetServer.Kick(rpcParams->sender);
             }
 
