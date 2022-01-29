@@ -424,8 +424,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             footSync.PlayerID = player.poolID;
             footSync.Rotation *= player.rotTransform_;
+
             player.pos_ = footSync.Position;
             player.rot_ = footSync.Rotation;
+            player.health_ = footSync.HealthArmour.x;
+            player.armour_ = footSync.HealthArmour.y;
+            player.armedWeapon_ = footSync.Weapon;
+            player.velocity_ = footSync.Velocity;
+            player.animation_.ID = footSync.AnimationID;
+            player.animation_.flags = footSync.AnimationFlags;
+            player.surfing_ = footSync.SurfingData;
+            player.action_ = PlayerSpecialAction(footSync.SpecialAction);
+
             uint32_t newKeys;
             switch (footSync.AdditionalKey) {
             case 1:
@@ -452,15 +462,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
-
-            player.health_ = footSync.HealthArmour.x;
-            player.armour_ = footSync.HealthArmour.y;
-            player.armedWeapon_ = footSync.Weapon;
-            player.velocity_ = footSync.Velocity;
-            player.animation_.ID = footSync.AnimationID;
-            player.animation_.flags = footSync.AnimationFlags;
-            player.surfing_ = footSync.SurfingData;
-            player.action_ = PlayerSpecialAction(footSync.SpecialAction);
             player.setState(PlayerState_OnFoot);
 
             TimePoint now = Time::now();
@@ -506,7 +507,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
-
             player.setState(PlayerState_Spectating);
 
             TimePoint now = Time::now();
@@ -714,6 +714,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             Player& player = static_cast<Player&>(peer);
             player.pos_ = vehicleSync.Position;
+            player.health_ = vehicleSync.PlayerHealthArmour.x;
+            player.armour_ = vehicleSync.PlayerHealthArmour.y;
+            player.armedWeapon_ = vehicleSync.WeaponID;
+            const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
+
             uint32_t newKeys;
             switch (vehicleSync.AdditionalKey) {
             case 1:
@@ -740,10 +745,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
-            player.health_ = vehicleSync.PlayerHealthArmour.x;
-            player.armour_ = vehicleSync.PlayerHealthArmour.y;
-            player.armedWeapon_ = vehicleSync.WeaponID;
-            bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
             player.setState(PlayerState_Driver);
 
             if (vehicleOk) {
@@ -931,9 +932,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             if (vehicle.isRespawning())
                 return false;
-            vehicle.updateFromPassengerSync(passengerSync, peer);
+            const bool vehicleOk = vehicle.updateFromPassengerSync(passengerSync, peer);
 
+            player.health_ = passengerSync.HealthArmour.x;
+            player.armour_ = passengerSync.HealthArmour.y;
+            player.armedWeapon_ = passengerSync.WeaponID;
             player.pos_ = passengerSync.Position;
+
             uint32_t newKeys;
             switch (passengerSync.AdditionalKey) {
             case 1:
@@ -960,22 +965,22 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
-            player.health_ = passengerSync.HealthArmour.x;
-            player.armour_ = passengerSync.HealthArmour.y;
-            player.armedWeapon_ = passengerSync.WeaponID;
             player.setState(PlayerState_Passenger);
 
-            TimePoint now = Time::now();
-            bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-                [&peer, now](PlayerUpdateEventHandler* handler) {
-                    return handler->onUpdate(peer, now);
-                });
+            if (vehicleOk) {
+                TimePoint now = Time::now();
+                bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+                    [&peer, now](PlayerUpdateEventHandler* handler) {
+                        return handler->onUpdate(peer, now);
+                    });
 
-            if (allowedupdate) {
-                passengerSync.PlayerID = player.poolID;
-                player.passengerSync_ = passengerSync;
-                player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
+                if (allowedupdate) {
+                    passengerSync.PlayerID = player.poolID;
+                    player.passengerSync_ = passengerSync;
+                    player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
+                }
             }
+
             return true;
         }
     } playerPassengerSyncHandler;
