@@ -4,7 +4,7 @@ using namespace Impl;
 
 struct GangZonesComponent final : public IGangZonesComponent {
     ICore* core = nullptr;
-    MarkedPoolStorage<GangZone, IGangZone, IGangZonesComponent::Capacity> storage;
+    MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
     StringView componentName() const override
@@ -32,17 +32,12 @@ struct GangZonesComponent final : public IGangZonesComponent {
         delete this;
     }
 
-    int findFreeIndex() override
+    virtual Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    IGangZone& get(int index) override
+    IGangZone* get(int index) override
     {
         return storage.get(index);
     }
