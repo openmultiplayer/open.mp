@@ -21,9 +21,13 @@ SCRIPT_API(DestroyPlayerObject, bool(IPlayer& player, IPlayerObject& object))
     return true;
 }
 
-SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& object, IVehicle& vehicle, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& object, IVehicle* vehicle, Vector3 offset, Vector3 rotation))
 {
-    object.attachToVehicle(vehicle, offset, rotation);
+    if (vehicle) {
+        object.attachToVehicle(*vehicle, offset, rotation);
+    } else {
+        object.resetAttachment();
+    }
     return true;
 }
 
