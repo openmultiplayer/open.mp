@@ -1052,8 +1052,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             IPlayerVehicleData* vehData = queryData<IPlayerVehicleData>(peer);
             if (state != PlayerState_Driver || vehData->getVehicle() == nullptr) {
                 return false;
-            } else if (vehicle.getDriver() != &player) {
-                return false;
             }
 
             if (vehicle.updateFromTrailerSync(trailerSync, peer)) {

@@ -125,6 +125,12 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
         data->setVehicle(this, 0);
         updateOccupied();
     }
+
+    //Reset the detaching flag when trailer is detached on driver's client.
+    if (vehicleSync.TrailerID == 0) {
+        detaching = false;
+    }
+
     return true;
 }
 
@@ -178,12 +184,11 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 
     PlayerVehicleData* playerData = queryData<PlayerVehicleData>(player);
     Vehicle* vehicle = playerData->vehicle;
-    if (!vehicle) {
+  
+    if (!vehicle || vehicle->detaching) {
         return false;
     } else if (tower != vehicle) {
-        tower = vehicle;
-        tower->attachTrailer(*this);
-        towing = false;
+        vehicle->attachTrailer(*this);
     }
 
     const TimePoint now = Time::now();
@@ -481,6 +486,7 @@ void Vehicle::respawn()
     trailer = nullptr;
     tower = nullptr;
     towing = false;
+    detaching = false;
     params = VehicleParams {};
 
     ScopedPoolReleaseLock lock(*pool, *this);
@@ -511,6 +517,8 @@ void Vehicle::detachTrailer()
         PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries());
         trailer->setTower(nullptr);
         trailer = nullptr;
+        towing = false;
+        detaching = true;
     }
 }
 
