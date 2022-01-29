@@ -322,7 +322,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            // Filters ~k, ~K (uppercase), and %. Replace with #.
+            // Filters ~k, ~K (uppercase). Replace with #.
             std::regex filter = std::regex("~(k|K)");
             // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
             std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
@@ -370,9 +370,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (!playerRequestCommandMessage.read(bs)) {
                 return false;
             }
-            StringView msg = playerRequestCommandMessage.message;
-            bool send = msg.size() > 1 && self.eventDispatcher.anyTrue([&peer, msg](PlayerEventHandler* handler) {
-                return handler->onCommandText(peer, msg);
+
+            // Filters ~k, ~K (uppercase). Replace with #.
+            std::regex filter = std::regex("~(k|K)");
+            // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
+            std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
+            String filteredMessage = std::regex_replace(String(StringView(playerRequestCommandMessage.message)), filter, "#");
+            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+
+            bool send = filteredMessage.size() > 1 && self.eventDispatcher.anyTrue([&peer, filteredMessage](PlayerEventHandler* handler) {
+                return handler->onCommandText(peer, filteredMessage);
             });
 
             if (!send) {
