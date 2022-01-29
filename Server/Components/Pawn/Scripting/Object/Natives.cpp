@@ -20,15 +20,23 @@ SCRIPT_API(DestroyObject, bool(IObject& object))
     return true;
 }
 
-SCRIPT_API(AttachObjectToVehicle, bool(IObject& object, IVehicle& vehicle, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachObjectToVehicle, bool(IObject& object, IVehicle* vehicle, Vector3 offset, Vector3 rotation))
 {
-    object.attachToVehicle(vehicle, offset, rotation);
+    if (vehicle) {
+        object.attachToVehicle(*vehicle, offset, rotation);
+    } else {
+        object.resetAttachment();
+    }
     return true;
 }
 
-SCRIPT_API(AttachObjectToObject, bool(IObject& object, IObject& objAttachedTo, Vector3 offset, Vector3 rotation, bool syncRotation))
+SCRIPT_API(AttachObjectToObject, bool(IObject& object, IObject* objAttachedTo, Vector3 offset, Vector3 rotation, bool syncRotation))
 {
-    object.attachToObject(objAttachedTo, offset, rotation, syncRotation);
+    if (objAttachedTo) {
+        object.attachToObject(*objAttachedTo, offset, rotation, syncRotation);
+    } else {
+        object.resetAttachment();
+    }
     return true;
 }
 
