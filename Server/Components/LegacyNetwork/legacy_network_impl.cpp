@@ -324,19 +324,18 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
     Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
+    //Allow only 0.3.7 client for now
     if (version != LegacyClientVersion_037 || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_037)) {
-        if (version != LegacyClientVersion_03DL || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_03DL)) {
-            newConnectionResult.first = NewConnectionResult_VersionMismatch;
-        }
+        newConnectionResult.first = NewConnectionResult_VersionMismatch;
+    } else {
+        PeerRequestParams params;
+        params.version = version;
+        params.versionName = versionName;
+        params.name = name;
+        params.bot = isNPC;
+        params.serial = serial;
+        newConnectionResult = core->getPlayers().requestPlayer(netData, params);
     }
-
-    PeerRequestParams params;
-    params.version = version;
-    params.versionName = versionName;
-    params.name = name;
-    params.bot = isNPC;
-    params.serial = serial;
-    newConnectionResult = core->getPlayers().requestPlayer(netData, params);
 
     if (newConnectionResult.first != NewConnectionResult_Success) {
         if (newConnectionResult.first != NewConnectionResult_Ignore) {

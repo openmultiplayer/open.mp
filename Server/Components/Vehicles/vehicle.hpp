@@ -42,6 +42,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     Vector3 angularVelocity;
     TimePoint trailerUpdateTime;
     bool towing = false;
+    bool detaching = false;
     union {
         Vehicle* trailer = nullptr;
         Vehicle* tower;

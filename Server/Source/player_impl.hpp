@@ -405,7 +405,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerTeam setPlayerTeamRPC;
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
-        PacketHelper::broadcastToStreamed(setPlayerTeamRPC, *this, true /* skipFrom */);
+
+        //local player needs to know his teamId
+        PacketHelper::broadcastToStreamed(setPlayerTeamRPC, *this, false /* skipFrom */);
     }
 
     int getTeam() const override
@@ -1006,7 +1008,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         RPC.DrawDistance = drawDist;
         RPC.ExpireTime = expire.count();
         RPC.Text = text;
-        PacketHelper::send(RPC, *this);
+        PacketHelper::broadcastToStreamed(RPC, *this, true /* skipFrom */);
     }
 
     void sendClientMessage(const Colour& colour, StringView message) override
