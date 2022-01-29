@@ -537,6 +537,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
     {
+        // Set from sync
         NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC(animation);
         applyPlayerAnimationRPC.PlayerID = poolID;
 
@@ -566,7 +567,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setHealth(float health) override
     {
-        health_ = health;
+        // Set from sync
         NetCode::RPC::SetPlayerHealth setPlayerHealthRPC;
         setPlayerHealthRPC.Health = health;
         PacketHelper::send(setPlayerHealthRPC, *this);
@@ -579,7 +580,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setArmour(float armour) override
     {
-        armour_ = armour;
+        // Set from sync
         NetCode::RPC::SetPlayerArmour setPlayerArmourRPC;
         setPlayerArmourRPC.Armour = armour;
         PacketHelper::send(setPlayerArmourRPC, *this);
@@ -599,7 +600,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setAction(PlayerSpecialAction action) override
     {
-        action_ = action;
+        // Set from sync
         NetCode::RPC::SetPlayerSpecialAction setPlayerSpecialActionRPC;
         setPlayerSpecialActionRPC.Action = action;
         PacketHelper::send(setPlayerSpecialActionRPC, *this);
@@ -612,7 +613,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setVelocity(Vector3 velocity) override
     {
-        velocity_ = velocity;
+        // Set from sync
         NetCode::RPC::SetPlayerVelocity setPlayerVelocityRPC;
         setPlayerVelocityRPC.Velocity = velocity;
         PacketHelper::send(setPlayerVelocityRPC, *this);
@@ -771,8 +772,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setPosition(Vector3 position) override
     {
-        // do not update position internally, let player's position change on their end first
-        // then we receive updates by them when they send on foot sync packets
+        // Set from sync
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
         PacketHelper::send(setPlayerPosRPC, *this);
@@ -849,7 +849,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setPositionFindZ(Vector3 position) override
     {
-        pos_ = position;
+        // Set from sync
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
         PacketHelper::send(setPlayerPosRPC, *this);
@@ -862,7 +862,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setRotation(GTAQuat rotation) override
     {
-        rot_ = rotation * rotTransform_;
+        // Set from sync
         NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
         setPlayerFacingAngleRPC.Angle = rot_.ToEuler().z;
         PacketHelper::send(setPlayerFacingAngleRPC, *this);
@@ -958,6 +958,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setArmedWeapon(uint32_t weapon) override
     {
+        // Set from sync
         NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
         setPlayerArmedWeaponRPC.Weapon = weapon;
         PacketHelper::send(setPlayerArmedWeaponRPC, *this);
