@@ -48,7 +48,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
         rakNetServer.Kick(rid);
     }
 
-    bool sendPacket(IPlayer& peer, Span<uint8_t> data) override
+    bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel) override
     {
         const PeerNetworkData& netData = peer.getNetworkData();
         if (netData.network != this) {
@@ -80,10 +80,11 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-        return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE_SEQUENCED, 0, rid, false);
+        const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::UNRELIABLE : RakNet::UNRELIABLE_SEQUENCED;
+        return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false);
     }
 
-    bool broadcastRPC(int id, Span<uint8_t> data, const IPlayer* exceptPeer) override
+    bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer) override
     {
         if (id == INVALID_PACKET_ID) {
             return false;
@@ -109,20 +110,21 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
             return false;
         }
 
+        const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
         if (exceptPeer) {
             const PeerNetworkData& netData = exceptPeer->getNetworkData();
             if (netData.network == this) {
                 const PeerNetworkData::NetworkID& nid = netData.networkID;
                 const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 
-                return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+                return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
             }
         }
 
-        return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data) override
+    bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel) override
     {
         if (id == INVALID_PACKET_ID) {
             return false;
@@ -155,7 +157,8 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-        return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, RakNet::RELIABLE_ORDERED, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+        const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
+        return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
     static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);

@@ -4,9 +4,9 @@
 
 struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
     ICore* core = nullptr;
-    MarkedDynamicPoolStorage<Object, IObject, IObjectsComponent::Capacity> storage;
+    MarkedDynamicPoolStorage<Object, IObject, 1, OBJECT_POOL_SIZE> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-    StaticBitset<IObjectsComponent::Capacity> isPlayerObject;
+    StaticBitset<OBJECT_POOL_SIZE> isPlayerObject;
     bool defCameraCollision = true;
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInEventHandler {
@@ -25,22 +25,26 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
 
             IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
             if (data && data->selectingObject()) {
-                if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Global || self.valid(onPlayerSelectObjectRPC.ObjectID)) {
-                    ScopedPoolReleaseLock lock(self, onPlayerSelectObjectRPC.ObjectID);
+                IObject* obj = self.get(onPlayerSelectObjectRPC.ObjectID);
+                if (obj) {
+                    ScopedPoolReleaseLock lock(self, *obj);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectSelected,
                         peer,
-                        lock.entry,
+                        *lock.entry,
                         onPlayerSelectObjectRPC.Model,
                         onPlayerSelectObjectRPC.Position);
-                } else if (onPlayerSelectObjectRPC.SelectType == ObjectSelectType_Player || data->valid(onPlayerSelectObjectRPC.ObjectID)) {
-                    ScopedPoolReleaseLock lock(*data, onPlayerSelectObjectRPC.ObjectID);
-                    self.eventDispatcher.dispatch(
-                        &ObjectEventHandler::onPlayerObjectSelected,
-                        peer,
-                        lock.entry,
-                        onPlayerSelectObjectRPC.Model,
-                        onPlayerSelectObjectRPC.Position);
+                } else {
+                    IPlayerObject* playerObj = data->get(onPlayerSelectObjectRPC.ObjectID);
+                    if (playerObj) {
+                        ScopedPoolReleaseLock lock(*data, *playerObj);
+                        self.eventDispatcher.dispatch(
+                            &ObjectEventHandler::onPlayerObjectSelected,
+                            peer,
+                            *lock.entry,
+                            onPlayerSelectObjectRPC.Model,
+                            onPlayerSelectObjectRPC.Position);
+                    }
                 }
             }
 
@@ -69,24 +73,28 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                     data->endObjectEdit();
                 }
 
-                if (onPlayerEditObjectRPC.PlayerObject && data->valid(onPlayerEditObjectRPC.ObjectID)) {
+                if (onPlayerEditObjectRPC.PlayerObject) {
                     ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
-                    self.eventDispatcher.dispatch(
-                        &ObjectEventHandler::onPlayerObjectEdited,
-                        peer,
-                        lock.entry,
-                        ObjectEditResponse(onPlayerEditObjectRPC.Response),
-                        onPlayerEditObjectRPC.Offset,
-                        onPlayerEditObjectRPC.Rotation);
-                } else if (self.valid(onPlayerEditObjectRPC.ObjectID)) {
+                    if (lock.entry) {
+                        self.eventDispatcher.dispatch(
+                            &ObjectEventHandler::onPlayerObjectEdited,
+                            peer,
+                            *lock.entry,
+                            ObjectEditResponse(onPlayerEditObjectRPC.Response),
+                            onPlayerEditObjectRPC.Offset,
+                            onPlayerEditObjectRPC.Rotation);
+                    }
+                } else {
                     ScopedPoolReleaseLock lock(self, onPlayerEditObjectRPC.ObjectID);
-                    self.eventDispatcher.dispatch(
-                        &ObjectEventHandler::onObjectEdited,
-                        peer,
-                        lock.entry,
-                        ObjectEditResponse(onPlayerEditObjectRPC.Response),
-                        onPlayerEditObjectRPC.Offset,
-                        onPlayerEditObjectRPC.Rotation);
+                    if (lock.entry) {
+                        self.eventDispatcher.dispatch(
+                            &ObjectEventHandler::onObjectEdited,
+                            peer,
+                            *lock.entry,
+                            ObjectEditResponse(onPlayerEditObjectRPC.Response),
+                            onPlayerEditObjectRPC.Offset,
+                            onPlayerEditObjectRPC.Rotation);
+                    }
                 }
             }
 
@@ -129,7 +137,6 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         , playerEditObjectEventHandler(*this)
         , playerEditAttachedObjectEventHandler(*this)
     {
-        storage.claimUnusable(0);
     }
 
     void onLoad(ICore* core) override
@@ -197,12 +204,12 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             return nullptr;
         }
 
-        Object& obj = storage.get(objid);
+        Object* obj = storage.get(objid);
         for (IPlayer* player : core->getPlayers().entries()) {
-            obj.createForPlayer(*player);
+            obj->createForPlayer(*player);
         }
 
-        return &obj;
+        return obj;
     }
 
     void free() override
@@ -210,21 +217,16 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
+    IObject* get(int index) override
     {
         if (index == 0) {
-            return false;
+            return nullptr;
         }
-        return storage.valid(index);
-    }
-
-    IObject& get(int index) override
-    {
         return storage.get(index);
     }
 
@@ -332,7 +334,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     IPlayer& player_;
     StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
     StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
-    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, IPlayerObjectData::Capacity> storage;
+    MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, 1, OBJECT_POOL_SIZE> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
 
@@ -340,14 +342,13 @@ struct PlayerObjectData final : public IPlayerObjectData {
         : component_(component)
         , player_(player)
     {
-        storage.claimUnusable(0);
     }
 
     IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
     {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx != -1) {
-            if (!component_.storage.valid(freeIdx)) {
+            if (!component_.storage.get(freeIdx)) {
                 break;
             }
 
@@ -367,27 +368,22 @@ struct PlayerObjectData final : public IPlayerObjectData {
 
         component_.isPlayerObject.set(objid);
 
-        PlayerObject& obj = storage.get(objid);
-        obj.createForPlayer();
+        PlayerObject* obj = storage.get(objid);
+        obj->createForPlayer();
 
-        return &obj;
+        return obj;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
+    IPlayerObject* get(int index) override
     {
         if (index == 0) {
-            return false;
+            return nullptr;
         }
-        return storage.valid(index);
-    }
-
-    IPlayerObject& get(int index) override
-    {
         return storage.get(index);
     }
 
@@ -533,8 +529,8 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
     for (IObject* object : storage) {
         Object* obj = static_cast<Object*>(object);
         if (obj->advance(elapsed, now)) {
-            ScopedPoolReleaseLock lock(*this, *obj);
-            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, lock.entry);
+            ScopedPoolReleaseLock lock(*this, *object);
+            eventDispatcher.dispatch(&ObjectEventHandler::onMoved, *lock.entry);
         }
     }
 
@@ -544,8 +540,10 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
             for (IPlayerObject* object : *data) {
                 PlayerObject* obj = static_cast<PlayerObject*>(object);
                 if (obj->advance(elapsed, now)) {
-                    ScopedPoolReleaseLock lock(*data, *obj);
-                    eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, lock.entry);
+                    ScopedPoolReleaseLock lock(*data, *object);
+                    if (lock.entry) {
+                        eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, *player, *lock.entry);
+                    }
                 }
             }
         }

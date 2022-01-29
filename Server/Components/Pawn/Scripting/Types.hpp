@@ -18,8 +18,11 @@
         static type& ValReq(cell ref)                        \
         {                                                    \
             auto pool = PawnManager::Get()->poolPtr;         \
-            if (pool && pool->valid(ref)) {                  \
-                return pool->get(ref);                       \
+            if (pool) {                                      \
+                auto ptr = pool->get(ref);                   \
+                if (ptr) {                                   \
+                    return *ptr;                             \
+                }                                            \
             }                                                \
             throw pawn_natives::ParamCastFailure();          \
         }                                                    \
@@ -27,8 +30,8 @@
         static type* Val(cell ref) noexcept                  \
         {                                                    \
             auto pool = PawnManager::Get()->poolPtr;         \
-            if (pool && pool->valid(ref)) {                  \
-                return &pool->get(ref);                      \
+            if (pool) {                                      \
+                return pool->get(ref);                       \
             }                                                \
             return nullptr;                                  \
         }                                                    \
@@ -104,8 +107,11 @@
         static type& ValReq(IPlayer& player, cell ref)                                                                                     \
         {                                                                                                                                  \
             auto data = queryData<dataType>(player);                                                                                       \
-            if (data && data->valid(ref)) {                                                                                                \
-                return data->get(ref);                                                                                                     \
+            if (data) {                                                                                                                    \
+                auto ptr = data->get(ref);                                                                                                 \
+                if (ptr) {                                                                                                                 \
+                    return *ptr;                                                                                                           \
+                }                                                                                                                          \
             }                                                                                                                              \
             throw pawn_natives::ParamCastFailure();                                                                                        \
         }                                                                                                                                  \
@@ -113,8 +119,8 @@
         static type* Val(IPlayer& player, cell ref) noexcept                                                                               \
         {                                                                                                                                  \
             auto data = queryData<dataType>(player);                                                                                       \
-            if (data && data->valid(ref)) {                                                                                                \
-                return &data->get(ref);                                                                                                    \
+            if (data) {                                                                                                                    \
+                return data->get(ref);                                                                                                     \
             }                                                                                                                              \
             return nullptr;                                                                                                                \
         }                                                                                                                                  \
