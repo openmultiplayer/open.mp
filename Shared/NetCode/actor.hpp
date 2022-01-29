@@ -8,7 +8,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct ShowActorForPlayer : NetworkPacketBase<171, NetworkPacketType::RPC> {
+    struct ShowActorForPlayer : NetworkPacketBase<171, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
         int SkinID;
         Vector3 Position;
@@ -27,7 +27,7 @@ namespace RPC {
         }
     };
 
-    struct HideActorForPlayer : NetworkPacketBase<172, NetworkPacketType::RPC> {
+    struct HideActorForPlayer : NetworkPacketBase<172, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
 
         void write(NetworkBitStream& bs) const
@@ -36,7 +36,7 @@ namespace RPC {
         }
     };
 
-    struct ApplyActorAnimationForPlayer : NetworkPacketBase<173, NetworkPacketType::RPC> {
+    struct ApplyActorAnimationForPlayer : NetworkPacketBase<173, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
         const AnimationData& Anim;
 
@@ -59,7 +59,7 @@ namespace RPC {
         }
     };
 
-    struct ClearActorAnimationsForPlayer : NetworkPacketBase<174, NetworkPacketType::RPC> {
+    struct ClearActorAnimationsForPlayer : NetworkPacketBase<174, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
 
         void write(NetworkBitStream& bs) const
@@ -68,7 +68,7 @@ namespace RPC {
         }
     };
 
-    struct SetActorFacingAngleForPlayer : NetworkPacketBase<175, NetworkPacketType::RPC> {
+    struct SetActorFacingAngleForPlayer : NetworkPacketBase<175, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
         float Angle;
 
@@ -79,7 +79,7 @@ namespace RPC {
         }
     };
 
-    struct SetActorPosForPlayer : NetworkPacketBase<176, NetworkPacketType::RPC> {
+    struct SetActorPosForPlayer : NetworkPacketBase<176, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
         Vector3 Pos;
 
@@ -90,7 +90,7 @@ namespace RPC {
         }
     };
 
-    struct SetActorHealthForPlayer : NetworkPacketBase<178, NetworkPacketType::RPC> {
+    struct SetActorHealthForPlayer : NetworkPacketBase<178, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
         float Health;
 
@@ -101,7 +101,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerDamageActor : NetworkPacketBase<177, NetworkPacketType::RPC> {
+    struct OnPlayerDamageActor : NetworkPacketBase<177, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool Unknown;
         int ActorID;
         float Damage;

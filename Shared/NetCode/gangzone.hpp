@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct ShowGangZone : NetworkPacketBase<108, NetworkPacketType::RPC> {
+    struct ShowGangZone : NetworkPacketBase<108, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ID;
         Vector2 Min;
         Vector2 Max;
@@ -21,7 +21,7 @@ namespace RPC {
         }
     };
 
-    struct HideGangZone : NetworkPacketBase<120, NetworkPacketType::RPC> {
+    struct HideGangZone : NetworkPacketBase<120, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ID;
 
         void write(NetworkBitStream& bs) const
@@ -30,7 +30,7 @@ namespace RPC {
         }
     };
 
-    struct FlashGangZone : NetworkPacketBase<121, NetworkPacketType::RPC> {
+    struct FlashGangZone : NetworkPacketBase<121, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ID;
         Colour Col;
 
@@ -41,7 +41,7 @@ namespace RPC {
         }
     };
 
-    struct StopFlashGangZone : NetworkPacketBase<85, NetworkPacketType::RPC> {
+    struct StopFlashGangZone : NetworkPacketBase<85, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ID;
 
         void write(NetworkBitStream& bs) const

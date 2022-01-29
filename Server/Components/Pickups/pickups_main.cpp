@@ -5,7 +5,7 @@ using namespace Impl;
 
 struct PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<Pickup, IPickup, IPickupsComponent::Capacity> storage;
+    MarkedPoolStorage<Pickup, IPickup, 0, PICKUP_POOL_SIZE> storage;
     DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;
@@ -24,13 +24,15 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
                 return false;
             }
 
-            if (self.valid(onPlayerPickUpPickupRPC.PickupID)) {
-                ScopedPoolReleaseLock lock(self, onPlayerPickUpPickupRPC.PickupID);
-                self.eventDispatcher.dispatch(
-                    &PickupEventHandler::onPlayerPickUpPickup,
-                    peer,
-                    lock.entry);
+            ScopedPoolReleaseLock lock(self, onPlayerPickUpPickupRPC.PickupID);
+            if (!lock.entry) {
+                return false;
             }
+
+            self.eventDispatcher.dispatch(
+                &PickupEventHandler::onPlayerPickUpPickup,
+                peer,
+                *lock.entry);
             return true;
         }
     } playerPickUpPickupEventHandler;
@@ -90,24 +92,20 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    IPickup& get(int index) override
+    IPickup* get(int index) override
     {
         return storage.get(index);
     }
 
     void release(int index) override
     {
-        if (!storage.get(index).isStatic) {
+        Pickup* pickup = storage.get(index);
+        if (pickup && !pickup->isStatic) {
             storage.release(index, false);
         }
     }

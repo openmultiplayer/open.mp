@@ -2,7 +2,7 @@
 
 struct ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<Actor, IActor, IActorsComponent::Capacity> storage;
+    MarkedPoolStorage<Actor, IActor, 0, ACTOR_POOL_SIZE> storage;
     DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
     IPlayerPool* players;
     StreamConfigHelper streamConfigHelper;
@@ -21,14 +21,15 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
                 return false;
             }
 
-            if (self.valid(onPlayerDamageActorRPC.ActorID)) {
-                Actor& actor = self.storage.get(onPlayerDamageActorRPC.ActorID);
+            Actor* actorPtr = self.storage.get(onPlayerDamageActorRPC.ActorID);
+            if (actorPtr) {
+                Actor& actor = *actorPtr;
                 if (actor.isStreamedInForPlayer(peer) && !actor.invulnerable_) {
-                    ScopedPoolReleaseLock<IActor, Capacity> lock(self, onPlayerDamageActorRPC.ActorID);
+                    ScopedPoolReleaseLock<IActor> lock(self, actor);
                     self.eventDispatcher.dispatch(
                         &ActorEventHandler::onPlayerDamageActor,
                         peer,
-                        lock.entry,
+                        *lock.entry,
                         onPlayerDamageActorRPC.Damage,
                         onPlayerDamageActorRPC.WeaponID,
                         BodyPart(onPlayerDamageActorRPC.Bodypart));
@@ -99,17 +100,12 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         delete this;
     }
 
-    int findFreeIndex() override
+    Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    IActor& get(int index) override
+    IActor* get(int index) override
     {
         return storage.get(index);
     }
@@ -159,17 +155,17 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
                 const bool isStreamedIn = actor->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
                     actor->streamInForPlayer(player);
-                    ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
+                    ScopedPoolReleaseLock<IActor> lock(*this, *actor);
                     eventDispatcher.dispatch(
                         &ActorEventHandler::onActorStreamIn,
-                        lock.entry,
+                        *lock.entry,
                         player);
                 } else if (isStreamedIn && !shouldBeStreamedIn) {
                     actor->streamOutForPlayer(player);
-                    ScopedPoolReleaseLock<IActor, Capacity> lock(*this, actor->getID());
+                    ScopedPoolReleaseLock<IActor> lock(*this, *actor);
                     eventDispatcher.dispatch(
                         &ActorEventHandler::onActorStreamOut,
-                        lock.entry,
+                        *lock.entry,
                         player);
                 }
             }

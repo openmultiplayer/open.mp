@@ -21,7 +21,7 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     int skin_;
     Vector3 pos_;
     float angle_;
-    UniqueIDArray<IPlayer, IPlayerPool::Capacity> streamedFor_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     float health_;
     bool invulnerable_;
     AnimationData animation_;

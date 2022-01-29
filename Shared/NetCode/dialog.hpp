@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct ShowDialog : NetworkPacketBase<61, NetworkPacketType::RPC> {
+    struct ShowDialog : NetworkPacketBase<61, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ID;
         uint8_t Style;
         HybridString<32> Title;
@@ -30,7 +30,7 @@ namespace RPC {
         }
     };
 
-    struct OnPlayerDialogResponse : NetworkPacketBase<62, NetworkPacketType::RPC> {
+    struct OnPlayerDialogResponse : NetworkPacketBase<62, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ID;
         uint8_t Response;
         int ListItem;

@@ -6,7 +6,7 @@ using namespace Impl;
 
 struct PlayerTextDrawData final : IPlayerTextDrawData {
     IPlayer& player;
-    MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, IPlayerTextDrawData::Capacity> storage;
+    MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, 0, PLAYER_TEXTDRAW_POOL_SIZE> storage;
     bool selecting;
 
     PlayerTextDrawData(IPlayer& player)
@@ -59,17 +59,12 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         delete this;
     }
 
-    int findFreeIndex() override
+    virtual Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    IPlayerTextDraw& get(int index) override
+    IPlayerTextDraw* get(int index) override
     {
         return storage.get(index);
     }
@@ -103,7 +98,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
 
 struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
     ICore* core = nullptr;
-    MarkedPoolStorage<TextDraw, ITextDraw, ITextDrawsComponent::Capacity> storage;
+    MarkedPoolStorage<TextDraw, ITextDraw, 0, GLOBAL_TEXTDRAW_POOL_SIZE> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
     StringView componentName() const override
@@ -136,12 +131,16 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
                     self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
                     data->selecting = false;
                 } else {
-                    if (RPC.PlayerTextDraw && data->storage.valid(RPC.TextDrawID)) {
+                    if (RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, lock.entry);
-                    } else if (!RPC.PlayerTextDraw && self.storage.valid(RPC.TextDrawID)) {
+                        if (lock.entry) {
+                            self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, *lock.entry);
+                        }
+                    } else if (!RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
-                        self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, lock.entry);
+                        if (lock.entry) {
+                            self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, *lock.entry);
+                        }
                     }
                 }
             }
@@ -195,17 +194,12 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         delete this;
     }
 
-    int findFreeIndex() override
+    virtual Pair<size_t, size_t> bounds() const override
     {
-        return storage.findFreeIndex();
+        return std::make_pair(storage.Lower, storage.Upper);
     }
 
-    bool valid(int index) const override
-    {
-        return storage.valid(index);
-    }
-
-    ITextDraw& get(int index) override
+    ITextDraw* get(int index) override
     {
         return storage.get(index);
     }

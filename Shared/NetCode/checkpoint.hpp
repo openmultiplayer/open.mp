@@ -6,7 +6,7 @@
 
 namespace NetCode {
 namespace RPC {
-    struct SetCheckpoint : NetworkPacketBase<107, NetworkPacketType::RPC> {
+    struct SetCheckpoint : NetworkPacketBase<107, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 position;
         float size;
 
@@ -22,7 +22,7 @@ namespace RPC {
         }
     };
 
-    struct DisableCheckpoint : NetworkPacketBase<37, NetworkPacketType::RPC> {
+    struct DisableCheckpoint : NetworkPacketBase<37, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
@@ -31,7 +31,7 @@ namespace RPC {
         void write(NetworkBitStream& bs) const { }
     };
 
-    struct SetRaceCheckpoint : NetworkPacketBase<38, NetworkPacketType::RPC> {
+    struct SetRaceCheckpoint : NetworkPacketBase<38, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t type;
         Vector3 position;
         Vector3 nextPosition;
@@ -51,7 +51,7 @@ namespace RPC {
         }
     };
 
-    struct DisableRaceCheckpoint : NetworkPacketBase<39, NetworkPacketType::RPC> {
+    struct DisableRaceCheckpoint : NetworkPacketBase<39, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         bool read(NetworkBitStream& bs)
         {
             return false;
