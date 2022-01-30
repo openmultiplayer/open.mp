@@ -9,6 +9,10 @@
 
 SCRIPT_API(SetSVarInt, bool(const std::string& varname, int value))
 {
+    if (varname.empty()) {
+        return false;
+    }
+
     GET_VAR_COMP(component, false);
     component->setInt(varname, value);
     return true;
@@ -22,12 +26,16 @@ SCRIPT_API(GetSVarInt, int(const std::string& varname))
 
 SCRIPT_API(SetSVarString, bool(const std::string& varname, const std::string& value))
 {
+    if (varname.empty()) {
+        return false;
+    }
+
     GET_VAR_COMP(component, false);
     component->setString(varname, value);
     return true;
 }
 
-SCRIPT_API(GetSVarString, bool(const std::string& varname, std::string& output))
+SCRIPT_API(GetSVarString, int(const std::string& varname, std::string& output))
 {
     GET_VAR_COMP(component, false);
     output = String(component->getString(varname));
@@ -36,6 +44,10 @@ SCRIPT_API(GetSVarString, bool(const std::string& varname, std::string& output))
 
 SCRIPT_API(SetSVarFloat, bool(const std::string& varname, float value))
 {
+    if (varname.empty()) {
+        return false;
+    }
+
     GET_VAR_COMP(component, false);
     component->setFloat(varname, value);
     return true;
