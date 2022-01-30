@@ -375,7 +375,7 @@ SCRIPT_API(GetPlayerLastShotVectors, bool(IPlayer& player, Vector3& origin, Vect
     return true;
 }
 
-SCRIPT_API(GetPlayerCameraTargetPlayer, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
 {
     IPlayer* target = player.getCameraTargetPlayer();
     if (target) {
@@ -384,7 +384,7 @@ SCRIPT_API(GetPlayerCameraTargetPlayer, int(IPlayer& player))
     return INVALID_PLAYER_ID;
 }
 
-SCRIPT_API(GetPlayerCameraTargetActor, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetActor, INVALID_ACTOR_ID, int(IPlayer& player))
 {
     IActor* target = player.getCameraTargetActor();
     if (target) {
@@ -393,7 +393,7 @@ SCRIPT_API(GetPlayerCameraTargetActor, int(IPlayer& player))
     return INVALID_ACTOR_ID;
 }
 
-SCRIPT_API(GetPlayerCameraTargetObject, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetObject, INVALID_OBJECT_ID, int(IPlayer& player))
 {
     IObject* target = player.getCameraTargetObject();
     if (target) {
@@ -402,7 +402,7 @@ SCRIPT_API(GetPlayerCameraTargetObject, int(IPlayer& player))
     return INVALID_OBJECT_ID;
 }
 
-SCRIPT_API(GetPlayerCameraTargetVehicle, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetVehicle, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
     IVehicle* target = player.getCameraTargetVehicle();
     if (target) {
@@ -684,7 +684,7 @@ SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& lef
     return true;
 }
 
-SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerSurfingVehicleID, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
     if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Vehicle) {
@@ -696,7 +696,7 @@ SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
     return INVALID_VEHICLE_ID;
 }
 
-SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerSurfingObjectID, INVALID_OBJECT_ID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
     if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Object) {
@@ -708,7 +708,7 @@ SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
     return INVALID_OBJECT_ID;
 }
 
-SCRIPT_API(GetPlayerTargetPlayer, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
 {
     IPlayer* target = player.getTargetPlayer();
     if (target) {
@@ -717,7 +717,7 @@ SCRIPT_API(GetPlayerTargetPlayer, int(IPlayer& player))
     return INVALID_PLAYER_ID;
 }
 
-SCRIPT_API(GetPlayerTargetActor, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player))
 {
     IActor* target = player.getTargetActor();
     if (target) {
