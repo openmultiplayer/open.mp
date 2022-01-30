@@ -913,21 +913,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void giveWeapon(WeaponSlotData weapon) override
     {
-        if (weapon.id > MAX_WEAPON_ID) {
-            return;
-        }
-
-        if (weapon.ammo == 0) {
-            return;
-        }
-
-        uint8_t slot = weapon.slot();
-        if (slot >= weapons_.size()) {
-            return;
-        }
-
-        weapons_[slot] = weapon;
-
+        // Set from sync
         NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
         givePlayerWeaponRPC.Weapon = weapon.id;
         givePlayerWeaponRPC.Ammo = weapon.ammo;
@@ -936,14 +922,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setWeaponAmmo(WeaponSlotData data) override
     {
-        int slot = data.slot();
-        if (slot < weapons_.size()) {
-            weapons_[slot] = data;
-            NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
-            setPlayerAmmoRPC.Weapon = data.id;
-            setPlayerAmmoRPC.Ammo = data.ammo;
-            PacketHelper::send(setPlayerAmmoRPC, *this);
-        }
+        // Set from sync
+        NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
+        setPlayerAmmoRPC.Weapon = data.id;
+        setPlayerAmmoRPC.Ammo = data.ammo;
+        PacketHelper::send(setPlayerAmmoRPC, *this);
     }
 
     WeaponSlots getWeapons() override
@@ -953,7 +936,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void resetWeapons() override
     {
-        weapons_.fill({ 0, 0 });
+        // Set from sync
         NetCode::RPC::ResetPlayerWeapons RPC;
         PacketHelper::send(RPC, *this);
     }
