@@ -71,6 +71,7 @@ int main(int argc, char** argv)
     _setmode(_fileno(stdin), _O_U16TEXT);
 #endif
     setlocale(LC_ALL, "");
+    setlocale(LC_NUMERIC, "C");
 
     cxxopts::Options options(argv[0], "The open.mp game server");
 

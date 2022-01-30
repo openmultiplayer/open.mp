@@ -2,6 +2,7 @@
 
 #include "vehicle.hpp"
 #include <Server/Components/Vehicles/vehicle_components.hpp>
+#include <Server/Components/Vehicles/vehicle_models.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
@@ -316,6 +317,9 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
     IVehicle* create(bool isStatic, int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override
     {
+        if (!isValidVehicleModel(modelID)) {
+            return nullptr;
+        }
         if (!isStatic && (modelID == 538 || modelID == 537)) {
             return nullptr;
         }

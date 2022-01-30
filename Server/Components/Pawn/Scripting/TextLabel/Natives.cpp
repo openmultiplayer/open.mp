@@ -2,7 +2,7 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(Create3DTextLabel, int(const std::string& text, uint32_t colour, Vector3 position, float drawDistance, int virtualWorld, bool los))
+SCRIPT_API_FAILRET(Create3DTextLabel, INVALID_TEXT_LABEL_ID, int(const std::string& text, uint32_t colour, Vector3 position, float drawDistance, int virtualWorld, bool los))
 {
     ITextLabelsComponent* component = PawnManager::Get()->textlabels;
     if (component) {
@@ -11,7 +11,7 @@ SCRIPT_API(Create3DTextLabel, int(const std::string& text, uint32_t colour, Vect
             return textlabel->getID();
         }
     }
-    return INVALID_TEXT_LABEL_ID;
+    return FailRet;
 }
 
 SCRIPT_API(Delete3DTextLabel, bool(ITextLabel& textlabel))
@@ -39,7 +39,7 @@ SCRIPT_API(Update3DTextLabelText, bool(ITextLabel& textlabel, uint32_t colour, c
     return true;
 }
 
-SCRIPT_API(CreatePlayer3DTextLabel, int(IPlayer& player, const std::string& text, uint32_t colour, Vector3 position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
+SCRIPT_API_FAILRET(CreatePlayer3DTextLabel, INVALID_TEXT_LABEL_ID, int(IPlayer& player, const std::string& text, uint32_t colour, Vector3 position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
 {
     IPlayerTextLabelData* labelData = queryData<IPlayerTextLabelData>(player);
     if (labelData) {
@@ -57,7 +57,7 @@ SCRIPT_API(CreatePlayer3DTextLabel, int(IPlayer& player, const std::string& text
             return textlabel->getID();
         }
     }
-    return INVALID_TEXT_LABEL_ID;
+    return FailRet;
 }
 
 SCRIPT_API(DeletePlayer3DTextLabel, bool(IPlayer& player, IPlayerTextLabel& textlabel))
