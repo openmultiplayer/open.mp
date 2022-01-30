@@ -122,6 +122,9 @@ SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 
 SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 {
+    if (ipAddress.empty()) {
+        return false;
+    }
     BanEntry entry(ipAddress);
     for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
         network->ban(entry, Milliseconds(timeMS));
