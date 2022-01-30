@@ -321,7 +321,7 @@ PawnPlugin::PawnPlugin(std::string const& path, ICore* core)
                     FORMAT_MESSAGE_ARGUMENT_ARRAY | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS,
                     NULL,
                     GetLastError(),
-                    LANG_SYSTEM_DEFAULT,
+                    MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_UK),
                     (LPSTR)&errorText,
                     0,
                     NULL)) {
