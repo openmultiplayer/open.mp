@@ -866,7 +866,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         // Set from sync
         NetCode::RPC::SetPlayerFacingAngle setPlayerFacingAngleRPC;
-        setPlayerFacingAngleRPC.Angle = rot_.ToEuler().z;
+        setPlayerFacingAngleRPC.Angle = (rotation * rotTransform_).ToEuler().z;
         PacketHelper::send(setPlayerFacingAngleRPC, *this);
     }
 
