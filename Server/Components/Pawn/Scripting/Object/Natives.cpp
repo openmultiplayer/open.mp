@@ -62,7 +62,7 @@ SCRIPT_API(GetObjectRot, bool(IObject& object, Vector3& rotation))
     return true;
 }
 
-SCRIPT_API(GetObjectModel, int(IObject& object))
+SCRIPT_API_FAILRET(GetObjectModel, -1, int(IObject& object))
 {
     return object.getModel();
 }

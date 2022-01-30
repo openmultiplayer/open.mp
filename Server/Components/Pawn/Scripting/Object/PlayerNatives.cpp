@@ -67,9 +67,12 @@ SCRIPT_API(GetPlayerObjectRot, bool(IPlayer& player, IPlayerObject& object, Vect
     return true;
 }
 
-SCRIPT_API(GetPlayerObjectModel, bool(IPlayer& player, IPlayerObject& object))
+SCRIPT_API(GetPlayerObjectModel, int(IPlayer& player, IPlayerObject* object))
 {
-    return object.getModel();
+    if (!object) {
+        return -1;
+    }
+    return object->getModel();
 }
 
 SCRIPT_API(SetPlayerObjectNoCameraCol, bool(IPlayer& player, IPlayerObject& object))
