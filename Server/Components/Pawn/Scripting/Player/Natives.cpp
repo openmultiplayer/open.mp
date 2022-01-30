@@ -381,7 +381,7 @@ SCRIPT_API_FAILRET(GetPlayerCameraTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& 
     if (target) {
         return target->getID();
     }
-    return INVALID_PLAYER_ID;
+    return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetActor, INVALID_ACTOR_ID, int(IPlayer& player))
@@ -390,7 +390,7 @@ SCRIPT_API_FAILRET(GetPlayerCameraTargetActor, INVALID_ACTOR_ID, int(IPlayer& pl
     if (target) {
         return target->getID();
     }
-    return INVALID_ACTOR_ID;
+    return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetObject, INVALID_OBJECT_ID, int(IPlayer& player))
@@ -399,7 +399,7 @@ SCRIPT_API_FAILRET(GetPlayerCameraTargetObject, INVALID_OBJECT_ID, int(IPlayer& 
     if (target) {
         return target->getID();
     }
-    return INVALID_OBJECT_ID;
+    return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetVehicle, INVALID_VEHICLE_ID, int(IPlayer& player))
@@ -408,7 +408,7 @@ SCRIPT_API_FAILRET(GetPlayerCameraTargetVehicle, INVALID_VEHICLE_ID, int(IPlayer
     if (target) {
         return target->getID();
     }
-    return INVALID_VEHICLE_ID;
+    return FailRet;
 }
 
 SCRIPT_API(IsPlayerConnected, bool(IPlayer* player))
@@ -579,7 +579,7 @@ SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, std::string& ip))
             return ip.length();
         }
     }
-    return -1;
+    return FailRet;
 }
 
 SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
@@ -599,13 +599,13 @@ SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
     return 0;
 }
 
-SCRIPT_API(GetPlayerVehicleSeat, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerVehicleSeat, -1, int(IPlayer& player))
 {
     IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
     if (data) {
         return data->getSeat();
     }
-    return -1;
+    return FailRet;
 }
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
@@ -693,7 +693,7 @@ SCRIPT_API_FAILRET(GetPlayerSurfingVehicleID, INVALID_VEHICLE_ID, int(IPlayer& p
             return data.ID;
         }
     }
-    return INVALID_VEHICLE_ID;
+    return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerSurfingObjectID, INVALID_OBJECT_ID, int(IPlayer& player))
@@ -705,7 +705,7 @@ SCRIPT_API_FAILRET(GetPlayerSurfingObjectID, INVALID_OBJECT_ID, int(IPlayer& pla
             return data.ID;
         }
     }
-    return INVALID_OBJECT_ID;
+    return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
@@ -714,7 +714,7 @@ SCRIPT_API_FAILRET(GetPlayerTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player
     if (target) {
         return target->getID();
     }
-    return INVALID_PLAYER_ID;
+    return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player))
@@ -723,7 +723,7 @@ SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player)
     if (target) {
         return target->getID();
     }
-    return INVALID_ACTOR_ID;
+    return FailRet;
 }
 
 SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))

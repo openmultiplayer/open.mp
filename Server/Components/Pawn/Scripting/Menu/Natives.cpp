@@ -55,10 +55,13 @@ SCRIPT_API(DisableMenuRow, bool(IMenu& menu, uint8_t row))
     return true;
 }
 
-SCRIPT_API(GetPlayerMenu, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerMenu, INVALID_MENU_ID, int(IPlayer& player))
 {
     IPlayerMenuData* menuData = queryData<IPlayerMenuData>(player);
-    return menuData->getMenuID();
+    if (menuData) {
+        return menuData->getMenuID();
+    }
+    return FailRet;
 }
 
 SCRIPT_API(IsValidMenu, bool(IMenu* menu))
