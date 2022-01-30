@@ -210,10 +210,10 @@ SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
     return true;
 }
 
-SCRIPT_API(GetPlayerName, bool(IPlayer& player, std::string& name))
+SCRIPT_API(GetPlayerName, int(IPlayer& player, std::string& name))
 {
     name = String(player.getName());
-    return true;
+    return name.length();
 }
 
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
@@ -268,7 +268,7 @@ SCRIPT_API(SetPlayerFightingStyle, bool(IPlayer& player, int style))
     return true;
 }
 
-SCRIPT_API(GetPlayerFightingStyle, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerFightingStyle, PlayerFightingStyle_Normal, int(IPlayer& player))
 {
     return player.getFightingStyle();
 }
@@ -569,7 +569,7 @@ SCRIPT_API(GetPlayerFacingAngle, bool(IPlayer& player, float& angle))
     return true;
 }
 
-SCRIPT_API(GetPlayerIp, int(IPlayer& player, std::string& ip))
+SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, std::string& ip))
 {
     PeerNetworkData data = player.getNetworkData();
     if (!data.networkID.address.ipv6) {

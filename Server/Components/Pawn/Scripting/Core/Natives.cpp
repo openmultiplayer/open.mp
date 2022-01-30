@@ -224,7 +224,7 @@ int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
     } else {
         buffer = String(config->getString(cvar));
     }
-    return buffer.size();
+    return buffer.length();
 }
 
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
@@ -324,7 +324,7 @@ SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
     return getConfigOptionAsInt(cvar);
 }
 
-SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buffer))
+SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, std::string& buffer))
 {
     return getConfigOptionAsString(cvar, buffer);
 }
