@@ -210,10 +210,10 @@ SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
     return true;
 }
 
-SCRIPT_API(GetPlayerName, bool(IPlayer& player, std::string& name))
+SCRIPT_API(GetPlayerName, int(IPlayer& player, std::string& name))
 {
     name = String(player.getName());
-    return true;
+    return name.length();
 }
 
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
@@ -221,12 +221,12 @@ SCRIPT_API(GetPlayerState, int(IPlayer& player))
     return player.getState();
 }
 
-SCRIPT_API(GetPlayerPing, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerPing, -1, int(IPlayer& player))
 {
     return player.getPing();
 }
 
-SCRIPT_API(GetPlayerWeapon, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerWeapon, -1, int(IPlayer& player))
 {
     return player.getArmedWeapon();
 }
@@ -268,7 +268,7 @@ SCRIPT_API(SetPlayerFightingStyle, bool(IPlayer& player, int style))
     return true;
 }
 
-SCRIPT_API(GetPlayerFightingStyle, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerFightingStyle, PlayerFightingStyle_Normal, int(IPlayer& player))
 {
     return player.getFightingStyle();
 }
@@ -375,40 +375,40 @@ SCRIPT_API(GetPlayerLastShotVectors, bool(IPlayer& player, Vector3& origin, Vect
     return true;
 }
 
-SCRIPT_API(GetPlayerCameraTargetPlayer, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
 {
     IPlayer* target = player.getCameraTargetPlayer();
     if (target) {
         return target->getID();
     }
-    return INVALID_PLAYER_ID;
+    return FailRet;
 }
 
-SCRIPT_API(GetPlayerCameraTargetActor, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetActor, INVALID_ACTOR_ID, int(IPlayer& player))
 {
     IActor* target = player.getCameraTargetActor();
     if (target) {
         return target->getID();
     }
-    return INVALID_ACTOR_ID;
+    return FailRet;
 }
 
-SCRIPT_API(GetPlayerCameraTargetObject, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetObject, INVALID_OBJECT_ID, int(IPlayer& player))
 {
     IObject* target = player.getCameraTargetObject();
     if (target) {
         return target->getID();
     }
-    return INVALID_OBJECT_ID;
+    return FailRet;
 }
 
-SCRIPT_API(GetPlayerCameraTargetVehicle, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraTargetVehicle, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
     IVehicle* target = player.getCameraTargetVehicle();
     if (target) {
         return target->getID();
     }
-    return INVALID_VEHICLE_ID;
+    return FailRet;
 }
 
 SCRIPT_API(IsPlayerConnected, bool(IPlayer* player))
@@ -569,7 +569,7 @@ SCRIPT_API(GetPlayerFacingAngle, bool(IPlayer& player, float& angle))
     return true;
 }
 
-SCRIPT_API(GetPlayerIp, int(IPlayer& player, std::string& ip))
+SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, std::string& ip))
 {
     PeerNetworkData data = player.getNetworkData();
     if (!data.networkID.address.ipv6) {
@@ -579,7 +579,7 @@ SCRIPT_API(GetPlayerIp, int(IPlayer& player, std::string& ip))
             return ip.length();
         }
     }
-    return -1;
+    return FailRet;
 }
 
 SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
@@ -599,13 +599,13 @@ SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
     return 0;
 }
 
-SCRIPT_API(GetPlayerVehicleSeat, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerVehicleSeat, -1, int(IPlayer& player))
 {
     IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
     if (data) {
         return data->getSeat();
     }
-    return -1;
+    return FailRet;
 }
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
@@ -669,7 +669,7 @@ SCRIPT_API(GetPlayerCameraFrontVector, bool(IPlayer& player, Vector3& vector))
     return true;
 }
 
-SCRIPT_API(GetPlayerCameraMode, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraMode, -1, int(IPlayer& player))
 {
     PlayerAimData data = player.getAimData();
     return data.CamMode;
@@ -684,7 +684,7 @@ SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& lef
     return true;
 }
 
-SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerSurfingVehicleID, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
     if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Vehicle) {
@@ -693,10 +693,10 @@ SCRIPT_API(GetPlayerSurfingVehicleID, int(IPlayer& player))
             return data.ID;
         }
     }
-    return INVALID_VEHICLE_ID;
+    return FailRet;
 }
 
-SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerSurfingObjectID, INVALID_OBJECT_ID, int(IPlayer& player))
 {
     PlayerSurfingData data = player.getSurfingData();
     if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Object) {
@@ -705,25 +705,25 @@ SCRIPT_API(GetPlayerSurfingObjectID, int(IPlayer& player))
             return data.ID;
         }
     }
-    return INVALID_OBJECT_ID;
+    return FailRet;
 }
 
-SCRIPT_API(GetPlayerTargetPlayer, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
 {
     IPlayer* target = player.getTargetPlayer();
     if (target) {
         return target->getID();
     }
-    return INVALID_PLAYER_ID;
+    return FailRet;
 }
 
-SCRIPT_API(GetPlayerTargetActor, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player))
 {
     IActor* target = player.getTargetActor();
     if (target) {
         return target->getID();
     }
-    return INVALID_ACTOR_ID;
+    return FailRet;
 }
 
 SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))

@@ -122,6 +122,9 @@ SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 
 SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 {
+    if (ipAddress.empty()) {
+        return false;
+    }
     BanEntry entry(ipAddress);
     for (INetwork* network : PawnManager::Get()->core->getNetworks()) {
         network->ban(entry, Milliseconds(timeMS));
@@ -224,7 +227,7 @@ int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
     } else {
         buffer = String(config->getString(cvar));
     }
-    return buffer.size();
+    return buffer.length();
 }
 
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
@@ -324,7 +327,7 @@ SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
     return getConfigOptionAsInt(cvar);
 }
 
-SCRIPT_API(GetServerVarAsString, bool(std::string const& cvar, std::string& buffer))
+SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, std::string& buffer))
 {
     return getConfigOptionAsString(cvar, buffer);
 }
