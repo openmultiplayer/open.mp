@@ -221,12 +221,12 @@ SCRIPT_API(GetPlayerState, int(IPlayer& player))
     return player.getState();
 }
 
-SCRIPT_API(GetPlayerPing, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerPing, -1, int(IPlayer& player))
 {
     return player.getPing();
 }
 
-SCRIPT_API(GetPlayerWeapon, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerWeapon, -1, int(IPlayer& player))
 {
     return player.getArmedWeapon();
 }
@@ -669,7 +669,7 @@ SCRIPT_API(GetPlayerCameraFrontVector, bool(IPlayer& player, Vector3& vector))
     return true;
 }
 
-SCRIPT_API(GetPlayerCameraMode, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerCameraMode, -1, int(IPlayer& player))
 {
     PlayerAimData data = player.getAimData();
     return data.CamMode;
