@@ -237,7 +237,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
             if (data->vehicle) {
                 data->vehicle->unoccupy(player);
             }
-            data->setVehicle(nullptr, -1);
+            data->setVehicle(nullptr, SEAT_NONE);
         }
     }
 
