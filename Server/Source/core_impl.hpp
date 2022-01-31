@@ -576,7 +576,7 @@ private:
         // Deconstruct further
         StringView domain = urlNoPrefix;
         StringView path = "/";
-        if ((idx = urlNoPrefix.find_first_of('/')) != -1) {
+        if ((idx = urlNoPrefix.find_first_of('/')) != StringView::npos) {
             domain = urlNoPrefix.substr(0, idx);
             path = urlNoPrefix.substr(idx);
         }
