@@ -70,7 +70,7 @@ SCRIPT_API(GetPlayerObjectRot, bool(IPlayer& player, IPlayerObject& object, Vect
 SCRIPT_API(GetPlayerObjectModel, int(IPlayer& player, IPlayerObject* object))
 {
     if (!object) {
-        return -1;
+        return INVALID_OBJECT_MODEL_ID;
     }
     return object->getModel();
 }

@@ -11,7 +11,7 @@ SCRIPT_API(CreatePickup, int(int model, int type, Vector3 position, int virtualW
             return pickup->getID();
         }
     }
-    return -1;
+    return INVALID_PICKUP_ID;
 }
 
 SCRIPT_API(AddStaticPickup, bool(int model, int type, Vector3 position, int virtualWorld))

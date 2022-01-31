@@ -185,7 +185,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     IObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
     {
         int freeIdx = storage.findFreeIndex();
-        while (freeIdx != -1) {
+        while (freeIdx >= storage.Lower) {
             if (!isPlayerObject.test(freeIdx)) {
                 break;
             }
@@ -193,13 +193,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             freeIdx = storage.findFreeIndex(freeIdx + 1);
         }
 
-        if (freeIdx == -1) {
+        if (freeIdx < storage.Lower) {
             // No free index
             return nullptr;
         }
 
         int objid = storage.claimHint(freeIdx, core->getPlayers(), modelID, position, rotation, drawDist, defCameraCollision);
-        if (objid == -1) {
+        if (objid < storage.Lower) {
             // No free index
             return nullptr;
         }
@@ -347,7 +347,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
     IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
     {
         int freeIdx = storage.findFreeIndex();
-        while (freeIdx != -1) {
+        while (freeIdx >= storage.Lower) {
             if (!component_.storage.get(freeIdx)) {
                 break;
             }
@@ -355,13 +355,13 @@ struct PlayerObjectData final : public IPlayerObjectData {
             freeIdx = storage.findFreeIndex(freeIdx + 1);
         }
 
-        if (freeIdx == -1) {
+        if (freeIdx < storage.Lower) {
             // No free index
             return nullptr;
         }
 
         int objid = storage.claimHint(freeIdx, player_, modelID, position, rotation, drawDist, component_.defCameraCollision);
-        if (objid == -1) {
+        if (objid < storage.Lower) {
             // No free index
             return nullptr;
         }
