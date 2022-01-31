@@ -6,7 +6,7 @@ using namespace Impl;
 
 static const struct DefaultClass final : public PlayerClass {
     DefaultClass()
-        : PlayerClass(0, 255, Vector3(0.0f, 0.0f, 3.1279f), 0.f, WeaponSlots())
+        : PlayerClass(0, TEAM_NONE, Vector3(0.0f, 0.0f, 3.1279f), 0.f, WeaponSlots())
     {
         weapons.fill(WeaponSlotData { 0, 0 });
     }

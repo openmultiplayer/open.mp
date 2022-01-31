@@ -338,7 +338,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
 struct PlayerVehicleData final : public IPlayerVehicleData {
     Vehicle* vehicle = nullptr;
-    int seat = -1;
+    int seat = SEAT_NONE;
     int numStreamed = 0;
 
     void setVehicle(Vehicle* vehicle, int seat)
@@ -355,7 +355,7 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
     }
 
     /// Get the player's seat
-    /// Returns -1 if they aren't in a vehicle.
+    /// Returns SEAT_NONE if they aren't in a vehicle.
     int getSeat() const override
     {
         return seat;
