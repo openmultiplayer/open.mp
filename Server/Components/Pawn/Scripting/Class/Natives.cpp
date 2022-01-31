@@ -14,7 +14,7 @@ SCRIPT_API(AddPlayerClass, int(int modelid, Vector3 position, float angle, uint8
             WeaponSlotData { weapon3, weapon3_ammo }
         };
 
-        IClass* _class = component->create(modelid, NO_TEAM, position, angle, slots);
+        IClass* _class = component->create(modelid, TEAM_NONE, position, angle, slots);
 
         if (_class) {
             return _class->getID();

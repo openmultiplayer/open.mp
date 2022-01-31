@@ -64,13 +64,13 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
     int addMenuItem(StringView itemText, MenuColumn column) override
     {
         if (column > columnCount) {
-            return -1;
+            return INVALID_MENU_ITEM_ID;
         }
 
         uint8_t itemCount = columnItemCount.at(column);
 
         if (itemCount >= MAX_MENU_ITEMS) {
-            return -1;
+            return INVALID_MENU_ITEM_ID;
         }
 
         const int res = itemCount;

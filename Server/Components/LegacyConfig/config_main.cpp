@@ -129,8 +129,8 @@ struct LegacyConfigComponent final : public IComponent {
         if (name.find("gamemode") == 0) {
             auto it = dictionary.find("gamemode");
             if (it != dictionary.end()) {
-                int idx = right.find_first_of(' ');
-                if (idx != -1) {
+                size_t idx = right.find_first_of(' ');
+                if (idx != String::npos) {
                     right = right.substr(0, idx);
                 }
                 std::filesystem::path path("gamemodes");
@@ -146,12 +146,12 @@ struct LegacyConfigComponent final : public IComponent {
                 String listStr = right;
                 DynamicArray<String> storage;
                 DynamicArray<StringView> list;
-                int i = 0;
+                size_t i = 0;
                 for (;;) {
-                    int next = listStr.find_first_of(' ', i);
+                    size_t next = listStr.find_first_of(' ', i);
 
                     std::filesystem::path path("filterscripts");
-                    if (next != -1) {
+                    if (next != String::npos) {
                         path /= listStr.substr(i, next - i);
                     } else {
                         path /= listStr.substr(i);
@@ -211,11 +211,11 @@ struct LegacyConfigComponent final : public IComponent {
                 String listStr = right;
                 DynamicArray<String> storage;
                 DynamicArray<StringView> list;
-                int i = 0;
+                size_t i = 0;
                 for (;;) {
-                    int next = listStr.find_first_of(' ', i);
+                    size_t next = listStr.find_first_of(' ', i);
 
-                    if (next != -1) {
+                    if (next != String::npos) {
                         storage.emplace_back(listStr.substr(i, next - i));
                     } else {
                         storage.emplace_back(listStr.substr(i));
@@ -250,7 +250,7 @@ struct LegacyConfigComponent final : public IComponent {
             if (bans.good()) {
                 for (String line; std::getline(bans, line);) {
                     size_t first = line.find_first_of(' ');
-                    if (first != -1) {
+                    if (first != String::npos) {
                         config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
                     }
                 }
@@ -263,15 +263,15 @@ struct LegacyConfigComponent final : public IComponent {
             std::ifstream cfg("server.cfg");
             if (cfg.good()) {
                 for (String line; std::getline(cfg, line);) {
-                    int idx;
+                    size_t idx;
                     // Ignore // comments
                     idx = line.find("//");
-                    if (idx != -1) {
+                    if (idx != String::npos) {
                         line = line.substr(0, idx);
                     }
                     // Ignore # comments
                     idx = line.find_first_of('#');
-                    if (idx != -1) {
+                    if (idx != String::npos) {
                         line = line.substr(0, idx);
                     }
 
@@ -292,8 +292,11 @@ struct LegacyConfigComponent final : public IComponent {
                     // Get the setting name
                     String name = line;
                     idx = name.find_first_of(' ');
-                    if (idx != -1) {
+                    if (idx != String::npos) {
                         name = line.substr(0, idx);
+                    } else {
+                        // No value; skip line
+                        continue;
                     }
 
                     auto typeIt = types.find(name);
