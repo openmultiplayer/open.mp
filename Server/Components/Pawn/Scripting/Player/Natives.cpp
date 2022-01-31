@@ -144,12 +144,9 @@ SCRIPT_API(SetPlayerTeam, bool(IPlayer& player, int teamid))
     return true;
 }
 
-SCRIPT_API(GetPlayerTeam, int(IPlayer* player))
+SCRIPT_API_FAILRET(GetPlayerTeam, -1, int(IPlayer& player))
 {
-    if (player == nullptr)
-        return -1;
-
-    return player->getTeam();
+    return player.getTeam();
 }
 
 SCRIPT_API(SetPlayerScore, bool(IPlayer& player, int score))
@@ -599,7 +596,7 @@ SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
     return 0;
 }
 
-SCRIPT_API_FAILRET(GetPlayerVehicleSeat, -1, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
 {
     IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
     if (data) {
