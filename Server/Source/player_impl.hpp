@@ -701,7 +701,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     virtual void setInterior(unsigned interior) override
     {
-        interior_ = interior;
+        // Set from sync
         NetCode::RPC::SetPlayerInterior setPlayerInteriorRPC;
         setPlayerInteriorRPC.Interior = interior;
         PacketHelper::send(setPlayerInteriorRPC, *this);
