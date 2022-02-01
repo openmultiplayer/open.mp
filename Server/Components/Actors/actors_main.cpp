@@ -150,7 +150,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = actor->pos_ - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_Spectating && state != PlayerState_None && player.getVirtualWorld() == actor->virtualWorld_ && glm::dot(dist2D, dist2D) < maxDist;
+                const bool shouldBeStreamedIn = state != PlayerState_None && player.getVirtualWorld() == actor->virtualWorld_ && glm::dot(dist2D, dist2D) < maxDist;
 
                 const bool isStreamedIn = actor->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {

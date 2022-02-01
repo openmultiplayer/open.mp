@@ -63,6 +63,12 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     ~Vehicle()
     {
+        if (tower) {
+            tower->detachTrailer();
+        } else if (trailer && towing) {
+            detachTrailer();
+        }
+
         const auto& entries = streamedFor_.entries();
         for (IPlayer* player : entries) {
             streamOutForClient(*player);
