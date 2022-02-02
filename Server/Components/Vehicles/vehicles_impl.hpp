@@ -221,7 +221,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
             Vehicle& vehicle = *vehiclePtr;
             if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            } else if ((vehicle.isDead() || vehicle.isRespawning()) && vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer) {
+            } else if (vehicle.isDead() || vehicle.isRespawning() || (vehicle.getDriver() != nullptr && vehicle.getDriver() != &peer)) {
                 return false;
             }
 
@@ -422,6 +422,11 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (IVehicle* v : storage) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
+
+                IPlayerVehicleData* playerVehData = queryData<IPlayerVehicleData>(player);
+                if (playerVehData && playerVehData->getVehicle() == vehicle) {
+                    continue;
+                }
 
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = vehicle->pos - player.getPosition();

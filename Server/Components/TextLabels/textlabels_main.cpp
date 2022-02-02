@@ -224,7 +224,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
 
                 const PlayerState state = player.getState();
                 const Vector3 dist3D = pos - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_Spectating && state != PlayerState_None && player.getVirtualWorld() == label->virtualWorld && glm::dot(dist3D, dist3D) < maxDist;
+                const bool shouldBeStreamedIn = state != PlayerState_None && player.getVirtualWorld() == label->virtualWorld && glm::dot(dist3D, dist3D) < maxDist;
 
                 const bool isStreamedIn = textLabel->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {

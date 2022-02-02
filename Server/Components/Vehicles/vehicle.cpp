@@ -528,7 +528,7 @@ void Vehicle::setVelocity(Vector3 velocity)
         return;
     }
 
-    this->velocity = velocity;
+    // Set from sync
     NetCode::RPC::SetVehicleVelocity velocityRPC;
     velocityRPC.Type = VehicleVelocitySet_Normal;
     velocityRPC.Velocity = velocity;
