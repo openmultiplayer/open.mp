@@ -283,7 +283,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
 
                 player.setArmedWeapon(0);
-                self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
 
                 // Make sure to restream player on spawn
                 for (IPlayer* other : self.storage.entries()) {
@@ -291,6 +290,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                         player.streamOutForPlayer(*other);
                     }
                 }
+
+                self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
             }
 
             return true;
@@ -1193,8 +1194,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     continue;
                 }
                 Player* other = static_cast<Player*>(p);
-                if (other->streamedFor_.valid(player.poolID)) {
+                if (player.streamedFor_.valid(other->poolID)) {
                     --other->numStreamed_;
+                }
+                if (other->streamedFor_.valid(player.poolID)) {
                     other->streamedFor_.remove(player.poolID, player);
                 }
             }
