@@ -674,17 +674,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                             [&player, &lock](PlayerEventHandler* handler) {
                                 return handler->onShotObject(player, *lock.entry, player.bulletData_);
                             });
-                    }
-                } else {
-                    player.bulletData_.hitType = PlayerBulletHitType_PlayerObject;
-                    IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
-                    if (data) {
-                        ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
-                        if (lock.entry) {
-                            allowed = self.eventDispatcher.stopAtFalse(
-                                [&player, &lock](PlayerEventHandler* handler) {
-                                    return handler->onShotPlayerObject(player, *lock.entry, player.bulletData_);
-                                });
+                    } else {
+                        player.bulletData_.hitType = PlayerBulletHitType_PlayerObject;
+                        IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
+                        if (data) {
+                            ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
+                            if (lock.entry) {
+                                allowed = self.eventDispatcher.stopAtFalse(
+                                    [&player, &lock](PlayerEventHandler* handler) {
+                                        return handler->onShotPlayerObject(player, *lock.entry, player.bulletData_);
+                                    });
+                            }
                         }
                     }
                 }
@@ -1381,8 +1381,23 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     continue;
                 }
 
+                Vector3 otherPos = other->getPosition();
                 const PlayerState state = other->getState();
-                const Vector2 dist2D = player.pos_ - other->getPosition();
+
+                // Use vehicle pos if player is passenger to keep paused players synced.
+                if (state == PlayerState_Passenger) {
+                    auto vehicleData = queryData<IPlayerVehicleData>(other);
+
+                    if (vehicleData) {
+                        auto vehicle = vehicleData->getVehicle();
+
+                        if (vehicle) {
+                            otherPos = vehicle->getPosition();
+                        }
+                    }
+                }
+
+                const Vector2 dist2D = player.pos_ - otherPos;
                 const bool shouldBeStreamedIn = state != PlayerState_Spectating && state != PlayerState_None && other->getVirtualWorld() == player.virtualWorld_ && glm::dot(dist2D, dist2D) < maxDist;
 
                 const bool isStreamedIn = other->isStreamedInForPlayer(player);
