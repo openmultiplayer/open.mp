@@ -1,29 +1,23 @@
 #include "player_pool.hpp"
 #include <Impl/network_impl.hpp>
 
-IPlayerPool* Player::getPool() const
-{
-    return pool_;
-}
-
 void Player::setColour(Colour colour)
 {
     colour_ = colour;
     NetCode::RPC::SetPlayerColor setPlayerColorRPC;
     setPlayerColorRPC.PlayerID = poolID;
     setPlayerColorRPC.Col = colour;
-    PacketHelper::broadcast(setPlayerColorRPC, *pool_);
+    PacketHelper::broadcast(setPlayerColorRPC, pool_);
 }
 
 EPlayerNameStatus Player::setName(StringView name)
 {
-    assert(pool_);
-    if (pool_->isNameTaken(name, this)) {
+    if (pool_.isNameTaken(name, this)) {
         return EPlayerNameStatus::Taken;
     } else if (name.length() > MAX_PLAYER_NAME) {
         return EPlayerNameStatus::Invalid;
     }
-    pool_->eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
+    pool_.eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
 
     name_ = name;
 
@@ -31,7 +25,7 @@ EPlayerNameStatus Player::setName(StringView name)
     setPlayerNameRPC.PlayerID = poolID;
     setPlayerNameRPC.Name = StringView(name_);
     setPlayerNameRPC.Success = true;
-    PacketHelper::broadcast(setPlayerNameRPC, *pool_);
+    PacketHelper::broadcast(setPlayerNameRPC, pool_);
     return EPlayerNameStatus::Updated;
 }
 
@@ -39,7 +33,7 @@ void Player::updateMarkers(Milliseconds updateRate, bool limit, float radius, Ti
 {
     if (duration_cast<Milliseconds>(now - lastMarkerUpdate_) > updateRate) {
         lastMarkerUpdate_ = now;
-        NetCode::Packet::PlayerMarkersSync markersSync(*pool_, *this, limit, radius);
+        NetCode::Packet::PlayerMarkersSync markersSync(pool_, *this, limit, radius);
         PacketHelper::send(markersSync, *this);
     }
 }
@@ -50,7 +44,7 @@ IPlayer* Player::getCameraTargetPlayer()
         return nullptr;
     }
 
-    IPlayer* target = pool_->get(targetPlayer_);
+    IPlayer* target = pool_.get(targetPlayer_);
     if (!target) {
         return nullptr;
     }
@@ -68,7 +62,7 @@ IVehicle* Player::getCameraTargetVehicle()
         return nullptr;
     }
 
-    IVehiclesComponent* component = pool_->vehiclesComponent;
+    IVehiclesComponent* component = pool_.vehiclesComponent;
     if (!component) {
         return nullptr;
     }
@@ -91,7 +85,7 @@ IObject* Player::getCameraTargetObject()
         return nullptr;
     }
 
-    IObjectsComponent* component = pool_->objectsComponent;
+    IObjectsComponent* component = pool_.objectsComponent;
     if (!component) {
         return nullptr;
     }
@@ -101,7 +95,7 @@ IObject* Player::getCameraTargetObject()
 
 IPlayer* Player::getTargetPlayer()
 {
-    IPlayer* target = pool_->get(targetPlayer_);
+    IPlayer* target = pool_.get(targetPlayer_);
     if (!target) {
         return nullptr;
     }
@@ -115,7 +109,7 @@ IPlayer* Player::getTargetPlayer()
 
 IActor* Player::getCameraTargetActor()
 {
-    IActorsComponent* component = pool_->actorsComponent;
+    IActorsComponent* component = pool_.actorsComponent;
 
     if (!component) {
         return nullptr;
@@ -135,7 +129,7 @@ IActor* Player::getCameraTargetActor()
 
 IActor* Player::getTargetActor()
 {
-    IActorsComponent* component = pool_->actorsComponent;
+    IActorsComponent* component = pool_.actorsComponent;
 
     if (!component) {
         return nullptr;
@@ -158,7 +152,7 @@ void Player::setState(PlayerState state)
     if (state_ != state) {
         PlayerState oldstate = state_;
         state_ = state;
-        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, oldstate);
+        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, oldstate);
     }
 }
 
@@ -166,7 +160,7 @@ void Player::setScore(int score)
 {
     if (score_ != score) {
         score_ = score;
-        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onScoreChange, *this, score);
+        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onScoreChange, *this, score);
     }
 }
 
@@ -200,7 +194,7 @@ void Player::streamInForPlayer(IPlayer& other)
                 PacketHelper::send(RPC, other);
             }
 
-            pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
+            pool_.eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
         }
     }
 }
@@ -215,7 +209,7 @@ void Player::streamOutForPlayer(IPlayer& other)
         playerStreamOutRPC.PlayerID = poolID;
         PacketHelper::send(playerStreamOutRPC, other);
 
-        pool_->eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, *this, other);
+        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, *this, other);
     }
 }
 
@@ -224,10 +218,10 @@ void Player::ban(StringView reason)
     PeerAddress::AddressString address;
     PeerAddress::ToString(netData_.networkID.address, address);
     const BanEntry entry(address, name_, reason);
-    for (INetwork* network : pool_->core.getNetworks()) {
+    for (INetwork* network : pool_.core.getNetworks()) {
         network->ban(entry);
     }
     netData_.network->disconnect(*this);
-    pool_->core.getConfig().addBan(entry);
-    pool_->core.getConfig().writeBans();
+    pool_.core.getConfig().addBan(entry);
+    pool_.core.getConfig().writeBans();
 }
