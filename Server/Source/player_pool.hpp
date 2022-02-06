@@ -1133,7 +1133,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return { NewConnectionResult_BadName, nullptr };
         }
 
-        Player* result = storage.emplace(this, netData, params);
+        Player* result = storage.emplace(*this, netData, params);
         if (!result) {
             return { NewConnectionResult_NoPlayerSlot, nullptr };
         }
@@ -1183,37 +1183,35 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
     {
-        if (peer.getPool() == this) {
-            if (peer.getState() == PlayerState_Kicked) {
-                reason = PeerDisconnectReason_Kicked;
-            }
-
-            Player& player = static_cast<Player&>(peer);
-            for (IPlayer* p : storage.entries()) {
-                if (p == &player) {
-                    continue;
-                }
-                Player* other = static_cast<Player*>(p);
-                if (player.streamedFor_.valid(other->poolID)) {
-                    --other->numStreamed_;
-                }
-                if (other->streamedFor_.valid(player.poolID)) {
-                    other->streamedFor_.remove(player.poolID, player);
-                }
-            }
-
-            NetCode::RPC::PlayerQuit packet;
-            packet.PlayerID = player.poolID;
-            packet.Reason = reason;
-            PacketHelper::broadcast(packet, *this);
-
-            eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
-
-            auto& secondaryPool = player.isBot_ ? botList : playerList;
-            secondaryPool.erase(&player);
-
-            storage.release(player.poolID);
+        if (peer.getState() == PlayerState_Kicked) {
+            reason = PeerDisconnectReason_Kicked;
         }
+
+        Player& player = static_cast<Player&>(peer);
+        for (IPlayer* p : storage.entries()) {
+            if (p == &player) {
+                continue;
+            }
+            Player* other = static_cast<Player*>(p);
+            if (player.streamedFor_.valid(other->poolID)) {
+                --other->numStreamed_;
+            }
+            if (other->streamedFor_.valid(player.poolID)) {
+                other->streamedFor_.remove(player.poolID, player);
+            }
+        }
+
+        NetCode::RPC::PlayerQuit packet;
+        packet.PlayerID = player.poolID;
+        packet.Reason = reason;
+        PacketHelper::broadcast(packet, *this);
+
+        eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
+
+        auto& secondaryPool = player.isBot_ ? botList : playerList;
+        secondaryPool.erase(&player);
+
+        storage.release(player.poolID);
     }
 
     PlayerPool(ICore& core)
