@@ -29,8 +29,14 @@ SCRIPT_API(SetPVarString, bool(IPlayer& player, const std::string& varname, cons
 
 SCRIPT_API(GetPVarString, int(IPlayer& player, const std::string& varname, std::string& output))
 {
-    GET_PLAYER_VAR_COMP(component, false);
-    output = String(component->getString(varname));
+    GET_PLAYER_VAR_COMP(component, 0);
+
+    // If string is empty, output will not be updated or set to anything and will remain with old data.
+    StringView var = component->getString(varname);
+    if (var.empty()) {
+        return 0;
+    }
+    output = String(var);
     return output.length();
 }
 
