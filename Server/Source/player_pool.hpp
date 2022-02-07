@@ -1069,6 +1069,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
     } playerTrailerSyncHandler;
 
+    void free()
+    {
+        for (IPlayer* p : storage.entries()) {
+            Player* player = static_cast<Player*>(p);
+            player->extraData_.free();
+        }
+    }
+
     IPlayer* get(int index) override
     {
         return storage.get(index);

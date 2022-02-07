@@ -761,6 +761,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
         players.getEventDispatcher().removeEventHandler(this);
 
+        players.free();
         networks.clear();
         components.free();
 
