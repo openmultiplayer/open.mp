@@ -41,7 +41,7 @@ enum SecondarySyncUpdateType {
 };
 
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
-    PlayerPool* pool_;
+    PlayerPool& pool_;
     PeerNetworkData netData_;
     uint32_t version_;
     HybridString<16> versionName_;
@@ -110,7 +110,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     NetCode::Packet::PlayerTrailerSync trailerSync_;
     NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
 
-    Player(PlayerPool* pool, const PeerNetworkData& netData, const PeerRequestParams& params)
+    Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params)
         : pool_(pool)
         , netData_(netData)
         , version_(params.version)
@@ -653,8 +653,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         return skillLevels_;
     }
-
-    IPlayerPool* getPool() const override;
 
     void removeDefaultObjects(unsigned model, Vector3 pos, float radius) override
     {
