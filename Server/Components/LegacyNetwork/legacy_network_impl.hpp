@@ -170,7 +170,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void onTick(Microseconds elapsed, TimePoint now) override;
     void init(ICore* core);
 
-    void OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason);
+    void OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason);
 
     void onScoreChange(IPlayer& player, int score) override
     {
@@ -223,12 +223,10 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
     void unban(const BanEntry& entry) override;
 
-    typedef std::map<RakNet::PlayerID, std::reference_wrapper<IPlayer>> PlayerFromRIDMap;
-
     ICore* core = nullptr;
     Query query;
     RakNet::RakServerInterface& rakNetServer;
-    PlayerFromRIDMap playerFromRID;
+    std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
     Milliseconds cookieSeedTime;
     TimePoint lastCookieSeed;
 };
