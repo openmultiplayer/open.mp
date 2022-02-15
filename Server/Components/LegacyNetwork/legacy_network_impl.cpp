@@ -311,7 +311,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 {
     const RakNet::PlayerID rid = rpcParams->sender;
 
-    if (playerFromRID.find(rpcParams->sender) != playerFromRID.end()) {
+    if (playerFromRakIndex[rpcParams->senderIndex]) {
         // Connection already exists
         return nullptr;
     }
@@ -348,9 +348,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
         return nullptr;
     }
 
-    IPlayer& player = *newConnectionResult.second;
-    playerFromRID.emplace(rid, player);
-
+    playerFromRakIndex[rpcParams->senderIndex] = newConnectionResult.second;
     return newConnectionResult.second;
 }
 
@@ -383,6 +381,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
             if (serialIsInvalid || versionIsInvalid) {
                 PeerAddress address;
                 address.v4 = rpcParams->sender.binaryAddress;
+                address.ipv6 = false;
 
                 PeerAddress::AddressString addressString;
                 PeerAddress::ToString(address, addressString);
@@ -456,36 +455,35 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
     network->rakNetServer.Kick(rpcParams->sender);
 }
 
-void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerID rid, PeerDisconnectReason reason)
+void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason)
 {
-    PlayerFromRIDMap::iterator pos = playerFromRID.find(rid);
-    if (pos == playerFromRID.end()) {
+    IPlayer* player = playerFromRakIndex[rid];
+
+    if (!player) {
         return;
     }
 
-    IPlayer& player = pos->second;
-    playerFromRID.erase(rid);
-
-    networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, player, reason);
+    playerFromRakIndex[rid] = nullptr;
+    networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
 template <size_t ID>
 void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
-    PlayerFromRIDMap::iterator pos = network->playerFromRID.find(rpcParams->sender);
-    if (pos == network->playerFromRID.end()) {
+
+    IPlayer* player = network->playerFromRakIndex[rpcParams->senderIndex];
+
+    if (player == nullptr) {
         return;
     }
-
-    IPlayer& player = pos->second;
 
     NetworkBitStream bs = GetBitStream(*rpcParams);
 
     if (!network->inEventDispatcher.stopAtFalse(
             [&player, &bs](NetworkInEventHandler* handler) {
                 bs.resetReadPointer();
-                return handler->receivedRPC(player, ID, bs);
+                return handler->receivedRPC(*player, ID, bs);
             })) {
         return;
     }
@@ -494,7 +492,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
             ID,
             [&player, &bs](SingleNetworkInEventHandler* handler) {
                 bs.resetReadPointer();
-                return handler->received(player, bs);
+                return handler->received(*player, bs);
             })) {
         return;
     }
@@ -653,6 +651,8 @@ void RakNetLegacyNetwork::init(ICore* c)
     lastCookieSeed = Time::now();
     SAMPRakNet::SeedCookie();
 
+    playerFromRakIndex.fill(nullptr);
+
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
 
@@ -687,42 +687,49 @@ void RakNetLegacyNetwork::init(ICore* c)
         ban(config.getBan(i));
     }
 
-    rakNetServer.Start(
-        maxPlayers,
-        0,
-        sleep,
-        port,
-        bind.data());
-    rakNetServer.StartOccasionalPing();
+    if (!rakNetServer.Start(maxPlayers, 0, sleep, port, bind.data())) {
+        if (!bind.empty()) {
+            core->logLn(LogLevel::Error, "Unable to start legacy network on %.*s:%d. Port in use?.", PRINT_VIEW(bind), port);
+        } else {
+            core->logLn(LogLevel::Error, "Unable to start legacy network on port %d. Port in use?", port);
+        }
+    } else {
+        if (!bind.empty()) {
+            core->logLn(LogLevel::Message, "Legacy Network started on %.*s:%d.", PRINT_VIEW(bind), port);
+        } else {
+            core->logLn(LogLevel::Message, "Legacy Network started on port %d", port);
+        }
+    }
 
+    rakNetServer.StartOccasionalPing();
     SAMPRakNet::SetPort(port);
 }
 
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
-        auto pos = playerFromRID.find(pkt->playerId);
-        if (pos != playerFromRID.end()) {
-            IPlayer& player = pos->second;
+        IPlayer* player = playerFromRakIndex[pkt->playerIndex];
+
+        if (player) {
             NetworkBitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
             if (bs.readUINT8(type)) {
                 const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
                     bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->receivedPacket(player, type, bs);
+                    return handler->receivedPacket(*player, type, bs);
                 });
 
                 if (res) {
                     packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
                         bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->received(player, bs);
+                        return handler->received(*player, bs);
                     });
                 }
 
                 if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {
-                    OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Quit);
+                    OnRakNetDisconnect(pkt->playerIndex, PeerDisconnectReason_Quit);
                 } else if (type == RakNet::ID_CONNECTION_LOST) {
-                    OnRakNetDisconnect(pkt->playerId, PeerDisconnectReason_Timeout);
+                    OnRakNetDisconnect(pkt->playerIndex, PeerDisconnectReason_Timeout);
                 }
             }
         }
