@@ -1618,25 +1618,47 @@ namespace Packet {
             const Vector3 pos = FromPlayer.getPosition();
             const FlatPtrHashSet<IPlayer>& players = Pool.entries();
             bs.writeUINT8(NetCode::Packet::PlayerMarkersSync::PacketID);
+
             // TODO isNPC
-            bs.writeUINT32(players.size() - 1);
+
+            // temporarily allocate 32 bit for player size here to be filled later at the end
+            bs.writeUINT32(0);
+            int playersToSend = 0;
             for (IPlayer* other : players) {
                 if (other == &FromPlayer) {
                     continue;
                 }
 
-                const Vector3 otherPos = other->getPosition();
-                const PlayerState otherState = other->getState();
-                bool streamMarker = otherState != PlayerState_None && otherState != PlayerState_Spectating && virtualWorld == other->getVirtualWorld() && (!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
+                // get other player's color; first check if it has a custom one set with IPlayer::setOtherColour or not, if not, use their global colour
+                Colour colour;
+                bool hasPlayerSpecificColour = other->getOtherColour(FromPlayer, colour);
+                if (!hasPlayerSpecificColour) {
+                    colour = other->getColour();
+                }
 
-                bs.writeUINT16(other->getID());
-                bs.writeBIT(streamMarker);
-                if (streamMarker) {
-                    bs.writeINT16(int(otherPos.x));
-                    bs.writeINT16(int(otherPos.y));
-                    bs.writeINT16(int(otherPos.z));
+                // process and write into bitstream only if player has a visible colour
+                if (colour.a > 0) {
+                    playersToSend++;
+                    const Vector3 otherPos = other->getPosition();
+                    const PlayerState otherState = other->getState();
+                    bool streamMarker = otherState != PlayerState_None && otherState != PlayerState_Spectating && virtualWorld == other->getVirtualWorld() && (!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
+
+                    bs.writeUINT16(other->getID());
+                    bs.writeBIT(streamMarker);
+                    if (streamMarker) {
+                        bs.writeINT16(int(otherPos.x));
+                        bs.writeINT16(int(otherPos.y));
+                        bs.writeINT16(int(otherPos.z));
+                    }
                 }
             }
+
+            // set write offset to the beginning so we can write amount of players we have taken data from and
+            // wrote into our bitstream, then set it back to the end
+            int currentWriteOffset = bs.GetWriteOffset();
+            bs.SetWriteOffset(0);
+            bs.writeUINT32(playersToSend);
+            bs.SetWriteOffset(currentWriteOffset);
         }
     };
 
