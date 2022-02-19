@@ -93,7 +93,12 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
         std::string amxFileEnvVar = scriptfilesPath.string();
 
         amxFileEnvVar.insert(0, "AMXFILE=");
-        putenv(amxFileEnvVar.data());
+
+        const std::string::size_type size = amxFileEnvVar.size();
+        char *amxFileEnvVarCString = new char[size + 1];
+        memcpy(amxFileEnvVarCString, amxFileEnvVar.c_str(), size + 1);
+
+        putenv(amxFileEnvVarCString);
     }
 
     void onInit(IComponentList* components) override
