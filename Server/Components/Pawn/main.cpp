@@ -94,6 +94,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
         amxFileEnvVar.insert(0, "AMXFILE=");
 
+        // putenv() must own the string, so we aren't actually leaking it
         const std::string::size_type size = amxFileEnvVar.size();
         char *amxFileEnvVarCString = new char[size + 1];
         memcpy(amxFileEnvVarCString, amxFileEnvVar.c_str(), size + 1);
