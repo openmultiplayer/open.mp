@@ -172,9 +172,26 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
     void onFree(IComponent* component) override
     {
-        if (component == PawnManager::Get()->console) {
-            PawnManager::Get()->console = nullptr;
-        }
+        #define COMPONENT_UNLOADED(var) \
+            if (component == var)       \
+                var = nullptr;
+
+        PawnManager* mgr = PawnManager::Get();
+
+        COMPONENT_UNLOADED(mgr->console)
+        COMPONENT_UNLOADED(mgr->checkpoints)
+        COMPONENT_UNLOADED(mgr->classes)
+        COMPONENT_UNLOADED(mgr->databases)
+        COMPONENT_UNLOADED(mgr->dialogs)
+        COMPONENT_UNLOADED(mgr->gangzones)
+        COMPONENT_UNLOADED(mgr->menus)
+        COMPONENT_UNLOADED(mgr->objects)
+        COMPONENT_UNLOADED(mgr->pickups)
+        COMPONENT_UNLOADED(mgr->textdraws)
+        COMPONENT_UNLOADED(mgr->textlabels)
+        COMPONENT_UNLOADED(mgr->timers)
+        COMPONENT_UNLOADED(mgr->vars)
+        COMPONENT_UNLOADED(mgr->vehicles)
     }
 
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
