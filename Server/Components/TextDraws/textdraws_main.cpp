@@ -126,11 +126,16 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
             }
 
             PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
-            if (data && data->selecting) {
+            if (data) {
                 if (RPC.Invalid) {
                     data->selecting = false;
                     self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
                 } else {
+
+                    if (!data->selecting) {
+                        return true;
+                    }
+
                     if (RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
                         if (lock.entry) {
