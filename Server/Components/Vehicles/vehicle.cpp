@@ -548,3 +548,22 @@ void Vehicle::setAngularVelocity(Vector3 velocity)
     velocityRPC.Velocity = velocity;
     PacketHelper::send(velocityRPC, *driver);
 }
+
+Vehicle::~Vehicle()
+{
+    if (tower) {
+        tower->detachTrailer();
+    } else if (trailer && towing) {
+        detachTrailer();
+    }
+
+    const auto& entries = streamedFor_.entries();
+    for (IPlayer* player : entries) {
+        PlayerVehicleData* vehicleData = queryData<PlayerVehicleData>(player);
+
+        if (vehicleData && vehicleData->getVehicle() == this) {
+            vehicleData->setVehicle(nullptr, 0);
+        }
+        streamOutForClient(*player);
+    }
+}
