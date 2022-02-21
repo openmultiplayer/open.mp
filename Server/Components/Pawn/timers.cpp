@@ -4,6 +4,15 @@ Pair<size_t, PawnTimerHandler*> PawnTimerImpl::newTimer(const char* callback, Mi
 {
     ITimersComponent* timers = PawnManager::Get()->timers;
     if (timers && amx) {
+        
+        int callbackId;
+
+        // Also checking the callbackId value because SAMPGDK's FindPublic hook returns AMX_ERR_NONE. 
+        if (amx_FindPublic(amx, callback, &callbackId) != AMX_ERR_NONE || callbackId == INT_MAX) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTimer(Ex): There was a problem in creating the timer, \"public %s\" doesn't exist in your script.", callback);
+            return std::make_pair(0u, static_cast<PawnTimerHandler*>(nullptr));
+        }
+
         PawnTimerHandler* handler = new PawnTimerHandler(callback, amx);
         ITimer* timer = timers->create(handler, interval, repeating);
         if (timer == nullptr) {
