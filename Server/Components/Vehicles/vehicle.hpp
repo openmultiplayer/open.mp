@@ -61,19 +61,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         setSpawnData(data);
     }
 
-    ~Vehicle()
-    {
-        if (tower) {
-            tower->detachTrailer();
-        } else if (trailer && towing) {
-            detachTrailer();
-        }
-
-        const auto& entries = streamedFor_.entries();
-        for (IPlayer* player : entries) {
-            streamOutForClient(*player);
-        }
-    }
+    ~Vehicle();
 
     IExtraData* findData(UID uuid) const override
     {
