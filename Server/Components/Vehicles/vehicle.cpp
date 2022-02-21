@@ -184,7 +184,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 
     PlayerVehicleData* playerData = queryData<PlayerVehicleData>(player);
     Vehicle* vehicle = playerData->vehicle;
-  
+
     if (!vehicle || vehicle->detaching) {
         return false;
     } else if (tower != vehicle) {
@@ -357,7 +357,8 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
 
     //We don't want to update player's vehicle right now, let sync packets do it.
-    //queryData<PlayerVehicleData>(player)->vehicle = this;
+    // Or actually we do! SA-MP does it :shrug:
+    queryData<PlayerVehicleData>(player)->vehicle = this;
 
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
@@ -546,4 +547,23 @@ void Vehicle::setAngularVelocity(Vector3 velocity)
     velocityRPC.Type = VehicleVelocitySet_Angular;
     velocityRPC.Velocity = velocity;
     PacketHelper::send(velocityRPC, *driver);
+}
+
+Vehicle::~Vehicle()
+{
+    if (tower) {
+        tower->detachTrailer();
+    } else if (trailer && towing) {
+        detachTrailer();
+    }
+
+    const auto& entries = streamedFor_.entries();
+    for (IPlayer* player : entries) {
+        PlayerVehicleData* vehicleData = queryData<PlayerVehicleData>(player);
+
+        if (vehicleData && vehicleData->getVehicle() == this) {
+            vehicleData->setVehicle(nullptr, 0);
+        }
+        streamOutForClient(*player);
+    }
 }
