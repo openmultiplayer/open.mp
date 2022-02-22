@@ -54,6 +54,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     ExtraDataProvider extraData_;
     WeaponSlots weapons_;
     Colour colour_;
+    FlatHashMap<int, Colour> othersColours_;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     int virtualWorld_;
     int team_;
@@ -678,10 +679,29 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setOtherColour(IPlayer& other, Colour colour) override
     {
+        int otherID = static_cast<Player&>(other).poolID;
+        auto it = othersColours_.find(otherID);
+        if (it == othersColours_.end()) {
+            othersColours_.insert({ otherID, colour });
+        } else {
+            it->second = colour;
+        }
+
         NetCode::RPC::SetPlayerColor RPC;
-        RPC.PlayerID = static_cast<Player&>(other).poolID;
+        RPC.PlayerID = otherID;
         RPC.Col = colour;
         PacketHelper::send(RPC, *this);
+    }
+
+    bool getOtherColour(IPlayer& other, Colour& colour) const override
+    {
+        auto it = othersColours_.find(static_cast<Player&>(other).poolID);
+        if (it == othersColours_.end()) {
+            return false;
+        } else {
+            colour = it->second;
+            return true;
+        }
     }
 
     virtual void setWantedLevel(unsigned level) override
