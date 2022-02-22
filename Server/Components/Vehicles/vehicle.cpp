@@ -82,8 +82,9 @@ void Vehicle::streamOutForClient(IPlayer& player)
     PacketHelper::send(streamOut, player);
 
     PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
-    --data->numStreamed;
-
+    if (data) {
+        --data->numStreamed;
+    }
     ScopedPoolReleaseLock lock(*pool, *this);
     pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, *lock.entry, player);
 }
@@ -310,6 +311,10 @@ void Vehicle::addComponent(int component)
 {
     int slot = getVehicleComponentSlot(component);
     if (slot == VehicleComponent_None) {
+        return;
+    }
+
+    if (!isValidComponentForVehicleModel(spawnData.modelID, component)) {
         return;
     }
 
