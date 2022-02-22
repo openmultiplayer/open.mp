@@ -4,6 +4,16 @@
 void Player::setColour(Colour colour)
 {
     colour_ = colour;
+
+    // Remove per player colour, so marker sync will be forced to use the global one.
+    for (IPlayer* other : pool_.entries()) {
+        Player* player = static_cast<Player*>(other);
+
+        auto it = player->othersColours_.find(poolID);
+        if (it != player->othersColours_.end())
+            player->othersColours_.erase(it);
+    }
+
     NetCode::RPC::SetPlayerColor setPlayerColorRPC;
     setPlayerColorRPC.PlayerID = poolID;
     setPlayerColorRPC.Col = colour;
