@@ -132,8 +132,10 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
     {
         std::wstring line;
         while (true) {
-            std::getline(std::wcin, line);
-            if (threadData->valid) {
+            if (
+                std::getline(std::wcin, line)
+                && threadData->valid
+            ) {
                 std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
 
                 threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
