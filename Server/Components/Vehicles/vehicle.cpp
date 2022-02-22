@@ -117,11 +117,11 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
     }
 
     if (driver != &player) {
-        driver = &player;
         PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
         if (data->vehicle) {
             data->vehicle->unoccupy(player);
         }
+        driver = &player;
         data->setVehicle(this, 0);
         updateOccupied();
     }
