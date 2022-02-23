@@ -80,7 +80,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-        const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::UNRELIABLE : RakNet::UNRELIABLE_SEQUENCED;
+        const RakNet::PacketReliability reliability = (channel == OrderingChannel_Reliable) ? RakNet::RELIABLE : ((channel == OrderingChannel_Unordered) ? RakNet::UNRELIABLE : RakNet::UNRELIABLE_SEQUENCED);
         return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false);
     }
 
