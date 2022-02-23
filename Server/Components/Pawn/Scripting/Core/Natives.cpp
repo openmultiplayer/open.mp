@@ -202,7 +202,7 @@ int getConfigOptionAsInt(std::string const& cvar)
     int* var = nullptr;
     if (!res.second.empty()) {
         if (res.first) {
-            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
         }
         var = config->getInt(res.second);
     } else {
@@ -221,7 +221,7 @@ int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
     auto res = config->getNameFromAlias(cvar);
     if (!res.second.empty()) {
         if (res.first) {
-            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable %s", cvar.c_str());
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
         }
         buffer = String(config->getString(res.second));
     } else {
