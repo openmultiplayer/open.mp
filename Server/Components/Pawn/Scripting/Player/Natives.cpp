@@ -799,7 +799,7 @@ SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint3
     return true;
 }
 
-SCRIPT_API(AllowPlayerTeleport, bool(IPlayer& player, bool allow))
+SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
 {
     PawnManager::Get()->core->logLn(LogLevel::Warning, "AllowPlayerTeleport: This function is deprecated");
     return true;
