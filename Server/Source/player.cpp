@@ -100,7 +100,20 @@ IObject* Player::getCameraTargetObject()
         return nullptr;
     }
 
-    return component->get(cameraTargetObject_);
+    IObject* object = component->get(cameraTargetObject_);
+
+    if (!object) {
+        IPlayerObjectData* data = queryData<IPlayerObjectData>(this);
+
+        if (data) {
+            IPlayerObject* player_object = data->get(cameraTargetObject_);
+            if (player_object) {
+                return reinterpret_cast<IObject*>(player_object);
+            }
+        }
+    }
+    
+    return object;
 }
 
 IPlayer* Player::getTargetPlayer()
