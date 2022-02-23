@@ -178,6 +178,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
         PawnManager* mgr = PawnManager::Get();
 
+        COMPONENT_UNLOADED(mgr->actors)
         COMPONENT_UNLOADED(mgr->console)
         COMPONENT_UNLOADED(mgr->checkpoints)
         COMPONENT_UNLOADED(mgr->classes)

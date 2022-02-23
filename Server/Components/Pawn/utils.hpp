@@ -122,7 +122,7 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
 
     if (param <= num) {
         char* fmt;
-        amx_StrParamChar(amx, params[3], fmt);
+        amx_StrParamChar(amx, params[1], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "printf: not enough arguments given. fmt: \"%s\"", fmt);
     }
 
@@ -130,7 +130,7 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
         PawnManager::Get()->core->printLn("%s", buf);
     }
 
-    return 1;
+    return 0;
 }
 
 inline cell AMX_NATIVE_CALL pawn_settimer(AMX* amx, cell const* params)
