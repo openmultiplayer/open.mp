@@ -88,9 +88,10 @@ SCRIPT_API(GetActorPoolSize, int())
     return -1;
 }
 
-SCRIPT_API(print, void(const std::string& text))
+SCRIPT_API(print, bool(const std::string& text))
 {
     PawnManager::Get()->core->printLn("%s", text.c_str());
+    return false;
 }
 
 SCRIPT_API(AddCharModel, bool(int baseid, int newid, std::string const& dff, std::string const& textureLibrary))
