@@ -1,4 +1,5 @@
 #include "console_impl.hpp"
+#include "cmd_handler.hpp"
 #include <Impl/events_impl.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <atomic>
@@ -62,7 +63,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
                 self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player [%.*s] sent command: %.*s", PRINT_VIEW(peer.getName()), PRINT_VIEW(command));
 
-                self.send(command);
+                self.send(command, &peer);
             } else {
                 // Get the first word of the command.
                 size_t split = command.find_first_of(' ');
@@ -93,6 +94,15 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
             return true;
         }
     } playerRconCommandHandler;
+
+    void sendMessage(IPlayer* player, StringView message) override
+    {
+        core->logLn(LogLevel::Message, "%s", message.data());
+
+        if (player) {
+            player->sendClientMessage(Colour(255, 255, 255), message);
+        }
+    }
 
     void onConnect(IPlayer& player) override
     {
@@ -134,8 +144,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         while (true) {
             if (
                 std::getline(std::wcin, line)
-                && threadData->valid
-            ) {
+                && threadData->valid) {
                 std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
 
                 threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
@@ -165,7 +174,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         return eventDispatcher;
     }
 
-    void send(StringView command) override
+    void send(StringView command, IPlayer* sender = nullptr) override
     {
         // Get the first word of the command.
         StringView trimmedCommand = trim(command);
@@ -174,16 +183,16 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
             if (split == StringView::npos) {
                 // No parameters.
                 eventDispatcher.anyTrue(
-                    [trimmedCommand](ConsoleEventHandler* handler) {
-                        return handler->onConsoleText(trimmedCommand, "");
+                    [trimmedCommand, sender](ConsoleEventHandler* handler) {
+                        return handler->onConsoleText(trimmedCommand, "", sender);
                     });
             } else {
                 // Split parameters.
                 StringView trimmedCommandName = trim(trimmedCommand.substr(0, split));
                 StringView trimmedCommandParams = trim(trimmedCommand.substr(split + 1));
                 eventDispatcher.anyTrue(
-                    [trimmedCommandName, trimmedCommandParams](ConsoleEventHandler* handler) {
-                        return handler->onConsoleText(trimmedCommandName, trimmedCommandParams);
+                    [trimmedCommandName, trimmedCommandParams, sender](ConsoleEventHandler* handler) {
+                        return handler->onConsoleText(trimmedCommandName, trimmedCommandParams, sender);
                     });
             }
         }
@@ -201,13 +210,13 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         }
     }
 
-    bool onConsoleText(StringView command, StringView parameters) override
+    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
     {
-        if (command == "gamemodetext") {
-            core->setData(SettableCoreDataType::ModeText, parameters);
+        const auto it = ConsoleCmdHandler::Commands.find(String(command));
+        if (it != ConsoleCmdHandler::Commands.end()) {
+            it->second(String(parameters), sender, this, core);
             return true;
         }
-        // todo: add commands
         return false;
     }
 
