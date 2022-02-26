@@ -138,6 +138,14 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         std::thread(ThreadProc, threadData).detach();
     }
 
+    void onReady() override
+    {
+        if (core->getConfig().getString("rcon_password") == "changeme") {
+            core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password. Please change your rcon password.");
+            send("exit");
+        }
+    }
+
     static void ThreadProc(ThreadProcData* threadData)
     {
         std::wstring line;
