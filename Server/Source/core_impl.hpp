@@ -89,6 +89,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging_sqlite_queries", false },
     { "logging_cookies", false },
     { "rcon_allow_teleport", false },
+    { "rcon_command", "changeme" },
     { "vehicle_friendly_fire", false },
     { "vehicle_death_respawn_delay", 10 },
 };
@@ -247,34 +248,34 @@ struct Config final : IEarlyConfig {
                 }
                 processed["version"].emplace<String>(versionStr);
             }
-            {
-                std::ifstream ifs(BansFileName);
-                if (ifs.good()) {
-                    nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-                    if (!props.is_null() && !props.is_discarded() && props.is_array()) {
-                        const auto& arr = props.get<nlohmann::json::array_t>();
-                        for (const auto& arrVal : arr) {
-                            std::tm time = {};
-                            std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
-                            time_t t =
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-                                _mkgmtime(&time);
-#else
-                                timegm(&time);
-#endif
+            
+            loadBans();
 
-                            bans.emplace_back(
-                                BanEntry(
-                                    arrVal["address"].get<String>(),
-                                    arrVal["player"].get<String>(),
-                                    arrVal["reason"].get<String>(),
-                                    WorldTime::from_time_t(t)));
-                        }
-                    }
-                }
-            }
         } else {
             processed = Defaults;
+        }
+    }
+
+    void loadBans()
+    {
+        std::ifstream ifs(BansFileName);
+        if (ifs.good()) {
+            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            if (!props.is_null() && !props.is_discarded() && props.is_array()) {
+                const auto& arr = props.get<nlohmann::json::array_t>();
+                for (const auto& arrVal : arr) {
+                    std::tm time = {};
+                    std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
+                    time_t t =
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+                        _mkgmtime(&time);
+#else
+                        timegm(&time);
+#endif
+
+                    bans.emplace_back(BanEntry(arrVal["address"].get<String>(), arrVal["player"].get<String>(), arrVal["reason"].get<String>(), WorldTime::from_time_t(t)));
+                }
+            }
         }
     }
 
@@ -283,8 +284,7 @@ struct Config final : IEarlyConfig {
         unicode = components.queryComponent<IUnicodeComponent>();
     }
 
-    const StringView
-    getString(StringView key) const override
+    const StringView getString(StringView key) const override
     {
         const ConfigStorage* res = nullptr;
         if (!getFromKey(key, ConfigOptionType_String, res)) {
@@ -390,6 +390,18 @@ struct Config final : IEarlyConfig {
         bans.erase(bans.begin() + index);
     }
 
+    void reloadBans() override
+    {
+        for (INetwork* network : core.getNetworks()) {
+            for (BanEntry ban : bans) {
+                network->unban(ban);
+            }
+        }
+
+        bans.clear();
+        loadBans();
+    }
+
     void writeBans() override
     {
         optimiseBans();
@@ -415,8 +427,7 @@ struct Config final : IEarlyConfig {
         }
     }
 
-    size_t
-    getBansCount() const override
+    size_t getBansCount() const override
     {
         return bans.size();
     }
@@ -481,6 +492,15 @@ struct Config final : IEarlyConfig {
             return std::make_pair(false, StringView());
         }
         return std::make_pair(it->second.first, StringView(it->second.second));
+    }
+
+    DynamicArray<Pair<String, ConfigOptionType>> getOptions() const override
+    {
+        DynamicArray<Pair<String, ConfigOptionType>> options;
+        for (auto& kv : processed) {
+            options.emplace_back(kv.first, ConfigOptionType(kv.second.index()));
+        }
+        return options;
     }
 
 private:
@@ -634,6 +654,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
+    IConsoleComponent* console;
     FILE* logFile;
     std::atomic_bool run_;
     unsigned ticksPerSecond;
@@ -746,18 +767,18 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
 
-        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
-        if (consoleComp) {
-            consoleComp->getEventDispatcher().addEventHandler(this);
+        console = components.queryComponent<IConsoleComponent>();
+        if (console) {
+            console->getEventDispatcher().addEventHandler(this);
         }
         components.ready();
     }
 
     ~Core()
     {
-        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
-        if (consoleComp) {
-            components.queryComponent<IConsoleComponent>()->getEventDispatcher().removeEventHandler(this);
+        if (console) {
+            console->getEventDispatcher().removeEventHandler(this);
+            console = nullptr;
         }
         players.getEventDispatcher().removeEventHandler(this);
 
@@ -1161,19 +1182,19 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    bool onConsoleText(StringView command, StringView parameters) override
+    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
     {
         if (command == "exit") {
             run_ = false;
             return true;
-        }
-        if (command == "banip" && !parameters.empty()) {
-            const BanEntry entry(parameters, "BANIP", "Console");
-            for (INetwork* network : networks) {
-                network->ban(entry);
+        } else if (command == "reloadlog") {
+            if (logFile) {
+                return true;
             }
-            config.addBan(entry);
-            config.writeBans();
+
+            fclose(logFile);
+            logFile = ::fopen("log.txt", "w");
+            console->sendMessage(sender, "Reloaded log file \"log.txt\".");
         }
         return false;
     }
