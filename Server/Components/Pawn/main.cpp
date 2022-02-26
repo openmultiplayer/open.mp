@@ -160,7 +160,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
         return AMX_FUNCTIONS;
     }
 
-    bool onConsoleText(StringView command, StringView parameters) override
+    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
     {
         return PawnManager::Get()->OnServerCommand(String(command), String(parameters));
     }

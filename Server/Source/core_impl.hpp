@@ -1161,19 +1161,11 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    bool onConsoleText(StringView command, StringView parameters) override
+    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
     {
         if (command == "exit") {
             run_ = false;
             return true;
-        }
-        if (command == "banip" && !parameters.empty()) {
-            const BanEntry entry(parameters, "BANIP", "Console");
-            for (INetwork* network : networks) {
-                network->ban(entry);
-            }
-            config.addBan(entry);
-            config.writeBans();
         }
         return false;
     }
