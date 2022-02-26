@@ -654,6 +654,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
+    IConsoleComponent* console;
     FILE* logFile;
     std::atomic_bool run_;
     unsigned ticksPerSecond;
@@ -766,18 +767,18 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         players.init(components); // Players must ALWAYS be initialised before components
         components.init();
 
-        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
-        if (consoleComp) {
-            consoleComp->getEventDispatcher().addEventHandler(this);
+        console = components.queryComponent<IConsoleComponent>();
+        if (console) {
+            console->getEventDispatcher().addEventHandler(this);
         }
         components.ready();
     }
 
     ~Core()
     {
-        IConsoleComponent* consoleComp = components.queryComponent<IConsoleComponent>();
-        if (consoleComp) {
-            components.queryComponent<IConsoleComponent>()->getEventDispatcher().removeEventHandler(this);
+        if (console) {
+            console->getEventDispatcher().removeEventHandler(this);
+            console = nullptr;
         }
         players.getEventDispatcher().removeEventHandler(this);
 
@@ -1186,6 +1187,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         if (command == "exit") {
             run_ = false;
             return true;
+        } else if (command == "reloadlog") {
+            if (logFile) {
+                return true;
+            }
+
+            fclose(logFile);
+            logFile = ::fopen("log.txt", "w");
+            console->sendMessage(sender, "Reloaded log file \"log.txt\".");
         }
         return false;
     }
