@@ -53,21 +53,55 @@ PawnManager::~PawnManager()
     }
 }
 
-bool PawnManager::OnServerCommand(std::string const& cmd, std::string const& args)
+bool PawnManager::OnServerCommand(IPlayer* sender, std::string const& cmd, std::string const& args)
 {
     // Legacy commands.
     if (cmd == "loadfs") {
-        Load(args);
-        return true;
-    } else if (cmd == "reloadfs") {
-        Reload(args);
+        if (!Load("filterscripts/" + args)) {
+            console->sendMessage(sender, "Filterscript '" + args + "' load failed.");
+        } else {
+            console->sendMessage(sender, "Filterscript '" + args + "' loaded.");
+        }
         return true;
     } else if (cmd == "unloadfs") {
-        Unload(args);
+        if (!Unload("filterscripts/" + args)) {
+            console->sendMessage(sender, "Filterscript '" + args + "' unload failed.");
+        } else {
+            console->sendMessage(sender, "Filterscript '" + args + "' unloaded.");
+        }
         return true;
-    } else if (cmd == "changemode") {
-        Unload(entryScript);
-        Load(args, true);
+    } else if (cmd == "reloadfs") {
+        if (!Reload("filterscripts/" + args)) {
+            console->sendMessage(sender, "Filterscript '" + args + "' reload failed.");
+        } else {
+            console->sendMessage(sender, "Filterscript '" + args + "' reloaded.");
+        }
+        return true;
+    } else if (cmd == "changemode" || cmd == "gmx") {
+        console->sendMessage(sender, "Entry script changing is not supported.");
+        return true;
+    }
+    // New commands.
+    else if (cmd == "loadscript") {
+        if (!Load(args)) {
+            console->sendMessage(sender, "Script '" + args + "' load failed.");
+        } else {
+            console->sendMessage(sender, "Script '" + args + "' loaded.");
+        }
+        return true;
+    } else if (cmd == "unloadscript") {
+        if (!Unload(args)) {
+            console->sendMessage(sender, "Script '" + args + "' unload failed.");
+        } else {
+            console->sendMessage(sender, "Script '" + args + "' unloaded.");
+        }
+        return true;
+    } else if (cmd == "reloadscript") {
+        if (!Reload(args)) {
+            console->sendMessage(sender, "Script '" + args + "' reload failed.");
+        } else {
+            console->sendMessage(sender, "Script '" + args + "' reloaded.");
+        }
         return true;
     }
     return false;
@@ -108,10 +142,10 @@ void PawnManager::CheckNatives(PawnScript& script)
     }
 }
 
-void PawnManager::Load(std::string const& name, bool primary)
+bool PawnManager::Load(std::string const& name, bool primary)
 {
     if (scripts_.count(name)) {
-        return;
+        return false;
     }
 
     // if the user just supplied a script name, add the extension
@@ -123,8 +157,8 @@ void PawnManager::Load(std::string const& name, bool primary)
     std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
 
     if (!ptr.get()->IsLoaded()) {
-        core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
-        return;
+        //core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
+        return false;
     }
 
     PawnScript& script = *ptr;
@@ -168,41 +202,33 @@ void PawnManager::Load(std::string const& name, bool primary)
     // TODO: `AMX_EXEC_CONT` support.
     // Assume that all initialisation and header mangling is now complete, and that it is safe to
     // cache public pointers.
+
+    return true;
 }
 
-void PawnManager::Reload(std::string const& name)
+bool PawnManager::Reload(std::string const& name)
 {
-    auto pos = scripts_.find(name);
-    bool isEntryScript = entryScript == name;
-    if (pos != scripts_.end()) {
-        auto& script = *pos->second;
-
-        if (isEntryScript) {
-            script.Call("OnGameModeExit", DefaultReturnValue_False);
-        } else {
-            script.Call("OnFilterScriptExit", DefaultReturnValue_False);
-        }
-
-        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
-        pluginManager.AmxUnload(script.GetAMX());
-        PawnTimerImpl::Get()->killTimers(script.GetAMX());
-        amxToScript_.erase(script.GetAMX());
-        scripts_.erase(pos);
+    // Entry script reload is not supported.
+    if (entryScript == name) {
+        return false;
     }
-    Load(name, entryScript == name);
+
+    Unload(name);
+    return Load(name, false);
 }
 
-void PawnManager::Unload(std::string const& name)
+bool PawnManager::Unload(std::string const& name)
 {
     auto pos = scripts_.find(name);
     bool isEntryScript = entryScript == name;
     if (pos == scripts_.end()) {
-        return;
+        return false;
     }
     auto& script = *pos->second;
 
     if (isEntryScript) {
         script.Call("OnGameModeExit", DefaultReturnValue_False);
+        entryScript = "";
     } else {
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
@@ -212,6 +238,8 @@ void PawnManager::Unload(std::string const& name)
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
     scripts_.erase(pos);
+
+    return true;
 }
 
 void PawnManager::SetBasePath(std::string const& path)
