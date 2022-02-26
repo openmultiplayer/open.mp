@@ -71,9 +71,9 @@ public:
     void SetBasePath(std::string const& path);
     void SetScriptPath(std::string const& path);
 
-    void Load(std::string const& name, bool primary = false);
-    void Reload(std::string const& name);
-    void Unload(std::string const& name);
+    bool Load(std::string const& name, bool primary = false);
+    bool Reload(std::string const& name);
+    bool Unload(std::string const& name);
 
     template <typename... T>
     cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
@@ -268,7 +268,7 @@ public:
     AMX* AMXFromID(int id) const;
     int IDFromAMX(AMX*) const;
 
-    bool OnServerCommand(std::string const& cmd, std::string const& args);
+    bool OnServerCommand(IPlayer* sender, std::string const& cmd, std::string const& args);
 
 private:
     std::string
