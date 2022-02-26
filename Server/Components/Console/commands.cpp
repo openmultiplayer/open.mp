@@ -67,7 +67,7 @@ ADD_CONSOLE_CMD(players, [](const std::string& params, IPlayer* sender, IConsole
             if (!data.networkID.address.ipv6) {
                 PeerAddress::AddressString addressString;
                 if (PeerAddress::ToString(data.networkID.address, addressString)) {
-                    ip = addressString;
+                    ip = String(addressString.data(), addressString.length());
                 }
             }
             String result = String(std::to_string(player->getID()) + "\t" + player->getName().data() + "\t" + std::to_string(player->getPing()) + "\t" + ip);
@@ -89,7 +89,7 @@ ADD_CONSOLE_CMD(kick, [](const std::string& params, IPlayer* sender, IConsoleCom
     if (!data.networkID.address.ipv6) {
         PeerAddress::AddressString addressString;
         if (PeerAddress::ToString(data.networkID.address, addressString)) {
-            ip = addressString;
+            ip = String(addressString.data(), addressString.length());
         }
     }
     console->sendMessage(sender, player->getName().data() + String("<# " + std::to_string(player->getID()) + " - ") + ip + "> has been kicked.");
@@ -109,7 +109,7 @@ ADD_CONSOLE_CMD(ban, [](const std::string& params, IPlayer* sender, IConsoleComp
     if (!data.networkID.address.ipv6) {
         PeerAddress::AddressString addressString;
         if (PeerAddress::ToString(data.networkID.address, addressString)) {
-            ip = addressString;
+            ip = String(addressString.data(), addressString.length());
         }
     }
     console->sendMessage(sender, player->getName().data() + String("<# " + std::to_string(player->getID()) + " - ") + ip + "> has been banned.");
