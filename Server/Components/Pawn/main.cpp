@@ -162,7 +162,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
     bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
     {
-        return PawnManager::Get()->OnServerCommand(String(command), String(parameters));
+        return PawnManager::Get()->OnServerCommand(sender, String(command), String(parameters));
     }
 
     void onTick(Microseconds elapsed, TimePoint now) override

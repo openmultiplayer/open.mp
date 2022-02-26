@@ -109,8 +109,11 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "lagcompmode", "lag_compensation" }
 };
 
-struct LegacyConfigComponent final : public IComponent {
+struct LegacyConfigComponent final : public IComponent, public ConsoleEventHandler {
     PROVIDE_UID(0x24ef6216838f9ffc);
+
+    ICore* core;
+    IConsoleComponent* console;
 
     StringView componentName() const override
     {
@@ -122,7 +125,29 @@ struct LegacyConfigComponent final : public IComponent {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    void onLoad(ICore* c) override { }
+    void onLoad(ICore* c) override { core = c; }
+    void onInit(IComponentList* components) override
+    {
+        console = components->queryComponent<IConsoleComponent>();
+
+        if (console) {
+            console->getEventDispatcher().addEventHandler(this);
+        }
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (console == component) {
+            console = nullptr;
+        }
+    }
+
+    ~LegacyConfigComponent()
+    {
+        if (console) {
+            console->getEventDispatcher().removeEventHandler(this);
+        }
+    }
 
     bool processCustom(ILogger& logger, IEarlyConfig& config, String name, String right)
     {
@@ -260,68 +285,99 @@ struct LegacyConfigComponent final : public IComponent {
                 config.addAlias(kv.first, kv.second, true);
             }
 
-            std::ifstream cfg("server.cfg");
-            if (cfg.good()) {
-                for (String line; std::getline(cfg, line);) {
-                    size_t idx;
-                    // Ignore // comments
-                    idx = line.find("//");
-                    if (idx != String::npos) {
-                        line = line.substr(0, idx);
-                    }
-                    // Ignore # comments
-                    idx = line.find_first_of('#');
-                    if (idx != String::npos) {
-                        line = line.substr(0, idx);
-                    }
+            loadLegacyConfigFile(logger, config, "server.cfg");
+        }
+    }
 
-                    // Remove all spaces from the beginning of the string
-                    while (line.size() && isspace(line.front())) {
-                        line.erase(line.begin());
-                    }
-                    // Remove all spaces from the end of the string
-                    while (line.size() && isspace(line.back())) {
-                        line.pop_back();
-                    }
+    bool loadLegacyConfigFile(ILogger& logger, IEarlyConfig& config, const std::string& filename)
+    {
+        std::ifstream cfg(filename);
+        if (cfg.good()) {
+            for (String line; std::getline(cfg, line);) {
+                size_t idx;
+                // Ignore // comments
+                idx = line.find("//");
+                if (idx != String::npos) {
+                    line = line.substr(0, idx);
+                }
+                // Ignore # comments
+                idx = line.find_first_of('#');
+                if (idx != String::npos) {
+                    line = line.substr(0, idx);
+                }
 
-                    // Skip empty lines
-                    if (line.size() == 0) {
-                        continue;
-                    }
+                // Remove all spaces from the beginning of the string
+                while (line.size() && isspace(line.front())) {
+                    line.erase(line.begin());
+                }
+                // Remove all spaces from the end of the string
+                while (line.size() && isspace(line.back())) {
+                    line.pop_back();
+                }
 
-                    // Get the setting name
-                    String name = line;
-                    idx = name.find_first_of(' ');
-                    if (idx != String::npos) {
-                        name = line.substr(0, idx);
-                    } else {
-                        // No value; skip line
-                        continue;
-                    }
+                // Skip empty lines
+                if (line.size() == 0) {
+                    continue;
+                }
 
-                    auto typeIt = types.find(name);
-                    if (typeIt != types.end()) {
-                        // Process default dictionary items
-                        if (typeIt->second == ParamType::Custom) {
-                            if (!processCustom(logger, config, name, line.substr(idx + 1))) {
-                                logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
-                            }
-                        } else if (typeIt->second == ParamType::Obsolete) {
-                            logger.logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
-                        } else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
+                // Get the setting name
+                String name = line;
+                idx = name.find_first_of(' ');
+                if (idx != String::npos) {
+                    name = line.substr(0, idx);
+                } else {
+                    // No value; skip line
+                    continue;
+                }
+
+                auto typeIt = types.find(name);
+                if (typeIt != types.end()) {
+                    // Process default dictionary items
+                    if (typeIt->second == ParamType::Custom) {
+                        if (!processCustom(logger, config, name, line.substr(idx + 1))) {
                             logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                         }
-                    } else if (!processCustom(logger, config, name, line.substr(idx + 1))) {
+                    } else if (typeIt->second == ParamType::Obsolete) {
+                        logger.logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
+                    } else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
                         logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                     }
+                } else if (!processCustom(logger, config, name, line.substr(idx + 1))) {
+                    logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                 }
             }
+            return true;
         }
+        return false;
     }
 
     void free() override
     {
         delete this;
+    }
+
+    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    {
+        if (command == "exec") {
+            if (parameters.empty()) {
+                console->sendMessage(sender, "Usage: exec <filename>");
+            } else {
+                auto file_name = String(parameters);
+
+                if (file_name.find_last_of(".cfg") != file_name.size() - 1) {
+                    file_name += ".cfg";
+                }
+
+                if (!loadLegacyConfigFile(*core, static_cast<IEarlyConfig&>(core->getConfig()), file_name)) {
+                    console->sendMessage(sender, "Unable to exec file '" + file_name + "'.");
+                } else {
+                    console->sendMessage(sender, "Loaded configuration file '" + file_name + "'.");
+                    core->updateNetworks();
+                }
+            }
+            return true;
+        }
+        return false;
     }
 };
 
