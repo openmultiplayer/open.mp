@@ -85,20 +85,25 @@ int main(int argc, char** argv)
     options.parse_positional("script");
     options.show_positional_help();
 
-    auto result = options.parse(argc, argv);
-
-    if (result.count("help")) {
-        // Print help text
-        std::cout << options.help() << std::endl;
-        return 0;
-    }
-
     SET_TICKER_RESOLUTION(1);
 
-    core = new Core(result);
-    core->run();
-    delete core;
-    done = true;
+    try {
+        auto result = options.parse(argc, argv);
 
+        if (result.count("help")) {
+            // Print help text
+            std::cout << options.help() << std::endl;
+            return 0;
+        }
+
+        core = new Core(result);
+        core->run();
+        delete core;
+        done = true;
+    } catch (cxxopts::OptionParseException e) {
+        std::cout << options.help() << std::endl;
+        std::cout << "Error while parsing arguments: " << e.what() << '\n';
+        return 0;
+    }
     return 0;
 }
