@@ -694,6 +694,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     Core(const cxxopts::ParseResult& cmd)
         : players(*this)
         , config(*this)
+        , console(nullptr)
         , logFile(nullptr)
         , run_(true)
         , ticksPerSecond(0u)
@@ -1188,13 +1189,14 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             run_ = false;
             return true;
         } else if (command == "reloadlog") {
-            if (logFile) {
+            if (!logFile) {
                 return true;
             }
 
             fclose(logFile);
             logFile = ::fopen("log.txt", "w");
             console->sendMessage(sender, "Reloaded log file \"log.txt\".");
+            return true;
         }
         return false;
     }
