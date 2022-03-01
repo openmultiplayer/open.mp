@@ -470,6 +470,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
+
             player.setState(PlayerState_OnFoot);
 
             TimePoint now = Time::now();
@@ -479,6 +480,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if (allowedupdate) {
+
+                // Fix Night Vision & Thermal Goggles visual effect show for all streamed players.
+                if ((player.armedWeapon_ == PlayerWeapon_Night_Vis_Goggles || player.armedWeapon_ == PlayerWeapon_Thermal_Goggles) && (footSync.Keys & 4)) {
+                    footSync.Keys &= ~4;
+                }
+
                 player.footSync_ = footSync;
                 player.primarySyncUpdateType_ = PrimarySyncUpdateType::OnFoot;
             }
