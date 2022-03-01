@@ -44,6 +44,11 @@ SCRIPT_API(SetPlayerWeather, bool(IPlayer& player, int weatherid))
     return true;
 }
 
+SCRIPT_API_FAILRET(GetPlayerWeather, -1, int(IPlayer& player))
+{
+    return player.getWeather();
+}
+
 SCRIPT_API(SetPlayerSkin, bool(IPlayer& player, int skinid))
 {
     player.setSkin(skinid);
