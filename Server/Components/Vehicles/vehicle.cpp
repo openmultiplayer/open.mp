@@ -506,6 +506,9 @@ Seconds Vehicle::getRespawnDelay()
 
 void Vehicle::attachTrailer(IVehicle& trailer)
 {
+    if (&trailer == this) {
+        return;
+    }
     this->trailer = static_cast<Vehicle*>(&trailer);
     towing = true;
     this->trailer->setTower(this);
