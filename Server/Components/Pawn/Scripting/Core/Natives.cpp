@@ -216,6 +216,26 @@ int getConfigOptionAsInt(std::string const& cvar)
     }
 }
 
+float getConfigOptionAsFloat(std::string const& cvar)
+{
+    IConfig* config = PawnManager::Get()->config;
+    auto res = config->getNameFromAlias(cvar);
+    float* var = nullptr;
+    if (!res.second.empty()) {
+        if (res.first) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
+        }
+        var = config->getFloat(res.second);
+    } else {
+        var = config->getFloat(cvar);
+    }
+    if (var) {
+        return *var;
+    } else {
+        return 0.0f;
+    }
+}
+
 int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
 {
     IConfig* config = PawnManager::Get()->config;
@@ -239,6 +259,11 @@ SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
 SCRIPT_API(GetConsoleVarAsInt, int(std::string const& cvar))
 {
     return getConfigOptionAsInt(cvar);
+}
+
+SCRIPT_API(GetConsoleVarAsFloat, float(std::string const& cvar))
+{
+    return getConfigOptionAsFloat(cvar);
 }
 
 SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, std::string& buffer))
@@ -326,6 +351,11 @@ SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
 SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
 {
     return getConfigOptionAsInt(cvar);
+}
+
+SCRIPT_API(GetServerVarAsFloat, float(std::string const& cvar))
+{
+    return getConfigOptionAsFloat(cvar);
 }
 
 SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, std::string& buffer))
@@ -506,4 +536,14 @@ SCRIPT_API(UsePlayerPedAnims, bool())
 {
     *PawnManager::Get()->config->getInt("use_player_ped_anims") = true;
     return true;
+}
+
+SCRIPT_API(GetWeather, int())
+{
+    return *PawnManager::Get()->config->getInt("weather");
+}
+
+SCRIPT_API(GetWorldTime, int())
+{
+    return *PawnManager::Get()->config->getInt("world_time");
 }
