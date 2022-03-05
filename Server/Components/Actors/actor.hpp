@@ -123,11 +123,13 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     {
         const int pid = player.getID();
         if (!streamedFor_.valid(pid)) {
-            uint8_t& numStreamed = queryData<PlayerActorData>(player)->numStreamed;
-            if (numStreamed <= MAX_STREAMED_ACTORS) {
-                ++numStreamed;
-                streamedFor_.add(pid, player);
-                streamInForClient(player);
+            auto actor_data = queryData<PlayerActorData>(player);
+            if (actor_data) {
+                if (actor_data->numStreamed <= MAX_STREAMED_ACTORS) {
+                    ++actor_data->numStreamed;
+                    streamedFor_.add(pid, player);
+                    streamInForClient(player);
+                }
             }
         }
     }
@@ -136,8 +138,10 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     {
         const int pid = player.getID();
         if (streamedFor_.valid(pid)) {
-            uint8_t& numStreamed = queryData<PlayerActorData>(player)->numStreamed;
-            --numStreamed;
+            auto actor_data = queryData<PlayerActorData>(player);
+            if (actor_data) {
+                --actor_data->numStreamed;
+            }
             streamedFor_.remove(pid, player);
             streamOutForClient(player);
         }
@@ -227,7 +231,10 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     ~Actor()
     {
         for (IPlayer* player : streamedFor_.entries()) {
-            --queryData<PlayerActorData>(player)->numStreamed;
+            auto actor_data = queryData<PlayerActorData>(player);
+            if (actor_data) {
+                --actor_data->numStreamed;
+            }
             streamOutForClient(*player);
         }
     }
