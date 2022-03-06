@@ -354,6 +354,9 @@ void Vehicle::removeComponent(int component)
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID)
 {
+    if(player.getVirtualWorld() != virtualWorld_)
+        return;
+
     const bool isStreamedIn = this->isStreamedInForPlayer(player);
     if (!isStreamedIn) {
         this->streamInForPlayer(player);
