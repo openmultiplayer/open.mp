@@ -13,6 +13,28 @@ std::atomic_bool done = false;
 void handler(int s)
 {
     signal(s, &handler);
+
+#ifndef BUILD_WINDOWS
+    switch (s) {
+    case SIGHUP:
+    case SIGUSR1:
+        if (core) {
+            if (core->reloadLogFile()) {
+                core->logLn(LogLevel::Message, "Log file reloaded.");
+            }
+        }
+        return;
+    case SIGUSR2:
+        if (core) {
+            core->getConfig().reloadBans();
+            core->logLn(LogLevel::Message, "Ban list reloaded.");
+        }
+        return;
+    default:
+        break;
+    }
+#endif
+
     if (core) {
         core->run_ = false;
     }
@@ -69,6 +91,10 @@ int main(int argc, char** argv)
     signal(SIGBREAK, &handler);
     SetUnhandledExceptionFilter(&ExceptionHandler);
     _setmode(_fileno(stdin), _O_U16TEXT);
+#else 
+    signal(SIGHUP, &handler);
+    signal(SIGUSR1, &handler);
+    signal(SIGUSR2, &handler);
 #endif
     setlocale(LC_ALL, "");
     setlocale(LC_NUMERIC, "C");
