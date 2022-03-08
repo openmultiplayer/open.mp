@@ -180,6 +180,7 @@ static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
+
     IUnicodeComponent* unicode = nullptr;
     ICore& core;
 
@@ -648,6 +649,8 @@ private:
 };
 
 struct Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
+    static constexpr const char* LogFileName = "log.txt";
+
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
@@ -729,7 +732,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         // Don't use config before this point
 
         if (*config.getInt("logging")) {
-            logFile = ::fopen("log.txt", "w");
+            logFile = ::fopen(LogFileName, "a");
         }
 
         EnableZoneNames = config.getInt("enable_zone_names");
@@ -781,6 +784,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             console->getEventDispatcher().removeEventHandler(this);
             console = nullptr;
         }
+
         players.getEventDispatcher().removeEventHandler(this);
 
         players.free();
@@ -1183,19 +1187,26 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
+    bool reloadLogFile() 
+    {
+        if (!logFile) {
+            return false;
+        }
+
+        fclose(logFile);
+        logFile = ::fopen(LogFileName, "a");
+        return true;
+    }
+
     bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
     {
         if (command == "exit") {
             run_ = false;
             return true;
         } else if (command == "reloadlog") {
-            if (!logFile) {
-                return true;
+            if (reloadLogFile()) {
+                console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
             }
-
-            fclose(logFile);
-            logFile = ::fopen("log.txt", "w");
-            console->sendMessage(sender, "Reloaded log file \"log.txt\".");
             return true;
         }
         return false;
