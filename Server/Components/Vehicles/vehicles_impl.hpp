@@ -420,13 +420,15 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
+
+            IPlayerVehicleData* veh_data = queryData<IPlayerVehicleData>(player);
+            IVehicle* playerVehicle = nullptr;
+            if (veh_data) {
+                playerVehicle = veh_data->getVehicle();
+            }
+
             for (IVehicle* v : storage) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
-
-                IPlayerVehicleData* playerVehData = queryData<IPlayerVehicleData>(player);
-                if (playerVehData && playerVehData->getVehicle() == vehicle) {
-                    continue;
-                }
 
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = vehicle->pos - player.getPosition();
@@ -435,7 +437,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
                 const bool isStreamedIn = vehicle->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
                     vehicle->streamInForPlayer(player);
-                } else if (isStreamedIn && !shouldBeStreamedIn) {
+                } else if (isStreamedIn && !shouldBeStreamedIn && playerVehicle != vehicle) {
                     vehicle->streamOutForPlayer(player);
                 }
             }
