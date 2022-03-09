@@ -84,7 +84,7 @@ ADD_CONSOLE_CMD(varlist, [](const std::string& params, IPlayer* sender, IConsole
 
                 console->sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
             } else {
-                console->sendMessage(sender, name + " = \" \" (strings)");
+                console->sendMessage(sender, name + " = \"\" (strings)");
             }
         } break;
         default:
