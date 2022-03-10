@@ -66,20 +66,26 @@ ADD_CONSOLE_CMD(varlist, [](const std::string& params, IPlayer* sender, IConsole
             console->sendMessage(sender, name + " = \"" + String(config.getString(name)) + "\" (string)");
             break;
         case ConfigOptionType_Strings: {
-            DynamicArray<StringView> output(core->getConfig().getStringsCount(name));
-            config.getStrings(name, Span<StringView>(output.data(), output.size()));
+            size_t count = config.getStringsCount(name);
 
-            std::string strings_list = "";
+            if (count) {
+                DynamicArray<StringView> output(count);
+                config.getStrings(name, Span<StringView>(output.data(), output.size()));
 
-            for (auto& string : output) {
-                strings_list += String(string) + ' ';
+                std::string strings_list = "";
+
+                for (auto& string : output) {
+                    strings_list += String(string) + ' ';
+                }
+
+                if (strings_list.back() == ' ') {
+                    strings_list.pop_back();
+                }
+
+                console->sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
+            } else {
+                console->sendMessage(sender, name + " = \"\" (strings)");
             }
-
-            if (strings_list.back() == ' ') {
-                strings_list.pop_back();
-            }
-
-            console->sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
         } break;
         default:
             break;
