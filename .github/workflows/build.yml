@@ -89,6 +89,8 @@ jobs:
         cmake --build . --config Debug
 
     - name: Create a snapshot
+      env:
+        CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
       run: |
         version=$(git describe --always --tags)
         folder_name="open.mp-${version}"
