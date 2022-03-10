@@ -510,10 +510,11 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
             })) {
         return;
     }
-
+#ifdef _DEBUG
     if (network->inEventDispatcher.count() == 0 && network->rpcInEventDispatcher.count(ID) == 0) {
         network->core->printLn("Received unprocessed RPC %zu", ID);
     }
+#endif
 }
 
 void RakNetLegacyNetwork::ban(const BanEntry& entry, Milliseconds expire)
