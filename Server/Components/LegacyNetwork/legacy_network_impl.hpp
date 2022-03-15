@@ -19,7 +19,16 @@ using namespace Impl;
 
 struct Core;
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
+private:
+    ICore* core = nullptr;
+    Query query;
+    RakNet::RakServerInterface& rakNetServer;
+    std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+    Milliseconds cookieSeedTime;
+    TimePoint lastCookieSeed;
+
+public:
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
@@ -223,11 +232,5 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
     void unban(const BanEntry& entry) override;
-
-    ICore* core = nullptr;
-    Query query;
-    RakNet::RakServerInterface& rakNetServer;
-    std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
-    Milliseconds cookieSeedTime;
-    TimePoint lastCookieSeed;
 };
+
