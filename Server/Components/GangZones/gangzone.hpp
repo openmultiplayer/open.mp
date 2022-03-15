@@ -5,15 +5,11 @@
 
 using namespace Impl;
 
-struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
+class GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
+private:
     GangZonePos pos;
     Colour col;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
-
-    GangZone(GangZonePos pos)
-        : pos(pos)
-    {
-    }
 
     void restream()
     {
@@ -23,6 +19,18 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
         }
     }
 
+    void hideForClient(IPlayer& player)
+    {
+        NetCode::RPC::HideGangZone hideGangZoneRPC;
+        hideGangZoneRPC.ID = poolID;
+        PacketHelper::send(hideGangZoneRPC, player);
+    }
+
+public:
+    GangZone(GangZonePos pos)
+        : pos(pos)
+    {
+    }
     bool isShownForPlayer(const IPlayer& player) const override
     {
         return shownFor_.valid(player.getID());
@@ -82,13 +90,6 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
         PacketHelper::send(showGangZoneRPC, player);
     }
 
-    void hideForClient(IPlayer& player)
-    {
-        NetCode::RPC::HideGangZone hideGangZoneRPC;
-        hideGangZoneRPC.ID = poolID;
-        PacketHelper::send(hideGangZoneRPC, player);
-    }
-
     ~GangZone()
     {
         for (IPlayer* player : shownFor_.entries()) {
@@ -96,3 +97,4 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
         }
     }
 };
+
