@@ -6,6 +6,12 @@
 
 using namespace Impl;
 
+struct LegacyDBResultImpl : LegacyDBResult {
+    // Extra members to be used in open.mp code
+    DynamicArray<char*> results_;
+    bool fieldsAreAdded = false;
+};
+
 struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
 
     /// Adds a row
@@ -81,5 +87,5 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
     std::size_t rowCount;
 
     /// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
-    LegacyDBResult legacyDbResult;
+    LegacyDBResultImpl legacyDbResult;
 };
