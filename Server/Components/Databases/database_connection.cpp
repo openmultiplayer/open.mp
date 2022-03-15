@@ -30,7 +30,6 @@ bool DatabaseConnection::close()
 /// @returns Result set
 IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query)
 {
-
     IDatabaseResultSet* ret(parentDatabasesComponent->createResultSet());
     if (ret) {
         // TODO: Properly handle errors
@@ -52,3 +51,4 @@ int DatabaseConnection::queryStepExecuted(void* userData, int fieldCount, char**
 {
     return reinterpret_cast<DatabaseResultSet*>(userData)->addRow(fieldCount, fieldNames, values) ? SQLITE_OK : SQLITE_ABORT;
 }
+
