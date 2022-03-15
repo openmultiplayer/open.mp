@@ -4,7 +4,8 @@
 
 using namespace Impl;
 
-struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
+class CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
+private:
     DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
     ICore* core = nullptr;
 
@@ -91,6 +92,7 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
         }
     } playerCheckpointActionHandler;
 
+public:
     CheckpointsComponent()
         : playerCheckpointActionHandler(*this)
     {
@@ -131,3 +133,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new CheckpointsComponent();
 }
+
