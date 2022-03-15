@@ -5,9 +5,11 @@
 
 using namespace Impl;
 
-struct PlayerMenuData final : IPlayerMenuData {
+struct PlayerMenuData final : public IPlayerMenuData {
+private:
     uint8_t menuId = INVALID_MENU_ID;
 
+public:
     uint8_t getMenuID() const override
     {
         return menuId;
@@ -24,7 +26,8 @@ struct PlayerMenuData final : IPlayerMenuData {
     }
 };
 
-struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
+class Menu final : public IMenu, public PoolIDProvider, public NoCopy {
+private:
     String title;
     uint8_t columnCount;
     Vector2 pos;
@@ -37,6 +40,14 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
     StaticArray<StaticArray<String, MAX_MENU_ITEMS>, 2> columnMenuItems;
 
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> initedFor_;
+
+public:
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (initedFor_.valid(pid)) {
+            initedFor_.remove(pid, player);
+        }
+    }
 
     Menu(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width)
         : title(String(title))
@@ -182,3 +193,4 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
     {
     }
 };
+
