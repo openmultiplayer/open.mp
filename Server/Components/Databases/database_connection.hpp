@@ -8,16 +8,17 @@
 
 using namespace Impl;
 
-struct DatabasesComponent;
+class DatabasesComponent;
 
-struct DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
-
+class DatabaseConnection final : public IDatabaseConnection, public PoolIDProvider, public NoCopy {
+private:
     /// Parent databases component
     DatabasesComponent* parentDatabasesComponent;
 
     /// Database connection handle
     sqlite3* databaseConnectionHandle;
 
+public:
     DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle);
 
     /// Gets its pool element ID
@@ -43,3 +44,4 @@ private:
     /// @returns Query step result
     static int queryStepExecuted(void* userData, int fieldCount, char** values, char** fieldNames);
 };
+
