@@ -40,10 +40,12 @@ struct CheckpointDataBase : public T {
     }
 };
 
-struct PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerStandardCheckpointData> {
+class PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerStandardCheckpointData> {
+private:
     bool enabled_ = false;
     IPlayer& player_;
 
+public:
     PlayerStandardCheckpointData(IPlayer& player)
         : player_(player)
     {
@@ -79,12 +81,14 @@ struct PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerSta
     }
 };
 
-struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceCheckpointData> {
+class PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceCheckpointData> {
+private:
     RaceCheckpointType type_ = RaceCheckpointType::RACE_NONE;
     Vector3 nextPosition_;
     bool enabled_ = false;
     IPlayer& player_;
 
+public:
     PlayerRaceCheckpointData(IPlayer& player)
         : player_(player)
     {
@@ -142,10 +146,12 @@ struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChe
     }
 };
 
-struct PlayerCheckpointData final : public IPlayerCheckpointData {
+class PlayerCheckpointData final : public IPlayerCheckpointData {
+private:
     PlayerRaceCheckpointData raceCheckpoint;
     PlayerStandardCheckpointData standardCheckpoint;
 
+public:
     PlayerCheckpointData(IPlayer& player)
         : raceCheckpoint(player)
         , standardCheckpoint(player)
@@ -167,3 +173,4 @@ struct PlayerCheckpointData final : public IPlayerCheckpointData {
         return standardCheckpoint;
     }
 };
+
