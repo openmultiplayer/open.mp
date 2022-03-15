@@ -157,11 +157,11 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t address)
 
     // Ping
     if (buffer[QUERY_TYPE_INDEX] == 'p') {
-        if (buffer.length() != BASE_QUERY_SIZE + sizeof(uint32_t)) {
+        if (buffer.size() != BASE_QUERY_SIZE + sizeof(uint32_t)) {
             return Span<char>();
         }
         return buffer;
-    } else if (buffer.length() == BASE_QUERY_SIZE) {
+    } else if (buffer.size() == BASE_QUERY_SIZE) {
         // Server info
         if (buffer[QUERY_TYPE_INDEX] == 'i') {
             return getBuffer(buffer, serverInfoBuffer, serverInfoBufferLength);

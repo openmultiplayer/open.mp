@@ -3,6 +3,8 @@
 #include <Server/Components/Databases/databases.hpp>
 #include <types.hpp>
 
+using namespace Impl;
+
 struct DatabaseResultSetRow final : public IDatabaseResultSetRow {
 
     /// Adds a new field

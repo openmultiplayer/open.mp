@@ -8,6 +8,8 @@
 #include <sdk.hpp>
 #include <thread>
 
+using namespace Impl;
+
 enum class ParamType {
     Int,
     Float,
