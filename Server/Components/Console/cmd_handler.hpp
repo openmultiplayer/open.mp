@@ -1,15 +1,17 @@
 #pragma once
-#include <unordered_map>
 #include "sdk.hpp"
 #include <Server/Components/Console/console.hpp>
+#include <unordered_map>
 
-using CommandHandlerFuncType = void (*)(const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core);
+using namespace Impl;
+
+using CommandHandlerFuncType = void (*)(const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core);
 
 class ConsoleCmdHandler {
 public:
-    static std::unordered_map<std::string, CommandHandlerFuncType> Commands;
+    static FlatHashMap<String, CommandHandlerFuncType> Commands;
 
-    ConsoleCmdHandler(const std::string& command, CommandHandlerFuncType handler)
+    ConsoleCmdHandler(const String& command, CommandHandlerFuncType handler)
     {
         auto it = Commands.find(command);
         if (it != Commands.end()) {
@@ -27,7 +29,7 @@ public:
     }
 
 private:
-    std::string command_;
+    String command_;
     CommandHandlerFuncType handler_;
 };
 

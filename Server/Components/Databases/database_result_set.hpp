@@ -2,6 +2,7 @@
 
 #include "database_result_set_row.hpp"
 #include <Impl/pool_impl.hpp>
+#include <queue>
 
 using namespace Impl;
 
@@ -74,7 +75,7 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
     LegacyDBResult& getLegacyDBResult() override;
 
     /// Rows
-    Queue<DatabaseResultSetRow> rows;
+    std::queue<DatabaseResultSetRow> rows;
 
     /// Number of rows
     std::size_t rowCount;

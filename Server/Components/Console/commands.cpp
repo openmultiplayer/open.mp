@@ -1,69 +1,80 @@
 #include "cmd_handler.hpp"
 
-std::unordered_map<std::string, CommandHandlerFuncType> ConsoleCmdHandler::Commands;
+FlatHashMap<String, CommandHandlerFuncType> ConsoleCmdHandler::Commands;
 
-ADD_CONSOLE_CMD(gamemodetext, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(gamemodetext, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("gamemodetext = \"") + core->getConfig().getString("mode_name").data() + "\"");
+        console.sendMessage(sender, String("gamemodetext = \"") + core->getConfig().getString("mode_name").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::ModeText, params);
 });
 
-ADD_CONSOLE_CMD(hostname, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(hostname, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("hostname = \"") + core->getConfig().getString("server_name").data() + "\"");
+        console.sendMessage(sender, String("hostname = \"") + core->getConfig().getString("server_name").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::ServerName, params);
 });
 
-ADD_CONSOLE_CMD(mapname, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(mapname, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("mapname = \"") + core->getConfig().getString("map_name").data() + "\"");
+        console.sendMessage(sender, String("mapname = \"") + core->getConfig().getString("map_name").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::MapName, params);
 });
 
-ADD_CONSOLE_CMD(weburl, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(weburl, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("weburl = \"") + core->getConfig().getString("website").data() + "\"");
+        console.sendMessage(sender, String("weburl = \"") + core->getConfig().getString("website").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::URL, params);
 });
 
-ADD_CONSOLE_CMD(language, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(language, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("language = \"") + core->getConfig().getString("language").data() + "\"");
+        console.sendMessage(sender, String("language = \"") + core->getConfig().getString("language").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::Language, params);
-    console->sendMessage(sender, "Setting server language to: \"" + params + "\"");
+    console.sendMessage(sender, "Setting server language to: \"" + params + "\"");
 });
 
-ADD_CONSOLE_CMD(cmdlist, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
-    console->sendMessage(sender, "Console commands:");
+ADD_CONSOLE_CMD(cmdlist, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
+    console.sendMessage(sender, "Console commands:");
     for (auto& kv : ConsoleCmdHandler::Commands) {
-        console->sendMessage(sender, kv.first);
+        console.sendMessage(sender, kv.first);
     }
 });
 
-ADD_CONSOLE_CMD(varlist, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
-    console->sendMessage(sender, "Console variables:");
-    auto vars = core->getConfig().getOptions();
-    auto& config = core->getConfig();
-    for (auto& [name, type] : vars) {
+struct VarlistEnumCallback : OptionEnumeratorCallback {
+    IConsoleComponent& console;
+    IConfig& config;
+    IPlayer* sender;
+
+    VarlistEnumCallback(IConsoleComponent& console, IConfig& config, IPlayer* sender)
+        : console(console)
+        , config(config)
+        , sender(sender)
+    {
+    }
+
+    bool proc(StringView n, ConfigOptionType type) override
+    {
+        String name(n);
+
         switch (type) {
         case ConfigOptionType_Int:
-            console->sendMessage(sender, name + " = " + std::to_string(*config.getInt(name)) + " (int)");
+            console.sendMessage(sender, name + " = " + std::to_string(*config.getInt(name)) + " (int)");
             break;
         case ConfigOptionType_Float:
-            console->sendMessage(sender, name + " = " + std::to_string(*config.getFloat(name)) + " (float)");
+            console.sendMessage(sender, name + " = " + std::to_string(*config.getFloat(name)) + " (float)");
             break;
         case ConfigOptionType_String:
-            console->sendMessage(sender, name + " = \"" + String(config.getString(name)) + "\" (string)");
+            console.sendMessage(sender, name + " = \"" + String(config.getString(name)) + "\" (string)");
             break;
         case ConfigOptionType_Strings: {
             size_t count = config.getStringsCount(name);
@@ -72,7 +83,7 @@ ADD_CONSOLE_CMD(varlist, [](const std::string& params, IPlayer* sender, IConsole
                 DynamicArray<StringView> output(count);
                 config.getStrings(name, Span<StringView>(output.data(), output.size()));
 
-                std::string strings_list = "";
+                String strings_list = "";
 
                 for (auto& string : output) {
                     strings_list += String(string) + ' ';
@@ -82,47 +93,54 @@ ADD_CONSOLE_CMD(varlist, [](const std::string& params, IPlayer* sender, IConsole
                     strings_list.pop_back();
                 }
 
-                console->sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
+                console.sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
             } else {
-                console->sendMessage(sender, name + " = \"\" (strings)");
+                console.sendMessage(sender, name + " = \"\" (strings)");
             }
         } break;
         default:
             break;
         }
+        return true;
     }
+};
+
+ADD_CONSOLE_CMD(varlist, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
+    console.sendMessage(sender, "Console variables:");
+    VarlistEnumCallback cb(console, core->getConfig(), sender);
+    core->getConfig().enumOptions(cb);
 });
 
-ADD_CONSOLE_CMD(password, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(password, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("password = \"") + core->getConfig().getString("password").data() + "\"");
+        console.sendMessage(sender, String("password = \"") + core->getConfig().getString("password").data() + "\"");
         return;
     } else if (params == "0") {
-        console->sendMessage(sender, "Server password has been removed.");
+        console.sendMessage(sender, "Server password has been removed.");
         core->setData(SettableCoreDataType::Password, "");
         return;
     }
     core->setData(SettableCoreDataType::Password, params);
-    console->sendMessage(sender, "Setting server password to: \"" + params + "\"");
+    console.sendMessage(sender, "Setting server password to: \"" + params + "\"");
 });
 
-ADD_CONSOLE_CMD(say, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(say, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         return;
     }
     core->getPlayers().sendClientMessageToAll(Colour(37, 135, 206), String("* Admin: ") + params);
 });
 
-ADD_CONSOLE_CMD(players, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(players, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (!core->getPlayers().entries().size()) {
         return;
     }
 
-    console->sendMessage(sender, "ID\tName\tPing\tIP");
+    console.sendMessage(sender, "ID\tName\tPing\tIP");
 
     for (IPlayer* player : core->getPlayers().entries()) {
         if (player) {
-            std::string ip = "";
+            String ip = "";
             PeerNetworkData data = player->getNetworkData();
             if (!data.networkID.address.ipv6) {
                 PeerAddress::AddressString addressString;
@@ -131,12 +149,12 @@ ADD_CONSOLE_CMD(players, [](const std::string& params, IPlayer* sender, IConsole
                 }
             }
             String result = String(std::to_string(player->getID()) + "\t" + player->getName().data() + "\t" + std::to_string(player->getPing()) + "\t" + ip);
-            console->sendMessage(sender, result);
+            console.sendMessage(sender, result);
         }
     }
 });
 
-ADD_CONSOLE_CMD(kick, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(kick, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int playerId;
     if (sscanf(params.data(), "%i", &playerId) == EOF) {
         return;
@@ -144,7 +162,7 @@ ADD_CONSOLE_CMD(kick, [](const std::string& params, IPlayer* sender, IConsoleCom
         return;
     }
     IPlayer* player = core->getPlayers().get(playerId);
-    std::string ip = "";
+    String ip = "";
     PeerNetworkData data = player->getNetworkData();
     if (!data.networkID.address.ipv6) {
         PeerAddress::AddressString addressString;
@@ -152,11 +170,11 @@ ADD_CONSOLE_CMD(kick, [](const std::string& params, IPlayer* sender, IConsoleCom
             ip = String(addressString.data(), addressString.length());
         }
     }
-    console->sendMessage(sender, player->getName().data() + String("<# " + std::to_string(player->getID()) + " - ") + ip + "> has been kicked.");
+    console.sendMessage(sender, player->getName().data() + String("<# " + std::to_string(player->getID()) + " - ") + ip + "> has been kicked.");
     player->kick();
 });
 
-ADD_CONSOLE_CMD(ban, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(ban, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int playerId;
     if (sscanf(params.data(), "%i", &playerId) == EOF) {
         return;
@@ -164,7 +182,7 @@ ADD_CONSOLE_CMD(ban, [](const std::string& params, IPlayer* sender, IConsoleComp
         return;
     }
     IPlayer* player = core->getPlayers().get(playerId);
-    std::string ip = "";
+    String ip = "";
     PeerNetworkData data = player->getNetworkData();
     if (!data.networkID.address.ipv6) {
         PeerAddress::AddressString addressString;
@@ -172,11 +190,11 @@ ADD_CONSOLE_CMD(ban, [](const std::string& params, IPlayer* sender, IConsoleComp
             ip = String(addressString.data(), addressString.length());
         }
     }
-    console->sendMessage(sender, player->getName().data() + String("<# " + std::to_string(player->getID()) + " - ") + ip + "> has been banned.");
+    console.sendMessage(sender, player->getName().data() + String("<# " + std::to_string(player->getID()) + " - ") + ip + "> has been banned.");
     player->ban("CONSOLE BAN");
 });
 
-ADD_CONSOLE_CMD(banip, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(banip, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         return;
     }
@@ -187,15 +205,15 @@ ADD_CONSOLE_CMD(banip, [](const std::string& params, IPlayer* sender, IConsoleCo
         network->ban(banEntry);
     }
     core->getConfig().writeBans();
-    console->sendMessage(sender, String("IP ") + params.data() + String(" has been banned."));
+    console.sendMessage(sender, String("IP ") + params.data() + String(" has been banned."));
 });
 
-ADD_CONSOLE_CMD(reloadbans, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(reloadbans, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     core->getConfig().reloadBans();
-    console->sendMessage(sender, "Banlist reloded.");
+    console.sendMessage(sender, "Banlist reloded.");
 });
 
-ADD_CONSOLE_CMD(unbanip, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(unbanip, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         return;
     }
@@ -221,70 +239,70 @@ ADD_CONSOLE_CMD(unbanip, [](const std::string& params, IPlayer* sender, IConsole
     }
 });
 
-ADD_CONSOLE_CMD(gravity, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(gravity, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     float gravity = 0.008f;
     if (sscanf(params.data(), "%f", &gravity) == EOF) {
-        console->sendMessage(sender, String("gravity = " + std::to_string(*core->getConfig().getFloat("gravity"))));
+        console.sendMessage(sender, String("gravity = " + std::to_string(*core->getConfig().getFloat("gravity"))));
         return;
     }
     core->setGravity(gravity);
 });
 
-ADD_CONSOLE_CMD(weather, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(weather, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int weather = 0;
     if (sscanf(params.data(), "%i", &weather) == EOF) {
-        console->sendMessage(sender, String("weather = " + std::to_string(*core->getConfig().getInt("weather"))));
+        console.sendMessage(sender, String("weather = " + std::to_string(*core->getConfig().getInt("weather"))));
         return;
     }
     core->setWeather(weather);
 });
 
-ADD_CONSOLE_CMD(rcon_password, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(rcon_password, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console->sendMessage(sender, String("rcon_password = \"") + core->getConfig().getString("rcon_password").data() + "\"");
+        console.sendMessage(sender, String("rcon_password = \"") + core->getConfig().getString("rcon_password").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::AdminPassword, params);
 });
 
-ADD_CONSOLE_CMD(echo, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
-    console->sendMessage(sender, params);
+ADD_CONSOLE_CMD(echo, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
+    console.sendMessage(sender, params);
 });
 
-ADD_CONSOLE_CMD(messageslimit, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(messageslimit, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console->sendMessage(sender, String("messageslimit = \"") + std::to_string(*core->getConfig().getInt("messages_limit")) + "\"");
+        console.sendMessage(sender, String("messageslimit = \"") + std::to_string(*core->getConfig().getInt("messages_limit")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("messages_limit", value);
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(messageholelimit, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(messageholelimit, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console->sendMessage(sender, String("messageholelimit = \"") + std::to_string(*core->getConfig().getInt("message_hole_limit")) + "\"");
+        console.sendMessage(sender, String("messageholelimit = \"") + std::to_string(*core->getConfig().getInt("message_hole_limit")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("message_hole_limit", value);
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(ackslimit, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(ackslimit, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console->sendMessage(sender, String("ackslimit = \"") + std::to_string(*core->getConfig().getInt("acks_limit")) + "\"");
+        console.sendMessage(sender, String("ackslimit = \"") + std::to_string(*core->getConfig().getInt("acks_limit")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("acks_limit", value);
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(playertimeout, [](const std::string& params, IPlayer* sender, IConsoleComponent* console, ICore* core) {
+ADD_CONSOLE_CMD(playertimeout, [](const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console->sendMessage(sender, String("playertimeout = \"") + std::to_string(*core->getConfig().getInt("player_timeout")) + "\"");
+        console.sendMessage(sender, String("playertimeout = \"") + std::to_string(*core->getConfig().getInt("player_timeout")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("player_timeout", value);
