@@ -4,6 +4,7 @@
 
 */
 
+#include <Impl/events_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Checkpoints/checkpoints.hpp>
 #include <Server/Components/Classes/classes.hpp>
@@ -20,7 +21,6 @@
 #include <Server/Components/Timers/timers.hpp>
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
-#include <Impl/events_impl.hpp>
 #include <sdk.hpp>
 
 #include <algorithm>
@@ -268,7 +268,7 @@ public:
     AMX* AMXFromID(int id) const;
     int IDFromAMX(AMX*) const;
 
-    bool OnServerCommand(IPlayer* sender, std::string const& cmd, std::string const& args);
+    bool OnServerCommand(const ConsoleCommandSenderData& sender, std::string const& cmd, std::string const& args);
 
 private:
     std::string
