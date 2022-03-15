@@ -13,8 +13,8 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
     for (auto it = processedPlayerObjects.begin(); it != processedPlayerObjects.end();) {
         PlayerObject* obj = *(it++);
         if (obj->advance(elapsed, now)) {
-            ScopedPoolReleaseLock lock(obj->objects_, *obj);
-            eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, obj->objects_.player_, *obj);
+            ScopedPoolReleaseLock lock(obj->getObjects(), *obj);
+            eventDispatcher.dispatch(&ObjectEventHandler::onPlayerObjectMoved, obj->getObjects().getPlayer(), *obj);
         }
     }
 }
