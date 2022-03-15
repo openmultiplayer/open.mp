@@ -6,14 +6,46 @@
 
 using namespace Impl;
 
-struct LegacyDBResultImpl : LegacyDBResult {
+class LegacyDBResultImpl : public LegacyDBResult {
+private:
     // Extra members to be used in open.mp code
     DynamicArray<char*> results_;
     bool fieldsAreAdded = false;
+
+public:
+    void addColumns(int fieldCount, char** fieldNames, char** values)
+    {
+        if (!fieldsAreAdded)
+		{
+            for (int field_index(0); field_index < fieldCount; field_index++)
+			{
+                results_.push_back(fieldNames[field_index]);
+            }
+            columns = fieldCount;
+            fieldsAreAdded = true;
+        }
+        results = results_.data();
+    }
+
+    void addField(char* value)
+    {
+        results_.push_back(const_cast<char*>(value ? value : ""));
+        results = results_.data();
+    }
 };
 
-struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
+class DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
+private:
+    /// Rows
+    std::queue<DatabaseResultSetRow> rows;
 
+    /// Number of rows
+    std::size_t rowCount;
+
+    /// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
+    LegacyDBResultImpl legacyDbResult;
+
+public:
     /// Adds a row
     /// @param fieldCount Field count
     /// @param values Field values
@@ -21,7 +53,7 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
     /// @returns "true" if row has been successfully added, otherwise "false"
     bool addRow(int fieldCount, char** values, char** fieldNames);
 
-    /// Gets its pool element ID
+	/// Gets its pool element ID
     /// @return Pool element ID
     int getID() const override;
 
@@ -79,13 +111,5 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
 
     /// Gets database results in legacy structure
     LegacyDBResult& getLegacyDBResult() override;
-
-    /// Rows
-    std::queue<DatabaseResultSetRow> rows;
-
-    /// Number of rows
-    std::size_t rowCount;
-
-    /// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
-    LegacyDBResultImpl legacyDbResult;
 };
+
