@@ -1,9 +1,11 @@
 #include "legacy_network_impl.hpp"
 #include <sdk.hpp>
 
-struct RakNetLegacyNetworkComponent final : INetworkComponent {
+class RakNetLegacyNetworkComponent final : public INetworkComponent {
+private:
     RakNetLegacyNetwork legacyNetwork;
 
+public:
     void onLoad(ICore* core) override
     {
         legacyNetwork.init(core);
@@ -56,3 +58,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new RakNetLegacyNetworkComponent();
 }
+
