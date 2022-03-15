@@ -90,7 +90,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 
     size_t len = atcprintf(output, maxlen - 1, cinput, amx, params, &param);
 
-    if (param - 1 < num) {
+    if (param - 1 < num && len < maxlen - 1) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
