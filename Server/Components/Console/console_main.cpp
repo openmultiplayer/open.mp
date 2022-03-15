@@ -25,7 +25,8 @@ StringView trim(StringView view)
     return view.substr(start, end - start + 1);
 }
 
-struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
+class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
+private:
     struct ThreadProcData {
         std::atomic_bool valid;
         ConsoleComponent* component;
@@ -95,6 +96,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         }
     } playerRconCommandHandler;
 
+public:
     void sendMessage(IPlayer* player, StringView message) override
     {
         core->logLn(LogLevel::Message, "%s", message.data());
@@ -238,3 +240,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new ConsoleComponent();
 }
+
