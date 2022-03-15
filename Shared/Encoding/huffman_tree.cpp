@@ -19,6 +19,7 @@
 #include "types.hpp"
 #include <assert.h>
 #include <list>
+#include <queue>
 
 using namespace Encoding;
 
@@ -38,7 +39,7 @@ void DataStructures::HuffmanEncodingTree::FreeMemory(void)
         return;
 
     // Use an in-order traversal to delete the tree
-    Queue<HuffmanEncodingTreeNode*> nodeQueue;
+    std::queue<HuffmanEncodingTreeNode*> nodeQueue;
 
     HuffmanEncodingTreeNode* node;
 

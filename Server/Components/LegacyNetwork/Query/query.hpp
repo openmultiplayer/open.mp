@@ -1,6 +1,8 @@
 #pragma once
 #include "sdk.hpp"
-#include <unordered_map>
+#include <map>
+
+using namespace Impl;
 
 constexpr size_t BASE_QUERY_SIZE = 11;
 constexpr size_t QUERY_TYPE_INDEX = 10;
