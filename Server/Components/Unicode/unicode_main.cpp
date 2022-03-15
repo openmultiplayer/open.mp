@@ -3,6 +3,8 @@
 #include <unicode/ucsdet.h>
 #include <unicode/unistr.h>
 
+using namespace Impl;
+
 struct UnicodeComponent final : public IUnicodeComponent {
     ICore* core = nullptr;
 
