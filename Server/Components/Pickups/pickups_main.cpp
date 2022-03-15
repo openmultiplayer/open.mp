@@ -3,7 +3,8 @@
 
 using namespace Impl;
 
-struct PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<Pickup, IPickup, 0, PICKUP_POOL_SIZE> storage;
     DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
@@ -37,6 +38,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
         }
     } playerPickUpPickupEventHandler;
 
+public:
     StringView componentName() const override
     {
         return "Pickups";
@@ -80,10 +82,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
     {
         const int pid = player.getID();
         for (IPickup* p : storage) {
-            Pickup* pickup = static_cast<Pickup*>(p);
-            if (pickup->streamedFor_.valid(pid)) {
-                pickup->streamedFor_.remove(pid, player);
-            }
+            static_cast<Pickup*>(p)->removeFor(pid, player);
         }
     }
 
@@ -105,7 +104,7 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
     void release(int index) override
     {
         Pickup* pickup = storage.get(index);
-        if (pickup && !pickup->isStatic) {
+        if (pickup && !pickup->isStatic()) {
             storage.release(index, false);
         }
     }
@@ -144,8 +143,8 @@ struct PickupsComponent final : public IPickupsComponent, public PlayerEventHand
                 Pickup* pickup = static_cast<Pickup*>(p);
 
                 const PlayerState state = player.getState();
-                const Vector3 dist3D = pickup->pos - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == pickup->virtualWorld || pickup->virtualWorld == -1) && glm::dot(dist3D, dist3D) < maxDist;
+                const Vector3 dist3D = pickup->getPosition() - player.getPosition();
+                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
                 const bool isStreamedIn = pickup->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
@@ -164,3 +163,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new PickupsComponent();
 }
+
