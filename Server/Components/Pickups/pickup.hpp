@@ -5,22 +5,14 @@
 
 using namespace Impl;
 
-struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
+class Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
+private:
     int virtualWorld;
     int modelId;
     PickupType type;
     Vector3 pos;
-    bool isStatic;
+    bool isStatic_;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
-
-    Pickup(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic)
-        : virtualWorld(virtualWorld)
-        , modelId(modelId)
-        , type(type)
-        , pos(pos)
-        , isStatic(isStatic)
-    {
-    }
 
     void restream()
     {
@@ -28,6 +20,45 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
             streamOutForClient(*player);
             streamInForClient(*player);
         }
+    }
+
+    void streamInForClient(IPlayer& player)
+    {
+        NetCode::RPC::PlayerCreatePickup createPickupRPC;
+        createPickupRPC.PickupID = poolID;
+        createPickupRPC.Model = modelId;
+        createPickupRPC.Type = type;
+        createPickupRPC.Position = pos;
+        PacketHelper::send(createPickupRPC, player);
+    }
+
+    void streamOutForClient(IPlayer& player)
+    {
+        NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
+        destroyPickupRPC.PickupID = poolID;
+        PacketHelper::send(destroyPickupRPC, player);
+    }
+
+public:
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (streamedFor_.valid(pid)) {
+            streamedFor_.remove(pid, player);
+        }
+    }
+
+    inline bool isStatic() const
+    {
+        return isStatic_;
+	}
+
+    Pickup(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic)
+        : virtualWorld(virtualWorld)
+        , modelId(modelId)
+        , type(type)
+        , pos(pos)
+        , isStatic_(isStatic)
+    {
     }
 
     bool isStreamedInForPlayer(const IPlayer& player) const override
@@ -99,23 +130,6 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
         return modelId;
     }
 
-    void streamInForClient(IPlayer& player)
-    {
-        NetCode::RPC::PlayerCreatePickup createPickupRPC;
-        createPickupRPC.PickupID = poolID;
-        createPickupRPC.Model = modelId;
-        createPickupRPC.Type = type;
-        createPickupRPC.Position = pos;
-        PacketHelper::send(createPickupRPC, player);
-    }
-
-    void streamOutForClient(IPlayer& player)
-    {
-        NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
-        destroyPickupRPC.PickupID = poolID;
-        PacketHelper::send(destroyPickupRPC, player);
-    }
-
     ~Pickup()
     {
         for (IPlayer* player : streamedFor_.entries()) {
@@ -123,3 +137,4 @@ struct Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
         }
     }
 };
+
