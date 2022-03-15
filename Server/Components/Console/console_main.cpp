@@ -1,5 +1,5 @@
-#include "console_impl.hpp"
 #include "cmd_handler.hpp"
+#include "console_impl.hpp"
 #include <Impl/events_impl.hpp>
 #include <Server/Components/Console/console.hpp>
 #include <atomic>
@@ -222,7 +222,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
     {
         const auto it = ConsoleCmdHandler::Commands.find(String(command));
         if (it != ConsoleCmdHandler::Commands.end()) {
-            it->second(String(parameters), sender, this, core);
+            it->second(String(parameters), sender, *this, core);
             return true;
         }
         return false;
