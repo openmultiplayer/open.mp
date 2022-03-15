@@ -2,11 +2,13 @@
 
 using namespace Impl;
 
-struct GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler {
+class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
+public:
     StringView componentName() const override
     {
         return "GangZones";
@@ -97,3 +99,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new GangZonesComponent();
 }
+
