@@ -5,8 +5,18 @@
 
 using namespace Impl;
 
-struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
+class DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
+private:
+    /// Rows
+    Queue<DatabaseResultSetRow> rows;
 
+    /// Number of rows
+    std::size_t rowCount;
+
+    /// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
+    LegacyDBResult legacyDbResult;
+
+public:
     /// Adds a row
     /// @param fieldCount Field count
     /// @param values Field values
@@ -14,7 +24,7 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
     /// @returns "true" if row has been successfully added, otherwise "false"
     bool addRow(int fieldCount, char** values, char** fieldNames);
 
-    /// Gets its pool element ID
+	/// Gets its pool element ID
     /// @return Pool element ID
     int getID() const override;
 
@@ -72,13 +82,5 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
 
     /// Gets database results in legacy structure
     LegacyDBResult& getLegacyDBResult() override;
-
-    /// Rows
-    Queue<DatabaseResultSetRow> rows;
-
-    /// Number of rows
-    std::size_t rowCount;
-
-    /// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
-    LegacyDBResult legacyDbResult;
 };
+
