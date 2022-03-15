@@ -2,7 +2,8 @@
 
 using namespace Impl;
 
-struct MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
+class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<Menu, IMenu, 1, MENU_POOL_SIZE> storage;
     DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
@@ -70,6 +71,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
         }
     } playerExitedMenuEventHandler;
 
+public:
     StringView componentName() const override
     {
         return "Menus";
@@ -99,10 +101,7 @@ struct MenusComponent final : public IMenusComponent, public MenuEventHandler, p
     {
         const int pid = player.getID();
         for (IMenu* m : storage) {
-            Menu* menu = static_cast<Menu*>(m);
-            if (menu->initedFor_.valid(pid)) {
-                menu->initedFor_.remove(pid, player);
-            }
+            static_cast<Menu*>(m)->removeFor(pid, player);
         }
     }
 
@@ -177,3 +176,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new MenusComponent();
 }
+
