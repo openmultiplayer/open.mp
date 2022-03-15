@@ -12,9 +12,9 @@ namespace RPC {
     struct SetPlayerObjectMaterial : NetworkPacketBase<84, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ObjectID;
         int MaterialID;
-        ObjectMaterialData& MaterialData;
+        const ObjectMaterialData& MaterialData;
 
-        SetPlayerObjectMaterial(ObjectMaterialData& materialData)
+        SetPlayerObjectMaterial(const ObjectMaterialData& materialData)
             : MaterialData(materialData)
         {
         }
