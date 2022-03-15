@@ -168,7 +168,7 @@ public:
     template <typename T, typename U = std::enable_if_t<std::is_integral_v<T>, T>>
     inline void writeArray(Span<T> data)
     {
-        Write(reinterpret_cast<const char*>(data.data()), data.length() * sizeof(T));
+        Write(reinterpret_cast<const char*>(data.data()), data.size() * sizeof(T));
     }
 
     template <typename T, size_t S, typename U = std::enable_if_t<std::is_integral_v<T>, T>>

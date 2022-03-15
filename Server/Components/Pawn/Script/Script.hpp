@@ -14,6 +14,8 @@
 #include <amx/amx.h>
 #include <amx/amxaux.h>
 
+using namespace Impl;
+
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
 int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
 int AMXAPI amx_StrSize(const cell* cstr, int* length);
