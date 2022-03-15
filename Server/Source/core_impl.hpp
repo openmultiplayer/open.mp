@@ -110,7 +110,8 @@ struct adl_serializer<std::variant<Args...>> {
 };
 }
 
-struct ComponentList : public IComponentList {
+class ComponentList : public IComponentList {
+public:
     using IComponentList::queryComponent;
 
     IComponent* queryComponent(UID id) override
@@ -179,7 +180,8 @@ private:
 
 static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 
-struct Config final : IEarlyConfig {
+class Config final : public IEarlyConfig {
+private:
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
 
@@ -213,6 +215,7 @@ struct Config final : IEarlyConfig {
         }
     }
 
+public:
     Config(ICore& core, bool defaultsOnly = false)
         : core(core)
     {
@@ -256,29 +259,6 @@ struct Config final : IEarlyConfig {
 
         } else {
             processed = Defaults;
-        }
-    }
-
-    void loadBans()
-    {
-        std::ifstream ifs(BansFileName);
-        if (ifs.good()) {
-            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-            if (!props.is_null() && !props.is_discarded() && props.is_array()) {
-                const auto& arr = props.get<nlohmann::json::array_t>();
-                for (const auto& arrVal : arr) {
-                    std::tm time = {};
-                    std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
-                    time_t t =
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-                        _mkgmtime(&time);
-#else
-                        timegm(&time);
-#endif
-
-                    bans.emplace_back(BanEntry(arrVal["address"].get<String>(), arrVal["player"].get<String>(), arrVal["reason"].get<String>(), WorldTime::from_time_t(t)));
-                }
-            }
         }
     }
 
@@ -507,6 +487,29 @@ struct Config final : IEarlyConfig {
     }
 
 private:
+    void loadBans()
+    {
+        std::ifstream ifs(BansFileName);
+        if (ifs.good()) {
+            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+            if (!props.is_null() && !props.is_discarded() && props.is_array()) {
+                const auto& arr = props.get<nlohmann::json::array_t>();
+                for (const auto& arrVal : arr) {
+                    std::tm time = {};
+                    std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
+                    time_t t =
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+                        _mkgmtime(&time);
+#else
+                        timegm(&time);
+#endif
+
+                    bans.emplace_back(BanEntry(arrVal["address"].get<String>(), arrVal["player"].get<String>(), arrVal["reason"].get<String>(), WorldTime::from_time_t(t)));
+                }
+            }
+        }
+    }
+
     bool getFromKey(StringView input, int index, const ConfigStorage*& output) const
     {
         auto it = processed.find(String(input));
@@ -545,7 +548,8 @@ private:
     FlatHashMap<String, Pair<bool, String>> aliases;
 };
 
-struct HTTPAsyncIO {
+class HTTPAsyncIO {
+public:
     HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data)
         : handler(handler)
         , type(type)
@@ -650,7 +654,8 @@ private:
     String body;
 };
 
-struct Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
+class Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
+private:
     static constexpr const char* LogFileName = "log.txt";
 
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
@@ -696,6 +701,133 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
     int EnableLogTimestamp;
     String LogTimestampFormat;
 
+    void addComponent(IComponent* component)
+    {
+        auto res = components.add(component);
+        if (!res.second) {
+            printLn("Tried to add plug-ins %.*s and %.*s with conflicting UID %16llx", PRINT_VIEW(component->componentName()), PRINT_VIEW(res.first->second->componentName()), component->getUID());
+        }
+        if (component->componentType() == ComponentType::Network) {
+            networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
+        }
+    }
+
+    IComponent* loadComponent(const std::filesystem::path& path)
+    {
+        printLn("Loading component %s", path.filename().u8string().c_str());
+        auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
+        if (componentLib == nullptr) {
+            printLn("\tFailed to load component.");
+            return nullptr;
+        }
+        ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
+        if (OnComponentLoad == nullptr) {
+            printLn("\tFailed to load component.");
+            LIBRARY_FREE(componentLib);
+            return nullptr;
+        }
+        IComponent* component = OnComponentLoad();
+        if (component != nullptr) {
+            SemanticVersion ver = component->componentVersion();
+            printLn(
+                "\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
+                PRINT_VIEW(component->componentName()),
+                ver.major,
+                ver.minor,
+                ver.patch,
+                ver.prerel,
+                component->getUID());
+            return component;
+        } else {
+            printLn("\tFailed to load component.");
+            LIBRARY_FREE(componentLib);
+            return nullptr;
+        }
+    }
+
+    void loadComponents(const std::filesystem::path& path)
+    {
+        std::filesystem::create_directory(path);
+
+        auto componentsCfg = config.getStrings("components");
+        if (!componentsCfg || componentsCfg->empty()) {
+            for (auto& p : std::filesystem::directory_iterator(path)) {
+                if (p.path().extension() == LIBRARY_EXT) {
+                    IComponent* component = loadComponent(p);
+                    if (component) {
+                        addComponent(component);
+                    }
+                }
+            }
+        } else {
+            for (const StringView component : *componentsCfg) {
+                auto file = std::filesystem::path(path) / component.data();
+                if (!file.has_extension()) {
+                    file.replace_extension(LIBRARY_EXT);
+                }
+
+                if (std::filesystem::exists(file)) {
+                    IComponent* component = loadComponent(file);
+                    if (component) {
+                        addComponent(component);
+                    }
+                }
+            }
+        }
+
+        printLn("Loaded %i component(s)", components.size());
+    }
+
+    bool reloadLogFile()
+    {
+        if (!logFile) {
+            return false;
+        }
+
+        fclose(logFile);
+        logFile = ::fopen(LogFileName, "a");
+        return true;
+    }
+
+public:
+    void run()
+    {
+        sleepTimer = Milliseconds(*config.getInt("sleep"));
+
+        TimePoint prev = Time::now();
+        while (run_) {
+            const TimePoint now = Time::now();
+            Microseconds us = duration_cast<Microseconds>(now - prev);
+            prev = now;
+
+            if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
+                ticksPerSecondLastUpdate = now;
+                ticksPerSecond = ticksThisSecond;
+                ticksThisSecond = 0u;
+            }
+            ++ticksThisSecond;
+
+            eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
+
+            for (auto it = httpFutures.begin(); it != httpFutures.end();) {
+                HTTPAsyncIO* httpIO = *it;
+                if (httpIO->tryExec()) {
+                    delete httpIO;
+                    it = httpFutures.erase(it);
+                } else {
+                    ++it;
+                }
+            }
+
+            std::this_thread::sleep_until(now + sleepTimer);
+        }
+    }
+
+	void stop()
+    {
+        run_ = false;
+    }
+
     Core(const cxxopts::ParseResult& cmd)
         : players(*this)
         , config(*this)
@@ -718,7 +850,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         if (cmd.count("write-config")) {
             // Generate config
             Config::writeDefault(*this, components);
-            run_ = false;
+            stop();
             return;
         }
 
@@ -1096,131 +1228,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         return true;
     }
 
-    void addComponent(IComponent* component)
-    {
-        auto res = components.add(component);
-        if (!res.second) {
-            printLn("Tried to add plug-ins %.*s and %.*s with conflicting UID %16llx", PRINT_VIEW(component->componentName()), PRINT_VIEW(res.first->second->componentName()), component->getUID());
-        }
-        if (component->componentType() == ComponentType::Network) {
-            networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
-        }
-    }
-
-    IComponent* loadComponent(const std::filesystem::path& path)
-    {
-        printLn("Loading component %s", path.filename().u8string().c_str());
-        auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
-        if (componentLib == nullptr) {
-            printLn("\tFailed to load component.");
-            return nullptr;
-        }
-        ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
-        if (OnComponentLoad == nullptr) {
-            printLn("\tFailed to load component.");
-            LIBRARY_FREE(componentLib);
-            return nullptr;
-        }
-        IComponent* component = OnComponentLoad();
-        if (component != nullptr) {
-            SemanticVersion ver = component->componentVersion();
-            printLn(
-                "\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
-                PRINT_VIEW(component->componentName()),
-                ver.major,
-                ver.minor,
-                ver.patch,
-                ver.prerel,
-                component->getUID());
-            return component;
-        } else {
-            printLn("\tFailed to load component.");
-            LIBRARY_FREE(componentLib);
-            return nullptr;
-        }
-    }
-
-    void loadComponents(const std::filesystem::path& path)
-    {
-        std::filesystem::create_directory(path);
-
-        auto componentsCfg = config.getStrings("components");
-        if (!componentsCfg || componentsCfg->empty()) {
-            for (auto& p : std::filesystem::directory_iterator(path)) {
-                if (p.path().extension() == LIBRARY_EXT) {
-                    IComponent* component = loadComponent(p);
-                    if (component) {
-                        addComponent(component);
-                    }
-                }
-            }
-        } else {
-            for (const StringView component : *componentsCfg) {
-                auto file = std::filesystem::path(path) / component.data();
-                if (!file.has_extension()) {
-                    file.replace_extension(LIBRARY_EXT);
-                }
-
-                if (std::filesystem::exists(file)) {
-                    IComponent* component = loadComponent(file);
-                    if (component) {
-                        addComponent(component);
-                    }
-                }
-            }
-        }
-
-        printLn("Loaded %i component(s)", components.size());
-    }
-
-    void run()
-    {
-        sleepTimer = Milliseconds(*config.getInt("sleep"));
-
-        TimePoint prev = Time::now();
-        while (run_) {
-            const TimePoint now = Time::now();
-            Microseconds us = duration_cast<Microseconds>(now - prev);
-            prev = now;
-
-            if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
-                ticksPerSecondLastUpdate = now;
-                ticksPerSecond = ticksThisSecond;
-                ticksThisSecond = 0u;
-            }
-            ++ticksThisSecond;
-
-            eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
-
-            for (auto it = httpFutures.begin(); it != httpFutures.end();) {
-                HTTPAsyncIO* httpIO = *it;
-                if (httpIO->tryExec()) {
-                    delete httpIO;
-                    it = httpFutures.erase(it);
-                } else {
-                    ++it;
-                }
-            }
-
-            std::this_thread::sleep_until(now + sleepTimer);
-        }
-    }
-
-    bool reloadLogFile()
-    {
-        if (!logFile) {
-            return false;
-        }
-
-        fclose(logFile);
-        logFile = ::fopen(LogFileName, "a");
-        return true;
-    }
-
     bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         if (command == "exit") {
-            run_ = false;
+            stop();
             return true;
         } else if (command == "reloadlog") {
             if (reloadLogFile()) {
@@ -1231,3 +1242,4 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         return false;
     }
 };
+
