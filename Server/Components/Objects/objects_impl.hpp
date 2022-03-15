@@ -4,7 +4,8 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
+class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;
     MarkedDynamicPoolStorage<Object, IObject, 1, OBJECT_POOL_SIZE> storage;
@@ -136,6 +137,34 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             return true;
         }
     } playerEditAttachedObjectEventHandler;
+
+public:
+    inline void incrementPlayerCounter(int objid)
+    {
+        ++isPlayerObject[objid];
+	}
+
+    inline void decrementPlayerCounter(int objid)
+    {
+        --isPlayerObject[objid];
+	}
+
+    inline IPlayerPool& getPlayers()
+    {
+        return *players;
+    }
+
+	// TODO: Very hacky!
+    inline FlatPtrHashSet<Object>& getProcessedObjects()
+    {
+        return processedObjects;
+	}
+	
+	// TODO: Very hacky!
+    inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
+    {
+        return processedPlayerObjects;
+	}
 
     ObjectComponent()
         : playerSelectObjectEventHandler(*this)
@@ -287,12 +316,13 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         const int pid = player.getID();
         for (IObject* object : storage) {
             Object* obj = static_cast<Object*>(object);
-            if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
+            const ObjectAttachmentData& attachment = obj->getAttachmentData();
+            if (attachment.type == ObjectAttachmentData::Type::Player && attachment.ID == pid) {
                 NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
                 attachObjectToPlayerRPC.ObjectID = obj->poolID;
-                attachObjectToPlayerRPC.PlayerID = obj->attachmentData_.ID;
-                attachObjectToPlayerRPC.Offset = obj->attachmentData_.offset;
-                attachObjectToPlayerRPC.Rotation = obj->attachmentData_.rotation;
+                attachObjectToPlayerRPC.PlayerID = attachment.ID;
+                attachObjectToPlayerRPC.Offset = attachment.offset;
+                attachObjectToPlayerRPC.Rotation = attachment.rotation;
                 PacketHelper::send(attachObjectToPlayerRPC, forPlayer);
             }
         }
@@ -318,7 +348,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         const int pid = player.getID();
         for (IObject* object : storage) {
             Object* obj = static_cast<Object*>(object);
-            if (obj->attachmentData_.type == ObjectAttachmentData::Type::Player && obj->attachmentData_.ID == pid) {
+            if (obj->getAttachmentData().type == ObjectAttachmentData::Type::Player && obj->getAttachmentData().ID == pid) {
                 obj->resetAttachment();
             }
         }
@@ -336,7 +366,8 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     void onTick(Microseconds elapsed, TimePoint now) override;
 };
 
-struct PlayerObjectData final : public IPlayerObjectData {
+class PlayerObjectData final : public IPlayerObjectData {
+private:
     ObjectComponent& component_;
     IPlayer& player_;
     StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
@@ -344,6 +375,19 @@ struct PlayerObjectData final : public IPlayerObjectData {
     MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, 1, OBJECT_POOL_SIZE> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
+
+public:
+	// TODO: const.
+    inline IPlayer& getPlayer()
+    {
+        return player_;
+    }
+
+    // TODO: Very hacky!
+    inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
+    {
+        return component_.getPlayerProcessedObjects();
+    }
 
     PlayerObjectData(ObjectComponent& component, IPlayer& player)
         : component_(component)
@@ -355,7 +399,15 @@ struct PlayerObjectData final : public IPlayerObjectData {
     {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx >= storage.Lower) {
-            if (!component_.storage.get(freeIdx)) {
+			// Per-player and global objects shared an ID pool in SA:MP.  If an
+			// ID was "assigned" to players each player could have a unique
+			// object with that ID, but if you created the maximum global
+			// objects you couldn't then create any per-player objects.  This
+			// replicates that by finding an ID that isn't assigned to a global
+			// object.  This looks to see if there is a global object in that
+			// slot, and if there isn't marks the slot as per-player, which in
+			// turn prevents the global pool from using it (BUG: ever again).
+            if (!component_.get(freeIdx)) {
                 break;
             }
 
@@ -367,13 +419,13 @@ struct PlayerObjectData final : public IPlayerObjectData {
             return nullptr;
         }
 
-        int objid = storage.claimHint(freeIdx, *this, modelID, position, rotation, drawDist, component_.defCameraCollision);
+        int objid = storage.claimHint(freeIdx, *this, modelID, position, rotation, drawDist, component_.getDefaultCameraCollision());
         if (objid < storage.Lower) {
             // No free index
             return nullptr;
         }
 
-        ++component_.isPlayerObject[objid];
+        component_.incrementPlayerCounter(objid);
 
         PlayerObject* obj = storage.get(objid);
         obj->createForPlayer();
@@ -401,7 +453,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         }
         if (index < component_.isPlayerObject.size()) {
             assert(component_.isPlayerObject[index] != 0);
-            --component_.isPlayerObject[index];
+            component_.decrementPlayerCounter(index);
         }
         storage.release(index, false);
     }
@@ -436,7 +488,8 @@ struct PlayerObjectData final : public IPlayerObjectData {
             assert(component_.isPlayerObject[obj->getID()] != 0);
             --component_.isPlayerObject[obj->getID()];
             // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            obj->playerQuitting_ = true;
+            component_.decrementPlayerCounter(obj->getID());
+            obj->setPlayerQuitting();
         }
         delete this;
     }
@@ -537,3 +590,4 @@ struct PlayerObjectData final : public IPlayerObjectData {
         }
     }
 };
+

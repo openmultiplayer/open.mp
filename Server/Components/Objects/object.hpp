@@ -5,13 +5,14 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-struct ObjectComponent;
-struct PlayerObjectData;
+class ObjectComponent;
+class PlayerObjectData;
 
 using namespace Impl;
 
 template <class ObjectType>
-struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
+class BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
+private:
     Vector3 pos_;
     Vector3 rot_;
     int model_;
@@ -25,6 +26,7 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
     float rotSpeed_;
     bool anyDelayedProcessing_;
 
+public:
     BaseObject(int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
         : pos_(position)
         , rot_(rotation)
@@ -100,6 +102,36 @@ struct BaseObject : public ObjectType, public PoolIDProvider, public NoCopy {
     {
     }
 
+    void resetAttachment() override
+    {
+        attachmentData_.type = ObjectAttachmentData::Type::None;
+    }
+
+    void setPosition(Vector3 position) override
+    {
+        pos_ = position;
+	}
+
+    void setRotation(GTAQuat rotation) override
+    {
+        rot_ = rotation.ToEuler();
+	}
+
+    void setDrawDistance(float drawDistance) override
+    {
+        drawDist_ = drawDistance;
+    }
+
+    void setModel(int model) override
+    {
+        model_ = model;
+    }
+
+    void setCameraCollision(bool collision) override
+    {
+        cameraCol_ = collision;
+    }
+
 protected:
     void setMtl(int index, int model, StringView txd, StringView texture, Colour colour)
     {
@@ -166,10 +198,15 @@ protected:
             rotSpeed_ = glm::distance(rot_, moveData_.targetRot) * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
         }
 
+        return makeMovePacket();
+    }
+	
+    NetCode::RPC::MoveObject makeMovePacket() const
+    {
         NetCode::RPC::MoveObject moveObjectRPC;
         moveObjectRPC.ObjectID = poolID;
         moveObjectRPC.CurrentPosition = pos_;
-        moveObjectRPC.MoveData = data;
+        moveObjectRPC.MoveData = moveData_;
         return moveObjectRPC;
     }
 
@@ -211,52 +248,51 @@ protected:
 
         return false;
     }
+
+	bool getDelayedProcessing() const
+	{
+        return anyDelayedProcessing_;
+    }
+
+	void enableDelayedProcessing()
+	{
+        anyDelayedProcessing_ = true;
+    }
+	
+	void disableDelayedProcessing()
+	{
+        anyDelayedProcessing_ = false;
+    }
+	
+	size_t getMtlCount() const
+	{
+        return materials_.size();
+    }
 };
 
-struct Object final : public BaseObject<IObject> {
+class Object final : public BaseObject<IObject> {
+private:
     StaticBitset<PLAYER_POOL_SIZE> delayedProcessing_;
     StaticArray<TimePoint, PLAYER_POOL_SIZE> delayedProcessingTime_;
     ObjectComponent& objects_;
 
-    Object(ObjectComponent& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
-        : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
-        , objects_(objects)
-    {
-    }
-
     void restream();
 
-    virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override
-    {
-        if (index < materials_.size()) {
-            setMtl(index, model, txd, texture, colour);
-            restream();
-        }
-    }
+    void addToProcessed();
+    void eraseFromProcessed(bool force);
 
-    virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
-    {
-        if (index < materials_.size()) {
-            setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
-            restream();
-        }
-    }
-
-    void startMoving(const ObjectMoveData& data) override;
-
-    void stopMoving() override;
-
+public:
     bool advance(Microseconds elapsed, TimePoint now);
 
     void createForPlayer(IPlayer& player)
     {
         createObjectForClient(player);
 
-        if (moving_ || attachmentData_.type == ObjectAttachmentData::Type::Player) {
+        if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player) {
             const int pid = player.getID();
             delayedProcessing_.set(pid);
             delayedProcessingTime_[pid] = Time::now() + Seconds(1);
-            anyDelayedProcessing_ = true;
+            enableDelayedProcessing();
             addToProcessed();
         }
     }
@@ -269,9 +305,35 @@ struct Object final : public BaseObject<IObject> {
         destroyObjectForClient(player);
     }
 
+    Object(ObjectComponent& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
+        : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
+        , objects_(objects)
+    {
+    }
+
+    virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override
+    {
+        if (index < getMtlCount()) {
+            setMtl(index, model, txd, texture, colour);
+            restream();
+        }
+    }
+
+    virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
+    {
+        if (index < getMtlCount()) {
+            setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
+            restream();
+        }
+    }
+
+    void startMoving(const ObjectMoveData& data) override;
+
+    void stopMoving() override;
+
     void resetAttachment() override
     {
-        attachmentData_.type = ObjectAttachmentData::Type::None;
+        this->BaseObject<IObject>::resetAttachment();
         restream();
     }
 
@@ -281,19 +343,19 @@ struct Object final : public BaseObject<IObject> {
 
     void setDrawDistance(float drawDistance) override
     {
-        drawDist_ = drawDistance;
+        this->BaseObject<IObject>::setDrawDistance(drawDistance);
         restream();
     }
 
     void setModel(int model) override
     {
-        model_ = model;
+        this->BaseObject<IObject>::setModel(model);
         restream();
     }
 
     void setCameraCollision(bool collision) override
     {
-        cameraCol_ = collision;
+        this->BaseObject<IObject>::setCameraCollision(collision);
         restream();
     }
 
@@ -311,35 +373,52 @@ struct Object final : public BaseObject<IObject> {
 
     void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) override
     {
-        setAttachmentData(ObjectAttachmentData::Type::Player, player.getID(), offset, rotation, true);
+        const int id = player.getID();
+        setAttachmentData(ObjectAttachmentData::Type::Player, id, offset, rotation, true);
         NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
         attachObjectToPlayerRPC.ObjectID = poolID;
-        attachObjectToPlayerRPC.PlayerID = attachmentData_.ID;
-        attachObjectToPlayerRPC.Offset = attachmentData_.offset;
-        attachObjectToPlayerRPC.Rotation = attachmentData_.rotation;
+        attachObjectToPlayerRPC.PlayerID = id;
+        attachObjectToPlayerRPC.Offset = offset;
+        attachObjectToPlayerRPC.Rotation = rotation;
         PacketHelper::broadcastToStreamed(attachObjectToPlayerRPC, player);
     }
 
     ~Object();
-
-private:
-    void addToProcessed();
-    void eraseFromProcessed(bool force);
 };
 
-struct PlayerObject final : public BaseObject<IPlayerObject> {
+class PlayerObject final : public BaseObject<IPlayerObject> {
+private:
     PlayerObjectData& objects_;
     TimePoint delayedProcessingTime_;
     bool playerQuitting_;
 
+    void restream();
+
+    void addToProcessed();
+
+	void eraseFromProcessed(bool force);
+
+public:
+    inline PlayerObjectData& getObjects()
+    {
+        return objects_;
+    }
+
+    void createForPlayer();
+
+    void destroyForPlayer();
+
+    void setPlayerQuitting()
+    {
+        playerQuitting_ = true;
+	}
+    
     PlayerObject(PlayerObjectData& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
         : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
         , objects_(objects)
         , playerQuitting_(false)
     {
     }
-
-    void restream();
 
     void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override;
 
@@ -351,13 +430,9 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 
     bool advance(Microseconds elapsed, TimePoint now);
 
-    void createForPlayer();
-
-    void destroyForPlayer();
-
     void resetAttachment() override
     {
-        attachmentData_.type = ObjectAttachmentData::Type::None;
+        this->BaseObject<IPlayerObject>::resetAttachment();
         restream();
     }
 
@@ -367,19 +442,19 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
 
     void setDrawDistance(float drawDistance) override
     {
-        drawDist_ = drawDistance;
+        this->BaseObject<IPlayerObject>::setDrawDistance(drawDistance);
         restream();
     }
 
     void setModel(int model) override
     {
-        model_ = model;
+        this->BaseObject<IPlayerObject>::setModel(model);
         restream();
     }
 
     void setCameraCollision(bool collision) override
     {
-        cameraCol_ = collision;
+        this->BaseObject<IPlayerObject>::setCameraCollision(collision);
         restream();
     }
 
@@ -396,8 +471,5 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
     }
 
     ~PlayerObject();
-
-private:
-    void addToProcessed();
-    void eraseFromProcessed(bool force);
 };
+
