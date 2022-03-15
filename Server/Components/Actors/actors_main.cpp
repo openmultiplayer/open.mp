@@ -1,6 +1,7 @@
 #include "actor.hpp"
 
-struct ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<Actor, IActor, 0, ACTOR_POOL_SIZE> storage;
     DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
@@ -24,7 +25,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
             Actor* actorPtr = self.storage.get(onPlayerDamageActorRPC.ActorID);
             if (actorPtr) {
                 Actor& actor = *actorPtr;
-                if (actor.isStreamedInForPlayer(peer) && !actor.invulnerable_) {
+                if (actor.isStreamedInForPlayer(peer) && !actor.isInvulnerable()) {
                     ScopedPoolReleaseLock<IActor> lock(self, actor);
                     self.eventDispatcher.dispatch(
                         &ActorEventHandler::onPlayerDamageActor,
@@ -39,6 +40,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
         }
     } playerDamageActorEventHandler;
 
+public:
     StringView componentName() const override
     {
         return "Actors";
@@ -83,10 +85,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
     {
         const int pid = player.getID();
         for (IActor* a : storage) {
-            Actor* actor = static_cast<Actor*>(a);
-            if (actor->streamedFor_.valid(pid)) {
-                actor->streamedFor_.remove(pid, player);
-            }
+            static_cast<Actor*>(a)->removeFor(pid, player);
         }
     }
 
@@ -149,8 +148,8 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
                 Actor* actor = static_cast<Actor*>(a);
 
                 const PlayerState state = player.getState();
-                const Vector2 dist2D = actor->pos_ - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == actor->virtualWorld_ || actor->virtualWorld_ == -1) && glm::dot(dist2D, dist2D) < maxDist;
+                const Vector2 dist2D = actor->getPosition() - player.getPosition();
+                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == actor->getVirtualWorld() || actor->getVirtualWorld() == -1) && glm::dot(dist2D, dist2D) < maxDist;
 
                 const bool isStreamedIn = actor->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
@@ -179,3 +178,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new ActorsComponent();
 }
+
