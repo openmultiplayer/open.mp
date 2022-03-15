@@ -5,13 +5,22 @@
 
 using namespace Impl;
 
-struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
+class DatabasesComponent final : public IDatabasesComponent, public NoCopy {
+private:
+    /// Database connections
+    /// TODO: Replace with a pool type that grows dynamically
+    DynamicPoolStorage<DatabaseConnection, IDatabaseConnection, 0, 1025> databaseConnections;
 
-    DatabasesComponent();
+    /// Database result sets
+    /// TODO: Replace with a pool type that grows dynamically
+    DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 0, 2049> databaseResultSets;
 
+public:
     /// Creates a result set
     /// @returns Result set if successful, otherwise "nullptr"
     IDatabaseResultSet* createResultSet();
+
+    DatabasesComponent();
 
     /// Gets the component name
     /// @returns Component name
@@ -86,13 +95,5 @@ struct DatabasesComponent final : public IDatabasesComponent, public NoCopy {
     {
         delete this;
     }
-
-private:
-    /// Database connections
-    /// TODO: Replace with a pool type that grows dynamically
-    DynamicPoolStorage<DatabaseConnection, IDatabaseConnection, 0, 1025> databaseConnections;
-
-    /// Database result sets
-    /// TODO: Replace with a pool type that grows dynamically
-    DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 0, 2049> databaseResultSets;
 };
+
