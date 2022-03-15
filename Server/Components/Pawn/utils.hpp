@@ -517,6 +517,9 @@ inline bool Canonicalise(std::string path, std::string& result)
 	}
     bool ret(PathCanonicalizeA(result.data(), path.c_str()));
     result.resize(strlen(result.c_str()));
+	if (result[0] == '\\') {
+        result.erase(0, 1);
+	}
     return ret;
 }
 
