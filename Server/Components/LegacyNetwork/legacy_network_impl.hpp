@@ -17,7 +17,7 @@ using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
 
-struct Core;
+class Core;
 
 class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
 private:

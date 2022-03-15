@@ -36,7 +36,7 @@ void handler(int s)
 #endif
 
     if (core) {
-        core->run_ = false;
+        core->stop();
     }
 
 #ifdef BUILD_WINDOWS
