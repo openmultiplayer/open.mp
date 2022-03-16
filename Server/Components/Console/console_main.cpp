@@ -63,7 +63,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
                 self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player [%.*s] sent command: %.*s", PRINT_VIEW(peer.getName()), PRINT_VIEW(command));
 
-                self.send(command, &peer);
+                self.send(command, ConsoleCommandSenderData(peer));
             } else {
                 // Get the first word of the command.
                 size_t split = command.find_first_of(' ');
@@ -95,12 +95,22 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         }
     } playerRconCommandHandler;
 
-    void sendMessage(IPlayer* player, StringView message) override
+    void sendMessage(const ConsoleCommandSenderData& recipient, StringView message) override
     {
-        core->logLn(LogLevel::Message, "%s", message.data());
+        core->logLn(LogLevel::Message, "%.*s", PRINT_VIEW(message));
 
-        if (player) {
-            player->sendClientMessage(Colour(255, 255, 255), message);
+        switch (recipient.sender) {
+        case ConsoleCommandSender::Player:
+            if (recipient.player) {
+                recipient.player->sendClientMessage(Colour(255, 255, 255), message);
+            }
+            break;
+        case ConsoleCommandSender::Custom: {
+            recipient.handler->handleConsoleMessage(message);
+            break;
+        }
+        default:
+            break;
         }
     }
 
@@ -182,7 +192,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         return eventDispatcher;
     }
 
-    void send(StringView command, IPlayer* sender = nullptr) override
+    void send(StringView command, const ConsoleCommandSenderData& sender = ConsoleCommandSenderData()) override
     {
         // Get the first word of the command.
         StringView trimmedCommand = trim(command);
@@ -218,7 +228,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
         }
     }
 
-    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         const auto it = ConsoleCmdHandler::Commands.find(String(command));
         if (it != ConsoleCmdHandler::Commands.end()) {

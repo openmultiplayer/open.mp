@@ -358,7 +358,7 @@ struct LegacyConfigComponent final : public IComponent, public ConsoleEventHandl
         delete this;
     }
 
-    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         if (command == "exec") {
             if (parameters.empty()) {

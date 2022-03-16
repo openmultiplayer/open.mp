@@ -159,7 +159,7 @@ struct ComponentList : public IComponentList {
                     pair.second->onFree(it->second);
                 });
             it->second->free();
-            components.erase(it++);
+            it = components.erase(it);
         }
     }
 
@@ -1200,7 +1200,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         return true;
     }
 
-    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         if (command == "exit") {
             run_ = false;
