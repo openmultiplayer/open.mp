@@ -6,7 +6,8 @@
 using namespace Impl;
 
 template <class T>
-struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
+class TextDrawBase : public T, public PoolIDProvider, public NoCopy {
+private:
     Vector2 pos;
     HybridString<64> text;
     Colour letterColour = Colour(0xE1, 0xE1, 0xE1);
@@ -26,6 +27,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
 
+public:
     TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : pos(pos)
         , text(text)
@@ -237,6 +239,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         return previewZoom;
     }
 
+protected:
     void showForClient(IPlayer& player, bool isPlayerTextDraw)
     {
         NetCode::RPC::PlayerShowTextDraw playerShowTextDrawRPC;
@@ -295,11 +298,13 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     }
 };
 
-struct TextDraw final : public TextDrawBase<ITextDraw> {
+class TextDraw final : public TextDrawBase<ITextDraw> {
+private:
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
 
     using TextDrawBase<ITextDraw>::TextDrawBase;
 
+public:
     void restream() override
     {
         for (IPlayer* player : shownFor_.entries()) {
@@ -340,9 +345,16 @@ struct TextDraw final : public TextDrawBase<ITextDraw> {
     }
 };
 
-struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
+class PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
+private:
     IPlayer& player;
     bool shown = false;
+
+public:
+    inline void setPlayerQuitting()
+    {
+        shown = false;
+	}
 
     PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : TextDrawBase(pos, text, style, previewModel)
@@ -389,3 +401,4 @@ struct PlayerTextDraw final : public TextDrawBase<IPlayerTextDraw> {
         }
     }
 };
+
