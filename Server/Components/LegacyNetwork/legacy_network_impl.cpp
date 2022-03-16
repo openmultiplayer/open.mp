@@ -659,8 +659,13 @@ void RakNetLegacyNetwork::update()
 void RakNetLegacyNetwork::init(ICore* c)
 {
     core = c;
+    
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
+}
+
+void RakNetLegacyNetwork::start()
+{
     SAMPRakNet::Init(core);
     SAMPRakNet::SeedToken();
     lastCookieSeed = Time::now();
@@ -675,7 +680,7 @@ void RakNetLegacyNetwork::init(ICore* c)
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
 
-    query.setCore(c);
+    query.setCore(core);
     query.setRuleValue("version", "0.3.7-R2 open.mp");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();

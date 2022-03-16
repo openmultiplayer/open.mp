@@ -169,6 +169,7 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
     void onTick(Microseconds elapsed, TimePoint now) override;
     void init(ICore* core);
+    void start();
 
     void OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason);
 
