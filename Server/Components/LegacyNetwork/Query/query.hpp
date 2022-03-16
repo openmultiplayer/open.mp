@@ -1,4 +1,5 @@
 #pragma once
+#include "Server/Components/Console/console.hpp"
 #include "sdk.hpp"
 #include <map>
 
@@ -15,7 +16,18 @@ public:
         this->core = core;
     }
 
-    Span<const char> handleQuery(Span<const char> buffer, uint32_t address);
+    void setConsole(IConsoleComponent* console)
+    {
+        this->console = console;
+    }
+
+    IConsoleComponent* getConsole() const
+    {
+        return console;
+    }
+
+    Span<const char> handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen);
+    void handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen);
     void buildRulesBuffer();
 
     void buildPlayerDependentBuffers(IPlayer* except = nullptr)
@@ -38,6 +50,16 @@ public:
     void setPassworded(bool value)
     {
         passworded = value;
+    }
+
+    void setRconPassword(StringView value)
+    {
+        rconPassword = String(value);
+    }
+
+    void setRconEnabled(bool value)
+    {
+        rconEnabled = value;
     }
 
     void setLogQueries(bool value)
@@ -92,11 +114,14 @@ public:
 
 private:
     ICore* core = nullptr;
+    IConsoleComponent* console = nullptr;
     uint16_t maxPlayers = 0;
     String serverName = "open.mp server";
     String gameModeName = "Unknown";
+    String rconPassword;
     bool passworded = false;
     bool logQueries = false;
+    bool rconEnabled = false;
 
     std::unique_ptr<char[]> playerListBuffer;
     size_t playerListBufferLength = 0;
@@ -109,10 +134,6 @@ private:
 
     std::unique_ptr<char[]> rulesBuffer;
     size_t rulesBufferLength = 0;
-
-    template <typename T>
-    void writeToBuffer(char* output, size_t& offset, T value, size_t size = sizeof(T));
-    void writeToBuffer(char* output, char const* src, size_t& offset, size_t size);
 
     void buildPlayerInfoBuffer(IPlayer* except = nullptr);
     void updateServerInfoBufferPlayerCount(IPlayer* except = nullptr);
