@@ -5,9 +5,11 @@
 
 using namespace Impl;
 
-struct UnicodeComponent final : public IUnicodeComponent {
+class UnicodeComponent final : public IUnicodeComponent {
+private:
     ICore* core = nullptr;
 
+public:
     void onLoad(ICore* core) override
     {
     }
@@ -50,3 +52,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new UnicodeComponent();
 }
+
