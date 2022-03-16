@@ -9,6 +9,11 @@ struct RakNetLegacyNetworkComponent final : INetworkComponent {
         legacyNetwork.init(core);
     }
 
+    void onReady() override 
+    {
+        legacyNetwork.start();
+    }
+
     INetwork* getNetwork() override
     {
         return &legacyNetwork;
