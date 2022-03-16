@@ -98,7 +98,6 @@ public:
     {
         return data_.size();
     }
-    FlatHashMap<String, Variant<int, String, float>> data_;
 };
 
 class PlayerVariableData final : public VariableStorageBase<IPlayerVariableData> {
