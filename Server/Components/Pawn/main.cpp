@@ -96,7 +96,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
         // putenv() must own the string, so we aren't actually leaking it
         const std::string::size_type size = amxFileEnvVar.size();
-        char *amxFileEnvVarCString = new char[size + 1];
+        char* amxFileEnvVarCString = new char[size + 1];
         memcpy(amxFileEnvVarCString, amxFileEnvVar.c_str(), size + 1);
 
         putenv(amxFileEnvVarCString);
@@ -160,7 +160,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
         return AMX_FUNCTIONS;
     }
 
-    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         return PawnManager::Get()->OnServerCommand(sender, String(command), String(parameters));
     }
@@ -172,9 +172,9 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
 
     void onFree(IComponent* component) override
     {
-        #define COMPONENT_UNLOADED(var) \
-            if (component == var)       \
-                var = nullptr;
+#define COMPONENT_UNLOADED(var) \
+    if (component == var)       \
+        var = nullptr;
 
         PawnManager* mgr = PawnManager::Get();
 

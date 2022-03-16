@@ -2,13 +2,24 @@
 #include <cstring>
 
 template <typename T>
-void Query::writeToBuffer(char* output, size_t& offset, T value, size_t size)
+void writeToBuffer(char* output, size_t& offset, T value)
 {
     *reinterpret_cast<T*>(&output[offset]) = value;
-    offset += size;
+    offset += sizeof(T);
 }
 
-void Query::writeToBuffer(char* output, char const* src, size_t& offset, size_t size)
+template <typename T>
+bool readFromBuffer(Span<const char> input, size_t& offset, T& value)
+{
+    if (offset + sizeof(T) > input.size()) {
+        return false;
+    }
+    value = *reinterpret_cast<const T*>(&input[offset]);
+    offset += sizeof(T);
+    return true;
+}
+
+void writeToBuffer(char* output, char const* src, size_t& offset, size_t size)
 {
     memcpy(&output[offset], src, size);
     offset += size;
@@ -140,7 +151,58 @@ constexpr Span<char> getBuffer(Span<const char> input, std::unique_ptr<char[]>& 
     return Span<char>(buf, length);
 }
 
-Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t address)
+struct LegacyConsoleMessageHandler : ConsoleMessageHandler {
+    uint32_t sock;
+    const sockaddr_in& client;
+    Span<const char> packet;
+    int tolen;
+
+    LegacyConsoleMessageHandler(uint32_t sock, const sockaddr_in& client, int tolen, Span<const char> data)
+        : sock(sock)
+        , client(client)
+        , packet(data)
+        , tolen(tolen)
+    {
+    }
+
+    void handleConsoleMessage(StringView message)
+    {
+        const size_t dgramLen = packet.size() + sizeof(uint16_t) + message.length();
+        auto dgram = std::make_unique<char[]>(dgramLen);
+        size_t offset = 0;
+        writeToBuffer(dgram.get(), packet.data(), offset, packet.size());
+        writeToBuffer<uint16_t>(dgram.get(), offset, message.length());
+        writeToBuffer(dgram.get(), message.data(), offset, message.length());
+        sendto(sock, dgram.get(), dgramLen, 0, reinterpret_cast<const sockaddr*>(&client), tolen);
+    }
+};
+
+void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen)
+{
+    if (buffer.size() >= BASE_QUERY_SIZE + sizeof(uint16_t)) {
+        Span<const char> subbuf = buffer.subspan(BASE_QUERY_SIZE);
+        size_t offset = 0;
+        uint16_t passLen;
+        if (readFromBuffer(subbuf, offset, passLen)) {
+            if (passLen == rconPassword.length() && subbuf.size() - offset >= passLen) {
+                String pass(StringView(&subbuf.data()[offset], passLen));
+                if (pass == rconPassword) {
+                    offset += passLen;
+                    uint16_t cmdLen;
+                    if (readFromBuffer(subbuf, offset, cmdLen)) {
+                        if (subbuf.size() - offset == cmdLen) {
+                            StringView cmd(&subbuf.data()[offset], cmdLen);
+                            LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
+                            console->send(cmd, ConsoleCommandSenderData(handler));
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen)
 {
     if (core == nullptr) {
         return Span<char>();
@@ -150,7 +212,7 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t address)
         PeerAddress::AddressString addrString;
         PeerAddress addr;
         addr.ipv6 = false;
-        addr.v4 = address;
+        addr.v4 = client.sin_addr.s_addr;
         PeerAddress::ToString(addr, addrString);
         core->printLn("[query:%c] from %.*s", buffer[QUERY_TYPE_INDEX], PRINT_VIEW(addrString));
     }
@@ -176,6 +238,9 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t address)
         else if (buffer[QUERY_TYPE_INDEX] == 'r' && rulesBuffer) {
             return getBuffer(buffer, rulesBuffer, rulesBufferLength);
         }
+    } else if (buffer[QUERY_TYPE_INDEX] == 'x' && console) {
+        // RCON
+        handleRCON(buffer, sock, client, tolen);
     }
 
     return Span<char>();
