@@ -9,12 +9,15 @@ void Vehicle::streamInForPlayer(IPlayer& player)
         return;
     }
 
-    int& numStreamed = queryData<PlayerVehicleData>(player)->numStreamed;
+    PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+	if (!data) {
+        return;
+	}
+    int numStreamed = data->getNumStreamed();
     if (numStreamed >= MAX_STREAMED_VEHICLES) {
         return;
     }
-
-    ++numStreamed;
+	data->setNumStreamed(numStreamed + 1);
 
     NetCode::RPC::StreamInVehicle streamIn;
     streamIn.VehicleID = poolID;
@@ -59,7 +62,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamedFor_.add(pid, player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamIn, *lock.entry, player);
+    static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleStreamIn, *lock.entry, player);
 
     respawning = false;
 }
@@ -83,10 +86,10 @@ void Vehicle::streamOutForClient(IPlayer& player)
 
     PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
     if (data) {
-        --data->numStreamed;
+        data->setNumStreamed(data->getNumStreamed() - 1);
     }
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleStreamOut, *lock.entry, player);
+    static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleStreamOut, *lock.entry, player);
 }
 
 bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, IPlayer& player)
@@ -112,15 +115,15 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
     if (vehicleSync.Siren != sirenState && spawnData.siren) {
         sirenState = vehicleSync.Siren;
         params.siren = sirenState != 0;
-        pool->eventDispatcher.stopAtFalse([&player, this](VehicleEventHandler* handler) {
+        static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler) {
             return handler->onVehicleSirenStateChange(player, *this, sirenState);
         });
     }
 
     if (driver != &player) {
         PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
-        if (data->vehicle) {
-            data->vehicle->unoccupy(player);
+        if (data->getVehicle()) {
+            static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
         }
         driver = &player;
         data->setVehicle(this, 0);
@@ -157,7 +160,7 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
     }
 
     UnoccupiedVehicleUpdate data = UnoccupiedVehicleUpdate { unoccupiedSync.SeatID, unoccupiedSync.Position, unoccupiedSync.Velocity };
-    bool allowed = pool->eventDispatcher.stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
+    bool allowed = static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this, &data](VehicleEventHandler* handler) {
         return handler->onUnoccupiedVehicleUpdate(*this, player, data);
     });
 
@@ -184,7 +187,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
     angularVelocity = trailerSync.TurnVelocity;
 
     PlayerVehicleData* playerData = queryData<PlayerVehicleData>(player);
-    Vehicle* vehicle = playerData->vehicle;
+    Vehicle* vehicle = static_cast<Vehicle*>(playerData->getVehicle());
 
     if (!vehicle || vehicle->detaching) {
         return false;
@@ -198,11 +201,11 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
         // SA:MP will fail to reattach it, so we have to call the attach RPC again.
         NetCode::RPC::AttachTrailer trailerRPC;
         trailerRPC.TrailerID = poolID;
-        trailerRPC.VehicleID = playerData->vehicle->poolID;
+        trailerRPC.VehicleID = static_cast<Vehicle*>(playerData->getVehicle())->poolID;
         PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries(), &player);
         trailerUpdateTime = now;
     }
-    bool allowed = pool->eventDispatcher.stopAtFalse([&player, this](VehicleEventHandler* handler) {
+    bool allowed = static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler) {
         return handler->onTrailerUpdate(player, *this);
     });
     return allowed;
@@ -212,14 +215,14 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 {
     PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
     // Only do heavy processing if switching vehicle or switching between driver and passenger
-    if ((data->vehicle != this || driver == &player) && passengers.insert(&player).second) {
-        if (data->vehicle) {
-            data->vehicle->unoccupy(player);
+    if ((data->getVehicle() != this || driver == &player) && passengers.insert(&player).second) {
+        if (data->getVehicle()) {
+            static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
         }
         data->setVehicle(this, passengerSync.SeatID);
         updateOccupied();
-    } else if (data->seat != passengerSync.SeatID) {
-        data->seat = passengerSync.SeatID;
+    } else if (data->getSeat() != passengerSync.SeatID) {
+        data->setVehicle(this, passengerSync.SeatID);
         updateOccupied();
     }
 
@@ -275,7 +278,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
 
     if (vehicleUpdater) {
         ScopedPoolReleaseLock lock(*pool, *this);
-        pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, *lock.entry, *vehicleUpdater);
+        static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, *lock.entry, *vehicleUpdater);
     }
 
     PacketHelper::broadcastToSome(damageStatus, streamedFor_.entries(), vehicleUpdater);
@@ -366,7 +369,10 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
 
     //We don't want to update player's vehicle right now, let sync packets do it.
     // Or actually we do! SA-MP does it :shrug:
-    queryData<PlayerVehicleData>(player)->vehicle = this;
+    PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+    if (data) {
+		data->setVehicle(this, data->getSeat());
+    }
 
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
@@ -458,7 +464,7 @@ void Vehicle::setDead(IPlayer& killer)
     dead = true;
     timeOfDeath = Time::now();
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, *lock.entry, killer);
+    static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleDeath, *lock.entry, killer);
 }
 
 bool Vehicle::isDead()
@@ -499,7 +505,7 @@ void Vehicle::respawn()
     params = VehicleParams {};
 
     ScopedPoolReleaseLock lock(*pool, *this);
-    pool->eventDispatcher.dispatch(&VehicleEventHandler::onVehicleSpawn, *lock.entry);
+    static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleSpawn, *lock.entry);
 }
 
 Seconds Vehicle::getRespawnDelay()
@@ -565,11 +571,11 @@ Vehicle::~Vehicle()
         detachTrailer();
     }
 
-    const auto& entries = pool->core->getPlayers().entries();
+    const auto& entries = pool->getPlayers().entries();
     for (IPlayer* player : entries) {
         PlayerVehicleData* vehicleData = queryData<PlayerVehicleData>(player);
 
-        if (vehicleData && vehicleData->vehicle == this) {
+        if (vehicleData && vehicleData->getVehicle() == this) {
             vehicleData->setVehicle(nullptr, 0);
         }
 
@@ -578,3 +584,4 @@ Vehicle::~Vehicle()
         }
     }
 }
+
