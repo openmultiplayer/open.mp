@@ -1,11 +1,23 @@
 #include <Server/Components/Timers/timers.hpp>
 
-struct Timer final : public ITimer {
+class Timer final : public ITimer {
+private:
     bool running_;
     const bool repeating_;
     const Milliseconds interval_;
     TimePoint timeout_;
     TimerTimeOutHandler* const handler_;
+
+public:
+	inline TimePoint getTimeout() const
+	{
+        return timeout_;
+	}
+
+	inline void setTimeout(TimePoint timeout)
+    {
+        timeout_ = timeout;
+	}
 
     Timer(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating)
         : running_(true)
@@ -53,3 +65,4 @@ struct Timer final : public ITimer {
         }
     }
 };
+

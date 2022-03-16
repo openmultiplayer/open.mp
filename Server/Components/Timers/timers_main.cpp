@@ -1,9 +1,12 @@
 #include "timer.hpp"
 #include <sdk.hpp>
 
-struct TimersComponent final : public ITimersComponent, public CoreEventHandler {
+class TimersComponent final : public ITimersComponent, public CoreEventHandler {
+private:
     ICore* core = nullptr;
+    std::set<Timer*> timers;
 
+public:
     StringView componentName() const override
     {
         return "Timers";
@@ -44,15 +47,15 @@ struct TimersComponent final : public ITimersComponent, public CoreEventHandler 
         for (auto it = timers.begin(); it != timers.end();) {
             Timer* timer = *it;
             bool deleteTimer = false;
-            if (!timer->running_) {
+            if (!timer->running()) {
                 deleteTimer = true;
             } else {
                 const TimePoint now = Time::now();
-                const Milliseconds diff = duration_cast<Milliseconds>(now - timer->timeout_);
+                const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
                 if (diff.count() > 0) {
-                    timer->handler_->timeout(*timer);
-                    if (timer->repeating_) {
-                        timer->timeout_ = now + timer->interval_ - diff;
+                    timer->handler()->timeout(*timer);
+                    if (timer->repeating()) {
+                        timer->setTimeout(now + timer->interval() - diff);
                     } else {
                         deleteTimer = true;
                     }
@@ -71,11 +74,10 @@ struct TimersComponent final : public ITimersComponent, public CoreEventHandler 
     {
         delete this;
     }
-
-    std::set<Timer*> timers;
 };
 
 COMPONENT_ENTRY_POINT()
 {
     return new TimersComponent();
 }
+
