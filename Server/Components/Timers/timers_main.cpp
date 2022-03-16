@@ -37,7 +37,14 @@ public:
 
     ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) override
     {
-        Timer* timer = new Timer(handler, interval, repeating);
+        Timer* timer = new Timer(handler, interval, interval, repeating ? 0 : 1);
+        timers.insert(timer);
+        return timer;
+    }
+	
+    ITimer* create(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count) override
+    {
+        Timer* timer = new Timer(handler, initial, interval, count);
         timers.insert(timer);
         return timer;
     }
@@ -54,7 +61,7 @@ public:
                 const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
                 if (diff.count() > 0) {
                     timer->handler()->timeout(*timer);
-                    if (timer->repeating()) {
+                    if (timer->trigger()) {
                         timer->setTimeout(now + timer->interval() - diff);
                     } else {
                         deleteTimer = true;
