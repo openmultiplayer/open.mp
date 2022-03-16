@@ -1,17 +1,29 @@
 #include <Server/Components/Timers/timers.hpp>
 
-struct Timer final : public ITimer {
+class Timer final : public ITimer {
+private:
     bool running_;
-    const bool repeating_;
+    unsigned int count_;
     const Milliseconds interval_;
     TimePoint timeout_;
     TimerTimeOutHandler* const handler_;
 
-    Timer(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating)
+public:
+	inline TimePoint getTimeout() const
+	{
+        return timeout_;
+	}
+
+	inline void setTimeout(TimePoint timeout)
+    {
+        timeout_ = timeout;
+	}
+
+    Timer(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count)
         : running_(true)
-        , repeating_(repeating)
+        , count_(count)
         , interval_(interval)
-        , timeout_(Time::now() + interval)
+        , timeout_(Time::now() + initial)
         , handler_(handler)
     {
     }
@@ -26,9 +38,9 @@ struct Timer final : public ITimer {
         return duration_cast<Milliseconds>(timeout_ - Time::now());
     }
 
-    bool repeating() const override
+    unsigned int calls() const override
     {
-        return repeating_;
+        return count_;
     }
 
     Milliseconds interval() const override
@@ -45,6 +57,25 @@ struct Timer final : public ITimer {
     {
         running_ = false;
     }
+	
+    bool trigger() override
+    {
+		if (running_ == false)
+		{
+            return false;
+		}
+		if (count_ == 0)
+		{
+			// Repeat forever.
+            return true;
+		}
+        --count_;
+		if (count_ == 0)
+		{
+            running_ = false;
+		}
+        return running_;
+    }
 
     ~Timer()
     {
@@ -53,3 +84,4 @@ struct Timer final : public ITimer {
         }
     }
 };
+
