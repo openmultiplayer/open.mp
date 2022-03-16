@@ -8,9 +8,10 @@
 
 using namespace Impl;
 
-struct VehiclesComponent;
+class VehiclesComponent;
 
-struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
+class Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
+private:
     Vector3 pos;
     GTAQuat rot;
     int virtualWorld_ = 0;
@@ -50,6 +51,55 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     VehicleParams params;
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
+
+    /// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
+    void updateOccupied()
+    {
+        beenOccupied = true;
+        lastOccupiedChange = Time::now();
+    }
+
+    void setTower(Vehicle* tower)
+    {
+        this->tower = tower;
+        towing = false;
+    }
+
+public:
+    inline bool hasBeenOccupied() const
+    {
+        return beenOccupied;
+	}
+
+    inline const TimePoint& getLastOccupied() const
+    {
+        return lastOccupiedChange;
+	}
+
+    inline const TimePoint& getTimeOfDeath() const
+    {
+        return timeOfDeath;
+	}
+
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (streamedFor_.valid(pid)) {
+            streamedFor_.remove(pid, player);
+        }
+    }
+
+    /// Sets the vehicle's death state.
+    void setDead(IPlayer& killer);
+
+    void unoccupy(IPlayer& player)
+    {
+        if (driver == &player) {
+            driver = nullptr;
+        } else {
+            passengers.erase(&player);
+        }
+        updateOccupied();
+    }
 
     Vehicle(VehiclesComponent* pool, const VehicleSpawnData& data)
         : pool(pool)
@@ -116,16 +166,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     void streamOutForPlayer(IPlayer& player) override;
 
     void streamOutForClient(IPlayer& player);
-
-    void unoccupy(IPlayer& player)
-    {
-        if (driver == &player) {
-            driver = nullptr;
-        } else {
-            passengers.erase(&player);
-        }
-        updateOccupied();
-    }
 
     bool isOccupied() const
     {
@@ -206,9 +246,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     // Get the vehicle's parameters.
     VehicleParams const& getParams() override { return params; }
 
-    /// Sets the vehicle's death state.
-    void setDead(IPlayer& killer);
-
     /// Checks if the vehicle is dead.
     bool isDead() override;
 
@@ -225,13 +262,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
 
     // Gets the vehicle's interior.
     int getInterior() override;
-
-    /// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
-    void updateOccupied()
-    {
-        this->beenOccupied = true;
-        lastOccupiedChange = Time::now();
-    }
 
     void repair() override
     {
@@ -263,12 +293,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         return trailer;
     }
 
-    void setTower(Vehicle* tower)
-    {
-        this->tower = tower;
-        towing = false;
-    }
-
     /// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
     void addCarriage(IVehicle* carriage, int pos) override
     {
@@ -282,6 +306,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         this->pos = pos;
         velocity = veloc;
     }
+
     const StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES>& getCarriages() override
     {
         return carriages;
@@ -318,18 +343,32 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     }
 };
 
-struct PlayerVehicleData final : public IPlayerVehicleData {
+class PlayerVehicleData final : public IPlayerVehicleData {
+private:
     Vehicle* vehicle = nullptr;
     int seat = SEAT_NONE;
     int numStreamed = 0;
+
+public:
+    void setNumStreamed(int num)
+    {
+        numStreamed = num;
+    }
+
+	/// Get the player's vehicle
+    /// Returns nullptr if they aren't in a vehicle
+    int getNumStreamed() const
+    {
+        return numStreamed;
+    }
 
     void setVehicle(Vehicle* vehicle, int seat)
     {
         this->vehicle = vehicle;
         this->seat = seat;
     }
-
-    /// Get the player's vehicle
+	
+	/// Get the player's vehicle
     /// Returns nullptr if they aren't in a vehicle
     IVehicle* getVehicle() override
     {
@@ -348,3 +387,4 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
         delete this;
     }
 };
+
