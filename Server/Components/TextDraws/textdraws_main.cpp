@@ -4,10 +4,17 @@
 
 using namespace Impl;
 
-struct PlayerTextDrawData final : IPlayerTextDrawData {
+class PlayerTextDrawData final : public IPlayerTextDrawData {
+private:
     IPlayer& player;
     MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, 0, PLAYER_TEXTDRAW_POOL_SIZE> storage;
     bool selecting;
+
+public:
+    inline void cancelSelecting()
+    {
+        selecting = false;
+	}
 
     PlayerTextDrawData(IPlayer& player)
         : player(player)
@@ -54,7 +61,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         for (IPlayerTextDraw* textDraw : storage) {
             PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
             // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            td->shown = false;
+            td->setPlayerQuitting();
         }
         delete this;
     }
@@ -96,11 +103,13 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
     }
 };
 
-struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
+class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextDraw, ITextDraw, 0, GLOBAL_TEXTDRAW_POOL_SIZE> storage;
     DefaultEventDispatcher<TextDrawEventHandler> dispatcher;
 
+public:
     StringView componentName() const override
     {
         return "TextLabels";
@@ -128,7 +137,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
             PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
             if (data) {
                 if (RPC.Invalid) {
-                    data->selecting = false;
+                    data->cancelSelecting();
                     self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
                 } else {
                     if (RPC.PlayerTextDraw) {
@@ -234,3 +243,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new TextDrawsComponent();
 }
+
