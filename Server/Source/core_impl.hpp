@@ -159,7 +159,7 @@ struct ComponentList : public IComponentList {
                     pair.second->onFree(it->second);
                 });
             it->second->free();
-            components.erase(it++);
+            it = components.erase(it);
         }
     }
 
