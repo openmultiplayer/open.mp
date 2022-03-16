@@ -646,6 +646,10 @@ void RakNetLegacyNetwork::update()
         query.setRuleValue("weburl", String(website));
     }
 
+    StringView rconPassword = config.getString("rcon_password");
+    query.setRconPassword(rconPassword);
+    query.setRconEnabled(*config.getInt("enable_rcon"));
+
     StringView password = config.getString("password");
     query.setPassworded(!password.empty());
     rakNetServer.SetPassword(password.empty() ? 0 : password.data());

@@ -1,11 +1,12 @@
 #pragma once
+
 #include "sdk.hpp"
 #include <Server/Components/Console/console.hpp>
 #include <unordered_map>
 
 using namespace Impl;
 
-using CommandHandlerFuncType = void (*)(const String& params, IPlayer* sender, IConsoleComponent& console, ICore* core);
+using CommandHandlerFuncType = void (*)(const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core);
 
 class ConsoleCmdHandler {
 public:
