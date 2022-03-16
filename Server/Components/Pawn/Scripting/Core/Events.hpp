@@ -4,7 +4,7 @@
 #include "sdk.hpp"
 
 struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
-    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         std::string fullCommand = command.data();
         fullCommand.append(" ");
