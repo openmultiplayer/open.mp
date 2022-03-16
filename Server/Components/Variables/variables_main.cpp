@@ -4,12 +4,17 @@
 #include <variant>
 
 template <class ToInherit>
-struct VariableStorageBase : public ToInherit {
+class VariableStorageBase : public ToInherit {
+private:
+    FlatHashMap<String, Variant<int, String, float>> data_;
+
+public:
     void setString(StringView key, StringView value) override
     {
         data_[key].template emplace<String>(value);
     }
-    const StringView getString(StringView key) const override
+
+	const StringView getString(StringView key) const override
     {
         auto it = data_.find(key);
         if (it == data_.end()) {
@@ -92,22 +97,21 @@ struct VariableStorageBase : public ToInherit {
     {
         return data_.size();
     }
-
-private:
-    FlatHashMap<String, Variant<int, String, float>> data_;
 };
 
-struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
-
+class PlayerVariableData final : public VariableStorageBase<IPlayerVariableData> {
+public:
     void free() override
     {
         delete this;
     }
 };
 
-struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, PlayerEventHandler {
+class VariablesComponent final : public VariableStorageBase<IVariablesComponent>, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
 
+public:
     void onConnect(IPlayer& player) override
     {
         player.addData(new PlayerVariableData());
@@ -146,3 +150,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new VariablesComponent();
 }
+
