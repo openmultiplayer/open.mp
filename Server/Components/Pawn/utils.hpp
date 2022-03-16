@@ -540,6 +540,7 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 
 inline bool Canonicalise(std::string path, std::string& result)
 {
+    size_t pos = 0;
     while ((pos = path.find('\\', pos)) != std::string::npos)
     {
         path.replace(pos, 1, 1, '/');
