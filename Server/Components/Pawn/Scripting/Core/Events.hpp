@@ -7,8 +7,10 @@ struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
     bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         std::string fullCommand = command.data();
-        fullCommand.append(" ");
-        fullCommand.append(parameters.data());
+        if (!parameters.empty()) {
+            fullCommand.append(" ");
+            fullCommand.append(parameters.data());
+        }
         cell ret = PawnManager::Get()->CallInSides("OnRconCommand", DefaultReturnValue_False, StringView(fullCommand));
         if (!ret) {
             ret = PawnManager::Get()->CallInEntry("OnRconCommand", DefaultReturnValue_False, StringView(fullCommand));
