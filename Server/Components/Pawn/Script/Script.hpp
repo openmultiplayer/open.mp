@@ -68,7 +68,7 @@ public:
     inline int NumTags(int* number) const { return amx_NumTags(const_cast<AMX*>(&amx_), number); }
     inline int Push(cell value) { return amx_Push(&amx_, value); }
     inline int PushArray(cell* amx_addr, cell** phys_addr, const cell array[], int numcells) { return amx_PushArray(&amx_, amx_addr, phys_addr, array, numcells); }
-    inline int PushString(cell* amx_addr, cell** phys_addr, char const* string, bool pack, bool use_wchar) { return amx_PushString(&amx_, amx_addr, phys_addr, string, pack, use_wchar); }
+    inline int PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) { return amx_PushStringLen(&amx_, amx_addr, phys_addr, string.data(), string.length(), pack, use_wchar); }
     inline int RaiseError(int error) { return amx_RaiseError(&amx_, error); }
     inline int Register(const AMX_NATIVE_INFO* nativelist, int number) { return amx_Register(&amx_, nativelist, number); }
     inline int Register(char const _FAR* name, AMX_NATIVE func)
@@ -80,7 +80,7 @@ public:
     inline int Release(cell amx_addr) { return amx_Release(&amx_, amx_addr); }
     inline int SetCallback(AMX_CALLBACK callback) { return amx_SetCallback(&amx_, callback); }
     inline int SetDebugHook(AMX_DEBUG debug) { return amx_SetDebugHook(&amx_, debug); }
-    inline int SetString(cell* dest, char const* source, bool pack, bool use_wchar, size_t size) const { return amx_SetString(dest, source, pack, use_wchar, size); }
+    inline int SetString(cell* dest, StringView source, bool pack, bool use_wchar, size_t size) const { return amx_SetStringLen(dest, source.data(), source.length(), pack, use_wchar, size); }
     inline int SetUserData(long tag, void* ptr) { return amx_SetUserData(&amx_, tag, ptr); }
     inline int StrLen(const cell* cstring, int* length) const { return amx_StrLen(cstring, length); }
     inline int StrSize(const cell* cstr, int* length) const { return amx_StrSize(cstr, length); }
@@ -213,29 +213,7 @@ private:
     }
 
     template <typename... T>
-    inline int PushOne(StringView const& arg, T... args)
-    {
-        int
-            ret
-            = PushOne(args...);
-        if (ret == AMX_ERR_NONE)
-            return PushString(nullptr, nullptr, arg.data(), false, false);
-        return ret;
-    }
-
-    template <typename... T>
-    inline int PushOne(std::string const& arg, T... args)
-    {
-        int
-            ret
-            = PushOne(args...);
-        if (ret == AMX_ERR_NONE)
-            return PushString(nullptr, nullptr, arg.c_str(), false, false);
-        return ret;
-    }
-
-    template <typename... T>
-    inline int PushOne(char const* arg, T... args)
+    inline int PushOne(StringView arg, T... args)
     {
         int
             ret
