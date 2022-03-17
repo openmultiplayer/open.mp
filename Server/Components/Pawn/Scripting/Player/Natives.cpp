@@ -207,9 +207,9 @@ SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
     return true;
 }
 
-SCRIPT_API(GetPlayerName, int(IPlayer& player, std::string& name))
+SCRIPT_API(GetPlayerName, int(IPlayer& player, StringView& name))
 {
-    name = String(player.getName());
+    name = player.getName();
     return name.length();
 }
 
@@ -513,10 +513,9 @@ SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, con
     return true;
 }
 
-SCRIPT_API(GetAnimationName, bool(IPlayer& player, std::string& lib, std::string& name))
+SCRIPT_API(GetAnimationName, bool(int index, StringView& lib, StringView& name))
 {
-    PlayerAnimationData data = player.getAnimationData();
-    Pair<String, String> anim = data.name();
+    Pair<StringView, StringView> anim = splitAnimationNames(index);
     lib = anim.first;
     name = anim.second;
     return true;
@@ -572,6 +571,7 @@ SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, std::string& ip))
     if (!data.networkID.address.ipv6) {
         PeerAddress::AddressString addressString;
         if (PeerAddress::ToString(data.networkID.address, addressString)) {
+            // Scope-allocated string, copy it
             ip = String(StringView(addressString));
             return ip.length();
         }
@@ -863,9 +863,9 @@ SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
     throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(gpci, int(IPlayer& player, std::string& output))
+SCRIPT_API(gpci, int(IPlayer& player, StringView& output))
 {
-    output = String(player.getSerial());
+    output = player.getSerial();
     return output.length();
 }
 
@@ -921,8 +921,8 @@ SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std
     return true;
 }
 
-SCRIPT_API(GetPlayerVersion, int(IPlayer& player, std::string& version))
+SCRIPT_API(GetPlayerVersion, int(IPlayer& player, StringView& version))
 {
-    version = String(player.getClientVersionName());
+    version = player.getClientVersionName();
     return version.length();
 }
