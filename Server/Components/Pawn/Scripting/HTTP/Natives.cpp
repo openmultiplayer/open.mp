@@ -15,7 +15,7 @@ struct PawnHTTPResponseHandler final : HTTPResponseHandler {
 
     void onHTTPResponse(int status, StringView body) override
     {
-        script.Call(callback, DefaultReturnValue_True, index, status, String(body));
+        script.Call(callback, DefaultReturnValue_True, index, status, body);
         delete this;
     }
 };

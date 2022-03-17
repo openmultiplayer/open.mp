@@ -76,6 +76,10 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
 
     void applyAnimation(const AnimationData& animation) override
     {
+        if (!animationNameValid(animation.lib, animation.name)) {
+            return;
+        }
+
         animation_ = animation;
 
         if (animation_.loop || animation_.freeze) {
