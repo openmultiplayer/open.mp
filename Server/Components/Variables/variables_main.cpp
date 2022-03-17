@@ -79,7 +79,7 @@ struct VariableStorageBase : public ToInherit {
         return true;
     }
 
-    bool getKeyAtIndex(int index, StringView key) const override
+    bool getKeyAtIndex(int index, StringView& key) const override
     {
         auto it = std::next(data_.begin(), index);
         if (it != data_.end()) {
