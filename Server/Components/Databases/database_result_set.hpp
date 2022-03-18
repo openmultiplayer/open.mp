@@ -2,8 +2,15 @@
 
 #include "database_result_set_row.hpp"
 #include <Impl/pool_impl.hpp>
+#include <queue>
 
 using namespace Impl;
+
+struct LegacyDBResultImpl : LegacyDBResult {
+    // Extra members to be used in open.mp code
+    DynamicArray<char*> results_;
+    bool fieldsAreAdded = false;
+};
 
 struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvider, public NoCopy {
 
@@ -74,11 +81,11 @@ struct DatabaseResultSet final : public IDatabaseResultSet, public PoolIDProvide
     LegacyDBResult& getLegacyDBResult() override;
 
     /// Rows
-    Queue<DatabaseResultSetRow> rows;
+    std::queue<DatabaseResultSetRow> rows;
 
     /// Number of rows
     std::size_t rowCount;
 
     /// Legacy database result to allow libraries access members of this structure from pawn (don't even ask)
-    LegacyDBResult legacyDbResult;
+    LegacyDBResultImpl legacyDbResult;
 };

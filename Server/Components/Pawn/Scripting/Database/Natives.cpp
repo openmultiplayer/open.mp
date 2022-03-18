@@ -40,28 +40,28 @@ SCRIPT_API(db_num_fields, int(IDatabaseResultSet& dbresult))
     return static_cast<int>(dbresult.getFieldCount());
 }
 
-SCRIPT_API(db_field_name, bool(IDatabaseResultSet& dbresult, int field, std::string& result))
+SCRIPT_API(db_field_name, bool(IDatabaseResultSet& dbresult, int field, StringView& result))
 {
     if ((field >= 0) && (field < dbresult.getFieldCount())) {
-        result = String(dbresult.getFieldName(static_cast<std::size_t>(field)));
+        result = dbresult.getFieldName(static_cast<std::size_t>(field));
         return true;
     }
     return false;
 }
 
-SCRIPT_API(db_get_field, bool(IDatabaseResultSet& dbresult, int field, std::string& result))
+SCRIPT_API(db_get_field, bool(IDatabaseResultSet& dbresult, int field, StringView& result))
 {
     if ((field >= 0) && (field < dbresult.getFieldCount())) {
-        result = String(dbresult.getFieldString(static_cast<std::size_t>(field)));
+        result = dbresult.getFieldString(static_cast<std::size_t>(field));
         return true;
     }
     return false;
 }
 
-SCRIPT_API(db_get_field_assoc, bool(IDatabaseResultSet& dbresult, const std::string& field, std::string& result))
+SCRIPT_API(db_get_field_assoc, bool(IDatabaseResultSet& dbresult, const std::string& field, StringView& result))
 {
     if (dbresult.isFieldNameAvailable(field)) {
-        result = String(dbresult.getFieldStringByName(field));
+        result = dbresult.getFieldStringByName(field);
         return true;
     }
     return false;

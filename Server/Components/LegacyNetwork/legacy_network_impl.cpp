@@ -355,8 +355,13 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra)
 {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
-    SAMPRakNet::RemoteSystemData remoteSystemData = network->rakNetServer.GetSAMPDataFromPlayerID(rpcParams->sender);
-    if (remoteSystemData.authType == SAMPRakNet::AuthType_Player) {
+    RakNet::RakPeer::RemoteSystemStruct* remoteSystem = network->rakNetServer.GetRemoteSystemFromPlayerID(rpcParams->sender);
+
+    if (!remoteSystem || remoteSystem->connectMode != RakNet::RakPeer::RemoteSystemStruct::ConnectMode::CONNECTED) {
+        return;
+    }
+
+    if (remoteSystem->sampData.authType == SAMPRakNet::AuthType_Player) {
         NetworkBitStream bs = GetBitStream(*rpcParams);
         NetCode::RPC::PlayerConnect playerConnectRPC;
         if (playerConnectRPC.read(bs)) {
@@ -422,8 +427,13 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra)
 {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
-    SAMPRakNet::RemoteSystemData remoteSystemData = network->rakNetServer.GetSAMPDataFromPlayerID(rpcParams->sender);
-    if (remoteSystemData.authType == SAMPRakNet::AuthType_NPC) {
+    RakNet::RakPeer::RemoteSystemStruct* remoteSystem = network->rakNetServer.GetRemoteSystemFromPlayerID(rpcParams->sender);
+
+    if (!remoteSystem || remoteSystem->connectMode != RakNet::RakPeer::RemoteSystemStruct::ConnectMode::CONNECTED) {
+        return;
+    }
+
+    if (remoteSystem->sampData.authType == SAMPRakNet::AuthType_NPC) {
         NetworkBitStream bs = GetBitStream(*rpcParams);
         NetCode::RPC::NPCConnect NPCConnectRPC;
         if (NPCConnectRPC.read(bs)) {
@@ -472,6 +482,10 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
 
+    if (rpcParams->senderIndex >= network->playerFromRakIndex.size()) {
+        return;
+    }
+
     IPlayer* player = network->playerFromRakIndex[rpcParams->senderIndex];
 
     if (player == nullptr) {
@@ -496,10 +510,11 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
             })) {
         return;
     }
-
+#ifdef _DEBUG
     if (network->inEventDispatcher.count() == 0 && network->rpcInEventDispatcher.count(ID) == 0) {
         network->core->printLn("Received unprocessed RPC %zu", ID);
     }
+#endif
 }
 
 void RakNetLegacyNetwork::ban(const BanEntry& entry, Milliseconds expire)
@@ -631,6 +646,10 @@ void RakNetLegacyNetwork::update()
         query.setRuleValue("weburl", String(website));
     }
 
+    StringView rconPassword = config.getString("rcon_password");
+    query.setRconPassword(rconPassword);
+    query.setRconEnabled(*config.getInt("enable_rcon"));
+
     StringView password = config.getString("password");
     query.setPassworded(!password.empty());
     rakNetServer.SetPassword(password.empty() ? 0 : password.data());
@@ -644,8 +663,13 @@ void RakNetLegacyNetwork::update()
 void RakNetLegacyNetwork::init(ICore* c)
 {
     core = c;
+    
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
+}
+
+void RakNetLegacyNetwork::start()
+{
     SAMPRakNet::Init(core);
     SAMPRakNet::SeedToken();
     lastCookieSeed = Time::now();
@@ -660,7 +684,7 @@ void RakNetLegacyNetwork::init(ICore* c)
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
 
-    query.setCore(c);
+    query.setCore(core);
     query.setRuleValue("version", "0.3.7-R2 open.mp");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
@@ -708,6 +732,11 @@ void RakNetLegacyNetwork::init(ICore* c)
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 {
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
+
+        if (pkt->playerIndex >= playerFromRakIndex.size()) {
+            continue;
+        }
+
         IPlayer* player = playerFromRakIndex[pkt->playerIndex];
 
         if (player) {

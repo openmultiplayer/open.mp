@@ -7,6 +7,8 @@
 #include "../Plugin/Plugin.h"
 #include "../Singleton.hpp"
 
+using namespace Impl;
+
 class PawnPluginManager {
 public:
     FlatHashMap<String, std::unique_ptr<PawnPlugin>> plugins_;

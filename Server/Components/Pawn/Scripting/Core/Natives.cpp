@@ -236,7 +236,7 @@ float getConfigOptionAsFloat(std::string const& cvar)
     }
 }
 
-int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
+int getConfigOptionAsString(std::string const& cvar, StringView& buffer)
 {
     IConfig* config = PawnManager::Get()->config;
     auto res = config->getNameFromAlias(cvar);
@@ -244,9 +244,9 @@ int getConfigOptionAsString(std::string const& cvar, std::string& buffer)
         if (res.first) {
             PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
         }
-        buffer = String(config->getString(res.second));
+        buffer = config->getString(res.second);
     } else {
-        buffer = String(config->getString(cvar));
+        buffer = config->getString(cvar);
     }
     return buffer.length();
 }
@@ -266,7 +266,7 @@ SCRIPT_API(GetConsoleVarAsFloat, float(std::string const& cvar))
     return getConfigOptionAsFloat(cvar);
 }
 
-SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, std::string& buffer))
+SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, StringView& buffer))
 {
     return getConfigOptionAsString(cvar, buffer);
 }
@@ -305,6 +305,7 @@ SCRIPT_API(GetNetworkStats, bool(std::string& output))
         << "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
         << "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
+    // Scope-allocated string, copy it
     output = stream.str();
     return true;
 }
@@ -334,6 +335,7 @@ SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
         << "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
         << "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
+    // Scope-allocated string, copy it
     output = stream.str();
     return true;
 }
@@ -358,14 +360,14 @@ SCRIPT_API(GetServerVarAsFloat, float(std::string const& cvar))
     return getConfigOptionAsFloat(cvar);
 }
 
-SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, std::string& buffer))
+SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, StringView& buffer))
 {
     return getConfigOptionAsString(cvar, buffer);
 }
 
-SCRIPT_API(GetWeaponName, bool(int weaponid, std::string& weapon))
+SCRIPT_API(GetWeaponName, bool(int weaponid, StringView& weapon))
 {
-    weapon = String(PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid)));
+    weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
     return true;
 }
 
@@ -415,6 +417,7 @@ SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
         String ip_port((StringView(addressString)));
         ip_port += ":";
         ip_port += std::to_string(data.networkID.port);
+        // Scope-allocated string, copy it
         output = ip_port;
         return true;
     }
@@ -510,6 +513,7 @@ SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& 
 {
     PawnManager::Get()->core->logLn(LogLevel::Warning, "Using unsafe hashing function SHA256_PassHash");
 
+    // Scope-allocated string, copy it
     StaticArray<char, 64 + 1> hash;
     bool res = PawnManager::Get()->core->sha256(password, salt, hash);
     if (res) {

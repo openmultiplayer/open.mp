@@ -546,6 +546,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
     {
+        if (!animationNameValid(animation.lib, animation.name)) {
+            return;
+        }
+
         // Set from sync
         NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC(animation);
         applyPlayerAnimationRPC.PlayerID = poolID;

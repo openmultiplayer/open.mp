@@ -90,7 +90,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 
     size_t len = atcprintf(output, maxlen - 1, cinput, amx, params, &param);
 
-    if (param - 1 < num) {
+    if (param - 1 < num && len < maxlen - 1) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
@@ -504,13 +504,22 @@ inline int ComponentCallFS(char* name)
 #include <Windows.h>
 #pragma comment(lib, "Shlwapi.lib")
 
-inline bool Canonicalise(std::string const& path, std::string& result)
+// Copies the string, to modify it.
+inline bool Canonicalise(std::string path, std::string& result)
 {
     // To be compatible with Linux.
     result.clear();
     result.resize(FILENAME_MAX);
+    size_t pos = 0;
+    while ((pos = path.find('/', pos)) != std::string::npos)
+    {
+        path.replace(pos, 1, 1, '\\');
+    }
     bool ret(PathCanonicalizeA(result.data(), path.c_str()));
     result.resize(strlen(result.c_str()));
+    if (result[0] == '\\') {
+        result.erase(0, 1);
+    }
     return ret;
 }
 
@@ -529,8 +538,13 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 #include <cstring>
 #include <unistd.h>
 
-inline bool Canonicalise(std::string const& path, std::string& result)
+inline bool Canonicalise(std::string path, std::string& result)
 {
+    size_t pos = 0;
+    while ((pos = path.find('\\', pos)) != std::string::npos)
+    {
+        path.replace(pos, 1, 1, '/');
+    }
     char* canon = realpath(path.c_str(), nullptr);
     if (canon) {
         result = canon;

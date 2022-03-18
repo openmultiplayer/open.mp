@@ -53,7 +53,7 @@ PawnManager::~PawnManager()
     }
 }
 
-bool PawnManager::OnServerCommand(IPlayer* sender, std::string const& cmd, std::string const& args)
+bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::string const& cmd, std::string const& args)
 {
     // Legacy commands.
     if (cmd == "loadfs") {
