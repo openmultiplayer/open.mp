@@ -12,3 +12,12 @@ SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialogId, int style, cons
     }
     return false;
 }
+
+SCRIPT_API_FAILRET(GetPlayerDialog, INVALID_DIALOG_ID, int(IPlayer& player))
+{
+    IPlayerDialogData* dialog = queryData<IPlayerDialogData>(player);
+    if (dialog) {
+        return dialog->getActiveID();
+    }
+    return FailRet;
+}

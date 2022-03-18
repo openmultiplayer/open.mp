@@ -936,6 +936,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         RPC.WeatherID = weather;
         PacketHelper::broadcast(RPC, players);
 
+        for (IPlayer* player : players.entries()) {
+            static_cast<Player*>(player)->weather_ = weather;
+        }
+
         updateNetworks();
     }
 
@@ -945,6 +949,10 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         NetCode::RPC::SetPlayerWorldTime RPC;
         RPC.Time = time;
         PacketHelper::broadcast(RPC, players);
+
+        for (IPlayer* player : players.entries()) {
+            static_cast<Player*>(player)->time_ = time;
+        }
     }
 
     void toggleStuntBonus(bool toggle) override
@@ -1008,8 +1016,11 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
         playerInitRPC.ShowNameTags = *ShowNameTags;
         playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
-        playerInitRPC.SetWorldTime = *SetWorldTime;
-        playerInitRPC.SetWeather = *SetWeather;
+
+        // Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
+        playerInitRPC.SetWorldTime = player.getTime().first.count();
+        playerInitRPC.SetWeather = player.getWeather();
+
         playerInitRPC.SetGravity = *SetGravity;
         playerInitRPC.LanMode = *LanMode;
         playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
@@ -1028,6 +1039,12 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
         playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
         PacketHelper::send(playerInitRPC, player);
+        
+        // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
+        NetCode::RPC::SetPlayerColor RPC;
+        RPC.PlayerID = player.getID();
+        RPC.Col = player.getColour();
+        PacketHelper::send(RPC, player);
     }
 
     void connectBot(StringView name, StringView script) override

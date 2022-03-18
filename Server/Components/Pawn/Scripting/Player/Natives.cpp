@@ -363,6 +363,18 @@ SCRIPT_API(SetPlayerWorldBounds, bool(IPlayer& player, float xMax, float xMin, f
     return true;
 }
 
+SCRIPT_API(ClearPlayerWorldBounds, bool(IPlayer& player))
+{
+    player.setWorldBounds(Vector4(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS));
+    return true;
+}
+
+SCRIPT_API(GetPlayerWorldBounds, bool(IPlayer& player, Vector4& bounds))
+{
+    bounds = player.getWorldBounds();
+    return true;
+}
+
 SCRIPT_API(ClearAnimations, bool(IPlayer& player, int syncType))
 {
     player.clearAnimations(PlayerAnimationSyncType(syncType));
