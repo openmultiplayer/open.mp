@@ -90,6 +90,6 @@ void Scripting::addEvents() const
         mgr->objects->getEventDispatcher().addEventHandler(ObjectEvents::Get());
     }
     if (mgr->console) {
-        mgr->console->getEventDispatcher().addEventHandler(CoreEvents::Get());
+        mgr->console->getEventDispatcher().addEventHandler(CoreEvents::Get(), EventPriority_Lowest);
     }
 }

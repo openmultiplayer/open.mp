@@ -9,6 +9,23 @@ struct RakNetLegacyNetworkComponent final : INetworkComponent {
         legacyNetwork.init(core);
     }
 
+    void onReady() override 
+    {
+        legacyNetwork.start();
+    }
+  
+    void onInit(IComponentList* components) override
+    {
+        legacyNetwork.query.setConsole(components->queryComponent<IConsoleComponent>());
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (component == legacyNetwork.query.getConsole()) {
+            legacyNetwork.query.setConsole(nullptr);
+        }
+    }
+
     INetwork* getNetwork() override
     {
         return &legacyNetwork;

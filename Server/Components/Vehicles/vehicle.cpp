@@ -354,6 +354,9 @@ void Vehicle::removeComponent(int component)
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID)
 {
+    if(player.getVirtualWorld() != virtualWorld_)
+        return;
+
     const bool isStreamedIn = this->isStreamedInForPlayer(player);
     if (!isStreamedIn) {
         this->streamInForPlayer(player);
@@ -572,13 +575,16 @@ Vehicle::~Vehicle()
         detachTrailer();
     }
 
-    const auto& entries = streamedFor_.entries();
+    const auto& entries = pool->core->getPlayers().entries();
     for (IPlayer* player : entries) {
         PlayerVehicleData* vehicleData = queryData<PlayerVehicleData>(player);
 
-        if (vehicleData && vehicleData->getVehicle() == this) {
+        if (vehicleData && vehicleData->vehicle == this) {
             vehicleData->setVehicle(nullptr, 0);
         }
-        streamOutForClient(*player);
+
+        if (isStreamedInForPlayer(*player)) {
+            streamOutForClient(*player);
+        }
     }
 }

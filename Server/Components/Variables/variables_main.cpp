@@ -1,63 +1,64 @@
 #include <Server/Components/Variables/variables.hpp>
 #include <sdk.hpp>
-#include <unordered_map>
 #include <variant>
+
+using namespace Impl;
 
 template <class ToInherit>
 struct VariableStorageBase : public ToInherit {
     void setString(StringView key, StringView value) override
     {
-        data_[key].template emplace<String>(value);
+        data_[String(key)].emplace<String>(value);
     }
     const StringView getString(StringView key) const override
     {
-        auto it = data_.find(key);
+        auto it = data_.find(String(key));
         if (it == data_.end()) {
             return StringView();
         }
         if (it->second.index() != 1) {
             return StringView();
         }
-        return StringView(variant_get<String>(it->second));
+        return StringView(std::get<String>(it->second));
     }
 
     void setInt(StringView key, int value) override
     {
-        data_[key].template emplace<int>(value);
+        data_[String(key)].emplace<int>(value);
     }
 
     int getInt(StringView key) const override
     {
-        auto it = data_.find(key);
+        auto it = data_.find(String(key));
         if (it == data_.end()) {
             return 0;
         }
         if (it->second.index() != 0) {
             return 0;
         }
-        return variant_get<int>(it->second);
+        return std::get<int>(it->second);
     }
 
     void setFloat(StringView key, float value) override
     {
-        data_[key].template emplace<float>(value);
+        data_[String(key)].emplace<float>(value);
     }
 
     float getFloat(StringView key) const override
     {
-        auto it = data_.find(key);
+        auto it = data_.find(String(key));
         if (it == data_.end()) {
             return 0;
         }
         if (it->second.index() != 2) {
             return 0;
         }
-        return variant_get<float>(it->second);
+        return std::get<float>(it->second);
     }
 
     VariableType getType(StringView key) const override
     {
-        auto it = data_.find(key);
+        auto it = data_.find(String(key));
         if (it == data_.end()) {
             return VariableType_None;
         }
@@ -70,15 +71,15 @@ struct VariableStorageBase : public ToInherit {
 
     bool erase(StringView key) override
     {
-        auto it = data_.find(key);
+        auto it = data_.find(String(key));
         if (it == data_.end()) {
             return false;
         }
-        it->second = Variant<int, String, float>();
+        it->second = std::variant<int, String, float>();
         return true;
     }
 
-    bool getKeyAtIndex(int index, StringView key) const override
+    bool getKeyAtIndex(int index, StringView& key) const override
     {
         auto it = std::next(data_.begin(), index);
         if (it != data_.end()) {
@@ -94,7 +95,7 @@ struct VariableStorageBase : public ToInherit {
     }
 
 private:
-    FlatHashMap<String, Variant<int, String, float>> data_;
+    FlatHashMap<String, std::variant<int, String, float>> data_;
 };
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
