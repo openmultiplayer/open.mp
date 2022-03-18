@@ -778,6 +778,7 @@ private:
         printLn("Loaded %i component(s)", components.size());
     }
 
+public:
     bool reloadLogFile()
     {
         if (!logFile) {
@@ -789,7 +790,6 @@ private:
         return true;
     }
 
-public:
     void run()
     {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
