@@ -209,6 +209,58 @@ PLAYER_POOL_PARAM(IPlayerObject, IPlayerObjectData);
 PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
 PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 
+/// A parameter used for only writing data to an output string
+/// Greatly speeds up code as there's no need for reading the input string
+/// and faster amx_SetString function is used which works well with string views
+template <>
+class ParamCast<StringView&> {
+public:
+    ParamCast(AMX* amx, cell* params, int idx)
+        : len_((int)params[idx + 1])
+        , accessed_(false)
+    {
+        if (len_ < 0)
+            throw std::length_error("Invalid string length.");
+        if (len_) {
+            amx_GetAddr(amx, params[idx], &addr_);
+        } else {
+            addr_ = nullptr;
+        }
+    }
+
+    ~ParamCast()
+    {
+        // Write data
+        if (addr_ && accessed_)
+            amx_SetStringLen(addr_, value_.data(), value_.length(), 0, 0, len_);
+    }
+
+    ParamCast(ParamCast<StringView&> const&) = delete;
+    ParamCast(ParamCast<StringView&>&&) = delete;
+
+    operator StringView&()
+    {
+        // If we're accessing the string view we're most likely writing to it so it should be written to the AMX
+        accessed_ = true;
+        return value_;
+    }
+
+    static constexpr int Size = 2;
+
+private:
+    int
+        len_;
+
+    bool
+        accessed_;
+
+    cell*
+        addr_;
+
+    StringView
+        value_;
+};
+
 // Database IDatabaseConnection param lookups
 template <>
 struct ParamLookup<IDatabaseConnection> {

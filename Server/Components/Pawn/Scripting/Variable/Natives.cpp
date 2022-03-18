@@ -35,10 +35,10 @@ SCRIPT_API(SetSVarString, bool(const std::string& varname, const std::string& va
     return true;
 }
 
-SCRIPT_API(GetSVarString, int(const std::string& varname, std::string& output))
+SCRIPT_API(GetSVarString, int(const std::string& varname, StringView& output))
 {
     GET_VAR_COMP(component, false);
-    output = String(component->getString(varname));
+    output = component->getString(varname);
     return output.length();
 }
 
@@ -71,10 +71,10 @@ SCRIPT_API(GetSVarsUpperIndex, int())
     return component->size();
 }
 
-SCRIPT_API(GetSVarNameAtIndex, bool(int index, std::string& varname))
+SCRIPT_API(GetSVarNameAtIndex, bool(int index, StringView& varname))
 {
     GET_VAR_COMP(component, false);
-    return component->getKeyAtIndex(index, StringView(varname));
+    return component->getKeyAtIndex(index, varname);
 }
 
 SCRIPT_API(GetSVarType, int(const std::string& varname))

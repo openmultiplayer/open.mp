@@ -24,7 +24,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     uint32_t panelDamage = 0;
     uint8_t lightDamage = 0;
     uint8_t tyreDamage = 0;
-    uint8_t paintJob;
+    uint8_t paintJob = 0;
     int32_t bodyColour1 = -1;
     int32_t bodyColour2 = -1;
     uint8_t landingGear = 1;

@@ -18,6 +18,8 @@
 #include <thread>
 #include <variant>
 
+using namespace Impl;
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
 #define CPPHTTPLIB_OPENSSL_SUPPORT
@@ -26,7 +28,7 @@
 
 #include <openssl/sha.h>
 
-typedef Variant<int, String, float, DynamicArray<String>> ConfigStorage;
+typedef std::variant<int, String, float, DynamicArray<String>> ConfigStorage;
 
 static const std::map<String, ConfigStorage> Defaults {
     { "max_players", 50 },
@@ -97,10 +99,10 @@ static const std::map<String, ConfigStorage> Defaults {
 // Provide automatic Defaults → JSON conversion in Config
 namespace nlohmann {
 template <typename... Args>
-struct adl_serializer<Variant<Args...>> {
-    static void to_json(ordered_json& j, Variant<Args...> const& v)
+struct adl_serializer<std::variant<Args...>> {
+    static void to_json(ordered_json& j, std::variant<Args...> const& v)
     {
-        absl_omp::visit([&](auto&& value) {
+        std::visit([&](auto&& value) {
             j = std::forward<decltype(value)>(value);
         },
             v);
@@ -120,7 +122,7 @@ struct ComponentList : public IComponentList {
     void configure(ICore& core, IEarlyConfig& config, bool defaults)
     {
         std::for_each(components.begin(), components.end(),
-            [&core, &config, defaults](const Pair<UID, IComponent*>& pair) {
+            [&core, &config, defaults](const robin_hood::pair<UID, IComponent*>& pair) {
                 pair.second->provideConfiguration(core, config, defaults);
             });
     }
@@ -128,7 +130,7 @@ struct ComponentList : public IComponentList {
     void load(ICore* core)
     {
         std::for_each(components.begin(), components.end(),
-            [core](const Pair<UID, IComponent*>& pair) {
+            [core](const robin_hood::pair<UID, IComponent*>& pair) {
                 pair.second->onLoad(core);
             });
     }
@@ -136,7 +138,7 @@ struct ComponentList : public IComponentList {
     void init()
     {
         std::for_each(components.begin(), components.end(),
-            [this](const Pair<UID, IComponent*>& pair) {
+            [this](const robin_hood::pair<UID, IComponent*>& pair) {
                 pair.second->onInit(this);
             });
     }
@@ -144,7 +146,7 @@ struct ComponentList : public IComponentList {
     void ready()
     {
         std::for_each(components.begin(), components.end(),
-            [](const Pair<UID, IComponent*>& pair) {
+            [](const robin_hood::pair<UID, IComponent*>& pair) {
                 pair.second->onReady();
             });
     }
@@ -153,11 +155,11 @@ struct ComponentList : public IComponentList {
     {
         for (auto it = components.begin(); it != components.end();) {
             std::for_each(components.begin(), components.end(),
-                [it](const Pair<UID, IComponent*>& pair) {
+                [it](const robin_hood::pair<UID, IComponent*>& pair) {
                     pair.second->onFree(it->second);
                 });
             it->second->free();
-            components.erase(it++);
+            it = components.erase(it);
         }
     }
 
@@ -180,6 +182,7 @@ static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%SZ";
 struct Config final : IEarlyConfig {
     static constexpr const char* ConfigFileName = "config.json";
     static constexpr const char* BansFileName = "bans.json";
+
     IUnicodeComponent* unicode = nullptr;
     ICore& core;
 
@@ -248,7 +251,7 @@ struct Config final : IEarlyConfig {
                 }
                 processed["version"].emplace<String>(versionStr);
             }
-            
+
             loadBans();
 
         } else {
@@ -290,7 +293,7 @@ struct Config final : IEarlyConfig {
         if (!getFromKey(key, ConfigOptionType_String, res)) {
             return StringView();
         }
-        return StringView(variant_get<String>(*res));
+        return StringView(std::get<String>(*res));
     }
 
     int* getInt(StringView key) override
@@ -299,7 +302,7 @@ struct Config final : IEarlyConfig {
         if (!getFromKey(key, ConfigOptionType_Int, res)) {
             return 0;
         }
-        return &variant_get<int>(*res);
+        return &std::get<int>(*res);
     }
 
     float* getFloat(StringView key) override
@@ -308,7 +311,7 @@ struct Config final : IEarlyConfig {
         if (!getFromKey(key, ConfigOptionType_Float, res)) {
             return 0;
         }
-        return &variant_get<float>(*res);
+        return &std::get<float>(*res);
     }
 
     size_t getStringsCount(StringView key) const override
@@ -317,7 +320,7 @@ struct Config final : IEarlyConfig {
         if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return 0;
         }
-        return variant_get<DynamicArray<String>>(*res).size();
+        return std::get<DynamicArray<String>>(*res).size();
     }
 
     size_t getStrings(StringView key, Span<StringView> output) const override
@@ -331,7 +334,7 @@ struct Config final : IEarlyConfig {
             return 0;
         }
 
-        const auto& strings = variant_get<DynamicArray<String>>(*res);
+        const auto& strings = std::get<DynamicArray<String>>(*res);
         const size_t size = std::min(output.size(), strings.size());
         for (size_t i = 0; i < size; ++i) {
             output[i] = strings[i];
@@ -345,7 +348,7 @@ struct Config final : IEarlyConfig {
         if (!getFromKey(key, ConfigOptionType_Strings, res)) {
             return nullptr;
         }
-        return &variant_get<DynamicArray<String>>(*res);
+        return &std::get<DynamicArray<String>>(*res);
     }
 
     ConfigOptionType getType(StringView key) const override
@@ -487,20 +490,20 @@ struct Config final : IEarlyConfig {
 
     Pair<bool, StringView> getNameFromAlias(StringView alias) const override
     {
-        auto it = aliases.find(alias);
+        auto it = aliases.find(String(alias));
         if (it == aliases.end()) {
             return std::make_pair(false, StringView());
         }
         return std::make_pair(it->second.first, StringView(it->second.second));
     }
 
-    DynamicArray<Pair<String, ConfigOptionType>> getOptions() const override
+    void enumOptions(OptionEnumeratorCallback& callback) const override
     {
-        DynamicArray<Pair<String, ConfigOptionType>> options;
         for (auto& kv : processed) {
-            options.emplace_back(kv.first, ConfigOptionType(kv.second.index()));
+            if (!callback.proc(StringView(kv.first), ConfigOptionType(kv.second.index()))) {
+                break;
+            }
         }
-        return options;
     }
 
 private:
@@ -648,6 +651,8 @@ private:
 };
 
 struct Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
+    static constexpr const char* LogFileName = "log.txt";
+
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
@@ -729,7 +734,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         // Don't use config before this point
 
         if (*config.getInt("logging")) {
-            logFile = ::fopen("log.txt", "w");
+            logFile = ::fopen(LogFileName, "a");
         }
 
         EnableZoneNames = config.getInt("enable_zone_names");
@@ -781,6 +786,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             console->getEventDispatcher().removeEventHandler(this);
             console = nullptr;
         }
+
         players.getEventDispatcher().removeEventHandler(this);
 
         players.free();
@@ -886,7 +892,7 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
             buf = Span<char>(fallback.get(), len);
         }
         buf[0] = 0;
-        vsnprintf(buf.data(), buf.length(), fmt, args);
+        vsnprintf(buf.data(), buf.size(), fmt, args);
 
         FILE* stream
             = stdout;
@@ -1200,19 +1206,26 @@ struct Core final : public ICore, public PlayerEventHandler, public ConsoleEvent
         }
     }
 
-    bool onConsoleText(StringView command, StringView parameters, IPlayer* sender) override
+    bool reloadLogFile()
+    {
+        if (!logFile) {
+            return false;
+        }
+
+        fclose(logFile);
+        logFile = ::fopen(LogFileName, "a");
+        return true;
+    }
+
+    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         if (command == "exit") {
             run_ = false;
             return true;
         } else if (command == "reloadlog") {
-            if (!logFile) {
-                return true;
+            if (reloadLogFile()) {
+                console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
             }
-
-            fclose(logFile);
-            logFile = ::fopen("log.txt", "w");
-            console->sendMessage(sender, "Reloaded log file \"log.txt\".");
             return true;
         }
         return false;

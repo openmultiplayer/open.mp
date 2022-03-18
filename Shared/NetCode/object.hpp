@@ -5,6 +5,8 @@
 #include <player.hpp>
 #include <types.hpp>
 
+using namespace Impl;
+
 namespace NetCode {
 namespace RPC {
     struct SetPlayerObjectMaterial : NetworkPacketBase<84, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
