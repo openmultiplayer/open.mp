@@ -18,13 +18,13 @@ public:
   
     void onInit(IComponentList* components) override
     {
-        legacyNetwork.query.setConsole(components->queryComponent<IConsoleComponent>());
+        legacyNetwork.setQueryConsole(components->queryComponent<IConsoleComponent>());
     }
 
     void onFree(IComponent* component) override
     {
-        if (component == legacyNetwork.query.getConsole()) {
-            legacyNetwork.query.setConsole(nullptr);
+        if (component == legacyNetwork.getQueryConsole()) {
+            legacyNetwork.setQueryConsole(nullptr);
         }
     }
 

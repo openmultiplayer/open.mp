@@ -29,6 +29,16 @@ private:
     TimePoint lastCookieSeed;
 
 public:
+    inline void setQueryConsole(IConsoleComponent* console)
+    {
+        query.setConsole(console);
+    }
+
+    inline IConsoleComponent* getQueryConsole() const
+    {
+        return query.getConsole();
+    }
+
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
