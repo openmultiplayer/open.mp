@@ -153,16 +153,23 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         PacketHelper::send(playerShowMenu, player);
 
         IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
-        data->setMenuID(poolID);
+        if (data) {
+            data->setMenuID(poolID);
+        }
     }
 
     void hideForPlayer(IPlayer& player) override
     {
+        IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
+
+        if (!data || data->getMenuID() != poolID) {
+            return;
+        }
+
         NetCode::RPC::PlayerHideMenu playerHideMenu;
         playerHideMenu.MenuID = poolID;
         PacketHelper::send(playerHideMenu, player);
 
-        IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
         data->setMenuID(INVALID_MENU_ID);
     }
 

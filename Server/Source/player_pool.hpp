@@ -1193,6 +1193,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             PacketHelper::send(otherJoinPacket, peer);
         }
 
+        // Set player's time & weather to global ones.
+        static int* hour = core.getConfig().getInt("world_time");
+        static int* weather = core.getConfig().getInt("weather");
+
+        player.time_ = duration_cast<Minutes>(Hours(*hour));
+        player.weather_ = *weather;
+
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 

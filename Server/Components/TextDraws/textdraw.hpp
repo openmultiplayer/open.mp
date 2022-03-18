@@ -32,6 +32,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         , style(style)
         , previewModel(previewModel)
     {
+        trimText();
     }
 
     int getID() const override
@@ -53,6 +54,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     void setText(StringView txt) override
     {
         text = txt;
+        trimText();
     }
 
     StringView getText() const override
@@ -292,6 +294,22 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
         playerTextDrawSetStringRPC.TextDrawID = poolID;
         playerTextDrawSetStringRPC.Text = txt;
         PacketHelper::send(playerTextDrawSetStringRPC, player);
+    }
+
+    // Remove ending spaces. Set text length to client limit.
+    void trimText() 
+    {
+        String newText(text.data(), text.length());
+        
+        while (newText.back() == ' ') {
+            newText.pop_back();
+        }
+
+        if (newText.length() > MAX_TEXTDRAW_STR_LENGTH) {
+            newText.resize(MAX_TEXTDRAW_STR_LENGTH);
+        }
+
+        text = newText;
     }
 };
 
