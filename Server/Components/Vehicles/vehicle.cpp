@@ -370,7 +370,8 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     auto vehicleData = queryData<PlayerVehicleData>(player);
     if (vehicleData) {
         if (vehicleData->vehicle != nullptr) {
-            player.setPosition(player.getPosition());
+            vehicleData->vehicle->unoccupy(player);
+            player.setPosition(pos);
         }
         vehicleData->vehicle = this;
     }
