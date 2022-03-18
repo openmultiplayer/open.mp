@@ -297,16 +297,16 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
     }
 
     // Remove ending spaces. Set text length to client limit.
-    void trimText() 
+    void trimText()
     {
         String newText(text.data(), text.length());
-        
-        while (newText.back() == ' ') {
-            newText.pop_back();
+
+        if (newText.length() >= MAX_TEXTDRAW_STR_LENGTH) {
+            newText.resize(MAX_TEXTDRAW_STR_LENGTH - 1);
         }
 
-        if (newText.length() > MAX_TEXTDRAW_STR_LENGTH) {
-            newText.resize(MAX_TEXTDRAW_STR_LENGTH);
+        while (newText.back() == ' ') {
+            newText.pop_back();
         }
 
         text = newText;
