@@ -305,7 +305,7 @@ struct TextDrawBase : public T, public PoolIDProvider, public NoCopy {
             newText.resize(MAX_TEXTDRAW_STR_LENGTH - 1);
         }
 
-        while (newText.back() == ' ') {
+        while (newText.length() && newText.back() == ' ') {
             newText.pop_back();
         }
 
