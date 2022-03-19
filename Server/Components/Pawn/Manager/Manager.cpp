@@ -180,9 +180,11 @@ bool PawnManager::Changemode(std::string const& name)
 	}
 	// Close it for now, it'll be reopened again by `aux_LoadProgram`.
     fclose(fp);
+	// Disconnect players.
 	// Unload the old main script.
     Unload(entryScript);
 	// TODO: Trigger all components to reset.
+    PlayerEvents::Get()->IgnoreOneDisconnect();
 	// TODO: Inform clients of the restart.
 	// Save the name of the next script.
     entryScript = name;
@@ -259,6 +261,7 @@ bool PawnManager::Load(std::string const& name, bool primary)
         } else {
             script.cache_.inited = true;
         }
+        PlayerEvents::Get()->IgnoreOneConnect();
     } else {
         script.Call("OnFilterScriptInit", DefaultReturnValue_False);
 
