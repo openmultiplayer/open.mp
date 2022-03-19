@@ -14,6 +14,7 @@
 
 #include <pawn-natives/NativeFunc.hpp>
 #include <pawn-natives/NativesMain.hpp>
+#include "../Scripting/Player/Events.hpp"
 
 extern "C" {
 #if defined _UNICODE
@@ -50,7 +51,7 @@ PawnManager::~PawnManager()
         } else {
             script.Call("OnFilterScriptExit", DefaultReturnValue_False);
         }
-        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
+        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX(), isEntryScript);
         pluginManager.AmxUnload(script.GetAMX());
         PawnTimerImpl::Get()->killTimers(script.GetAMX());
     }
@@ -245,7 +246,7 @@ bool PawnManager::Load(std::string const& name, bool primary)
 
     pawn_natives::AmxLoad(script.GetAMX());
     pluginManager.AmxLoad(script.GetAMX());
-    eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX());
+    eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX(), primary);
 
     CheckNatives(script);
 
@@ -310,7 +311,7 @@ bool PawnManager::Unload(std::string const& name)
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
 
-    eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
+    eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX(), isEntryScript);
     pluginManager.AmxUnload(script.GetAMX());
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
