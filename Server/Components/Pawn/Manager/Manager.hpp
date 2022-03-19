@@ -61,6 +61,8 @@ public:
     PawnPluginManager pluginManager;
     int gamemodeIndex_ = 0;
     DynamicArray<String> gamemodes_;
+    TimePoint nextRestart_;
+    Milliseconds restartDelay_;
 
     PawnManager();
     ~PawnManager();
@@ -77,6 +79,26 @@ public:
     bool Reload(std::string const& name);
     bool Unload(std::string const& name);
     bool Changemode(std::string const& name);
+
+	void ProcessTick(Microseconds elapsed, TimePoint now);
+    inline int getRestartMS() const
+    {
+        return (int)restartDelay_.count();
+	}
+
+    inline void setRestartMS(int ms)
+    {
+        if (nextRestart_ == TimePoint::min())
+		{
+			restartDelay_ = Milliseconds(ms);
+		}
+		else
+		{
+			Milliseconds delay = Milliseconds(ms);
+			nextRestart_ = nextRestart_ - restartDelay_ + delay;
+			restartDelay_ = delay;
+        }
+	}
 
     template <typename... T>
     cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
@@ -278,8 +300,8 @@ private:
         scriptPath_,
         basePath_;
     int
-        id_
-        = 0;
+        id_ = 0;
 
     void CheckNatives(PawnScript& script);
 };
+

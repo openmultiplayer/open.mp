@@ -168,6 +168,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
     void onTick(Microseconds elapsed, TimePoint now) override
     {
         PawnManager::Get()->pluginManager.ProcessTick();
+        PawnManager::Get()->ProcessTick(elapsed, now);
     }
 
     void onFree(IComponent* component) override
