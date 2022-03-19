@@ -31,9 +31,11 @@ typedef char TCHAR;
 }
 
 PawnManager::PawnManager()
-    : scriptPath_("")
+    : gamemodes_()
+    , nextRestart_(TimePoint::min())
+    , restartDelay_(12000)
+    , scriptPath_("")
     , basePath_("./")
-    , gamemodes_()
 {
 }
 
@@ -180,9 +182,28 @@ bool PawnManager::Changemode(std::string const& name)
     fclose(fp);
 	// Unload the old main script.
     Unload(entryScript);
+	// TODO: Trigger all components to reset.
+	// TODO: Inform clients of the restart.
+	// Save the name of the next script.
     entryScript = name;
 	// Start the changemode timer.
+    nextRestart_ = Time::now() + restartDelay_;
     return true;
+}
+
+void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
+{
+	if (nextRestart_ == TimePoint::min())
+	{
+        return;
+	}
+	// Reloading a script.
+	if (nextRestart_ < now)
+	{
+		// Restart is in the past, load the next GM.
+        Load(entryScript, true);
+		nextRestart_ = TimePoint::min();
+	}
 }
 
 bool PawnManager::Load(std::string const& name, bool primary)
