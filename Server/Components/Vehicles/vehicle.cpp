@@ -33,11 +33,33 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.TyreDamage = tyreDamage;
     streamIn.PanelDamage = panelDamage;
     streamIn.Siren = spawnData.siren;
-    streamIn.Mods = mods;
+	for (int i = 0; i != 14; ++i)
+	{
+		streamIn.Mods[i] = mods[i];
+	}
     streamIn.Paintjob = paintJob;
     streamIn.BodyColour1 = bodyColour1;
     streamIn.BodyColour2 = bodyColour2;
     PacketHelper::send(streamIn, player);
+	// Add two more mods (front and rear bullbars).
+	if (mods[VehicleComponent_FrontBullbar] != 0)
+	{
+		NetCode::RPC::SCMEvent modRPC;
+		modRPC.PlayerID = pid;
+		modRPC.EventType = VehicleSCMEvent_AddComponent;
+		modRPC.VehicleID = poolID;
+        modRPC.Arg1 = mods[VehicleComponent_FrontBullbar];
+        PacketHelper::send(modRPC, player);
+	}
+	if (mods[VehicleComponent_RearBullbar] != 0)
+	{
+		NetCode::RPC::SCMEvent modRPC;
+        modRPC.PlayerID = pid;
+		modRPC.EventType = VehicleSCMEvent_AddComponent;
+		modRPC.VehicleID = poolID;
+        modRPC.Arg1 = mods[VehicleComponent_RearBullbar];
+        PacketHelper::send(modRPC, player);
+	}
 
     if (numberPlate != StringView("XYZSR998")) {
         NetCode::RPC::SetVehiclePlate plateRPC;
