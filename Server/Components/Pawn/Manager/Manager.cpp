@@ -51,7 +51,7 @@ PawnManager::~PawnManager()
         } else {
             script.Call("OnFilterScriptExit", DefaultReturnValue_False);
         }
-        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX(), isEntryScript);
+        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
         pluginManager.AmxUnload(script.GetAMX());
         PawnTimerImpl::Get()->killTimers(script.GetAMX());
     }
@@ -246,7 +246,7 @@ bool PawnManager::Load(std::string const& name, bool primary)
 
     pawn_natives::AmxLoad(script.GetAMX());
     pluginManager.AmxLoad(script.GetAMX());
-    eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX(), primary);
+    eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX());
 
     CheckNatives(script);
 
@@ -311,7 +311,7 @@ bool PawnManager::Unload(std::string const& name)
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
 
-    eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX(), isEntryScript);
+    eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
     pluginManager.AmxUnload(script.GetAMX());
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
