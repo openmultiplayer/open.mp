@@ -50,12 +50,6 @@ public:
 
     void freeExtension() override
     {
-        for (IPlayerTextLabel* textLabel : storage) {
-            /// Detach player from player textlabels so they don't try to send an RPC
-            PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            lbl->setPlayerQuitting();
-        }
         delete this;
     }
 
@@ -96,7 +90,7 @@ public:
     }
 };
 
-class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public ModeResetEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextLabel, ITextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
@@ -275,6 +269,12 @@ public:
                 }
             }
         }
+    }
+
+    void onModeReset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
     }
 };
 

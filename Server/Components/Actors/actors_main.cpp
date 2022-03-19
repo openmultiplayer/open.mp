@@ -144,10 +144,6 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
-        for (IActor* a : storage)
-		{
-            static_cast<Actor*>(a)->removeForAll();
-        }
         storage.clear();
     }
 

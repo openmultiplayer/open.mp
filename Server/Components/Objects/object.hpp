@@ -394,6 +394,7 @@ public:
     }
 
     ~Object();
+    void destream();
 };
 
 class PlayerObject final : public BaseObject<IPlayerObject> {

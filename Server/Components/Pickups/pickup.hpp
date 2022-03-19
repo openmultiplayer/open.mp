@@ -43,14 +43,10 @@ private:
 public:
     void removeFor(int pid, IPlayer& player)
     {
-        if (streamedFor_.valid(pid)) {
+        if (streamedFor_.valid(pid))
+		{
             streamedFor_.remove(pid, player);
         }
-    }
-
-    inline void removeForAll()
-    {
-        streamedFor_.clear();
     }
 
     inline bool isStatic() const
@@ -165,7 +161,12 @@ public:
 
     ~Pickup()
     {
-        for (IPlayer* player : streamedFor_.entries()) {
+    }
+
+    void destream()
+    {
+        for (IPlayer* player : streamedFor_.entries())
+		{
             streamOutForClient(*player);
         }
     }

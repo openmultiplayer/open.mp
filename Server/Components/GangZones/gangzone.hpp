@@ -43,11 +43,6 @@ public:
         flashColorForPlayer_[pid] = Colour::None();
     }
 
-    inline void removeForAll()
-    {
-        shownFor_.clear();
-	}
-
     GangZone(GangZonePos pos)
         : pos(pos)
     {
@@ -163,7 +158,12 @@ public:
 
     ~GangZone()
     {
-        for (IPlayer* player : shownFor_.entries()) {
+    }
+
+    void destream()
+    {
+        for (IPlayer* player : shownFor_.entries())
+		{
             hideForClient(*player);
         }
     }
