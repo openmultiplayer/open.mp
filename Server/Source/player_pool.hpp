@@ -2,7 +2,7 @@
 
 #include "player_impl.hpp"
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler {
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public TickEventHandler {
     ICore& core;
     const FlatPtrHashSet<INetwork>& networks;
     PoolStorage<Player, IPlayer, 0, PLAYER_POOL_SIZE> storage;
@@ -1533,10 +1533,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
 
         // TODO: sync time?
-    }
-
-    void onEntryScriptInit() override
-    {
     }
 
     ~PlayerPool()

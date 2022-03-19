@@ -4,7 +4,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler, public CoreEventHandler {
+class ObjectComponent final : public IObjectsComponent, public TickEventHandler, public PlayerEventHandler, public TickEventHandler, public ModeResetEventHandler {
 private:
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;

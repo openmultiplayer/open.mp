@@ -25,7 +25,7 @@ StringView trim(StringView view)
     return view.substr(start, end - start + 1);
 }
 
-class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
+class ConsoleComponent final : public IConsoleComponent, public TickEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
 private:
     struct ThreadProcData {
         std::atomic_bool valid;

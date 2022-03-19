@@ -56,7 +56,7 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
     reinterpret_cast<void*>(&amx_UTF8Put),
 };
 
-struct PawnComponent final : public IPawnComponent, public CoreEventHandler, ConsoleEventHandler {
+struct PawnComponent final : public IPawnComponent, public TickEventHandler, public ConsoleEventHandler {
     ICore* core = nullptr;
     Scripting scriptingInstance;
 

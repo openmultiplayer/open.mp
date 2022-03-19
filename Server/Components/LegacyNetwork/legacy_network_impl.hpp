@@ -19,7 +19,7 @@ using namespace Impl;
 
 class Core;
 
-class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
+class RakNetLegacyNetwork final : public Network, public TickEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
 private:
     ICore* core = nullptr;
     Query query;

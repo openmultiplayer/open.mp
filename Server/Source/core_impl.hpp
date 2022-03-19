@@ -659,7 +659,7 @@ class Core final : public ICore, public PlayerEventHandler, public ConsoleEventH
 private:
     static constexpr const char* LogFileName = "log.txt";
 
-    DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
+    DefaultEventDispatcher<TickEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
     FlatPtrHashSet<INetwork> networks;
@@ -808,7 +808,7 @@ public:
             }
             ++ticksThisSecond;
 
-            eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
+            eventDispatcher.dispatch(&TickEventHandler::onTick, us, now);
 
             for (auto it = httpFutures.begin(); it != httpFutures.end();) {
                 HTTPAsyncIO* httpIO = *it;
@@ -1053,7 +1053,7 @@ public:
         return utils::GetTickCount();
     }
 
-    IEventDispatcher<CoreEventHandler>& getEventDispatcher() override
+    IEventDispatcher<TickEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;
     }
