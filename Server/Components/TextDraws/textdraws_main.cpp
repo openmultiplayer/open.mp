@@ -4,7 +4,7 @@
 
 using namespace Impl;
 
-class PlayerTextDrawData final : public IPlayerTextDrawData, public ModeResetEventHandler {
+class PlayerTextDrawData final : public IPlayerTextDrawData {
 private:
     IPlayer& player;
     MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, 0, PLAYER_TEXTDRAW_POOL_SIZE> storage;
@@ -103,7 +103,7 @@ public:
     }
 };
 
-class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
+class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler, public ModeResetEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextDraw, ITextDraw, 0, GLOBAL_TEXTDRAW_POOL_SIZE> storage;
