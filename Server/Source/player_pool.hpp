@@ -1535,6 +1535,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         // TODO: sync time?
     }
 
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     ~PlayerPool()
     {
         playerUpdateDispatcher.removeEventHandler(this);

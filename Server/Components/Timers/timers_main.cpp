@@ -77,6 +77,15 @@ public:
         }
     }
 
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     void free() override
     {
         delete this;

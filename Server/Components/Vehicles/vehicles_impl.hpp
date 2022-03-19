@@ -436,6 +436,15 @@ public:
         }
     }
 
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const float maxDist = streamConfigHelper.getDistanceSqr();
