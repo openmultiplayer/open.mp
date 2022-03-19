@@ -4,7 +4,7 @@
 
 using namespace Impl;
 
-class PlayerTextDrawData final : public IPlayerTextDrawData {
+class PlayerTextDrawData final : public IPlayerTextDrawData, public CoreEventHandler {
 private:
     IPlayer& player;
     MarkedPoolStorage<PlayerTextDraw, IPlayerTextDraw, 0, PLAYER_TEXTDRAW_POOL_SIZE> storage;

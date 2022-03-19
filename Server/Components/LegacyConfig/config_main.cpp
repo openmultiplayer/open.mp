@@ -322,11 +322,6 @@ public:
         }
     }
 
-    void onModeReset() override
-    {
-        // Destroy all stored entity instances.
-    }
-
     ~LegacyConfigComponent()
     {
         if (console) {

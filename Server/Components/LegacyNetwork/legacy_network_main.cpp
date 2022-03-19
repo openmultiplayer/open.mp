@@ -28,11 +28,6 @@ public:
         }
     }
 
-	void onModeReset() override
-    {
-        // Destroy all stored entity instances.
-    }
-
     INetwork* getNetwork() override
     {
         return &legacyNetwork;

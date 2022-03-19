@@ -77,7 +77,7 @@ public:
     }
 };
 
-class ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
+class ClassesComponent final : public IClassesComponent, public PlayerEventHandler, public CoreEventHandler {
 private:
     MarkedPoolStorage<Class, IClass, 0, CLASS_POOL_SIZE> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;

@@ -188,11 +188,6 @@ public:
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
     void onTick(Microseconds elapsed, TimePoint now) override;
 
-    void onModeReset() override
-    {
-        // Destroy all stored entity instances.
-    }
-    
 	void init(ICore* core);
     void start();
 
