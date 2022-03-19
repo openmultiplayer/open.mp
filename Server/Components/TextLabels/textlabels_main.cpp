@@ -185,7 +185,12 @@ public:
 
     void release(int index) override
     {
-        storage.release(index, false);
+        auto ptr = storage.get(index);
+        if (ptr)
+		{
+            static_cast<TextLabel*>(ptr)->destream();
+			storage.release(index, false);
+        }
     }
 
     void lock(int index) override

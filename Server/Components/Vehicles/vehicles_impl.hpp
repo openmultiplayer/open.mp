@@ -383,11 +383,13 @@ public:
                 for (IVehicle* c : vehicle.getCarriages()) {
                     Vehicle* carriage = static_cast<Vehicle*>(c);
                     --preloadModels[carriage->getModel() - 400];
+                    carriage->destream();
                     storage.release(carriage->poolID, false);
                 }
             }
 
             --preloadModels[veh_model - 400];
+            vehiclePtr->destream();
             storage.release(index, false);
         }
     }
