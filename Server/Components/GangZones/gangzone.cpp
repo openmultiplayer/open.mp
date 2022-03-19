@@ -10,6 +10,14 @@ private:
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
 public:
+    ~GangZonesComponent()
+    {
+        if (core)
+		{
+			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+        }
+	}
+
     StringView componentName() const override
     {
         return "GangZones";
@@ -23,7 +31,7 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        this->core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getEventDispatcher().addEventHandler(this);
         this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
     }
 
