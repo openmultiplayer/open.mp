@@ -173,11 +173,8 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
-        for (ITextDraw* a : storage)
-		{
-            static_cast<TextDraw*>(a)->removeForAll();
-        }
         storage.clear();
+        //PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
     }
 
     ~TextDrawsComponent()

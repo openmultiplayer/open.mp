@@ -440,10 +440,6 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
-        for (IVehicle* a : storage)
-		{
-            static_cast<Vehicle*>(a)->removeForAll();
-        }
         storage.clear();
     }
 

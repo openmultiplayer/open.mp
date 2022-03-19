@@ -4,7 +4,12 @@
 Object::~Object()
 {
     eraseFromProcessed(true /* force */);
-    for (IPlayer* player : objects_.getPlayers().entries()) {
+}
+
+void Object::destream()
+{
+    for (IPlayer* player : objects_.getPlayers().entries())
+	{
         destroyForPlayer(*player);
     }
 }

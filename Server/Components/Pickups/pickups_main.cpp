@@ -96,10 +96,6 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
-        for (IPickup* a : storage)
-		{
-            static_cast<Pickup*>(a)->removeForAll();
-        }
         storage.clear();
     }
 

@@ -70,11 +70,6 @@ public:
         }
     }
 
-    void removeForAll()
-    {
-        streamedFor_.clear();
-    }
-
     Actor(int skin, Vector3 pos, float angle)
         : virtualWorld_(0)
         , skin_(skin)
@@ -244,9 +239,15 @@ public:
 
     ~Actor()
     {
-        for (IPlayer* player : streamedFor_.entries()) {
+    }
+
+    void destream()
+    {
+        for (IPlayer* player : streamedFor_.entries())
+		{
             auto actor_data = queryExtension<PlayerActorData>(player);
-            if (actor_data) {
+            if (actor_data)
+			{
                 --actor_data->numStreamed;
             }
             streamOutForClient(*player);
