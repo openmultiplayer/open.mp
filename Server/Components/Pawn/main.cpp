@@ -171,11 +171,6 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
         PawnManager::Get()->ProcessTick(elapsed, now);
     }
 
-    void onModeReset() override
-    {
-        // Destroy all stored entity instances.
-    }
-
     void onFree(IComponent* component) override
     {
 #define COMPONENT_UNLOADED(var) \

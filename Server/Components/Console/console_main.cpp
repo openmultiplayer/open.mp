@@ -230,11 +230,6 @@ public:
         }
     }
 
-    void onModeReset() override
-    {
-        // Destroy all stored entity instances.
-    }
-
     bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         const auto it = ConsoleCmdHandler::Commands.find(String(command));

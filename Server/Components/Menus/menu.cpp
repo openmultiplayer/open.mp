@@ -2,7 +2,7 @@
 
 using namespace Impl;
 
-class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
+class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler, public CoreEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Menu, IMenu, 1, MENU_POOL_SIZE> storage;

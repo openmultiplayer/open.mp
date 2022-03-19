@@ -77,11 +77,6 @@ public:
         }
     }
 
-    void onModeReset() override
-    {
-        // Destroy all stored entity instances.
-    }
-
     void free() override
     {
         delete this;

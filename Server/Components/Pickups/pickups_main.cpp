@@ -3,7 +3,7 @@
 
 using namespace Impl;
 
-class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Pickup, IPickup, 0, PICKUP_POOL_SIZE> storage;

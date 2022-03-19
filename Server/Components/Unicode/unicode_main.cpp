@@ -5,15 +5,10 @@
 
 using namespace Impl;
 
-class UnicodeComponent final : public IUnicodeComponent {
+class UnicodeComponent final : public IUnicodeComponent, public CoreEventHandler {
 public:
     void onLoad(ICore* core) override
     {
-    }
-
-    void onModeReset() override
-    {
-        // Destroy all stored entity instances.
     }
 
     OptimisedString toUTF8(StringView input) override

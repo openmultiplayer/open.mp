@@ -4,7 +4,7 @@
 
 using namespace Impl;
 
-class CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
+class CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler, public CoreEventHandler {
 private:
     DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
     ICore* core = nullptr;

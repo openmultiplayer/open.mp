@@ -1,6 +1,6 @@
 #include "actor.hpp"
 
-class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Actor, IActor, 0, ACTOR_POOL_SIZE> storage;
