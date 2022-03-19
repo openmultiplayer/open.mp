@@ -20,13 +20,13 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getEventDispatcher().addEventHandler(this);
+        core->getTickEventDispatcher().addEventHandler(this);
     }
 
     ~TimersComponent()
     {
         if (core) {
-            core->getEventDispatcher().removeEventHandler(this);
+            core->getTickEventDispatcher().removeEventHandler(this);
         }
 
         for (auto timer : timers) {

@@ -293,7 +293,7 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getEventDispatcher().addEventHandler(this);
+        core->getTickEventDispatcher().addEventHandler(this);
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);

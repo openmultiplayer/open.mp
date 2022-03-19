@@ -140,7 +140,7 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getEventDispatcher().addEventHandler(this);
+        core->getTickEventDispatcher().addEventHandler(this);
         this->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
 
@@ -182,7 +182,7 @@ public:
             threadData->valid = false;
         }
         if (core) {
-            core->getEventDispatcher().removeEventHandler(this);
+            core->getTickEventDispatcher().removeEventHandler(this);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
 
             NetCode::Packet::PlayerRconCommand::removeEventHandler(*core, &playerRconCommandHandler);
