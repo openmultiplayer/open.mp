@@ -76,6 +76,7 @@ public:
     bool Load(std::string const& name, bool primary = false);
     bool Reload(std::string const& name);
     bool Unload(std::string const& name);
+    bool Changemode(std::string const& name);
 
     template <typename... T>
     cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
