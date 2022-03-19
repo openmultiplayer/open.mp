@@ -97,15 +97,7 @@ public:
         NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
     }
 
-    void onTick(Microseconds elapsed, TimePoint now) override
-    {
-    }
-
-    void onEntryScriptInit() override
-    {
-    }
-
-    void onEntryScriptExit() override
+    void onModeReset() override
     {
         // Destroy all stored entity instances.
     }

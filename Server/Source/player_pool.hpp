@@ -1539,7 +1539,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     {
     }
 
-    void onEntryScriptExit() override
+    void onModeReset() override
     {
         // Destroy all stored entity instances.
     }

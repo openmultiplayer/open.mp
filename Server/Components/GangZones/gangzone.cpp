@@ -35,6 +35,10 @@ public:
         }
     }
 
+    void onModeReset() override
+    {
+    }
+
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const Vector3& playerPos = player.getPosition();

@@ -170,15 +170,7 @@ public:
         NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
     }
 
-    void onTick(Microseconds elapsed, TimePoint now) override
-    {
-    }
-
-    void onEntryScriptInit() override
-    {
-    }
-
-    void onEntryScriptExit() override
+    void onModeReset() override
     {
         // Destroy all stored entity instances.
     }
