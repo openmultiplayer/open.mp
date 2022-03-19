@@ -156,7 +156,10 @@ bool PawnManager::Changemode(std::string const& name)
 {
 	// First check that the new script exists.
     FILE* fp;
-	if ((fp = fopen(name.c_str(), "rb")) == NULL)
+    std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
+    std::string canon;
+    utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
+    if ((fp = fopen(canon.c_str(), "rb")) == NULL)
 	{
         core->printLn("Could not find:\n\n\t %s %s", name.c_str(),
             R"(
