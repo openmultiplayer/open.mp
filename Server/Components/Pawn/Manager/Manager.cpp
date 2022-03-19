@@ -77,8 +77,12 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
             console->sendMessage(sender, "Filterscript '" + args + "' reloaded.");
         }
         return true;
-    } else if (cmd == "changemode" || cmd == "gmx") {
+    } else if (cmd == "gmx") {
         console->sendMessage(sender, "Entry script changing is not supported.");
+        return true;
+    } else if (cmd == "changemode") {
+        Unload(entryScript);
+        Load("gamemodes/" + args);
         return true;
     }
     // New commands.
