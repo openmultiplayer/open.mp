@@ -33,6 +33,7 @@ typedef char TCHAR;
 PawnManager::PawnManager()
     : scriptPath_("")
     , basePath_("./")
+    , gamemodes_()
 {
 }
 
