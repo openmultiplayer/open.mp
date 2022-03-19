@@ -79,11 +79,16 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "gmx") {
-        console->sendMessage(sender, "Entry script changing is not supported.");
+		// Advance to the next script in the list.
+        ++gamemodeIndex_;
+		if (gamemodeIndex_ == gamemodes_.size())
+		{
+            gamemodeIndex_ = 0;
+		}
+        Changemode("gamemodes/" + gamemodes_.at(gamemodeIndex_));
         return true;
     } else if (cmd == "changemode") {
-        Unload(entryScript);
-        Load("gamemodes/" + args);
+        Changemode("gamemodes/" + args);
         return true;
     }
     // New commands.
@@ -145,6 +150,23 @@ void PawnManager::CheckNatives(PawnScript& script)
             core->logLn(LogLevel::Error, "Function not registered: %s", func.name);
         }
     }
+}
+
+bool PawnManager::Changemode(std::string const& name)
+{
+	// First check that the new script exists.
+    FILE* fp;
+	if ((fp = fopen(name.c_str(), "rb")) == NULL)
+	{
+        return false;
+	}
+	// Close it for now, it'll be reopened again by `aux_LoadProgram`.
+    fclose(fp);
+	// Unload the old main script.
+    Unload(entryScript);
+    entryScript = name;
+	// Start the changemode timer.
+    return true;
 }
 
 bool PawnManager::Load(std::string const& name, bool primary)
