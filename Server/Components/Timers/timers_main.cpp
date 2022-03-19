@@ -1,7 +1,7 @@
 #include "timer.hpp"
 #include <sdk.hpp>
 
-class TimersComponent final : public ITimersComponent, public CoreEventHandler {
+class TimersComponent final : public ITimersComponent, public TickEventHandler {
 private:
     ICore* core = nullptr;
     std::set<Timer*> timers;

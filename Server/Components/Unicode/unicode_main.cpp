@@ -5,7 +5,7 @@
 
 using namespace Impl;
 
-class UnicodeComponent final : public IUnicodeComponent, public CoreEventHandler {
+class UnicodeComponent final : public IUnicodeComponent, public TickEventHandler {
 public:
     void onLoad(ICore* core) override
     {

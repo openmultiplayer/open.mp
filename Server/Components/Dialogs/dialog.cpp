@@ -37,7 +37,7 @@ public:
     }
 };
 
-class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler, public CoreEventHandler {
+class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler, public ModeResetEventHandler {
 private:
     ICore* core = nullptr;
     DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;

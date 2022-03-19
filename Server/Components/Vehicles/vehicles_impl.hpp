@@ -8,7 +8,7 @@
 
 using namespace Impl;
 
-class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class VehiclesComponent final : public IVehiclesComponent, public TickEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler, public ModeResetEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Vehicle, IVehicle, 1, VEHICLE_POOL_SIZE> storage;
