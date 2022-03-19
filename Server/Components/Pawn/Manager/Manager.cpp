@@ -186,6 +186,7 @@ bool PawnManager::Load(std::string const& name, bool primary)
     if (primary) {
         entryScript = name;
         script.Call("OnGameModeInit", DefaultReturnValue_False);
+        CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
         int err = script.Exec(nullptr, AMX_EXEC_MAIN);
         if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
@@ -232,6 +233,7 @@ bool PawnManager::Unload(std::string const& name)
     auto& script = *pos->second;
 
     if (isEntryScript) {
+        CallInSides("OnGameModeExit", DefaultReturnValue_False);
         script.Call("OnGameModeExit", DefaultReturnValue_False);
         entryScript = "";
     } else {
@@ -271,3 +273,4 @@ void PawnManager::SetScriptPath(std::string const& path)
         scriptPath_ = path + '/';
     }
 }
+
