@@ -121,7 +121,12 @@ public:
             IGangZone* zone = get(index);
             checkingList.remove(index, *zone);
         }
-        storage.release(index, false);
+		auto ptr = storage.get(index);
+		if (ptr)
+		{
+            static_cast<GangZone*>(ptr)->destream();
+	        storage.release(index, false);
+		}
     }
 
     void lock(int index) override

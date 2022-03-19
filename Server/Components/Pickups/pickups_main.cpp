@@ -112,7 +112,9 @@ public:
     void release(int index) override
     {
         Pickup* pickup = storage.get(index);
-        if (pickup && !pickup->isStatic()) {
+        if (pickup && !pickup->isStatic())
+		{
+            static_cast<Pickup*>(pickup)->destream();
             storage.release(index, false);
         }
     }
