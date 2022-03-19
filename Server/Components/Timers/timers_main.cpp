@@ -77,11 +77,7 @@ public:
         }
     }
 
-    void onEntryScriptInit() override
-    {
-    }
-
-    void onEntryScriptExit() override
+    void onModeReset() override
     {
         // Destroy all stored entity instances.
     }
