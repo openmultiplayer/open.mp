@@ -59,6 +59,8 @@ public:
     IVehiclesComponent* vehicles = nullptr;
     DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
     PawnPluginManager pluginManager;
+    int gamemodeIndex_ = 0;
+    DynamicArray<String> gamemodes_;
 
     PawnManager();
     ~PawnManager();
