@@ -33,15 +33,20 @@ private:
 public:
     void removeFor(int pid, IPlayer& player)
     {
-        if (shownFor_.valid(pid)) {
+        if (shownFor_.valid(pid))
+        {
             shownFor_.remove(pid, player);
         }
-
         playersInside_.reset(pid);
         flashingFor_.reset(pid);
         colorForPlayer_[pid] = Colour::None();
         flashColorForPlayer_[pid] = Colour::None();
     }
+
+    inline void removeForAll()
+    {
+        shownFor_.clear();
+	}
 
     GangZone(GangZonePos pos)
         : pos(pos)

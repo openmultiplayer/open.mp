@@ -37,6 +37,11 @@ public:
 
     void onModeReset() override
     {
+        for (IGangZone* a : storage)
+		{
+            static_cast<GangZone*>(a)->removeForAll();
+        }
+        storage.clear();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override

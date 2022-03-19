@@ -372,6 +372,11 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
+		storage.clear();
+        isPlayerObject.fill(0);
+        processedPlayerObjects.clear();
+        processedObjects.clear();
+        defCameraCollision = true;
     }
 };
 

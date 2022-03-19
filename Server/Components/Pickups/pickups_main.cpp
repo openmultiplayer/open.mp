@@ -81,7 +81,8 @@ public:
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IPickup* p : storage) {
+        for (IPickup* p : storage)
+		{
             static_cast<Pickup*>(p)->removeFor(pid, player);
             static_cast<Pickup*>(p)->setPickupHiddenForPlayer(player, false);
         }
@@ -95,6 +96,11 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
+        for (IPickup* a : storage)
+		{
+            static_cast<Pickup*>(a)->removeForAll();
+        }
+        storage.clear();
     }
 
     Pair<size_t, size_t> bounds() const override

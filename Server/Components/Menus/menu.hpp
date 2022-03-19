@@ -44,10 +44,16 @@ private:
 public:
     void removeFor(int pid, IPlayer& player)
     {
-        if (initedFor_.valid(pid)) {
+        if (initedFor_.valid(pid))
+		{
             initedFor_.remove(pid, player);
         }
     }
+
+	inline void removeForAll()
+    {
+        initedFor_.clear();
+	}
 
     Menu(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width)
         : title(String(title))

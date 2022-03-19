@@ -173,6 +173,11 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
+        for (ITextDraw* a : storage)
+		{
+            static_cast<TextDraw*>(a)->removeForAll();
+        }
+        storage.clear();
     }
 
     ~TextDrawsComponent()
@@ -195,6 +200,15 @@ public:
         for (ITextDraw* textdraw : storage) {
             TextDraw* textdraw_ = static_cast<TextDraw*>(textdraw);
             textdraw_->removeFor(pid, player);
+        }
+    }
+
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
+        const int pid = player.getID();
+        for (ITextDraw* v : storage)
+		{
+            static_cast<TextDraw*>(v)->removeFor(pid, player);
         }
     }
 

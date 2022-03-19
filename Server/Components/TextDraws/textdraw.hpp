@@ -329,6 +329,11 @@ public:
             shownFor_.remove(pid, player);
         }
     }
+    
+	inline void removeForAll()
+    {
+        shownFor_.clear();
+	}
 
     void restream() override
     {

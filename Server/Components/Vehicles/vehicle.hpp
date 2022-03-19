@@ -96,6 +96,11 @@ public:
             streamedFor_.remove(pid, player);
         }
     }
+	
+    inline void removeForAll()
+    {
+        streamedFor_.clear();
+    }
 
     /// Sets the vehicle's death state.
     void setDead(IPlayer& killer);

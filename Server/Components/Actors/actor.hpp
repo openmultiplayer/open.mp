@@ -64,9 +64,15 @@ private:
 public:
     void removeFor(int pid, IPlayer& player)
     {
-        if (streamedFor_.valid(pid)) {
+        if (streamedFor_.valid(pid))
+		{
             streamedFor_.remove(pid, player);
         }
+    }
+
+    void removeForAll()
+    {
+        streamedFor_.clear();
     }
 
     Actor(int skin, Vector3 pos, float angle)
