@@ -48,6 +48,11 @@ public:
         }
     }
 
+    inline void removeForAll()
+    {
+        streamedFor_.clear();
+    }
+
     inline bool isStatic() const
     {
         return isStatic_;

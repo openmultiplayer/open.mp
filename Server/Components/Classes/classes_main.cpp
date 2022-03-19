@@ -166,9 +166,12 @@ public:
     {
     }
 
-	void onModeReset() override
+    void onModeReset() override
     {
         // Destroy all stored entity instances.
+        storage.clear();
+        inClassRequest = false;
+        skipDefaultClassRequest = false;
     }
 
     void onLoad(ICore* c) override

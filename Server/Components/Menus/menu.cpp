@@ -100,12 +100,18 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
+        for (IMenu* a : storage)
+		{
+            static_cast<Menu*>(a)->removeForAll();
+        }
+        storage.clear();
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IMenu* m : storage) {
+        for (IMenu* m : storage)
+		{
             static_cast<Menu*>(m)->removeFor(pid, player);
         }
     }

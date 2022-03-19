@@ -261,7 +261,8 @@ public:
         }
 
         const int pid = player.getID();
-        for (IVehicle* v : storage) {
+        for (IVehicle* v : storage)
+		{
             static_cast<Vehicle*>(v)->removeFor(pid, player);
         }
     }
@@ -439,6 +440,11 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
+        for (IVehicle* a : storage)
+		{
+            static_cast<Vehicle*>(a)->removeForAll();
+        }
+        storage.clear();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override

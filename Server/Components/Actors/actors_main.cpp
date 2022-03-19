@@ -84,7 +84,8 @@ public:
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IActor* a : storage) {
+        for (IActor* a : storage)
+		{
             static_cast<Actor*>(a)->removeFor(pid, player);
         }
     }
@@ -143,6 +144,11 @@ public:
     void onModeReset() override
     {
         // Destroy all stored entity instances.
+        for (IActor* a : storage)
+		{
+            static_cast<Actor*>(a)->removeForAll();
+        }
+        storage.clear();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
