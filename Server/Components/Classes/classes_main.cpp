@@ -166,6 +166,19 @@ public:
     {
     }
 
+    void onTick(Microseconds elapsed, TimePoint now) override
+    {
+    }
+
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     void onLoad(ICore* c) override
     {
         core = c;

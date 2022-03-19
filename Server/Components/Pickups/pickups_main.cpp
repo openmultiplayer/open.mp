@@ -92,6 +92,19 @@ public:
         delete this;
     }
 
+    void onTick(Microseconds elapsed, TimePoint now) override
+    {
+    }
+
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     Pair<size_t, size_t> bounds() const override
     {
         return std::make_pair(storage.Lower, storage.Upper);

@@ -322,6 +322,19 @@ public:
         }
     }
 
+    void onTick(Microseconds elapsed, TimePoint now) override
+    {
+    }
+
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     ~LegacyConfigComponent()
     {
         if (console) {

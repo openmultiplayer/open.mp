@@ -11,6 +11,19 @@ public:
     {
     }
 
+    void onTick(Microseconds elapsed, TimePoint now) override
+    {
+    }
+
+    void onEntryScriptInit() override
+    {
+    }
+
+    void onEntryScriptExit() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     OptimisedString toUTF8(StringView input) override
     {
         static UErrorCode detstatus = U_ZERO_ERROR;
