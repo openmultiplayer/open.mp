@@ -182,7 +182,7 @@ public:
     {
         this->core = core;
         this->players = &core->getPlayers();
-        core->getEventDispatcher().addEventHandler(this);
+        core->getTickEventDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
@@ -192,7 +192,7 @@ public:
     ~ObjectComponent()
     {
         if (core) {
-            core->getEventDispatcher().removeEventHandler(this);
+            core->getTickEventDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
             NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);

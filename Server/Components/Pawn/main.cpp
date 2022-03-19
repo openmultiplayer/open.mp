@@ -83,7 +83,7 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
         PawnManager::Get()->config = &core->getConfig();
         PawnManager::Get()->players = &core->getPlayers();
         PawnManager::Get()->pluginManager.core = core;
-        core->getEventDispatcher().addEventHandler(this);
+        core->getTickEventDispatcher().addEventHandler(this);
 
         // Set AMXFILE environment variable to "{current_dir}/scriptfiles"
         std::filesystem::path scriptfilesPath = std::filesystem::absolute("scriptfiles");
@@ -208,7 +208,7 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
     ~PawnComponent()
     {
         if (core) {
-            core->getEventDispatcher().removeEventHandler(this);
+            core->getTickEventDispatcher().removeEventHandler(this);
         }
         if (PawnManager::Get()->console) {
             PawnManager::Get()->console->getEventDispatcher().removeEventHandler(this);

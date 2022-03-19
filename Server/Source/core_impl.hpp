@@ -1053,7 +1053,7 @@ public:
         return utils::GetTickCount();
     }
 
-    IEventDispatcher<TickEventHandler>& getEventDispatcher() override
+    IEventDispatcher<TickEventHandler>& getTickEventDispatcher() override
     {
         return eventDispatcher;
     }
