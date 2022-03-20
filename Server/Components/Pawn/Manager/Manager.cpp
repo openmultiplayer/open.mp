@@ -316,6 +316,10 @@ bool PawnManager::Unload(std::string const& name)
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
     scripts_.erase(pos);
+	if (isEntryScript)
+	{
+        core->resetAll();
+	}
 
     return true;
 }
