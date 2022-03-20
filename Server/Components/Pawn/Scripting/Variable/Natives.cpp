@@ -35,11 +35,16 @@ SCRIPT_API(SetSVarString, bool(const std::string& varname, const std::string& va
     return true;
 }
 
-SCRIPT_API(GetSVarString, int(const std::string& varname, StringView& output))
+SCRIPT_API(GetSVarString, int(const std::string& varname, OutputOnlyString& output))
 {
     GET_VAR_COMP(component, false);
-    output = component->getString(varname);
-    return output.length();
+    // If string is empty, output will not be updated or set to anything and will remain with old data.
+    StringView var = component->getString(varname);
+    if (var.empty()) {
+        return 0;
+    }
+    output = var;
+    return std::get<StringView>(output).length();
 }
 
 SCRIPT_API(SetSVarFloat, bool(const std::string& varname, float value))
@@ -71,10 +76,15 @@ SCRIPT_API(GetSVarsUpperIndex, int())
     return component->size();
 }
 
-SCRIPT_API(GetSVarNameAtIndex, bool(int index, StringView& varname))
+SCRIPT_API(GetSVarNameAtIndex, bool(int index, OutputOnlyString& output))
 {
     GET_VAR_COMP(component, false);
-    return component->getKeyAtIndex(index, varname);
+    StringView varname;
+    bool res = component->getKeyAtIndex(index, varname);
+    if (res) {
+        output = varname;
+    }
+    return res;
 }
 
 SCRIPT_API(GetSVarType, int(const std::string& varname))
