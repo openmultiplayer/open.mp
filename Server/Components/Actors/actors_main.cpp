@@ -65,6 +65,7 @@ public:
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerDamageActor::addEventHandler(*core, &playerDamageActorEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     ~ActorsComponent()

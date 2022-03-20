@@ -116,6 +116,7 @@ public:
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onInit(IComponentList* components) override

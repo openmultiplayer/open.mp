@@ -103,6 +103,7 @@ public:
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     StringView componentName() const override

@@ -95,6 +95,7 @@ public:
         players->getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectedMenuRow::addEventHandler(*core, &playerSelectedMenuRowEventHandler);
         NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onModeReset() override

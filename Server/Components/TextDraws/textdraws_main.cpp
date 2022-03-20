@@ -168,6 +168,7 @@ public:
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onModeReset() override

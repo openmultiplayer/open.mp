@@ -102,6 +102,7 @@ public:
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onModeReset() override
