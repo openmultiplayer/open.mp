@@ -179,6 +179,7 @@ public:
         core = c;
         NetCode::RPC::PlayerRequestClass::addEventHandler(*core, &onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     IEventDispatcher<ClassEventHandler>& getEventDispatcher() override

@@ -33,7 +33,8 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+        core->getPlayers().getEventDispatcher().addEventHandler(this);
+        core->getModeResetEventDispatcher().addEventHandler(this);
         this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
     }
 

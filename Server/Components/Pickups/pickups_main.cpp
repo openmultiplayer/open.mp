@@ -62,6 +62,7 @@ public:
         players->getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerPickUpPickup::addEventHandler(*core, &playerPickUpPickupEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     ~PickupsComponent()

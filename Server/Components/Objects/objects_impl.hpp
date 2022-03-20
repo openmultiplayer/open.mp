@@ -187,6 +187,7 @@ public:
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     ~ObjectComponent()

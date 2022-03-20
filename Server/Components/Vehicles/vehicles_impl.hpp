@@ -304,6 +304,7 @@ public:
         NetCode::RPC::VehicleDeath::addEventHandler(*core, &vehicleDeathHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
         deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
+        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onConnect(IPlayer& player) override
