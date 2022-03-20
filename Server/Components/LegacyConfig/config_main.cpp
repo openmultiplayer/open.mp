@@ -70,7 +70,7 @@ const FlatHashMap<StringView, ParamType> types = {
 const FlatHashMap<StringView, StringView> dictionary = {
     { "rcon", "enable_rcon" },
     { "rcon_password", "rcon_password" },
-    { "gamemode", "pawn.entry_file" },
+    { "gamemode", "pawn.main_scripts" },
     { "filterscripts", "pawn.side_scripts" },
     { "plugins", "pawn.legacy_plugins" },
     { "announce", "announce" },
