@@ -118,6 +118,7 @@ public:
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectedMenuRow::removeEventHandler(*core, &playerSelectedMenuRowEventHandler);
             NetCode::RPC::OnPlayerExitedMenu::removeEventHandler(*core, &playerExitedMenuEventHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

@@ -70,6 +70,7 @@ public:
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerPickUpPickup::removeEventHandler(*core, &playerPickUpPickupEventHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

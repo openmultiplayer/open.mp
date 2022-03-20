@@ -119,6 +119,7 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

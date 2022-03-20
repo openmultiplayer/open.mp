@@ -182,6 +182,7 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectTextDraw::removeEventHandler(*core, &playerSelectTextDrawEventHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

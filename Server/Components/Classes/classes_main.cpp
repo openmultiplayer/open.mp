@@ -259,6 +259,7 @@ public:
         if (core) {
             NetCode::RPC::PlayerRequestClass::removeEventHandler(*core, &onPlayerRequestClassHandler);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 };

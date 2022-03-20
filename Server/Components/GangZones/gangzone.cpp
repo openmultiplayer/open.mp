@@ -15,6 +15,8 @@ public:
         if (core)
 		{
 			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getModeResetEventDispatcher().removeEventHandler(this);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
 	}
 
