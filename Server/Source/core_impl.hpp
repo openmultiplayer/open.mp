@@ -866,11 +866,19 @@ public:
 
         if (cmd.count("script")) {
 			// Add the launch parameter to the start of the scripts list.
-            DynamicArray<StringView> mainScripts(config.getStringsCount("pawn.main_scripts") + 1);
-            config.getStrings("pawn.main_scripts", Span<StringView>(mainScripts.data() + 1, mainScripts.size() - 1));
-            String entry_file = cmd["script"].as<String>();
-            mainScripts[0] = cmd["script"].as<std::string>();
-            config.setStrings("pawn.main_scripts", mainScripts);
+			// Something here corrupts the strings between loading and inserting.  Hence doing this
+			// the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
+			// we got the old value, modified it, then passed it in for the new value.  But our
+            // modified value was only a pointer to the old value, which was now being overridden.
+            DynamicArray<String> const mainScripts = *config.getStrings("pawn.main_scripts");
+            DynamicArray<StringView> view {};
+			String entry_file = cmd["script"].as<String>();
+            view.push_back(entry_file);
+            for (String const & v : mainScripts)
+			{
+                view.push_back(v);
+            }
+            config.setStrings("pawn.main_scripts", view);
         }
 
         // Don't use config before this point
