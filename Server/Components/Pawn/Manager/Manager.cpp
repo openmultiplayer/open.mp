@@ -292,6 +292,12 @@ bool PawnManager::Load(std::string const& name, bool primary)
     // Assume that all initialisation and header mangling is now complete, and that it is safe to
     // cache public pointers.
 
+    // Call `OnPlayerConnect` (can be after caching).
+    core->reloadAll();
+    for (auto p : players->entries())
+	{
+        script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
+    }
     return true;
 }
 
@@ -315,6 +321,11 @@ bool PawnManager::Unload(std::string const& name)
     }
     auto& script = *pos->second;
 
+	// Call `OnPlayerDisconnect`.
+	for (auto const p : players->entries())
+	{
+        script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), 3);
+	}
     if (isEntryScript) {
         CallInSides("OnGameModeExit", DefaultReturnValue_False);
         script.Call("OnGameModeExit", DefaultReturnValue_False);

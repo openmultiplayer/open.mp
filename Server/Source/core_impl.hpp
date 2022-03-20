@@ -825,43 +825,6 @@ private:
         RPC.Col = player.getColour();
         PacketHelper::send(RPC, player);
     }
-	
-    void playerDeinit()
-    {
-        NetCode::RPC::PlayerInit playerInitRPC;
-        playerInitRPC.EnableZoneNames = *EnableZoneNames;
-        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
-        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
-        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
-        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
-        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
-        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
-        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
-        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
-        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
-        playerInitRPC.ShowNameTags = *ShowNameTags;
-        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
-        playerInitRPC.SetWorldTime = *SetWorldTime;
-        playerInitRPC.SetWeather = *SetWeather;
-        playerInitRPC.SetGravity = *SetGravity;
-        playerInitRPC.LanMode = *LanMode;
-        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
-        playerInitRPC.Instagib = *Instagib;
-        playerInitRPC.OnFootRate = *OnFootRate;
-        playerInitRPC.InCarRate = *InCarRate;
-        playerInitRPC.WeaponRate = *WeaponRate;
-        playerInitRPC.Multiplier = *Multiplier;
-        playerInitRPC.LagCompensation = *LagCompensation;
-        playerInitRPC.ServerName = StringView(ServerName);
-        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
-        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
-        playerInitRPC.PlayerID = 0;
-        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        static const StaticArray<uint8_t, 212> emptyModels { 0 };
-        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
-        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
-        PacketHelper::broadcast(playerInitRPC, players);
-    }
 
 public:
     bool reloadLogFile()
@@ -910,8 +873,17 @@ public:
 
 	void resetAll() override
     {
-        playerDeinit();
+        NetCode::RPC::GMX RPC;
+        PacketHelper::broadcast(RPC, players);
         resetEventDispatcher.dispatch(&ModeResetEventHandler::onModeReset);
+    }
+
+	void reloadAll() override
+    {
+        for (auto p : players.entries())
+		{
+            playerInit(*p);
+        }
     }
 
 	void stop()
