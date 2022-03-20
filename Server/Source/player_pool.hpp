@@ -1386,7 +1386,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         maxBots = *config.getInt("max_bots");
 
         playerUpdateDispatcher.addEventHandler(this);
-        core.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
+        core.getTickEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
         core.addNetworkEventHandler(this);
 
         NetCode::RPC::PlayerSpawn::addEventHandler(core, &playerSpawnRPCHandler);
@@ -1562,6 +1562,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::Packet::PlayerWeaponsUpdate::removeEventHandler(core, &playerWeaponsUpdateHandler);
         NetCode::Packet::PlayerTrailerSync::removeEventHandler(core, &playerTrailerSyncHandler);
         core.removeNetworkEventHandler(this);
-        core.getEventDispatcher().removeEventHandler(this);
+        core.getTickEventDispatcher().removeEventHandler(this);
     }
 };
