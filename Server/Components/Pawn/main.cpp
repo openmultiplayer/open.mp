@@ -153,7 +153,7 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
 
         DynamicArray<StringView> mainScripts(config.getStringsCount("pawn.main_scripts"));
         config.getStrings("pawn.main_scripts", Span<StringView>(mainScripts.data(), mainScripts.size()));
-        mgr->Load(String(mainScripts[0]), true);
+        mgr->Load(mainScripts);
     }
 
     const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const override
