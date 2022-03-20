@@ -76,6 +76,7 @@ public:
     void SetScriptPath(std::string const& path);
 
     bool Load(std::string const& name, bool primary = false);
+    bool Load(DynamicArray<StringView> const & mainScripts);
     bool Reload(std::string const& name);
     bool Unload(std::string const& name);
     bool Changemode(std::string const& name);

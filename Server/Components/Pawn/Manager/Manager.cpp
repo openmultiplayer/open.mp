@@ -209,6 +209,21 @@ void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 	}
 }
 
+bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
+{
+	if (mainScripts.empty())
+	{
+        return false;
+	}
+    gamemodes_.clear();
+    gamemodeIndex_ = 0;
+	for (auto const & i : mainScripts)
+	{
+        gamemodes_.push_back(String(i));
+	}
+    return Load(gamemodes_[0], true);
+}
+
 bool PawnManager::Load(std::string const& name, bool primary)
 {
     if (scripts_.count(name)) {
