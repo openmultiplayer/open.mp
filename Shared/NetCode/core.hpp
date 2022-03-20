@@ -1384,6 +1384,18 @@ namespace RPC {
             bs.writeUINT16(Count);
         }
     };
+
+    struct GMX : NetworkPacketBase<40, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+
+        bool read(NetworkBitStream& bs)
+        {
+            return false;
+        }
+
+        void write(NetworkBitStream& bs) const
+        {
+        }
+    };
 }
 
 namespace Packet {
