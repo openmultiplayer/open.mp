@@ -88,7 +88,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 		{
             gamemodeIndex_ = 0;
 		}
-        Changemode("gamemodes/" + gamemodes_.at(gamemodeIndex_));
+        Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]);
         return true;
     } else if (cmd == "changemode") {
         Changemode("gamemodes/" + args);
@@ -221,7 +221,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 	{
         gamemodes_.push_back(String(i));
 	}
-    return Load(gamemodes_[0], true);
+    return Load("gamemodes/" + gamemodes_[0], true);
 }
 
 bool PawnManager::Load(std::string const& name, bool primary)
