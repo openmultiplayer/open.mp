@@ -287,6 +287,7 @@ public:
             NetCode::RPC::SetVehicleDamageStatus::removeEventHandler(*core, &vehicleDamageStatusHandler);
             NetCode::RPC::SCMEvent::removeEventHandler(*core, &playerSCMEventHandler);
             NetCode::RPC::VehicleDeath::removeEventHandler(*core, &vehicleDeathHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

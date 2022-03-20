@@ -130,6 +130,7 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 };

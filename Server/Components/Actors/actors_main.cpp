@@ -73,6 +73,7 @@ public:
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerDamageActor::removeEventHandler(*core, &playerDamageActorEventHandler);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

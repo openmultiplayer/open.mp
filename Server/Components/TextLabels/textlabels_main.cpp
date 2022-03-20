@@ -128,6 +128,7 @@ public:
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
+            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
