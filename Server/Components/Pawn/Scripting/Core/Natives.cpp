@@ -216,7 +216,7 @@ int getConfigOptionAsInt(std::string const& cvar)
     }
 }
 
-int getConfigOptionAsString(std::string const& cvar, StringView& buffer)
+int getConfigOptionAsString(std::string const& cvar, OutputOnlyString& buffer)
 {
     IConfig* config = PawnManager::Get()->config;
     auto res = config->getNameFromAlias(cvar);
@@ -228,7 +228,7 @@ int getConfigOptionAsString(std::string const& cvar, StringView& buffer)
     } else {
         buffer = config->getString(cvar);
     }
-    return buffer.length();
+    return std::get<StringView>(buffer).length();
 }
 
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
@@ -241,7 +241,7 @@ SCRIPT_API(GetConsoleVarAsInt, int(std::string const& cvar))
     return getConfigOptionAsInt(cvar);
 }
 
-SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, StringView& buffer))
+SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, OutputOnlyString& buffer))
 {
     return getConfigOptionAsString(cvar, buffer);
 }
@@ -251,7 +251,7 @@ SCRIPT_API(GetGravity, float())
     return *PawnManager::Get()->config->getFloat("gravity");
 }
 
-SCRIPT_API(GetNetworkStats, bool(std::string& output))
+SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
 {
     std::stringstream stream;
     NetworkStats stats;
@@ -285,7 +285,7 @@ SCRIPT_API(GetNetworkStats, bool(std::string& output))
     return true;
 }
 
-SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, std::string& output))
+SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, OutputOnlyString& output))
 {
     std::stringstream stream;
     NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
@@ -330,12 +330,12 @@ SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
     return getConfigOptionAsInt(cvar);
 }
 
-SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, StringView& buffer))
+SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, OutputOnlyString& buffer))
 {
     return getConfigOptionAsString(cvar, buffer);
 }
 
-SCRIPT_API(GetWeaponName, bool(int weaponid, StringView& weapon))
+SCRIPT_API(GetWeaponName, bool(int weaponid, OutputOnlyString& weapon))
 {
     weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
     return true;
@@ -379,7 +379,7 @@ SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
     return stats.connectionStartTime;
 }
 
-SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, std::string& output))
+SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
 {
     PeerNetworkData data = player.getNetworkData();
     PeerAddress::AddressString addressString;
@@ -479,7 +479,7 @@ SCRIPT_API(SetWorldTime, bool(int hour))
     return true;
 }
 
-SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& salt, std::string& output))
+SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& salt, OutputOnlyString& output))
 {
     PawnManager::Get()->core->logLn(LogLevel::Warning, "Using unsafe hashing function SHA256_PassHash");
 
@@ -488,7 +488,7 @@ SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& 
     bool res = PawnManager::Get()->core->sha256(password, salt, hash);
     if (res) {
         output = hash.data();
-        return output.length();
+        return std::get<String>(output).length();
     }
     output = "";
     return 0;
