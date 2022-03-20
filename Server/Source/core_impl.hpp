@@ -780,6 +780,89 @@ private:
         printLn("Loaded %i component(s)", components.size());
     }
 
+    void playerInit(IPlayer& player)
+    {
+        NetCode::RPC::PlayerInit playerInitRPC;
+        playerInitRPC.EnableZoneNames = *EnableZoneNames;
+        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
+        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
+        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
+        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
+        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
+        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
+        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
+        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
+        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
+        playerInitRPC.ShowNameTags = *ShowNameTags;
+        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
+
+        // Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
+        playerInitRPC.SetWorldTime = player.getTime().first.count();
+        playerInitRPC.SetWeather = player.getWeather();
+
+        playerInitRPC.SetGravity = *SetGravity;
+        playerInitRPC.LanMode = *LanMode;
+        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
+        playerInitRPC.Instagib = *Instagib;
+        playerInitRPC.OnFootRate = *OnFootRate;
+        playerInitRPC.InCarRate = *InCarRate;
+        playerInitRPC.WeaponRate = *WeaponRate;
+        playerInitRPC.Multiplier = *Multiplier;
+        playerInitRPC.LagCompensation = *LagCompensation;
+        playerInitRPC.ServerName = StringView(ServerName);
+        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
+        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
+        playerInitRPC.PlayerID = player.getID();
+        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
+        static const StaticArray<uint8_t, 212> emptyModels { 0 };
+        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
+        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
+        PacketHelper::send(playerInitRPC, player);
+        
+        // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
+        NetCode::RPC::SetPlayerColor RPC;
+        RPC.PlayerID = player.getID();
+        RPC.Col = player.getColour();
+        PacketHelper::send(RPC, player);
+    }
+	
+    void playerDeinit()
+    {
+        NetCode::RPC::PlayerInit playerInitRPC;
+        playerInitRPC.EnableZoneNames = *EnableZoneNames;
+        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
+        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
+        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
+        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
+        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
+        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
+        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
+        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
+        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
+        playerInitRPC.ShowNameTags = *ShowNameTags;
+        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
+        playerInitRPC.SetWorldTime = *SetWorldTime;
+        playerInitRPC.SetWeather = *SetWeather;
+        playerInitRPC.SetGravity = *SetGravity;
+        playerInitRPC.LanMode = *LanMode;
+        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
+        playerInitRPC.Instagib = *Instagib;
+        playerInitRPC.OnFootRate = *OnFootRate;
+        playerInitRPC.InCarRate = *InCarRate;
+        playerInitRPC.WeaponRate = *WeaponRate;
+        playerInitRPC.Multiplier = *Multiplier;
+        playerInitRPC.LagCompensation = *LagCompensation;
+        playerInitRPC.ServerName = StringView(ServerName);
+        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
+        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
+        playerInitRPC.PlayerID = 0;
+        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
+        static const StaticArray<uint8_t, 212> emptyModels { 0 };
+        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
+        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
+        PacketHelper::broadcast(playerInitRPC, players);
+    }
+
 public:
     bool reloadLogFile()
     {
@@ -827,6 +910,7 @@ public:
 
 	void resetAll() override
     {
+        playerDeinit();
         resetEventDispatcher.dispatch(&ModeResetEventHandler::onModeReset);
     }
 
@@ -1164,48 +1248,7 @@ public:
 
     void onConnect(IPlayer& player) override
     {
-        NetCode::RPC::PlayerInit playerInitRPC;
-        playerInitRPC.EnableZoneNames = *EnableZoneNames;
-        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
-        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
-        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
-        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
-        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
-        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
-        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
-        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
-        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
-        playerInitRPC.ShowNameTags = *ShowNameTags;
-        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
-
-        // Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
-        playerInitRPC.SetWorldTime = player.getTime().first.count();
-        playerInitRPC.SetWeather = player.getWeather();
-
-        playerInitRPC.SetGravity = *SetGravity;
-        playerInitRPC.LanMode = *LanMode;
-        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
-        playerInitRPC.Instagib = *Instagib;
-        playerInitRPC.OnFootRate = *OnFootRate;
-        playerInitRPC.InCarRate = *InCarRate;
-        playerInitRPC.WeaponRate = *WeaponRate;
-        playerInitRPC.Multiplier = *Multiplier;
-        playerInitRPC.LagCompensation = *LagCompensation;
-        playerInitRPC.ServerName = StringView(ServerName);
-        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
-        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
-        playerInitRPC.PlayerID = player.getID();
-        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        static const StaticArray<uint8_t, 212> emptyModels { 0 };
-        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
-        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
-        PacketHelper::send(playerInitRPC, player);
-        
-        // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
-        NetCode::RPC::SetPlayerColor RPC;
-        RPC.PlayerID = player.getID();
-        RPC.Col = player.getColour();
-        PacketHelper::send(RPC, player);
+        playerInit(player);
     }
 
     void connectBot(StringView name, StringView script) override
