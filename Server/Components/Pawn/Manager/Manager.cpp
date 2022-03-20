@@ -224,7 +224,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
     return Load("gamemodes/" + gamemodes_[0], true);
 }
 
-bool PawnManager::Load(std::string const& name, bool primary)
+bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
     if (scripts_.count(name)) {
         return false;
@@ -265,7 +265,7 @@ bool PawnManager::Load(std::string const& name, bool primary)
 
     CheckNatives(script);
 
-    if (primary) {
+    if (isEntryScript) {
         entryScript = name;
         script.Call("OnGameModeInit", DefaultReturnValue_False);
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
@@ -293,7 +293,10 @@ bool PawnManager::Load(std::string const& name, bool primary)
     // cache public pointers.
 
     // Call `OnPlayerConnect` (can be after caching).
-    core->reloadAll();
+    if (isEntryScript)
+	{
+        core->reloadAll();
+    }
     for (auto p : players->entries())
 	{
         script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
