@@ -207,10 +207,10 @@ SCRIPT_API(SetPlayerName, bool(IPlayer& player, const std::string& name))
     return true;
 }
 
-SCRIPT_API(GetPlayerName, int(IPlayer& player, StringView& name))
+SCRIPT_API(GetPlayerName, int(IPlayer& player, OutputOnlyString& name))
 {
     name = player.getName();
-    return name.length();
+    return std::get<StringView>(name).length();
 }
 
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
@@ -513,7 +513,7 @@ SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, con
     return true;
 }
 
-SCRIPT_API(GetAnimationName, bool(int index, StringView& lib, StringView& name))
+SCRIPT_API(GetAnimationName, bool(int index, OutputOnlyString& lib, OutputOnlyString& name))
 {
     Pair<StringView, StringView> anim = splitAnimationNames(index);
     lib = anim.first;
@@ -565,7 +565,7 @@ SCRIPT_API(GetPlayerFacingAngle, bool(IPlayer& player, float& angle))
     return true;
 }
 
-SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, std::string& ip))
+SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, OutputOnlyString& ip))
 {
     PeerNetworkData data = player.getNetworkData();
     if (!data.networkID.address.ipv6) {
@@ -573,7 +573,7 @@ SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, std::string& ip))
         if (PeerAddress::ToString(data.networkID.address, addressString)) {
             // Scope-allocated string, copy it
             ip = String(StringView(addressString));
-            return ip.length();
+            return std::get<String>(ip).length();
         }
     }
     return FailRet;
@@ -863,10 +863,10 @@ SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
     throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(gpci, int(IPlayer& player, StringView& output))
+SCRIPT_API(gpci, int(IPlayer& player, OutputOnlyString& output))
 {
     output = player.getSerial();
-    return output.length();
+    return std::get<StringView>(output).length();
 }
 
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
@@ -921,8 +921,8 @@ SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, std
     return true;
 }
 
-SCRIPT_API(GetPlayerVersion, int(IPlayer& player, StringView& version))
+SCRIPT_API(GetPlayerVersion, int(IPlayer& player, OutputOnlyString& version))
 {
     version = player.getClientVersionName();
-    return version.length();
+    return std::get<StringView>(version).length();
 }
