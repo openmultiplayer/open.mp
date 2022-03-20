@@ -865,9 +865,12 @@ public:
         config.setInt("max_players", glm::clamp(*config.getInt("max_players"), 1, 1000));
 
         if (cmd.count("script")) {
-            config.setString(
-                "pawn.entry_file",
-                cmd["script"].as<std::string>());
+			// Add the launch parameter to the start of the scripts list.
+            DynamicArray<StringView> mainScripts(config.getStringsCount("pawn.main_scripts") + 1);
+            config.getStrings("pawn.main_scripts", Span<StringView>(mainScripts.data() + 1, mainScripts.size() - 1));
+            String entry_file = cmd["script"].as<String>();
+            mainScripts[0] = cmd["script"].as<std::string>();
+            config.setStrings("pawn.main_scripts", mainScripts);
         }
 
         // Don't use config before this point

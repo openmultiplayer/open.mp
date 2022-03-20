@@ -134,7 +134,7 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
         PawnManager* mgr = PawnManager::Get();
         PawnPluginManager& pluginMgr = PawnManager::Get()->pluginManager;
 
-        // read values of plugins, entry_file and side_scripts from config file
+        // read values of plugins, main_scripts and side_scripts from config file
         IConfig& config = core->getConfig();
 
         // load plugins
@@ -151,8 +151,9 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
             mgr->Load(String(script), false);
         }
 
-        StringView entryFile = config.getString("pawn.entry_file");
-        mgr->Load(String(entryFile), true);
+        DynamicArray<StringView> mainScripts(config.getStringsCount("pawn.main_scripts"));
+        config.getStrings("pawn.main_scripts", Span<StringView>(mainScripts.data(), mainScripts.size()));
+        mgr->Load(String(mainScripts[0]), true);
     }
 
     const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const override
@@ -199,7 +200,8 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
     {
         if (defaults) {
-            config.setString("pawn.entry_file", "test.amx");
+            StringView scripts[] = { "test.amx" };
+            config.setStrings("pawn.main_scripts", Span<StringView>(scripts, 1));
             config.setStrings("pawn.side_scripts", Span<StringView>());
             config.setStrings("pawn.legacy_plugins", Span<StringView>());
         }
