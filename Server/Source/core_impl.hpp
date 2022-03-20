@@ -659,7 +659,8 @@ class Core final : public ICore, public PlayerEventHandler, public ConsoleEventH
 private:
     static constexpr const char* LogFileName = "log.txt";
 
-    DefaultEventDispatcher<TickEventHandler> eventDispatcher;
+    DefaultEventDispatcher<TickEventHandler> tickEventDispatcher;
+    DefaultEventDispatcher<ModeResetEventHandler> resetEventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
     FlatPtrHashSet<INetwork> networks;
@@ -808,7 +809,7 @@ public:
             }
             ++ticksThisSecond;
 
-            eventDispatcher.dispatch(&TickEventHandler::onTick, us, now);
+            tickEventDispatcher.dispatch(&TickEventHandler::onTick, us, now);
 
             for (auto it = httpFutures.begin(); it != httpFutures.end();) {
                 HTTPAsyncIO* httpIO = *it;
@@ -822,6 +823,11 @@ public:
 
             std::this_thread::sleep_until(now + sleepTimer);
         }
+    }
+
+	void resetAll() override
+    {
+        resetEventDispatcher.dispatch(&ModeResetEventHandler::onModeReset);
     }
 
 	void stop()
@@ -1055,7 +1061,12 @@ public:
 
     IEventDispatcher<TickEventHandler>& getTickEventDispatcher() override
     {
-        return eventDispatcher;
+        return tickEventDispatcher;
+    }
+	
+    IEventDispatcher<ModeResetEventHandler>& getModeResetEventDispatcher() override
+    {
+        return resetEventDispatcher;
     }
 
     void setGravity(float gravity) override
