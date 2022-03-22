@@ -138,7 +138,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , interior_(0)
         , wantedLevel_(0)
         , weather_(0)
-        , worldBounds_(0.f, 0.f, 0.f, 0.f)
+        , worldBounds_(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS)
         , widescreen_(0)
         , lastMarkerUpdate_()
         , enableCameraTargeting_(false)
@@ -164,6 +164,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void spawn() override
     {
+
+        // Remove from vehicle.
+        if (state_ == PlayerState_Driver || state_ == PlayerState_Passenger) {
+            setPosition(pos_);
+        }
+
         toSpawn_ = true;
         NetCode::RPC::ImmediatelySpawnPlayer RPC;
         PacketHelper::send(RPC, *this);
@@ -607,6 +613,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setAction(PlayerSpecialAction action) override
     {
+
+        // Fix jetpack sound after removing special action.
+        if (action_ == SpecialAction_Jetpack) {
+            clearAnimations(PlayerAnimationSyncType_NoSync);
+        }
+
         // Set from sync
         NetCode::RPC::SetPlayerSpecialAction setPlayerSpecialActionRPC;
         setPlayerSpecialActionRPC.Action = action;
