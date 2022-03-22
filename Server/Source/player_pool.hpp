@@ -268,7 +268,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     const PlayerClass& cls = classData->getClass();
                     player.pos_ = cls.spawn;
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
-                    player.team_ = cls.team;
+                    player.setTeam(cls.team);
                     player.skin_ = cls.skin;
 
                     const WeaponSlots& weapons = cls.weapons;
@@ -470,6 +470,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     handler->onKeyStateChange(peer, newKeys, oldKeys);
                 });
             }
+
             player.setState(PlayerState_OnFoot);
 
             TimePoint now = Time::now();
@@ -479,6 +480,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 });
 
             if (allowedupdate) {
+
+                // Fix Night Vision & Thermal Goggles visual effect show for all streamed players.
+                if ((player.armedWeapon_ == PlayerWeapon_Night_Vis_Goggles || player.armedWeapon_ == PlayerWeapon_Thermal_Goggles) && (footSync.Keys & 4)) {
+                    footSync.Keys &= ~4;
+                }
+
                 player.footSync_ = footSync;
                 player.primarySyncUpdateType_ = PrimarySyncUpdateType::OnFoot;
             }
@@ -1185,6 +1192,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             otherJoinPacket.Name = StringView(otherPlayer->name_);
             PacketHelper::send(otherJoinPacket, peer);
         }
+
+        // Set player's time & weather to global ones.
+        static int* hour = core.getConfig().getInt("world_time");
+        static int* weather = core.getConfig().getInt("weather");
+
+        player.time_ = duration_cast<Minutes>(Hours(*hour));
+        player.weather_ = *weather;
 
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }

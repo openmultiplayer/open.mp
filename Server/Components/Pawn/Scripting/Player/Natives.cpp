@@ -44,6 +44,11 @@ SCRIPT_API(SetPlayerWeather, bool(IPlayer& player, int weatherid))
     return true;
 }
 
+SCRIPT_API_FAILRET(GetPlayerWeather, -1, int(IPlayer& player))
+{
+    return player.getWeather();
+}
+
 SCRIPT_API(SetPlayerSkin, bool(IPlayer& player, int skinid))
 {
     player.setSkin(skinid);
@@ -355,6 +360,18 @@ SCRIPT_API(SetPlayerWorldBounds, bool(IPlayer& player, float xMax, float xMin, f
 {
     Vector4 coords = { xMax, xMin, yMax, yMin };
     player.setWorldBounds(coords);
+    return true;
+}
+
+SCRIPT_API(ClearPlayerWorldBounds, bool(IPlayer& player))
+{
+    player.setWorldBounds(Vector4(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS));
+    return true;
+}
+
+SCRIPT_API(GetPlayerWorldBounds, bool(IPlayer& player, Vector4& bounds))
+{
+    bounds = player.getWorldBounds();
     return true;
 }
 
