@@ -364,9 +364,17 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
 
     NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
 
-    //We don't want to update player's vehicle right now, let sync packets do it.
+    // We don't want to update player's vehicle right now, let sync packets do it.
     // Or actually we do! SA-MP does it :shrug:
-    queryData<PlayerVehicleData>(player)->vehicle = this;
+
+    auto vehicleData = queryData<PlayerVehicleData>(player);
+    if (vehicleData) {
+        if (vehicleData->vehicle != nullptr) {
+            vehicleData->vehicle->unoccupy(player);
+            player.setPosition(pos);
+        }
+        vehicleData->vehicle = this;
+    }
 
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
@@ -509,6 +517,9 @@ Seconds Vehicle::getRespawnDelay()
 
 void Vehicle::attachTrailer(IVehicle& trailer)
 {
+    if (&trailer == this) {
+        return;
+    }
     this->trailer = static_cast<Vehicle*>(&trailer);
     towing = true;
     this->trailer->setTower(this);

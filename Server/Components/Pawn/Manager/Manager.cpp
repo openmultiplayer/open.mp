@@ -196,6 +196,11 @@ bool PawnManager::Load(std::string const& name, bool primary)
         }
     } else {
         script.Call("OnFilterScriptInit", DefaultReturnValue_False);
+
+        for (IPlayer* player : players->entries()) {
+            script.Call("OnPlayerConnect", DefaultReturnValue_True, player->getID());
+        }
+
         script.cache_.inited = true;
     }
 
@@ -230,6 +235,9 @@ bool PawnManager::Unload(std::string const& name)
         script.Call("OnGameModeExit", DefaultReturnValue_False);
         entryScript = "";
     } else {
+        for (IPlayer* player : players->entries()) {
+            script.Call("OnPlayerDisconnect", DefaultReturnValue_True, player->getID());
+        }
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
 
