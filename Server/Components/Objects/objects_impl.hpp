@@ -398,7 +398,10 @@ struct PlayerObjectData final : public IPlayerObjectData {
         if (index == 0) {
             return;
         }
-        --component_.isPlayerObject[index];
+        if (index < component_.isPlayerObject.size()) {
+            assert(component_.isPlayerObject[index] != 0);
+            --component_.isPlayerObject[index];
+        }
         storage.release(index, false);
     }
 
@@ -428,9 +431,9 @@ struct PlayerObjectData final : public IPlayerObjectData {
         /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
-			// Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
+            // Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
             assert(component_.isPlayerObject[obj->getID()] != 0);
-			--component_.isPlayerObject[obj->getID()];
+            --component_.isPlayerObject[obj->getID()];
             // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
             obj->playerQuitting_ = true;
         }
