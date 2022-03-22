@@ -7,6 +7,10 @@
 #include "../Manager/Manager.hpp"
 #include "Impl.hpp"
 #include "sdk.hpp"
+#include <variant>
+
+/// The bool is used because variant is initialised to index 0 by default
+using OutputOnlyString = std::variant<bool, StringView, String>;
 
 /// Macro to define a script param for a pool entry
 /// Example with IPlayer from the players pool:
@@ -213,11 +217,10 @@ PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 /// Greatly speeds up code as there's no need for reading the input string
 /// and faster amx_SetString function is used which works well with string views
 template <>
-class ParamCast<StringView&> {
+class ParamCast<OutputOnlyString&> {
 public:
     ParamCast(AMX* amx, cell* params, int idx)
         : len_((int)params[idx + 1])
-        , accessed_(false)
     {
         if (len_ < 0)
             throw std::length_error("Invalid string length.");
@@ -230,18 +233,19 @@ public:
 
     ~ParamCast()
     {
-        // Write data
-        if (addr_ && accessed_)
-            amx_SetStringLen(addr_, value_.data(), value_.length(), 0, 0, len_);
+        const size_t idx = value_.index();
+        // Write data if there's a string written (index is 1 or 2)
+        if (addr_ && idx != 0 && idx != std::variant_npos) {
+            StringView str = (idx == 1 ? std::get<StringView>(value_) : std::get<String>(value_));
+            amx_SetStringLen(addr_, str.data(), str.length(), 0, 0, len_);
+        }
     }
 
-    ParamCast(ParamCast<StringView&> const&) = delete;
-    ParamCast(ParamCast<StringView&>&&) = delete;
+    ParamCast(ParamCast<OutputOnlyString&> const&) = delete;
+    ParamCast(ParamCast<OutputOnlyString&>&&) = delete;
 
-    operator StringView&()
+    operator OutputOnlyString&()
     {
-        // If we're accessing the string view we're most likely writing to it so it should be written to the AMX
-        accessed_ = true;
         return value_;
     }
 
@@ -251,13 +255,10 @@ private:
     int
         len_;
 
-    bool
-        accessed_;
-
     cell*
         addr_;
 
-    StringView
+    OutputOnlyString
         value_;
 };
 
