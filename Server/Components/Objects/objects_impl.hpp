@@ -9,7 +9,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     IPlayerPool* players = nullptr;
     MarkedDynamicPoolStorage<Object, IObject, 1, OBJECT_POOL_SIZE> storage;
     DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-    StaticBitset<OBJECT_POOL_SIZE> isPlayerObject;
+    StaticArray<int, OBJECT_POOL_SIZE> isPlayerObject;
     FlatPtrHashSet<PlayerObject> processedPlayerObjects;
     FlatPtrHashSet<Object> processedObjects;
     bool defCameraCollision = true;
@@ -192,7 +192,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
     {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx >= storage.Lower) {
-            if (!isPlayerObject.test(freeIdx)) {
+            if (!isPlayerObject.at(freeIdx)) {
                 break;
             }
 
@@ -372,7 +372,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
             return nullptr;
         }
 
-        component_.isPlayerObject.set(objid);
+        ++component_.isPlayerObject[objid];
 
         PlayerObject* obj = storage.get(objid);
         obj->createForPlayer();
@@ -397,6 +397,10 @@ struct PlayerObjectData final : public IPlayerObjectData {
     {
         if (index == 0) {
             return;
+        }
+        if (index < component_.isPlayerObject.size()) {
+            assert(component_.isPlayerObject[index] != 0);
+            --component_.isPlayerObject[index];
         }
         storage.release(index, false);
     }
@@ -427,6 +431,9 @@ struct PlayerObjectData final : public IPlayerObjectData {
         /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
+            // Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
+            assert(component_.isPlayerObject[obj->getID()] != 0);
+            --component_.isPlayerObject[obj->getID()];
             // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
             obj->playerQuitting_ = true;
         }
