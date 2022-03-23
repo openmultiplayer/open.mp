@@ -263,7 +263,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
                 self.eventDispatcher.dispatch(&PlayerEventHandler::preSpawn, peer);
 
-                IPlayerClassData* classData = queryData<IPlayerClassData>(peer);
+                IPlayerClassData* classData = queryExtension<IPlayerClassData>(peer);
                 if (classData) {
                     const PlayerClass& cls = classData->getClass();
                     player.pos_ = cls.spawn;
@@ -683,7 +683,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                             });
                     } else {
                         player.bulletData_.hitType = PlayerBulletHitType_PlayerObject;
-                        IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
+                        IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
                         if (data) {
                             ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
                             if (lock.entry) {
@@ -1026,7 +1026,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             } else if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || queryData<IPlayerVehicleData>(peer)->getVehicle() != &vehicle)) {
+            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || queryExtension<IPlayerVehicleData>(peer)->getVehicle() != &vehicle)) {
                 return false;
             }
 
@@ -1062,7 +1062,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             Player& player = static_cast<Player&>(peer);
             PlayerState state = player.getState();
-            IPlayerVehicleData* vehData = queryData<IPlayerVehicleData>(peer);
+            IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
             if (state != PlayerState_Driver || vehData->getVehicle() == nullptr) {
                 return false;
             }
@@ -1080,7 +1080,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     {
         for (IPlayer* p : storage.entries()) {
             Player* player = static_cast<Player*>(p);
-            player->extraData_.free();
+            player->clearExtensions();
         }
     }
 
@@ -1406,7 +1406,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
                 // Use vehicle pos if player is passenger to keep paused players synced.
                 if (state == PlayerState_Passenger) {
-                    auto vehicleData = queryData<IPlayerVehicleData>(other);
+                    auto vehicleData = queryExtension<IPlayerVehicleData>(other);
 
                     if (vehicleData) {
                         auto vehicle = vehicleData->getVehicle();

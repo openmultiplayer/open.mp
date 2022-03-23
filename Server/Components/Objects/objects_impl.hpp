@@ -28,7 +28,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 return false;
             }
 
-            IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
+            IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->selectingObject()) {
                 IObject* obj = self.get(onPlayerSelectObjectRPC.ObjectID);
                 if (obj) {
@@ -71,7 +71,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 return false;
             }
 
-            IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
+            IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->editingObject()) {
 
                 if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final) {
@@ -121,7 +121,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
                 return false;
             }
 
-            IPlayerObjectData* data = queryData<IPlayerObjectData>(peer);
+            IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->editingObject() && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index)) {
                 self.eventDispatcher.dispatch(
                     &ObjectEventHandler::onPlayerAttachedObjectEdited,
@@ -296,7 +296,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             }
         }
 
-        IPlayerObjectData* objectData = queryData<IPlayerObjectData>(player);
+        IPlayerObjectData* objectData = queryExtension<IPlayerObjectData>(player);
         if (objectData) {
             for (int i = 0; i < MAX_ATTACHED_OBJECT_SLOTS; ++i) {
                 if (objectData->hasAttachedObject(i)) {
@@ -322,7 +322,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
             }
         }
 
-        IPlayerObjectData* objectData = queryData<IPlayerObjectData>(player);
+        IPlayerObjectData* objectData = queryExtension<IPlayerObjectData>(player);
         if (objectData) {
             for (int i = 0; i < MAX_ATTACHED_OBJECT_SLOTS; ++i) {
                 if (objectData->hasAttachedObject(i)) {
@@ -426,7 +426,7 @@ struct PlayerObjectData final : public IPlayerObjectData {
         return storage._entries();
     }
 
-    void free() override
+    void freeExtension() override
     {
         /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage) {

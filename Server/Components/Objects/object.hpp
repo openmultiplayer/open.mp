@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
@@ -217,23 +216,12 @@ protected:
 struct Object final : public BaseObject<IObject> {
     StaticBitset<PLAYER_POOL_SIZE> delayedProcessing_;
     StaticArray<TimePoint, PLAYER_POOL_SIZE> delayedProcessingTime_;
-    ExtraDataProvider extraData_;
     ObjectComponent& objects_;
 
     Object(ObjectComponent& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
         : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
         , objects_(objects)
     {
-    }
-
-    IExtraData* findData(UID uuid) const override
-    {
-        return extraData_.findData(uuid);
-    }
-
-    void addData(IExtraData* playerData) override
-    {
-        return extraData_.addData(playerData);
     }
 
     void restream();
@@ -343,23 +331,12 @@ struct PlayerObject final : public BaseObject<IPlayerObject> {
     PlayerObjectData& objects_;
     TimePoint delayedProcessingTime_;
     bool playerQuitting_;
-    ExtraDataProvider extraData_;
 
     PlayerObject(PlayerObjectData& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
         : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
         , objects_(objects)
         , playerQuitting_(false)
     {
-    }
-
-    IExtraData* findData(UID uuid) const override
-    {
-        return extraData_.findData(uuid);
-    }
-
-    void addData(IExtraData* playerData) override
-    {
-        return extraData_.addData(playerData);
     }
 
     void restream();

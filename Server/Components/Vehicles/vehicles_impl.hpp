@@ -101,7 +101,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
                 return false;
             }
 
-            PlayerVehicleData* data = queryData<PlayerVehicleData>(peer);
+            PlayerVehicleData* data = queryExtension<PlayerVehicleData>(peer);
             Vehicle* vehicle = data->vehicle;
             if (vehicle && vehicle->driver == &peer) {
                 vehicle->setDamageStatus(onDamageStatus.PanelStatus, onDamageStatus.DoorStatus, onDamageStatus.LightStatus, onDamageStatus.TyreStatus, &peer);
@@ -233,7 +233,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
     {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
-            PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+            PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
             if (data->vehicle) {
                 data->vehicle->unoccupy(player);
             }
@@ -243,7 +243,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+        PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
         if (data && data->vehicle) {
             data->vehicle->unoccupy(player);
         }
@@ -297,7 +297,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerVehicleData());
+        player.addExtension(new PlayerVehicleData(), true);
     }
 
     StringView componentName() const override
@@ -421,7 +421,7 @@ struct VehiclesComponent final : public IVehiclesComponent, public CoreEventHand
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
 
-            IPlayerVehicleData* veh_data = queryData<IPlayerVehicleData>(player);
+            IPlayerVehicleData* veh_data = queryExtension<IPlayerVehicleData>(player);
             IVehicle* playerVehicle = nullptr;
             if (veh_data) {
                 playerVehicle = veh_data->getVehicle();
