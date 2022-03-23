@@ -68,7 +68,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
         const auto& entries = c->getPlayers().entries();
         for (IPlayer* player : entries) {
             player->forceClassSelection();
-            queryData<RivershellPlayerData>(player)->lastResupplyTime = TimePoint();
+            queryExtension<RivershellPlayerData>(player)->lastResupplyTime = TimePoint();
             player->setSpectating(true);
             player->setSpectating(false);
         }
@@ -76,12 +76,12 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
 
     void handleSpectating(IPlayer& player)
     {
-        RivershellPlayerData* data = queryData<RivershellPlayerData>(player);
+        RivershellPlayerData* data = queryExtension<RivershellPlayerData>(player);
         if (data->lastKiller) {
             PlayerState state = data->lastKiller->getState();
             if (state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger) {
                 if (state == PlayerState_Driver || state == PlayerState_Passenger) {
-                    player.spectateVehicle(*data->lastKiller->queryData<IPlayerVehicleData>()->getVehicle(), PlayerSpectateMode_Normal);
+                    player.spectateVehicle(*data->lastKiller->queryExtension<IPlayerVehicleData>()->getVehicle(), PlayerSpectateMode_Normal);
                 } else {
                     player.spectatePlayer(*data->lastKiller, PlayerSpectateMode_Normal);
                 }
@@ -127,7 +127,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
         int blueCount = 0;
 
         for (IPlayer* player : c->getPlayers().entries()) {
-            bool balanced = queryData<RivershellPlayerData>(player)->alreadyBalanceTeam;
+            bool balanced = queryExtension<RivershellPlayerData>(player)->alreadyBalanceTeam;
             if (player->getTeam() == Team_Green && balanced && player != &target) {
                 greenCount++;
             } else if (player->getTeam() == Team_Blue && balanced && player != &target) {
@@ -135,14 +135,14 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
             }
         }
 
-        target.queryData<RivershellPlayerData>()->alreadyBalanceTeam = true;
+        target.queryExtension<RivershellPlayerData>()->alreadyBalanceTeam = true;
         if (greenCount > blueCount && team == Team_Green) {
-            target.queryData<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Blue][0]);
+            target.queryExtension<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Blue][0]);
             target.sendClientMessage(Colour::White(), "You have been moved to the {0000FF}blue{FFFFFF} team for balance.");
             timers->create(new ForceSpawnTimer(&target), Milliseconds(500), false);
             return true;
         } else if (blueCount > greenCount && team == Team_Blue) {
-            target.queryData<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Green][0]);
+            target.queryExtension<IPlayerClassData>()->setSpawnInfo(*teamClasses[Team_Green][0]);
             target.sendClientMessage(Colour::White(), "You have been moved to the {00FF00}green{FFFFFF} team for balance.");
             timers->create(new ForceSpawnTimer(&target), Milliseconds(500), false);
             return true;
@@ -171,7 +171,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
 
     bool onPlayerRequestClass(IPlayer& player, unsigned int classId) override
     {
-        queryData<RivershellPlayerData>(player)->alreadyBalanceTeam = false;
+        queryExtension<RivershellPlayerData>(player)->alreadyBalanceTeam = false;
         player.setPosition(Vector3(1984.4445f, 157.9501f, 55.9384f));
         player.setCameraLookAt(Vector3(1984.4445f, 157.9501f, 55.9384f), 2);
         player.setCameraPosition(Vector3(1984.4445f, 160.9501f, 55.9384f));
@@ -201,7 +201,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
 
     void onSpawn(IPlayer& player) override
     {
-        RivershellPlayerData* data = queryData<RivershellPlayerData>(player);
+        RivershellPlayerData* data = queryExtension<RivershellPlayerData>(player);
         if (Time::now() - data->lastDeath < RESPAWN_COOLDOWN) {
             player.sendClientMessage(Colour(255, 170, 238), "Waiting to respawn...");
             player.setSpectating(true);
@@ -227,11 +227,11 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
     void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
     {
         if (newState == PlayerState_Driver) {
-            IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
+            IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
             if (data->getVehicle() == greenObjectiveVehicle && player.getTeam() == Team_Green) {
                 player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn!", Seconds(3), 5);
 
-                IPlayerCheckpointData* cp = queryData<IPlayerCheckpointData>(player);
+                IPlayerCheckpointData* cp = queryExtension<IPlayerCheckpointData>(player);
                 cp->setType(CheckpointType::STANDARD);
                 cp->setPosition(Vector3(2135.7368f, -179.8811f, -0.5323f));
                 cp->setSize(10.0f);
@@ -239,21 +239,21 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
             } else if (data->getVehicle() == blueObjectiveVehicle && player.getTeam() == Team_Blue) {
                 player.sendGameText("~w~Take the ~y~boat ~w~back to the ~r~spawn~w~!", Seconds(3), 5);
 
-                IPlayerCheckpointData* cp = queryData<IPlayerCheckpointData>(player);
+                IPlayerCheckpointData* cp = queryExtension<IPlayerCheckpointData>(player);
                 cp->setType(CheckpointType::STANDARD);
                 cp->setPosition(Vector3(2329.4226f, 532.7426f, 0.5862f));
                 cp->setSize(10.0f);
                 cp->enable(player);
             }
         } else if (oldState == PlayerState_Driver) {
-            queryData<IPlayerCheckpointData>(player)->disable(player);
+            queryExtension<IPlayerCheckpointData>(player)->disable(player);
         }
     }
 
     void onPlayerEnterCheckpoint(IPlayer& player) override
     {
         if (player.getState() == PlayerState_Driver) {
-            IVehicle* vehicle = queryData<IPlayerVehicleData>(player)->getVehicle();
+            IVehicle* vehicle = queryExtension<IPlayerVehicleData>(player)->getVehicle();
             if (vehicle == greenObjectiveVehicle && player.getTeam() == Team_Green) {
                 StringView gameText;
                 player.setScore(player.getScore() + 5);
@@ -288,7 +288,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
                 killer->setScore(killer->getScore() + 1);
             }
         }
-        RivershellPlayerData* data = queryData<RivershellPlayerData>(player);
+        RivershellPlayerData* data = queryExtension<RivershellPlayerData>(player);
         data->lastKiller = killer;
         data->lastDeath = Time::now();
     }
@@ -476,7 +476,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
             Vector3 resupply1 = pos - Vector3(2140.83f, -235.13f, 7.13f);
             Vector3 resupply2 = pos - Vector3(2318.73f, 590.96, 6.75);
             if (glm::dot(resupply1, resupply1) < 2.5f || glm::dot(resupply2, resupply2) < 2.5f) {
-                RivershellPlayerData* data = queryData<RivershellPlayerData>(player);
+                RivershellPlayerData* data = queryExtension<RivershellPlayerData>(player);
                 if (now - data->lastResupplyTime >= RESUPPLY_COOLDOWN) {
                     data->lastResupplyTime = now;
                     player.resetWeapons();
@@ -492,7 +492,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
         }
 
         else if (player.getState() == PlayerState_Spectating) {
-            RivershellPlayerData* data = queryData<RivershellPlayerData>(player);
+            RivershellPlayerData* data = queryExtension<RivershellPlayerData>(player);
             if (now - data->lastDeath > RESPAWN_COOLDOWN) {
                 player.setSpectating(false);
                 return true;

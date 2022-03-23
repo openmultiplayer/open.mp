@@ -143,29 +143,27 @@ struct PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChe
 };
 
 struct PlayerCheckpointData final : public IPlayerCheckpointData {
-    PlayerRaceCheckpointData* raceCheckpoint;
-    PlayerStandardCheckpointData* standardCheckpoint;
+    PlayerRaceCheckpointData raceCheckpoint;
+    PlayerStandardCheckpointData standardCheckpoint;
 
     PlayerCheckpointData(IPlayer& player)
-        : raceCheckpoint(new PlayerRaceCheckpointData(player))
-        , standardCheckpoint(new PlayerStandardCheckpointData(player))
+        : raceCheckpoint(player)
+        , standardCheckpoint(player)
     {
     }
 
-    void free() override
+    void freeExtension() override
     {
-        delete raceCheckpoint;
-        delete standardCheckpoint;
         delete this;
     }
 
     IPlayerRaceCheckpointData& getRaceCheckpoint() override
     {
-        return *raceCheckpoint;
+        return raceCheckpoint;
     }
 
     IPlayerStandardCheckpointData& getStandardCheckpoint() override
     {
-        return *standardCheckpoint;
+        return standardCheckpoint;
     }
 };

@@ -27,7 +27,7 @@ struct PlayerDialogData final : public IPlayerDialogData {
         return activeId;
     }
 
-    void free() override
+    void freeExtension() override
     {
         delete this;
     }
@@ -52,7 +52,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
             }
 
             // If the dialog id doesn't match what the server is expecting, ignore it
-            PlayerDialogData* data = queryData<PlayerDialogData>(peer);
+            PlayerDialogData* data = queryExtension<PlayerDialogData>(peer);
             if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID) {
                 return false;
             }
@@ -73,7 +73,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerDialogData);
+        player.addExtension(new PlayerDialogData(), true);
     }
 
     StringView componentName() const override

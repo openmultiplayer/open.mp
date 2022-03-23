@@ -16,7 +16,7 @@ struct PlayerConsoleData final : IPlayerConsoleData {
         hasAccess = set;
     }
 
-    void free() override
+    void freeExtension() override
     {
         delete this;
     }
