@@ -144,7 +144,7 @@ public:
 
                 const PlayerState state = player.getState();
                 const Vector3 dist3D = pickup->getPosition() - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
+                const bool shouldBeStreamedIn = !pickup->hiddenFor_.valid(player.getID()) && state != PlayerState_None && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
                 const bool isStreamedIn = pickup->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
