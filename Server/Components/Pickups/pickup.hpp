@@ -13,6 +13,7 @@ private:
     Vector3 pos;
     bool isStatic_;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> hiddenFor_;
 
     void restream()
     {
@@ -78,6 +79,24 @@ public:
         streamOutForClient(player);
     }
 
+    bool isPickupHiddenForPlayer(IPlayer& player) override
+    {
+        return hiddenFor_.valid(player.getID());
+    }
+
+    void setPickupHiddenForPlayer(IPlayer& player, bool hidden) override
+    {
+        if (hidden) {
+            if (!isPickupHiddenForPlayer(player)) {
+                hiddenFor_.add(player.getID(), player);
+            }
+        } else {
+            if (isPickupHiddenForPlayer(player)) {
+                hiddenFor_.remove(player.getID(), player);
+            }
+        }
+    }
+
     int getVirtualWorld() const override
     {
         return virtualWorld;
@@ -98,20 +117,24 @@ public:
         return pos;
     }
 
-    void setPosition(Vector3 position) override
+    void setPosition(Vector3 position, bool update) override
     {
         pos = position;
-        restream();
+        if (update) {
+            restream();
+        }
     }
 
     GTAQuat getRotation() const override { return GTAQuat(); }
 
     void setRotation(GTAQuat rotation) override { }
 
-    void setType(PickupType t) override
+    void setType(PickupType t, bool update) override
     {
         type = t;
-        restream();
+        if (update) {
+            restream();
+        }
     }
 
     PickupType getType() const override
@@ -119,10 +142,12 @@ public:
         return type;
     }
 
-	void setModel(int id) override
+    void setModel(int id, bool update) override
     {
         modelId = id;
-        restream();
+        if (update) {
+            restream();
+        }
     }
 
     int getModel() const override
