@@ -110,7 +110,7 @@ using OutputOnlyString = std::variant<bool, StringView, String>;
     struct ParamLookup<type> {                                                                                                             \
         static type& ValReq(IPlayer& player, cell ref)                                                                                     \
         {                                                                                                                                  \
-            auto data = queryData<dataType>(player);                                                                                       \
+            auto data = queryExtension<dataType>(player);                                                                                  \
             if (data) {                                                                                                                    \
                 auto ptr = data->get(ref);                                                                                                 \
                 if (ptr) {                                                                                                                 \
@@ -122,7 +122,7 @@ using OutputOnlyString = std::variant<bool, StringView, String>;
                                                                                                                                            \
         static type* Val(IPlayer& player, cell ref) noexcept                                                                               \
         {                                                                                                                                  \
-            auto data = queryData<dataType>(player);                                                                                       \
+            auto data = queryExtension<dataType>(player);                                                                                  \
             if (data) {                                                                                                                    \
                 return data->get(ref);                                                                                                     \
             }                                                                                                                              \

@@ -48,7 +48,7 @@ struct PlayerClassData final : IPlayerClassData {
         PacketHelper::send(setSpawnInfoRPC, player);
     }
 
-    void free() override
+    void freeExtension() override
     {
         delete this;
     }
@@ -100,7 +100,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                         return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
                     })) {
                 if (self.skipDefaultClassRequest) {
-                    IPlayerClassData* clsData = queryData<IPlayerClassData>(peer);
+                    IPlayerClassData* clsData = queryExtension<IPlayerClassData>(peer);
                     if (clsData) {
                         const PlayerClass& cls = clsData->getClass();
                         const WeaponSlots& weapons = cls.weapons;
@@ -115,7 +115,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                     }
                 } else if (Class* clsPtr = (self.storage.get(playerRequestClassPacket.Classid))) {
                     const PlayerClass& cls = clsPtr->cls;
-                    IPlayerClassData* clsData = queryData<IPlayerClassData>(peer);
+                    IPlayerClassData* clsData = queryExtension<IPlayerClassData>(peer);
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
                         clsDataCast->cls = cls;
@@ -201,7 +201,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerClassData(player, inClassRequest, skipDefaultClassRequest));
+        player.addExtension(new PlayerClassData(player, inClassRequest, skipDefaultClassRequest), true);
     }
 
     void free() override

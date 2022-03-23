@@ -18,7 +18,7 @@ struct PlayerMenuData final : IPlayerMenuData {
         menuId = id;
     }
 
-    void free() override
+    void freeExtension() override
     {
         delete this;
     }
@@ -152,7 +152,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
         playerShowMenu.MenuID = poolID;
         PacketHelper::send(playerShowMenu, player);
 
-        IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
+        IPlayerMenuData* data = queryExtension<IPlayerMenuData>(player);
         if (data) {
             data->setMenuID(poolID);
         }
@@ -160,7 +160,7 @@ struct Menu final : public IMenu, public PoolIDProvider, public NoCopy {
 
     void hideForPlayer(IPlayer& player) override
     {
-        IPlayerMenuData* data = queryData<IPlayerMenuData>(player);
+        IPlayerMenuData* data = queryExtension<IPlayerMenuData>(player);
 
         if (!data || data->getMenuID() != poolID) {
             return;

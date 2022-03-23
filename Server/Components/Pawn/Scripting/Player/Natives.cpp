@@ -540,7 +540,7 @@ SCRIPT_API(GetAnimationName, bool(int index, OutputOnlyString& lib, OutputOnlySt
 
 SCRIPT_API(EditAttachedObject, bool(IPlayer& player, int index))
 {
-    IPlayerObjectData* data = queryData<IPlayerObjectData>(player);
+    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
     if (data) {
         data->editAttachedObject(index);
     }
@@ -603,7 +603,7 @@ SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
 {
-    IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
     if (data) {
         IVehicle* vehicle = data->getVehicle();
         if (vehicle) {
@@ -615,7 +615,7 @@ SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
 
 SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
 {
-    IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
     if (data) {
         return data->getSeat();
     }
@@ -651,7 +651,7 @@ SCRIPT_API(InterpolateCameraLookAt, bool(IPlayer& player, Vector3 from, Vector3 
 
 SCRIPT_API(IsPlayerAttachedObjectSlotUsed, bool(IPlayer& player, int index))
 {
-    IPlayerObjectData* data = queryData<IPlayerObjectData>(player);
+    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
     if (data) {
         return data->hasAttachedObject(index);
     }
@@ -742,7 +742,7 @@ SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player)
 
 SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))
 {
-    IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
     if (data) {
         IVehicle* vehicle = data->getVehicle();
         if (vehicle == &targetVehicle) {
@@ -754,7 +754,7 @@ SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))
 
 SCRIPT_API(IsPlayerInAnyVehicle, bool(IPlayer& player))
 {
-    IPlayerVehicleData* data = queryData<IPlayerVehicleData>(player);
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
     if (data) {
         IVehicle* vehicle = data->getVehicle();
         if (vehicle) {
@@ -776,7 +776,7 @@ SCRIPT_API(PlayCrimeReportForPlayer, bool(IPlayer& player, IPlayer& suspect, int
 
 SCRIPT_API(RemovePlayerAttachedObject, bool(IPlayer& player, int index))
 {
-    IPlayerObjectData* data = queryData<IPlayerObjectData>(player);
+    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
     if (data) {
         data->removeAttachedObject(index);
         return true;
@@ -786,7 +786,7 @@ SCRIPT_API(RemovePlayerAttachedObject, bool(IPlayer& player, int index))
 
 SCRIPT_API(SetPlayerAttachedObject, bool(IPlayer& player, int index, int modelid, int bone, Vector3 offset, Vector3 rotation, Vector3 scale, uint32_t materialcolor1, uint32_t materialcolor2))
 {
-    IPlayerObjectData* data = queryData<IPlayerObjectData>(player);
+    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
     if (data) {
         ObjectAttachmentSlotData attachment;
         attachment.model = modelid;
@@ -840,7 +840,7 @@ SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
 
 SCRIPT_API(SelectTextDraw, bool(IPlayer& player, uint32_t hoverColour))
 {
-    IPlayerTextDrawData* data = queryData<IPlayerTextDrawData>(player);
+    IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
     if (data) {
         data->beginSelection(Colour::FromRGBA(hoverColour));
         return true;
@@ -850,7 +850,7 @@ SCRIPT_API(SelectTextDraw, bool(IPlayer& player, uint32_t hoverColour))
 
 SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
 {
-    IPlayerTextDrawData* data = queryData<IPlayerTextDrawData>(player);
+    IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
     if (data) {
         data->endSelection();
         return true;
@@ -888,7 +888,7 @@ SCRIPT_API(gpci, int(IPlayer& player, OutputOnlyString& output))
 
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
 {
-    IPlayerConsoleData* data = queryData<IPlayerConsoleData>(player);
+    IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
     if (data) {
         return data->hasConsoleAccess();
     }

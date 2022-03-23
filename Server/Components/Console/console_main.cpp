@@ -53,7 +53,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
             }
 
             StringView command = trim(packet.cmd);
-            PlayerConsoleData* pdata = queryData<PlayerConsoleData>(peer);
+            PlayerConsoleData* pdata = queryExtension<PlayerConsoleData>(peer);
 
             if (pdata->hasConsoleAccess()) {
                 if (command.size() < 1) {
@@ -116,7 +116,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerConsoleData());
+        player.addExtension(new PlayerConsoleData(), true);
     }
 
     StringView componentName() const override

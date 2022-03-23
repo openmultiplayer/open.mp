@@ -9,7 +9,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
         return;
     }
 
-    int& numStreamed = queryData<PlayerVehicleData>(player)->numStreamed;
+    int& numStreamed = queryExtension<PlayerVehicleData>(player)->numStreamed;
     if (numStreamed >= MAX_STREAMED_VEHICLES) {
         return;
     }
@@ -81,7 +81,7 @@ void Vehicle::streamOutForClient(IPlayer& player)
     streamOut.VehicleID = poolID;
     PacketHelper::send(streamOut, player);
 
-    PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+    PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
     if (data) {
         --data->numStreamed;
     }
@@ -118,7 +118,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
     }
 
     if (driver != &player) {
-        PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+        PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
         if (data->vehicle) {
             data->vehicle->unoccupy(player);
         }
@@ -147,7 +147,7 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
                 continue;
             }
             PlayerState state = comparable->getState();
-            if ((state == PlayerState_Driver || state == PlayerState_Passenger) && queryData<IPlayerVehicleData>(comparable)->getVehicle() == this) {
+            if ((state == PlayerState_Driver || state == PlayerState_Passenger) && queryExtension<IPlayerVehicleData>(comparable)->getVehicle() == this) {
                 return false;
             }
             if (glm::distance(comparable->getPosition(), pos) < playerDistance) {
@@ -183,7 +183,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
     velocity = trailerSync.Velocity;
     angularVelocity = trailerSync.TurnVelocity;
 
-    PlayerVehicleData* playerData = queryData<PlayerVehicleData>(player);
+    PlayerVehicleData* playerData = queryExtension<PlayerVehicleData>(player);
     Vehicle* vehicle = playerData->vehicle;
 
     if (!vehicle || vehicle->detaching) {
@@ -210,7 +210,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 
 bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player)
 {
-    PlayerVehicleData* data = queryData<PlayerVehicleData>(player);
+    PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
     // Only do heavy processing if switching vehicle or switching between driver and passenger
     if ((data->vehicle != this || driver == &player) && passengers.insert(&player).second) {
         if (data->vehicle) {
@@ -354,7 +354,7 @@ void Vehicle::removeComponent(int component)
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID)
 {
-    if(player.getVirtualWorld() != virtualWorld_)
+    if (player.getVirtualWorld() != virtualWorld_)
         return;
 
     const bool isStreamedIn = this->isStreamedInForPlayer(player);
@@ -367,7 +367,7 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     // We don't want to update player's vehicle right now, let sync packets do it.
     // Or actually we do! SA-MP does it :shrug:
 
-    auto vehicleData = queryData<PlayerVehicleData>(player);
+    auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
         if (vehicleData->vehicle != nullptr) {
             vehicleData->vehicle->unoccupy(player);
@@ -578,7 +578,7 @@ Vehicle::~Vehicle()
 
     const auto& entries = pool->core->getPlayers().entries();
     for (IPlayer* player : entries) {
-        PlayerVehicleData* vehicleData = queryData<PlayerVehicleData>(player);
+        PlayerVehicleData* vehicleData = queryExtension<PlayerVehicleData>(player);
 
         if (vehicleData && vehicleData->vehicle == this) {
             vehicleData->setVehicle(nullptr, 0);
