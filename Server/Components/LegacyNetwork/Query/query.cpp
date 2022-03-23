@@ -33,6 +33,13 @@ void Query::buildPlayerInfoBuffer(IPlayer* except)
 
     const FlatPtrHashSet<IPlayer>& players = core->getPlayers().players();
     const uint16_t playerCount = (except && !except->isBot()) ? players.size() - 1 : players.size();
+
+    if (playerCount > 100) {
+        playerListBuffer.reset();
+        playerListBufferLength = 0;
+        return;
+    }
+
     assert(playerCount <= maxPlayers);
     playerListBufferLength = BASE_QUERY_SIZE + sizeof(uint16_t) + (sizeof(uint8_t) + MAX_PLAYER_NAME) * playerCount;
     playerListBuffer.reset(new char[playerListBufferLength]);
