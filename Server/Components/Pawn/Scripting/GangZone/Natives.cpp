@@ -83,3 +83,49 @@ SCRIPT_API(GangZoneStopFlashForAll, bool(IGangZone& gangzone))
     }
     return true;
 }
+
+SCRIPT_API(IsValidGangZone, bool(IGangZone* zone))
+{
+    return zone != nullptr;
+}
+
+SCRIPT_API(IsPlayerInGangZone, bool(IPlayer& player, IGangZone& zone))
+{
+    return zone.getPlayersInside().find(&player) != zone.getPlayersInside().end();
+}
+
+SCRIPT_API(IsGangZoneVisibleForPlayer, bool(IPlayer& player, IGangZone& zone))
+{
+    return zone.isShownForPlayer(player);
+}
+
+SCRIPT_API(GangZoneGetColorForPlayer, int(IPlayer& player, IGangZone& zone))
+{
+    if (zone.isShownForPlayer(player)) {
+        return zone.getColorForPlayer(player).RGBA();
+    } else {
+        return 0;
+    }
+}
+
+SCRIPT_API(GangZoneGetFlashColorForPlayer, int(IPlayer& player, IGangZone& zone))
+{
+    if (zone.isShownForPlayer(player)) {
+        return zone.getFlashingColorForPlayer(player).RGBA();
+    } else {
+        return 0;
+    }
+}
+
+SCRIPT_API(IsGangZoneFlashingForPlayer, bool(IPlayer& player, IGangZone& zone))
+{
+    return zone.isFlashingForPlayer(player);
+}
+
+SCRIPT_API(GangZoneGetPos, bool(IGangZone& zone, Vector2& min, Vector2& max))
+{
+    const GangZonePos& pos = zone.getPosition();
+    min = pos.min;
+    max = pos.max;
+    return true;
+}
