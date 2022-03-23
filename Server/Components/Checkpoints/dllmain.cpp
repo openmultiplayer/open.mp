@@ -15,12 +15,12 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerCheckpointData(player));
+        player.addExtension(new PlayerCheckpointData(player), true);
     }
 
     static void processPlayerCheckpoint(CheckpointsComponent& component, IPlayer& player)
     {
-        PlayerCheckpointData* playerCheckpointData = queryData<PlayerCheckpointData>(player);
+        PlayerCheckpointData* playerCheckpointData = queryExtension<PlayerCheckpointData>(player);
         if (playerCheckpointData) {
             IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
             if (cp.isEnabled()) {
@@ -49,7 +49,7 @@ struct CheckpointsComponent final : public ICheckpointsComponent, public PlayerE
 
     static void processPlayerRaceCheckpoint(CheckpointsComponent& component, IPlayer& player)
     {
-        PlayerCheckpointData* playerCheckpointData = queryData<PlayerCheckpointData>(player);
+        PlayerCheckpointData* playerCheckpointData = queryExtension<PlayerCheckpointData>(player);
         if (playerCheckpointData) {
             IPlayerRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
             if (cp.isEnabled()) {

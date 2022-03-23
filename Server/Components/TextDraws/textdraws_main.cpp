@@ -48,7 +48,7 @@ struct PlayerTextDrawData final : IPlayerTextDrawData {
         return storage.emplace(player, position, "_", TextDrawStyle_Preview, model);
     }
 
-    void free() override
+    void freeExtension() override
     {
         /// Detach player from player textdraws so they don't try to send an RPC
         for (IPlayerTextDraw* textDraw : storage) {
@@ -125,7 +125,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
                 return false;
             }
 
-            PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
+            PlayerTextDrawData* data = queryExtension<PlayerTextDrawData>(peer);
             if (data) {
                 if (RPC.Invalid) {
                     data->selecting = false;
@@ -171,7 +171,7 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerTextDrawData(player));
+        player.addExtension(new PlayerTextDrawData(player), true);
     }
 
     IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() override
