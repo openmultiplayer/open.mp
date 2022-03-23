@@ -125,6 +125,12 @@ public:
         }
     }
 
+    void setPosition(Vector3 position) override
+    {
+        pos = position;
+        restream();
+    }
+
     GTAQuat getRotation() const override { return GTAQuat(); }
 
     void setRotation(GTAQuat rotation) override { }
