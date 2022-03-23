@@ -21,7 +21,7 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void ObjectComponent::onConnect(IPlayer& player)
 {
-    player.addData(new PlayerObjectData(*this, player));
+    player.addExtension(new PlayerObjectData(*this, player), true);
 
     for (IObject* o : storage) {
         Object* obj = static_cast<Object*>(o);

@@ -41,7 +41,7 @@ SCRIPT_API(Update3DTextLabelText, bool(ITextLabel& textlabel, uint32_t colour, c
 
 SCRIPT_API_FAILRET(CreatePlayer3DTextLabel, INVALID_TEXT_LABEL_ID, int(IPlayer& player, const std::string& text, uint32_t colour, Vector3 position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
 {
-    IPlayerTextLabelData* labelData = queryData<IPlayerTextLabelData>(player);
+    IPlayerTextLabelData* labelData = queryExtension<IPlayerTextLabelData>(player);
     if (labelData) {
         IPlayerTextLabel* textlabel = nullptr;
 
@@ -62,7 +62,7 @@ SCRIPT_API_FAILRET(CreatePlayer3DTextLabel, INVALID_TEXT_LABEL_ID, int(IPlayer& 
 
 SCRIPT_API(DeletePlayer3DTextLabel, bool(IPlayer& player, IPlayerTextLabel& textlabel))
 {
-    queryData<IPlayerTextLabelData>(player)->release(textlabel.getID());
+    queryExtension<IPlayerTextLabelData>(player)->release(textlabel.getID());
     return true;
 }
 

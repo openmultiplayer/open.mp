@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/Classes/classes.hpp>
@@ -51,7 +50,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     GTAQuat rot_;
     HybridString<MAX_PLAYER_NAME + 1> name_;
     HybridString<16> serial_;
-    ExtraDataProvider extraData_;
     WeaponSlots weapons_;
     Colour colour_;
     FlatHashMap<int, Colour> othersColours_;
@@ -110,6 +108,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     NetCode::Packet::PlayerAimSync aimSync_;
     NetCode::Packet::PlayerTrailerSync trailerSync_;
     NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
+
+    void clearExtensions()
+    {
+        freeExtensions();
+        miscExtensions.clear();
+    }
 
     Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params)
         : pool_(pool)
@@ -502,7 +506,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         PlayerState suspectState = suspect.getState();
         IVehicle* vehicle = nullptr;
-        IPlayerVehicleData* data = queryData<IPlayerVehicleData>(suspect);
+        IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(suspect);
         if (data) {
             vehicle = data->getVehicle();
         }
@@ -744,16 +748,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     virtual unsigned getInterior() const override
     {
         return interior_;
-    }
-
-    IExtraData* findData(UID uuid) const override
-    {
-        return extraData_.findData(uuid);
-    }
-
-    void addData(IExtraData* playerData) override
-    {
-        return extraData_.addData(playerData);
     }
 
     void streamInForPlayer(IPlayer& other) override;

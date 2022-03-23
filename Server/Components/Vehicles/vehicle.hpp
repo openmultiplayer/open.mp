@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Server/Components/Vehicles/vehicle_colours.hpp"
-#include <Impl/entity_impl.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <chrono>
@@ -47,11 +46,10 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         Vehicle* trailer = nullptr;
         Vehicle* tower;
     };
-    StaticArray<IVehicle*, 3> carriages;
+    StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES> carriages;
     VehicleParams params;
     uint8_t sirenState = 0;
     VehiclesComponent* pool = nullptr;
-    ExtraDataProvider extraData_;
 
     Vehicle(VehiclesComponent* pool, const VehicleSpawnData& data)
         : pool(pool)
@@ -62,16 +60,6 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
     }
 
     ~Vehicle();
-
-    IExtraData* findData(UID uuid) const override
-    {
-        return extraData_.findData(uuid);
-    }
-
-    void addData(IExtraData* playerData) override
-    {
-        return extraData_.addData(playerData);
-    }
 
     virtual int getVirtualWorld() const override
     {
@@ -294,7 +282,7 @@ struct Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy {
         this->pos = pos;
         velocity = veloc;
     }
-    StaticArray<IVehicle*, 3> getCarriages() override
+    const StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES>& getCarriages() override
     {
         return carriages;
     }
@@ -355,7 +343,7 @@ struct PlayerVehicleData final : public IPlayerVehicleData {
         return seat;
     }
 
-    void free() override
+    void freeExtension() override
     {
         delete this;
     }

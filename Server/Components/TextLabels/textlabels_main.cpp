@@ -48,7 +48,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
         return created;
     }
 
-    void free() override
+    void freeExtension() override
     {
         for (IPlayerTextLabel* textLabel : storage) {
             /// Detach player from player textlabels so they don't try to send an RPC
@@ -137,7 +137,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerTextLabelData(player));
+        player.addExtension(new PlayerTextLabelData(player), true);
     }
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override
@@ -251,7 +251,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
             }
         }
         for (IPlayer* player : players->entries()) {
-            IPlayerTextLabelData* data = queryData<IPlayerTextLabelData>(player);
+            IPlayerTextLabelData* data = queryExtension<IPlayerTextLabelData>(player);
             if (data) {
                 for (IPlayerTextLabel* textLabel : *data) {
                     PlayerTextLabel* label = static_cast<PlayerTextLabel*>(textLabel);

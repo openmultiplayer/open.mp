@@ -76,7 +76,7 @@ struct ActorsComponent final : public IActorsComponent, public PlayerEventHandle
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerActorData());
+        player.addExtension(new PlayerActorData(), true);
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
