@@ -102,7 +102,7 @@ public:
     ~GangZone()
     {
         for (IPlayer* player : shownFor_.entries()) {
-            hideForClient(*player);
+            hideForPlayer(*player);
         }
     }
 };
