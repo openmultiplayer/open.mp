@@ -142,6 +142,7 @@ struct ObjectComponent final : public IObjectsComponent, public CoreEventHandler
         , playerEditObjectEventHandler(*this)
         , playerEditAttachedObjectEventHandler(*this)
     {
+        isPlayerObject.fill(0);
     }
 
     void onLoad(ICore* core) override
