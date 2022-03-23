@@ -2,7 +2,7 @@
 
 using namespace Impl;
 
-struct GangZonesComponent final : public IGangZonesComponent {
+struct GangZonesComponent final : public IGangZonesComponent, public PlayerUpdateEventHandler {
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
@@ -20,6 +20,39 @@ struct GangZonesComponent final : public IGangZonesComponent {
     void onLoad(ICore* core) override
     {
         this->core = core;
+    }
+
+    bool onUpdate(IPlayer& player, TimePoint now) override
+    {
+        for (auto gangzone : storage._entries()) {
+
+            // getting the list from GangZone implementation instead of interface because
+            // we need the modifiable version
+            FlatHashSet<IPlayer*>& playersInside = reinterpret_cast<GangZone*>(gangzone)->getPlayersInside();
+            const GangZonePos& pos = gangzone->getPosition();
+            const Vector3& playerPos = player.getPosition();
+
+            if (playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y && playersInside.find(&player) == playersInside.end()) {
+
+                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                playersInside.insert(&player);
+                eventDispatcher.dispatch(
+                    &GangZoneEventHandler::onPlayerEnterGangZone,
+                    player,
+                    *lock.entry);
+
+            } else if (!(playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y) && playersInside.find(&player) != playersInside.end()) {
+
+                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                playersInside.erase(&player);
+                eventDispatcher.dispatch(
+                    &GangZoneEventHandler::onPlayerLeaveGangZone,
+                    player,
+                    *lock.entry);
+            }
+        }
+
+        return true;
     }
 
     IGangZone* create(GangZonePos pos) override

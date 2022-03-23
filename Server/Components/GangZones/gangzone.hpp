@@ -9,6 +9,7 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
     GangZonePos pos;
     Colour col;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
+    FlatHashSet<IPlayer*> playersInside_;
 
     GangZone(GangZonePos pos)
         : pos(pos)
@@ -54,6 +55,23 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
         NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
         stopFlashGangZoneRPC.ID = poolID;
         PacketHelper::send(stopFlashGangZoneRPC, player);
+
+
+    const FlatHashSet<IPlayer*>& getShownFor() override
+    {
+        return shownFor_.entries();
+    }
+
+    // this one is used for internal usage, as in set being modifiable
+    FlatHashSet<IPlayer*>& getPlayersInside()
+    {
+        return playersInside_;
+    }
+
+    // this one is for our SDK, and returns a constant set
+    const FlatHashSet<IPlayer*>& getPlayersInside() const override
+    {
+        return playersInside_;
     }
 
     int getID() const override
