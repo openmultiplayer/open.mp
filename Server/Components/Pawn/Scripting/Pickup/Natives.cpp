@@ -66,7 +66,11 @@ SCRIPT_API(GetPickupVirtualWorld, int(IPickup& pickup))
 
 SCRIPT_API(SetPickupPos, bool(IPickup& pickup, Vector3 pos, bool update))
 {
-    pickup.setPosition(pos, update);
+    if (update) {
+        pickup.setPosition(pos);
+    } else {
+        pickup.setPositionNoUpdate(pos);
+    }
     return true;
 }
 
