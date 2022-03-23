@@ -32,3 +32,75 @@ SCRIPT_API(DestroyPickup, bool(IPickup& pickup))
     component->release(pickup.getID());
     return true;
 }
+
+SCRIPT_API(IsValidPickup, bool(IPickup* pickup))
+{
+    return pickup != nullptr;
+}
+
+SCRIPT_API(IsPickupStreamedIn, bool(IPlayer& player, IPickup& pickup))
+{
+    return pickup.isStreamedInForPlayer(player);
+}
+
+SCRIPT_API(GetPickupPos, bool(IPickup& pickup, Vector3& pos))
+{
+    pos = pickup.getPosition();
+    return true;
+}
+
+SCRIPT_API(GetPickupModel, int(IPickup& pickup))
+{
+    return pickup.getModel();
+}
+
+SCRIPT_API(GetPickupType, int(IPickup& pickup))
+{
+    return pickup.getType();
+}
+
+SCRIPT_API(GetPickupVirtualWorld, int(IPickup& pickup))
+{
+    return pickup.getVirtualWorld();
+}
+
+SCRIPT_API(SetPickupPos, bool(IPickup& pickup, Vector3 pos, bool update))
+{
+    pickup.setPosition(pos, update);
+    return true;
+}
+
+SCRIPT_API(SetPickupModel, bool(IPickup& pickup, int model, bool update))
+{
+    pickup.setModel(model, update);
+    return true;
+}
+
+SCRIPT_API(SetPickupType, bool(IPickup& pickup, int type, bool update))
+{
+    pickup.setType(type, update);
+    return true;
+}
+
+SCRIPT_API(SetPickupVirtualWorld, bool(IPickup& pickup, int virtualworld))
+{
+    pickup.setVirtualWorld(virtualworld);
+    return true;
+}
+
+SCRIPT_API(ShowPickupForPlayer, bool(IPlayer& player, IPickup& pickup))
+{
+    pickup.setPickupHiddenForPlayer(player, false);
+    return true;
+}
+
+SCRIPT_API(HidePickupForPlayer, bool(IPlayer& player, IPickup& pickup))
+{
+    pickup.setPickupHiddenForPlayer(player, true);
+    return true;
+}
+
+SCRIPT_API(IsPickupHiddenForPlayer, bool(IPlayer& player, IPickup& pickup))
+{
+    return pickup.isPickupHiddenForPlayer(player);
+}
