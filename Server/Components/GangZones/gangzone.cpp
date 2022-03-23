@@ -4,6 +4,7 @@ using namespace Impl;
 
 struct GangZonesComponent final : public IGangZonesComponent, public PlayerUpdateEventHandler {
     ICore* core = nullptr;
+    IPlayerPool* players = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
@@ -20,6 +21,15 @@ struct GangZonesComponent final : public IGangZonesComponent, public PlayerUpdat
     void onLoad(ICore* core) override
     {
         this->core = core;
+        players = &core->getPlayers();
+        players->getPlayerUpdateDispatcher().addEventHandler(this);
+    }
+
+    ~GangZonesComponent()
+    {
+        if (core) {
+            players->getPlayerUpdateDispatcher().removeEventHandler(this);
+        }
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
