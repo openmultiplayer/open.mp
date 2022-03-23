@@ -92,7 +92,7 @@ struct GangZone final : public IGangZone, public PoolIDProvider, public NoCopy {
     ~GangZone()
     {
         for (IPlayer* player : shownFor_.entries()) {
-            hideForClient(*player);
+            hideForPlayer(*player);
         }
     }
 };
