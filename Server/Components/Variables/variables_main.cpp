@@ -100,7 +100,7 @@ private:
 
 struct PlayerVariableData final : VariableStorageBase<IPlayerVariableData> {
 
-    void free() override
+    void freeExtension() override
     {
         delete this;
     }
@@ -111,7 +111,7 @@ struct VariablesComponent final : VariableStorageBase<IVariablesComponent>, Play
 
     void onConnect(IPlayer& player) override
     {
-        player.addData(new PlayerVariableData());
+        player.addExtension(new PlayerVariableData(), true);
     }
 
     StringView componentName() const override

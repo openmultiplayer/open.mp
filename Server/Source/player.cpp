@@ -103,7 +103,7 @@ IObject* Player::getCameraTargetObject()
     IObject* object = component->get(cameraTargetObject_);
 
     if (!object) {
-        IPlayerObjectData* data = queryData<IPlayerObjectData>(this);
+        IPlayerObjectData* data = queryExtension<IPlayerObjectData>(this);
 
         if (data) {
             IPlayerObject* player_object = data->get(cameraTargetObject_);
@@ -112,7 +112,7 @@ IObject* Player::getCameraTargetObject()
             }
         }
     }
-    
+
     return object;
 }
 

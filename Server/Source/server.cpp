@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     signal(SIGBREAK, &handler);
     SetUnhandledExceptionFilter(&ExceptionHandler);
     _setmode(_fileno(stdin), _O_U16TEXT);
-#else 
+#else
     signal(SIGHUP, &handler);
     signal(SIGUSR1, &handler);
     signal(SIGUSR2, &handler);
@@ -101,10 +101,7 @@ int main(int argc, char** argv)
 
     cxxopts::Options options(argv[0], "The open.mp game server");
 
-    options.add_options()
-		("h,help", "Print usage information")
-		("write-config", "Generate default config.json")
-		("script", "Script to run", cxxopts::value<std::string>());
+    options.add_options()("h,help", "Print usage information")("write-config", "Generate default config.json")("script", "Script to run", cxxopts::value<std::string>());
     options.parse_positional("script");
     options.show_positional_help();
 
