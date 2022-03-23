@@ -10,6 +10,9 @@ private:
     GangZonePos pos;
     Colour col;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> flashingFor_;
+    FlatHashMap<int, Colour> flashColorForPlayer_;
+    FlatHashMap<int, Colour> colorForPlayer_;
     FlatHashSet<IPlayer*> playersInside_;
 
     void restream()
@@ -46,16 +49,54 @@ public:
         return shownFor_.valid(player.getID());
     }
 
+    bool isFlashingForPlayer(const IPlayer& player) const override
+    {
+        return flashingFor_.valid(player.getID());
+    }
+
     void showForPlayer(IPlayer& player, const Colour& colour) override
     {
         col = colour;
-        shownFor_.add(player.getID(), player);
+        const int playerId = player.getID();
+        shownFor_.add(playerId, player);
+
+        if (isFlashingForPlayer(player)) {
+            flashingFor_.remove(playerId, player);
+        }
+
+        auto itColor = colorForPlayer_.find(playerId);
+        if (itColor == colorForPlayer_.end()) {
+            colorForPlayer_.insert({ playerId, colour });
+        } else {
+            itColor->second = colour;
+        }
+
+        auto itFlashColor = flashColorForPlayer_.find(playerId);
+        if (itFlashColor != flashColorForPlayer_.end()) {
+            flashColorForPlayer_.erase(playerId);
+        }
+
         showForClient(player, colour);
     }
 
     void hideForPlayer(IPlayer& player) override
     {
         shownFor_.remove(player.getID(), player);
+
+        if (isFlashingForPlayer(player)) {
+            flashingFor_.remove(player.getID(), player);
+        }
+
+        auto itColor = colorForPlayer_.find(player.getID());
+        if (itColor != colorForPlayer_.end()) {
+            colorForPlayer_.erase(player.getID());
+        }
+
+        auto itFlashColor = flashColorForPlayer_.find(player.getID());
+        if (itFlashColor != flashColorForPlayer_.end()) {
+            flashColorForPlayer_.erase(player.getID());
+        }
+
         hideForClient(player);
     }
 
@@ -65,6 +106,17 @@ public:
         flashGangZoneRPC.ID = poolID;
         flashGangZoneRPC.Col = colour;
         PacketHelper::send(flashGangZoneRPC, player);
+
+        auto itFlashColor = flashColorForPlayer_.find(player.getID());
+        if (itFlashColor == flashColorForPlayer_.end()) {
+            flashColorForPlayer_.insert({ player.getID(), colour });
+        } else {
+            itFlashColor->second = colour;
+        }
+
+        if (!isFlashingForPlayer(player)) {
+            flashingFor_.add(player.getID(), player);
+        }
     }
 
     void stopFlashForPlayer(IPlayer& player) override
@@ -73,6 +125,35 @@ public:
         stopFlashGangZoneRPC.ID = poolID;
         PacketHelper::send(stopFlashGangZoneRPC, player);
 
+        auto itFlashColor = flashColorForPlayer_.find(player.getID());
+        if (itFlashColor != flashColorForPlayer_.end()) {
+            flashColorForPlayer_.erase(player.getID());
+        }
+
+        if (isFlashingForPlayer(player)) {
+            flashingFor_.remove(player.getID(), player);
+        }
+    }
+
+    const Colour getFlashingColorForPlayer(IPlayer& player) const override
+    {
+        auto itFlashColor = flashColorForPlayer_.find(player.getID());
+        if (itFlashColor != flashColorForPlayer_.end()) {
+            return flashColorForPlayer_.at(player.getID());
+        } else {
+            return Colour::None();
+        }
+    }
+
+    const Colour getColorForPlayer(IPlayer& player) const override
+    {
+        auto itColor = colorForPlayer_.find(player.getID());
+        if (itColor != colorForPlayer_.end()) {
+            return colorForPlayer_.at(player.getID());
+        } else {
+            return Colour::None();
+        }
+    }
 
     const FlatHashSet<IPlayer*>& getShownFor() override
     {
