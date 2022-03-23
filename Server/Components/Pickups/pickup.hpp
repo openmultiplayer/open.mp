@@ -79,7 +79,7 @@ public:
         streamOutForClient(player);
     }
 
-    bool isPickupHiddenForPlayer(IPlayer& player) override
+    bool isPickupHiddenForPlayer(IPlayer& player) const override
     {
         return hiddenFor_.valid(player.getID());
     }
@@ -117,12 +117,9 @@ public:
         return pos;
     }
 
-    void setPosition(Vector3 position, bool update) override
+    void setPositionNoUpdate(Vector3 position) override
     {
         pos = position;
-        if (update) {
-            restream();
-        }
     }
 
     void setPosition(Vector3 position) override
