@@ -444,19 +444,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.surfing_ = footSync.SurfingData;
             player.action_ = PlayerSpecialAction(footSync.SpecialAction);
 
-            uint32_t newKeys;
+            uint32_t newKeys = footSync.Keys;
             switch (footSync.AdditionalKey) {
             case 1:
-                newKeys = footSync.Keys | 65536; // KEY_YES
+                newKeys |= 65536; // KEY_YES
                 break;
             case 2:
-                newKeys = footSync.Keys | 131072; // KEY_NO
+                newKeys |= 131072; // KEY_NO
                 break;
             case 3:
-                newKeys = footSync.Keys | 262144; // KEY_CTRL_BACK
-                break;
-            default:
-                newKeys = footSync.Keys;
+                newKeys |= 262144; // KEY_CTRL_BACK
                 break;
             }
 
@@ -734,19 +731,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.armedWeapon_ = vehicleSync.WeaponID;
             const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
-            uint32_t newKeys;
+            uint32_t newKeys = vehicleSync.Keys;
             switch (vehicleSync.AdditionalKey) {
             case 1:
-                newKeys = vehicleSync.Keys | 65536; // KEY_YES
+                newKeys |= 65536; // KEY_YES
                 break;
             case 2:
-                newKeys = vehicleSync.Keys | 131072; // KEY_NO
+                newKeys |= 131072; // KEY_NO
                 break;
             case 3:
-                newKeys = vehicleSync.Keys | 262144; // KEY_CTRL_BACK
-                break;
-            default:
-                newKeys = vehicleSync.Keys;
+                newKeys |= 262144; // KEY_CTRL_BACK
                 break;
             }
 
@@ -765,6 +759,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (vehicleOk) {
                 vehicleSync.PlayerID = player.poolID;
 
+                vehicleSync.HasTrailer = false;
                 if (vehicleSync.TrailerID) {
                     IVehicle* trailer = vehicle.getTrailer();
                     if (trailer) {
