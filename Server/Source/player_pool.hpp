@@ -441,6 +441,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.velocity_ = footSync.Velocity;
             player.animation_.ID = footSync.AnimationID;
             player.animation_.flags = footSync.AnimationFlags;
+
+            if (footSync.SurfingData.type == PlayerSurfingData::Type::Object
+                && self.objectsComponent != nullptr
+                && self.objectsComponent->get(footSync.SurfingData.ID) == nullptr) {
+                footSync.SurfingData.type = PlayerSurfingData::Type::None;
+            } else if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle
+                && self.vehiclesComponent != nullptr
+                && self.vehiclesComponent->get(footSync.SurfingData.ID) == nullptr) {
+                footSync.SurfingData.type = PlayerSurfingData::Type::None;
+            }
+
             player.surfing_ = footSync.SurfingData;
             player.action_ = PlayerSpecialAction(footSync.SpecialAction);
 
