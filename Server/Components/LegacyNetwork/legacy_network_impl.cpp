@@ -734,6 +734,7 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
     for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive()) {
 
         if (pkt->playerIndex >= playerFromRakIndex.size()) {
+            rakNetServer.DeallocatePacket(pkt);
             continue;
         }
 
