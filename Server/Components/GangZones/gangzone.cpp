@@ -2,7 +2,7 @@
 
 using namespace Impl;
 
-struct GangZonesComponent final : public IGangZonesComponent {
+struct GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler {
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
@@ -20,6 +20,14 @@ struct GangZonesComponent final : public IGangZonesComponent {
     void onLoad(ICore* core) override
     {
         this->core = core;
+        this->core->getPlayers().getEventDispatcher().addEventHandler(this);
+    }
+
+    ~GangZonesComponent()
+    {
+        if (core) {
+            core->getPlayers().getEventDispatcher().addEventHandler(this);
+        }
     }
 
     IGangZone* create(GangZonePos pos) override
@@ -71,6 +79,17 @@ struct GangZonesComponent final : public IGangZonesComponent {
     const FlatPtrHashSet<IGangZone>& entries() override
     {
         return storage._entries();
+    }
+
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
+        const int pid = player.getID();
+        for (IGangZone* g : storage) {
+            GangZone* gangzone = static_cast<GangZone*>(g);
+            if (gangzone->shownFor_.valid(pid)) {
+                gangzone->shownFor_.remove(pid, player);
+            }
+        }
     }
 };
 
