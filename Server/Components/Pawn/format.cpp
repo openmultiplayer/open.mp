@@ -10,6 +10,10 @@
 #include "format.hpp"
 #include "Manager/Manager.hpp"
 
+#ifndef WIN32
+#include <math.h>
+#endif
+
 //Adapted from Quake3's vsprintf
 // thanks to cybermind for linking me to this :)
 //I made the following changes:
