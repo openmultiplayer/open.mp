@@ -142,7 +142,16 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los) override
     {
-        return storage.emplace(text, colour, pos, drawDist, vw, los);
+        ITextLabel* created = storage.emplace(text, colour, pos, drawDist, vw, los);
+
+        if (created) {
+            const float maxDist = streamConfigHelper.getDistanceSqr();
+
+            for (IPlayer* player : players->entries()) {
+                updateLabelStateForPlayer(created, *player, maxDist);
+            }
+        }
+        return created;
     }
 
     ITextLabel* create(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los, IPlayer& attach) override
@@ -209,33 +218,38 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (ITextLabel* textLabel : storage) {
-                TextLabel* label = static_cast<TextLabel*>(textLabel);
-                const TextLabelAttachmentData& data = label->attachmentData;
-                Vector3 pos = label->pos;
-                IPlayer* textLabelPlayer = players->get(data.playerID);
-                if (textLabelPlayer) {
-                    pos = textLabelPlayer->getPosition();
-                } else if (vehicles) {
-                    IVehicle* textLabelVehicle = vehicles->get(data.vehicleID);
-                    if (textLabelVehicle) {
-                        pos = textLabelVehicle->getPosition();
-                    }
-                }
-
-                const PlayerState state = player.getState();
-                const Vector3 dist3D = pos - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == label->virtualWorld || label->virtualWorld == -1) && glm::dot(dist3D, dist3D) < maxDist;
-
-                const bool isStreamedIn = textLabel->isStreamedInForPlayer(player);
-                if (!isStreamedIn && shouldBeStreamedIn) {
-                    textLabel->streamInForPlayer(player);
-                } else if (isStreamedIn && !shouldBeStreamedIn) {
-                    textLabel->streamOutForPlayer(player);
-                }
+                updateLabelStateForPlayer(textLabel, player, maxDist);
             }
         }
 
         return true;
+    }
+
+    void updateLabelStateForPlayer(ITextLabel* textLabel, IPlayer& player, float maxDist) 
+    {
+        TextLabel* label = static_cast<TextLabel*>(textLabel);
+        const TextLabelAttachmentData& data = label->attachmentData;
+        Vector3 pos = label->pos;
+        IPlayer* textLabelPlayer = players->get(data.playerID);
+        if (textLabelPlayer) {
+            pos = textLabelPlayer->getPosition();
+        } else if (vehicles) {
+            IVehicle* textLabelVehicle = vehicles->get(data.vehicleID);
+            if (textLabelVehicle) {
+                pos = textLabelVehicle->getPosition();
+            }
+        }
+
+        const PlayerState state = player.getState();
+        const Vector3 dist3D = pos - player.getPosition();
+        const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == label->virtualWorld || label->virtualWorld == -1) && glm::dot(dist3D, dist3D) < maxDist;
+
+        const bool isStreamedIn = label->isStreamedInForPlayer(player);
+        if (!isStreamedIn && shouldBeStreamedIn) {
+            label->streamInForPlayer(player);
+        } else if (isStreamedIn && !shouldBeStreamedIn) {
+            label->streamOutForPlayer(player);
+        }
     }
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
