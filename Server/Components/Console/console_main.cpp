@@ -34,7 +34,7 @@ struct ConsoleComponent final : public IConsoleComponent, public CoreEventHandle
     ICore* core = nullptr;
     DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
     std::mutex cmdMutex;
-    std::atomic_bool newCmd;
+    std::atomic_bool newCmd = false;
     String cmd;
     ThreadProcData* threadData;
 
