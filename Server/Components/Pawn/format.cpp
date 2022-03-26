@@ -10,6 +10,10 @@
 #include "format.hpp"
 #include "Manager/Manager.hpp"
 
+#ifndef WIN32
+#include <math.h>
+#endif
+
 //Adapted from Quake3's vsprintf
 // thanks to cybermind for linking me to this :)
 //I made the following changes:
@@ -94,6 +98,11 @@ void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec)
 template <typename U>
 void AddFloat(U** buf_p, size_t& maxlen, double fval, int width, int prec, int flags)
 {
+
+    if (maxlen < 3) {
+        return;
+    }
+
     int digits; // non-fraction part digits
     double tmp; // temporary
     U* buf = *buf_p; // output buffer pointer
@@ -103,91 +112,99 @@ void AddFloat(U** buf_p, size_t& maxlen, double fval, int width, int prec, int f
     int significant_digits = 0; // number of significant digits written
     const int MAX_SIGNIFICANT_DIGITS = 16;
 
-    // default precision
-    if (prec < 0) {
-        prec = 6;
-    }
+    if (isnan(fval)) {
+        // NaN
+        *(buf++) = 'N';
+        *(buf++) = 'a';
+        *(buf++) = 'N';
+        maxlen -= 3;
+    } else {
+        // default precision
+        if (prec < 0) {
+            prec = 6;
+        }
 
-    // get the sign
-    if (fval < 0) {
-        fval = -fval;
-        sign = 1;
-    }
+        // get the sign
+        if (fval < 0) {
+            fval = -fval;
+            sign = 1;
+        }
 
-    // compute whole-part digits count
-    digits = (int)log10(fval) + 1;
+        // compute whole-part digits count
+        digits = (int)log10(fval) + 1;
 
-    // Only print 0.something if 0 < fval < 1
-    if (digits < 1) {
-        digits = 1;
-    }
+        // Only print 0.something if 0 < fval < 1
+        if (digits < 1) {
+            digits = 1;
+        }
 
-    // compute the field length
-    fieldlength = digits + prec + ((prec > 0) ? 1 : 0) + sign;
+        // compute the field length
+        fieldlength = digits + prec + ((prec > 0) ? 1 : 0) + sign;
 
-    // minus sign BEFORE left padding if padding with zeros
-    if (sign && maxlen && (flags & ZEROPAD)) {
-        *buf++ = '-';
-        maxlen--;
-    }
-
-    // right justify if required
-    if ((flags & LADJUST) == 0) {
-        while ((fieldlength < width) && maxlen) {
-            *buf++ = (flags & ZEROPAD) ? '0' : ' ';
-            width--;
+        // minus sign BEFORE left padding if padding with zeros
+        if (sign && maxlen && (flags & ZEROPAD)) {
+            *buf++ = '-';
             maxlen--;
         }
-    }
 
-    // minus sign AFTER left padding if padding with spaces
-    if (sign && maxlen && !(flags & ZEROPAD)) {
-        *buf++ = '-';
-        maxlen--;
-    }
-
-    // write the whole part
-    tmp = pow(10.0, digits - 1);
-    while ((digits--) && maxlen) {
-        if (++significant_digits > MAX_SIGNIFICANT_DIGITS) {
-            *buf++ = '0';
-        } else {
-            val = (int)(fval / tmp);
-            *buf++ = '0' + val;
-            fval -= val * tmp;
-            tmp *= 0.1;
+        // right justify if required
+        if ((flags & LADJUST) == 0) {
+            while ((fieldlength < width) && maxlen) {
+                *buf++ = (flags & ZEROPAD) ? '0' : ' ';
+                width--;
+                maxlen--;
+            }
         }
-        maxlen--;
-    }
 
-    // write the fraction part
-    if (maxlen && prec) {
-        *buf++ = '.';
-        maxlen--;
-    }
-
-    tmp = pow(10.0, prec);
-
-    fval *= tmp;
-    while (prec-- && maxlen) {
-        if (++significant_digits > MAX_SIGNIFICANT_DIGITS) {
-            *buf++ = '0';
-        } else {
-            tmp *= 0.1;
-            val = (int)(fval / tmp);
-            *buf++ = '0' + val;
-            fval -= val * tmp;
-        }
-        maxlen--;
-    }
-
-    // left justify if required
-    if (flags & LADJUST) {
-        while ((fieldlength < width) && maxlen) {
-            // right-padding only with spaces, ZEROPAD is ignored
-            *buf++ = ' ';
-            width--;
+        // minus sign AFTER left padding if padding with spaces
+        if (sign && maxlen && !(flags & ZEROPAD)) {
+            *buf++ = '-';
             maxlen--;
+        }
+
+        // write the whole part
+        tmp = pow(10.0, digits - 1);
+        while ((digits--) && maxlen) {
+            if (++significant_digits > MAX_SIGNIFICANT_DIGITS) {
+                *buf++ = '0';
+            } else {
+                val = (int)(fval / tmp);
+                *buf++ = '0' + val;
+                fval -= val * tmp;
+                tmp *= 0.1;
+            }
+            maxlen--;
+        }
+
+        // write the fraction part
+        if (maxlen && prec) {
+            *buf++ = '.';
+            maxlen--;
+        }
+
+        tmp = pow(10.0, prec);
+
+        fval *= tmp;
+        while (prec-- && maxlen) {
+            if (++significant_digits > MAX_SIGNIFICANT_DIGITS) {
+                *buf++ = '0';
+            } else {
+                tmp *= 0.1;
+                val = (int)(fval / tmp);
+                *buf++ = '0' + val;
+                fval -= val * tmp;
+            }
+            maxlen--;
+        }
+
+        // left justify if required
+        if (flags & LADJUST) {
+            while ((fieldlength < width) && maxlen) {
+                // right-padding only with spaces, ZEROPAD is ignored
+                *buf++ = ' ';
+                width--;
+                maxlen--;
+            }
         }
     }
 
