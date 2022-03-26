@@ -174,6 +174,18 @@ struct TextDrawsComponent final : public ITextDrawsComponent, public PlayerEvent
         player.addExtension(new PlayerTextDrawData(player), true);
     }
 
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
+        const int pid = player.getID();
+
+        for (ITextDraw* textdraw : storage) {
+            TextDraw* textdraw_ = static_cast<TextDraw*>(textdraw);
+            if (textdraw_->shownFor_.valid(pid)) {
+                textdraw_->shownFor_.remove(pid, player);
+            }
+        }
+    }
+
     IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() override
     {
         return dispatcher;
