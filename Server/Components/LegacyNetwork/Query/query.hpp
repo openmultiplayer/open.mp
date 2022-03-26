@@ -123,10 +123,10 @@ private:
     bool logQueries = false;
     bool rconEnabled = false;
 
-    std::unique_ptr<char[]> playerListBuffer;
+    std::unique_ptr<char[]> playerListBuffer = std::make_unique<char[]>(0);
     size_t playerListBufferLength = 0;
 
-    std::unique_ptr<char[]> serverInfoBuffer;
+    std::unique_ptr<char[]> serverInfoBuffer = std::make_unique<char[]>(0);
     size_t serverInfoBufferLength = 0;
 
     std::map<String, String> rules;
