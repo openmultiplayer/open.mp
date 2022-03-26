@@ -128,6 +128,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , score_(0)
         , fightingStyle_(PlayerFightingStyle_Normal)
         , state_(PlayerState_None)
+        , keys_{ 0u, 0, 0 }
         , surfing_ { PlayerSurfingData::Type::None }
         , armedWeapon_(0)
         , rotTransform_(0.f, 0.f, 0.f)
