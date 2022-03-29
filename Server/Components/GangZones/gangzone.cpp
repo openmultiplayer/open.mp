@@ -88,9 +88,7 @@ public:
         const int pid = player.getID();
         for (IGangZone* g : storage) {
             GangZone* gangzone = static_cast<GangZone*>(g);
-            if (gangzone->shownFor_.valid(pid)) {
-                gangzone->shownFor_.remove(pid, player);
-            }
+            gangzone->removeFor(pid, player);
         }
     }
 };

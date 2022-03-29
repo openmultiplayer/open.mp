@@ -146,7 +146,11 @@ public:
 
     inline void decrementPlayerCounter(int objid)
     {
-        --isPlayerObject[objid];
+		if (objid < isPlayerObject.size())
+		{
+			assert(isPlayerObject[objid] != 0);
+			--isPlayerObject[objid];
+		}
 	}
 
     inline IPlayerPool& getPlayers()
@@ -451,10 +455,7 @@ public:
         if (index == 0) {
             return;
         }
-        if (index < component_.isPlayerObject.size()) {
-            assert(component_.isPlayerObject[index] != 0);
-            component_.decrementPlayerCounter(index);
-        }
+        component_.decrementPlayerCounter(index);
         storage.release(index, false);
     }
 
@@ -485,10 +486,8 @@ public:
         for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
             // Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
-            assert(component_.isPlayerObject[obj->getID()] != 0);
-            --component_.isPlayerObject[obj->getID()];
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
             component_.decrementPlayerCounter(obj->getID());
+            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
             obj->setPlayerQuitting();
         }
         delete this;

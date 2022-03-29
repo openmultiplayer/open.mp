@@ -372,11 +372,12 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
 
     auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
-        if (vehicleData->vehicle != nullptr) {
-            vehicleData->vehicle->unoccupy(player);
+		auto vehicle = static_cast<Vehicle *>(vehicleData->getVehicle());
+        if (vehicle != nullptr) {
+            vehicle->unoccupy(player);
             player.setPosition(pos);
         }
-        vehicleData->setVehicle(this, data->getSeat());
+        vehicleData->setVehicle(this, vehicleData->getSeat());
     }
 
     putPlayerInVehicleRPC.VehicleID = poolID;
