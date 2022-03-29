@@ -12,12 +12,16 @@ static const struct DefaultClass final : public PlayerClass {
     }
 } defClass;
 
-struct PlayerClassData final : IPlayerClassData {
+class PlayerClassData final : public IPlayerClassData {
+private:
     IPlayer& player;
     PlayerClass cls;
     bool& inClassRequest;
     bool& skipDefaultClassRequest;
 
+    friend class ClassesComponent;
+
+public:
     PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest)
         : player(player)
         , cls(defClass)
@@ -54,9 +58,13 @@ struct PlayerClassData final : IPlayerClassData {
     }
 };
 
-struct Class final : public IClass, public PoolIDProvider {
+class Class final : public IClass, public PoolIDProvider {
+private:
     PlayerClass cls;
 
+	friend class ClassesComponent;
+
+public:
     Class(const PlayerClass& cls)
         : cls(cls)
     {
@@ -73,7 +81,8 @@ struct Class final : public IClass, public PoolIDProvider {
     }
 };
 
-struct ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
+class ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
+private:
     MarkedPoolStorage<Class, IClass, 0, CLASS_POOL_SIZE> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
     bool inClassRequest;
@@ -114,7 +123,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
                         PacketHelper::send(playerRequestClassResponse, peer);
                     }
                 } else if (Class* clsPtr = (self.storage.get(playerRequestClassPacket.Classid))) {
-                    const PlayerClass& cls = clsPtr->cls;
+                    const PlayerClass& cls = clsPtr->getClass();
                     IPlayerClassData* clsData = queryExtension<IPlayerClassData>(peer);
                     if (clsData) {
                         PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
@@ -155,6 +164,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         }
     } onPlayerRequestClassHandler;
 
+public:
     ClassesComponent()
         : onPlayerRequestClassHandler(*this)
     {
@@ -187,11 +197,7 @@ struct ClassesComponent final : public IClassesComponent, public PlayerEventHand
         if (storage._entries().size() == CLASS_POOL_SIZE) {
             Class* lastClass = storage.get(storage.Upper - 1);
 
-            lastClass->cls.skin = skin;
-            lastClass->cls.team = team;
-            lastClass->cls.spawn = spawn;
-            lastClass->cls.angle = angle;
-            lastClass->cls.weapons = weapons;
+            lastClass->cls = PlayerClass(skin, team, spawn, angle, weapons);
 
             return lastClass;
         }
@@ -257,3 +263,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new ClassesComponent();
 }
+

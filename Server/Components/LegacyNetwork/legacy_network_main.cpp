@@ -1,9 +1,11 @@
 #include "legacy_network_impl.hpp"
 #include <sdk.hpp>
 
-struct RakNetLegacyNetworkComponent final : INetworkComponent {
+class RakNetLegacyNetworkComponent final : public INetworkComponent {
+private:
     RakNetLegacyNetwork legacyNetwork;
 
+public:
     void onLoad(ICore* core) override
     {
         legacyNetwork.init(core);
@@ -16,13 +18,13 @@ struct RakNetLegacyNetworkComponent final : INetworkComponent {
 
     void onInit(IComponentList* components) override
     {
-        legacyNetwork.query.setConsole(components->queryComponent<IConsoleComponent>());
+        legacyNetwork.setQueryConsole(components->queryComponent<IConsoleComponent>());
     }
 
     void onFree(IComponent* component) override
     {
-        if (component == legacyNetwork.query.getConsole()) {
-            legacyNetwork.query.setConsole(nullptr);
+        if (component == legacyNetwork.getQueryConsole()) {
+            legacyNetwork.setQueryConsole(nullptr);
         }
     }
 
@@ -56,3 +58,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new RakNetLegacyNetworkComponent();
 }
+

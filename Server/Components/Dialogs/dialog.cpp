@@ -4,9 +4,13 @@
 
 using namespace Impl;
 
-struct PlayerDialogData final : public IPlayerDialogData {
+class PlayerDialogData final : public IPlayerDialogData {
+private:
     int activeId = INVALID_DIALOG_ID;
 
+	friend class DialogsComponent;
+
+public:
     void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
     {
         NetCode::RPC::ShowDialog showDialog;
@@ -33,7 +37,8 @@ struct PlayerDialogData final : public IPlayerDialogData {
     }
 };
 
-struct DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
+class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
     DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;
 
@@ -71,6 +76,7 @@ struct DialogsComponent final : public IDialogsComponent, public PlayerEventHand
         }
     } dialogResponseHandler;
 
+public:
     void onConnect(IPlayer& player) override
     {
         player.addExtension(new PlayerDialogData(), true);
@@ -121,3 +127,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new DialogsComponent();
 }
+
