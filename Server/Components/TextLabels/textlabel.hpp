@@ -7,7 +7,8 @@
 using namespace Impl;
 
 template <class T>
-struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
+class TextLabelBase : public T, public PoolIDProvider, public NoCopy {
+private:
     HybridString<32> text;
     Vector3 pos;
     Colour colour;
@@ -15,6 +16,7 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     TextLabelAttachmentData attachmentData;
     bool testLOS;
 
+public:
     TextLabelBase(StringView text, Colour colour, Vector3 pos, float drawDist, bool testLOS)
         : text(text)
         , pos(pos)
@@ -42,7 +44,11 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
         restream();
     }
 
-    GTAQuat getRotation() const override { return GTAQuat(); }
+    GTAQuat getRotation() const override
+	{
+		// Maybe make this a static shared instance?
+		return GTAQuat();
+	}
 
     void setRotation(GTAQuat rotation) override { }
 
@@ -136,9 +142,18 @@ struct TextLabelBase : public T, public PoolIDProvider, public NoCopy {
     }
 };
 
-struct TextLabel final : public TextLabelBase<ITextLabel> {
+class TextLabel final : public TextLabelBase<ITextLabel> {
+private:
     int virtualWorld;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
+
+public:
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (streamedFor_.valid(pid)) {
+            streamedFor_.remove(pid, player);
+        }
+    }
 
     TextLabel(StringView text, Colour colour, Vector3 pos, float drawDist, int vw, bool los)
         : TextLabelBase(text, colour, pos, drawDist, los)
@@ -190,10 +205,17 @@ struct TextLabel final : public TextLabelBase<ITextLabel> {
     }
 };
 
-struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
+class PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
+private:
     IPlayer& player;
     bool playerQuitting;
 
+public:
+    void setPlayerQuitting()
+    {
+        playerQuitting = true;
+    }
+    
     PlayerTextLabel(IPlayer& player, StringView text, Colour colour, Vector3 pos, float drawDist, bool testLOS)
         : TextLabelBase(text, colour, pos, drawDist, testLOS)
         , player(player)
@@ -223,3 +245,4 @@ struct PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
         }
     }
 };
+

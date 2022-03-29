@@ -15,7 +15,8 @@ struct PlayerActorData final : IExtension {
     }
 };
 
-struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
+class Actor final : public IActor, public PoolIDProvider, public NoCopy {
+private:
     int virtualWorld_;
     int skin_;
     Vector3 pos_;
@@ -25,6 +26,47 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
     bool invulnerable_;
     AnimationData animation_;
     bool animationLoop_;
+
+    void restream()
+    {
+        for (IPlayer* player : streamedFor_.entries()) {
+            streamOutForClient(*player);
+            streamInForClient(*player);
+        }
+    }
+
+    void streamInForClient(IPlayer& player)
+    {
+        NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC;
+        showActorForPlayerRPC.ActorID = poolID;
+        showActorForPlayerRPC.Angle = angle_;
+        showActorForPlayerRPC.Health = health_;
+        showActorForPlayerRPC.Invulnerable = invulnerable_;
+        showActorForPlayerRPC.Position = pos_;
+        showActorForPlayerRPC.SkinID = skin_;
+        PacketHelper::send(showActorForPlayerRPC, player);
+
+        if (animationLoop_) {
+            NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
+            RPC.ActorID = poolID;
+            PacketHelper::send(RPC, player);
+        }
+    }
+
+    void streamOutForClient(IPlayer& player)
+    {
+        NetCode::RPC::HideActorForPlayer RPC;
+        RPC.ActorID = poolID;
+        PacketHelper::send(RPC, player);
+    }
+
+public:
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (streamedFor_.valid(pid)) {
+            streamedFor_.remove(pid, player);
+        }
+    }
 
     Actor(int skin, Vector3 pos, float angle)
         : virtualWorld_(0)
@@ -96,14 +138,6 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         NetCode::RPC::ClearActorAnimationsForPlayer RPC;
         RPC.ActorID = poolID;
         PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
-    }
-
-    void restream()
-    {
-        for (IPlayer* player : streamedFor_.entries()) {
-            streamOutForClient(*player);
-            streamInForClient(*player);
-        }
     }
 
     bool isStreamedInForPlayer(const IPlayer& player) const override
@@ -195,31 +229,6 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         return skin_;
     }
 
-    void streamInForClient(IPlayer& player)
-    {
-        NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC;
-        showActorForPlayerRPC.ActorID = poolID;
-        showActorForPlayerRPC.Angle = angle_;
-        showActorForPlayerRPC.Health = health_;
-        showActorForPlayerRPC.Invulnerable = invulnerable_;
-        showActorForPlayerRPC.Position = pos_;
-        showActorForPlayerRPC.SkinID = skin_;
-        PacketHelper::send(showActorForPlayerRPC, player);
-
-        if (animationLoop_) {
-            NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
-            RPC.ActorID = poolID;
-            PacketHelper::send(RPC, player);
-        }
-    }
-
-    void streamOutForClient(IPlayer& player)
-    {
-        NetCode::RPC::HideActorForPlayer RPC;
-        RPC.ActorID = poolID;
-        PacketHelper::send(RPC, player);
-    }
-
     ~Actor()
     {
         for (IPlayer* player : streamedFor_.entries()) {
@@ -231,3 +240,4 @@ struct Actor final : public IActor, public PoolIDProvider, public NoCopy {
         }
     }
 };
+

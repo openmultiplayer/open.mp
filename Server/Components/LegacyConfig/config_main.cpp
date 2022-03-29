@@ -111,45 +111,13 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "lagcompmode", "lag_compensation" }
 };
 
-struct LegacyConfigComponent final : public IComponent, public ConsoleEventHandler {
+class LegacyConfigComponent final : public IComponent, public ConsoleEventHandler {
+public:
     PROVIDE_UID(0x24ef6216838f9ffc);
 
+private:
     ICore* core;
     IConsoleComponent* console;
-
-    StringView componentName() const override
-    {
-        return "LegacyConfig";
-    }
-
-    SemanticVersion componentVersion() const override
-    {
-        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
-    }
-
-    void onLoad(ICore* c) override { core = c; }
-    void onInit(IComponentList* components) override
-    {
-        console = components->queryComponent<IConsoleComponent>();
-
-        if (console) {
-            console->getEventDispatcher().addEventHandler(this);
-        }
-    }
-
-    void onFree(IComponent* component) override
-    {
-        if (console == component) {
-            console = nullptr;
-        }
-    }
-
-    ~LegacyConfigComponent()
-    {
-        if (console) {
-            console->getEventDispatcher().removeEventHandler(this);
-        }
-    }
 
     bool processCustom(ILogger& logger, IEarlyConfig& config, String name, String right)
     {
@@ -264,33 +232,6 @@ struct LegacyConfigComponent final : public IComponent, public ConsoleEventHandl
         return false;
     }
 
-    void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
-    {
-        // Don't provide defaults for generating the config file
-        if (!defaults) {
-            if (config.getString("bot_exe").empty()) {
-                config.setString("bot_exe", "samp-npc");
-            }
-
-            // someone can parse samp.ban properly, I didn't care to
-            std::ifstream bans("samp.ban");
-            if (bans.good()) {
-                for (String line; std::getline(bans, line);) {
-                    size_t first = line.find_first_of(' ');
-                    if (first != String::npos) {
-                        config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
-                    }
-                }
-            }
-
-            for (auto& kv : dictionary) {
-                config.addAlias(kv.first, kv.second, true);
-            }
-
-            loadLegacyConfigFile(logger, config, "server.cfg");
-        }
-    }
-
     bool loadLegacyConfigFile(ILogger& logger, IEarlyConfig& config, const std::string& filename)
     {
         std::ifstream cfg(filename);
@@ -353,6 +294,68 @@ struct LegacyConfigComponent final : public IComponent, public ConsoleEventHandl
         return false;
     }
 
+public:
+    StringView componentName() const override
+    {
+        return "LegacyConfig";
+    }
+
+    SemanticVersion componentVersion() const override
+    {
+        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+    }
+
+    void onLoad(ICore* c) override { core = c; }
+    void onInit(IComponentList* components) override
+    {
+        console = components->queryComponent<IConsoleComponent>();
+
+        if (console) {
+            console->getEventDispatcher().addEventHandler(this);
+        }
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (console == component) {
+            console = nullptr;
+        }
+    }
+
+    ~LegacyConfigComponent()
+    {
+        if (console) {
+            console->getEventDispatcher().removeEventHandler(this);
+        }
+    }
+
+    void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
+    {
+        // Don't provide defaults for generating the config file
+        if (!defaults) {
+            if (config.getString("bot_exe").empty()) {
+                config.setString("bot_exe", "samp-npc");
+            }
+
+            // someone can parse samp.ban properly, I didn't care to
+            std::ifstream bans("samp.ban");
+            if (bans.good()) {
+                for (String line; std::getline(bans, line);) {
+                    size_t first = line.find_first_of(' ');
+                    if (first != String::npos) {
+                        config.addBan(BanEntry(line.substr(0, first), "", line.substr(first + 1)));
+                    }
+                }
+            }
+
+            for (auto& kv : dictionary) {
+                config.addAlias(kv.first, kv.second, true);
+            }
+
+            loadLegacyConfigFile(logger, config, "server.cfg");
+        }
+    }
+
     void free() override
     {
         delete this;
@@ -387,3 +390,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new LegacyConfigComponent();
 }
+

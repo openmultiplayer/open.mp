@@ -5,10 +5,12 @@
 
 using namespace Impl;
 
-struct PlayerTextLabelData final : IPlayerTextLabelData {
+class PlayerTextLabelData final : public IPlayerTextLabelData {
+private:
     IPlayer& player;
     MarkedPoolStorage<PlayerTextLabel, IPlayerTextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
 
+public:
     PlayerTextLabelData(IPlayer& player)
         : player(player)
     {
@@ -32,8 +34,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     {
         PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
-            created->attachmentData.playerID = attach.getID();
-            created->streamInForClient(player, true);
+            created->attachToPlayer(attach, pos);
         }
         return created;
     }
@@ -42,8 +43,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     {
         PlayerTextLabel* created = createInternal(text, colour, pos, drawDist, los);
         if (created) {
-            created->attachmentData.vehicleID = attach.getID();
-            created->streamInForClient(player, true);
+            created->attachToVehicle(attach, pos);
         }
         return created;
     }
@@ -54,7 +54,7 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
             /// Detach player from player textlabels so they don't try to send an RPC
             PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
             // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            lbl->playerQuitting = true;
+            lbl->setPlayerQuitting();
         }
         delete this;
     }
@@ -96,13 +96,15 @@ struct PlayerTextLabelData final : IPlayerTextLabelData {
     }
 };
 
-struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextLabel, ITextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
     IVehiclesComponent* vehicles = nullptr;
     IPlayerPool* players = nullptr;
     StreamConfigHelper streamConfigHelper;
 
+public:
     StringView componentName() const override
     {
         return "TextLabels";
@@ -228,8 +230,8 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
     void updateLabelStateForPlayer(ITextLabel* textLabel, IPlayer& player, float maxDist) 
     {
         TextLabel* label = static_cast<TextLabel*>(textLabel);
-        const TextLabelAttachmentData& data = label->attachmentData;
-        Vector3 pos = label->pos;
+        const TextLabelAttachmentData& data = label->getAttachmentData();
+        Vector3 pos = label->getPosition();
         IPlayer* textLabelPlayer = players->get(data.playerID);
         if (textLabelPlayer) {
             pos = textLabelPlayer->getPosition();
@@ -242,7 +244,7 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
 
         const PlayerState state = player.getState();
         const Vector3 dist3D = pos - player.getPosition();
-        const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == label->virtualWorld || label->virtualWorld == -1) && glm::dot(dist3D, dist3D) < maxDist;
+        const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == label->getVirtualWorld() || label->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
         const bool isStreamedIn = label->isStreamedInForPlayer(player);
         if (!isStreamedIn && shouldBeStreamedIn) {
@@ -257,20 +259,18 @@ struct TextLabelsComponent final : public ITextLabelsComponent, public PlayerEve
         const int pid = player.getID();
         for (ITextLabel* textLabel : storage) {
             TextLabel* label = static_cast<TextLabel*>(textLabel);
-            if (label->attachmentData.playerID == pid) {
-                textLabel->detachFromPlayer(label->pos);
+            if (label->getAttachmentData().playerID == pid) {
+                textLabel->detachFromPlayer(label->getPosition());
             }
-            if (label->streamedFor_.valid(pid)) {
-                label->streamedFor_.remove(pid, player);
-            }
+			label->removeFor(pid, player);
         }
         for (IPlayer* player : players->entries()) {
             IPlayerTextLabelData* data = queryExtension<IPlayerTextLabelData>(player);
             if (data) {
                 for (IPlayerTextLabel* textLabel : *data) {
                     PlayerTextLabel* label = static_cast<PlayerTextLabel*>(textLabel);
-                    if (label->attachmentData.playerID == pid) {
-                        textLabel->detachFromPlayer(label->pos);
+                    if (label->getAttachmentData().playerID == pid) {
+                        textLabel->detachFromPlayer(label->getPosition());
                     }
                 }
             }
@@ -282,3 +282,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new TextLabelsComponent();
 }
+
