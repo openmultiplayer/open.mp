@@ -3,9 +3,11 @@
 #include <netcode.hpp>
 #include <sdk.hpp>
 
-struct PlayerConsoleData final : IPlayerConsoleData {
+class PlayerConsoleData final : public IPlayerConsoleData {
+private:
     bool hasAccess = false;
 
+public:
     bool hasConsoleAccess() const override
     {
         return hasAccess;
@@ -21,3 +23,4 @@ struct PlayerConsoleData final : IPlayerConsoleData {
         delete this;
     }
 };
+

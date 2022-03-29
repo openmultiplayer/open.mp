@@ -2,11 +2,13 @@
 
 using namespace Impl;
 
-struct GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler {
+class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler {
+private:
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
+public:
     StringView componentName() const override
     {
         return "GangZones";
@@ -86,9 +88,7 @@ struct GangZonesComponent final : public IGangZonesComponent, public PlayerEvent
         const int pid = player.getID();
         for (IGangZone* g : storage) {
             GangZone* gangzone = static_cast<GangZone*>(g);
-            if (gangzone->shownFor_.valid(pid)) {
-                gangzone->shownFor_.remove(pid, player);
-            }
+            gangzone->removeFor(pid, player);
         }
     }
 };
@@ -97,3 +97,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new GangZonesComponent();
 }
+

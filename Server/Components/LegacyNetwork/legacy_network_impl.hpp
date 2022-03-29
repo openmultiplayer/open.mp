@@ -17,9 +17,28 @@ using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
 
-struct Core;
+class Core;
 
-struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
+private:
+    ICore* core = nullptr;
+    Query query;
+    RakNet::RakServerInterface& rakNetServer;
+    std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+    Milliseconds cookieSeedTime;
+    TimePoint lastCookieSeed;
+
+public:
+    inline void setQueryConsole(IConsoleComponent* console)
+    {
+        query.setConsole(console);
+    }
+
+    inline IConsoleComponent* getQueryConsole() const
+    {
+        return query.getConsole();
+    }
+
     RakNetLegacyNetwork();
     ~RakNetLegacyNetwork();
 
@@ -223,11 +242,5 @@ struct RakNetLegacyNetwork final : public Network, public CoreEventHandler, publ
 
     void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
     void unban(const BanEntry& entry) override;
-
-    ICore* core = nullptr;
-    Query query;
-    RakNet::RakServerInterface& rakNetServer;
-    std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
-    Milliseconds cookieSeedTime;
-    TimePoint lastCookieSeed;
 };
+
