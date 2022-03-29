@@ -20,7 +20,7 @@ private:
     bool cameraCol_;
     ObjectAttachmentData attachmentData_;
     StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> materials_;
-    StaticBitset<MAX_OBJECT_MATERIAL_SLOTS> materialsUsed_;
+    uint8_t materialsCount_;
     bool moving_;
     ObjectMoveData moveData_;
     float rotSpeed_;
@@ -34,6 +34,7 @@ public:
         , drawDist_(drawDist)
         , cameraCol_(cameraCollision)
         , attachmentData_ { ObjectAttachmentData::Type::None }
+        , materialsCount_(0u)
         , moving_(false)
         , anyDelayedProcessing_(false)
     {
@@ -49,13 +50,9 @@ public:
         return attachmentData_;
     }
 
-    bool getMaterialData(int index, const ObjectMaterialData*& out) const override
+    bool getMaterialData(uint32_t index, const ObjectMaterialData*& out) const override
     {
         if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
-            return false;
-        }
-
-        if (!materialsUsed_.test(index)) {
             return false;
         }
 
@@ -110,12 +107,12 @@ public:
     void setPosition(Vector3 position) override
     {
         pos_ = position;
-	}
+    }
 
     void setRotation(GTAQuat rotation) override
     {
         rot_ = rotation.ToEuler();
-	}
+    }
 
     void setDrawDistance(float drawDistance) override
     {
@@ -135,7 +132,11 @@ public:
 protected:
     void setMtl(int index, int model, StringView txd, StringView texture, Colour colour)
     {
-        materialsUsed_.set(index);
+        if (!materials_[index].used) {
+            ++materialsCount_;
+            materials_[index].used = true;
+        }
+
         materials_[index].type = ObjectMaterialData::Type::Default;
         materials_[index].model = model;
         materials_[index].textOrTXD = txd;
@@ -145,7 +146,11 @@ protected:
 
     void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
     {
-        materialsUsed_.set(index);
+        if (!materials_[index].used) {
+            ++materialsCount_;
+            materials_[index].used = true;
+        }
+
         materials_[index].type = ObjectMaterialData::Type::Text;
         materials_[index].textOrTXD = text;
         materials_[index].materialSize = size;
@@ -168,7 +173,7 @@ protected:
 
     void createObjectForClient(IPlayer& player)
     {
-        NetCode::RPC::CreateObject createObjectRPC(materials_, materialsUsed_);
+        NetCode::RPC::CreateObject createObjectRPC(materials_, materialsCount_);
         createObjectRPC.ObjectID = poolID;
         createObjectRPC.ModelID = model_;
         createObjectRPC.Position = pos_;
@@ -200,7 +205,7 @@ protected:
 
         return makeMovePacket();
     }
-	
+
     NetCode::RPC::MoveObject makeMovePacket() const
     {
         NetCode::RPC::MoveObject moveObjectRPC;
@@ -249,23 +254,23 @@ protected:
         return false;
     }
 
-	bool getDelayedProcessing() const
-	{
+    bool getDelayedProcessing() const
+    {
         return anyDelayedProcessing_;
     }
 
-	void enableDelayedProcessing()
-	{
+    void enableDelayedProcessing()
+    {
         anyDelayedProcessing_ = true;
     }
-	
-	void disableDelayedProcessing()
-	{
+
+    void disableDelayedProcessing()
+    {
         anyDelayedProcessing_ = false;
     }
-	
-	size_t getMtlCount() const
-	{
+
+    size_t getMtlCount() const
+    {
         return materials_.size();
     }
 };
@@ -311,17 +316,17 @@ public:
     {
     }
 
-    virtual void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override
+    virtual void setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour) override
     {
-        if (index < getMtlCount()) {
+        if (index < MAX_OBJECT_MATERIAL_SLOTS) {
             setMtl(index, model, txd, texture, colour);
             restream();
         }
     }
 
-    virtual void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
+    virtual void setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
     {
-        if (index < getMtlCount()) {
+        if (index < MAX_OBJECT_MATERIAL_SLOTS) {
             setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
             restream();
         }
@@ -396,7 +401,7 @@ private:
 
     void addToProcessed();
 
-	void eraseFromProcessed(bool force);
+    void eraseFromProcessed(bool force);
 
 public:
     inline PlayerObjectData& getObjects()
@@ -411,8 +416,8 @@ public:
     void setPlayerQuitting()
     {
         playerQuitting_ = true;
-	}
-    
+    }
+
     PlayerObject(PlayerObjectData& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
         : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
         , objects_(objects)
@@ -420,9 +425,9 @@ public:
     {
     }
 
-    void setMaterial(int index, int model, StringView txd, StringView texture, Colour colour) override;
+    void setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour) override;
 
-    void setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override;
+    void setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override;
 
     void startMoving(const ObjectMoveData& data) override;
 
@@ -472,4 +477,3 @@ public:
 
     ~PlayerObject();
 };
-
