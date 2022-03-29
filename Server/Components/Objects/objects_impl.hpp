@@ -158,14 +158,14 @@ public:
         return *players;
     }
 
-	// TODO: Very hacky!
-    inline FlatPtrHashSet<Object>& getProcessedObjects()
+	// TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
+	inline FlatPtrHashSet<Object>& getProcessedObjects()
     {
         return processedObjects;
 	}
 	
-	// TODO: Very hacky!
-    inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
+	// TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
+	inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
     {
         return processedPlayerObjects;
 	}
@@ -387,7 +387,7 @@ public:
         return player_;
     }
 
-    // TODO: Very hacky!
+    // TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
     inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
     {
         return component_.getPlayerProcessedObjects();
