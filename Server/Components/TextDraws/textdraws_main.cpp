@@ -189,9 +189,7 @@ public:
 
         for (ITextDraw* textdraw : storage) {
             TextDraw* textdraw_ = static_cast<TextDraw*>(textdraw);
-            if (textdraw_->shownFor_.valid(pid)) {
-                textdraw_->shownFor_.remove(pid, player);
-            }
+            textdraw_->removeFor(pid, player);
         }
     }
 

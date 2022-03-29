@@ -323,7 +323,15 @@ private:
     using TextDrawBase<ITextDraw>::TextDrawBase;
 
 public:
-    void restream() override
+	void removeFor(int pid, IPlayer & player)
+	{
+		if (shownFor_.valid(pid))
+		{
+			shownFor_.remove(pid, player);
+		}
+	}
+
+	void restream() override
     {
         for (IPlayer* player : shownFor_.entries()) {
             showForClient(*player, false);

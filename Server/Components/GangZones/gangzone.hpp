@@ -27,10 +27,19 @@ private:
     }
 
 public:
-    GangZone(GangZonePos pos)
+	void removeFor(int pid, IPlayer & player)
+	{
+		if (shownFor_.valid(pid))
+		{
+			shownFor_.remove(pid, player);
+		}
+	}
+
+	GangZone(GangZonePos pos)
         : pos(pos)
     {
     }
+
     bool isShownForPlayer(const IPlayer& player) const override
     {
         return shownFor_.valid(player.getID());
