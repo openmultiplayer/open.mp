@@ -119,7 +119,7 @@ public:
         return type;
     }
 
-    void setModel(int id) override
+	void setModel(int id) override
     {
         modelId = id;
         restream();
