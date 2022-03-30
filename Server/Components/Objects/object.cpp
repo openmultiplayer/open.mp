@@ -123,7 +123,7 @@ void PlayerObject::restream()
     createObjectForClient(objects_.getPlayer());
 }
 
-void PlayerObject::setMaterial(int index, int model, StringView txd, StringView texture, Colour colour)
+void PlayerObject::setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour)
 {
     const ObjectMaterialData* mtl;
     if (getMaterialData(index, mtl)) {
@@ -135,7 +135,7 @@ void PlayerObject::setMaterial(int index, int model, StringView txd, StringView 
     }
 }
 
-void PlayerObject::setMaterialText(int index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
+void PlayerObject::setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
 {
     const ObjectMaterialData* mtl;
     if (getMaterialData(index, mtl)) {
