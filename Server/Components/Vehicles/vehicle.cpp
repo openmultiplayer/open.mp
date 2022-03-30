@@ -59,6 +59,14 @@ void Vehicle::streamInForPlayer(IPlayer& player)
         vehicleRPC.params = params;
         PacketHelper::send(vehicleRPC, player);
     }
+
+    if (interior != 0) {
+        NetCode::RPC::LinkVehicleToInterior interiorRPC;
+        interiorRPC.InteriorID = interior;
+        interiorRPC.VehicleID = poolID;
+        PacketHelper::send(interiorRPC, player);
+    }
+
     streamedFor_.add(pid, player);
 
     ScopedPoolReleaseLock lock(*pool, *this);
@@ -489,12 +497,14 @@ void Vehicle::respawn()
 
     dead = false;
     pos = spawnData.position;
+    interior = spawnData.interior;
     bodyColour1 = -1;
     bodyColour2 = -1;
     rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
     beenOccupied = false;
     lastOccupiedChange = TimePoint();
     timeOfDeath = TimePoint();
+    timeOfSpawn = Time::now();
     mods.fill(0);
     doorDamage = 0;
     tyreDamage = 0;
@@ -517,6 +527,11 @@ void Vehicle::respawn()
 Seconds Vehicle::getRespawnDelay()
 {
     return spawnData.respawnDelay;
+}
+
+void Vehicle::setRespawnDelay(Seconds delay)
+{
+    spawnData.respawnDelay = delay;
 }
 
 void Vehicle::attachTrailer(IVehicle& trailer)
