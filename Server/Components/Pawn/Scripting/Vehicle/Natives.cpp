@@ -339,3 +339,166 @@ SCRIPT_API(EnableVehicleFriendlyFire, bool())
     *PawnManager::Get()->config->getInt("vehicle_friendly_fire") = true;
     return true;
 }
+
+SCRIPT_API(GetVehicleSpawnInfo, bool(IVehicle& vehicle, Vector3& position, float& rotation, int& colour1, int& colour2))
+{
+    const VehicleSpawnData& data = vehicle.getSpawnData();
+
+    position = data.position;
+    rotation = data.zRotation;
+    colour1 = data.colour1;
+    colour2 = data.colour2;
+    return true;
+}
+
+SCRIPT_API(SetVehicleSpawnInfo, bool(IVehicle& vehicle, int modelid, Vector3 position, float rotation, int colour1, int colour2, int respawn_time, int interior))
+{
+    const VehicleSpawnData& data = vehicle.getSpawnData();
+    
+    vehicle.setSpawnData({ modelid, position, rotation, colour1, colour2, respawn_time >= -1 ? Seconds(respawn_time) : data.respawnDelay, data.siren, interior != -2 ? interior : data.interior });
+    return true;
+}
+
+SCRIPT_API(GetVehicleModelCount, int(int modelid))
+{
+    if (modelid < 400 || modelid > 611)
+        return 0;
+
+    auto& models = PawnManager::Get()->vehicles->models();
+    return models[modelid - 400];
+}
+
+SCRIPT_API(GetVehicleModelsUsed, int())
+{
+    auto& vehicle_models = PawnManager::Get()->vehicles->models();
+
+    return std::count_if(vehicle_models.begin(), vehicle_models.end(), [](uint8_t model_instances) {
+        return model_instances > 0;
+    });
+}
+
+SCRIPT_API(GetVehiclePaintJob, int(IVehicle& vehicle))
+{
+    return vehicle.getPaintJob();
+}
+
+SCRIPT_API(GetVehicleColor, bool(IVehicle& vehicle, int& colour1, int& colour2))
+{
+    Pair<int, int> colors = vehicle.getColour();
+
+    colour1 = colors.first;
+    colour2 = colors.second;
+    return true;
+}
+
+SCRIPT_API(GetVehicleInterior, int(IVehicle& vehicle))
+{
+    return vehicle.getInterior();
+}
+
+SCRIPT_API(GetVehicleNumberPlate, bool(IVehicle& vehicle, OutputOnlyString& number_plate))
+{
+    number_plate = vehicle.getPlate();
+    return true;
+}
+
+SCRIPT_API(SetVehicleRespawnDelay, bool(IVehicle& vehicle, int respawn_delay))
+{
+    if (respawn_delay < -1)
+        return false;
+
+    vehicle.setRespawnDelay(Seconds(respawn_delay));
+    return true;
+}
+
+SCRIPT_API(GetVehicleRespawnDelay, int(IVehicle& vehicle))
+{
+    return vehicle.getRespawnDelay().count();
+}
+
+SCRIPT_API_FAILRET(GetVehicleCab, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
+{
+    IVehicle* tower = vehicle.getTower();
+
+    if (tower == nullptr) {
+        return FailRet;
+    }
+
+    return tower->getID();
+}
+
+SCRIPT_API_FAILRET(GetVehicleTower, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
+{
+    IVehicle* tower = vehicle.getTower();
+
+    if (tower == nullptr) {
+        return FailRet;
+    }
+
+    return tower->getID();
+}
+
+SCRIPT_API(GetVehicleOccupiedTick, int(IVehicle& vehicle))
+{
+   return std::chrono::duration_cast<Milliseconds>(Time::now() - vehicle.getLastOccupiedTime()).count();
+}
+
+SCRIPT_API(GetVehicleRespawnTick, int(IVehicle& vehicle))
+{
+    return std::chrono::duration_cast<Milliseconds>(Time::now() - vehicle.getLastSpawnTime()).count();
+}
+
+SCRIPT_API(HasVehicleBeenOccupied, bool(IVehicle& vehicle))
+{
+    return vehicle.hasBeenOccupied();
+}
+
+SCRIPT_API(IsVehicleOccupied, bool(IVehicle& vehicle))
+{
+    return vehicle.isOccupied();
+}
+
+SCRIPT_API(IsVehicleDead, bool(IVehicle& vehicle))
+{
+    return vehicle.isDead();
+}
+
+SCRIPT_API(SetVehicleParamsSirenState, bool(IVehicle& vehicle, bool siren_state))
+{
+    VehicleParams params = vehicle.getParams();
+    params.siren = siren_state;
+
+    vehicle.setParams(params);
+    return true;
+}
+
+SCRIPT_API(ToggleVehicleSirenEnabled, bool(IVehicle& vehicle, bool status))
+{
+    vehicle.setSiren(status);
+    return true;
+}
+
+SCRIPT_API(IsVehicleSirenEnabled, bool(IVehicle& vehicle))
+{
+    return vehicle.getSpawnData().siren;
+}
+
+SCRIPT_API_FAILRET(GetVehicleLastDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
+{
+    IPlayer* driver = vehicle.getDriver();
+
+    if (!driver) {
+        return FailRet;
+    }
+    return driver->getID();
+}
+
+SCRIPT_API_FAILRET(GetVehicleDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
+{
+    IPlayer* driver = vehicle.getDriver();
+
+    if (!driver) {
+        return FailRet;
+    }
+    return driver->getID();
+}
