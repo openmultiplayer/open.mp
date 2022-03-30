@@ -68,3 +68,49 @@ SCRIPT_API(IsValidMenu, bool(IMenu* menu))
 {
     return menu != nullptr;
 }
+
+SCRIPT_API(IsMenuDisabled, bool(IMenu& menu))
+{
+    return !menu.isEnabled();
+}
+
+SCRIPT_API(IsMenuRowDisabled, bool(IMenu& menu, int row))
+{
+    return !menu.isRowEnabled(row);
+}
+
+SCRIPT_API(GetMenuColumns, int(IMenu& menu))
+{
+    return menu.getColumnCount();
+}
+
+SCRIPT_API(GetMenuItems, int(IMenu& menu, int column))
+{
+    return menu.getItemCount(column);
+}
+
+SCRIPT_API(GetMenuPos, bool(IMenu& menu, Vector2& pos))
+{
+    pos = menu.getPosition();
+    return true;
+}
+
+SCRIPT_API(GetMenuColumnWidth, bool(IMenu& menu, float& Column1, float& Column2))
+{
+    const Vector2 widths = menu.getColumnsWidth();
+    Column1 = widths.x;
+    Column2 = widths.y;
+    return true;
+}
+
+SCRIPT_API(GetMenuColumnHeader, bool(IMenu& menu, int column, OutputOnlyString& header))
+{
+    header = menu.getColumnHeader(column);
+    return true;
+}
+
+SCRIPT_API(GetMenuItem, bool(IMenu& menu, int column, int row, OutputOnlyString& item))
+{
+    item = menu.getItem(column, row);
+    return true;
+}
