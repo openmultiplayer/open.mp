@@ -83,6 +83,7 @@ public:
         const int pid = player.getID();
         for (IPickup* p : storage) {
             static_cast<Pickup*>(p)->removeFor(pid, player);
+            static_cast<Pickup*>(p)->setPickupHiddenForPlayer(player, false);
         }
     }
 
