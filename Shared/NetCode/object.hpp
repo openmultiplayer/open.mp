@@ -57,13 +57,13 @@ namespace RPC {
         bool CameraCollision;
         ObjectAttachmentData AttachmentData;
         StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> Materials;
-        StaticBitset<MAX_OBJECT_MATERIAL_SLOTS>& MaterialsUsed;
+        uint8_t MaterialsCount;
 
         CreateObject(
             StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS>& materials,
-            StaticBitset<MAX_OBJECT_MATERIAL_SLOTS>& materialsUsed)
+            uint8_t materialsCount)
             : Materials(materials)
-            , MaterialsUsed(materialsUsed)
+            , MaterialsCount(materialsCount)
         {
         }
 
@@ -89,28 +89,31 @@ namespace RPC {
                 bs.writeUINT8(AttachmentData.syncRotation);
             }
 
-            bs.writeUINT8(MaterialsUsed.count());
-            for (int i = 0; i < MaterialsUsed.size(); ++i) {
-                if (MaterialsUsed.test(i)) {
-                    const ObjectMaterialData& data = Materials[i];
-                    bs.writeUINT8(int(data.type));
-                    bs.writeUINT8(i);
+            bs.writeUINT8(MaterialsCount);
+            for (int i = 0; i < MAX_OBJECT_MATERIAL_SLOTS; ++i) {
+                const ObjectMaterialData& data = Materials[i];
 
-                    if (data.type == ObjectMaterialData::Type::Default) {
-                        bs.writeUINT16(data.model);
-                        bs.writeDynStr8(StringView(data.textOrTXD));
-                        bs.writeDynStr8(StringView(data.fontOrTexture));
-                        bs.writeUINT32(data.materialColour.ARGB());
-                    } else if (data.type == ObjectMaterialData::Type::Text) {
-                        bs.writeUINT8(data.materialSize);
-                        bs.writeDynStr8(StringView(data.fontOrTexture));
-                        bs.writeUINT8(data.fontSize);
-                        bs.writeUINT8(data.bold);
-                        bs.writeUINT32(data.fontColour.ARGB());
-                        bs.writeUINT32(data.backgroundColour.ARGB());
-                        bs.writeUINT8(data.alignment);
-                        bs.WriteCompressedStr(data.textOrTXD);
-                    }
+                if (!data.used) {
+                    continue;
+                }
+
+                bs.writeUINT8(int(data.type));
+                bs.writeUINT8(i);
+
+                if (data.type == ObjectMaterialData::Type::Default) {
+                    bs.writeUINT16(data.model);
+                    bs.writeDynStr8(StringView(data.textOrTXD));
+                    bs.writeDynStr8(StringView(data.fontOrTexture));
+                    bs.writeUINT32(data.materialColour.ARGB());
+                } else if (data.type == ObjectMaterialData::Type::Text) {
+                    bs.writeUINT8(data.materialSize);
+                    bs.writeDynStr8(StringView(data.fontOrTexture));
+                    bs.writeUINT8(data.fontSize);
+                    bs.writeUINT8(data.bold);
+                    bs.writeUINT32(data.fontColour.ARGB());
+                    bs.writeUINT32(data.backgroundColour.ARGB());
+                    bs.writeUINT8(data.alignment);
+                    bs.WriteCompressedStr(data.textOrTXD);
                 }
             }
         }
