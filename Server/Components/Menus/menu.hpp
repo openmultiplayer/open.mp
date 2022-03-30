@@ -104,10 +104,69 @@ public:
         initedFor_.clear();
     }
 
+    bool isRowEnabled(MenuRow row) const override
+    {
+        if (row >= MAX_MENU_ITEMS) {
+            return false;
+        }
+
+        return rowEnabled.at(row);
+    }
+
     void disableMenu() override
     {
         menuEnabled = false;
         initedFor_.clear();
+    }
+
+    bool isEnabled() const override
+    {
+        return menuEnabled;
+    }
+
+    const Vector2& getPosition() const override
+    {
+        return pos;
+    }
+
+    int getColumnCount() const override
+    {
+        return columnCount;
+    }
+
+    int getItemCount(MenuColumn column) const override
+    {
+        if (column > columnCount) {
+            return 0;
+        }
+        return columnItemCount.at(column);
+    }
+
+    Vector2 getColumnsWidth() const override
+    {
+        return { col1Width, col2Width };
+    }
+
+    const StringView getColumnHeader(MenuColumn column) const override
+    {
+        if (column > columnCount) {
+            return StringView();
+        }
+
+        return columnHeaders[column];
+    }
+
+    const StringView getItem(MenuColumn column, MenuRow row) const override
+    {
+        if (column > columnCount) {
+            return StringView();
+        }
+
+        if (row >= MAX_MENU_ITEMS) {
+            return StringView();
+        }
+
+        return columnMenuItems[column][row];
     }
 
     void initForPlayer(IPlayer& player) override
