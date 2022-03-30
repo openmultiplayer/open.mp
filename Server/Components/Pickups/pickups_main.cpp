@@ -83,6 +83,7 @@ public:
         const int pid = player.getID();
         for (IPickup* p : storage) {
             static_cast<Pickup*>(p)->removeFor(pid, player);
+            static_cast<Pickup*>(p)->setPickupHiddenForPlayer(player, false);
         }
     }
 
@@ -144,7 +145,7 @@ public:
 
                 const PlayerState state = player.getState();
                 const Vector3 dist3D = pickup->getPosition() - player.getPosition();
-                const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
+                const bool shouldBeStreamedIn = !pickup->isPickupHiddenForPlayer(player) && state != PlayerState_None && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
                 const bool isStreamedIn = pickup->isStreamedInForPlayer(player);
                 if (!isStreamedIn && shouldBeStreamedIn) {
