@@ -10,10 +10,10 @@ private:
     GangZonePos pos;
     Colour col;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
-    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> flashingFor_;
-    FlatHashMap<int, Colour> flashColorForPlayer_;
-    FlatHashMap<int, Colour> colorForPlayer_;
-    FlatHashSet<IPlayer*> playersInside_;
+    StaticBitset<PLAYER_POOL_SIZE> flashingFor_;
+    StaticArray<Colour, PLAYER_POOL_SIZE> flashColorForPlayer_;
+    StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
+    StaticBitset<PLAYER_POOL_SIZE> playersInside_;
 
     void restream()
     {
@@ -37,24 +37,19 @@ public:
             shownFor_.remove(pid, player);
         }
 
-        if (isFlashingForPlayer(player)) {
-            flashingFor_.remove(pid, player);
-        }
-
-        auto itColor = colorForPlayer_.find(player.getID());
-        if (itColor != colorForPlayer_.end()) {
-            colorForPlayer_.erase(itColor);
-        }
-
-        auto itFlashColor = flashColorForPlayer_.find(player.getID());
-        if (itFlashColor != flashColorForPlayer_.end()) {
-            flashColorForPlayer_.erase(itFlashColor);
-        }
+        playersInside_.reset(pid);
+        flashingFor_.reset(pid);
+        colorForPlayer_[pid] = Colour::None();
+        flashColorForPlayer_[pid] = Colour::None();
     }
 
     GangZone(GangZonePos pos)
         : pos(pos)
     {
+        playersInside_.reset();
+        flashingFor_.reset();
+        colorForPlayer_.fill(Colour::None());
+        flashColorForPlayer_.fill(Colour::None());
     }
 
     bool isShownForPlayer(const IPlayer& player) const override
@@ -64,7 +59,7 @@ public:
 
     bool isFlashingForPlayer(const IPlayer& player) const override
     {
-        return flashingFor_.valid(player.getID());
+        return flashingFor_.test(player.getID());
     }
 
     void showForPlayer(IPlayer& player, const Colour& colour) override
@@ -73,22 +68,11 @@ public:
         const int playerId = player.getID();
         shownFor_.add(playerId, player);
 
-        if (isFlashingForPlayer(player)) {
-            flashingFor_.remove(playerId, player);
-        }
+        flashingFor_.reset(playerId);
 
-        auto itColor = colorForPlayer_.find(playerId);
-        if (itColor == colorForPlayer_.end()) {
-            colorForPlayer_.insert({ playerId, colour });
-        } else {
-            itColor->second = colour;
-        }
-
-        auto itFlashColor = flashColorForPlayer_.find(playerId);
-        if (itFlashColor != flashColorForPlayer_.end()) {
-            flashColorForPlayer_.erase(itFlashColor);
-        }
-
+        colorForPlayer_[playerId] = colour;
+        flashColorForPlayer_[playerId] = Colour::None();
+        
         showForClient(player, colour);
     }
 
@@ -105,16 +89,9 @@ public:
         flashGangZoneRPC.Col = colour;
         PacketHelper::send(flashGangZoneRPC, player);
 
-        auto itFlashColor = flashColorForPlayer_.find(player.getID());
-        if (itFlashColor == flashColorForPlayer_.end()) {
-            flashColorForPlayer_.insert({ player.getID(), colour });
-        } else {
-            itFlashColor->second = colour;
-        }
-
-        if (!isFlashingForPlayer(player)) {
-            flashingFor_.add(player.getID(), player);
-        }
+        const int pid = player.getID();
+        flashColorForPlayer_[pid] = colour; 
+        flashingFor_.set(pid);
     }
 
     void stopFlashForPlayer(IPlayer& player) override
@@ -123,34 +100,19 @@ public:
         stopFlashGangZoneRPC.ID = poolID;
         PacketHelper::send(stopFlashGangZoneRPC, player);
 
-        auto itFlashColor = flashColorForPlayer_.find(player.getID());
-        if (itFlashColor != flashColorForPlayer_.end()) {
-            flashColorForPlayer_.erase(player.getID());
-        }
-
-        if (isFlashingForPlayer(player)) {
-            flashingFor_.remove(player.getID(), player);
-        }
+        const int pid = player.getID();
+        flashColorForPlayer_[pid] = Colour::None();
+        flashingFor_.reset(pid);
     }
 
     const Colour getFlashingColorForPlayer(IPlayer& player) const override
     {
-        auto itFlashColor = flashColorForPlayer_.find(player.getID());
-        if (itFlashColor != flashColorForPlayer_.end()) {
-            return flashColorForPlayer_.at(player.getID());
-        } else {
-            return Colour::None();
-        }
+        return flashColorForPlayer_[player.getID()];
     }
 
     const Colour getColorForPlayer(IPlayer& player) const override
     {
-        auto itColor = colorForPlayer_.find(player.getID());
-        if (itColor != colorForPlayer_.end()) {
-            return colorForPlayer_.at(player.getID());
-        } else {
-            return Colour::None();
-        }
+        return colorForPlayer_[player.getID()];
     }
 
     const FlatHashSet<IPlayer*>& getShownFor() override
@@ -158,16 +120,14 @@ public:
         return shownFor_.entries();
     }
 
-    // this one is used for internal usage, as in set being modifiable
-    FlatHashSet<IPlayer*>& getPlayersInside()
+    bool isPlayerInside(const IPlayer& player) const override
     {
-        return playersInside_;
+        return playersInside_.test(player.getID());
     }
 
-    // this one is for our SDK, and returns a constant set
-    const FlatHashSet<IPlayer*>& getPlayersInside() const override
+    void setPlayerInside(const IPlayer& player, const bool status) 
     {
-        return playersInside_;
+        playersInside_.set(player.getID(), status);
     }
 
     int getID() const override
