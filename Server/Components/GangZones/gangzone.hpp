@@ -41,12 +41,14 @@ public:
             flashingFor_.remove(pid, player);
         }
 
-        if (colorForPlayer_.find(pid) != colorForPlayer_.end()) {
-            colorForPlayer_.erase(pid);
+        auto itColor = colorForPlayer_.find(player.getID());
+        if (itColor != colorForPlayer_.end()) {
+            colorForPlayer_.erase(itColor);
         }
 
-        if (flashColorForPlayer_.find(pid) != flashColorForPlayer_.end()) {
-            flashColorForPlayer_.erase(pid);
+        auto itFlashColor = flashColorForPlayer_.find(player.getID());
+        if (itFlashColor != flashColorForPlayer_.end()) {
+            flashColorForPlayer_.erase(itFlashColor);
         }
     }
 
@@ -84,7 +86,7 @@ public:
 
         auto itFlashColor = flashColorForPlayer_.find(playerId);
         if (itFlashColor != flashColorForPlayer_.end()) {
-            flashColorForPlayer_.erase(playerId);
+            flashColorForPlayer_.erase(itFlashColor);
         }
 
         showForClient(player, colour);
@@ -92,22 +94,7 @@ public:
 
     void hideForPlayer(IPlayer& player) override
     {
-        shownFor_.remove(player.getID(), player);
-
-        if (isFlashingForPlayer(player)) {
-            flashingFor_.remove(player.getID(), player);
-        }
-
-        auto itColor = colorForPlayer_.find(player.getID());
-        if (itColor != colorForPlayer_.end()) {
-            colorForPlayer_.erase(player.getID());
-        }
-
-        auto itFlashColor = flashColorForPlayer_.find(player.getID());
-        if (itFlashColor != flashColorForPlayer_.end()) {
-            flashColorForPlayer_.erase(player.getID());
-        }
-
+        removeFor(player.getID(), player);
         hideForClient(player);
     }
 
