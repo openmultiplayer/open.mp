@@ -31,15 +31,26 @@ private:
     }
 
 public:
-	void removeFor(int pid, IPlayer & player)
-	{
-		if (shownFor_.valid(pid))
-		{
-			shownFor_.remove(pid, player);
-		}
-	}
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (shownFor_.valid(pid)) {
+            shownFor_.remove(pid, player);
+        }
 
-	GangZone(GangZonePos pos)
+        if (isFlashingForPlayer(player)) {
+            flashingFor_.remove(pid, player);
+        }
+
+        if (colorForPlayer_.find(pid) != colorForPlayer_.end()) {
+            colorForPlayer_.erase(pid);
+        }
+
+        if (flashColorForPlayer_.find(pid) != flashColorForPlayer_.end()) {
+            flashColorForPlayer_.erase(pid);
+        }
+    }
+
+    GangZone(GangZonePos pos)
         : pos(pos)
     {
     }
@@ -205,4 +216,3 @@ public:
         }
     }
 };
-
