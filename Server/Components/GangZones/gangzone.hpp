@@ -199,7 +199,7 @@ public:
     ~GangZone()
     {
         for (IPlayer* player : shownFor_.entries()) {
-            hideForPlayer(*player);
+            hideForClient(*player);
         }
     }
 };
