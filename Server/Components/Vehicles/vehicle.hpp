@@ -121,32 +121,32 @@ public:
 
     ~Vehicle();
 
-    virtual int getVirtualWorld() const override
+    int getVirtualWorld() const override
     {
         return virtualWorld_;
     }
 
-    virtual void setVirtualWorld(int vw) override
+    void setVirtualWorld(int vw) override
     {
         virtualWorld_ = vw;
     }
 
-    virtual void setSiren(bool status) override
+    void setSiren(bool status) override
     {
         spawnData.siren = status;
     }
 
-    virtual uint8_t getSirenState() const override
+    uint8_t getSirenState() const override
     {
         return sirenState;
     }
 
-    virtual uint32_t getHydraThrustAngle() const override
+    uint32_t getHydraThrustAngle() const override
     {
         return hydraThrustAngle;
     }
 
-    virtual float getTrainSpeed() const override
+    float getTrainSpeed() const override
     {
         return trainSpeed;
     }
