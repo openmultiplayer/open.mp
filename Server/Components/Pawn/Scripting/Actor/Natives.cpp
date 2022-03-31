@@ -100,3 +100,40 @@ SCRIPT_API(IsValidActor, bool(IActor* actor))
 {
     return actor != nullptr;
 }
+
+SCRIPT_API(SetActorSkin, bool(IActor& actor, int skin))
+{
+    actor.setSkin(skin);
+    return true;
+}
+
+SCRIPT_API(GetActorSkin, int(IActor& actor))
+{
+    return actor.getSkin();
+}
+
+SCRIPT_API(GetActorAnimation, bool(IActor& actor, OutputOnlyString& animlib, OutputOnlyString& animname, float& delta, bool& loop, bool& lockx, bool& locky, bool& freeze, int& time))
+{
+    const AnimationData& anim = actor.getAnimation();
+
+    animlib = anim.lib;
+    animname = anim.name;
+    delta = anim.delta;
+    loop = anim.loop;
+    lockx = anim.lockX;
+    locky = anim.lockY;
+    freeze = anim.freeze;
+    time = anim.time;
+
+    return true;
+}
+
+SCRIPT_API(GetActorSpawnInfo, bool(IActor& actor, int& skin, Vector3& pos, float& rotation))
+{
+    const ActorSpawnData& spawnData = actor.getSpawnData();
+
+    pos = spawnData.position;
+    rotation = spawnData.facingAngle;
+    skin = spawnData.skin;
+    return true;
+}
