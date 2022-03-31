@@ -57,3 +57,23 @@ SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 posit
     }
     return false;
 }
+
+SCRIPT_API(GetSpawnInfo, bool(IPlayer& player, int& teamid, int& modelid, Vector3& spawnPos, float& z_angle, int& weapon1, int& weapon1_ammo, int& weapon2, int& weapon2_ammo, int& weapon3, int& weapon3_ammo))
+{
+    IPlayerClassData* playerData = queryExtension<IPlayerClassData>(player);
+    if (playerData) {
+        const PlayerClass& data = playerData->getClass();
+        teamid = data.team;
+        modelid = data.skin;
+        spawnPos = data.spawn;
+        z_angle = data.angle;
+        weapon1 = data.weapons[0].id;
+        weapon1_ammo = data.weapons[0].ammo;
+        weapon2 = data.weapons[1].id;
+        weapon2_ammo = data.weapons[1].ammo;
+        weapon3 = data.weapons[2].id;
+        weapon3_ammo = data.weapons[2].ammo;
+        return true;
+    }
+    return false;
+}
