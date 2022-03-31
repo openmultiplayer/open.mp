@@ -144,99 +144,99 @@ SCRIPT_API(PlayerTextDrawSetPreviewVehCol, bool(IPlayer& player, IPlayerTextDraw
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawSetPos, bool(IPlayer& player, ITextDraw& textdraw, Vector2 pos))
+SCRIPT_API(PlayerTextDrawSetPos, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector2 pos))
 {
     textdraw.setPosition(pos);
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawGetString, bool(IPlayer& player, ITextDraw& textdraw, OutputOnlyString& text))
+SCRIPT_API(PlayerTextDrawGetString, bool(IPlayer& player, IPlayerTextDraw& textdraw, OutputOnlyString& text))
 {
     text = textdraw.getText();
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawGetLetterSize, bool(IPlayer& player, ITextDraw& textdraw, Vector2& size))
+SCRIPT_API(PlayerTextDrawGetLetterSize, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector2& size))
 {
     size = textdraw.getLetterSize();
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawGetTextSize, bool(IPlayer& player, ITextDraw& textdraw, Vector2& size))
+SCRIPT_API(PlayerTextDrawGetTextSize, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector2& size))
 {
     size = textdraw.getTextSize();
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawGetPos, bool(IPlayer& player, ITextDraw& textdraw, Vector2& pos))
+SCRIPT_API(PlayerTextDrawGetPos, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector2& pos))
 {
     pos = textdraw.getPosition();
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawGetColor, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetColor, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.getLetterColour().RGBA();
 }
 
-SCRIPT_API(PlayerTextDrawGetBoxColor, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetBoxColor, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.getBoxColour().RGBA();
 }
 
-SCRIPT_API(PlayerTextDrawGetBackgroundCol, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetBackgroundCol, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.getBackColour().RGBA();
 }
 
-SCRIPT_API(PlayerTextDrawGetShadow, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetShadow, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.getShadow();
 }
 
-SCRIPT_API(PlayerTextDrawGetOutline, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetOutline, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.getOutline();
 }
 
-SCRIPT_API(PlayerTextDrawGetFont, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetFont, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return static_cast<uint8_t>(textdraw.getStyle());
 }
 
-SCRIPT_API(PlayerTextDrawIsBox, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawIsBox, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.isUsingBox();
 }
 
-SCRIPT_API(PlayerTextDrawIsProportional, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawIsProportional, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.isProportional();
 }
 
-SCRIPT_API(PlayerTextDrawIsSelectable, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawIsSelectable, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.isSelectable();
 }
 
-SCRIPT_API(PlayerTextDrawGetAlignment, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetAlignment, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return static_cast<uint8_t>(textdraw.getAlignment());
 }
 
-SCRIPT_API(PlayerTextDrawGetPreviewModel, int(IPlayer& player, ITextDraw& textdraw))
+SCRIPT_API(PlayerTextDrawGetPreviewModel, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
     return textdraw.getPreviewModel();
 }
 
-SCRIPT_API(PlayerTextDrawGetPreviewRot, bool(IPlayer& player, ITextDraw& textdraw, Vector3& rotation, float& zoom))
+SCRIPT_API(PlayerTextDrawGetPreviewRot, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector3& rotation, float& zoom))
 {
     rotation = textdraw.getPreviewRotation().ToEuler();
     zoom = textdraw.getPreviewZoom();
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawGetPreviewVehCol, bool(IPlayer& player, ITextDraw& textdraw, int& colour1, int& colour2))
+SCRIPT_API(PlayerTextDrawGetPreviewVehCol, bool(IPlayer& player, IPlayerTextDraw& textdraw, int& colour1, int& colour2))
 {
     Pair<int, int> colours = textdraw.getPreviewVehicleColour();
     colour1 = colours.first;
