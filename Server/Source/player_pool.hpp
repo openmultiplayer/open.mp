@@ -1252,6 +1252,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (other->streamedFor_.valid(player.poolID)) {
                 other->streamedFor_.remove(player.poolID, player);
             }
+
+            auto it = other->othersColours_.find(player.poolID);
+            if (it != other->othersColours_.end()) {
+                other->othersColours_.erase(it);
+            }
         }
 
         NetCode::RPC::PlayerQuit packet;
