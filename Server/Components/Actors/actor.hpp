@@ -26,6 +26,7 @@ private:
     float health_;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     AnimationData animation_;
+    ActorSpawnData spawnData_;
 
     void restream()
     {
@@ -76,6 +77,7 @@ public:
         , pos_(pos)
         , angle_(angle)
         , health_(100.f)
+        , spawnData_{pos, angle, skin}
     {
     }
 
@@ -227,6 +229,11 @@ public:
     int getSkin() const override
     {
         return skin_;
+    }
+
+    const ActorSpawnData& getSpawnData() override
+    {
+        return spawnData_;
     }
 
     ~Actor()

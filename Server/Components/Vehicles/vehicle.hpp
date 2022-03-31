@@ -38,9 +38,10 @@ private:
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
-    bool beenOccupied = false;
     TimePoint timeOfDeath;
+    TimePoint timeOfSpawn;
     TimePoint lastOccupiedChange;
+    bool beenOccupied = false;
     Vector3 velocity;
     Vector3 angularVelocity;
     TimePoint trailerUpdateTime;
@@ -66,14 +67,20 @@ private:
     }
 
 public:
-    inline bool hasBeenOccupied() const
+
+    bool hasBeenOccupied() override
     {
         return beenOccupied;
     }
 
-    inline const TimePoint& getLastOccupied() const
+    const TimePoint& getLastOccupiedTime() override
     {
         return lastOccupiedChange;
+    }
+
+    const TimePoint& getLastSpawnTime() override
+    {
+        return timeOfSpawn;
     }
 
     inline const TimePoint& getTimeOfDeath() const
@@ -107,6 +114,7 @@ public:
         mods.fill(0);
         carriages.fill(nullptr);
         setSpawnData(data);
+        timeOfSpawn = Time::now();
     }
 
     ~Vehicle();
@@ -119,6 +127,11 @@ public:
     virtual void setVirtualWorld(int vw) override
     {
         virtualWorld_ = vw;
+    }
+
+    virtual void setSiren(bool status) override
+    {
+        spawnData.siren = status;
     }
 
     int getID() const override
@@ -160,6 +173,12 @@ public:
         }
         pos = spawnData.position;
         rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
+        interior = spawnData.interior;
+    }
+
+    const VehicleSpawnData& getSpawnData() override
+    {
+        return spawnData;
     }
 
     void streamInForPlayer(IPlayer& player) override;
@@ -167,7 +186,7 @@ public:
 
     void streamOutForClient(IPlayer& player);
 
-    bool isOccupied() const
+    bool isOccupied() override
     {
         return driver != nullptr || passengers.size() != 0;
     }
@@ -255,6 +274,9 @@ public:
     /// Get the vehicle's respawn delay.
     Seconds getRespawnDelay() override;
 
+    /// Set the vehicle's respawn delay.
+    void setRespawnDelay(Seconds delay) override;
+
     bool isRespawning() override { return respawning; }
 
     // Sets (links) the vehicle to an interior.
@@ -293,9 +315,22 @@ public:
         return trailer;
     }
 
+    /// Get the current vehicle's tower.
+    IVehicle* getTower() const override
+    {
+        if (towing) {
+            return nullptr;
+        }
+        return tower;
+    }
+
     /// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
     void addCarriage(IVehicle* carriage, int pos) override
     {
+        if (!carriage) {
+            return;
+        }
+
         if (spawnData.modelID != 538 && spawnData.modelID != 537) {
             return;
         }
