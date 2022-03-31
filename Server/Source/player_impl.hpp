@@ -563,7 +563,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
     {
-        if (!animationNameValid(animation.lib, animation.name)) {
+        if (!animationLibraryValid(animation.lib)) {
             return;
         }
 
