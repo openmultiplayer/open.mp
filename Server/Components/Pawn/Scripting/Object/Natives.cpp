@@ -160,3 +160,98 @@ SCRIPT_API(SetObjectsDefaultCameraCol, bool(bool disable))
 
     return false;
 }
+
+SCRIPT_API(GetObjectDrawDistance, float(IObject& object))
+{
+    return object.getDrawDistance();
+}
+
+SCRIPT_API(GetObjectMoveSpeed, float(IObject& object))
+{
+    return object.getMovingData().speed;
+}
+
+SCRIPT_API(GetObjectMovingTargetPos, bool(IObject& object, Vector3& pos))
+{
+    const ObjectMoveData& data = object.getMovingData();
+    pos = data.targetPos;
+    return true;
+}
+
+SCRIPT_API(GetObjectTarget, bool(IObject& object, Vector3& pos))
+{
+    return openmp_scripting::GetObjectMovingTargetPos(object, pos);
+}
+
+SCRIPT_API(GetObjectMovingTargetRot, bool(IObject& object, Vector3& rot))
+{
+    const ObjectMoveData& data = object.getMovingData();
+    rot = data.targetRot;
+    return true;
+}
+
+SCRIPT_API(GetObjectAttachedData, bool(IObject& object, int& attached_vehicleid, int& attached_objectid, int& attached_playerid))
+{
+    const ObjectAttachmentData data = object.getAttachmentData();
+    attached_vehicleid = INVALID_VEHICLE_ID;
+    attached_objectid = INVALID_OBJECT_ID;
+    attached_playerid = INVALID_PLAYER_ID;
+
+    if (data.type == ObjectAttachmentData::Type::Object) {
+        attached_objectid = data.ID;
+    } else if (data.type == ObjectAttachmentData::Type::Player) {
+        attached_playerid = data.ID;
+    } else if (data.type == ObjectAttachmentData::Type::Vehicle) {
+        attached_vehicleid = data.ID;
+    }
+
+    return true;
+}
+
+SCRIPT_API(GetObjectAttachedOffset, bool(IObject& object, Vector3& offset, Vector3& rot))
+{
+    const ObjectAttachmentData data = object.getAttachmentData();
+    offset = data.offset;
+    rot = data.rotation;
+    return true;
+}
+
+SCRIPT_API(GetObjectSyncRotation, bool(IObject& object))
+{
+    return object.getAttachmentData().syncRotation;
+}
+
+SCRIPT_API(IsObjectMaterialSlotUsed, bool(IObject& object, int materialindex))
+{
+    ObjectMaterialData data;
+    bool result = object.getMaterialData(materialindex, &data);
+    if (result) {
+        return data.used;
+    }
+    return result;
+}
+
+SCRIPT_API(GetObjectMaterial, bool(IObject& object, int materialindex, int& modelid, OutputOnlyString& txdname))
+{
+    ObjectMaterialData data;
+    bool result = object.getMaterialData(materialindex, &data);
+    if (result) {
+        txdname = data.textOrTXD;
+    }
+    return result;
+}
+
+SCRIPT_API(GetObjectMaterialText, bool(IObject& object, int materialindex, OutputOnlyString& text))
+{
+    ObjectMaterialData data;
+    bool result = object.getMaterialData(materialindex, &data);
+    if (result) {
+        text = data.fontOrTexture;
+    }
+    return result;
+}
+
+SCRIPT_API(IsObjectNoCameraCol, bool(IObject& object))
+{
+    return !object.getCameraCollision();
+}
