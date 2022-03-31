@@ -257,7 +257,7 @@ public:
 
         const int pid = player.getID();
         for (IVehicle* v : storage) {
-			static_cast<Vehicle*>(v)->removeFor(pid, player);
+            static_cast<Vehicle*>(v)->removeFor(pid, player);
         }
     }
 
@@ -327,12 +327,12 @@ public:
         if (!isStatic && (modelID == 538 || modelID == 537)) {
             return nullptr;
         }
-        IVehicle* ret = create(VehicleSpawnData { modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
+        IVehicle* ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;
-            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 0);
-            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 1);
-            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 2);
+            ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2 }), 0);
+            ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2 }), 1);
+            ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2 }), 2);
         }
         return ret;
     }
@@ -450,4 +450,3 @@ public:
         return true;
     }
 };
-

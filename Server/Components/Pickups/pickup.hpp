@@ -9,11 +9,11 @@ class Pickup final : public IPickup, public PoolIDProvider, public NoCopy {
 private:
     int virtualWorld;
     int modelId;
-    PickupType type;
     Vector3 pos;
-    bool isStatic_;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> hiddenFor_;
+    PickupType type;
+    bool isStatic_;
 
     void restream()
     {
@@ -51,13 +51,13 @@ public:
     inline bool isStatic() const
     {
         return isStatic_;
-	}
+    }
 
     Pickup(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic)
         : virtualWorld(virtualWorld)
         , modelId(modelId)
-        , type(type)
         , pos(pos)
+        , type(type)
         , isStatic_(isStatic)
     {
     }
@@ -165,4 +165,3 @@ public:
         }
     }
 };
-
