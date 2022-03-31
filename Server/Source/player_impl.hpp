@@ -95,6 +95,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     const bool isBot_;
     bool toSpawn_;
     TimePoint lastGameTimeUpdate_;
+    PlayerSpectateData spectateData_;
 
     PrimarySyncUpdateType primarySyncUpdateType_;
     int secondarySyncUpdateType_;
@@ -160,6 +161,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , isBot_(params.bot)
         , toSpawn_(false)
         , lastGameTimeUpdate_()
+        , spectateData_({ INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
@@ -177,6 +179,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         if (state_ == PlayerState_Driver || state_ == PlayerState_Passenger) {
             setPosition(pos_);
         }
+
+        
+        spectateData_.type = PlayerSpectateData::ESpectateType::None;
+        spectateData_.spectateID = INVALID_PLAYER_ID;
 
         toSpawn_ = true;
         NetCode::RPC::ImmediatelySpawnPlayer RPC;
@@ -473,8 +479,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         setState(PlayerState_Spectating);
 
-        if (!spectating)
+        if (!spectating) {
             toSpawn_ = true;
+            spectateData_.type = PlayerSpectateData::ESpectateType::None;
+            spectateData_.spectateID = INVALID_PLAYER_ID;
+        }
 
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
         togglePlayerSpectatingRPC.Enable = spectating;
@@ -1131,6 +1140,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 
+        spectateData_.type = PlayerSpectateData::ESpectateType::Player;
+        spectateData_.spectateID = target.getID();
+
         NetCode::RPC::PlayerSpectatePlayer rpc;
         rpc.PlayerID = static_cast<Player&>(target).poolID;
         rpc.SpecCamMode = mode;
@@ -1147,10 +1159,18 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 
+        spectateData_.type = PlayerSpectateData::ESpectateType::Vehicle;
+        spectateData_.spectateID = target.getID();
+
         NetCode::RPC::PlayerSpectateVehicle rpc;
         rpc.VehicleID = target.getID();
         rpc.SpecCamMode = mode;
         PacketHelper::send(rpc, *this);
+    }
+
+    const PlayerSpectateData& getSpectateData() const override
+    {
+        return spectateData_;
     }
 
     void sendClientCheck(int actionType, int address, int offset, int count) override
