@@ -354,8 +354,8 @@ SCRIPT_API(GetVehicleSpawnInfo, bool(IVehicle& vehicle, Vector3& position, float
 SCRIPT_API(SetVehicleSpawnInfo, bool(IVehicle& vehicle, int modelid, Vector3 position, float rotation, int colour1, int colour2, int respawn_time, int interior))
 {
     const VehicleSpawnData& data = vehicle.getSpawnData();
-    
-    vehicle.setSpawnData({ modelid, position, rotation, colour1, colour2, respawn_time >= -1 ? Seconds(respawn_time) : data.respawnDelay, data.siren, interior != -2 ? interior : data.interior });
+
+    vehicle.setSpawnData({ respawn_time >= -1 ? Seconds(respawn_time) : data.respawnDelay, modelid, position, rotation, colour1, colour2, data.siren, interior != -2 ? interior : data.interior });
     return true;
 }
 
