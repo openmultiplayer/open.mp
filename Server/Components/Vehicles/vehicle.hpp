@@ -52,6 +52,8 @@ private:
     StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES> carriages;
     VehicleParams params;
     uint8_t sirenState = 0;
+    uint32_t hydraThrustAngle = 0;
+    float trainSpeed = 0.0f;
 
     /// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
     void updateOccupied()
@@ -132,6 +134,21 @@ public:
     virtual void setSiren(bool status) override
     {
         spawnData.siren = status;
+    }
+
+    virtual uint8_t getSirenState() const override
+    {
+        return sirenState;
+    }
+
+    virtual uint32_t getHydraThrustAngle() const override
+    {
+        return hydraThrustAngle;
+    }
+
+    virtual float getTrainSpeed() const override
+    {
+        return trainSpeed;
     }
 
     int getID() const override
@@ -383,6 +400,7 @@ private:
     Vehicle* vehicle = nullptr;
     int seat = SEAT_NONE;
     int numStreamed = 0;
+    bool inModShop = false;
 
 public:
     void setNumStreamed(int num)
@@ -415,6 +433,16 @@ public:
     int getSeat() const override
     {
         return seat;
+    }
+
+    void setInModShop(bool toggle)
+    {
+        inModShop = toggle;
+    }
+
+    bool isInModShop() const override
+    {
+        return inModShop;
     }
 
     void freeExtension() override

@@ -112,6 +112,9 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
     velocity = vehicleSync.Velocity;
     landingGear = vehicleSync.LandingGear;
 
+    hydraThrustAngle = vehicleSync.HydraThrustAngle;
+    trainSpeed = vehicleSync.TrainSpeed;
+
     if (spawnData.modelID == 538 || spawnData.modelID == 537) {
         for (IVehicle* vehicle : carriages) {
             if (vehicle) {
