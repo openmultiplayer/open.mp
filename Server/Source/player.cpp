@@ -191,7 +191,7 @@ void Player::streamInForPlayer(IPlayer& other)
 {
     const int pid = other.getID();
     if (!streamedFor_.valid(pid)) {
-        uint8_t& numStreamed = static_cast<Player&>(other).numStreamed_;
+        uint16_t& numStreamed = static_cast<Player&>(other).numStreamed_;
         if (numStreamed <= MAX_STREAMED_PLAYERS) {
             ++numStreamed;
             streamedFor_.add(pid, other);

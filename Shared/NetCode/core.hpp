@@ -1393,9 +1393,6 @@ namespace Packet {
         uint16_t LeftRight;
         uint16_t UpDown;
         uint16_t Keys;
-        Vector3 Position;
-        GTAQuat Rotation;
-        Vector2 HealthArmour;
         union {
             uint8_t WeaponAdditionalKey;
             struct {
@@ -1404,6 +1401,9 @@ namespace Packet {
             };
         };
         uint8_t SpecialAction;
+        Vector3 Position;
+        GTAQuat Rotation;
+        Vector2 HealthArmour;
         Vector3 Velocity;
         uint16_t AnimationID;
         uint16_t AnimationFlags;
@@ -1485,10 +1485,9 @@ namespace Packet {
     struct PlayerAimSync : NetworkPacketBase<203, NetworkPacketType::Packet, OrderingChannel_SyncPacket> {
 
         int PlayerID;
-        uint8_t CamMode;
+        float AimZ;
         Vector3 CamFrontVector;
         Vector3 CamPos;
-        float AimZ;
         union {
             uint8_t ZoomWepState;
             struct {
@@ -1497,6 +1496,7 @@ namespace Packet {
             };
         };
         uint8_t AspectRatio;
+        uint8_t CamMode;
 
         bool read(NetworkBitStream& bs)
         {
@@ -1636,11 +1636,7 @@ namespace Packet {
 
                 const Vector3 otherPos = other->getPosition();
                 const PlayerState otherState = other->getState();
-                bool streamMarker = 
-                    otherState != PlayerState_None && otherState != PlayerState_Spectating && 
-                    virtualWorld == other->getVirtualWorld() && 
-                    colour.a > 0 &&
-                    (!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
+                bool streamMarker = otherState != PlayerState_None && otherState != PlayerState_Spectating && virtualWorld == other->getVirtualWorld() && colour.a > 0 && (!Limit || glm::dot(Vector2(pos), Vector2(otherPos)) < Radius * Radius);
 
                 bs.writeUINT16(other->getID());
                 bs.writeBIT(streamMarker);

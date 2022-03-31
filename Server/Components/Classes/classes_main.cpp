@@ -16,17 +16,13 @@ class PlayerClassData final : public IPlayerClassData {
 private:
     IPlayer& player;
     PlayerClass cls;
-    bool& inClassRequest;
-    bool& skipDefaultClassRequest;
 
     friend class ClassesComponent;
 
 public:
-    PlayerClassData(IPlayer& player, bool& inClassRequest, bool& skipDefaultClassRequest)
+    PlayerClassData(IPlayer& player)
         : player(player)
         , cls(defClass)
-        , inClassRequest(inClassRequest)
-        , skipDefaultClassRequest(skipDefaultClassRequest)
     {
     }
 
@@ -62,7 +58,7 @@ class Class final : public IClass, public PoolIDProvider {
 private:
     PlayerClass cls;
 
-	friend class ClassesComponent;
+    friend class ClassesComponent;
 
 public:
     Class(const PlayerClass& cls)
@@ -207,7 +203,7 @@ public:
 
     void onConnect(IPlayer& player) override
     {
-        player.addExtension(new PlayerClassData(player, inClassRequest, skipDefaultClassRequest), true);
+        player.addExtension(new PlayerClassData(player), true);
     }
 
     void free() override
@@ -263,4 +259,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new ClassesComponent();
 }
-

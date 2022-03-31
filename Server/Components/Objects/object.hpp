@@ -17,14 +17,14 @@ private:
     Vector3 rot_;
     int model_;
     float drawDist_;
-    bool cameraCol_;
     ObjectAttachmentData attachmentData_;
     StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> materials_;
-    uint8_t materialsCount_;
-    bool moving_;
     ObjectMoveData moveData_;
     float rotSpeed_;
+    uint8_t materialsCount_;
     bool anyDelayedProcessing_;
+    bool cameraCol_;
+    bool moving_;
 
 public:
     BaseObject(int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
@@ -32,11 +32,11 @@ public:
         , rot_(rotation)
         , model_(modelID)
         , drawDist_(drawDist)
-        , cameraCol_(cameraCollision)
         , attachmentData_ { ObjectAttachmentData::Type::None }
         , materialsCount_(0u)
-        , moving_(false)
         , anyDelayedProcessing_(false)
+        , cameraCol_(cameraCollision)
+        , moving_(false)
     {
     }
 
