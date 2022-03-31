@@ -54,8 +54,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool received(IPlayer& peer, NetworkBitStream& bs) override
         {
-            NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries());
-            PacketHelper::send(sendPlayerScoresAndPingsRPC, peer);
+            Player& player = static_cast<Player&>(peer);
+            const TimePoint now = Time::now();
+
+            // SA:MP client is nice and makes this request every 3 seconds.
+            if (now - player.lastScoresAndPings_ >= Seconds(2)) {
+                NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries());
+                PacketHelper::send(sendPlayerScoresAndPingsRPC, peer);
+                player.lastScoresAndPings_ = now;
+            }
             return true;
         }
     } playerRequestScoresAndPingsRPCHandler;
@@ -303,6 +310,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         int* limitGlobalChatRadius;
         float* globalChatRadiusLimit;
         int* logChat;
+        int* filterText;
 
         PlayerTextRPCHandler(PlayerPool& self)
             : self(self)
@@ -314,6 +322,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             limitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
             globalChatRadiusLimit = config.getFloat("limit_global_chat_radius");
             logChat = config.getInt("logging_chat");
+            filterText = config.getInt("chat_input_filter");
         }
 
         bool received(IPlayer& peer, NetworkBitStream& bs) override
@@ -323,12 +332,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            // Filters ~k, ~K (uppercase). Replace with #.
-            std::regex filter = std::regex("~(k|K)");
-            // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
-            std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            String filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filter, "#");
-            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+            String filteredMessage;
+            if (*filterText) {
+                // Filters ~k, ~K (uppercase). Replace with #.
+                std::regex filter = std::regex("~(k|K)|%");
+                // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
+                std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
+                filteredMessage = std::regex_replace(String(StringView(playerChatMessageRequest.message)), filter, "#");
+                filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+            } else {
+                filteredMessage = String(StringView(playerChatMessageRequest.message));
+            }
 
             bool send = self.eventDispatcher.stopAtFalse(
                 [&peer, &filteredMessage](PlayerEventHandler* handler) {
@@ -360,9 +374,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     struct PlayerCommandRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
+        int* filterText;
         PlayerCommandRPCHandler(PlayerPool& self)
             : self(self)
         {
+        }
+
+        void init(IConfig& config)
+        {
+            filterText = config.getInt("chat_input_filter");
         }
 
         bool received(IPlayer& peer, NetworkBitStream& bs) override
@@ -372,12 +392,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            // Filters ~k, ~K (uppercase). Replace with #.
-            std::regex filter = std::regex("~(k|K)");
-            // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
-            std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
-            String filteredMessage = std::regex_replace(String(StringView(playerRequestCommandMessage.message)), filter, "#");
-            filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+            String filteredMessage;
+            if (*filterText) {
+                // Filters ~k, ~K (uppercase), %. Replace with #.
+                std::regex filter = std::regex("~(k|K)|%");
+                // Filters 6 characters between { and }, keeping out coloring. Replace with whitespace
+                std::regex filterColourNodes = std::regex("\\{[0-9a-fA-F]{6}\\}", std::regex::egrep);
+                filteredMessage = std::regex_replace(String(StringView(playerRequestCommandMessage.message)), filter, "#");
+                filteredMessage = std::regex_replace(filteredMessage, filterColourNodes, " ");
+            } else {
+                filteredMessage = String(StringView(playerRequestCommandMessage.message));
+            }
 
             bool send = filteredMessage.size() > 1 && self.eventDispatcher.anyTrue([&peer, filteredMessage](PlayerEventHandler* handler) {
                 return handler->onCommandText(peer, filteredMessage);
@@ -1347,6 +1372,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         IConfig& config = core.getConfig();
         streamConfigHelper = StreamConfigHelper(config);
         playerTextRPCHandler.init(config);
+        playerCommandRPCHandler.init(config);
         markersShow = config.getInt("show_player_markers");
         markersLimit = config.getInt("limit_player_markers");
         markersLimitRadius = config.getFloat("player_markers_draw_distance");

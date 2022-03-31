@@ -94,6 +94,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "rcon_command", "changeme" },
     { "vehicle_friendly_fire", false },
     { "vehicle_death_respawn_delay", 10 },
+    { "chat_input_filter", true }
 };
 
 // Provide automatic Defaults → JSON conversion in Config
