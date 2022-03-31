@@ -565,11 +565,6 @@ SCRIPT_API(GetVehicleSirenState, int(IVehicle& vehicle))
     return vehicle.getSirenState();
 }
 
-SCRIPT_API(GetVehicleLandingGearState, int(IVehicle& vehicle))
-{
-    return vehicle.getLandingGearState();
-}
-
 SCRIPT_API(GetVehicleHydraReactorAngle, int(IVehicle& vehicle))
 {
     return vehicle.getHydraThrustAngle();
