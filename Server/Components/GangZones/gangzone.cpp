@@ -37,16 +37,19 @@ public:
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
+        const Vector3& playerPos = player.getPosition();
+
         // only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
         for (auto gangzone : checkingList.entries()) {
 
             // getting the list from GangZone implementation instead of interface because
             // we need the modifiable version
-            FlatHashSet<IPlayer*>& playersInside = reinterpret_cast<GangZone*>(gangzone)->getPlayersInside();
+            FlatHashSet<IPlayer*>& playersInside = static_cast<GangZone*>(gangzone)->getPlayersInside();
             const GangZonePos& pos = gangzone->getPosition();
-            const Vector3& playerPos = player.getPosition();
+            bool isPlayerInInsideList = playersInside.find(&player) != playersInside.end();
+            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y;
 
-            if (playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y && playersInside.find(&player) == playersInside.end()) {
+            if (isPlayerInZoneArea && !isPlayerInInsideList) {
 
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 playersInside.insert(&player);
@@ -55,7 +58,7 @@ public:
                     player,
                     *lock.entry);
 
-            } else if (!(playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y) && playersInside.find(&player) != playersInside.end()) {
+            } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
 
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 playersInside.erase(&player);
