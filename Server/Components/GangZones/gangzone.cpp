@@ -6,6 +6,7 @@ class GangZonesComponent final : public IGangZonesComponent, public PlayerEventH
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
+    UniqueIDArray<IGangZone, GANG_ZONE_POOL_SIZE> checkingList;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
 public:
@@ -36,7 +37,8 @@ public:
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
-        for (auto gangzone : storage._entries()) {
+        // only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+        for (auto gangzone : checkingList.entries()) {
 
             // getting the list from GangZone implementation instead of interface because
             // we need the modifiable version
@@ -72,6 +74,22 @@ public:
         return storage.emplace(pos);
     }
 
+    const FlatHashSet<IGangZone*>& getCheckingGangZones() const override
+    {
+        return checkingList.entries();
+    }
+
+    void toggleGangZoneCheck(IGangZone& zone, bool toggle) override
+    {
+        if (toggle) {
+            checkingList.add(zone.getID(), zone);
+        } else {
+            if (checkingList.valid(zone.getID())) {
+                checkingList.remove(zone.getID(), zone);
+            }
+        }
+    }
+
     void free() override
     {
         delete this;
@@ -89,6 +107,10 @@ public:
 
     void release(int index) override
     {
+        if (checkingList.valid(index)) {
+            IGangZone* zone = get(index);
+            checkingList.remove(index, *zone);
+        }
         storage.release(index, false);
     }
 
@@ -132,4 +154,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new GangZonesComponent();
 }
-
