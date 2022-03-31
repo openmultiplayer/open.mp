@@ -109,6 +109,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     NetCode::Packet::PlayerTrailerSync trailerSync_;
     NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
 
+    TimePoint lastScoresAndPings_;
+
     void clearExtensions()
     {
         freeExtensions();
@@ -160,6 +162,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , toSpawn_(false)
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
+        , lastScoresAndPings_(Time::now())
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
