@@ -25,7 +25,7 @@ StringView trim(StringView view)
     return view.substr(start, end - start + 1);
 }
 
-class ConsoleComponent final : public IConsoleComponent, public TickEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
+class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
 private:
     struct ThreadProcData {
         std::atomic_bool valid;
@@ -140,7 +140,7 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getTickEventDispatcher().addEventHandler(this);
+        core->getEventDispatcher().addEventHandler(this);
         this->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
 
@@ -182,7 +182,7 @@ public:
             threadData->valid = false;
         }
         if (core) {
-            core->getTickEventDispatcher().removeEventHandler(this);
+            core->getEventDispatcher().removeEventHandler(this);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
 
             NetCode::Packet::PlayerRconCommand::removeEventHandler(*core, &playerRconCommandHandler);

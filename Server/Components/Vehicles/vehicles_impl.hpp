@@ -8,7 +8,7 @@
 
 using namespace Impl;
 
-class VehiclesComponent final : public IVehiclesComponent, public TickEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Vehicle, IVehicle, 1, VEHICLE_POOL_SIZE> storage;
@@ -293,7 +293,7 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getTickEventDispatcher().addEventHandler(this);
+        core->getEventDispatcher().addEventHandler(this);
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);

@@ -282,7 +282,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork()
 RakNetLegacyNetwork::~RakNetLegacyNetwork()
 {
     if (core) {
-        core->getTickEventDispatcher().removeEventHandler(this);
+        core->getEventDispatcher().removeEventHandler(this);
         core->getPlayers().getEventDispatcher().removeEventHandler(this);
     }
     rakNetServer.Disconnect(300);
@@ -664,7 +664,7 @@ void RakNetLegacyNetwork::init(ICore* c)
 {
     core = c;
     
-    core->getTickEventDispatcher().addEventHandler(this);
+    core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
 }
 
