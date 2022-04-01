@@ -218,7 +218,7 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
         PawnManager::Destroy();
     }
 
-    void free(bool informClients) override { delete this; }
+    void free() override { delete this; }
 };
 
 COMPONENT_ENTRY_POINT()

@@ -217,7 +217,7 @@ public:
         return storage.emplace(position, "_", TextDrawStyle_Preview, model);
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

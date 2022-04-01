@@ -170,7 +170,7 @@ public:
         return created;
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

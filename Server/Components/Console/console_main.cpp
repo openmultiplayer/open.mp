@@ -240,7 +240,7 @@ public:
         return false;
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

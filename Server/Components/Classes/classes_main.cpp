@@ -215,7 +215,7 @@ public:
         player.addExtension(new PlayerClassData(player), true);
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

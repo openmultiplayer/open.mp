@@ -110,7 +110,7 @@ public:
         // Destroy all stored entity instances.
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }
