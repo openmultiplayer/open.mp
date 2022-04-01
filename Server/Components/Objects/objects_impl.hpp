@@ -506,6 +506,14 @@ public:
         delete this;
     }
 
+	void reset() override
+	{
+		inObjectEdit_ = false;
+		inObjectSelection_ = false;
+		slotsOccupied_.reset();
+		storage.clear();
+	}
+
     void beginObjectSelection() override
     {
         inObjectEdit_ = false;

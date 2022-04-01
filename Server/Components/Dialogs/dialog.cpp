@@ -35,6 +35,11 @@ public:
     {
         delete this;
     }
+
+	void reset() override
+	{
+		activeId = INVALID_DIALOG_ID;
+	}
 };
 
 class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {

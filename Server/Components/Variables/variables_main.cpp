@@ -106,6 +106,11 @@ public:
     {
         delete this;
     }
+
+	void reset() override
+	{
+		// Do nothing.  Variables persist.
+	}
 };
 
 class VariablesComponent final : public VariableStorageBase<IVariablesComponent>, public PlayerEventHandler {

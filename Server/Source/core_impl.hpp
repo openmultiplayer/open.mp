@@ -883,7 +883,11 @@ public:
         NetCode::RPC::GMX RPC;
         PacketHelper::broadcast(RPC, players);
 		components.reset();
-    }
+		for (auto p : players.entries())
+		{
+			static_cast<Player *>(p)->resetExtensions();
+		}
+	}
 
 	void reloadAll() override
     {
