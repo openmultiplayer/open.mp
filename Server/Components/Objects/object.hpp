@@ -50,7 +50,12 @@ public:
         return attachmentData_;
     }
 
-    bool getMaterialData(uint32_t index, const ObjectMaterialData*& out) const override
+    const ObjectMoveData& getMovingData() const override
+    {
+        return moveData_;
+    }
+
+    bool getMaterialData(uint32_t index, const ObjectMaterialData* out) const override
     {
         if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
             return false;
