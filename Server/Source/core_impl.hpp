@@ -880,7 +880,7 @@ public:
 
     void resetAll() override
     {
-        NetCode::RPC::GMX RPC;
+        NetCode::RPC::PlayerClose RPC;
         PacketHelper::broadcast(RPC, players);
         components.reset();
         for (auto p : players.entries())
