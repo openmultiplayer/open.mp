@@ -147,7 +147,7 @@ SCRIPT_API(GetPlayerObjectMovingTargetPos, bool(IPlayer& player, IPlayerObject& 
     return true;
 }
 
-SCRIPT_API(GetPlayerPlayerObjectTarget, bool(IPlayer& player, IPlayerObject& object, Vector3& pos))
+SCRIPT_API(GetPlayerObjectTarget, bool(IPlayer& player, IPlayerObject& object, Vector3& pos))
 {
     return openmp_scripting::GetPlayerObjectMovingTargetPos(player, object, pos);
 }
@@ -192,30 +192,30 @@ SCRIPT_API(GetPlayerObjectSyncRotation, int(IPlayer& player, IPlayerObject& obje
 
 SCRIPT_API(IsPlayerObjectMaterialSlotUsed, bool(IPlayer& player, IPlayerObject& object, int materialindex))
 {
-    ObjectMaterialData data;
-    bool result = object.getMaterialData(materialindex, &data);
+    const ObjectMaterialData* data = nullptr;
+    bool result = object.getMaterialData(materialindex, data);
     if (result) {
-        return data.used;
+        return data->used;
     }
     return result;
 }
 
 SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialindex, int& modelid, OutputOnlyString& txdname))
 {
-    ObjectMaterialData data;
-    bool result = object.getMaterialData(materialindex, &data);
+    const ObjectMaterialData* data = nullptr;
+    bool result = object.getMaterialData(materialindex, data);
     if (result) {
-        txdname = data.textOrTXD;
+        txdname = data->textOrTXD;
     }
     return result;
 }
 
 SCRIPT_API(GetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, int materialindex, OutputOnlyString& text))
 {
-    ObjectMaterialData data;
-    bool result = object.getMaterialData(materialindex, &data);
+    const ObjectMaterialData* data = nullptr;
+    bool result = object.getMaterialData(materialindex, data);
     if (result) {
-        text = data.fontOrTexture;
+        text = data->fontOrTexture;
     }
     return result;
 }
@@ -228,7 +228,7 @@ SCRIPT_API(IsPlayerObjectNoCameraCol, bool(IPlayer& player, IPlayerObject& objec
 SCRIPT_API(GetPlayerSurfingPlayerObjectID, int(IPlayer& player))
 {
     const PlayerSurfingData& data = player.getSurfingData();
-    if (data.type == PlayerSurfingData::Type::Object) {
+    if (data.type == PlayerSurfingData::Type::PlayerObject) {
         return data.ID;
     } else {
         return INVALID_OBJECT_ID;
