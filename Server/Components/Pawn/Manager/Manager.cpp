@@ -11,6 +11,7 @@
 #include <Windows.h>
 #endif // WIN32
 #include <iostream>
+#include <charconv>
 
 #include <pawn-natives/NativeFunc.hpp>
 #include <pawn-natives/NativesMain.hpp>
@@ -82,11 +83,17 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "gmx") {
-		// Advance to the next script in the list.
-        ++gamemodeIndex_;
-		if (gamemodeIndex_ == gamemodes_.size())
+		// How many times should we repeat this mode?
+		--gamemodeRepeat_;
+		if (gamemodeRepeat_ == 0)
 		{
-            gamemodeIndex_ = 0;
+			// Advance to the next script in the list.
+			++gamemodeIndex_;
+			if (gamemodeIndex_ == gamemodes_.size())
+			{
+				gamemodeIndex_ = 0;
+			}
+			gamemodeRepeat_ = repeats_[gamemodeIndex_];
 		}
         Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]);
         return true;
@@ -219,8 +226,26 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
     gamemodeIndex_ = 0;
 	for (auto const & i : mainScripts)
 	{
-        gamemodes_.push_back(String(i));
+		// Split the mode name and count.
+		auto space = i.find_last_of(' ', 0);
+		if (space == std::string::npos)
+		{
+			repeats_.push_back(1);
+			gamemodes_.push_back(String(i));
+		}
+		else
+		{
+			int count = 0;
+			auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size() - space - 1, count, 10);
+			if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1)
+			{
+				count = 1;
+			}
+			repeats_.push_back(count);
+			gamemodes_.push_back(String(i.substr(0, space)));
+		}
 	}
+	gamemodeRepeat_ = repeats_[0];
     return Load("gamemodes/" + gamemodes_[0], true);
 }
 

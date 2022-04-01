@@ -60,7 +60,9 @@ public:
     DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
     PawnPluginManager pluginManager;
     int gamemodeIndex_ = 0;
+	int gamemodeRepeat_ = 1;
     DynamicArray<String> gamemodes_;
+    DynamicArray<int> repeats_;
     TimePoint nextRestart_;
     Milliseconds restartDelay_;
 
