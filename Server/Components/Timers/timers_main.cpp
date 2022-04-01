@@ -81,6 +81,12 @@ public:
     {
         delete this;
     }
+
+	void reset() override
+	{
+		// Nothing to reset here.  Although some timers are reset on GMX it isn't all of them, and
+		// that's handled at a lower level by pawn itself.
+	}
 };
 
 COMPONENT_ENTRY_POINT()

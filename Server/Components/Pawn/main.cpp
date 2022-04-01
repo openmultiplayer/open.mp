@@ -56,10 +56,12 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
     reinterpret_cast<void*>(&amx_UTF8Put),
 };
 
-struct PawnComponent final : public IPawnComponent, public TickEventHandler, public ConsoleEventHandler {
+class PawnComponent final : public IPawnComponent, public TickEventHandler, public ConsoleEventHandler {
+private:
     ICore* core = nullptr;
     Scripting scriptingInstance;
 
+public:
     StringView componentName() const override
     {
         return "Pawn";
@@ -219,6 +221,11 @@ struct PawnComponent final : public IPawnComponent, public TickEventHandler, pub
     }
 
     void free() override { delete this; }
+
+	void reset() override
+	{
+		// Nothing to reset here.  This component did the resetting in the first place.
+	}
 };
 
 COMPONENT_ENTRY_POINT()
