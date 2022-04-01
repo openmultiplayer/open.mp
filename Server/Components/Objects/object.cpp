@@ -59,14 +59,11 @@ bool Object::advance(Microseconds elapsed, TimePoint now)
             const int pid = player->getID();
             if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
                 delayedProcessing_.reset(pid);
-				if (delayedProcessing_.any())
-				{
+                if (delayedProcessing_.any()) {
                     enableDelayedProcessing();
-				}
-				else
-				{
+                } else {
                     disableDelayedProcessing();
-				}
+                }
 
                 eraseFromProcessed(false /* force */);
 
@@ -74,7 +71,7 @@ bool Object::advance(Microseconds elapsed, TimePoint now)
                     PacketHelper::send(makeMovePacket(), *player);
                 }
 
-				const ObjectAttachmentData& attachment = getAttachmentData();
+                const ObjectAttachmentData& attachment = getAttachmentData();
                 if (
                     attachment.type == ObjectAttachmentData::Type::Player) {
                     IPlayer* other = objects_.getPlayers().get(attachment.ID);
@@ -247,4 +244,3 @@ PlayerObject::~PlayerObject()
         destroyForPlayer();
     }
 }
-

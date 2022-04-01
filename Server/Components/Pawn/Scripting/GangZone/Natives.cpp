@@ -91,7 +91,7 @@ SCRIPT_API(IsValidGangZone, bool(IGangZone* zone))
 
 SCRIPT_API(IsPlayerInGangZone, bool(IPlayer& player, IGangZone& zone))
 {
-    return zone.getPlayersInside().find(&player) != zone.getPlayersInside().end();
+    return zone.isPlayerInside(player);
 }
 
 SCRIPT_API(IsGangZoneVisibleForPlayer, bool(IPlayer& player, IGangZone& zone))

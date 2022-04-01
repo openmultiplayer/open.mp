@@ -7,7 +7,15 @@ template <class T>
 struct CheckpointDataBase : public T {
     Vector3 position_;
     float radius_;
+    IPlayer& player_;
     bool inside_;
+    bool enabled_;
+
+    CheckpointDataBase(IPlayer& player)
+        : player_(player)
+        , enabled_(false)
+    {
+    }
 
     Vector3 getPosition() const override
     {
@@ -41,13 +49,9 @@ struct CheckpointDataBase : public T {
 };
 
 class PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerStandardCheckpointData> {
-private:
-    bool enabled_ = false;
-    IPlayer& player_;
-
 public:
     PlayerStandardCheckpointData(IPlayer& player)
-        : player_(player)
+        : CheckpointDataBase<IPlayerStandardCheckpointData>(player)
     {
     }
 
@@ -85,12 +89,10 @@ class PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceChec
 private:
     RaceCheckpointType type_ = RaceCheckpointType::RACE_NONE;
     Vector3 nextPosition_;
-    bool enabled_ = false;
-    IPlayer& player_;
 
 public:
     PlayerRaceCheckpointData(IPlayer& player)
-        : player_(player)
+        : CheckpointDataBase<IPlayerRaceCheckpointData>(player)
     {
     }
 
@@ -173,4 +175,3 @@ public:
         return standardCheckpoint;
     }
 };
-

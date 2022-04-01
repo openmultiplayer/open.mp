@@ -42,17 +42,19 @@ public:
         // only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
         for (auto gangzone : checkingList.entries()) {
 
-            // getting the list from GangZone implementation instead of interface because
-            // we need the modifiable version
-            FlatHashSet<IPlayer*>& playersInside = static_cast<GangZone*>(gangzone)->getPlayersInside();
+            // only check visible gangzones
+            if (!gangzone->isShownForPlayer(player)) {
+                continue;
+            }
+
             const GangZonePos& pos = gangzone->getPosition();
-            bool isPlayerInInsideList = playersInside.find(&player) != playersInside.end();
+            bool isPlayerInInsideList = gangzone->isPlayerInside(player);
             bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y;
 
             if (isPlayerInZoneArea && !isPlayerInInsideList) {
 
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
-                playersInside.insert(&player);
+                static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
                 eventDispatcher.dispatch(
                     &GangZoneEventHandler::onPlayerEnterGangZone,
                     player,
@@ -61,7 +63,7 @@ public:
             } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
 
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
-                playersInside.erase(&player);
+                static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
                 eventDispatcher.dispatch(
                     &GangZoneEventHandler::onPlayerLeaveGangZone,
                     player,

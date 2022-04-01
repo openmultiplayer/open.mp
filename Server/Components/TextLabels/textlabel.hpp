@@ -104,6 +104,17 @@ public:
         return attachmentData;
     }
 
+    void setTestLOS(bool status) override
+    {
+        testLOS = status;
+        restream();
+    }
+
+    bool getTestLOS() const override
+    {
+        return testLOS;
+    }
+
     void detachFromPlayer(Vector3 position) override
     {
         pos = position;

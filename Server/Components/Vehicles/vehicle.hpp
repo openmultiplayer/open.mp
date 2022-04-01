@@ -15,34 +15,36 @@ private:
     Vector3 pos;
     GTAQuat rot;
     int virtualWorld_ = 0;
+    VehiclesComponent* pool = nullptr;
     VehicleSpawnData spawnData;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT> mods;
     float health = 1000.0f;
-    uint8_t interior = 0;
+    IPlayer* driver = nullptr;
     uint32_t doorDamage = 0;
     uint32_t panelDamage = 0;
     uint8_t lightDamage = 0;
     uint8_t tyreDamage = 0;
     uint8_t paintJob = 0;
+    uint8_t interior = 0;
     int32_t bodyColour1 = -1;
     int32_t bodyColour2 = -1;
     uint8_t landingGear = 1;
-    IPlayer* driver = nullptr;
+    bool respawning = false;
+    bool towing = false;
+    bool detaching = false;
     FlatHashSet<IPlayer*> passengers;
     HybridString<16> numberPlate = StringView("XYZSR998");
     uint8_t objective;
     uint8_t doorsLocked;
     bool dead = false;
     TimePoint timeOfDeath;
-    bool beenOccupied = false;
+    TimePoint timeOfSpawn;
     TimePoint lastOccupiedChange;
-    bool respawning = false;
+    bool beenOccupied = false;
     Vector3 velocity;
     Vector3 angularVelocity;
     TimePoint trailerUpdateTime;
-    bool towing = false;
-    bool detaching = false;
     union {
         Vehicle* trailer = nullptr;
         Vehicle* tower;
@@ -50,7 +52,6 @@ private:
     StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES> carriages;
     VehicleParams params;
     uint8_t sirenState = 0;
-    VehiclesComponent* pool = nullptr;
 
     /// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
     void updateOccupied()
@@ -66,20 +67,26 @@ private:
     }
 
 public:
-    inline bool hasBeenOccupied() const
+
+    bool hasBeenOccupied() override
     {
         return beenOccupied;
-	}
+    }
 
-    inline const TimePoint& getLastOccupied() const
+    const TimePoint& getLastOccupiedTime() override
     {
         return lastOccupiedChange;
-	}
+    }
+
+    const TimePoint& getLastSpawnTime() override
+    {
+        return timeOfSpawn;
+    }
 
     inline const TimePoint& getTimeOfDeath() const
     {
         return timeOfDeath;
-	}
+    }
 
     void removeFor(int pid, IPlayer& player)
     {
@@ -107,6 +114,7 @@ public:
         mods.fill(0);
         carriages.fill(nullptr);
         setSpawnData(data);
+        timeOfSpawn = Time::now();
     }
 
     ~Vehicle();
@@ -119,6 +127,11 @@ public:
     virtual void setVirtualWorld(int vw) override
     {
         virtualWorld_ = vw;
+    }
+
+    virtual void setSiren(bool status) override
+    {
+        spawnData.siren = status;
     }
 
     int getID() const override
@@ -160,6 +173,12 @@ public:
         }
         pos = spawnData.position;
         rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
+        interior = spawnData.interior;
+    }
+
+    const VehicleSpawnData& getSpawnData() override
+    {
+        return spawnData;
     }
 
     void streamInForPlayer(IPlayer& player) override;
@@ -167,7 +186,7 @@ public:
 
     void streamOutForClient(IPlayer& player);
 
-    bool isOccupied() const
+    bool isOccupied() override
     {
         return driver != nullptr || passengers.size() != 0;
     }
@@ -255,6 +274,9 @@ public:
     /// Get the vehicle's respawn delay.
     Seconds getRespawnDelay() override;
 
+    /// Set the vehicle's respawn delay.
+    void setRespawnDelay(Seconds delay) override;
+
     bool isRespawning() override { return respawning; }
 
     // Sets (links) the vehicle to an interior.
@@ -293,9 +315,22 @@ public:
         return trailer;
     }
 
+    /// Get the current vehicle's tower.
+    IVehicle* getTower() const override
+    {
+        if (towing) {
+            return nullptr;
+        }
+        return tower;
+    }
+
     /// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
     void addCarriage(IVehicle* carriage, int pos) override
     {
+        if (!carriage) {
+            return;
+        }
+
         if (spawnData.modelID != 538 && spawnData.modelID != 537) {
             return;
         }
@@ -355,7 +390,7 @@ public:
         numStreamed = num;
     }
 
-	/// Get the player's vehicle
+    /// Get the player's vehicle
     /// Returns nullptr if they aren't in a vehicle
     int getNumStreamed() const
     {
@@ -367,8 +402,8 @@ public:
         this->vehicle = vehicle;
         this->seat = seat;
     }
-	
-	/// Get the player's vehicle
+
+    /// Get the player's vehicle
     /// Returns nullptr if they aren't in a vehicle
     IVehicle* getVehicle() override
     {
@@ -387,4 +422,3 @@ public:
         delete this;
     }
 };
-
