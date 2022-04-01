@@ -1,7 +1,7 @@
 #include "timer.hpp"
 #include <sdk.hpp>
 
-class TimersComponent final : public ITimersComponent, public TickEventHandler {
+class TimersComponent final : public ITimersComponent, public CoreEventHandler {
 private:
     ICore* core = nullptr;
     std::set<Timer*> timers;
@@ -20,13 +20,13 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getTickEventDispatcher().addEventHandler(this);
+        core->getEventDispatcher().addEventHandler(this);
     }
 
     ~TimersComponent()
     {
         if (core) {
-            core->getTickEventDispatcher().removeEventHandler(this);
+            core->getEventDispatcher().removeEventHandler(this);
         }
 
         for (auto timer : timers) {

@@ -56,7 +56,7 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
     reinterpret_cast<void*>(&amx_UTF8Put),
 };
 
-class PawnComponent final : public IPawnComponent, public TickEventHandler, public ConsoleEventHandler {
+class PawnComponent final : public IPawnComponent, public CoreEventHandler, public ConsoleEventHandler {
 private:
     ICore* core = nullptr;
     Scripting scriptingInstance;
@@ -85,7 +85,7 @@ public:
         PawnManager::Get()->config = &core->getConfig();
         PawnManager::Get()->players = &core->getPlayers();
         PawnManager::Get()->pluginManager.core = core;
-        core->getTickEventDispatcher().addEventHandler(this);
+        core->getEventDispatcher().addEventHandler(this);
 
         // Set AMXFILE environment variable to "{current_dir}/scriptfiles"
         std::filesystem::path scriptfilesPath = std::filesystem::absolute("scriptfiles");
@@ -212,7 +212,7 @@ public:
     ~PawnComponent()
     {
         if (core) {
-            core->getTickEventDispatcher().removeEventHandler(this);
+            core->getEventDispatcher().removeEventHandler(this);
         }
         if (PawnManager::Get()->console) {
             PawnManager::Get()->console->getEventDispatcher().removeEventHandler(this);

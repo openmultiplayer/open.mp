@@ -4,7 +4,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public TickEventHandler, public PlayerEventHandler {
+class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
 private:
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;
@@ -182,7 +182,7 @@ public:
     {
         this->core = core;
         this->players = &core->getPlayers();
-        core->getTickEventDispatcher().addEventHandler(this);
+        core->getEventDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
@@ -192,7 +192,7 @@ public:
     ~ObjectComponent()
     {
         if (core) {
-            core->getTickEventDispatcher().removeEventHandler(this);
+            core->getEventDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
             NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);

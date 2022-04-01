@@ -2,7 +2,7 @@
 
 #include "player_impl.hpp"
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public TickEventHandler {
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler {
     ICore& core;
     const FlatPtrHashSet<INetwork>& networks;
     PoolStorage<Player, IPlayer, 0, PLAYER_POOL_SIZE> storage;
@@ -1386,7 +1386,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         maxBots = *config.getInt("max_bots");
 
         playerUpdateDispatcher.addEventHandler(this);
-        core.getTickEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
+        core.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
         core.addNetworkEventHandler(this);
 
         NetCode::RPC::PlayerSpawn::addEventHandler(core, &playerSpawnRPCHandler);
@@ -1562,6 +1562,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::Packet::PlayerWeaponsUpdate::removeEventHandler(core, &playerWeaponsUpdateHandler);
         NetCode::Packet::PlayerTrailerSync::removeEventHandler(core, &playerTrailerSyncHandler);
         core.removeNetworkEventHandler(this);
-        core.getTickEventDispatcher().removeEventHandler(this);
+        core.getEventDispatcher().removeEventHandler(this);
     }
 };
