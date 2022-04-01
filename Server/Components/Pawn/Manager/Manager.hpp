@@ -36,7 +36,7 @@ using namespace Impl;
 
 class PawnManager : public Singleton<PawnManager> {
 public:
-    FlatHashMap<String, std::unique_ptr<PawnScript>> scripts_;
+    DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
     std::string entryScript = "";
     FlatHashMap<AMX*, PawnScript*> amxToScript_;
     ICore* core = nullptr;
@@ -66,7 +66,15 @@ public:
     TimePoint nextRestart_;
     Milliseconds restartDelay_;
 	bool reloading_ = false;
+private:
+	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const & name) const
+	{
+		return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const & it) {
+			return it.first == name;
+		});
+	}
 
+public:
     PawnManager();
     ~PawnManager();
 
@@ -130,7 +138,7 @@ public:
     {
         cell ret = static_cast<cell>(defaultRetValue);
 
-        FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const& first = scripts_.find(entryScript);
+		auto first = findScript(entryScript);
         if (first != scripts_.end()) {
             ret = first->second->Call(name, defaultRetValue, args...);
         }
@@ -209,10 +217,12 @@ public:
     {
         cell ret = static_cast<cell>(defaultRetValue);
 
-        FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const& first = scripts_.find(entryScript);
-        if (first != scripts_.end()) {
-            ret = first->second->Call(name, defaultRetValue, args...);
-        }
+		for (auto & cur : scripts_) {
+			if (cur.first == entryScript) {
+			    ret = cur.second->Call(name, defaultRetValue, args...);
+				break;
+			}
+		}
 
         return ret;
     }

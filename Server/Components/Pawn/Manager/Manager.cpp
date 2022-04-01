@@ -43,7 +43,7 @@ PawnManager::PawnManager()
 
 PawnManager::~PawnManager()
 {
-    FlatHashMap<String, std::unique_ptr<PawnScript>>::const_iterator const& entryScriptIter = scripts_.find(entryScript);
+    auto entryScriptIter = findScript(entryScript);
     for (auto& cur : scripts_) {
         const bool isEntryScript = cur.second == entryScriptIter->second;
         auto& script = *cur.second;
@@ -284,7 +284,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 
 bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
-    if (scripts_.count(name)) {
+    if (findScript(name) != scripts_.end()) {
         return false;
     }
 
@@ -303,9 +303,11 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 
     PawnScript& script = *ptr;
 
-    auto res = scripts_.emplace(name, std::move(ptr));
-    if (res.second) {
-        amxToScript_.emplace(script.GetAMX(), res.first->second.get());
+	Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
+    scripts_.push_back(std::move(pair));
+	auto res = findScript(name);
+    if (res != scripts_.end()) {
+        amxToScript_.emplace(script.GetAMX(), res->second.get());
     }
     script.Register("CallLocalFunction", &utils::pawn_Script_Call);
     script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
@@ -379,7 +381,7 @@ bool PawnManager::Reload(std::string const& name)
 
 bool PawnManager::Unload(std::string const& name)
 {
-    auto pos = scripts_.find(name);
+	auto pos = findScript(name);
     bool isEntryScript = entryScript == name;
     if (pos == scripts_.end()) {
         return false;
