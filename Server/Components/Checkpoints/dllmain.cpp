@@ -116,7 +116,7 @@ public:
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    void free() override
+    void free(bool informClients) override
     {
         delete this;
     }

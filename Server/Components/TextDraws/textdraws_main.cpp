@@ -202,15 +202,6 @@ public:
         }
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
-    {
-        const int pid = player.getID();
-        for (ITextDraw* v : storage)
-		{
-            static_cast<TextDraw*>(v)->removeFor(pid, player);
-        }
-    }
-
     IEventDispatcher<TextDrawEventHandler>& getEventDispatcher() override
     {
         return dispatcher;
@@ -226,7 +217,7 @@ public:
         return storage.emplace(position, "_", TextDrawStyle_Preview, model);
     }
 
-    void free() override
+    void free(bool informClients) override
     {
         delete this;
     }

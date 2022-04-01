@@ -97,7 +97,7 @@ public:
         return storage.emplace(skin, pos, angle);
     }
 
-    void free() override
+    void free(bool informClients) override
     {
         delete this;
     }
