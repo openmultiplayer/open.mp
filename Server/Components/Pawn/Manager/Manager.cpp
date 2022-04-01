@@ -85,20 +85,40 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
     } else if (cmd == "gmx") {
 		// How many times should we repeat this mode?
 		--gamemodeRepeat_;
-		if (gamemodeRepeat_ == 0)
+		int initial = gamemodeIndex_;
+		for ( ; ; )
 		{
-			// Advance to the next script in the list.
-			++gamemodeIndex_;
-			if (gamemodeIndex_ == gamemodes_.size())
+			if (gamemodeRepeat_ == 0)
 			{
-				gamemodeIndex_ = 0;
+				// Advance to the next script in the list.
+				++gamemodeIndex_;
+				if (gamemodeIndex_ == gamemodes_.size())
+				{
+					gamemodeIndex_ = 0;
+				}
+				gamemodeRepeat_ = repeats_[gamemodeIndex_];
 			}
-			gamemodeRepeat_ = repeats_[gamemodeIndex_];
+			if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]))
+			{
+				break;
+			}
+			else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0))
+			{
+				// Tried all the GMs in the list, couldn't load any.
+				break;
+			}
+			else
+			{
+				// Couldn't load this mode, try the next one.
+				gamemodeRepeat_ = 0;
+			}
 		}
-        Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]);
         return true;
     } else if (cmd == "changemode") {
-        Changemode("gamemodes/" + args);
+		if (Changemode("gamemodes/" + args))
+		{
+			gamemodeRepeat_ = 1;
+		}
         return true;
     }
     // New commands.
