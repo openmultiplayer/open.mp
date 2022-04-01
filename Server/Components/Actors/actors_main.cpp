@@ -85,7 +85,7 @@ public:
     {
         const int pid = player.getID();
         for (IActor* a : storage)
-		{
+        {
             static_cast<Actor*>(a)->removeFor(pid, player);
         }
     }
@@ -112,12 +112,12 @@ public:
 
     void release(int index) override
     {
-		auto ptr = storage.get(index);
-		if (ptr)
-		{
+        auto ptr = storage.get(index);
+        if (ptr)
+        {
             static_cast<Actor*>(ptr)->destream();
-			storage.release(index, false);
-		}
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override

@@ -44,7 +44,7 @@ public:
     void removeFor(int pid, IPlayer& player)
     {
         if (streamedFor_.valid(pid))
-		{
+        {
             streamedFor_.remove(pid, player);
         }
     }
@@ -166,7 +166,7 @@ public:
     void destream()
     {
         for (IPlayer* player : streamedFor_.entries())
-		{
+        {
             streamOutForClient(*player);
         }
     }

@@ -188,7 +188,7 @@ public:
     static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
     void onTick(Microseconds elapsed, TimePoint now) override;
 
-	void init(ICore* core);
+    void init(ICore* core);
     void start();
 
     void OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason);
@@ -244,8 +244,8 @@ public:
     void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
     void unban(const BanEntry& entry) override;
 
-	void reset() override
-	{
-	}
+    void reset() override
+    {
+    }
 };
 

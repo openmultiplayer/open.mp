@@ -326,7 +326,7 @@ public:
     void removeFor(int pid, IPlayer& player)
     {
         if (shownFor_.valid(pid))
-		{
+        {
             shownFor_.remove(pid, player);
         }
     }
@@ -365,12 +365,12 @@ public:
 
     ~TextDraw()
     {
-	}
+    }
 
     void destream()
     {
         for (IPlayer* player : shownFor_.entries())
-		{
+        {
             hideForClient(*player, false);
         }
     }
@@ -427,7 +427,7 @@ public:
     void destream()
     {
         if (shown)
-		{
+        {
             hideForClient(player, true);
         }
     }

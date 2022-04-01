@@ -23,8 +23,8 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-	}
+    void reset() override
+    {
+    }
 };
 

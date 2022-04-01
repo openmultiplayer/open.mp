@@ -13,10 +13,10 @@ public:
     ~GangZonesComponent()
     {
         if (core)
-		{
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+        {
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
         }
-	}
+    }
 
     StringView componentName() const override
     {
@@ -129,12 +129,12 @@ public:
             IGangZone* zone = get(index);
             checkingList.remove(index, *zone);
         }
-		auto ptr = storage.get(index);
-		if (ptr)
-		{
+        auto ptr = storage.get(index);
+        if (ptr)
+        {
             static_cast<GangZone*>(ptr)->destream();
-	        storage.release(index, false);
-		}
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override

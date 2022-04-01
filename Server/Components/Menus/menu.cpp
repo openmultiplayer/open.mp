@@ -107,7 +107,7 @@ public:
     {
         const int pid = player.getID();
         for (IMenu* m : storage)
-		{
+        {
             static_cast<Menu*>(m)->removeFor(pid, player);
         }
     }

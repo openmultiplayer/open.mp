@@ -53,12 +53,12 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		inClassRequest = false;
-		skipDefaultClassRequest = false;
-		cls = defClass;
-	}
+    void reset() override
+    {
+        inClassRequest = false;
+        skipDefaultClassRequest = false;
+        cls = defClass;
+    }
 };
 
 class Class final : public IClass, public PoolIDProvider {

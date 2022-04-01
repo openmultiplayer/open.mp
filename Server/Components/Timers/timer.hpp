@@ -9,15 +9,15 @@ private:
     TimerTimeOutHandler* const handler_;
 
 public:
-	inline TimePoint getTimeout() const
-	{
+    inline TimePoint getTimeout() const
+    {
         return timeout_;
-	}
+    }
 
-	inline void setTimeout(TimePoint timeout)
+    inline void setTimeout(TimePoint timeout)
     {
         timeout_ = timeout;
-	}
+    }
 
     Timer(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count)
         : running_(true)
@@ -57,23 +57,23 @@ public:
     {
         running_ = false;
     }
-	
+    
     bool trigger() override
     {
-		if (running_ == false)
-		{
+        if (running_ == false)
+        {
             return false;
-		}
-		if (count_ == 0)
-		{
-			// Repeat forever.
+        }
+        if (count_ == 0)
+        {
+            // Repeat forever.
             return true;
-		}
+        }
         --count_;
-		if (count_ == 0)
-		{
+        if (count_ == 0)
+        {
             running_ = false;
-		}
+        }
         return running_;
     }
 

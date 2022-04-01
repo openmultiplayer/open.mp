@@ -45,10 +45,10 @@ public:
     }
 
     GTAQuat getRotation() const override
-	{
-		// Maybe make this a static shared instance?
-		return GTAQuat();
-	}
+    {
+        // Maybe make this a static shared instance?
+        return GTAQuat();
+    }
 
     void setRotation(GTAQuat rotation) override { }
 
@@ -162,7 +162,7 @@ public:
     void removeFor(int pid, IPlayer& player)
     {
         if (streamedFor_.valid(pid))
-		{
+        {
             streamedFor_.remove(pid, player);
         }
     }
@@ -216,7 +216,7 @@ public:
     void destream()
     {
         for (IPlayer* player : streamedFor_.entries())
-		{
+        {
             streamOutForClient(*player, false);
         }
     }

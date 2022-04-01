@@ -83,42 +83,42 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "gmx") {
-		// How many times should we repeat this mode?
-		--gamemodeRepeat_;
-		int initial = gamemodeIndex_;
-		for ( ; ; )
-		{
-			if (gamemodeRepeat_ == 0)
-			{
-				// Advance to the next script in the list.
-				++gamemodeIndex_;
-				if (gamemodeIndex_ == gamemodes_.size())
-				{
-					gamemodeIndex_ = 0;
-				}
-				gamemodeRepeat_ = repeats_[gamemodeIndex_];
-			}
-			if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]))
-			{
-				break;
-			}
-			else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0))
-			{
-				// Tried all the GMs in the list, couldn't load any.
-				break;
-			}
-			else
-			{
-				// Couldn't load this mode, try the next one.
-				gamemodeRepeat_ = 0;
-			}
-		}
+        // How many times should we repeat this mode?
+        --gamemodeRepeat_;
+        int initial = gamemodeIndex_;
+        for ( ; ; )
+        {
+            if (gamemodeRepeat_ == 0)
+            {
+                // Advance to the next script in the list.
+                ++gamemodeIndex_;
+                if (gamemodeIndex_ == gamemodes_.size())
+                {
+                    gamemodeIndex_ = 0;
+                }
+                gamemodeRepeat_ = repeats_[gamemodeIndex_];
+            }
+            if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]))
+            {
+                break;
+            }
+            else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0))
+            {
+                // Tried all the GMs in the list, couldn't load any.
+                break;
+            }
+            else
+            {
+                // Couldn't load this mode, try the next one.
+                gamemodeRepeat_ = 0;
+            }
+        }
         return true;
     } else if (cmd == "changemode") {
-		if (Changemode("gamemodes/" + args))
-		{
-			gamemodeRepeat_ = 1;
-		}
+        if (Changemode("gamemodes/" + args))
+        {
+            gamemodeRepeat_ = 1;
+        }
         return true;
     }
     // New commands.
@@ -184,88 +184,88 @@ void PawnManager::CheckNatives(PawnScript& script)
 
 bool PawnManager::Changemode(std::string const& name)
 {
-	// First check that the new script exists.
+    // First check that the new script exists.
     FILE* fp;
     std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
     std::string canon;
     utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
     if ((fp = fopen(canon.c_str(), "rb")) == NULL)
-	{
+    {
         core->printLn("Could not find:\n\n\t %s %s", name.c_str(),
             R"(
-				While attempting to load a PAWN gamemode, a file-not-found error was
-				encountered.  This could be caused by many things:
-				
-				* The wrong filename was given.
-				* The wrong gamemodes path was given.
-				* The server was launched from a different directory, making relative paths relative to the wrong place (and thus wrong).
-				* You didn't copy the file to the correct directory or server.
-				* The compilation failed, leading to no output file.
-				* `-l` or `-a` were used to compile, which output intermediate steps for inspecting, rather than a full script.
-				* Anything else, really just check the file is at the path given.
-			)");
+                While attempting to load a PAWN gamemode, a file-not-found error was
+                encountered.  This could be caused by many things:
+                
+                * The wrong filename was given.
+                * The wrong gamemodes path was given.
+                * The server was launched from a different directory, making relative paths relative to the wrong place (and thus wrong).
+                * You didn't copy the file to the correct directory or server.
+                * The compilation failed, leading to no output file.
+                * `-l` or `-a` were used to compile, which output intermediate steps for inspecting, rather than a full script.
+                * Anything else, really just check the file is at the path given.
+            )");
         return false;
-	}
-	// Close it for now, it'll be reopened again by `aux_LoadProgram`.
+    }
+    // Close it for now, it'll be reopened again by `aux_LoadProgram`.
     fclose(fp);
-	// Disconnect players.
-	// Unload the old main script.
+    // Disconnect players.
+    // Unload the old main script.
     Unload(entryScript);
-	// TODO: Trigger all components to reset.
+    // TODO: Trigger all components to reset.
     PlayerEvents::Get()->IgnoreOneDisconnect();
-	// TODO: Inform clients of the restart.
-	// Save the name of the next script.
+    // TODO: Inform clients of the restart.
+    // Save the name of the next script.
     entryScript = name;
-	// Start the changemode timer.
+    // Start the changemode timer.
     nextRestart_ = Time::now() + restartDelay_;
     return true;
 }
 
 void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 {
-	if (nextRestart_ == TimePoint::min())
-	{
+    if (nextRestart_ == TimePoint::min())
+    {
         return;
-	}
-	// Reloading a script.
-	if (nextRestart_ < now)
-	{
-		// Restart is in the past, load the next GM.
+    }
+    // Reloading a script.
+    if (nextRestart_ < now)
+    {
+        // Restart is in the past, load the next GM.
         Load(entryScript, true);
-		nextRestart_ = TimePoint::min();
-	}
+        nextRestart_ = TimePoint::min();
+    }
 }
 
 bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 {
-	if (mainScripts.empty())
-	{
+    if (mainScripts.empty())
+    {
         return false;
-	}
+    }
     gamemodes_.clear();
     gamemodeIndex_ = 0;
-	for (auto const & i : mainScripts)
-	{
-		// Split the mode name and count.
-		auto space = i.find_last_of(' ');
-		if (space == std::string::npos)
-		{
-			repeats_.push_back(1);
-			gamemodes_.push_back(String(i));
-		}
-		else
-		{
-			int count = 0;
-			auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size(), count, 10);
-			if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1)
-			{
-				count = 1;
-			}
-			repeats_.push_back(count);
-			gamemodes_.push_back(String(i.substr(0, space)));
-		}
-	}
-	gamemodeRepeat_ = repeats_[0];
+    for (auto const & i : mainScripts)
+    {
+        // Split the mode name and count.
+        auto space = i.find_last_of(' ');
+        if (space == std::string::npos)
+        {
+            repeats_.push_back(1);
+            gamemodes_.push_back(String(i));
+        }
+        else
+        {
+            int count = 0;
+            auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size(), count, 10);
+            if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1)
+            {
+                count = 1;
+            }
+            repeats_.push_back(count);
+            gamemodes_.push_back(String(i.substr(0, space)));
+        }
+    }
+    gamemodeRepeat_ = repeats_[0];
     return Load("gamemodes/" + gamemodes_[0], true);
 }
 
@@ -339,11 +339,11 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 
     // Call `OnPlayerConnect` (can be after caching).
     if (isEntryScript)
-	{
+    {
         core->reloadAll();
     }
     for (auto p : players->entries())
-	{
+    {
         script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
     }
     return true;
@@ -369,11 +369,11 @@ bool PawnManager::Unload(std::string const& name)
     }
     auto& script = *pos->second;
 
-	// Call `OnPlayerDisconnect`.
-	for (auto const p : players->entries())
-	{
+    // Call `OnPlayerDisconnect`.
+    for (auto const p : players->entries())
+    {
         script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), 3);
-	}
+    }
     if (isEntryScript) {
         CallInSides("OnGameModeExit", DefaultReturnValue_False);
         script.Call("OnGameModeExit", DefaultReturnValue_False);
@@ -390,10 +390,10 @@ bool PawnManager::Unload(std::string const& name)
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
     scripts_.erase(pos);
-	if (isEntryScript)
-	{
+    if (isEntryScript)
+    {
         core->resetAll();
-	}
+    }
 
     return true;
 }

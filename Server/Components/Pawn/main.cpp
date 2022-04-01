@@ -222,10 +222,10 @@ public:
 
     void free() override { delete this; }
 
-	void reset() override
-	{
-		// Nothing to reset here.  This component did the resetting in the first place.
-	}
+    void reset() override
+    {
+        // Nothing to reset here.  This component did the resetting in the first place.
+    }
 };
 
 COMPONENT_ENTRY_POINT()

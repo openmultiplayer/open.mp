@@ -163,7 +163,7 @@ public:
     void destream()
     {
         for (IPlayer* player : shownFor_.entries())
-		{
+        {
             hideForClient(*player);
         }
     }

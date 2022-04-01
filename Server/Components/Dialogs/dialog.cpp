@@ -8,7 +8,7 @@ class PlayerDialogData final : public IPlayerDialogData {
 private:
     int activeId = INVALID_DIALOG_ID;
 
-	friend class DialogsComponent;
+    friend class DialogsComponent;
 
 public:
     void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
@@ -36,10 +36,10 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		activeId = INVALID_DIALOG_ID;
-	}
+    void reset() override
+    {
+        activeId = INVALID_DIALOG_ID;
+    }
 };
 
 class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
