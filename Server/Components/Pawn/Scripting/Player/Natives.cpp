@@ -113,10 +113,15 @@ SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer* killee, int weapon))
     return true;
 }
 
-SCRIPT_API(ToggleWidescreen, bool(IPlayer& player, bool enable))
+SCRIPT_API(TogglePlayerWidescreen, bool(IPlayer& player, bool enable))
 {
     player.setWidescreen(enable);
     return true;
+}
+
+SCRIPT_API(IsPlayerWidescreenToggled, bool(IPlayer& player))
+{
+    return player.getWidescreen();
 }
 
 SCRIPT_API(SetPlayerHealth, bool(IPlayer& player, float health))
@@ -942,4 +947,50 @@ SCRIPT_API(GetPlayerVersion, int(IPlayer& player, OutputOnlyString& version))
 {
     version = player.getClientVersionName();
     return std::get<StringView>(version).length();
+}
+
+SCRIPT_API(GetPlayerSkillLevel, int(IPlayer& player, int skill))
+{
+    auto skills = player.getSkillLevels();
+    if (skill >= 11 || skill < 0) {
+        return 0;
+    }
+    return skills[skill];
+}
+
+SCRIPT_API(GetPlayerZAim, float(IPlayer& player))
+{
+    return player.getAimData().AimZ;
+}
+
+SCRIPT_API(GetPlayerSurfingOffsets, bool(IPlayer& player, Vector3& offset))
+{
+    const PlayerSurfingData& data = player.getSurfingData();
+    offset = data.offset;
+    return true;
+}
+
+SCRIPT_API(GetPlayerRotationQuat, bool(IPlayer& player, Vector4& quat))
+{
+    glm::quat rotQuat = player.getRotation().q;
+    quat.w = rotQuat.w;
+    quat.x = rotQuat.y;
+    quat.y = rotQuat.y;
+    quat.z = rotQuat.z;
+    return true;
+}
+
+SCRIPT_API(GetPlayerSpectateID, int(IPlayer& player))
+{
+    return player.getSpectateData().spectateID;
+}
+
+SCRIPT_API(GetPlayerSpectateType, int(IPlayer& player))
+{
+    return int(player.getSpectateData().type);
+}
+
+SCRIPT_API(GetPlayerRawIp, int(IPlayer& player))
+{
+    return player.getNetworkData().networkID.address.v4;
 }

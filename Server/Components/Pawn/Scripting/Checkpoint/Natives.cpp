@@ -78,3 +78,45 @@ SCRIPT_API(IsPlayerInRaceCheckpoint, bool(IPlayer& player))
     }
     return false;
 }
+
+SCRIPT_API(IsPlayerCheckpointActive, bool(IPlayer& player))
+{
+    IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
+    if (playerData) {
+        return playerData->getStandardCheckpoint().isEnabled();
+    }
+    return false;
+}
+
+SCRIPT_API(GetPlayerCheckpoint, bool(IPlayer& player, Vector3& pos, float& size))
+{
+    IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
+    if (playerData) {
+        const IPlayerStandardCheckpointData& data = playerData->getStandardCheckpoint();
+        pos = data.getPosition();
+        size = data.getRadius();
+        return true;
+    }
+    return false;
+}
+
+SCRIPT_API(IsPlayerRaceCheckpointActive, bool(IPlayer& player))
+{
+    IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
+    if (playerData) {
+        return playerData->getRaceCheckpoint().isEnabled();
+    }
+    return false;
+}
+
+SCRIPT_API(GetPlayerRaceCheckpoint, bool(IPlayer& player, Vector3& pos, Vector3& next, float& size))
+{
+    IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
+    if (playerData) {
+        const IPlayerRaceCheckpointData& data = playerData->getRaceCheckpoint();
+        pos = data.getPosition();
+        next = data.getNextPosition();
+        size = data.getRadius();
+        return true;
+    }
+}
