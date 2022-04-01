@@ -52,6 +52,11 @@ public:
     {
         delete this;
     }
+
+	void reset() override
+	{
+		// Nothing to reset here.
+	}
 };
 
 COMPONENT_ENTRY_POINT()

@@ -145,6 +145,11 @@ public:
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
         }
     }
+
+	void reset() override
+	{
+		// Nothing to reset here.  SVars persist.
+	}
 };
 
 COMPONENT_ENTRY_POINT()

@@ -95,5 +95,10 @@ public:
     {
         delete this;
     }
+
+	void reset() override
+	{
+		// Nothing to reset here.
+	}
 };
 
