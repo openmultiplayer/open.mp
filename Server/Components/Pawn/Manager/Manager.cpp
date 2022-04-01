@@ -256,7 +256,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 		else
 		{
 			int count = 0;
-			auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size() - space - 1, count, 10);
+			auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size(), count, 10);
 			if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1)
 			{
 				count = 1;
