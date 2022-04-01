@@ -309,7 +309,7 @@ private:
 			}
 			if (gmcount != 0)
 			{
-				config.setStrings(pawn.side_scripts, list);
+				config.setStrings("pawn.main_scripts", list);
 			}
             return true;
         }
