@@ -273,4 +273,3 @@ void PawnManager::SetScriptPath(std::string const& path)
         scriptPath_ = path + '/';
     }
 }
-
