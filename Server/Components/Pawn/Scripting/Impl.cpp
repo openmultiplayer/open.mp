@@ -11,6 +11,7 @@
 #include "Player/Events.hpp"
 #include "TextDraw/Events.hpp"
 #include "Vehicle/Events.hpp"
+#include "GangZone/Events.hpp"
 
 Scripting::~Scripting()
 {
@@ -50,6 +51,9 @@ Scripting::~Scripting()
     }
     if (mgr->console) {
         mgr->console->getEventDispatcher().removeEventHandler(CoreEvents::Get());
+    }
+    if (mgr->gangzones) {
+        mgr->gangzones->getEventDispatcher().removeEventHandler(GangZoneEvents::Get());
     }
 }
 
@@ -91,5 +95,8 @@ void Scripting::addEvents() const
     }
     if (mgr->console) {
         mgr->console->getEventDispatcher().addEventHandler(CoreEvents::Get(), EventPriority_Lowest);
+    }
+    if (mgr->gangzones) {
+        mgr->gangzones->getEventDispatcher().addEventHandler(GangZoneEvents::Get());
     }
 }

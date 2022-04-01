@@ -2,10 +2,11 @@
 
 using namespace Impl;
 
-class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler {
+class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
+    UniqueIDArray<IGangZone, GANG_ZONE_POOL_SIZE> checkingList;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
 public:
@@ -23,18 +24,75 @@ public:
     {
         this->core = core;
         this->core->getPlayers().getEventDispatcher().addEventHandler(this);
+        this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
     }
 
     ~GangZonesComponent()
     {
         if (core) {
             core->getPlayers().getEventDispatcher().addEventHandler(this);
+            core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
         }
+    }
+
+    bool onUpdate(IPlayer& player, TimePoint now) override
+    {
+        const Vector3& playerPos = player.getPosition();
+
+        // only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+        for (auto gangzone : checkingList.entries()) {
+
+            // only check visible gangzones
+            if (!gangzone->isShownForPlayer(player)) {
+                continue;
+            }
+
+            const GangZonePos& pos = gangzone->getPosition();
+            bool isPlayerInInsideList = gangzone->isPlayerInside(player);
+            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y;
+
+            if (isPlayerInZoneArea && !isPlayerInInsideList) {
+
+                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
+                eventDispatcher.dispatch(
+                    &GangZoneEventHandler::onPlayerEnterGangZone,
+                    player,
+                    *lock.entry);
+
+            } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
+
+                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
+                eventDispatcher.dispatch(
+                    &GangZoneEventHandler::onPlayerLeaveGangZone,
+                    player,
+                    *lock.entry);
+            }
+        }
+
+        return true;
     }
 
     IGangZone* create(GangZonePos pos) override
     {
         return storage.emplace(pos);
+    }
+
+    const FlatHashSet<IGangZone*>& getCheckingGangZones() const override
+    {
+        return checkingList.entries();
+    }
+
+    void toggleGangZoneCheck(IGangZone& zone, bool toggle) override
+    {
+        if (toggle) {
+            checkingList.add(zone.getID(), zone);
+        } else {
+            if (checkingList.valid(zone.getID())) {
+                checkingList.remove(zone.getID(), zone);
+            }
+        }
     }
 
     void free() override
@@ -54,6 +112,10 @@ public:
 
     void release(int index) override
     {
+        if (checkingList.valid(index)) {
+            IGangZone* zone = get(index);
+            checkingList.remove(index, *zone);
+        }
         storage.release(index, false);
     }
 
@@ -97,4 +159,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new GangZonesComponent();
 }
-

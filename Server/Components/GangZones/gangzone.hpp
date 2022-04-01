@@ -10,6 +10,10 @@ private:
     GangZonePos pos;
     Colour col;
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
+    StaticBitset<PLAYER_POOL_SIZE> flashingFor_;
+    StaticArray<Colour, PLAYER_POOL_SIZE> flashColorForPlayer_;
+    StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
+    StaticBitset<PLAYER_POOL_SIZE> playersInside_;
 
     void restream()
     {
@@ -27,17 +31,25 @@ private:
     }
 
 public:
-	void removeFor(int pid, IPlayer & player)
-	{
-		if (shownFor_.valid(pid))
-		{
-			shownFor_.remove(pid, player);
-		}
-	}
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (shownFor_.valid(pid)) {
+            shownFor_.remove(pid, player);
+        }
 
-	GangZone(GangZonePos pos)
+        playersInside_.reset(pid);
+        flashingFor_.reset(pid);
+        colorForPlayer_[pid] = Colour::None();
+        flashColorForPlayer_[pid] = Colour::None();
+    }
+
+    GangZone(GangZonePos pos)
         : pos(pos)
     {
+        playersInside_.reset();
+        flashingFor_.reset();
+        colorForPlayer_.fill(Colour::None());
+        flashColorForPlayer_.fill(Colour::None());
     }
 
     bool isShownForPlayer(const IPlayer& player) const override
@@ -45,16 +57,28 @@ public:
         return shownFor_.valid(player.getID());
     }
 
+    bool isFlashingForPlayer(const IPlayer& player) const override
+    {
+        return flashingFor_.test(player.getID());
+    }
+
     void showForPlayer(IPlayer& player, const Colour& colour) override
     {
         col = colour;
-        shownFor_.add(player.getID(), player);
+        const int playerId = player.getID();
+        shownFor_.add(playerId, player);
+
+        flashingFor_.reset(playerId);
+
+        colorForPlayer_[playerId] = colour;
+        flashColorForPlayer_[playerId] = Colour::None();
+        
         showForClient(player, colour);
     }
 
     void hideForPlayer(IPlayer& player) override
     {
-        shownFor_.remove(player.getID(), player);
+        removeFor(player.getID(), player);
         hideForClient(player);
     }
 
@@ -64,6 +88,10 @@ public:
         flashGangZoneRPC.ID = poolID;
         flashGangZoneRPC.Col = colour;
         PacketHelper::send(flashGangZoneRPC, player);
+
+        const int pid = player.getID();
+        flashColorForPlayer_[pid] = colour; 
+        flashingFor_.set(pid);
     }
 
     void stopFlashForPlayer(IPlayer& player) override
@@ -71,6 +99,35 @@ public:
         NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
         stopFlashGangZoneRPC.ID = poolID;
         PacketHelper::send(stopFlashGangZoneRPC, player);
+
+        const int pid = player.getID();
+        flashColorForPlayer_[pid] = Colour::None();
+        flashingFor_.reset(pid);
+    }
+
+    const Colour getFlashingColorForPlayer(IPlayer& player) const override
+    {
+        return flashColorForPlayer_[player.getID()];
+    }
+
+    const Colour getColorForPlayer(IPlayer& player) const override
+    {
+        return colorForPlayer_[player.getID()];
+    }
+
+    const FlatHashSet<IPlayer*>& getShownFor() override
+    {
+        return shownFor_.entries();
+    }
+
+    bool isPlayerInside(const IPlayer& player) const override
+    {
+        return playersInside_.test(player.getID());
+    }
+
+    void setPlayerInside(const IPlayer& player, const bool status) 
+    {
+        playersInside_.set(player.getID(), status);
     }
 
     int getID() const override
@@ -106,4 +163,3 @@ public:
         }
     }
 };
-
