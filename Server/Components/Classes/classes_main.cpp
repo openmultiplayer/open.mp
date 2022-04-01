@@ -55,8 +55,6 @@ public:
 
     void reset() override
     {
-        inClassRequest = false;
-        skipDefaultClassRequest = false;
         cls = defClass;
     }
 };
