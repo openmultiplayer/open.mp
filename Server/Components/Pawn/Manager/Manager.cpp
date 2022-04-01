@@ -83,6 +83,10 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "gmx") {
+		if (reloading_)
+		{
+			return true;
+		}
         // How many times should we repeat this mode?
         --gamemodeRepeat_;
         int initial = gamemodeIndex_;
@@ -115,7 +119,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "changemode") {
-        if (Changemode("gamemodes/" + args))
+		if (reloading_)
+		{
+			return true;
+		}
+		if (Changemode("gamemodes/" + args))
         {
             gamemodeRepeat_ = 1;
         }
@@ -173,7 +181,7 @@ void PawnManager::CheckNatives(PawnScript& script)
         count;
     script.NumNatives(&count);
     AMX_NATIVE_INFO
-    func;
+		func;
     while (count--) {
         script.GetNativeByIndex(count, &func);
         if (func.func == nullptr) {
@@ -222,6 +230,7 @@ bool PawnManager::Changemode(std::string const& name)
     entryScript = name;
     // Start the changemode timer.
     nextRestart_ = Time::now() + restartDelay_;
+	reloading_ = true;
     return true;
 }
 
@@ -342,9 +351,10 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     // cache public pointers.
 
     // Call `OnPlayerConnect` (can be after caching).
-    if (isEntryScript)
+    if (isEntryScript && reloading_)
     {
         core->reloadAll();
+		reloading_ = false;
     }
     for (auto p : players->entries())
     {
