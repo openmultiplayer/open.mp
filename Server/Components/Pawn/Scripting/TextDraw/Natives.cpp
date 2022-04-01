@@ -21,6 +21,16 @@ SCRIPT_API(TextDrawDestroy, bool(ITextDraw& textdraw))
     return true;
 }
 
+SCRIPT_API(IsValidTextDraw, bool(ITextDraw* textdraw))
+{
+    return textdraw != nullptr;
+}
+
+SCRIPT_API(IsTextDrawVisibleForPlayer, bool(IPlayer& player, ITextDraw& textdraw))
+{
+    return textdraw.isShownForPlayer(player);
+}
+
 SCRIPT_API(TextDrawLetterSize, bool(ITextDraw& textdraw, Vector2 size))
 {
     textdraw.setLetterSize(size);
@@ -145,5 +155,105 @@ SCRIPT_API(TextDrawSetPreviewRot, bool(ITextDraw& textdraw, Vector3 rotation, fl
 SCRIPT_API(TextDrawSetPreviewVehCol, bool(ITextDraw& textdraw, int colour1, int colour2))
 {
     textdraw.setPreviewVehicleColour(colour1, colour2);
+    return true;
+}
+
+SCRIPT_API(TextDrawSetPos, bool(ITextDraw& textdraw, Vector2 pos))
+{
+    textdraw.setPosition(pos);
+    return true;
+}
+
+SCRIPT_API(TextDrawGetString, bool(ITextDraw& textdraw, OutputOnlyString& text))
+{
+    text = textdraw.getText();
+    return true;
+}
+
+SCRIPT_API(TextDrawGetLetterSize, bool(ITextDraw& textdraw, Vector2& size))
+{
+    size = textdraw.getLetterSize();
+    return true;
+}
+
+SCRIPT_API(TextDrawGetTextSize, bool(ITextDraw& textdraw, Vector2& size))
+{
+    size = textdraw.getTextSize();
+    return true;
+}
+
+SCRIPT_API(TextDrawGetPos, bool(ITextDraw& textdraw, Vector2& pos))
+{
+    pos = textdraw.getPosition();
+    return true;
+}
+
+SCRIPT_API(TextDrawGetColor, int(ITextDraw& textdraw))
+{
+    return textdraw.getLetterColour().RGBA();
+}
+
+SCRIPT_API(TextDrawGetBoxColor, int(ITextDraw& textdraw))
+{
+    return textdraw.getBoxColour().RGBA();
+}
+
+SCRIPT_API(TextDrawGetBackgroundColor, int(ITextDraw& textdraw))
+{
+    return textdraw.getBackColour().RGBA();
+}
+
+SCRIPT_API(TextDrawGetShadow, int(ITextDraw& textdraw))
+{
+    return textdraw.getShadow();
+}
+
+SCRIPT_API(TextDrawGetOutline, int(ITextDraw& textdraw))
+{
+    return textdraw.getOutline();
+}
+
+SCRIPT_API(TextDrawGetFont, int(ITextDraw& textdraw))
+{
+    return static_cast<uint8_t>(textdraw.getStyle());
+}
+
+SCRIPT_API(TextDrawIsBox, int(ITextDraw& textdraw))
+{
+    return textdraw.isUsingBox();
+}
+
+SCRIPT_API(TextDrawIsProportional, int(ITextDraw& textdraw))
+{
+    return textdraw.isProportional();
+}
+
+SCRIPT_API(TextDrawIsSelectable, int(ITextDraw& textdraw))
+{
+    return textdraw.isSelectable();
+}
+
+SCRIPT_API(TextDrawGetAlignment, int(ITextDraw& textdraw))
+{
+    return static_cast<uint8_t>(textdraw.getAlignment());
+}
+
+SCRIPT_API(TextDrawGetPreviewModel, int(ITextDraw& textdraw))
+{
+    return textdraw.getPreviewModel();
+}
+
+SCRIPT_API(TextDrawGetPreviewRot, bool(ITextDraw& textdraw, Vector3& rotation, float& zoom))
+{
+    rotation = textdraw.getPreviewRotation().ToEuler();
+    zoom = textdraw.getPreviewZoom();
+    return true;
+}
+
+SCRIPT_API(TextDrawGetPreviewVehCol, bool(ITextDraw& textdraw, int& colour1, int& colour2))
+{
+    Pair<int, int> colours = textdraw.getPreviewVehicleColour();
+    colour1 = colours.first;
+    colour2 = colours.second;
     return true;
 }
