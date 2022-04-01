@@ -42,10 +42,10 @@
 #define get_amxaddr(amx, addr) amx_Address(amx, addr)
 
 /*char* amx_StrFormat(AMX * amx, const cell * params, int param, int& len) {
-    static char buf[8192];
-    ++param;
-    len = atcprintf(buf, sizeof(buf) - 1, get_amxaddr(amx, params[param - 1]), amx, params, &param);
-    return buf;
+	static char buf[8192];
+	++param;
+	len = atcprintf(buf, sizeof(buf) - 1, get_amxaddr(amx, params[param - 1]), amx, params, &param);
+	return buf;
 }*/
 
 template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
@@ -413,7 +413,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
     int width;
     int prec;
     int n;
-    //char    sign;
+    //char	sign;
     const S* fmt;
     size_t llen = maxlen;
 

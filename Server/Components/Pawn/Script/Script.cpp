@@ -45,17 +45,17 @@ PawnScript::PawnScript(int id, std::string const& path, ICore* core)
     case AMX_ERR_NOTFOUND:
         serverCore->printLn("Could not find:\n\n\t %s %s", path.c_str(),
             R"(
-                While attempting to load a PAWN gamemode, a file-not-found error was
-                encountered.  This could be caused by many things:
-                
-                * The wrong filename was given.
-                * The wrong gamemodes path was given.
-                * The server was launched from a different directory, making relative paths relative to the wrong place (and thus wrong).
-                * You didn't copy the file to the correct directory or server.
-                * The compilation failed, leading to no output file.
-                * `-l` or `-a` were used to compile, which output intermediate steps for inspecting, rather than a full script.
-                * Anything else, really just check the file is at the path given.
-            )");
+				While attempting to load a PAWN gamemode, a file-not-found error was
+				encountered.  This could be caused by many things:
+				
+				* The wrong filename was given.
+				* The wrong gamemodes path was given.
+				* The server was launched from a different directory, making relative paths relative to the wrong place (and thus wrong).
+				* You didn't copy the file to the correct directory or server.
+				* The compilation failed, leading to no output file.
+				* `-l` or `-a` were used to compile, which output intermediate steps for inspecting, rather than a full script.
+				* Anything else, really just check the file is at the path given.
+			)");
         break;
     case AMX_ERR_NONE:
         loaded_ = true;
@@ -100,59 +100,59 @@ void PawnScript::SubscribeAll()
 
 void PawnScript::PrintError(int err)
 {
-    std::string pawnError = aux_StrError(num);
-    switch (err)
-    {
-    case AMX_ERR_EXIT:         // forced exit
-        throw PawnException(err)
-            << R"(
+	std::string pawnError = aux_StrError(num);
+	switch (err)
+	{
+	case AMX_ERR_EXIT:         // forced exit
+		throw PawnException(err)
+			<< R"(
 This is triggered by the `exit` keyword in PAWN:
 
 ```pawn
-    new
-        a = 5,
-        b = 2;
-    // Will pass, because `5` is greater than `2`.
-    if (a > b)
-    {
-        exit;
-    }
+	new
+		a = 5,
+		b = 2;
+	// Will pass, because `5` is greater than `2`.
+	if (a > b)
+	{
+		exit;
+	}
 ```
 )";
-    case AMX_ERR_ASSERT:       // assertion failed
-        throw PawnException(err)
-            >> R"(
+	case AMX_ERR_ASSERT:       // assertion failed
+		throw PawnException(err)
+			>> R"(
 This is triggered by the `assert` keyword in PAWN, when compiling with
 debugging enabled, and the condition is false:
 
 ```pawn
-    #pragma option -d1
-    new
-        a = 5,
-        b = 2;
-    // Will fail, because `5` is greater than `2`.
-    assert(a <= b);
+	#pragma option -d1
+	new
+		a = 5,
+		b = 2;
+	// Will fail, because `5` is greater than `2`.
+	assert(a <= b);
 ```
 )";
-    case AMX_ERR_STACKERR:     // stack/heap collision
-        throw PawnException(err)
-            >> R"(
+	case AMX_ERR_STACKERR:     // stack/heap collision
+		throw PawnException(err)
+			>> R"(
 This generally happens when too many local variables are created; as a few very
 large variables, lots of small ones, or too much recursion recreating the same
 ones over and over again:
 
 ```pawn
-    FuncA()
-    {
-        new
-            // One large.
-            largeLocal[1024],
-            // Many small.
-            a, b, c, d, e, f, g, h, i, j, k, l, m,
-            n, o, p, q, r, s, t, u, v, w, x, y, z;
-        // Recursion.
-        FuncA();
-    }
+	FuncA()
+	{
+		new
+			// One large.
+			largeLocal[1024],
+			// Many small.
+			a, b, c, d, e, f, g, h, i, j, k, l, m,
+			n, o, p, q, r, s, t, u, v, w, x, y, z;
+		// Recursion.
+		FuncA();
+	}
 ```
 
 Note that none of these techniques are bad on their own, it is only when they
@@ -160,11 +160,11 @@ are used extensively or excessively that the memory requirements mount.  With
 `-v` or `-d3` you can get a local memory report from the compiler:
 
 ```
-    Header size:         1744 bytes
-    Code size:          97808 bytes
-    Data size:          35028 bytes
-    Stack/heap size:   239360 bytes; estimated max. usage=138 cells (552 bytes)
-    Total requirements:273940 bytes
+	Header size:         1744 bytes
+	Code size:          97808 bytes
+	Data size:          35028 bytes
+	Stack/heap size:   239360 bytes; estimated max. usage=138 cells (552 bytes)
+	Total requirements:273940 bytes
 ```
 
 It is the `Stack/heap size` and `estimated max. usage` statistics that are
@@ -176,27 +176,27 @@ Regardless of the cause, there are two solutions - reduce your memory usage or
 increase your local memory space.  The latter is done by:
 
 ```pawn
-    // Without YSI.
-    #pragma dynamic 4096
+	// Without YSI.
+	#pragma dynamic 4096
 
-    // With YSI.
-    #define DYNAMIC_MEMORY 4096
+	// With YSI.
+	#define DYNAMIC_MEMORY 4096
 ```
 )";
-    case AMX_ERR_BOUNDS:       // index out of bounds
-        throw PawnException(err)
-            >> R"(
+	case AMX_ERR_BOUNDS:       // index out of bounds
+		throw PawnException(err)
+			>> R"(
 This is caused by attempting to access an array slot that doesn't exist, often
 by not checking that a provided index is valid.  One very common cause is shown
 below:
 
 ```pawn
-    new gKills[MAX_PLAYERS];
+	new gKills[MAX_PLAYERS];
 
-    public OnPlayerDeath(playerid, killerid, reason)
-    {
-        ++gKills[killerid];
-    }
+	public OnPlayerDeath(playerid, killerid, reason)
+	{
+		++gKills[killerid];
+	}
 ```
 
 Here the number of kills that the killer has is increased every time someone
@@ -214,55 +214,55 @@ to `99`, `100` is not valid.  This code should use `<` in the loop condition,
 not `<=`, so that the size of the array is excluded from the loop body:
 
 ```pawn
-    new array[100];
+	new array[100];
 
-    for (new i = 0; i <= sizeof (array); ++i)
-    {
-        array[i] = 10;
-    }
+	for (new i = 0; i <= sizeof (array); ++i)
+	{
+		array[i] = 10;
+	}
 ```
 )";
-    case AMX_ERR_MEMACCESS:    // invalid memory access
-        throw PawnException(err) >> "TODO: A good explanation of \"invalid memory access\".";
-    case AMX_ERR_INVINSTR:     // invalid instruction
-        throw PawnException(err) >> "TODO: A good explanation of \"invalid instruction\".";
-    case AMX_ERR_STACKLOW:     // stack underflow
-        throw PawnException(err) >> "TODO: A good explanation of \"stack underflow\".";
-    case AMX_ERR_HEAPLOW:      // heap underflow
-        throw PawnException(err) >> "TODO: A good explanation of \"heap underflow\".";
-    case AMX_ERR_CALLBACK:     // no callback: or invalid callback
-        throw PawnException(err) >> "TODO: A good explanation of \"no callback: or invalid callback\".";
-    case AMX_ERR_NATIVE:       // native function failed
-        throw PawnException(err) >> "TODO: A good explanation of \"native function failed\".";
-    case AMX_ERR_DIVIDE:       // divide by zero
-        throw PawnException(err)
-            >> R"(
+	case AMX_ERR_MEMACCESS:    // invalid memory access
+		throw PawnException(err) >> "TODO: A good explanation of \"invalid memory access\".";
+	case AMX_ERR_INVINSTR:     // invalid instruction
+		throw PawnException(err) >> "TODO: A good explanation of \"invalid instruction\".";
+	case AMX_ERR_STACKLOW:     // stack underflow
+		throw PawnException(err) >> "TODO: A good explanation of \"stack underflow\".";
+	case AMX_ERR_HEAPLOW:      // heap underflow
+		throw PawnException(err) >> "TODO: A good explanation of \"heap underflow\".";
+	case AMX_ERR_CALLBACK:     // no callback: or invalid callback
+		throw PawnException(err) >> "TODO: A good explanation of \"no callback: or invalid callback\".";
+	case AMX_ERR_NATIVE:       // native function failed
+		throw PawnException(err) >> "TODO: A good explanation of \"native function failed\".";
+	case AMX_ERR_DIVIDE:       // divide by zero
+		throw PawnException(err)
+			>> R"(
 Something attempted to divide something else by `0`, which is mathematically
 undefined:
 
 ```pawn
-    main()
-    {
-        new
-            a = 10,
-            b; // Defaults to `0`.
-        printf("%d", a / b); // `10 / 0` doesn't exist.
-    }
+	main()
+	{
+		new
+			a = 10,
+			b; // Defaults to `0`.
+		printf("%d", a / b); // `10 / 0` doesn't exist.
+	}
 ```
 )";
-    case AMX_ERR_SLEEP:        // go into sleepmode - code can be restarted
-        throw PawnException(err) >> "TODO: A good explanation of \"go into sleepmode - code can be restarted\".";
-    case AMX_ERR_INVSTATE:     // invalid state for this access
-        throw PawnException(err) >> "TODO: A good explanation of \"invalid state for this access\".";
-    case AMX_ERR_MEMORY:
-        throw PawnException(err) >> "TODO: A good explanation of \"AMX_ERR_MEMORY\".";
-    case AMX_ERR_FORMAT:       // invalid file format
-        throw PawnException(err) >> "TODO: A good explanation of \"invalid file format\".";
-    case AMX_ERR_VERSION:      // file is for a newer version of the AMX
-        throw PawnException(err) >> "The most common cause of this is compiling with `-O2`, which generates macro instructions we don't have.  Use `-O1`.";
-    case AMX_ERR_NOTFOUND:     // function not found
-        throw PawnException(err)
-            >> R"(
+	case AMX_ERR_SLEEP:        // go into sleepmode - code can be restarted
+		throw PawnException(err) >> "TODO: A good explanation of \"go into sleepmode - code can be restarted\".";
+	case AMX_ERR_INVSTATE:     // invalid state for this access
+		throw PawnException(err) >> "TODO: A good explanation of \"invalid state for this access\".";
+	case AMX_ERR_MEMORY:
+		throw PawnException(err) >> "TODO: A good explanation of \"AMX_ERR_MEMORY\".";
+	case AMX_ERR_FORMAT:       // invalid file format
+		throw PawnException(err) >> "TODO: A good explanation of \"invalid file format\".";
+	case AMX_ERR_VERSION:      // file is for a newer version of the AMX
+		throw PawnException(err) >> "The most common cause of this is compiling with `-O2`, which generates macro instructions we don't have.  Use `-O1`.";
+	case AMX_ERR_NOTFOUND:     // function not found
+		throw PawnException(err)
+			>> R"(
 One (or move) native function(s) was used in your script, but doesn't exist in the server.  See
 above for the exact list of which.  This could be a typo in a native declaration:
 
@@ -284,32 +284,32 @@ warning 234: function is deprecated (symbol "AddPlayerClass") Use `Class_Add` in
 Also check changelogs and component code - it could have been removed without warning, but this is bad.
 )";
 
-    case AMX_ERR_INDEX:        // invalid index parameter (bad entry point)
-        throw PawnException(err)
-            >> R"(
+	case AMX_ERR_INDEX:        // invalid index parameter (bad entry point)
+		throw PawnException(err)
+			>> R"(
 Your code is probably missing `main`.  Just add this:
 
 ```pawn
-    main()
-    {
-    }
+	main()
+	{
+	}
 ```
 )";
-    case AMX_ERR_DEBUG:        // debugger cannot run
-        throw PawnException(err) >> "TODO: A good explanation of \"debugger cannot run\".";
-    case AMX_ERR_INIT:         // AMX not initialized (or doubly initialized)
-        throw PawnException(err) >> "TODO: A good explanation of \"AMX not initialized (or doubly initialized)\".";
-    case AMX_ERR_USERDATA:     // unable to set user data field (table full)
-        throw PawnException(err) >> "TODO: A good explanation of \"unable to set user data field (table full)\".";
-    case AMX_ERR_INIT_JIT:     // cannot initialize the JIT
-        throw PawnException(err) >> "TODO: A good explanation of \"cannot initialize the JIT\".";
-    case AMX_ERR_PARAMS:       // parameter error
-        throw PawnException(err) >> "TODO: A good explanation of \"parameter error\".";
-    case AMX_ERR_DOMAIN:       // domain error: expression result does not fit in range
-        throw PawnException(err) >> "TODO: A good explanation of \"domain error: expression result does not fit in range\".";
-    case AMX_ERR_GENERAL:      // general error (unknown or unspecific error)
-        throw PawnException(err) >> "TODO: A good explanation of \"eneral error (unknown or unspecific error)\".";
-    }
+	case AMX_ERR_DEBUG:        // debugger cannot run
+		throw PawnException(err) >> "TODO: A good explanation of \"debugger cannot run\".";
+	case AMX_ERR_INIT:         // AMX not initialized (or doubly initialized)
+		throw PawnException(err) >> "TODO: A good explanation of \"AMX not initialized (or doubly initialized)\".";
+	case AMX_ERR_USERDATA:     // unable to set user data field (table full)
+		throw PawnException(err) >> "TODO: A good explanation of \"unable to set user data field (table full)\".";
+	case AMX_ERR_INIT_JIT:     // cannot initialize the JIT
+		throw PawnException(err) >> "TODO: A good explanation of \"cannot initialize the JIT\".";
+	case AMX_ERR_PARAMS:       // parameter error
+		throw PawnException(err) >> "TODO: A good explanation of \"parameter error\".";
+	case AMX_ERR_DOMAIN:       // domain error: expression result does not fit in range
+		throw PawnException(err) >> "TODO: A good explanation of \"domain error: expression result does not fit in range\".";
+	case AMX_ERR_GENERAL:      // general error (unknown or unspecific error)
+		throw PawnException(err) >> "TODO: A good explanation of \"eneral error (unknown or unspecific error)\".";
+	}
 }
 */
 

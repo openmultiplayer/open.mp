@@ -49,8 +49,7 @@ private:
 public:
     void removeFor(int pid, IPlayer& player)
     {
-        if (initedFor_.valid(pid))
-        {
+        if (initedFor_.valid(pid)) {
             initedFor_.remove(pid, player);
         }
     }

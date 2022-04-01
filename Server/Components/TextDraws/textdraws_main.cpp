@@ -14,7 +14,7 @@ public:
     inline void cancelSelecting()
     {
         selecting = false;
-    }
+	}
 
     PlayerTextDrawData(IPlayer& player)
         : player(player)

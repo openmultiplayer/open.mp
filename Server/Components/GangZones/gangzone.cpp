@@ -12,8 +12,7 @@ private:
 public:
     ~GangZonesComponent()
     {
-        if (core)
-        {
+        if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
         }
     }
@@ -31,7 +30,7 @@ public:
     void onLoad(ICore* core) override
     {
         this->core = core;
-        core->getPlayers().getEventDispatcher().addEventHandler(this);
+        this->core->getPlayers().getEventDispatcher().addEventHandler(this);
         this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
     }
 
@@ -125,14 +124,12 @@ public:
 
     void release(int index) override
     {
-        if (checkingList.valid(index)) {
-            IGangZone* zone = get(index);
-            checkingList.remove(index, *zone);
-        }
-        auto ptr = storage.get(index);
-        if (ptr)
-        {
-            static_cast<GangZone*>(ptr)->destream();
+        IGangZone* zone = get(index);
+        if (ptr) {
+            if (checkingList.valid(index)) {
+                checkingList.remove(index, *zone);
+            }
+            static_cast<GangZone*>(zone)->destream();
             storage.release(index, false);
         }
     }
@@ -161,6 +158,15 @@ public:
     const FlatPtrHashSet<IGangZone>& entries() override
     {
         return storage._entries();
+    }
+
+    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
+        const int pid = player.getID();
+        for (IGangZone* g : storage) {
+            GangZone* gangzone = static_cast<GangZone*>(g);
+            gangzone->removeFor(pid, player);
+        }
     }
 };
 

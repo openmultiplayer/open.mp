@@ -72,8 +72,7 @@ public:
 
     void disable() override
     {
-        if (enabled_)
-        {
+        if (enabled_) {
             enabled_ = false;
             setPlayerInside(false);
 
@@ -111,7 +110,7 @@ public:
 
     void setType(const RaceCheckpointType type) override
     {
-       type_ = type;
+        type_ = type;
     }
 
     Vector3 getNextPosition() const override
@@ -143,8 +142,7 @@ public:
 
     void disable() override
     {
-        if (enabled_)
-        {
+        if (enabled_) {
             setPlayerInside(false);
             enabled_ = false;
 
