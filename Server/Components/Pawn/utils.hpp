@@ -172,6 +172,25 @@ inline cell AMX_NATIVE_CALL pawn_killtimer(AMX* amx, cell const* params)
     return PawnTimerImpl::Get()->killTimer(params[1]);
 }
 
+inline cell AMX_NATIVE_CALL pawn_SetModeRestartTime(AMX* amx, cell const* params)
+{
+    AMX_CHECK_PARAMETERS("SetModeRestartTime", params, 1);
+	int ms = static_cast<int>(amx_ctof(params[1]) * 1000.0f);
+	if (ms < 1)
+	{
+		return 0;
+	}
+    PawnManager::Get()->setRestartMS(ms);
+	return 1;
+}
+
+inline cell AMX_NATIVE_CALL pawn_GetModeRestartTime(AMX* amx, cell const* params)
+{
+    AMX_CHECK_PARAMETERS("GetModeRestartTime", params, 0);
+	float ms = static_cast<float>(PawnManager::Get()->getRestartMS()) / 1000.0f;
+    return amx_ctof(ms);
+}
+
 inline cell AMX_NATIVE_CALL pawn_Script_Call(AMX* amx, cell const* params)
 {
     int

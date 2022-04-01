@@ -316,6 +316,8 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     script.Register("SetTimer", &utils::pawn_settimer);
     script.Register("SetTimerEx", &utils::pawn_settimerex);
     script.Register("KillTimer", &utils::pawn_killtimer);
+    script.Register("SetModeRestartTime", &utils::pawn_SetModeRestartTime);
+    script.Register("SetModeRestartTime", &utils::pawn_GetModeRestartTime);
 
     pawn_natives::AmxLoad(script.GetAMX());
     pluginManager.AmxLoad(script.GetAMX());
@@ -355,6 +357,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     {
         core->reloadAll();
 		reloading_ = false;
+		setRestartMS(12000);
     }
     for (auto p : players->entries())
     {
