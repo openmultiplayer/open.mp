@@ -1385,7 +1385,7 @@ namespace RPC {
         }
     };
 
-    struct GMX : NetworkPacketBase<40, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+    struct PlayerClose : NetworkPacketBase<40, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
         bool read(NetworkBitStream& bs)
         {
