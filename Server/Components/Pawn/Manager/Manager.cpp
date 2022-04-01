@@ -189,6 +189,10 @@ bool PawnManager::Changemode(std::string const& name)
     std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
     std::string canon;
     utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
+	// This is exactly the code that pawn itself uses to open a mode, and here we're basically
+	// checking that the mode will be loadable when it comes to it.  Using a different system such
+	// as `std::filesystem` might introduce incompatibilities between what we think can be loaded
+	// and what can actually be loaded.  So while this is "old" C, it is better in this use-case.
     if ((fp = fopen(canon.c_str(), "rb")) == NULL)
     {
         core->printLn("Could not find:\n\n\t %s %s", name.c_str(),
