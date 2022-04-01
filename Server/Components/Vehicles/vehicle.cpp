@@ -33,7 +33,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.TyreDamage = tyreDamage;
     streamIn.PanelDamage = panelDamage;
     streamIn.Siren = spawnData.siren;
-	for (int i = 0; i != 14; ++i)
+	for (int i = 0; i != MAX_VEHICLE_COMPONENT_SLOT_IN_RPC; ++i)
 	{
 		streamIn.Mods[i] = mods[i];
 	}
