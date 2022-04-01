@@ -10,13 +10,6 @@ private:
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 
 public:
-    ~GangZonesComponent()
-    {
-        if (core) {
-            core->getPlayers().getEventDispatcher().removeEventHandler(this);
-        }
-    }
-
     StringView componentName() const override
     {
         return "GangZones";
@@ -91,7 +84,7 @@ public:
         return storage.emplace(pos);
     }
 
-    void free() override
+    const FlatHashSet<IGangZone*>& getCheckingGangZones() const override
     {
         return checkingList.entries();
     }
@@ -125,7 +118,7 @@ public:
     void release(int index) override
     {
         IGangZone* zone = get(index);
-        if (ptr) {
+        if (zone) {
             if (checkingList.valid(index)) {
                 checkingList.remove(index, *zone);
             }
