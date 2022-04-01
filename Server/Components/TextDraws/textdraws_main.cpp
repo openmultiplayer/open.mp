@@ -14,7 +14,7 @@ public:
     inline void cancelSelecting()
     {
         selecting = false;
-	}
+    }
 
     PlayerTextDrawData(IPlayer& player)
         : player(player)
@@ -64,11 +64,11 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		selecting = false;
-		storage.clear();
-	}
+    void reset() override
+    {
+        selecting = false;
+        storage.clear();
+    }
 
     virtual Pair<size_t, size_t> bounds() const override
     {
@@ -82,9 +82,9 @@ public:
 
     void release(int index) override
     {
-		PlayerTextDraw * td = storage.get(index);
-		td->destream();
-		storage.release(index, false);
+        PlayerTextDraw * td = storage.get(index);
+        td->destream();
+        storage.release(index, false);
     }
 
     void lock(int index) override
@@ -238,12 +238,12 @@ public:
 
     void release(int index) override
     {
-		auto ptr = storage.get(index);
-		if (ptr)
-		{
+        auto ptr = storage.get(index);
+        if (ptr)
+        {
             static_cast<TextDraw*>(ptr)->destream();
-			storage.release(index, false);
-		}
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override

@@ -14,10 +14,10 @@ struct PlayerActorData final : IExtension {
         delete this;
     }
 
-	void reset() override
-	{
-		numStreamed = 0;
-	}
+    void reset() override
+    {
+        numStreamed = 0;
+    }
 };
 
 class Actor final : public IActor, public PoolIDProvider, public NoCopy {
@@ -70,7 +70,7 @@ public:
     void removeFor(int pid, IPlayer& player)
     {
         if (streamedFor_.valid(pid))
-		{
+        {
             streamedFor_.remove(pid, player);
         }
     }
@@ -249,10 +249,10 @@ public:
     void destream()
     {
         for (IPlayer* player : streamedFor_.entries())
-		{
+        {
             auto actor_data = queryExtension<PlayerActorData>(player);
             if (actor_data)
-			{
+            {
                 --actor_data->numStreamed;
             }
             streamOutForClient(*player);

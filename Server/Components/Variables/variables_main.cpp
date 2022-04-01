@@ -15,7 +15,7 @@ public:
         data_[String(key)].emplace<String>(value);
     }
 
-	const StringView getString(StringView key) const override
+    const StringView getString(StringView key) const override
     {
         auto it = data_.find(String(key));
         if (it == data_.end()) {
@@ -107,10 +107,10 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		// Do nothing.  Variables persist.
-	}
+    void reset() override
+    {
+        // Do nothing.  Variables persist.
+    }
 };
 
 class VariablesComponent final : public VariableStorageBase<IVariablesComponent>, public PlayerEventHandler {
@@ -151,10 +151,10 @@ public:
         }
     }
 
-	void reset() override
-	{
-		// Nothing to reset here.  SVars persist.
-	}
+    void reset() override
+    {
+        // Nothing to reset here.  SVars persist.
+    }
 };
 
 COMPONENT_ENTRY_POINT()

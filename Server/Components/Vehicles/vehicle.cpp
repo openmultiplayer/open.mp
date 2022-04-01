@@ -10,14 +10,14 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     }
 
     PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
-	if (!data) {
+    if (!data) {
         return;
-	}
+    }
     int numStreamed = data->getNumStreamed();
     if (numStreamed >= MAX_STREAMED_VEHICLES) {
         return;
     }
-	data->setNumStreamed(numStreamed + 1);
+    data->setNumStreamed(numStreamed + 1);
 
     NetCode::RPC::StreamInVehicle streamIn;
     streamIn.VehicleID = poolID;
@@ -383,7 +383,7 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
 
     auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
-		auto vehicle = static_cast<Vehicle *>(vehicleData->getVehicle());
+        auto vehicle = static_cast<Vehicle *>(vehicleData->getVehicle());
         if (vehicle != nullptr) {
             vehicle->unoccupy(player);
             player.setPosition(pos);
@@ -603,16 +603,16 @@ void Vehicle::destream()
 {
     const auto& entries = pool->getPlayers().entries();
     for (IPlayer* player : entries)
-	{
+    {
         PlayerVehicleData* vehicleData = queryExtension<PlayerVehicleData>(player);
 
         if (vehicleData && vehicleData->getVehicle() == this)
-		{
+        {
             vehicleData->setVehicle(nullptr, 0);
         }
 
         if (isStreamedInForPlayer(*player))
-		{
+        {
             streamOutForClient(*player);
         }
     }

@@ -60,7 +60,7 @@ public:
     DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
     PawnPluginManager pluginManager;
     int gamemodeIndex_ = 0;
-	int gamemodeRepeat_ = 1;
+    int gamemodeRepeat_ = 1;
     DynamicArray<String> gamemodes_;
     DynamicArray<int> repeats_;
     TimePoint nextRestart_;
@@ -83,25 +83,25 @@ public:
     bool Unload(std::string const& name);
     bool Changemode(std::string const& name);
 
-	void ProcessTick(Microseconds elapsed, TimePoint now);
+    void ProcessTick(Microseconds elapsed, TimePoint now);
     inline int getRestartMS() const
     {
         return (int)restartDelay_.count();
-	}
+    }
 
     inline void setRestartMS(int ms)
     {
         if (nextRestart_ == TimePoint::min())
-		{
-			restartDelay_ = Milliseconds(ms);
-		}
-		else
-		{
-			Milliseconds delay = Milliseconds(ms);
-			nextRestart_ = nextRestart_ - restartDelay_ + delay;
-			restartDelay_ = delay;
+        {
+            restartDelay_ = Milliseconds(ms);
         }
-	}
+        else
+        {
+            Milliseconds delay = Milliseconds(ms);
+            nextRestart_ = nextRestart_ - restartDelay_ + delay;
+            restartDelay_ = delay;
+        }
+    }
 
     template <typename... T>
     cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)

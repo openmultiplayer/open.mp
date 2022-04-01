@@ -93,11 +93,11 @@ public:
     void removeFor(int pid, IPlayer& player)
     {
         if (streamedFor_.valid(pid))
-		{
+        {
             streamedFor_.remove(pid, player);
         }
     }
-	
+    
     /// Sets the vehicle's death state.
     void setDead(IPlayer& killer);
 
@@ -452,10 +452,10 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		vehicle = nullptr;
-		seat = SEAT_NONE;
-		numStreamed = 0;
-	}
+    void reset() override
+    {
+        vehicle = nullptr;
+        seat = SEAT_NONE;
+        numStreamed = 0;
+    }
 };

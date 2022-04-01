@@ -25,10 +25,10 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		menuId = INVALID_MENU_ID;
-	}
+    void reset() override
+    {
+        menuId = INVALID_MENU_ID;
+    }
 };
 
 class Menu final : public IMenu, public PoolIDProvider, public NoCopy {
@@ -50,7 +50,7 @@ public:
     void removeFor(int pid, IPlayer& player)
     {
         if (initedFor_.valid(pid))
-		{
+        {
             initedFor_.remove(pid, player);
         }
     }

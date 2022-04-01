@@ -20,7 +20,7 @@ public:
     /// @returns "true" if field has been successfully added, otherwise "false"
     bool addField(StringView value, StringView fieldName);
 
-	/// Gets the number of fields
+    /// Gets the number of fields
     /// @returns Number of fields
     std::size_t getFieldCount() const override;
 

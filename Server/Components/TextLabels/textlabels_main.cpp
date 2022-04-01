@@ -53,10 +53,10 @@ public:
         delete this;
     }
 
-	void reset() override
-	{
-		storage.clear();
-	}
+    void reset() override
+    {
+        storage.clear();
+    }
 
     Pair<size_t, size_t> bounds() const override
     {
@@ -192,9 +192,9 @@ public:
     {
         auto ptr = storage.get(index);
         if (ptr)
-		{
+        {
             static_cast<TextLabel*>(ptr)->destream();
-			storage.release(index, false);
+            storage.release(index, false);
         }
     }
 
@@ -266,7 +266,7 @@ public:
             if (label->getAttachmentData().playerID == pid) {
                 textLabel->detachFromPlayer(label->getPosition());
             }
-			label->removeFor(pid, player);
+            label->removeFor(pid, player);
         }
         for (IPlayer* player : players->entries()) {
             IPlayerTextLabelData* data = queryExtension<IPlayerTextLabelData>(player);

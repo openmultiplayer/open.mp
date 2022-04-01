@@ -262,7 +262,7 @@ public:
 
         const int pid = player.getID();
         for (IVehicle* v : storage)
-		{
+        {
             static_cast<Vehicle*>(v)->removeFor(pid, player);
         }
     }

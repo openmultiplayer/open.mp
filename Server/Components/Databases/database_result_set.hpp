@@ -16,9 +16,9 @@ public:
     void addColumns(int fieldCount, char** fieldNames, char** values)
     {
         if (!fieldsAreAdded)
-		{
+        {
             for (int field_index(0); field_index < fieldCount; field_index++)
-			{
+            {
                 results_.push_back(fieldNames[field_index]);
             }
             columns = fieldCount;
@@ -53,7 +53,7 @@ public:
     /// @returns "true" if row has been successfully added, otherwise "false"
     bool addRow(int fieldCount, char** values, char** fieldNames);
 
-	/// Gets its pool element ID
+    /// Gets its pool element ID
     /// @return Pool element ID
     int getID() const override;
 

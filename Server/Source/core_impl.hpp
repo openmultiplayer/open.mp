@@ -144,7 +144,7 @@ public:
                 pair.second->onInit(this);
             });
     }
-	
+    
     void reset()
     {
         std::for_each(components.begin(), components.end(),
@@ -878,26 +878,26 @@ public:
         }
     }
 
-	void resetAll() override
+    void resetAll() override
     {
         NetCode::RPC::GMX RPC;
         PacketHelper::broadcast(RPC, players);
-		components.reset();
-		for (auto p : players.entries())
-		{
-			static_cast<Player *>(p)->resetExtensions();
-		}
-	}
+        components.reset();
+        for (auto p : players.entries())
+        {
+            static_cast<Player *>(p)->resetExtensions();
+        }
+    }
 
-	void reloadAll() override
+    void reloadAll() override
     {
         for (auto p : players.entries())
-		{
+        {
             playerInit(*p);
         }
     }
 
-	void stop()
+    void stop()
     {
         run_ = false;
     }
@@ -932,17 +932,17 @@ public:
         config.setInt("max_players", glm::clamp(*config.getInt("max_players"), 1, 1000));
 
         if (cmd.count("script")) {
-			// Add the launch parameter to the start of the scripts list.
-			// Something here corrupts the strings between loading and inserting.  Hence doing this
-			// the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
-			// we got the old value, modified it, then passed it in for the new value.  But our
+            // Add the launch parameter to the start of the scripts list.
+            // Something here corrupts the strings between loading and inserting.  Hence doing this
+            // the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
+            // we got the old value, modified it, then passed it in for the new value.  But our
             // modified value was only a pointer to the old value, which was now being overridden.
             DynamicArray<String> const mainScripts = *config.getStrings("pawn.main_scripts");
             DynamicArray<StringView> view {};
-			String entry_file = cmd["script"].as<String>();
+            String entry_file = cmd["script"].as<String>();
             view.push_back(entry_file);
             for (String const & v : mainScripts)
-			{
+            {
                 view.push_back(v);
             }
             config.setStrings("pawn.main_scripts", view);
@@ -1141,7 +1141,7 @@ public:
     {
         return tickEventDispatcher;
     }
-	
+    
     void setGravity(float gravity) override
     {
         *SetGravity = gravity;
