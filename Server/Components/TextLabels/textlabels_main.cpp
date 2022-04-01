@@ -90,7 +90,7 @@ public:
     }
 };
 
-class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public ModeResetEventHandler {
+class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextLabel, ITextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
@@ -116,7 +116,6 @@ public:
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onInit(IComponentList* components) override
@@ -129,7 +128,6 @@ public:
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -278,7 +276,7 @@ public:
         }
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();

@@ -15,8 +15,6 @@ public:
         if (core)
 		{
 			core->getPlayers().getEventDispatcher().removeEventHandler(this);
-			core->getModeResetEventDispatcher().removeEventHandler(this);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
 	}
 
@@ -34,7 +32,6 @@ public:
     {
         this->core = core;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
-        core->getModeResetEventDispatcher().addEventHandler(this);
         this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
     }
 
@@ -46,7 +43,7 @@ public:
         }
     }
 
-    void onModeReset() override
+    void reset() override
     {
         storage.clear();
     }

@@ -8,7 +8,7 @@
 
 using namespace Impl;
 
-class VehiclesComponent final : public IVehiclesComponent, public TickEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler, public ModeResetEventHandler {
+class VehiclesComponent final : public IVehiclesComponent, public TickEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Vehicle, IVehicle, 1, VEHICLE_POOL_SIZE> storage;
@@ -287,7 +287,6 @@ public:
             NetCode::RPC::SetVehicleDamageStatus::removeEventHandler(*core, &vehicleDamageStatusHandler);
             NetCode::RPC::SCMEvent::removeEventHandler(*core, &playerSCMEventHandler);
             NetCode::RPC::VehicleDeath::removeEventHandler(*core, &vehicleDeathHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -304,7 +303,6 @@ public:
         NetCode::RPC::VehicleDeath::addEventHandler(*core, &vehicleDeathHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
         deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     void onConnect(IPlayer& player) override
@@ -441,7 +439,7 @@ public:
         }
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();

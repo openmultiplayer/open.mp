@@ -4,7 +4,7 @@
 
 using namespace Impl;
 
-class CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler, public ModeResetEventHandler {
+class CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler {
 private:
     DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
     ICore* core = nullptr;
@@ -103,7 +103,6 @@ public:
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     StringView componentName() const override
@@ -121,7 +120,7 @@ public:
         delete this;
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
     }
@@ -131,7 +130,6 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 };

@@ -3,7 +3,7 @@
 
 using namespace Impl;
 
-class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public ModeResetEventHandler {
+class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Pickup, IPickup, 0, PICKUP_POOL_SIZE> storage;
@@ -62,7 +62,6 @@ public:
         players->getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerPickUpPickup::addEventHandler(*core, &playerPickUpPickupEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     ~PickupsComponent()
@@ -71,7 +70,6 @@ public:
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerPickUpPickup::removeEventHandler(*core, &playerPickUpPickupEventHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -95,7 +93,7 @@ public:
         delete this;
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();

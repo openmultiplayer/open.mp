@@ -2,7 +2,7 @@
 
 using namespace Impl;
 
-class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler, public ModeResetEventHandler {
+class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Menu, IMenu, 1, MENU_POOL_SIZE> storage;
@@ -95,10 +95,9 @@ public:
         players->getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectedMenuRow::addEventHandler(*core, &playerSelectedMenuRowEventHandler);
         NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();
@@ -119,7 +118,6 @@ public:
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectedMenuRow::removeEventHandler(*core, &playerSelectedMenuRowEventHandler);
             NetCode::RPC::OnPlayerExitedMenu::removeEventHandler(*core, &playerExitedMenuEventHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

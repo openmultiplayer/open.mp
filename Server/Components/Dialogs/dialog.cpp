@@ -37,7 +37,7 @@ public:
     }
 };
 
-class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler, public ModeResetEventHandler {
+class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler {
 private:
     ICore* core = nullptr;
     DefaultEventDispatcher<PlayerDialogEventHandler> eventDispatcher;
@@ -102,10 +102,9 @@ public:
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
     }
@@ -120,7 +119,6 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
