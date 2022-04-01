@@ -33,33 +33,31 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.TyreDamage = tyreDamage;
     streamIn.PanelDamage = panelDamage;
     streamIn.Siren = spawnData.siren;
-	for (int i = 0; i != MAX_VEHICLE_COMPONENT_SLOT_IN_RPC; ++i)
-	{
-		streamIn.Mods[i] = mods[i];
-	}
+    int mod = 0;
+    while (mod != MAX_VEHICLE_COMPONENT_SLOT_IN_RPC)
+    {
+        streamIn.Mods[mod] = mods[mod];
+        ++mod;
+    }
     streamIn.Paintjob = paintJob;
     streamIn.BodyColour1 = bodyColour1;
     streamIn.BodyColour2 = bodyColour2;
     PacketHelper::send(streamIn, player);
+
 	// Add two more mods (front and rear bullbars).
-	if (mods[VehicleComponent_FrontBullbar] != 0)
-	{
-		NetCode::RPC::SCMEvent modRPC;
-		modRPC.PlayerID = pid;
-		modRPC.EventType = VehicleSCMEvent_AddComponent;
-		modRPC.VehicleID = poolID;
-        modRPC.Arg1 = mods[VehicleComponent_FrontBullbar];
-        PacketHelper::send(modRPC, player);
-	}
-	if (mods[VehicleComponent_RearBullbar] != 0)
-	{
-		NetCode::RPC::SCMEvent modRPC;
-        modRPC.PlayerID = pid;
-		modRPC.EventType = VehicleSCMEvent_AddComponent;
-		modRPC.VehicleID = poolID;
-        modRPC.Arg1 = mods[VehicleComponent_RearBullbar];
-        PacketHelper::send(modRPC, player);
-	}
+    while (mod != MAX_VEHICLE_COMPONENT_SLOT)
+    {
+        if (mods[mod] != 0)
+        {
+            NetCode::RPC::SCMEvent modRPC;
+            modRPC.PlayerID = pid;
+            modRPC.EventType = VehicleSCMEvent_AddComponent;
+            modRPC.VehicleID = poolID;
+            modRPC.Arg1 = mods[mod];
+            PacketHelper::send(modRPC, player);
+        }
+        ++mod;
+    }
 
     if (numberPlate != StringView("XYZSR998")) {
         NetCode::RPC::SetVehiclePlate plateRPC;
