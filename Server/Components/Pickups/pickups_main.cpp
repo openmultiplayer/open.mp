@@ -81,8 +81,7 @@ public:
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IPickup* p : storage)
-        {
+        for (IPickup* p : storage) {
             static_cast<Pickup*>(p)->removeFor(pid, player);
             static_cast<Pickup*>(p)->setPickupHiddenForPlayer(player, false);
         }
@@ -112,8 +111,7 @@ public:
     void release(int index) override
     {
         Pickup* pickup = storage.get(index);
-        if (pickup && !pickup->isStatic())
-        {
+        if (pickup && !pickup->isStatic()) {
             static_cast<Pickup*>(pickup)->destream();
             storage.release(index, false);
         }

@@ -33,10 +33,10 @@ private:
 public:
     void removeFor(int pid, IPlayer& player)
     {
-        if (shownFor_.valid(pid))
-        {
+        if (shownFor_.valid(pid)) {
             shownFor_.remove(pid, player);
         }
+
         playersInside_.reset(pid);
         flashingFor_.reset(pid);
         colorForPlayer_[pid] = Colour::None();
@@ -162,8 +162,7 @@ public:
 
     void destream()
     {
-        for (IPlayer* player : shownFor_.entries())
-        {
+        for (IPlayer* player : shownFor_.entries()) {
             hideForClient(*player);
         }
     }

@@ -243,4 +243,3 @@ public:
         return !!ret;
     }
 };
-

@@ -106,8 +106,7 @@ public:
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();
-        for (IMenu* m : storage)
-        {
+        for (IMenu* m : storage) {
             static_cast<Menu*>(m)->removeFor(pid, player);
         }
     }
@@ -146,6 +145,9 @@ public:
 
     void release(int index) override
     {
+        if (index == 0) {
+            return;
+        }
         storage.release(index, false);
     }
 

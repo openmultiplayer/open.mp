@@ -266,7 +266,7 @@ public:
             if (label->getAttachmentData().playerID == pid) {
                 textLabel->detachFromPlayer(label->getPosition());
             }
-            label->removeFor(pid, player);
+			label->removeFor(pid, player);
         }
         for (IPlayer* player : players->entries()) {
             IPlayerTextLabelData* data = queryExtension<IPlayerTextLabelData>(player);

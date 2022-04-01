@@ -307,4 +307,3 @@ private:
 
     void CheckNatives(PawnScript& script);
 };
-

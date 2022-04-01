@@ -92,12 +92,11 @@ public:
 
     void removeFor(int pid, IPlayer& player)
     {
-        if (streamedFor_.valid(pid))
-        {
+        if (streamedFor_.valid(pid)) {
             streamedFor_.remove(pid, player);
         }
     }
-    
+
     /// Sets the vehicle's death state.
     void setDead(IPlayer& killer);
 
