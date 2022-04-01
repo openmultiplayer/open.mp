@@ -11,12 +11,17 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int16_t dialogId, int style, const std::string& caption, const std::string& info, const std::string& button1, const std::string& button2))
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int16_t dialogId, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
+SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialogId, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
 {
+	// Put it back to `int` so we can detect and handle this special case.
+	if (dialogId == INVALID_DIALOG_ID)
+	{
+		return false;
+	}
     IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
     if (dialog) {
-        dialog->show(player, dialogId, DialogStyle(style), title, body, button1, button2);
+		// And instead mask the ID here.
+        dialog->show(player, dialogId & 0xFFFF, DialogStyle(style), title, body, button1, button2);
         return true;
     }
     return false;
@@ -62,6 +67,16 @@ SCRIPT_API(GetPlayerDialogData, bool(IPlayer& player, int& style, OutputOnlyStri
 		button1 = button1Var;
 		button2 = button2Var;
 		return dialogid != INVALID_DIALOG_ID;
+    }
+    return false;
+}
+
+SCRIPT_API(HidePlayerDialog, bool(IPlayer& player))
+{
+    IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
+    if (dialog && dialog->getActiveID() != INVALID_DIALOG_ID) {
+        dialog->hide(player);
+        return true;
     }
     return false;
 }
