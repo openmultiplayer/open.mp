@@ -60,8 +60,6 @@ public:
         /// Detach player from player textdraws so they don't try to send an RPC
         for (IPlayerTextDraw* textDraw : storage) {
             PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            td->setPlayerQuitting();
         }
         delete this;
     }
@@ -78,7 +76,9 @@ public:
 
     void release(int index) override
     {
-        storage.release(index, false);
+		PlayerTextDraw * td = storage.get(index);
+		td->destream();
+		storage.release(index, false);
     }
 
     void lock(int index) override
