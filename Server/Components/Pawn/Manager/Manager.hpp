@@ -65,6 +65,7 @@ public:
     DynamicArray<int> repeats_;
     TimePoint nextRestart_;
     Milliseconds restartDelay_;
+	bool reloading_ = false;
 
     PawnManager();
     ~PawnManager();
