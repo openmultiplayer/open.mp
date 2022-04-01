@@ -254,7 +254,7 @@ public:
         return obj;
     }
 
-    void free() override
+    void free(bool informClients) override
     {
         delete this;
     }

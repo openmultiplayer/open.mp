@@ -165,15 +165,6 @@ public:
     {
         return storage._entries();
     }
-
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
-    {
-        const int pid = player.getID();
-        for (IGangZone* g : storage) {
-            GangZone* gangzone = static_cast<GangZone*>(g);
-            gangzone->removeFor(pid, player);
-        }
-    }
 };
 
 COMPONENT_ENTRY_POINT()

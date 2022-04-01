@@ -134,7 +134,7 @@ public:
         core->getPlayers().getEventDispatcher().addEventHandler(this);
     }
 
-    void free() override
+    void free(bool informClients) override
     {
         delete this;
     }

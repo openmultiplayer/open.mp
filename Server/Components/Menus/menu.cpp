@@ -128,7 +128,7 @@ public:
         return storage.emplace(title, position, columns, col1Width, col2Width);
     }
 
-    void free() override
+    void free(bool informClients) override
     {
         delete this;
     }
