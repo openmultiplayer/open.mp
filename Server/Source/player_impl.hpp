@@ -118,6 +118,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         miscExtensions.clear();
     }
 
+	void resetExtensions()
+	{
+		IExtensible::resetExtensions();
+	}
+
     Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params)
         : pool_(pool)
         , netData_(netData)

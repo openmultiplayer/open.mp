@@ -53,6 +53,11 @@ public:
         delete this;
     }
 
+	void reset() override
+	{
+		storage.clear();
+	}
+
     Pair<size_t, size_t> bounds() const override
     {
         return std::make_pair(storage.Lower, storage.Upper);

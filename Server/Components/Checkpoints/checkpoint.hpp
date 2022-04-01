@@ -72,17 +72,25 @@ public:
 
     void disable() override
     {
-        enabled_ = false;
-        setPlayerInside(false);
+		if (enabled_)
+		{
+			enabled_ = false;
+			setPlayerInside(false);
 
-        NetCode::RPC::DisableCheckpoint disableCP;
-        PacketHelper::send(disableCP, player_);
+			NetCode::RPC::DisableCheckpoint disableCP;
+			PacketHelper::send(disableCP, player_);
+		}
     }
 
     bool isEnabled() const override
     {
         return enabled_;
     }
+
+	void reset()
+	{
+		enabled_ = false;
+	}
 };
 
 class PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceCheckpointData> {
@@ -103,7 +111,7 @@ public:
 
     void setType(const RaceCheckpointType type) override
     {
-        type_ = type;
+       type_ = type;
     }
 
     Vector3 getNextPosition() const override
@@ -135,17 +143,25 @@ public:
 
     void disable() override
     {
-        setPlayerInside(false);
-        enabled_ = false;
+		if (enabled_)
+		{
+			setPlayerInside(false);
+			enabled_ = false;
 
-        NetCode::RPC::DisableRaceCheckpoint disableRaceCP;
-        PacketHelper::send(disableRaceCP, player_);
+			NetCode::RPC::DisableRaceCheckpoint disableRaceCP;
+			PacketHelper::send(disableRaceCP, player_);
+		}
     }
 
     bool isEnabled() const override
     {
         return enabled_;
     }
+
+	void reset()
+	{
+		enabled_ = false;
+	}
 };
 
 class PlayerCheckpointData final : public IPlayerCheckpointData {
@@ -174,4 +190,10 @@ public:
     {
         return standardCheckpoint;
     }
+
+	void reset() override
+	{
+		raceCheckpoint.reset();
+		standardCheckpoint.reset();
+	}
 };

@@ -13,6 +13,11 @@ struct PlayerActorData final : IExtension {
     {
         delete this;
     }
+
+	void reset() override
+	{
+		numStreamed = 0;
+	}
 };
 
 class Actor final : public IActor, public PoolIDProvider, public NoCopy {

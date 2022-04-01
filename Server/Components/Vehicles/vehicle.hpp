@@ -451,4 +451,11 @@ public:
     {
         delete this;
     }
+
+	void reset() override
+	{
+		vehicle = nullptr;
+		seat = SEAT_NONE;
+		numStreamed = 0;
+	}
 };

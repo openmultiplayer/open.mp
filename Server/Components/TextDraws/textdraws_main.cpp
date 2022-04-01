@@ -64,6 +64,12 @@ public:
         delete this;
     }
 
+	void reset() override
+	{
+		selecting = false;
+		storage.clear();
+	}
+
     virtual Pair<size_t, size_t> bounds() const override
     {
         return std::make_pair(storage.Lower, storage.Upper);
