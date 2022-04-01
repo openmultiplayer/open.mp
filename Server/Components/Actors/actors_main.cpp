@@ -1,6 +1,6 @@
 #include "actor.hpp"
 
-class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public ModeResetEventHandler {
+class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Actor, IActor, 0, ACTOR_POOL_SIZE> storage;
@@ -65,7 +65,6 @@ public:
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerDamageActor::addEventHandler(*core, &playerDamageActorEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     ~ActorsComponent()
@@ -74,7 +73,6 @@ public:
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerDamageActor::removeEventHandler(*core, &playerDamageActorEventHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -148,7 +146,7 @@ public:
         return storage._entries();
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();

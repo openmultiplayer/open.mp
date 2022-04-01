@@ -4,7 +4,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public TickEventHandler, public PlayerEventHandler, public ModeResetEventHandler {
+class ObjectComponent final : public IObjectsComponent, public TickEventHandler, public PlayerEventHandler {
 private:
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;
@@ -187,7 +187,6 @@ public:
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     ~ObjectComponent()
@@ -198,7 +197,6 @@ public:
             NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
             NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
             NetCode::RPC::OnPlayerEditAttachedObject::removeEventHandler(*core, &playerEditAttachedObjectEventHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -373,7 +371,7 @@ public:
 
     void onTick(Microseconds elapsed, TimePoint now) override;
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         processedPlayerObjects.clear();

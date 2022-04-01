@@ -103,7 +103,7 @@ public:
     }
 };
 
-class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler, public ModeResetEventHandler {
+class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextDraw, ITextDraw, 0, GLOBAL_TEXTDRAW_POOL_SIZE> storage;
@@ -168,10 +168,9 @@ public:
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();
@@ -183,7 +182,6 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectTextDraw::removeEventHandler(*core, &playerSelectTextDrawEventHandler);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 

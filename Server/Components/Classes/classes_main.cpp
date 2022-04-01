@@ -77,7 +77,7 @@ public:
     }
 };
 
-class ClassesComponent final : public IClassesComponent, public PlayerEventHandler, public ModeResetEventHandler {
+class ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
 private:
     MarkedPoolStorage<Class, IClass, 0, CLASS_POOL_SIZE> storage;
     DefaultEventDispatcher<ClassEventHandler> eventDispatcher;
@@ -166,7 +166,7 @@ public:
     {
     }
 
-    void onModeReset() override
+    void reset() override
     {
         // Destroy all stored entity instances.
         storage.clear();
@@ -179,7 +179,6 @@ public:
         core = c;
         NetCode::RPC::PlayerRequestClass::addEventHandler(*core, &onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
-        core->getModeResetEventDispatcher().addEventHandler(this);
     }
 
     IEventDispatcher<ClassEventHandler>& getEventDispatcher() override
@@ -260,7 +259,6 @@ public:
         if (core) {
             NetCode::RPC::PlayerRequestClass::removeEventHandler(*core, &onPlayerRequestClassHandler);
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
-            core->getModeResetEventDispatcher().removeEventHandler(this);
         }
     }
 };

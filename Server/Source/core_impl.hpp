@@ -144,6 +144,14 @@ public:
                 pair.second->onInit(this);
             });
     }
+	
+    void reset()
+    {
+        std::for_each(components.begin(), components.end(),
+            [](const robin_hood::pair<UID, IComponent*>& pair) {
+                pair.second->reset();
+            });
+    }
 
     void ready()
     {
@@ -660,7 +668,6 @@ private:
     static constexpr const char* LogFileName = "log.txt";
 
     DefaultEventDispatcher<TickEventHandler> tickEventDispatcher;
-    DefaultEventDispatcher<ModeResetEventHandler> resetEventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
     FlatPtrHashSet<INetwork> networks;
@@ -875,7 +882,7 @@ public:
     {
         NetCode::RPC::GMX RPC;
         PacketHelper::broadcast(RPC, players);
-        resetEventDispatcher.dispatch(&ModeResetEventHandler::onModeReset);
+		components.reset();
     }
 
 	void reloadAll() override
@@ -1131,11 +1138,6 @@ public:
         return tickEventDispatcher;
     }
 	
-    IEventDispatcher<ModeResetEventHandler>& getModeResetEventDispatcher() override
-    {
-        return resetEventDispatcher;
-    }
-
     void setGravity(float gravity) override
     {
         *SetGravity = gravity;
