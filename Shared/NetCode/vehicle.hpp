@@ -102,7 +102,7 @@ namespace RPC {
         uint8_t LightDamage;
         uint8_t TyreDamage;
         uint8_t Siren;
-        StaticArray<int, 14> Mods;
+        StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT_IN_RPC> Mods;
         uint8_t Paintjob;
         int32_t BodyColour1;
         int32_t BodyColour2;
