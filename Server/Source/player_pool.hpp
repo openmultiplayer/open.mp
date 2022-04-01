@@ -470,7 +470,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (footSync.SurfingData.type == PlayerSurfingData::Type::Object
                 && self.objectsComponent != nullptr
                 && self.objectsComponent->get(footSync.SurfingData.ID) == nullptr) {
-                footSync.SurfingData.type = PlayerSurfingData::Type::None;
+
+                IPlayerObjectData* player_data = queryExtension<IPlayerObjectData>(player);
+
+                if (player_data != nullptr && player_data->get(footSync.SurfingData.ID) != nullptr) {
+                    footSync.SurfingData.type = PlayerSurfingData::Type::PlayerObject;
+                } else {
+                    footSync.SurfingData.type = PlayerSurfingData::Type::None;
+                }
             } else if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle
                 && self.vehiclesComponent != nullptr
                 && self.vehiclesComponent->get(footSync.SurfingData.ID) == nullptr) {
