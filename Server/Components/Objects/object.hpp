@@ -401,7 +401,6 @@ class PlayerObject final : public BaseObject<IPlayerObject> {
 private:
     PlayerObjectData& objects_;
     TimePoint delayedProcessingTime_;
-    bool playerQuitting_;
 
     void restream();
 
@@ -419,15 +418,9 @@ public:
 
     void destroyForPlayer();
 
-    void setPlayerQuitting()
-    {
-        playerQuitting_ = true;
-    }
-
     PlayerObject(PlayerObjectData& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
         : BaseObject(modelID, position, rotation, drawDist, cameraCollision)
         , objects_(objects)
-        , playerQuitting_(false)
     {
     }
 
@@ -482,4 +475,6 @@ public:
     }
 
     ~PlayerObject();
+	void destream();
 };
+

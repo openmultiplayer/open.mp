@@ -470,6 +470,10 @@ public:
             return;
         }
         component_.decrementPlayerCounter(index);
+
+		PlayerObject * obj = storage.get(index);
+		obj->destream();
+
         storage.release(index, false);
     }
 
@@ -496,13 +500,10 @@ public:
 
     void freeExtension() override
     {
-        /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
             // Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
             component_.decrementPlayerCounter(obj->getID());
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            obj->setPlayerQuitting();
         }
         delete this;
     }
