@@ -247,7 +247,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 	for (auto const & i : mainScripts)
 	{
 		// Split the mode name and count.
-		auto space = i.find_last_of(' ', 0);
+		auto space = i.find_last_of(' ');
 		if (space == std::string::npos)
 		{
 			repeats_.push_back(1);
