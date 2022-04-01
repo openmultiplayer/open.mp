@@ -356,7 +356,7 @@ public:
         return vehicle;
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

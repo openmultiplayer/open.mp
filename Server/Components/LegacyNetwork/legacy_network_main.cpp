@@ -48,7 +48,7 @@ public:
         return 0xea9799fd79cf8442;
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

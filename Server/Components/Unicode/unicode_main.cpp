@@ -39,7 +39,7 @@ public:
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

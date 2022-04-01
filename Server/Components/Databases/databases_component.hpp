@@ -91,7 +91,7 @@ public:
     /// @returns Database result set
     IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) override;
 
-    void free(bool informClients) override
+    void free() override
     {
         delete this;
     }

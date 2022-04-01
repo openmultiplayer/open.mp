@@ -95,7 +95,7 @@ public:
         return storage.emplace(pos);
     }
 
-    const FlatHashSet<IGangZone*>& getCheckingGangZones() const override
+    void free() override
     {
         return checkingList.entries();
     }
