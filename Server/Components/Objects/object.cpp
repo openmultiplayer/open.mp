@@ -244,8 +244,9 @@ void PlayerObject::setRotation(GTAQuat rotation)
 PlayerObject::~PlayerObject()
 {
     eraseFromProcessed(true /* force*/);
+}
 
-    if (!playerQuitting_) {
-        destroyForPlayer();
-    }
+void PlayerObject::destream()
+{
+    destroyForPlayer();
 }
