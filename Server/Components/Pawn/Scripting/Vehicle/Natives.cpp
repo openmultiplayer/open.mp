@@ -440,7 +440,7 @@ SCRIPT_API_FAILRET(GetVehicleTower, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
 
 SCRIPT_API(GetVehicleOccupiedTick, int(IVehicle& vehicle))
 {
-   return std::chrono::duration_cast<Milliseconds>(Time::now() - vehicle.getLastOccupiedTime()).count();
+    return std::chrono::duration_cast<Milliseconds>(Time::now() - vehicle.getLastOccupiedTime()).count();
 }
 
 SCRIPT_API(GetVehicleRespawnTick, int(IVehicle& vehicle))
@@ -501,4 +501,76 @@ SCRIPT_API_FAILRET(GetVehicleDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
         return FailRet;
     }
     return driver->getID();
+}
+
+SCRIPT_API(IsPlayerInModShop, bool(IPlayer& player))
+{
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+    if (data) {
+        return data->isInModShop();
+    }
+    return false;
+}
+
+SCRIPT_API(GetPlayerSirenState, int(IPlayer& player))
+{
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+    if (data) {
+        IVehicle* vehicle = data->getVehicle();
+        if (vehicle) {
+            return vehicle->getSirenState();
+        }
+    }
+    return 0;
+}
+
+SCRIPT_API(GetPlayerLandingGearState, int(IPlayer& player))
+{
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+    if (data) {
+        IVehicle* vehicle = data->getVehicle();
+        if (vehicle) {
+            return vehicle->getLandingGearState();
+        }
+    }
+    return 0;
+}
+
+SCRIPT_API(GetPlayerHydraReactorAngle, int(IPlayer& player))
+{
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+    if (data) {
+        IVehicle* vehicle = data->getVehicle();
+        if (vehicle) {
+            return vehicle->getHydraThrustAngle();
+        }
+    }
+    return 0;
+}
+
+SCRIPT_API(GetPlayerTrainSpeed, float(IPlayer& player))
+{
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+    if (data) {
+        IVehicle* vehicle = data->getVehicle();
+        if (vehicle) {
+            return vehicle->getTrainSpeed();
+        }
+    }
+    return 0.0f;
+}
+
+SCRIPT_API(GetVehicleSirenState, int(IVehicle& vehicle))
+{
+    return vehicle.getSirenState();
+}
+
+SCRIPT_API(GetVehicleHydraReactorAngle, int(IVehicle& vehicle))
+{
+    return vehicle.getHydraThrustAngle();
+}
+
+SCRIPT_API(GetVehicleTrainSpeed, float(IVehicle& vehicle))
+{
+    return vehicle.getTrainSpeed();
 }

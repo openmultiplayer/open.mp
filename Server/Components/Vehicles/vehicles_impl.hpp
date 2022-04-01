@@ -177,6 +177,11 @@ private:
             }
 
             case VehicleSCMEvent_EnterExitModShop: {
+                PlayerVehicleData* data = queryExtension<PlayerVehicleData>(peer);
+                if (data) {
+                    data->setInModShop(!!scmEvent.Arg1);
+                }
+
                 self.eventDispatcher.all([&peer, scmEvent](VehicleEventHandler* handler) {
                     handler->onEnterExitModShop(peer, scmEvent.Arg1, scmEvent.Arg2);
                 });
