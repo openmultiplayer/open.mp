@@ -257,7 +257,7 @@ public:
 
         const int pid = player.getID();
         for (IVehicle* v : storage) {
-			static_cast<Vehicle*>(v)->removeFor(pid, player);
+            static_cast<Vehicle*>(v)->removeFor(pid, player);
         }
     }
 
@@ -268,7 +268,7 @@ public:
         , playerSCMEventHandler(*this)
         , vehicleDeathHandler(*this)
     {
-        preloadModels.fill(1);
+        preloadModels.fill(0);
     }
 
     ~VehiclesComponent()
@@ -327,19 +327,25 @@ public:
         if (!isStatic && (modelID == 538 || modelID == 537)) {
             return nullptr;
         }
-        IVehicle* ret = create(VehicleSpawnData { modelID, position, Z, colour1, colour2, respawnDelay, addSiren });
+        IVehicle* ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
         if (modelID == 538 || modelID == 537) {
             int carridgeModel = modelID == 538 ? 570 : 569;
-            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 0);
-            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 1);
-            ret->addCarriage(create(VehicleSpawnData { carridgeModel, position, Z, colour1, colour2, respawnDelay }), 2);
+            ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 0);
+            ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 1);
+            ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 2);
         }
         return ret;
     }
 
     IVehicle* create(const VehicleSpawnData& data) override
     {
-        return storage.emplace(this, data);
+        IVehicle* vehicle = storage.emplace(this, data);
+
+        if (vehicle) {
+            ++preloadModels[data.modelID - 400];
+        }
+
+        return vehicle;
     }
 
     void free() override
@@ -365,12 +371,17 @@ public:
         Vehicle* vehiclePtr = storage.get(index);
         if (vehiclePtr) {
             Vehicle& vehicle = *vehiclePtr;
-            if (vehicle.getModel() == 538 || vehicle.getModel() == 537) {
+            
+            int veh_model = vehicle.getModel();
+            if (veh_model == 538 || veh_model == 537) {
                 for (IVehicle* c : vehicle.getCarriages()) {
                     Vehicle* carriage = static_cast<Vehicle*>(c);
+                    --preloadModels[carriage->getModel() - 400];
                     storage.release(carriage->poolID, false);
                 }
             }
+
+            --preloadModels[veh_model - 400];
             storage.release(index, false);
         }
     }
@@ -406,13 +417,13 @@ public:
                 if (vehicle->isDead()) {
                     TimePoint lastInteraction = vehicle->getTimeOfDeath();
                     if (vehicle->hasBeenOccupied()) {
-                        lastInteraction = std::max(lastInteraction, vehicle->getLastOccupied());
+                        lastInteraction = std::max(lastInteraction, vehicle->getLastOccupiedTime());
                     }
                     if (now - lastInteraction >= Seconds(*deathRespawnDelay)) {
                         vehicle->respawn();
                     }
                 } else if (vehicle->hasBeenOccupied() && delay != Seconds(-1)) {
-                    if (now - vehicle->getLastOccupied() >= delay) {
+                    if (now - vehicle->getLastOccupiedTime() >= delay) {
                         vehicle->respawn();
                     }
                 }
@@ -450,4 +461,3 @@ public:
         return true;
     }
 };
-

@@ -21,7 +21,7 @@ using namespace Impl;
 struct PlayerPool;
 
 struct PlayerChatBubble {
-    HybridString<128> text;
+    HybridString<32> text;
     Colour colour;
     float drawDist;
 };
@@ -61,6 +61,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerFightingStyle fightingStyle_;
     PlayerState state_;
     StaticArray<uint16_t, NUM_SKILL_LEVELS> skillLevels_;
+    bool controllable_;
+    bool clockToggled_;
     float health_, armour_;
     PlayerKeyData keys_;
     PlayerSpecialAction action_;
@@ -70,11 +72,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     uint32_t armedWeapon_;
     GTAQuat rotTransform_;
     PlayerAimData aimingData_;
-    bool controllable_;
     uint32_t lastPlayedSound_;
     int money_;
     Minutes time_;
-    bool clockToggled_;
     PlayerBulletData bulletData_;
     HybridString<16> shopName_;
     int drunkLevel_;
@@ -84,17 +84,17 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int weather_;
     int cutType_;
     Vector4 worldBounds_;
-    bool widescreen_;
-    TimePoint lastMarkerUpdate_;
     bool enableCameraTargeting_;
+    bool widescreen_;
+    uint16_t numStreamed_;
+    TimePoint lastMarkerUpdate_;
     int cameraTargetPlayer_, cameraTargetVehicle_, cameraTargetObject_, cameraTargetActor_;
     int targetPlayer_, targetActor_;
     TimePoint chatBubbleExpiration_;
     PlayerChatBubble chatBubble_;
-    uint8_t numStreamed_;
-    TimePoint lastGameTimeUpdate_;
     const bool isBot_;
     bool toSpawn_;
+    TimePoint lastGameTimeUpdate_;
 
     PrimarySyncUpdateType primarySyncUpdateType_;
     int secondarySyncUpdateType_;
@@ -108,6 +108,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     NetCode::Packet::PlayerAimSync aimSync_;
     NetCode::Packet::PlayerTrailerSync trailerSync_;
     NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
+
+    TimePoint lastScoresAndPings_;
 
     void clearExtensions()
     {
@@ -128,15 +130,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , score_(0)
         , fightingStyle_(PlayerFightingStyle_Normal)
         , state_(PlayerState_None)
-        , keys_{ 0u, 0, 0 }
+        , controllable_(true)
+        , clockToggled_(false)
+        , keys_ { 0u, 0, 0 }
         , surfing_ { PlayerSurfingData::Type::None }
         , armedWeapon_(0)
         , rotTransform_(0.f, 0.f, 0.f)
-        , controllable_(true)
         , lastPlayedSound_(0)
         , money_(0)
         , time_(0)
-        , clockToggled_(false)
         , shopName_()
         , drunkLevel_(0)
         , lastPlayedAudio_()
@@ -144,9 +146,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , wantedLevel_(0)
         , weather_(0)
         , worldBounds_(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS)
-        , widescreen_(0)
-        , lastMarkerUpdate_()
         , enableCameraTargeting_(false)
+        , widescreen_(0)
+        , numStreamed_(0)
+        , lastMarkerUpdate_()
         , cameraTargetPlayer_(INVALID_PLAYER_ID)
         , cameraTargetVehicle_(INVALID_VEHICLE_ID)
         , cameraTargetObject_(INVALID_OBJECT_ID)
@@ -154,12 +157,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , targetPlayer_(INVALID_PLAYER_ID)
         , targetActor_(INVALID_ACTOR_ID)
         , chatBubbleExpiration_(Time::now())
-        , numStreamed_(0)
-        , lastGameTimeUpdate_()
         , isBot_(params.bot)
         , toSpawn_(false)
+        , lastGameTimeUpdate_()
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
+        , lastScoresAndPings_(Time::now())
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);

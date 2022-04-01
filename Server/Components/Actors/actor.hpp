@@ -18,14 +18,15 @@ struct PlayerActorData final : IExtension {
 class Actor final : public IActor, public PoolIDProvider, public NoCopy {
 private:
     int virtualWorld_;
-    int skin_;
+    int16_t skin_;
+    bool invulnerable_;
+    bool animationLoop_;
     Vector3 pos_;
     float angle_;
-    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     float health_;
-    bool invulnerable_;
+    UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     AnimationData animation_;
-    bool animationLoop_;
+    ActorSpawnData spawnData_;
 
     void restream()
     {
@@ -71,11 +72,12 @@ public:
     Actor(int skin, Vector3 pos, float angle)
         : virtualWorld_(0)
         , skin_(skin)
+        , invulnerable_(true)
+        , animationLoop_(false)
         , pos_(pos)
         , angle_(angle)
         , health_(100.f)
-        , invulnerable_(true)
-        , animationLoop_(false)
+        , spawnData_{pos, angle, skin}
     {
     }
 
@@ -229,6 +231,11 @@ public:
         return skin_;
     }
 
+    const ActorSpawnData& getSpawnData() override
+    {
+        return spawnData_;
+    }
+
     ~Actor()
     {
         for (IPlayer* player : streamedFor_.entries()) {
@@ -240,4 +247,3 @@ public:
         }
     }
 };
-

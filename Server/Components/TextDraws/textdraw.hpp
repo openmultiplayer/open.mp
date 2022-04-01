@@ -16,12 +16,12 @@ private:
     TextDrawAlignmentTypes alignment = TextDrawAlignment_Default;
     bool box = false;
     bool proportional = true;
+    bool selectable = false;
     Colour boxColour = Colour(0x80, 0x80, 0x80, 0x80);
     int shadowSize = 2;
     int outlineSize = 0;
     Colour backgroundColour = Colour::Black();
     TextDrawStyle style;
-    bool selectable = false;
     int previewModel;
     GTAQuat previewRotation = GTAQuat(Vector3(0.f));
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
@@ -323,15 +323,14 @@ private:
     using TextDrawBase<ITextDraw>::TextDrawBase;
 
 public:
-	void removeFor(int pid, IPlayer & player)
-	{
-		if (shownFor_.valid(pid))
-		{
-			shownFor_.remove(pid, player);
-		}
-	}
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (shownFor_.valid(pid)) {
+            shownFor_.remove(pid, player);
+        }
+    }
 
-	void restream() override
+    void restream() override
     {
         for (IPlayer* player : shownFor_.entries()) {
             showForClient(*player, false);
@@ -380,7 +379,7 @@ public:
     inline void setPlayerQuitting()
     {
         shown = false;
-	}
+    }
 
     PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : TextDrawBase(pos, text, style, previewModel)
@@ -427,4 +426,3 @@ public:
         }
     }
 };
-
