@@ -129,3 +129,118 @@ SCRIPT_API(SetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& obj
     object.setMaterialText(materialindex, text, materialsize, fontface, fontsize, bold, Colour::FromARGB(fontcolor), Colour::FromARGB(backcolor), ObjectMaterialTextAlign(textalignment));
     return true;
 }
+
+SCRIPT_API(GetPlayerObjectDrawDistance, float(IPlayer& player, IPlayerObject& object))
+{
+    return object.getDrawDistance();
+}
+
+SCRIPT_API(GetPlayerObjectMoveSpeed, float(IPlayer& player, IPlayerObject& object))
+{
+    return object.getMovingData().speed;
+}
+
+SCRIPT_API(GetPlayerObjectMovingTargetPos, bool(IPlayer& player, IPlayerObject& object, Vector3& pos))
+{
+    const ObjectMoveData& data = object.getMovingData();
+    pos = data.targetPos;
+    return true;
+}
+
+SCRIPT_API(GetPlayerPlayerObjectTarget, bool(IPlayer& player, IPlayerObject& object, Vector3& pos))
+{
+    return openmp_scripting::GetPlayerObjectMovingTargetPos(player, object, pos);
+}
+
+SCRIPT_API(GetPlayerObjectMovingTargetRot, bool(IPlayer& player, IPlayerObject& object, Vector3& rot))
+{
+    const ObjectMoveData& data = object.getMovingData();
+    rot = data.targetRot;
+    return true;
+}
+
+SCRIPT_API(GetPlayerObjectAttachedData, bool(IPlayer& player, IPlayerObject& object, int& attached_vehicleid, int& attached_objectid, int& attached_playerid))
+{
+    const ObjectAttachmentData data = object.getAttachmentData();
+    attached_vehicleid = INVALID_VEHICLE_ID;
+    attached_objectid = INVALID_OBJECT_ID;
+    attached_playerid = INVALID_PLAYER_ID;
+
+    if (data.type == ObjectAttachmentData::Type::Object) {
+        attached_objectid = data.ID;
+    } else if (data.type == ObjectAttachmentData::Type::Player) {
+        attached_playerid = data.ID;
+    } else if (data.type == ObjectAttachmentData::Type::Vehicle) {
+        attached_vehicleid = data.ID;
+    }
+
+    return true;
+}
+
+SCRIPT_API(GetPlayerObjectAttachedOffset, bool(IPlayer& player, IPlayerObject& object, Vector3& offset, Vector3& rot))
+{
+    const ObjectAttachmentData data = object.getAttachmentData();
+    offset = data.offset;
+    rot = data.rotation;
+    return true;
+}
+
+SCRIPT_API(GetPlayerObjectSyncRotation, int(IPlayer& player, IPlayerObject& object))
+{
+    return object.getAttachmentData().syncRotation;
+}
+
+SCRIPT_API(IsPlayerObjectMaterialSlotUsed, bool(IPlayer& player, IPlayerObject& object, int materialindex))
+{
+    ObjectMaterialData data;
+    bool result = object.getMaterialData(materialindex, &data);
+    if (result) {
+        return data.used;
+    }
+    return result;
+}
+
+SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialindex, int& modelid, OutputOnlyString& txdname))
+{
+    ObjectMaterialData data;
+    bool result = object.getMaterialData(materialindex, &data);
+    if (result) {
+        txdname = data.textOrTXD;
+    }
+    return result;
+}
+
+SCRIPT_API(GetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, int materialindex, OutputOnlyString& text))
+{
+    ObjectMaterialData data;
+    bool result = object.getMaterialData(materialindex, &data);
+    if (result) {
+        text = data.fontOrTexture;
+    }
+    return result;
+}
+
+SCRIPT_API(IsPlayerObjectNoCameraCol, bool(IPlayer& player, IPlayerObject& object))
+{
+    return !object.getCameraCollision();
+}
+
+SCRIPT_API(GetPlayerSurfingPlayerObjectID, int(IPlayer& player))
+{
+    const PlayerSurfingData& data = player.getSurfingData();
+    if (data.type == PlayerSurfingData::Type::Object) {
+        return data.ID;
+    } else {
+        return INVALID_OBJECT_ID;
+    }
+}
+
+SCRIPT_API(GetPlayerCameraTargetPlayerObj, int(IPlayer& player))
+{
+    IObject* object = player.getCameraTargetObject();
+    if (object) {
+        return object->getID();
+    } else {
+        return INVALID_OBJECT_ID;
+    }
+}
