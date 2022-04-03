@@ -1,6 +1,7 @@
 #include "../Types.hpp"
 #include <Server/Components/Vehicles/vehicle_components.hpp>
 #include <Server/Components/Vehicles/vehicle_models.hpp>
+#include <Server/Components/Vehicles/vehicle_colours.hpp>
 #include <sdk.hpp>
 
 SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colour1, int colour2, int respawnDelay, bool addSiren))
@@ -246,6 +247,16 @@ SCRIPT_API(GetVehicleComponentInSlot, int(IVehicle& vehicle, int slot))
 SCRIPT_API(GetVehicleComponentType, int(int component))
 {
     return getVehicleComponentSlot(component);
+}
+
+SCRIPT_API(GetRandomCarColPair, void(int modelid, int& colour1, int& colour2, int& colour3, int& colour4))
+{
+    getRandomVehicleColour(modelid, colour1, colour2, colour3, colour4);
+}
+
+SCRIPT_API(CarColIndexToColour, int(int colourIndex, int alpha))
+{
+    return carColourIndexToColour(colourIndex, alpha);
 }
 
 SCRIPT_API(RepairVehicle, bool(IVehicle& vehicle))
