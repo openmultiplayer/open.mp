@@ -313,27 +313,6 @@ Your code is probably missing `main`.  Just add this:
 }
 */
 
-#if PAWN_CELL_SIZE == 16
-#define CHARMASK (0xffffu << 8 * (2 - sizeof(char)))
-#elif PAWN_CELL_SIZE == 32
-#define CHARMASK (0xffffffffuL << 8 * (4 - sizeof(char)))
-#elif PAWN_CELL_SIZE == 64
-#define CHARMASK (0xffffffffffffffffuLL << 8 * (8 - sizeof(char)))
-#else
-#error Unsupported cell size
-#endif
-
-#define USENAMETABLE(hdr) \
-    ((hdr)->defsize == sizeof(AMX_FUNCSTUBNT))
-#define NUMENTRIES(hdr, field, nextfield) \
-    (unsigned)(((hdr)->nextfield - (hdr)->field) / (hdr)->defsize)
-#define GETENTRY(hdr, table, index) \
-    (AMX_FUNCSTUB*)((unsigned char*)(hdr) + (unsigned)(hdr)->table + (unsigned)index * (hdr)->defsize)
-#define GETENTRYNAME(hdr, entry)                                                             \
-    (USENAMETABLE(hdr)                                                                       \
-            ? (char*)((unsigned char*)(hdr) + (unsigned)((AMX_FUNCSTUBNT*)(entry))->nameofs) \
-            : ((AMX_FUNCSTUB*)(entry))->name)
-
 int AMXAPI amx_NumPublics(AMX* amx, int* number)
 {
     AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
@@ -346,8 +325,8 @@ int AMXAPI amx_NumPublics(AMX* amx, int* number)
 
 int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
 {
-    AMX_HEADER* hdr;
-    AMX_FUNCSTUB* func;
+    AMX_HEADER * hdr;
+	AMX_FUNCPART * func;
 
     hdr = (AMX_HEADER*)amx->base;
     assert(hdr != NULL);
@@ -363,7 +342,11 @@ int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
 
 __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, int* index)
 {
-    // Attempt to find index in publics cache
+	AMX_HEADER * hdr = (AMX_HEADER *)amx->base;
+    char* pname;
+	AMX_FUNCPART * func;
+
+	// Attempt to find index in publics cache
     auto amxIter = cache.find(amx);
     const bool cacheExists = amxIter != cache.end();
     if (cacheExists) {
@@ -372,18 +355,21 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
             auto lookupIter = amxCache.publics.find(name);
             if (lookupIter != amxCache.publics.end()) {
                 // https://github.com/IllidanS4/pawn-conventions/blob/master/guidelines.md#do-not-rely-on-consistency
-                char pname[sNAMEMAX + 1];
-                if (amx_GetPublic(amx, lookupIter->second, pname) == AMX_ERR_NONE && !strcmp(name, pname)) {
-                    *index = lookupIter->second;
-                    return AMX_ERR_NONE;
-                }
+				if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives))
+				{
+					func = GETENTRY(hdr, publics, lookupIter->second);
+					pname = GETENTRYNAME(hdr, func);
+					if (!strcmp(name, pname)) {
+						*index = lookupIter->second;
+						return AMX_ERR_NONE;
+					}
+				}
             }
         }
     }
 
     // Cache miss; do the heavy search
     int first, last, mid, result;
-    char pname[sNAMEMAX + 1];
 
     amx_NumPublics(amx, &last);
     last--; /* last valid index is 1 less than the number of functions */
@@ -391,7 +377,8 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
     /* binary search */
     while (first <= last) {
         mid = (first + last) / 2;
-        amx_GetPublic(amx, mid, pname);
+		func = GETENTRY(hdr, publics, mid);
+		pname = GETENTRYNAME(hdr, func);
         result = strcmp(pname, name);
         if (result > 0) {
             last = mid - 1;
