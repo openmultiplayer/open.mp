@@ -114,10 +114,6 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            if (ModelID == 570 || ModelID == 569) {
-                return; // SA:MP Legacy, trains have their carriages already implemented so we just store them, not stream them in.
-            }
-
             bs.writeUINT16(VehicleID);
             bs.writeUINT32(ModelID);
             bs.writeVEC3(Position);
