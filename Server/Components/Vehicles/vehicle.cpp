@@ -23,7 +23,14 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.VehicleID = poolID;
     streamIn.ModelID = spawnData.modelID;
     streamIn.Position = pos;
+    
     streamIn.Angle = rot.ToEuler().z;
+
+    // Trains should always be streamed with default rotation.
+    if (spawnData.modelID == 537 || spawnData.modelID == 538) {
+        streamIn.Angle = spawnData.zRotation;
+    }
+
     streamIn.Colour1 = spawnData.colour1;
     streamIn.Colour2 = spawnData.colour2;
     streamIn.Health = health;

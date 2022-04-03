@@ -55,7 +55,7 @@ public:
         return moveData_;
     }
 
-    bool getMaterialData(uint32_t index, const ObjectMaterialData* out) const override
+    bool getMaterialData(uint32_t index, const ObjectMaterialData*& out) const override
     {
         if (index >= MAX_OBJECT_MATERIAL_SLOTS) {
             return false;
