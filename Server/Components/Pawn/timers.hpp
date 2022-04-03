@@ -39,7 +39,7 @@ private:
                     return 0;
                 }
                 // Wrap safely
-                idx = 0;
+                idx = 1;
                 wrappedOnce = true;
             } else {
                 ++idx;
@@ -48,7 +48,7 @@ private:
         pool.emplace(idx, timer);
         size_t lastIdx = idx;
         if (idx == UINT_MAX) {
-            idx = 0;
+            idx = 1;
         } else {
             ++idx;
         }
