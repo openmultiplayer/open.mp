@@ -259,16 +259,13 @@ template <typename U>
 void AddUInt(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
 {
     U text[32];
-    int digits;
-    U* buf;
+    int digits = 0;
+    U* buf = *buf_p;
 
-    digits = 0;
     do {
         text[digits++] = '0' + val % 10;
         val /= 10;
     } while (val);
-
-    buf = *buf_p;
 
     if (!(flags & LADJUST)) {
         while (digits < width && maxlen) {
@@ -298,25 +295,15 @@ template <typename U>
 void AddInt(U** buf_p, size_t& maxlen, int val, int width, int flags)
 {
     U text[32];
-    int digits;
-    int signedVal;
-    U* buf;
-    unsigned int unsignedVal;
+    int digits = 0;
+    int signedVal = val;
+    U* buf = *buf_p;
+    unsigned int unsignedVal = abs(val);
 
-    digits = 0;
-    signedVal = val;
-    if (val < 0) {
-        /* we want the unsigned version */
-        unsignedVal = abs(val);
-    } else {
-        unsignedVal = val;
-    }
     do {
         text[digits++] = '0' + unsignedVal % 10;
         unsignedVal /= 10;
     } while (unsignedVal);
-
-    buf = *buf_p;
 
     if (signedVal < 0) {
         if (flags & ZEROPAD) {
@@ -354,10 +341,10 @@ template <typename U>
 void AddHex(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
 {
     U text[32];
-    int digits;
-    U* buf;
-    U digit;
-    int hexadjust;
+    int digits = 0;
+    U* buf = *buf_p;
+    U digit = 0;
+    int hexadjust = 0;
 
     if (flags & UPPERDIGITS) {
         hexadjust = 'A' - '9' - 1;
@@ -365,7 +352,6 @@ void AddHex(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
         hexadjust = 'a' - '9' - 1;
     }
 
-    digits = 0;
     do {
         digit = ('0' + val % 16);
         if (digit > '9') {
@@ -375,8 +361,6 @@ void AddHex(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
         text[digits++] = digit;
         val /= 16;
     } while (val);
-
-    buf = *buf_p;
 
     if (!(flags & LADJUST)) {
         while (digits < width && maxlen) {
