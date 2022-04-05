@@ -141,7 +141,7 @@ inline cell AMX_NATIVE_CALL pawn_settimer(AMX* amx, cell const* params)
     amx_StrParamChar(amx, params[1], callback);
 
     if (params[2] < 0) {
-        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimer interval (%i) when calling: %i", params[2], callback);
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimer interval (%i) when calling: %s", params[2], callback);
         return false;
     }
 
@@ -156,7 +156,7 @@ inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
 	amx_StrParamChar(amx, params[1], callback);
 
     if (params[2] < 0) {
-        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimerEx interval (%i) when calling: %i", params[2], callback);
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimerEx interval (%i) when calling: %s", params[2], callback);
         return false;
     }
 
@@ -400,25 +400,16 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallAll(AMX* amx, cell const* params)
         }
     }
     len2 = i;
-    cell
-        ret = 0;
-	int gm = 0;
-	for (int gm = 0; gm != 2; ++gm)
+    cell ret = 0;
+	if (manager->mainScript_)
 	{
-		for (auto& cur : manager->scripts_)
+		// Get the next script to call in to, always starting with the GM.
+		amx = manager->mainScript_->GetAMX();
+		// Step 2: Get the function.
+		int
+			index;
+		if (amx_FindPublic(amx, name, &index) == AMX_ERR_NONE)
 		{
-			// Do the GM first, then filterscripts.
-			if (gm == 0 ? cur.first != manager->entryScript : cur.first == manager->entryScript)
-			{
-				continue;
-			}
-			// Get the next script to call in to, always starting with the GM.
-			amx = cur.second->GetAMX();
-			// Step 2: Get the function.
-			int
-				index;
-			if (amx_FindPublic(amx, name, &index) != AMX_ERR_NONE)
-				continue;
 			cell
 				hea = amx->hea,
 				stk = amx->stk;
@@ -430,14 +421,14 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallAll(AMX* amx, cell const* params)
 					// Copy the data to the heap, then push the address.
 					if (amx_PushArray(amx, nullptr, nullptr, pushes[i].src_, pushes[i].len_) != AMX_ERR_NONE) {
 						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
-						goto pawn_CallRemoteFunction_next;
+						goto pawn_CallRemoteFunction_gmnext;
 					}
 					break;
 				case 'v':
 					// Copy the data to the heap, then push the address.
 					if (amx_PushArray(amx, nullptr, &pushes[i].dest_, pushes[i].src_, 1) != AMX_ERR_NONE) {
 						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
-						goto pawn_CallRemoteFunction_next;
+						goto pawn_CallRemoteFunction_gmnext;
 					}
 					break;
 				default:
@@ -445,14 +436,14 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallAll(AMX* amx, cell const* params)
 					// passed by reference to varargs functions.
 					if (amx_Push(amx, *pushes[i].src_) != AMX_ERR_NONE) {
 						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
-						goto pawn_CallRemoteFunction_next;
+						goto pawn_CallRemoteFunction_gmnext;
 					}
 					break;
 				}
 			}
 			// Step 4: Call the function.
 			if (amx_Exec(amx, &ret, index) != AMX_ERR_NONE)
-				goto pawn_CallRemoteFunction_next;
+				goto pawn_CallRemoteFunction_gmnext;
 			// Step 5: Copy the reference parameters back out again.
 			for (size_t j = 0; fmat[j]; ++j) {
 				switch (fmat[j]) {
@@ -462,7 +453,64 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallAll(AMX* amx, cell const* params)
 				}
 			}
 			// Step 3: Restore reference parameters.
-pawn_CallRemoteFunction_next:
+pawn_CallRemoteFunction_gmnext:
+			amx->hea = hea;
+			amx->stk = stk;
+		}
+	}
+	for (auto& cur : manager->scripts_)
+	{
+		// Get the next script to call in to, always starting with the GM.
+		amx = cur.second->GetAMX();
+		// Step 2: Get the function.
+		int
+			index;
+		if (amx_FindPublic(amx, name, &index) == AMX_ERR_NONE)
+		{
+			cell
+				hea = amx->hea,
+				stk = amx->stk;
+			// Step 3: Push the parameters.
+			for (i = len2; i--;) {
+				switch (fmat[i]) {
+				case 'a':
+				case 's':
+					// Copy the data to the heap, then push the address.
+					if (amx_PushArray(amx, nullptr, nullptr, pushes[i].src_, pushes[i].len_) != AMX_ERR_NONE) {
+						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
+						goto pawn_CallRemoteFunction_fsnext;
+					}
+					break;
+				case 'v':
+					// Copy the data to the heap, then push the address.
+					if (amx_PushArray(amx, nullptr, &pushes[i].dest_, pushes[i].src_, 1) != AMX_ERR_NONE) {
+						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
+						goto pawn_CallRemoteFunction_fsnext;
+					}
+					break;
+				default:
+					// Get the original source.  This is needed even for normal parameters since everything is
+					// passed by reference to varargs functions.
+					if (amx_Push(amx, *pushes[i].src_) != AMX_ERR_NONE) {
+						PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallAll`");
+						goto pawn_CallRemoteFunction_fsnext;
+					}
+					break;
+				}
+			}
+			// Step 4: Call the function.
+			if (amx_Exec(amx, &ret, index) != AMX_ERR_NONE)
+				goto pawn_CallRemoteFunction_fsnext;
+			// Step 5: Copy the reference parameters back out again.
+			for (size_t j = 0; fmat[j]; ++j) {
+				switch (fmat[j]) {
+				case 'v':
+					*pushes[j].src_ = *pushes[j].dest_;
+					break;
+				}
+			}
+			// Step 3: Restore reference parameters.
+pawn_CallRemoteFunction_fsnext:
 			amx->hea = hea;
 			amx->stk = stk;
 		}
@@ -483,7 +531,7 @@ inline int ComponentCallGM(char* name)
         = AMX_ERR_NONE;
     auto manager = PawnManager::Get();
     for (auto& cur : manager->scripts_) {
-        if (cur.first != manager->entryScript) {
+        if (cur.first != manager->mainName_) {
             continue;
         }
         int
@@ -509,7 +557,7 @@ inline int ComponentCallFS(char* name)
         = AMX_ERR_NONE;
     auto manager = PawnManager::Get();
     for (auto& cur : manager->scripts_) {
-        if (cur.first == manager->entryScript) {
+        if (cur.first == manager->mainName_) {
             continue;
         }
         int

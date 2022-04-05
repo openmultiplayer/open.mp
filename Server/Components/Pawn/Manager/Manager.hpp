@@ -37,7 +37,8 @@ using namespace Impl;
 class PawnManager : public Singleton<PawnManager> {
 public:
     DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
-    std::string entryScript = "";
+    std::string mainName_ = "";
+	std::unique_ptr<PawnScript> mainScript_;
     FlatHashMap<AMX*, PawnScript*> amxToScript_;
     ICore* core = nullptr;
     IConfig* config = nullptr;
@@ -117,18 +118,14 @@ public:
     {
         cell ret = static_cast<cell>(defaultRetValue);
 
-        PawnScript* first = nullptr;
-        for (auto& cur : scripts_) {
-            if (cur.first == entryScript) {
-                first = cur.second.get();
-            } else {
-                ret = cur.second->Call(name, defaultRetValue, args...);
-            }
+        for (auto& cur : scripts_)
+		{
+            ret = cur.second->Call(name, defaultRetValue, args...);
         }
-
-        if (first != nullptr) {
-            ret = first->Call(name, defaultRetValue, args...);
-        }
+		if (mainScript_)
+		{
+            ret = mainScript_->Call(name, defaultRetValue, args...);
+		}
 
         return ret;
     }
@@ -138,18 +135,14 @@ public:
     {
         cell ret = static_cast<cell>(defaultRetValue);
 
-		auto first = findScript(entryScript);
-        if (first != scripts_.end()) {
-            ret = first->second->Call(name, defaultRetValue, args...);
-        }
-
-        for (auto& cur : scripts_) {
-            if (cur.first == entryScript) {
-                continue;
-            } else {
-                ret = cur.second->Call(name, defaultRetValue, args...);
-            }
-        }
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, defaultRetValue, args...);
+		}
+		for (auto & cur : scripts_)
+		{
+			ret = cur.second->Call(name, defaultRetValue, args...);
+		}
 
         return ret;
     }
@@ -158,17 +151,12 @@ public:
     cell CallInSidesWhile0(char const* name, T... args)
     {
         cell
-            ret
-            = 0;
+            ret = 0;
 
         for (auto& cur : scripts_) {
-            if (cur.first == entryScript) {
-                continue;
-            } else {
-                ret = cur.second->Call(name, DefaultReturnValue_False, args...);
-                if (ret) {
-                    break;
-                }
+            ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+            if (ret) {
+                break;
             }
         }
 
@@ -179,17 +167,12 @@ public:
     cell CallInSidesWhile1(char const* name, T... args)
     {
         cell
-            ret
-            = 1;
+            ret = 1;
 
         for (auto& cur : scripts_) {
-            if (cur.first == entryScript) {
-                continue;
-            } else {
-                ret = cur.second->Call(name, DefaultReturnValue_True, args...);
-                if (!ret) {
-                    break;
-                }
+            ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+            if (!ret) {
+                break;
             }
         }
 
@@ -202,11 +185,7 @@ public:
         cell ret = static_cast<cell>(defaultRetValue);
 
         for (auto& cur : scripts_) {
-            if (cur.first == entryScript) {
-                continue;
-            } else {
-                ret = cur.second->Call(name, defaultRetValue, args...);
-            }
+            ret = cur.second->Call(name, defaultRetValue, args...);
         }
 
         return ret;
@@ -217,11 +196,9 @@ public:
     {
         cell ret = static_cast<cell>(defaultRetValue);
 
-		for (auto & cur : scripts_) {
-			if (cur.first == entryScript) {
-			    ret = cur.second->Call(name, defaultRetValue, args...);
-				break;
-			}
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, defaultRetValue, args...);
 		}
 
         return ret;
@@ -231,9 +208,13 @@ public:
     cell CallAll(char const* name, T... args)
     {
         cell
-            ret
-            = 0;
-        for (auto& cur : scripts_) {
+            ret = 0;
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+		}
+		for (auto& cur : scripts_)
+		{
             ret = cur.second->Call(name, DefaultReturnValue_False, args...);
         }
         return ret;
@@ -242,10 +223,14 @@ public:
     template <typename... T>
     cell CallAll(std::string const& name, T... args)
     {
-        cell
-            ret
-            = 0;
-        for (auto& cur : scripts_) {
+		cell
+			ret = 0;
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+		}
+		for (auto& cur : scripts_)
+		{
             ret = cur.second->Call(name, DefaultReturnValue_False, args...);
         }
         return ret;
@@ -254,9 +239,14 @@ public:
     template <typename... T>
     cell CallWhile0(char const* name, T... args)
     {
-        cell
-            ret
-            = 0;
+		cell
+			ret = 0;
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+				return ret;
+		}
         for (auto& cur : scripts_) {
             ret = cur.second->Call(name, DefaultReturnValue_False, args...);
             if (ret)
@@ -269,8 +259,13 @@ public:
     cell CallWhile0(std::string const& name, T... args)
     {
         cell ret = static_cast<cell>(DefaultReturnValue_False);
-
-        for (auto& cur : scripts_) {
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+				return ret;
+		}
+		for (auto& cur : scripts_) {
             ret = cur.second->Call(name, DefaultReturnValue_False, args...);
             if (ret)
                 return ret;
@@ -283,6 +278,12 @@ public:
     {
         cell ret = static_cast<cell>(DefaultReturnValue_True);
 
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+				return ret;
+		}
         for (auto& cur : scripts_) {
             ret = cur.second->Call(name, DefaultReturnValue_True, args...);
             if (!ret)
@@ -296,7 +297,13 @@ public:
     {
         cell ret = static_cast<cell>(DefaultReturnValue_True);
 
-        for (auto& cur : scripts_) {
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+				return ret;
+		}
+		for (auto& cur : scripts_) {
             ret = cur.second->Call(name, DefaultReturnValue_True, args...);
             if (!ret)
                 return ret;

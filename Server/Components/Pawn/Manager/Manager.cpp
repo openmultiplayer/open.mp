@@ -33,7 +33,9 @@ typedef char TCHAR;
 }
 
 PawnManager::PawnManager()
-    : gamemodes_()
+    : mainName_("")
+    , mainScript_()
+    , gamemodes_()
     , nextRestart_(TimePoint::min())
     , restartDelay_(12000)
     , scriptPath_("")
@@ -43,15 +45,15 @@ PawnManager::PawnManager()
 
 PawnManager::~PawnManager()
 {
-    auto entryScriptIter = findScript(entryScript);
+	if (mainScript_) {
+		mainScript_->Call("OnGameModeExit", DefaultReturnValue_False);
+		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_->GetAMX());
+		pluginManager.AmxUnload(mainScript_->GetAMX());
+		PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
+	}
     for (auto& cur : scripts_) {
-        const bool isEntryScript = cur.second == entryScriptIter->second;
         auto& script = *cur.second;
-        if (isEntryScript) {
-            script.Call("OnGameModeExit", DefaultReturnValue_False);
-        } else {
-            script.Call("OnFilterScriptExit", DefaultReturnValue_False);
-        }
+        script.Call("OnFilterScriptExit", DefaultReturnValue_False);
         eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
         pluginManager.AmxUnload(script.GetAMX());
         PawnTimerImpl::Get()->killTimers(script.GetAMX());
@@ -157,7 +159,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 
 AMX* PawnManager::AMXFromID(int id) const
 {
-    for (auto& cur : scripts_) {
+	if (mainScript_ && mainScript_->GetID() == id)
+	{
+		return mainScript_->GetAMX();
+	}
+	for (auto& cur : scripts_) {
         if (cur.second->GetID() == id) {
             return cur.second->GetAMX();
         }
@@ -167,7 +173,11 @@ AMX* PawnManager::AMXFromID(int id) const
 
 int PawnManager::IDFromAMX(AMX* amx) const
 {
-    for (auto& cur : scripts_) {
+	if (mainScript_ && mainScript_->GetAMX() == amx)
+	{
+		return mainScript_->GetID();
+	}
+	for (auto& cur : scripts_) {
         if (cur.second->GetAMX() == amx) {
             return cur.second->GetID();
         }
@@ -222,12 +232,12 @@ bool PawnManager::Changemode(std::string const& name)
     fclose(fp);
     // Disconnect players.
     // Unload the old main script.
-    Unload(entryScript);
+    Unload(mainName_);
     // TODO: Trigger all components to reset.
     PlayerEvents::Get()->IgnoreOneDisconnect();
     // TODO: Inform clients of the restart.
     // Save the name of the next script.
-    entryScript = name;
+    mainName_ = name;
     // Start the changemode timer.
     nextRestart_ = Time::now() + restartDelay_;
 	reloading_ = true;
@@ -244,7 +254,7 @@ void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
     if (nextRestart_ < now)
     {
         // Restart is in the past, load the next GM.
-        Load(entryScript, true);
+        Load(mainName_, true);
         nextRestart_ = TimePoint::min();
     }
 }
@@ -284,9 +294,20 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 
 bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
-    if (findScript(name) != scripts_.end()) {
-        return false;
-    }
+	if (mainName_ == name)
+	{
+		if (mainScript_)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (findScript(name) != scripts_.end())
+		{
+			return false;
+		}
+	}
 
     // if the user just supplied a script name, add the extension
     // otherwise, don't, as they may have supplied a full abs/rel path.
@@ -303,12 +324,20 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 
     PawnScript& script = *ptr;
 
-	Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
-    scripts_.push_back(std::move(pair));
-	auto res = findScript(name);
-    if (res != scripts_.end()) {
-        amxToScript_.emplace(script.GetAMX(), res->second.get());
-    }
+	if (isEntryScript)
+	{
+        mainName_ = name;
+		mainScript_ = std::move(ptr);
+	}
+	else
+	{
+		Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
+		scripts_.push_back(std::move(pair));
+		auto res = findScript(name);
+		if (res != scripts_.end()) {
+			amxToScript_.emplace(script.GetAMX(), res->second.get());
+		}
+	}
     script.Register("CallLocalFunction", &utils::pawn_Script_Call);
     script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
     script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
@@ -328,7 +357,6 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     CheckNatives(script);
 
     if (isEntryScript) {
-        entryScript = name;
         script.Call("OnGameModeInit", DefaultReturnValue_False);
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
@@ -371,7 +399,8 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 bool PawnManager::Reload(std::string const& name)
 {
     // Entry script reload is not supported.
-    if (entryScript == name) {
+    if (mainName_ == name)
+	{
         return false;
     }
 
@@ -382,11 +411,22 @@ bool PawnManager::Reload(std::string const& name)
 bool PawnManager::Unload(std::string const& name)
 {
 	auto pos = findScript(name);
-    bool isEntryScript = entryScript == name;
-    if (pos == scripts_.end()) {
-        return false;
-    }
-    auto& script = *pos->second;
+    bool isEntryScript = mainName_ == name;
+	if (isEntryScript)
+	{
+		if (!mainScript_)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (pos == scripts_.end())
+		{
+			return false;
+		}
+	}
+    auto& script = isEntryScript ? *mainScript_ : *pos->second;
 
     // Call `OnPlayerDisconnect`.
     for (auto const p : players->entries())
@@ -396,7 +436,6 @@ bool PawnManager::Unload(std::string const& name)
     if (isEntryScript) {
         CallInSides("OnGameModeExit", DefaultReturnValue_False);
         script.Call("OnGameModeExit", DefaultReturnValue_False);
-        entryScript = "";
     } else {
         for (IPlayer* player : players->entries()) {
             script.Call("OnPlayerDisconnect", DefaultReturnValue_True, player->getID());
@@ -408,11 +447,17 @@ bool PawnManager::Unload(std::string const& name)
     pluginManager.AmxUnload(script.GetAMX());
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
-    scripts_.erase(pos);
+
     if (isEntryScript)
     {
         core->resetAll();
+        mainName_ = "";
+		mainScript_.reset();
     }
+	else
+	{
+	    scripts_.erase(pos);
+	}
 
     return true;
 }
