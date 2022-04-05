@@ -59,7 +59,7 @@ public:
             } else {
                 const TimePoint now = Time::now();
                 const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
-                if (diff.count() > 0) {
+                if (diff.count() >= 0) {
                     timer->handler()->timeout(*timer);
                     if (timer->trigger()) {
                         timer->setTimeout(now + timer->interval() - diff);
