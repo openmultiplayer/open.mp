@@ -937,14 +937,17 @@ public:
             // the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
             // we got the old value, modified it, then passed it in for the new value.  But our
             // modified value was only a pointer to the old value, which was now being overridden.
-            DynamicArray<String> const mainScripts = *config.getStrings("pawn.main_scripts");
+            DynamicArray<String> const * mainScripts = config.getStrings("pawn.main_scripts");
             DynamicArray<StringView> view {};
             String entry_file = cmd["script"].as<String>();
             view.push_back(entry_file);
-            for (String const & v : mainScripts)
-            {
-                view.push_back(v);
-            }
+			if (mainScripts)
+			{
+				for (String const & v : *mainScripts)
+				{
+					view.push_back(v);
+				}
+			}
             config.setStrings("pawn.main_scripts", view);
         }
 
