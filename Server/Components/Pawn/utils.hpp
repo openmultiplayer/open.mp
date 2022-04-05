@@ -137,13 +137,13 @@ inline cell AMX_NATIVE_CALL pawn_settimer(AMX* amx, cell const* params)
 {
     AMX_MIN_PARAMETERS("SetTimer", params, 3);
 
-    if (params[2] < 0) {
-        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid interval passed to SetTimer: %i", params[2]);
-        return false;
-    }
-
     char* callback;
     amx_StrParamChar(amx, params[1], callback);
+
+    if (params[2] < 0) {
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimer interval (%i) when calling: %i", params[2], callback);
+        return false;
+    }
 
     return PawnTimerImpl::Get()->setTimer(callback, Milliseconds(params[2]), params[3], amx);
 }
@@ -152,13 +152,13 @@ inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
 {
     AMX_MIN_PARAMETERS("SetTimerEx", params, 4);
 
+	char * callback;
+	amx_StrParamChar(amx, params[1], callback);
+
     if (params[2] < 0) {
-        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid interval passed to SetTimerEx: %i", params[2]);
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimerEx interval (%i) when calling: %i", params[2], callback);
         return false;
     }
-
-    char* callback;
-    amx_StrParamChar(amx, params[1], callback);
 
     char* fmt;
     amx_StrParamChar(amx, params[4], fmt);
