@@ -23,7 +23,14 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.VehicleID = poolID;
     streamIn.ModelID = spawnData.modelID;
     streamIn.Position = pos;
+    
     streamIn.Angle = rot.ToEuler().z;
+
+    // Trains should always be streamed with default rotation.
+    if (spawnData.modelID == 537 || spawnData.modelID == 538) {
+        streamIn.Angle = spawnData.zRotation;
+    }
+
     streamIn.Colour1 = spawnData.colour1;
     streamIn.Colour2 = spawnData.colour2;
     streamIn.Health = health;
@@ -33,11 +40,31 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.TyreDamage = tyreDamage;
     streamIn.PanelDamage = panelDamage;
     streamIn.Siren = spawnData.siren;
-    streamIn.Mods = mods;
+    int mod = 0;
+    while (mod != MAX_VEHICLE_COMPONENT_SLOT_IN_RPC)
+    {
+        streamIn.Mods[mod] = mods[mod];
+        ++mod;
+    }
     streamIn.Paintjob = paintJob;
     streamIn.BodyColour1 = bodyColour1;
     streamIn.BodyColour2 = bodyColour2;
     PacketHelper::send(streamIn, player);
+
+	// Add two more mods (front and rear bullbars).
+    while (mod != MAX_VEHICLE_COMPONENT_SLOT)
+    {
+        if (mods[mod] != 0)
+        {
+            NetCode::RPC::SCMEvent modRPC;
+            modRPC.PlayerID = pid;
+            modRPC.EventType = VehicleSCMEvent_AddComponent;
+            modRPC.VehicleID = poolID;
+            modRPC.Arg1 = mods[mod];
+            PacketHelper::send(modRPC, player);
+        }
+        ++mod;
+    }
 
     if (numberPlate != StringView("XYZSR998")) {
         NetCode::RPC::SetVehiclePlate plateRPC;

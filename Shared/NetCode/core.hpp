@@ -1474,8 +1474,11 @@ namespace Packet {
             bs.writeUINT8(SpecialAction);
             bs.writeCompressedVEC3(Velocity);
 
-            bs.writeBIT(SurfingData.type != PlayerSurfingData::Type::None);
-            if (SurfingData.type != PlayerSurfingData::Type::None) {
+            // We don't want to send player object surfing data.
+            bool send_surfing = SurfingData.type != PlayerSurfingData::Type::None && SurfingData.type != PlayerSurfingData::Type::PlayerObject;
+
+            bs.writeBIT(send_surfing);
+            if (send_surfing) {
                 int id = 0;
                 if (SurfingData.type == PlayerSurfingData::Type::Vehicle) {
                     id = SurfingData.ID;

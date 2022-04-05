@@ -430,6 +430,13 @@ public:
                         vehicle->respawn();
                     }
                 } else if (vehicle->hasBeenOccupied() && delay != Seconds(-1)) {
+
+                    // Trains shouldn't be respawned.
+                    const int model = vehicle->getModel();
+                    if (model == 537 || model == 538 || model == 569 || model == 570) {
+                        continue;
+                    }
+
                     if (now - vehicle->getLastOccupiedTime() >= delay) {
                         vehicle->respawn();
                     }
@@ -457,6 +464,12 @@ public:
 
             for (IVehicle* v : storage) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
+
+                // Trains carriages are created/destroyed by client.
+                const int model = vehicle->getModel();
+                if (model == 569 || model == 570) {
+                    continue;
+                }
 
                 const PlayerState state = player.getState();
                 const Vector2 dist2D = vehicle->getPosition() - player.getPosition();
