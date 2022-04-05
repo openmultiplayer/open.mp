@@ -415,7 +415,7 @@ int PluginCallGM(char* name)
 {
     auto manager = PawnManager::Get();
     for (auto& cur : manager->scripts_) {
-        if (cur.first == manager->entryScript) {
+        if (cur.first == manager->mainName_) {
             return cur.second->Call(name, DefaultReturnValue_False);
         }
     }
@@ -429,7 +429,7 @@ int PluginCallFS(char* name)
         = 0;
     auto manager = PawnManager::Get();
     for (auto& cur : manager->scripts_) {
-        if (cur.first == manager->entryScript) {
+        if (cur.first == manager->mainName_) {
             continue;
         }
 
