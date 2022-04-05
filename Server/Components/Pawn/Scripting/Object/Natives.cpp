@@ -223,30 +223,30 @@ SCRIPT_API(GetObjectSyncRotation, bool(IObject& object))
 
 SCRIPT_API(IsObjectMaterialSlotUsed, bool(IObject& object, int materialindex))
 {
-    ObjectMaterialData data;
-    bool result = object.getMaterialData(materialindex, &data);
+    const ObjectMaterialData* data = nullptr;
+    bool result = object.getMaterialData(materialindex, data);
     if (result) {
-        return data.used;
+        return data->used;
     }
     return result;
 }
 
 SCRIPT_API(GetObjectMaterial, bool(IObject& object, int materialindex, int& modelid, OutputOnlyString& txdname))
 {
-    ObjectMaterialData data;
-    bool result = object.getMaterialData(materialindex, &data);
+    const ObjectMaterialData* data = nullptr;
+    bool result = object.getMaterialData(materialindex, data);
     if (result) {
-        txdname = data.textOrTXD;
+        txdname = data->textOrTXD;
     }
     return result;
 }
 
 SCRIPT_API(GetObjectMaterialText, bool(IObject& object, int materialindex, OutputOnlyString& text))
 {
-    ObjectMaterialData data;
-    bool result = object.getMaterialData(materialindex, &data);
+    const ObjectMaterialData* data = nullptr;
+    bool result = object.getMaterialData(materialindex, data);
     if (result) {
-        text = data.fontOrTexture;
+        text = data->fontOrTexture;
     }
     return result;
 }

@@ -113,7 +113,7 @@ public:
 
     void applyAnimation(const AnimationData& animation) override
     {
-        if (!animationNameValid(animation.lib, animation.name)) {
+        if (!animationLibraryValid(animation.lib)) {
             return;
         }
 

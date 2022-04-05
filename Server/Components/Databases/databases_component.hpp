@@ -9,11 +9,11 @@ class DatabasesComponent final : public IDatabasesComponent, public NoCopy {
 private:
     /// Database connections
     /// TODO: Replace with a pool type that grows dynamically
-    DynamicPoolStorage<DatabaseConnection, IDatabaseConnection, 0, 1025> databaseConnections;
+    DynamicPoolStorage<DatabaseConnection, IDatabaseConnection, 1, 1025> databaseConnections;
 
     /// Database result sets
     /// TODO: Replace with a pool type that grows dynamically
-    DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 0, 2049> databaseResultSets;
+    DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 1, 2049> databaseResultSets;
 
 public:
     /// Creates a result set

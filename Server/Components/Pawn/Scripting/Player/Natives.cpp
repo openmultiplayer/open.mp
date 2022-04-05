@@ -966,7 +966,10 @@ SCRIPT_API(GetPlayerZAim, float(IPlayer& player))
 SCRIPT_API(GetPlayerSurfingOffsets, bool(IPlayer& player, Vector3& offset))
 {
     const PlayerSurfingData& data = player.getSurfingData();
-    offset = data.offset;
+
+    if (data.type != PlayerSurfingData::Type::None) {
+        offset = data.offset;
+    }
     return true;
 }
 

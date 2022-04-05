@@ -102,7 +102,7 @@ namespace RPC {
         uint8_t LightDamage;
         uint8_t TyreDamage;
         uint8_t Siren;
-        StaticArray<int, 14> Mods;
+        StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT_IN_RPC> Mods;
         uint8_t Paintjob;
         int32_t BodyColour1;
         int32_t BodyColour2;
@@ -114,10 +114,6 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            if (ModelID == 570 || ModelID == 569) {
-                return; // SA:MP Legacy, trains have their carriages already implemented so we just store them, not stream them in.
-            }
-
             bs.writeUINT16(VehicleID);
             bs.writeUINT32(ModelID);
             bs.writeVEC3(Position);

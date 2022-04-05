@@ -127,7 +127,7 @@ void PlayerObject::restream()
 
 void PlayerObject::setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour)
 {
-    const ObjectMaterialData* mtl;
+    const ObjectMaterialData* mtl = nullptr;
     if (getMaterialData(index, mtl)) {
         setMtl(index, model, txd, texture, colour);
         NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
@@ -139,7 +139,7 @@ void PlayerObject::setMaterial(uint32_t index, int model, StringView txd, String
 
 void PlayerObject::setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
 {
-    const ObjectMaterialData* mtl;
+    const ObjectMaterialData* mtl = nullptr;
     if (getMaterialData(index, mtl)) {
         setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
         NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
