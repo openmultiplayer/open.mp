@@ -706,6 +706,7 @@ private:
     int* LagCompensation;
     String ServerName;
     int* EnableVehicleFriendlyFire;
+	bool reloading_ = false;
 
     int EnableLogTimestamp;
     String LogTimestampFormat;
@@ -880,6 +881,7 @@ public:
 
     void resetAll() override
     {
+		reloading_ = true;
         NetCode::RPC::PlayerClose RPC;
         PacketHelper::broadcast(RPC, players);
         components.reset();
@@ -891,6 +893,7 @@ public:
 
     void reloadAll() override
     {
+		reloading_ = false;
         for (auto p : players.entries())
         {
             playerInit(*p);
@@ -1230,7 +1233,13 @@ public:
     void onConnect(IPlayer& player) override
     {
         playerInit(player);
-    }
+		if (reloading_)
+		{
+			// Close the player again.
+			NetCode::RPC::PlayerClose RPC;
+			PacketHelper::broadcast(RPC, players);
+		}
+	}
 
     void connectBot(StringView name, StringView script) override
     {
