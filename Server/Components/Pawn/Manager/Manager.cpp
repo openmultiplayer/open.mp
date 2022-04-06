@@ -368,7 +368,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
         int err = script.Exec(nullptr, AMX_EXEC_MAIN);
-        if (err != AMX_ERR_INDEX && err != AMX_ERR_NONE) {
+        if (err != AMX_ERR_NONE) {
             // If there's no `main` ignore it for now.
             core->logLn(LogLevel::Error, "%s", aux_StrError(err));
         } else {
