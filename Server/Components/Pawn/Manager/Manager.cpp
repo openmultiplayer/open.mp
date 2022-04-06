@@ -356,7 +356,14 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 
     CheckNatives(script);
 
-    if (isEntryScript) {
+    if (isEntryScript)
+	{
+		if (reloading_)
+		{
+			core->reloadAll();
+			reloading_ = false;
+			setRestartMS(12000);
+		}
         script.Call("OnGameModeInit", DefaultReturnValue_False);
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
@@ -378,12 +385,6 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     // cache public pointers.
 
     // Call `OnPlayerConnect` (can be after caching).
-    if (isEntryScript && reloading_)
-    {
-        core->reloadAll();
-		reloading_ = false;
-		setRestartMS(12000);
-    }
     for (auto p : players->entries())
     {
         script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
