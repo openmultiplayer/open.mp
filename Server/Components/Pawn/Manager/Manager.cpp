@@ -40,6 +40,7 @@ PawnManager::PawnManager()
     , restartDelay_(12000)
     , scriptPath_("")
     , basePath_("./")
+    , nextSleep_(TimePoint::min())
 {
 }
 
@@ -243,16 +244,30 @@ bool PawnManager::Changemode(std::string const& name)
 
 void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 {
-    if (nextRestart_ == TimePoint::min())
+    if (nextRestart_ != TimePoint::min() && nextRestart_ <= now)
     {
-        return;
-    }
-    // Reloading a script.
-    if (nextRestart_ < now)
-    {
-        // Restart is in the past, load the next GM.
+	    // Reloading a script.  Restart is in the past, load the next GM.
         Load(mainName_, true);
         nextRestart_ = TimePoint::min();
+    }
+    if (mainScript_ && nextSleep_ != TimePoint::min() && nextSleep_ <= now)
+    {
+	    // AMX_EXEC_CONT
+		nextSleep_ = TimePoint::min();
+		cell retval;
+		int err = mainScript_->Exec(&retval, AMX_EXEC_MAIN);
+		if (err == AMX_ERR_NONE)
+		{
+		}
+		else if (err == AMX_ERR_SLEEP)
+		{
+			nextSleep_ = Time::now() + Milliseconds(retval);
+		}
+		else
+		{
+			// If there's no `main` ignore it for now.
+			core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+		}
     }
 }
 
@@ -364,12 +379,22 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
         script.Call("OnGameModeInit", DefaultReturnValue_False);
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
-        int err = script.Exec(nullptr, AMX_EXEC_MAIN);
-        if (err != AMX_ERR_NONE) {
+		nextSleep_ = TimePoint::min();
+		cell retval;
+        int err = script.Exec(&retval, AMX_EXEC_MAIN);
+        if (err == AMX_ERR_NONE)
+		{
+            script.cache_.inited = true;
+        }
+		else if (err == AMX_ERR_SLEEP)
+		{
+            script.cache_.inited = true;
+			nextSleep_ = Time::now() + Milliseconds(retval);
+		}
+		else
+		{
             // If there's no `main` ignore it for now.
             core->logLn(LogLevel::Error, "%s", aux_StrError(err));
-        } else {
-            script.cache_.inited = true;
         }
 		// TODO: `AMX_EXEC_CONT` support.
     } else {
