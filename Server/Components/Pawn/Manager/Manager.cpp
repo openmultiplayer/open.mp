@@ -431,15 +431,13 @@ bool PawnManager::Unload(std::string const& name)
     // Call `OnPlayerDisconnect`.
     for (auto const p : players->entries())
     {
-        script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), 3);
+		// Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
+        script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), 4);
     }
     if (isEntryScript) {
         CallInSides("OnGameModeExit", DefaultReturnValue_False);
         script.Call("OnGameModeExit", DefaultReturnValue_False);
     } else {
-        for (IPlayer* player : players->entries()) {
-            script.Call("OnPlayerDisconnect", DefaultReturnValue_True, player->getID());
-        }
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
 
