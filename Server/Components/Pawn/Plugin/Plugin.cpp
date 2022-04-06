@@ -414,10 +414,9 @@ void PawnPlugin::Unload()
 int PluginCallGM(char* name)
 {
     auto manager = PawnManager::Get();
-    for (auto& cur : manager->scripts_) {
-        if (cur.first == manager->mainName_) {
-            return cur.second->Call(name, DefaultReturnValue_False);
-        }
+	if (manager->mainScript_)
+    {
+        return manager->mainScript_->Call(name, DefaultReturnValue_False);
     }
     return 0;
 }
@@ -429,10 +428,6 @@ int PluginCallFS(char* name)
         = 0;
     auto manager = PawnManager::Get();
     for (auto& cur : manager->scripts_) {
-        if (cur.first == manager->mainName_) {
-            continue;
-        }
-
         ret = cur.second->Call(name, DefaultReturnValue_False);
         if (!ret)
             return ret;
@@ -447,3 +442,4 @@ void PluginLogprintf(const char* fmt, ...)
     PawnManager::Get()->core->vprintLn(fmt, args);
     va_end(args);
 }
+
