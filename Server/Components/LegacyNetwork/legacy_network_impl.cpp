@@ -6,12 +6,6 @@
 #include <raknet/RakPeer.h>
 #include <ttmath/ttmath.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wlogical-op-parentheses"
-#define CPPHTTPLIB_OPENSSL_SUPPORT
-#include <httplib/httplib.h>
-#pragma clang diagnostic pop
-
 #define RPCHOOK(id) rakNetServer.RegisterAsRemoteProcedureCall(id, &RakNetLegacyNetwork::RPCHook<id>, this)
 
 RakNetLegacyNetwork::RakNetLegacyNetwork()
