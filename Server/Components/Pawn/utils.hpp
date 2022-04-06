@@ -524,57 +524,6 @@ inline cell AMX_NATIVE_CALL pawn_Script_GetID(AMX* amx, cell const* params)
     return PawnManager::Get()->IDFromAMX(amx);
 }
 
-inline int ComponentCallGM(char* name)
-{
-    int
-        fail
-        = AMX_ERR_NONE;
-    auto manager = PawnManager::Get();
-    for (auto& cur : manager->scripts_) {
-        if (cur.first != manager->mainName_) {
-            continue;
-        }
-        int
-            idx,
-            err;
-        cell
-            ret;
-        err = cur.second->FindPublic(name, &idx);
-        if (err != AMX_ERR_NONE)
-            continue;
-        err = cur.second->Exec(&ret, idx);
-        if (err != AMX_ERR_NONE)
-            fail = err;
-        break;
-    }
-    return fail;
-}
-
-inline int ComponentCallFS(char* name)
-{
-    int
-        fail
-        = AMX_ERR_NONE;
-    auto manager = PawnManager::Get();
-    for (auto& cur : manager->scripts_) {
-        if (cur.first == manager->mainName_) {
-            continue;
-        }
-        int
-            idx,
-            err;
-        cell
-            ret;
-        err = cur.second->FindPublic(name, &idx);
-        if (err != AMX_ERR_NONE)
-            continue;
-        err = cur.second->Exec(&ret, idx);
-        if (err != AMX_ERR_NONE)
-            fail = err;
-    }
-    return fail;
-}
-
 #ifdef WIN32
 
 #include <Shlwapi.h>
