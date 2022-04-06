@@ -1,10 +1,11 @@
 #include "timer.hpp"
 #include <sdk.hpp>
+#include <list>
 
 class TimersComponent final : public ITimersComponent, public CoreEventHandler {
 private:
     ICore* core = nullptr;
-    std::set<Timer*> timers;
+    std::list<Timer*> timers;
 
 public:
     StringView componentName() const override
@@ -38,14 +39,14 @@ public:
     ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) override
     {
         Timer* timer = new Timer(handler, interval, interval, repeating ? 0 : 1);
-        timers.insert(timer);
+        timers.push_back(timer);
         return timer;
     }
 	
     ITimer* create(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count) override
     {
         Timer* timer = new Timer(handler, initial, interval, count);
-        timers.insert(timer);
+        timers.push_back(timer);
         return timer;
     }
 
@@ -59,7 +60,7 @@ public:
             } else {
                 const TimePoint now = Time::now();
                 const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
-                if (diff.count() > 0) {
+                if (diff.count() >= 0) {
                     timer->handler()->timeout(*timer);
                     if (timer->trigger()) {
                         timer->setTimeout(now + timer->interval() - diff);
