@@ -691,22 +691,6 @@ void RakNetLegacyNetwork::start()
 
     update();
 
-    if (*config.getInt("announce")) {
-        const String get = "/0.3.7/announce/" + std::to_string(port);
-        {
-            httplib::Client request("https://api.open.mp");
-            request.enable_server_certificate_verification(true);
-            request.set_follow_location(true);
-            request.set_connection_timeout(Seconds(5));
-            request.set_read_timeout(Seconds(5));
-            request.set_write_timeout(Seconds(5));
-            const httplib::Result res = request.Get(get.c_str());
-            if (!res || res.value().status != 200) {
-                core->printLn("Failed to announce legacy network to open.mp list");
-            }
-        }
-    }
-
     for (size_t i = 0; i < config.getBansCount(); ++i) {
         ban(config.getBan(i));
     }
@@ -722,6 +706,12 @@ void RakNetLegacyNetwork::start()
             core->logLn(LogLevel::Message, "Legacy Network started on %.*s:%d.", PRINT_VIEW(bind), port);
         } else {
             core->logLn(LogLevel::Message, "Legacy Network started on port %d", port);
+        }
+
+        // Do the request after network is started.
+        if (*config.getInt("announce")) {
+            const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
+            core->requestHTTP(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
         }
     }
 
