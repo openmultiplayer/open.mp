@@ -370,11 +370,6 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
         PlayerEvents::Get()->IgnoreOneConnect();
     } else {
         script.Call("OnFilterScriptInit", DefaultReturnValue_False);
-
-        for (IPlayer* player : players->entries()) {
-            script.Call("OnPlayerConnect", DefaultReturnValue_True, player->getID());
-        }
-
         script.cache_.inited = true;
     }
 
