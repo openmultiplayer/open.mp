@@ -233,9 +233,6 @@ bool PawnManager::Changemode(std::string const& name)
     // Disconnect players.
     // Unload the old main script.
     Unload(mainName_);
-    // TODO: Trigger all components to reset.
-    PlayerEvents::Get()->IgnoreOneDisconnect();
-    // TODO: Inform clients of the restart.
     // Save the name of the next script.
     mainName_ = name;
     // Start the changemode timer.
@@ -374,13 +371,12 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
         } else {
             script.cache_.inited = true;
         }
-        PlayerEvents::Get()->IgnoreOneConnect();
+		// TODO: `AMX_EXEC_CONT` support.
     } else {
         script.Call("OnFilterScriptInit", DefaultReturnValue_False);
         script.cache_.inited = true;
     }
 
-    // TODO: `AMX_EXEC_CONT` support.
     // Assume that all initialisation and header mangling is now complete, and that it is safe to
     // cache public pointers.
 

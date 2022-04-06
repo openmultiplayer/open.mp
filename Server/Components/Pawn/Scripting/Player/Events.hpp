@@ -4,32 +4,11 @@
 #include "sdk.hpp"
 
 class PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler, public Singleton<PlayerEvents> {
-private:
-    bool skipConnect_ = false;
-    bool skipDisconnect_ = false;
-
 public:
-    void IgnoreOneDisconnect()
-    {
-        skipDisconnect_ = true;
-    }
-
-    void IgnoreOneConnect()
-    {
-        skipConnect_ = true;
-    }
-
     void onConnect(IPlayer& player) override
     {
-        if (skipConnect_)
-        {
-            skipConnect_ = false;
-        }
-        else
-        {
-            PawnManager::Get()->CallInSidesWhile1("OnPlayerConnect", player.getID());
-            PawnManager::Get()->CallInEntry("OnPlayerConnect", DefaultReturnValue_True, player.getID());
-        }
+        PawnManager::Get()->CallInSidesWhile1("OnPlayerConnect", player.getID());
+        PawnManager::Get()->CallInEntry("OnPlayerConnect", DefaultReturnValue_True, player.getID());
     }
 
     void onSpawn(IPlayer& player) override
@@ -60,15 +39,8 @@ public:
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        if (skipDisconnect_)
-        {
-            skipDisconnect_ = false;
-        }
-        else
-        {
-            PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
-            PawnManager::Get()->CallInSidesWhile1("OnPlayerDisconnect", player.getID(), int(reason));
-        }
+        PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
+        PawnManager::Get()->CallInSidesWhile1("OnPlayerDisconnect", player.getID(), int(reason));
     }
 
     bool onRequestSpawn(IPlayer& player) override
