@@ -11,6 +11,15 @@ private:
 	friend class DialogsComponent;
 
 public:
+	void hide(IPlayer & player) override
+	{
+		if (activeId != INVALID_DIALOG_ID)
+		{
+			show(player, INVALID_DIALOG_ID, DialogStyle_MSGBOX, " ", " ", " ", " ");
+			activeId = INVALID_DIALOG_ID;
+		}
+	}
+
     void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
     {
         NetCode::RPC::ShowDialog showDialog;
@@ -109,10 +118,13 @@ public:
         NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
     }
 
-    void reset() override
-    {
-        // Destroy all stored entity instances.
-    }
+	void reset() override
+	{
+		for (IPlayer * player : core->getPlayers().entries())
+		{
+			queryExtension<IPlayerDialogData>(player)->hide(*player);
+		}
+	}
 
     void free() override
     {
