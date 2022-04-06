@@ -47,6 +47,7 @@ public:
 
     void reset() override
     {
+		// Could call `hide()` here, but then we'd have to store the player ID.
         activeId = INVALID_DIALOG_ID;
     }
 };
