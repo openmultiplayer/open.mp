@@ -19,6 +19,7 @@ using namespace Impl;
 
 class Core;
 
+
 class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
 private:
     ICore* core = nullptr;
@@ -244,3 +245,19 @@ public:
     void unban(const BanEntry& entry) override;
 };
 
+struct AnnounceHTTPResponseHandler final : HTTPResponseHandler {
+    ICore* core;
+
+    AnnounceHTTPResponseHandler(ICore* core)
+        : core(core)
+    {
+    }
+
+    void onHTTPResponse(int status, StringView body) override
+    {
+        if (status != 200) {
+            core->printLn("Failed to announce legacy network to open.mp list");
+        }
+        delete this;
+    }
+};
