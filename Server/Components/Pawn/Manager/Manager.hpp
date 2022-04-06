@@ -67,6 +67,8 @@ public:
     TimePoint nextRestart_;
     Milliseconds restartDelay_;
 	bool reloading_ = false;
+    TimePoint nextSleep_;
+
 private:
 	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const & name) const
 	{
