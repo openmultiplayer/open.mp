@@ -481,7 +481,7 @@ bool PawnManager::Unload(std::string const& name)
     for (auto const p : players->entries())
     {
 		// Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
-        script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), 4);
+        script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_ModeEnd);
     }
     if (isEntryScript) {
         CallInSides("OnGameModeExit", DefaultReturnValue_False);
