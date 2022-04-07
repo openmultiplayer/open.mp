@@ -255,15 +255,12 @@ void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 	    // AMX_EXEC_CONT
 		nextSleep_ = TimePoint::min();
 		cell retval;
-		int err = mainScript_->Exec(&retval, AMX_EXEC_MAIN);
-		if (err == AMX_ERR_NONE)
-		{
-		}
-		else if (err == AMX_ERR_SLEEP)
+		int err = mainScript_->Exec(&retval, AMX_EXEC_CONT);
+		if (err == AMX_ERR_SLEEP)
 		{
 			nextSleep_ = Time::now() + Milliseconds(retval);
 		}
-		else
+		else if(err != AMX_ERR_NONE)
 		{
 			// If there's no `main` ignore it for now.
 			core->logLn(LogLevel::Error, "%s", aux_StrError(err));
