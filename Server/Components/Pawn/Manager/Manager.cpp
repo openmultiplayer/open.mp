@@ -39,8 +39,8 @@ PawnManager::PawnManager()
     , nextRestart_(TimePoint::min())
     , restartDelay_(12000)
     , scriptPath_("")
-    , basePath_("./")
     , nextSleep_(TimePoint::min())
+    , basePath_("./")
 {
 }
 
