@@ -119,4 +119,5 @@ SCRIPT_API(GetPlayerRaceCheckpoint, bool(IPlayer& player, Vector3& pos, Vector3&
         size = data.getRadius();
         return true;
     }
+    return false;
 }
