@@ -60,6 +60,8 @@ public:
     IVehiclesComponent* vehicles = nullptr;
     DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
     PawnPluginManager pluginManager;
+
+private:
     int gamemodeIndex_ = 0;
     int gamemodeRepeat_ = 1;
     DynamicArray<String> gamemodes_;
@@ -69,7 +71,19 @@ public:
 	bool reloading_ = false;
     TimePoint nextSleep_;
 
-private:
+	// To preserve main script `sleep` information between callbacks.
+	struct
+	{
+		cell cip;
+		cell frm;
+		cell hea;
+		cell stk;
+		cell pri;
+		cell alt;
+		cell reset_stk;
+		cell reset_hea;
+	} sleepData_;
+
 	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const & name) const
 	{
 		return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const & it) {
