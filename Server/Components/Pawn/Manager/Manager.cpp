@@ -38,8 +38,9 @@ PawnManager::PawnManager()
     , gamemodes_()
     , nextRestart_(TimePoint::min())
     , restartDelay_(12000)
-    , scriptPath_("")
     , nextSleep_(TimePoint::min())
+	, sleepData_()
+    , scriptPath_("")
     , basePath_("./")
 {
 }
@@ -253,17 +254,39 @@ void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
     if (mainScript_ && nextSleep_ != TimePoint::min() && nextSleep_ <= now)
     {
 	    // AMX_EXEC_CONT
+		// Restore the saved `sleep` data.  This is what sleep is meant to do itself, but the code
+		// wasn't written to account for other callbacks being called in the interim, and they thus
+		// clobber this data.
+		AMX * amx = mainScript_->GetAMX();
+		amx->cip = sleepData_.cip;
+		amx->frm = sleepData_.frm;
+		amx->hea = sleepData_.hea;
+		amx->stk = sleepData_.stk;
+		amx->pri = sleepData_.pri;
+		amx->alt = sleepData_.alt;
+		amx->reset_stk = sleepData_.reset_stk;
+		amx->reset_hea = sleepData_.reset_hea;
 		nextSleep_ = TimePoint::min();
 		cell retval;
 		int err = mainScript_->Exec(&retval, AMX_EXEC_CONT);
 		if (err == AMX_ERR_SLEEP)
 		{
 			nextSleep_ = Time::now() + Milliseconds(retval);
+			sleepData_ = {
+				amx->cip,
+				amx->frm,
+				amx->hea,
+				amx->stk,
+				amx->pri,
+				amx->alt,
+				amx->reset_stk,
+				amx->reset_hea,
+			};
 		}
-		else if(err != AMX_ERR_NONE)
+		else if (err != AMX_ERR_NONE)
 		{
 			// If there's no `main` ignore it for now.
-			core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+			core->logLn(LogLevel::Error, "%d %s", err, aux_StrError(err));
 		}
     }
 }
@@ -387,6 +410,18 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 		{
             script.cache_.inited = true;
 			nextSleep_ = Time::now() + Milliseconds(retval);
+			// Save the `sleep` state so it doesn't get clobbered by other callbacks.
+			AMX * amx = script.GetAMX();
+			sleepData_ = {
+				amx->cip,
+				amx->frm,
+				amx->hea,
+				amx->stk,
+				amx->pri,
+				amx->alt,
+				amx->reset_stk,
+				amx->reset_hea,
+			};
 		}
 		else
 		{
