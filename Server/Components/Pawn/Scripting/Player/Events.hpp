@@ -39,8 +39,8 @@ public:
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
         PawnManager::Get()->CallInSidesWhile1("OnPlayerDisconnect", player.getID(), int(reason));
+        PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
     }
 
     bool onRequestSpawn(IPlayer& player) override
