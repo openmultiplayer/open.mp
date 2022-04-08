@@ -202,7 +202,7 @@ public:
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
     {
         if (defaults) {
-            StringView scripts[] = { "test.amx" };
+            StringView scripts[] = { "test 1" };
             config.setStrings("pawn.main_scripts", Span<StringView>(scripts, 1));
             config.setStrings("pawn.side_scripts", Span<StringView>());
             config.setStrings("pawn.legacy_plugins", Span<StringView>());
