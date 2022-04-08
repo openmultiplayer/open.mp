@@ -294,8 +294,7 @@ SCRIPT_API(GetPlayerVelocity, bool(IPlayer& player, Vector3& velocity))
 
 SCRIPT_API(GetPlayerCameraPos, bool(IPlayer& player, Vector3& pos))
 {
-    PlayerAimData data = player.getAimData();
-    pos = data.CamPos;
+    pos = player.getAimData().camPos;
     return true;
 }
 
@@ -638,8 +637,7 @@ SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, i
 
 SCRIPT_API(GetPlayerWeaponState, int(IPlayer& player))
 {
-    PlayerAimData data = player.getAimData();
-    return data.WeaponState;
+    return player.getAimData().weaponState;
 }
 
 SCRIPT_API(InterpolateCameraPos, bool(IPlayer& player, Vector3 from, Vector3 to, int time, int cut))
@@ -677,21 +675,18 @@ SCRIPT_API(AttachCameraToPlayerObject, bool(IPlayer& player, IPlayerObject& obje
 
 SCRIPT_API(GetPlayerCameraAspectRatio, float(IPlayer& player))
 {
-    PlayerAimData data = player.getAimData();
-    return data.AspectRatio;
+    return player.getAimData().aspectRatio;
 }
 
 SCRIPT_API(GetPlayerCameraFrontVector, bool(IPlayer& player, Vector3& vector))
 {
-    PlayerAimData data = player.getAimData();
-    vector = data.CamFrontVector;
+    vector = player.getAimData().camFrontVector;
     return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraMode, -1, int(IPlayer& player))
 {
-    PlayerAimData data = player.getAimData();
-    return data.CamMode;
+    return player.getAimData().camMode;
 }
 
 SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& leftright))
@@ -835,7 +830,7 @@ SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
 
 SCRIPT_API(GetPlayerCameraZoom, float(IPlayer& player))
 {
-    return (player.getAimData().CamZoom & 0x3F) * 0.015873017 * 35.0 + 35.0;
+    return player.getAimData().camZoom;
 }
 
 SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
@@ -960,7 +955,7 @@ SCRIPT_API(GetPlayerSkillLevel, int(IPlayer& player, int skill))
 
 SCRIPT_API(GetPlayerZAim, float(IPlayer& player))
 {
-    return player.getAimData().AimZ;
+    return player.getAimData().aimZ;
 }
 
 SCRIPT_API(GetPlayerSurfingOffsets, bool(IPlayer& player, Vector3& offset))
