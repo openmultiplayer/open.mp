@@ -10,7 +10,7 @@ function(add_server_component name)
 	add_library(${PROJECT_NAME} SHARED ${component_source_list})
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE
-		SDK
+		OMP-SDK
 		NetCode
 	)
 
