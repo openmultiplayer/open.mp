@@ -17,7 +17,7 @@ target_compile_definitions(Server PRIVATE
 )
 
 target_link_libraries(Server PUBLIC
-	SDK
+	OMP-SDK
 	NetCode
 )
 

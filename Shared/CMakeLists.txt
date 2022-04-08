@@ -2,7 +2,7 @@ set(PROJECT Shared)
 
 add_library(NetCode STATIC)
 
-target_link_libraries(NetCode PUBLIC SDK)
+target_link_libraries(NetCode PUBLIC OMP-SDK)
 
 target_include_directories(NetCode PUBLIC .)
 
