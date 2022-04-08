@@ -590,13 +590,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
             if (frontvec > 0.0 && frontvec < 1.5) {
                 Player& player = static_cast<Player&>(peer);
-                player.aimingData_.AimZ = aimSync.AimZ;
-                player.aimingData_.CamFrontVector = aimSync.CamFrontVector;
-                player.aimingData_.CamMode = aimSync.CamMode;
-                player.aimingData_.CamPos = aimSync.CamPos;
-                player.aimingData_.CamZoom = aimSync.CamZoom;
-                player.aimingData_.WeaponState = aimSync.WeaponState;
-                player.aimingData_.AspectRatio = aimSync.AspectRatio;
+                player.aimingData_.aimZ = aimSync.AimZ;
+                player.aimingData_.camFrontVector = aimSync.CamFrontVector;
+                player.aimingData_.camMode = aimSync.CamMode;
+                player.aimingData_.camPos = aimSync.CamPos;
+                player.aimingData_.camZoom = aimSync.CamZoom * 0.015873017f * 35.f + 35.f;
+                player.aimingData_.weaponState = PlayerWeaponState(aimSync.WeaponState);
+                player.aimingData_.aspectRatio = (aimSync.AspectRatio * 1.f / 255) + 1.f;
 
                 //fix for camera shaking hack, i think there are more bugged ids
                 if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u)
