@@ -203,7 +203,8 @@ public:
 
     IClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
-        if (storage._entries().size() == CLASS_POOL_SIZE) {
+		size_t count = storage._entries().size();
+        if (count == CLASS_POOL_SIZE) {
             Class* lastClass = storage.get(storage.Upper - 1);
 
             lastClass->cls = PlayerClass(skin, team, spawn, angle, weapons);
@@ -211,7 +212,15 @@ public:
             return lastClass;
         }
 
-        return storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
+        IClass* ret = storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
+		if (count == 0) {
+			// First class.  Initialise all the players with this.
+			for (auto & i : core->getPlayers().entries()) {
+				queryExtension<IPlayerClassData>(i)->setSpawnInfo(ret->getClass());
+			}
+		}
+
+		return ret;
     }
 
     void onConnect(IPlayer& player) override
