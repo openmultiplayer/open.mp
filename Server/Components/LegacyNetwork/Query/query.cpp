@@ -63,7 +63,7 @@ void Query::buildPlayerInfoBuffer(IPlayer* except)
         writeToBuffer(output, playerName.data(), offset, playerNameLength);
 
         // Write player score
-        writeToBuffer(output, offset, player->getScore());
+        writeToBuffer(output, offset, static_cast<int32_t>(player->getScore()));
     }
 
     // Don't read (and send) uninitialized memory
