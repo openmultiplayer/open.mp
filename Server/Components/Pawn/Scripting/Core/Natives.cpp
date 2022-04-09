@@ -543,3 +543,19 @@ SCRIPT_API(ChatTextReplacementToggled, bool())
     return *PawnManager::Get()->config->getInt("chat_input_filter");
 }
 
+SCRIPT_API(IsValidNickName, bool(const std::string& name))
+{
+    return PawnManager::Get()->players->isNameValid(name);
+}
+
+SCRIPT_API(AllowNickNameCharacter, bool(char character, bool allow))
+{
+    PawnManager::Get()->players->allowNickNameCharacter(character, allow);
+    return true;
+}
+
+SCRIPT_API(IsNickNameCharacterAllowed, bool(char character))
+{
+    return PawnManager::Get()->players->isNickNameCharacterAllowed(character);
+}
+
