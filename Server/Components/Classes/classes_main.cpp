@@ -216,7 +216,12 @@ public:
 
     void onConnect(IPlayer& player) override
     {
-        player.addExtension(new PlayerClassData(player), true);
+		auto first = storage.begin();
+		if (player.addExtension(new PlayerClassData(player), true) && first != storage.end())
+		{
+			// Initialise the player's current spawn data to the first defined class.
+			queryExtension<IPlayerClassData>(player)->setSpawnInfo((*first)->getClass());
+		}
     }
 
     void free() override
