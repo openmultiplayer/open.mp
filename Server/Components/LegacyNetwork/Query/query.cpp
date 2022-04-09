@@ -41,7 +41,7 @@ void Query::buildPlayerInfoBuffer(IPlayer* except)
     }
 
     assert(playerCount <= maxPlayers);
-    playerListBufferLength = BASE_QUERY_SIZE + sizeof(uint16_t) + (sizeof(uint8_t) + MAX_PLAYER_NAME) * playerCount;
+    playerListBufferLength = BASE_QUERY_SIZE + sizeof(uint16_t) + (sizeof(uint8_t) + MAX_PLAYER_NAME + sizeof(int32_t)) * playerCount;
     playerListBuffer.reset(new char[playerListBufferLength]);
     size_t offset = QUERY_TYPE_INDEX;
     char* output = playerListBuffer.get();
@@ -63,7 +63,7 @@ void Query::buildPlayerInfoBuffer(IPlayer* except)
         writeToBuffer(output, playerName.data(), offset, playerNameLength);
 
         // Write player score
-        writeToBuffer(output, offset, player->getScore());
+        writeToBuffer(output, offset, static_cast<int32_t>(player->getScore()));
     }
 
     // Don't read (and send) uninitialized memory

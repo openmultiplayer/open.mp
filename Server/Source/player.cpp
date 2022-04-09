@@ -22,10 +22,11 @@ void Player::setColour(Colour colour)
 
 EPlayerNameStatus Player::setName(StringView name)
 {
+    if (!pool_.isNameValid(name)) {
+        return EPlayerNameStatus::Invalid;
+    }
     if (pool_.isNameTaken(name, this)) {
         return EPlayerNameStatus::Taken;
-    } else if (name.length() > MAX_PLAYER_NAME) {
-        return EPlayerNameStatus::Invalid;
     }
     pool_.eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
 

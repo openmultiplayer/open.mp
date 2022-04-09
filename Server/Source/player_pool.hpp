@@ -20,6 +20,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     float* markersLimitRadius;
     int* gameTimeUpdateRate;
     int maxBots = 0;
+    std::array<bool, 256> allowNickCharacter;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
@@ -1167,22 +1168,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override
     {
-        if (params.bot) {
-            if (botList.size() >= maxBots) {
-                return { NewConnectionResult_NoPlayerSlot, nullptr };
-            }
+        if (params.bot && botList.size() >= maxBots) {
+            return { NewConnectionResult_NoPlayerSlot, nullptr };
         }
 
-        if (params.name.length() < MIN_PLAYER_NAME || params.name.length() > MAX_PLAYER_NAME) {
-            return { NewConnectionResult_BadName, nullptr };
-        }
-        for (char chr : params.name) {
-            if (!std::isalnum(chr) && chr != ']' && chr != '[' && chr != '_' && chr != '$' && chr != '=' && chr != '(' && chr != ')' && chr != '@' && chr != '.') {
-                return { NewConnectionResult_BadName, nullptr };
-            }
-        }
-
-        if (isNameTaken(params.name, nullptr)) {
+        if (!isNameValid(params.name) || isNameTaken(params.name, nullptr)) {
             return { NewConnectionResult_BadName, nullptr };
         }
 
@@ -1305,6 +1295,55 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         , playerUnoccupiedSyncHandler(*this)
         , playerTrailerSyncHandler(*this)
     {
+        allowNickCharacter.fill(false);
+
+        // Set default allowed nickname characters.
+
+        for (char character = '0'; character <= '9'; ++character) {
+            allowNickCharacter[character] = true;
+        }
+
+        for (char character = 'a'; character <= 'z'; ++character) {
+            allowNickCharacter[character] = true;
+        }
+
+        for (char character = 'A'; character <= 'Z'; ++character) {
+            allowNickCharacter[character] = true;
+        }
+
+        allowNickCharacter[']'] = true;
+        allowNickCharacter['['] = true;
+        allowNickCharacter['_'] = true;
+        allowNickCharacter['$'] = true;
+        allowNickCharacter['='] = true;
+        allowNickCharacter['('] = true;
+        allowNickCharacter[')'] = true;
+        allowNickCharacter['@'] = true;
+        allowNickCharacter['.'] = true;
+    }
+
+    bool isNameValid(StringView name) const override
+    {
+        const size_t length = name.length();
+
+        if (length < MIN_PLAYER_NAME || length > MAX_PLAYER_NAME) {
+            return false;
+        }
+
+        return std::all_of(name.begin(), name.end(),
+            [&](const char& character) {
+                return allowNickCharacter[character];
+            });
+    }
+
+    void allowNickNameCharacter(char character, bool allow) override
+    {
+        allowNickCharacter[character] = allow;
+    }
+
+    bool isNickNameCharacterAllowed(char character) const override
+    {
+        return allowNickCharacter[character];
     }
 
     bool isNameTaken(StringView name, const IPlayer* skip) override
