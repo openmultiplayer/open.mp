@@ -66,6 +66,17 @@ std::string GetLastErrorAsString()
 
     return message;
 }
+#else
+std::string GetLastErrorAsString()
+{
+    const char* lastError = dlerror();
+
+    if (lastError == nullptr) {
+        return std::string();
+    }
+
+    return std::string(lastError);
+}
 #endif
 
 void RunProcess(StringView exe, StringView args)
