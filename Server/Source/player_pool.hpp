@@ -217,11 +217,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.setState(PlayerState_Wasted);
 
             IPlayer* killer = self.storage.get(onPlayerDeathRPC.KillerID);
+            uint8_t reason = onPlayerDeathRPC.Reason;
+            self.core.logLn(
+                LogLevel::Message,
+                "[death] %.*s died %d",
+                PRINT_VIEW(player.name_),
+                reason
+            );
             self.eventDispatcher.dispatch(
                 &PlayerEventHandler::onDeath,
                 peer,
                 killer,
-                onPlayerDeathRPC.Reason);
+                reason);
 
             NetCode::RPC::PlayerDeath playerDeathRPC;
             playerDeathRPC.PlayerID = player.poolID;
@@ -344,16 +351,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 filteredMessage = String(StringView(playerChatMessageRequest.message));
             }
 
+            if (*logChat) {
+                self.core.printLn("[chat] %.*s: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
+            }
+
             bool send = self.eventDispatcher.stopAtFalse(
                 [&peer, &filteredMessage](PlayerEventHandler* handler) {
                     return handler->onText(peer, filteredMessage);
                 });
 
             if (send) {
-                if (*logChat) {
-                    self.core.printLn("%.*s: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
-                }
-
                 if (*limitGlobalChatRadius) {
                     const float limit = *globalChatRadiusLimit;
                     const Vector3 pos = peer.getPosition();
@@ -1202,7 +1209,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     {
         PeerAddress::AddressString addressString;
         PeerAddress::ToString(peer.getNetworkData().networkID.address, addressString);
-        eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, peer.getNetworkData().networkID.port);
+        uint16_t port = peer.getNetworkData().networkID.port;
+        core.logLn(
+            LogLevel::Message,
+            "[connection] incoming connection: %s:%d id: %d",
+            addressString.data(),
+            port,
+            peer.getID()
+        );
+        eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, port);
 
         // Don't process player, about to be disconnected
         if (peer.getState() == PlayerState_Kicked) {
@@ -1238,6 +1253,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         player.time_ = duration_cast<Minutes>(Hours(*hour));
         player.weather_ = *weather;
 
+        core.logLn(
+            LogLevel::Message,
+            "[join] %.*s has joined the server (%d:%s)",
+            PRINT_VIEW(player.name_),
+            player.poolID,
+            addressString.data()
+        );
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
@@ -1271,6 +1293,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         packet.Reason = reason;
         PacketHelper::broadcast(packet, *this);
 
+        core.logLn(
+            LogLevel::Message,
+            "[part] %.*s has left the server (%d:%d)",
+            PRINT_VIEW(player.name_),
+            player.poolID,
+            reason
+        );
         eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
         auto& secondaryPool = player.isBot_ ? botList : playerList;
