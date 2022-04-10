@@ -356,7 +356,7 @@ public:
         }
     }
 
-    // Pre-spawn so you can safely attach onSpawn
+    // Pre-spawn so you can safely attach onPlayerSpawn
     void preSpawn(IPlayer& player) override
     {
         const int pid = player.getID();

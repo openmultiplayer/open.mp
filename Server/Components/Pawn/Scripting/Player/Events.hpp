@@ -19,7 +19,7 @@ public:
         PawnManager::Get()->CallInEntry("OnPlayerConnect", DefaultReturnValue_True, player.getID());
     }
 
-    void onSpawn(IPlayer& player) override
+    void onPlayerSpawn(IPlayer& player) override
     {
         PawnManager::Get()->CallInSidesWhile1("OnPlayerSpawn", player.getID());
         PawnManager::Get()->CallInEntry("OnPlayerSpawn", DefaultReturnValue_True, player.getID());
@@ -51,7 +51,7 @@ public:
         PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
     }
 
-    bool onRequestSpawn(IPlayer& player) override
+    bool onPlayerRequestSpawn(IPlayer& player) override
     {
         cell ret = PawnManager::Get()->CallInSidesWhile1("OnPlayerRequestSpawn", player.getID());
         if (ret) {
