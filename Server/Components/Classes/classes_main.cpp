@@ -215,7 +215,7 @@ public:
         IClass* ret = storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
 		if (count == 0) {
 			// First class.  Initialise all the players with this.
-			for (auto & i : core->getPlayers().entries()) {
+			for (auto i : core->getPlayers().entries()) {
 				queryExtension<IPlayerClassData>(i)->setSpawnInfo(ret->getClass());
 			}
 		}
