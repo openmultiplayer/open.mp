@@ -201,9 +201,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     struct PlayerDeathRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
+        int* logDeaths;
+
         PlayerDeathRPCHandler(PlayerPool& self)
             : self(self)
         {
+        }
+
+        void init(IConfig& config)
+        {
+            logDeaths = config.getInt("logging_deaths");
         }
 
         bool received(IPlayer& peer, NetworkBitStream& bs) override
@@ -218,12 +225,24 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             IPlayer* killer = self.storage.get(onPlayerDeathRPC.KillerID);
             uint8_t reason = onPlayerDeathRPC.Reason;
-            self.core.logLn(
-                LogLevel::Message,
-                "[death] %.*s died %d",
-                PRINT_VIEW(player.name_),
-                reason
-            );
+
+            if (*logDeaths) {
+                if (killer == nullptr) {
+                    self.core.logLn(
+                        LogLevel::Message,
+                        "[death] %.*s died %d",
+                        PRINT_VIEW(player.name_),
+                        reason);
+                } else {
+                    self.core.logLn(
+                        LogLevel::Message,
+                        "[kill] %.*s killed %.*s %.*s",
+                        PRINT_VIEW(killer->getName()),
+                        PRINT_VIEW(player.name_),
+                        PRINT_VIEW(self.core.getWeaponName(PlayerWeapon(reason))));
+                }
+            }
+
             self.eventDispatcher.dispatch(
                 &PlayerEventHandler::onDeath,
                 peer,
@@ -1414,6 +1433,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         streamConfigHelper = StreamConfigHelper(config);
         playerTextRPCHandler.init(config);
         playerCommandRPCHandler.init(config);
+        playerDeathRPCHandler.init(config);
         markersShow = config.getInt("show_player_markers");
         markersLimit = config.getInt("limit_player_markers");
         markersLimitRadius = config.getFloat("player_markers_draw_distance");
