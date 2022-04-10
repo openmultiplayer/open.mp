@@ -87,6 +87,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging_timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
     { "logging_queries", false },
     { "logging_chat", true },
+    { "logging_deaths", true },
     { "logging_sqlite", false },
     { "logging_sqlite_queries", false },
     { "logging_cookies", false },
