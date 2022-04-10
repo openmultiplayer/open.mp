@@ -49,7 +49,7 @@ StringView DatabaseResultSetRow::getFieldString(std::size_t fieldIndex) const
 /// Gets the integer of the field by the specified field index
 /// @param fieldIndex Field index
 /// @returns Integer
-long DatabaseResultSetRow::getFieldInteger(std::size_t fieldIndex) const
+long DatabaseResultSetRow::getFieldInt(std::size_t fieldIndex) const
 {
     return (fieldIndex < fields.size()) ? std::atol(fields[fieldIndex].second.c_str()) : 0L;
 }
@@ -74,7 +74,7 @@ StringView DatabaseResultSetRow::getFieldStringByName(StringView fieldName) cons
 /// Gets the integer of the field by the specified field name
 /// @param fieldName Field name
 /// @returns Integer
-long DatabaseResultSetRow::getFieldIntegerByName(StringView fieldName) const
+long DatabaseResultSetRow::getFieldIntByName(StringView fieldName) const
 {
     const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
     return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0L : std::atol(fields[field_name_to_field_index_iterator->second].second.c_str());

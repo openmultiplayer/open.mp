@@ -87,7 +87,7 @@ public:
     /// Gets the integer of the field by the specified field index
     /// @param fieldIndex Field index
     /// @returns Integer
-    long getFieldInteger(std::size_t fieldIndex) const override;
+    long getFieldInt(std::size_t fieldIndex) const override;
 
     /// Gets the floating point number of the field by the specified field index
     /// @param fieldIndex Field index
@@ -102,7 +102,7 @@ public:
     /// Gets the integer of the field by the specified field name
     /// @param fieldName Field name
     /// @returns Integer
-    long getFieldIntegerByName(StringView fieldName) const override;
+    long getFieldIntByName(StringView fieldName) const override;
 
     /// Gets the floating point number of the field by the specified field name
     /// @param fieldName Field name
