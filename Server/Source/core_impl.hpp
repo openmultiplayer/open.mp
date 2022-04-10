@@ -718,7 +718,7 @@ private:
         printLn("Loading component %s", path.filename().u8string().c_str());
         auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
         if (componentLib == nullptr) {
-            printLn("\tFailed to load component.");
+            printLn("\tFailed to load component: %s.", utils::GetLastErrorAsString().c_str());
             return nullptr;
         }
         ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
