@@ -1274,7 +1274,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         core.logLn(
             LogLevel::Message,
-            "[join] %.*s has joined the server (%d:%s)",
+            "[%sjoin] %.*s has joined the server (%d:%s)",
+            player.isBot_ ? "npc:" : "",
             PRINT_VIEW(player.name_),
             player.poolID,
             addressString.data()
@@ -1314,7 +1315,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         core.logLn(
             LogLevel::Message,
-            "[part] %.*s has left the server (%d:%d)",
+            "[%spart] %.*s has left the server (%d:%d)",
+            player.isBot_ ? "npc:" : "",
             PRINT_VIEW(player.name_),
             player.poolID,
             reason
