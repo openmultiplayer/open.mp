@@ -48,10 +48,10 @@ struct CheckpointDataBase : public T {
     }
 };
 
-class PlayerStandardCheckpointData final : public CheckpointDataBase<IPlayerStandardCheckpointData> {
+class CheckpointData final : public CheckpointDataBase<ICheckpointData> {
 public:
-    PlayerStandardCheckpointData(IPlayer& player)
-        : CheckpointDataBase<IPlayerStandardCheckpointData>(player)
+    CheckpointData(IPlayer& player)
+        : CheckpointDataBase<ICheckpointData>(player)
     {
     }
 
@@ -85,14 +85,14 @@ public:
     }
 };
 
-class PlayerRaceCheckpointData final : public CheckpointDataBase<IPlayerRaceCheckpointData> {
+class RaceCheckpointData final : public CheckpointDataBase<IRaceCheckpointData> {
 private:
     RaceCheckpointType type_ = RaceCheckpointType::RACE_NONE;
     Vector3 nextPosition_;
 
 public:
-    PlayerRaceCheckpointData(IPlayer& player)
-        : CheckpointDataBase<IPlayerRaceCheckpointData>(player)
+    RaceCheckpointData(IPlayer& player)
+        : CheckpointDataBase<IRaceCheckpointData>(player)
     {
     }
 
@@ -150,13 +150,13 @@ public:
 
 class PlayerCheckpointData final : public IPlayerCheckpointData {
 private:
-    PlayerRaceCheckpointData raceCheckpoint;
-    PlayerStandardCheckpointData standardCheckpoint;
+    RaceCheckpointData raceCheckpoint;
+    CheckpointData checkpoint;
 
 public:
     PlayerCheckpointData(IPlayer& player)
         : raceCheckpoint(player)
-        , standardCheckpoint(player)
+        , checkpoint(player)
     {
     }
 
@@ -165,13 +165,13 @@ public:
         delete this;
     }
 
-    IPlayerRaceCheckpointData& getRaceCheckpoint() override
+    IRaceCheckpointData& getRaceCheckpoint() override
     {
         return raceCheckpoint;
     }
 
-    IPlayerStandardCheckpointData& getStandardCheckpoint() override
+    ICheckpointData& getCheckpoint() override
     {
-        return standardCheckpoint;
+        return checkpoint;
     }
 };
