@@ -20,7 +20,7 @@ namespace RPC {
         HybridString<32> Title;
         HybridString<32> FirstButton;
         HybridString<32> SecondButton;
-        HybridString<256> Info;
+        HybridString<256> Body;
 
         bool read(NetworkBitStream& bs)
         {
@@ -34,7 +34,7 @@ namespace RPC {
             bs.writeDynStr8(Title);
             bs.writeDynStr8(FirstButton);
             bs.writeDynStr8(SecondButton);
-            bs.WriteCompressedStr(Info);
+            bs.WriteCompressedStr(Body);
         }
     };
 
