@@ -99,9 +99,9 @@ StringView DatabaseResultSet::getFieldString(std::size_t fieldIndex) const
 /// Gets the integer of the field by the specified field index
 /// @param fieldIndex Field index
 /// @returns Integer
-long DatabaseResultSet::getFieldInteger(std::size_t fieldIndex) const
+long DatabaseResultSet::getFieldInt(std::size_t fieldIndex) const
 {
-    return rows.empty() ? 0L : rows.front().getFieldInteger(fieldIndex);
+    return rows.empty() ? 0L : rows.front().getFieldInt(fieldIndex);
 }
 
 /// Gets the floating point number of the field by the specified field index
@@ -123,9 +123,9 @@ StringView DatabaseResultSet::getFieldStringByName(StringView fieldName) const
 /// Gets the integer of the field by the specified field name
 /// @param fieldName Field name
 /// @returns Integer
-long DatabaseResultSet::getFieldIntegerByName(StringView fieldName) const
+long DatabaseResultSet::getFieldIntByName(StringView fieldName) const
 {
-    return rows.empty() ? 0L : rows.front().getFieldIntegerByName(fieldName);
+    return rows.empty() ? 0L : rows.front().getFieldIntByName(fieldName);
 }
 
 /// Gets the floating point number of the field by the specified field name
