@@ -43,7 +43,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             player.toSpawn_ = self.eventDispatcher.stopAtFalse(
                 [&peer](PlayerEventHandler* handler) {
-                    return handler->onRequestSpawn(peer);
+                    return handler->onPlayerRequestSpawn(peer);
                 });
 
             NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
@@ -334,7 +334,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     }
                 }
 
-                self.eventDispatcher.dispatch(&PlayerEventHandler::onSpawn, peer);
+                self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerSpawn, peer);
             }
 
             return true;
