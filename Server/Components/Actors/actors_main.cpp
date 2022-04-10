@@ -28,7 +28,7 @@ private:
                 if (actor.isStreamedInForPlayer(peer) && !actor.isInvulnerable()) {
                     ScopedPoolReleaseLock<IActor> lock(self, actor);
                     self.eventDispatcher.dispatch(
-                        &ActorEventHandler::onPlayerDamageActor,
+                        &ActorEventHandler::onPlayerGiveDamageActor,
                         peer,
                         *lock.entry,
                         onPlayerDamageActorRPC.Damage,
