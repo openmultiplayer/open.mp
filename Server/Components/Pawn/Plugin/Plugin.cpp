@@ -340,12 +340,22 @@ PawnPlugin::PawnPlugin(std::string const& path, ICore* core)
         return;
     }
 
+    supports_f Supports_ = FindSym<supports_f>(pluginHandle_, "Supports");
+    load_f Load_ = FindSym<load_f>(pluginHandle_, "Load");
+
+    if (!Load_ || !Supports_) {
+        if (FindSym<void*>(pluginHandle_, "ComponentEntryPoint")) {
+            serverCore->printLn("This file is an open.mp component. Please move it to components/ folder.");
+        } else {
+            serverCore->printLn("This file is not a SA-MP plugin.");
+        }
+        return;
+    }
+
     // First, get the plugin's features.
     unsigned int flags_ = 0;
-    supports_f Supports_ = FindSym<supports_f>(pluginHandle_, "Supports");
-    if (Supports_) {
-        flags_ = Supports_();
-    }
+    flags_ = Supports_();
+
     if ((flags_ & 0x0000FFFF) == 0x00000200) {
         // Only try get the tick function if it is declared as in use.
         if (flags_ & 0x00020000) {
@@ -353,14 +363,12 @@ PawnPlugin::PawnPlugin(std::string const& path, ICore* core)
         }
     }
 
-    load_f Load_ = FindSym<load_f>(pluginHandle_, "Load");
     Unload_ = FindSym<unload_f>(pluginHandle_, "Unload");
-    if (Load_) {
-        // Zero value means it failed to load
-        if (!Load_(PLUGIN_FUNCTIONS)) {
-            serverCore->printLn("Plugin failed to initialize:");
-            return;
-        }
+
+    // Zero value means it failed to load
+    if (!Load_(PLUGIN_FUNCTIONS)) {
+        serverCore->printLn("Plugin failed to initialize.");
+        return;
     }
 
     if (flags_ & 0x00010000) {
