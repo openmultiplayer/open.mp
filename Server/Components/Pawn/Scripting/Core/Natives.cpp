@@ -345,6 +345,26 @@ SCRIPT_API(GetServerTickRate, int())
     return PawnManager::Get()->core->tickRate();
 }
 
+SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
+{
+    return getConfigOptionAsInt(cvar);
+}
+
+SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
+{
+    return getConfigOptionAsInt(cvar);
+}
+
+SCRIPT_API(GetServerVarAsFloat, float(std::string const& cvar))
+{
+    return getConfigOptionAsFloat(cvar);
+}
+
+SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, OutputOnlyString& buffer))
+{
+    return getConfigOptionAsString(cvar, buffer);
+}
+
 SCRIPT_API(GetWeaponName, bool(int weaponid, OutputOnlyString& weapon))
 {
     weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
