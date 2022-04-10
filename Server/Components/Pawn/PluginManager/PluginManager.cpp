@@ -49,7 +49,7 @@ void PawnPluginManager::Spawn(std::string const& name)
     std::unique_ptr<PawnPlugin> ptr = std::make_unique<PawnPlugin>(canon, core);
 
     if (!ptr.get()->IsLoaded()) {
-        core->printLn("Unable to load plugin %s\n\n", name.c_str());
+        //core->printLn("Unable to load plugin %s\n\n", name.c_str());
         return;
     }
 
