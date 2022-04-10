@@ -2,11 +2,11 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(CreateActor, int(int modelid, Vector3 position, float rotation))
+SCRIPT_API(CreateActor, int(int skin, Vector3 position, float angle))
 {
     IActorsComponent* component = PawnManager::Get()->actors;
     if (component) {
-        IActor* actor = component->create(modelid, position, rotation);
+        IActor* actor = component->create(skin, position, angle);
         if (actor) {
             return actor->getID();
         }
@@ -36,9 +36,9 @@ SCRIPT_API(GetActorVirtualWorld, int(IActor& actor))
     return actor.getVirtualWorld();
 }
 
-SCRIPT_API(ApplyActorAnimation, bool(IActor& actor, const std::string& animLib, const std::string& animName, float delta, int loop, int lockX, int lockY, int freeze, int time))
+SCRIPT_API(ApplyActorAnimation, bool(IActor& actor, const std::string& animationLibrary, const std::string& animationName, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time))
 {
-    const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animLib, animName);
+    const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animationLibrary, animationName);
     actor.applyAnimation(animationData);
     return true;
 }
@@ -112,28 +112,28 @@ SCRIPT_API(GetActorSkin, int(IActor& actor))
     return actor.getSkin();
 }
 
-SCRIPT_API(GetActorAnimation, bool(IActor& actor, OutputOnlyString& animlib, OutputOnlyString& animname, float& delta, bool& loop, bool& lockx, bool& locky, bool& freeze, int& time))
+SCRIPT_API(GetActorAnimation, bool(IActor& actor, OutputOnlyString& animationLibrary, OutputOnlyString& animationName, float& delta, bool& loop, bool& lockX, bool& lockY, bool& freeze, int& time))
 {
     const AnimationData& anim = actor.getAnimation();
 
-    animlib = anim.lib;
-    animname = anim.name;
+	animationLibrary = anim.lib;
+	animationName = anim.name;
     delta = anim.delta;
     loop = anim.loop;
-    lockx = anim.lockX;
-    locky = anim.lockY;
+    lockX = anim.lockX;
+    lockY = anim.lockY;
     freeze = anim.freeze;
     time = anim.time;
 
     return true;
 }
 
-SCRIPT_API(GetActorSpawnInfo, bool(IActor& actor, int& skin, Vector3& pos, float& rotation))
+SCRIPT_API(GetActorSpawnInfo, bool(IActor& actor, int& skin, Vector3& position, float& angle))
 {
     const ActorSpawnData& spawnData = actor.getSpawnData();
 
-    pos = spawnData.position;
-    rotation = spawnData.facingAngle;
+	position = spawnData.position;
+    angle = spawnData.facingAngle;
     skin = spawnData.skin;
     return true;
 }
