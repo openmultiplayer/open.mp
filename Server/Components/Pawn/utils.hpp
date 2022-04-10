@@ -566,3 +566,10 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 
 #endif
 }
+
+static const FlatHashMap<String, String> DeprecatedNatives {
+    { "GetServerVarAsBool", "GetConsoleVarAsString" },
+    { "GetServerVarAsInt", "GetConsoleVarAsInt" },
+    { "GetServerVarAsFloat", "GetConsoleVarAsFloat" },
+    { "GetServerVarAsString", "GetConsoleVarAsString" }
+};
