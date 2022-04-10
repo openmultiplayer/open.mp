@@ -129,16 +129,34 @@ int PawnManager::IDFromAMX(AMX* amx) const
 
 void PawnManager::CheckNatives(PawnScript& script)
 {
-    int
-        count;
+    int count;
     script.NumNatives(&count);
-    AMX_NATIVE_INFO
-    func;
+    AMX_NATIVE_INFO func;
+
+    bool any_deprecated = false;
+
     while (count--) {
         script.GetNativeByIndex(count, &func);
+
+        auto itr = DeprecatedNatives.find(func.name);
+        bool is_deprecated = itr != DeprecatedNatives.end();
+
         if (func.func == nullptr) {
-            core->logLn(LogLevel::Error, "Function not registered: %s", func.name);
+            if (!is_deprecated) {
+                core->logLn(LogLevel::Error, "Function not registered: %s", func.name);
+            } else {
+                core->logLn(LogLevel::Error, "Function %s was removed and replaced by %s.", func.name, itr->second.c_str());
+            }
+        } else {
+            if (is_deprecated) {
+                core->logLn(LogLevel::Warning, "Deprecated function %s used. This function was replaced by %s.", func.name, itr->second.c_str());
+                any_deprecated = true;
+            }
         }
+    }
+
+    if (any_deprecated) {
+        core->logLn(LogLevel::Warning, "Deprecated functions will be removed in the next open.mp release.");
     }
 }
 
