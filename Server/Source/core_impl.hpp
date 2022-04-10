@@ -723,7 +723,13 @@ private:
         }
         ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
         if (OnComponentLoad == nullptr) {
-            printLn("\tFailed to load component.");
+            void* isSAMPPlugin = LIBRARY_GET_ADDR(componentLib, "Supports");
+            printLn(
+                "\tFailed to load component: %s.",
+                isSAMPPlugin
+                ? "it is a SA-MP plugin, put it in plugins/ folder"
+                : "it is neither an open.mp component nor a SA-MP plugin"
+            );
             LIBRARY_FREE(componentLib);
             return nullptr;
         }
