@@ -69,10 +69,9 @@ jobs:
 
     - name: Build
       run: |
-        pwd=/home/actions-runner/_work/open.mp/open.mp
         docker run --rm -i \
-          -v $pwd:/code \
-          -v $pwd/conan:/root/.conan \
+          -v $PWD:/code \
+          -v $PWD/conan:/root/.conan \
           -w /code \
           -e CONFIG=RelWithDebInfo \
           open.mp/build:ubuntu-18.04
