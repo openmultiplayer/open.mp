@@ -67,7 +67,7 @@ jobs:
 
     - name: Build
       run: |
-        docker run --rm -ti \
+        docker run --rm -i \
           -v $PWD:/code \
           -v $PWD/conan:/root/.conan \
           -w /code \
