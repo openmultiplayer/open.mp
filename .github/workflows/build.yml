@@ -68,8 +68,8 @@ jobs:
     - name: Build
       run: |
         docker run --rm -i \
-          -v $PWD:/code \
-          -v $PWD/conan:/root/.conan \
+          -v $(pwd):/code \
+          -v $(pwd)/conan:/root/.conan \
           -w /code \
           -e CONFIG=Debug \
           open.mp/build:ubuntu-18.04
