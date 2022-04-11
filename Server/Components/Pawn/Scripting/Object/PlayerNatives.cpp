@@ -93,13 +93,13 @@ SCRIPT_API(MovePlayerObject, bool(IPlayer& player, IPlayerObject& object, Vector
     data.targetRot = rotation;
     data.speed = speed;
 
-    object.startMoving(data);
+    object.move(data);
     return true;
 }
 
 SCRIPT_API(StopPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-    object.stopMoving();
+    object.stop();
     return true;
 }
 
@@ -112,21 +112,31 @@ SCRIPT_API(EditPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
     IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
     if (playerData) {
-        playerData->editObject(object);
+        playerData->beginEditing(object);
         return true;
     }
     return false;
 }
 
-SCRIPT_API(SetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialIndex, int modelId, const std::string& txdName, const std::string& textureName, uint32_t materialcolor))
+SCRIPT_API(BeginPlayerObjectEditing, bool(IPlayer& player, IPlayerObject& object))
 {
-    object.setMaterial(materialIndex, modelId, txdName, textureName, Colour::FromARGB(materialcolor));
+    IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
+    if (playerData) {
+        playerData->beginEditing(object);
+        return true;
+    }
+    return false;
+}
+
+SCRIPT_API(SetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialIndex, int modelId, const std::string& textureLibrary, const std::string& textureName, uint32_t materialColour))
+{
+    object.setMaterial(materialIndex, modelId, textureLibrary, textureName, Colour::FromARGB(materialColour));
     return true;
 }
 
-SCRIPT_API(SetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, const std::string& text, int materialindex, int materialsize, const std::string& fontface, int fontsize, bool bold, uint32_t fontcolor, uint32_t backcolor, int textalignment))
+SCRIPT_API(SetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, const std::string& text, int materialIndex, int materialSize, const std::string& fontface, int fontsize, bool bold, uint32_t fontColour, uint32_t backgroundColour, int textalignment))
 {
-    object.setMaterialText(materialindex, text, materialsize, fontface, fontsize, bold, Colour::FromARGB(fontcolor), Colour::FromARGB(backcolor), ObjectMaterialTextAlign(textalignment));
+    object.setMaterialText(materialIndex, text, ObjectMaterialSize(materialSize), fontface, fontsize, bold, Colour::FromARGB(fontColour), Colour::FromARGB(backgroundColour), ObjectMaterialTextAlign(textalignment));
     return true;
 }
 
@@ -152,36 +162,36 @@ SCRIPT_API(GetPlayerObjectTarget, bool(IPlayer& player, IPlayerObject& object, V
     return openmp_scripting::GetPlayerObjectMovingTargetPos(player, object, pos);
 }
 
-SCRIPT_API(GetPlayerObjectMovingTargetRot, bool(IPlayer& player, IPlayerObject& object, Vector3& rot))
+SCRIPT_API(GetPlayerObjectMovingTargetRot, bool(IPlayer& player, IPlayerObject& object, Vector3& rotation))
 {
     const ObjectMoveData& data = object.getMovingData();
-    rot = data.targetRot;
+    rotation = data.targetRot;
     return true;
 }
 
-SCRIPT_API(GetPlayerObjectAttachedData, bool(IPlayer& player, IPlayerObject& object, int& attached_vehicleid, int& attached_objectid, int& attached_playerid))
+SCRIPT_API(GetPlayerObjectAttachedData, bool(IPlayer& player, IPlayerObject& object, int& parentVehicle, int& parentObject, int& parentPlayer))
 {
     const ObjectAttachmentData data = object.getAttachmentData();
-    attached_vehicleid = INVALID_VEHICLE_ID;
-    attached_objectid = INVALID_OBJECT_ID;
-    attached_playerid = INVALID_PLAYER_ID;
+    parentVehicle = INVALID_VEHICLE_ID;
+    parentObject = INVALID_OBJECT_ID;
+    parentPlayer = INVALID_PLAYER_ID;
 
     if (data.type == ObjectAttachmentData::Type::Object) {
-        attached_objectid = data.ID;
+        parentObject = data.ID;
     } else if (data.type == ObjectAttachmentData::Type::Player) {
-        attached_playerid = data.ID;
+        parentPlayer = data.ID;
     } else if (data.type == ObjectAttachmentData::Type::Vehicle) {
-        attached_vehicleid = data.ID;
+        parentVehicle = data.ID;
     }
 
     return true;
 }
 
-SCRIPT_API(GetPlayerObjectAttachedOffset, bool(IPlayer& player, IPlayerObject& object, Vector3& offset, Vector3& rot))
+SCRIPT_API(GetPlayerObjectAttachedOffset, bool(IPlayer& player, IPlayerObject& object, Vector3& offset, Vector3& rotation))
 {
     const ObjectAttachmentData data = object.getAttachmentData();
     offset = data.offset;
-    rot = data.rotation;
+    rotation = data.rotation;
     return true;
 }
 
@@ -190,32 +200,41 @@ SCRIPT_API(GetPlayerObjectSyncRotation, int(IPlayer& player, IPlayerObject& obje
     return object.getAttachmentData().syncRotation;
 }
 
-SCRIPT_API(IsPlayerObjectMaterialSlotUsed, bool(IPlayer& player, IPlayerObject& object, int materialindex))
+SCRIPT_API(IsPlayerObjectMaterialSlotUsed, bool(IPlayer& player, IPlayerObject& object, int materialIndex))
 {
     const ObjectMaterialData* data = nullptr;
-    bool result = object.getMaterialData(materialindex, data);
+    bool result = object.getMaterialData(materialIndex, data);
     if (result) {
         return data->used;
     }
     return result;
 }
 
-SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialindex, int& modelid, OutputOnlyString& txdname))
+SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialIndex, int& modelid, OutputOnlyString& textureLibrary, OutputOnlyString& textureName, int& materialColour))
 {
     const ObjectMaterialData* data = nullptr;
-    bool result = object.getMaterialData(materialindex, data);
+    bool result = object.getMaterialData(materialIndex, data);
     if (result) {
-        txdname = data->textOrTXD;
+		textureLibrary = data->textOrTXD;
+		textureName = data->fontOrTexture;
+		materialColour = data->materialColour.RGBA();
     }
     return result;
 }
 
-SCRIPT_API(GetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, int materialindex, OutputOnlyString& text))
+SCRIPT_API(GetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, int materialIndex, OutputOnlyString& text, int& materialSize, OutputOnlyString& fontFace, int& fontSize, bool& bold, int& fontColour, int& backgroundColour, int& textAlignment))
 {
     const ObjectMaterialData* data = nullptr;
-    bool result = object.getMaterialData(materialindex, data);
+    bool result = object.getMaterialData(materialIndex, data);
     if (result) {
-        text = data->fontOrTexture;
+        text = data->textOrTXD;
+		materialSize = data->materialSize;
+		fontFace = data->fontOrTexture;
+		fontSize = data->fontSize;
+		bold = data->bold;
+		fontColour = data->fontColour.RGBA();
+		backgroundColour = data->backgroundColour.RGBA();
+		textAlignment = data->alignment;
     }
     return result;
 }
