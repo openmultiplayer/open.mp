@@ -127,3 +127,14 @@ int main(int argc, char** argv)
     }
     return 0;
 }
+
+#if OMP_BUILD_PLATFORM == OMP_UNIX
+
+/// None of that GLIBC 2.27 crap
+extern "C" __attribute__((visibility("default"))) int getentropy(void* buffer, size_t length)
+{
+    errno = ENOSYS;
+    return -1;
+}
+
+#endif
