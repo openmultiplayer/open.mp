@@ -73,6 +73,7 @@ jobs:
         sudo dpkg --add-architecture i386
         sudo apt-get update -y
         sudo apt-get remove -y gcc-multilib g++-multilib
+        sudo apt-get autoremove -y
         sudo apt-get install -y gcc-8-multilib g++-8-multilib clang
         echo "CC=/usr/bin/clang" >> $GITHUB_ENV
         echo "CXX=/usr/bin/clang++" >> $GITHUB_ENV
