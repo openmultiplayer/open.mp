@@ -76,7 +76,7 @@ private:
             if (data && data->editingObject()) {
 
                 if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final) {
-                    data->endObjectEdit();
+                    data->endEditing();
                 }
 
                 if (onPlayerEditObjectRPC.PlayerObject) {
@@ -131,7 +131,7 @@ private:
                     onPlayerEditAttachedObjectRPC.Response,
                     onPlayerEditAttachedObjectRPC.AttachmentData);
 
-                data->endObjectEdit();
+                data->endEditing();
             }
 
             return true;
@@ -493,7 +493,7 @@ public:
         delete this;
     }
 
-    void beginObjectSelection() override
+    void beginSelecting() override
     {
         inObjectEdit_ = false;
         inObjectSelection_ = true;
@@ -511,7 +511,7 @@ public:
         return inObjectEdit_;
     }
 
-    void endObjectEdit() override
+    void endEditing() override
     {
         inObjectSelection_ = false;
         inObjectEdit_ = false;
@@ -519,7 +519,7 @@ public:
         PacketHelper::send(playerCancelObjectEditRPC, player_);
     }
 
-    void editObject(IObject& object) override
+    void beginEditing(IObject& object) override
     {
         inObjectSelection_ = false;
         inObjectEdit_ = true;
@@ -530,7 +530,7 @@ public:
         PacketHelper::send(playerBeginObjectEditRPC, player_);
     }
 
-    void editObject(IPlayerObject& object) override
+    void beginEditing(IPlayerObject& object) override
     {
         inObjectSelection_ = false;
         inObjectEdit_ = true;
