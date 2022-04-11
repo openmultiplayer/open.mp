@@ -11,9 +11,13 @@ jobs:
           - 'Server'
     steps:
     - uses: actions/checkout@v2
-    - name: Run clang-format style check for C/C++ programs.
-      uses: jidicula/clang-format-action@v4.2.0
       with:
-        clang-format-version: '11'
+        submodules: recursive
+        token: ${{ secrets.CI_TOKEN }}
+
+    - name: Run clang-format style check for C/C++ programs.
+      uses: jidicula/clang-format-action@v4.6.2
+      with:
+        clang-format-version: '13'
         check-path: ${{ matrix.path }}
         fallback-style: 'WebKit'
