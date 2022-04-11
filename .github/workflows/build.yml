@@ -67,9 +67,18 @@ jobs:
 
     - name: Build
       run: |
+        env | grep PWD
+        ls -l $PWD
         docker run --rm -i \
-          -v $(pwd):/code \
-          -v $(pwd)/conan:/root/.conan \
+          -v $PWD:/code \
+          -v $PWD/conan:/root/.conan \
+          -w /code \
+          -e CONFIG=Debug \
+          open.mp/build:ubuntu-18.04 \
+          ls -l /code
+        docker run --rm -i \
+          -v $PWD:/code \
+          -v $PWD/conan:/root/.conan \
           -w /code \
           -e CONFIG=Debug \
           open.mp/build:ubuntu-18.04
