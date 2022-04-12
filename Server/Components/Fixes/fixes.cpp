@@ -349,6 +349,28 @@ public:
 		// This is last because it is the library used in the test suite.  If that works while being
 		// loaded last all the others should load as well.
 		data->createAnimatedActor(timers_, "DEALER", "DEALER_DEAL");
+
+		/*
+		 * <problem>
+		 *     Kicks the player if "SpawnPlayer" is called before "SetSpawnInfo".
+		 * </problem>
+		 * <solution>
+		 *     Call "SetSpawnInfo" at least once.
+		 * </solution>
+		 * <see>OnPlayerConnect</see>
+		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
+		 */
+		IPlayerClassData * classData = queryExtension<IPlayerClassData>(player);
+		if (classData)
+		{
+			WeaponSlots slots = {
+				WeaponSlotData { 0, 0 },
+				WeaponSlotData { 0, 0 },
+				WeaponSlotData { 0, 0 }
+			};
+
+			classData->setSpawnInfo(PlayerClass(0, 255, { 0.0f, 0.0f, 0.0f }, 0.0f, slots));
+		}
 	}
 };
 
