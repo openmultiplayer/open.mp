@@ -44,7 +44,7 @@ public:
         timers.clear();
     }
 
-    ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) override
+    ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating = false) override
     {
         Timer* timer = new Timer(handler, interval, interval, repeating ? 0 : 1);
         timers.push_back(timer);
