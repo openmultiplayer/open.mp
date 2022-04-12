@@ -467,7 +467,10 @@ SCRIPT_API(GetPlayerBuildingsRemoved, int(IPlayer& player))
 
 SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
-    player.removeFromVehicle();
+	// Fully optional `force` parameter.
+	cell* params = GetParams();
+	bool force = params[0] >= 8 && params[2] != 0;
+    player.removeFromVehicle(force);
     return true;
 }
 

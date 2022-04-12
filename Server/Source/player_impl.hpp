@@ -1263,10 +1263,19 @@ removeWeapon_has_weapon:
         return enableCameraTargeting_;
     }
 
-    void removeFromVehicle() override
+    void removeFromVehicle(bool force) override
     {
-        NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
-        PacketHelper::send(removePlayerFromVehicleRPC, *this);
+		if (force)
+		{
+			// This is a replacement for the old (buggy) `ClearAnimations` exploit that people used
+			// to both remove players from vehicles and cancel vehicle entry.
+			clearAnimationsImpl(PlayerAnimationSyncType_NoSync);
+		}
+		else
+		{
+			NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
+			PacketHelper::send(removePlayerFromVehicleRPC, *this);
+		}
     }
 
     IPlayer* getCameraTargetPlayer() override;
