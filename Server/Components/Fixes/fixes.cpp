@@ -175,6 +175,27 @@ public:
 	{
 		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
 		data->setLastCash(player.getMoney());
+
+		/*
+		 * <problem>
+		 *     Clients get stuck when they die with an animation applied.
+		 * </problem>
+		 * <solution>
+		 *     Clear their animations.
+		 * </solution>
+		 * <see>OnPlayerDeath</see>
+		 * <see>OnPlayerUpdate</see>
+		 * <author    >h02</author>
+		 * <post      href="https://sampforum.blast.hk/showthread.php?tid=312862&amp;pid=1641144#pid1641144" />
+		 */
+		auto anim = player.getAnimationData().name();
+		if (anim.first.compare("PED"))
+		{
+			// Not in a "PED" library.  May get stuck.  Bypass the `ClearAnimations` fix.
+			NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
+			clearPlayerAnimationsRPC.PlayerID = player.getID();
+			PacketHelper::send(clearPlayerAnimationsRPC, player);
+		}
 	}
 
 	void onConnect(IPlayer & player) override
