@@ -199,6 +199,21 @@ bool PawnManager::Load(std::string const& name, bool primary)
     pluginManager.AmxLoad(script.GetAMX());
     eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX());
 
+	cell amxAddr;
+	cell * realAddr;
+	if (script.FindPubVar("__OPEN_MP_VERSION", &amxAddr) == AMX_ERR_NONE && script.GetAddr(amxAddr, &realAddr) == AMX_ERR_NONE)
+	{
+		// Compact the version number as tightly as we can.  This allows for up to 16 major
+		// versions, 127 minor and patch versions, and 16383 prerel versions (so all three
+		// minor segments can encode the full range of 2/4 digit decimal values).
+		auto version = core->getVersion();
+		*realAddr =
+			((version.major & 0x0F) << 28) |
+			((version.minor & 0x7F) << 21) |
+			((version.patch & 0x7F) << 14) |
+			(version.prerel & 0x3FFF);
+	}
+
     CheckNatives(script);
 
     if (primary) {
