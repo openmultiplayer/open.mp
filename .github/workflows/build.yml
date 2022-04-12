@@ -65,7 +65,7 @@ jobs:
         token: ${{ secrets.CI_TOKEN }}
 
     - name: Create Docker build image
-      run: docker build -t open.mp/build:ubuntu-18.04 docker/build:ubuntu-18.04
+      run: docker build -t open.mp/build:ubuntu-18.04 docker/build_ubuntu-18.04
 
     - name: Build
       run: |
