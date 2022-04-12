@@ -7,6 +7,8 @@ using namespace Impl;
 
 class PlayerFixesData final : public IPlayerFixesData {
 private:
+	int lastCash_ = 0;
+
 	int actorID_ = ACTOR_POOL_SIZE;
 	IPlayer & player_;
 
@@ -26,6 +28,16 @@ public:
 		: player_(player)
 		, killAll_(nullptr)
 	{
+	}
+
+	int getLastCash() const override
+	{
+		return lastCash_;
+	}
+
+	void setLastCash(int cash) override
+	{
+		lastCash_ = cash;
 	}
 
 	void createAnimatedActor(ITimersComponent * timers, char const * lib, char const * anim)
@@ -114,6 +126,29 @@ public:
 	void onInit(IComponentList * components) override
 	{
 		timers_ = components->queryComponent<ITimersComponent>();
+	}
+
+	void onSpawn(IPlayer & player) override
+	{
+		/*
+		 * <problem>
+		 *     San Andreas deducts $100 from players.
+		 * </problem>
+		 * <solution>
+		 *     Reset the player's money to what it was before they died.
+		 * </solution>
+		 * <see>OnPlayerSpawn</see>
+		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
+		 */
+		IPlayerFixesData * data = queryExtension<IPlayerFixesData>(player);
+		player.setMoney(data->getLastCash());
+		data->setLastCash(0);
+	}
+
+	void onDeath(IPlayer & player, IPlayer * killer, int reason) override
+	{
+		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
+		data->setLastCash(player.getMoney());
 	}
 
 	void onConnect(IPlayer & player) override

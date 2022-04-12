@@ -13,6 +13,7 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
 #include <events.hpp>
 #include <glm/glm.hpp>
 #include <netcode.hpp>
@@ -194,6 +195,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void spawn() override
     {
+        queryExtension<IPlayerFixesData>(*this)->setLastCash(getMoney());
 
         // Remove from vehicle.
         if (state_ == PlayerState_Driver || state_ == PlayerState_Passenger) {
