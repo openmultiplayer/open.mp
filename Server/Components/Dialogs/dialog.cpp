@@ -48,7 +48,7 @@ public:
 
     void show(IPlayer& player, int id, DialogStyle style, StringView title, StringView body, StringView button1, StringView button2) override
     {
-		if (id < 0 || id >= 32768)
+		if (id <= INVALID_DIALOG_ID || id >= MAX_DIALOG)
 		{
 			return;
 		}

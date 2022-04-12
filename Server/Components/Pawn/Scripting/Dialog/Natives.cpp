@@ -11,14 +11,20 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialogId, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
+SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
 {
+    IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
 	// Put it back to `int` so we can detect and handle this special case.
 	if (dialogId == INVALID_DIALOG_ID)
 	{
+		// Some old code uses invalid IDs to hide dialogs.
+		PawnManager::Get()->core->logLn(LogLevel::Warning, "Invalid dialog ID %d used.  Use `HidePlayerDialog()`.", dialog);
+		if (dialog)
+		{
+			dialog->hide(player);
+		}
 		return false;
 	}
-    IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
     if (dialog) {
 		// And instead mask the ID here.
         dialog->show(player, dialogId & 0xFFFF, DialogStyle(style), title, body, button1, button2);
@@ -37,7 +43,7 @@ SCRIPT_API_FAILRET(GetPlayerDialog, INVALID_DIALOG_ID, int(IPlayer & player))
     IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
     if (dialog) {
         return dialog->getActiveID();
-	}
+    }
 	return INVALID_DIALOG_ID;
 }
 
@@ -77,7 +83,7 @@ SCRIPT_API(HidePlayerDialog, bool(IPlayer& player))
     if (dialog && dialog->getActiveID() != INVALID_DIALOG_ID) {
         dialog->hide(player);
         return true;
-    }
+	}
     return false;
 }
 
