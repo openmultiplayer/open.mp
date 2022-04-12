@@ -21,6 +21,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     IVehiclesComponent* vehiclesComponent = nullptr;
     IObjectsComponent* objectsComponent = nullptr;
     IActorsComponent* actorsComponent = nullptr;
+    ITimersComponent* timersComponent = nullptr;
     StreamConfigHelper streamConfigHelper;
     int* markersShow;
     int* markersUpdateRate;
@@ -1533,6 +1534,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         vehiclesComponent = components.queryComponent<IVehiclesComponent>();
         objectsComponent = components.queryComponent<IObjectsComponent>();
         actorsComponent = components.queryComponent<IActorsComponent>();
+        timersComponent = components.queryComponent<ITimersComponent>();
     }
 
     bool onUpdate(IPlayer& p, TimePoint now) override
