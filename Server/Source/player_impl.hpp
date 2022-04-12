@@ -584,12 +584,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return lastPlayedAudio_;
     }
 
-    void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
+private:
+    void applyAnimationImpl(const AnimationData& animation, PlayerAnimationSyncType syncType)
     {
-        if (!animationLibraryValid(animation.lib)) {
-            return;
-        }
-
         // Set from sync
         NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC(animation);
         applyPlayerAnimationRPC.PlayerID = poolID;
@@ -601,7 +598,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void clearAnimations(PlayerAnimationSyncType syncType) override
+    void clearAnimationsImpl(PlayerAnimationSyncType syncType)
     {
         NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
         clearPlayerAnimationsRPC.PlayerID = poolID;
@@ -612,6 +609,63 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             PacketHelper::broadcastToStreamed(clearPlayerAnimationsRPC, *this, false /* skipFrom */);
         }
     }
+
+public:
+    void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
+    {
+        if (!animationLibraryValid(animation.lib)) {
+            return;
+        }
+		applyAnimationImpl(animation, syncType);
+    }
+
+    void clearAnimations(PlayerAnimationSyncType syncType) override
+    {
+		IPlayerVehicleData * data = queryExtension<IPlayerVehicleData>(*this);
+		AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
+
+		if (data && data->getVehicle())
+		{
+			/*
+			 *     <problem>
+			 *         Use ClearAnimation while you are in a vehicle cause the player exit
+			 *         from it.
+			 *     </problem>
+			 *     <solution>
+			 *         Apply an animation instead of clear animation.
+			 *     </solution>
+			 *     <see>FIXES_ClearAnimations</see>
+			 *     <author    href="https://github.com/simonepri/" >simonepri</author>
+			 */
+			animationData.lib = "PED";
+			animationData.name = "CAR_SIT";
+			applyAnimationImpl(animationData, syncType);
+		}
+		else
+		{
+			/*
+			 *     <problem>
+			 *         ClearAnimations doesn't do anything when the animation ends if we
+			 *         pass 1 for the freeze parameter in ApplyAnimation.
+			 *     </problem>
+			 *     <solution>
+			 *         Apply an idle animation for stop and then use ClearAnimation.
+			 *     </solution>
+			 *     <see>FIXES_ClearAnimations</see>
+			 *     <author    href="https://github.com/simonepri/" >simonepri</author>
+			 */
+			clearAnimationsImpl(syncType);
+			animationData.lib = "PED";
+			animationData.name = "IDLE_STANCE";
+			applyAnimationImpl(animationData, syncType);
+			animationData.lib = "PED";
+			animationData.name = "IDLE_CHAT";
+			applyAnimationImpl(animationData, syncType);
+			animationData.lib = "PED";
+			animationData.name = "WALK_PLAYER";
+			applyAnimationImpl(animationData, syncType);
+		}
+	}
 
     PlayerSurfingData getSurfingData() const override
     {
