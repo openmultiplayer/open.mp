@@ -51,7 +51,6 @@ if(BUILD_PAWN_COMPONENT)
 			PRIVATE
 				-DFLOATPOINT
 				-DAMX_STRING_LIB
-				-DsNAMEMAX=63
 
 				# Disable default amx_FindPublic implementation because we want our own more performant one
 				AMX_ALIGN AMX_ALLOT AMX_CLEANUP AMX_CLONE AMX_DEFCALLBACK AMX_EXEC AMX_FLAGS AMX_GETADDR
