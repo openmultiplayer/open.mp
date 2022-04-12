@@ -84,6 +84,7 @@ public:
 class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler {
 private:
     ICore* core_ = nullptr;
+	IClassesComponent * classes_ = nullptr;
 	ITimersComponent * timers_ = nullptr;
 	IPlayerPool * players_ = nullptr;
 
@@ -106,7 +107,9 @@ public:
 	{
 		if (core_)
 		{
+			//core->getEventDispatcher().removeEventHandler(this);
 			players_->getEventDispatcher().removeEventHandler(this);
+			classes_->getEventDispatcher().removeEventHandler(this);
 		}
 	}
 
@@ -119,12 +122,16 @@ public:
     {
 		constexpr int8_t EventPriority_Fixes = -40;
 		core_ = c;
+		//core->getEventDispatcher().addEventHandler(this);
 		players_ = &core_->getPlayers();
 		players_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
 	}
 
 	void onInit(IComponentList * components) override
 	{
+		constexpr int8_t EventPriority_Fixes = -40;
+		classes_ = components->queryComponent<IClassesComponent>();
+		classes_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
 		timers_ = components->queryComponent<ITimersComponent>();
 	}
 
@@ -143,6 +150,25 @@ public:
 		IPlayerFixesData * data = queryExtension<IPlayerFixesData>(player);
 		player.setMoney(data->getLastCash());
 		data->setLastCash(0);
+	}
+	
+	bool onPlayerRequestClass(IPlayer & player, unsigned int classId) override
+	{
+		/*
+		 * <problem>
+		 *     Random blunts and bottles sometimes appear in class selection.
+		 * </problem>
+		 * <solution>
+		 *     Call "RemoveBuildingForPlayer".
+		 * </solution>
+		 * <see>OnPlayerRequestClass</see>
+		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
+		 */
+		auto pos = player.getPosition();
+		player.removeDefaultObjects(1484, pos, 10.0f);
+		player.removeDefaultObjects(1485, pos, 10.0f);
+		player.removeDefaultObjects(1486, pos, 10.0f);
+		return true;
 	}
 
 	void onDeath(IPlayer & player, IPlayer * killer, int reason) override
