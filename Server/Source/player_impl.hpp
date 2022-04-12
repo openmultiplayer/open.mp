@@ -910,8 +910,27 @@ public:
         return pos_;
     }
 
+private:
+	void removeParachute()
+	{
+		switch (getAnimationData().ID)
+		{
+		case 958:
+		case 959:
+		case 960:
+		case 961:
+		case 962:
+		case 1134:
+			// Remove their parachute.
+			removeWeapon(46);
+			break;
+		}
+	}
+
+public:
     void setPosition(Vector3 position) override
     {
+		removeParachute();
         // Set from sync
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -990,6 +1009,7 @@ public:
 
     void setPositionFindZ(Vector3 position) override
     {
+		removeParachute();
         // Set from sync
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -1058,6 +1078,31 @@ public:
         givePlayerWeaponRPC.Ammo = weapon.ammo;
         PacketHelper::send(givePlayerWeaponRPC, *this);
     }
+	
+    void removeWeapon(uint8_t weaponid) override
+    {
+		for (auto & weapon : weapons_)
+		{
+			if (weapon.id == weaponid)
+			{
+				weapon.id = 0;
+				weapon.ammo = 0;
+				// Yes.
+				goto removeWeapon_has_weapon;
+			}
+		}
+		// Doesn't have the weapon.
+		return;
+removeWeapon_has_weapon:
+		resetWeapons();
+		for (auto & weapon : weapons_)
+		{
+			if (weapon.id)
+			{
+				giveWeapon(weapon);
+			}
+		}
+    }
 
     void setWeaponAmmo(WeaponSlotData data) override
     {
@@ -1071,6 +1116,21 @@ public:
     WeaponSlots getWeapons() override
     {
         return weapons_;
+    }
+	
+	WeaponSlotData getWeaponSlot(int slot) override
+    {
+		if (slot < 0 || slot >= MAX_WEAPON_SLOTS)
+		{
+			WeaponSlotData ret { 0, 0 };
+			return ret;
+		}
+		WeaponSlotData ret = weapons_[slot];
+		if (ret.ammo == 0)
+		{
+			ret.id = 0;
+		}
+		return ret;
     }
 
     void resetWeapons() override
