@@ -4,6 +4,16 @@
 
 using namespace Impl;
 
+static const NetCode::RPC::ShowDialog hideDialog = {
+	{},
+	INVALID_DIALOG_ID,
+	static_cast<uint8_t>(DialogStyle_MSGBOX),
+	" ",
+	" ",
+	" ",
+	" "
+};
+
 class PlayerDialogData final : public IPlayerDialogData {
 private:
     int activeId = INVALID_DIALOG_ID;
@@ -15,7 +25,7 @@ public:
 	{
 		if (activeId != INVALID_DIALOG_ID)
 		{
-			show(player, INVALID_DIALOG_ID, DialogStyle_MSGBOX, " ", " ", " ", " ");
+			PacketHelper::send(hideDialog, player);
 			activeId = INVALID_DIALOG_ID;
 		}
 	}
