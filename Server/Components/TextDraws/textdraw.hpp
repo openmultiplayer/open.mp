@@ -36,7 +36,7 @@ private:
     float previewZoom = 1.f;
 
 public:
-    TextDrawBase(Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_FontAharoniBold, int previewModel = 0)
+    TextDrawBase(Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_AharoniBold, int previewModel = 0)
         : pos(pos)
         , text(text)
         , style(style)
@@ -393,7 +393,7 @@ private:
     bool shown = false;
 
 public:
-    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_FontAharoniBold, int previewModel = 0)
+    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_AharoniBold, int previewModel = 0)
         : TextDrawBase(pos, text, style, previewModel)
         , player(player)
     {
