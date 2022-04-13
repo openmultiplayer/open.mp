@@ -43,8 +43,8 @@ elseif(UNIX)
 		set(THREADS_PREFER_PTHREAD_FLAG ON)
 	endif()
 
-	set(CMAKE_C_FLAGS "-pthread -Werror=format")
-	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++ -Werror=format")
+	set(CMAKE_C_FLAGS "-pthread -Werror=format -fno-builtin-getentropy")
+	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -static-libstdc++ -Werror=format -fno-builtin-getentropy")
 
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)

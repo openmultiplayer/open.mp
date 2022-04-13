@@ -1,0 +1,25 @@
+FROM ubuntu:18.04
+RUN \
+    apt-get update && \
+    apt-get install -y \
+        gpg \
+        wget \
+    && \
+    wget -O- https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
+    gpg --dearmor - | \
+    tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
+    echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ bionic main' | \
+    tee /etc/apt/sources.list.d/kitware.list >/dev/null && \
+    apt-get update && \
+    apt-get install -y \
+        cmake \
+        ninja-build \
+        clang-10 \
+        python3-pip \
+        gcc-8-multilib \
+        g++-8-multilib \
+    && \
+    pip3 install conan
+
+ADD build.sh /
+CMD /build.sh
