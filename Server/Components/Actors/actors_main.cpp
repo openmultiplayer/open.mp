@@ -111,7 +111,11 @@ public:
 
     void release(int index) override
     {
-        storage.release(index, false);
+        auto ptr = storage.get(index);
+        if (ptr) {
+            static_cast<Actor*>(ptr)->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override
@@ -138,6 +142,12 @@ public:
     const FlatPtrHashSet<IActor>& entries() override
     {
         return storage._entries();
+    }
+
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override

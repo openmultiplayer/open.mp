@@ -52,6 +52,11 @@ public:
     {
         delete this;
     }
+
+    void reset() override
+    {
+        cls = defClass;
+    }
 };
 
 class Class final : public IClass, public PoolIDProvider {
@@ -166,6 +171,14 @@ public:
     {
     }
 
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
+        inClassRequest = false;
+        skipDefaultClassRequest = false;
+    }
+
     void onLoad(ICore* c) override
     {
         core = c;
@@ -190,7 +203,8 @@ public:
 
     IClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
-        if (storage._entries().size() == CLASS_POOL_SIZE) {
+		size_t count = storage._entries().size();
+        if (count == CLASS_POOL_SIZE) {
             Class* lastClass = storage.get(storage.Upper - 1);
 
             lastClass->cls = PlayerClass(skin, team, spawn, angle, weapons);
@@ -198,12 +212,25 @@ public:
             return lastClass;
         }
 
-        return storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
+        IClass* ret = storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
+		if (count == 0) {
+			// First class.  Initialise all the players with this.
+			for (auto i : core->getPlayers().entries()) {
+				queryExtension<IPlayerClassData>(i)->setSpawnInfo(ret->getClass());
+			}
+		}
+
+		return ret;
     }
 
     void onConnect(IPlayer& player) override
     {
-        player.addExtension(new PlayerClassData(player), true);
+		auto first = storage.begin();
+		if (player.addExtension(new PlayerClassData(player), true) && first != storage.end())
+		{
+			// Initialise the player's current spawn data to the first defined class.
+			queryExtension<IPlayerClassData>(player)->setSpawnInfo((*first)->getClass());
+		}
     }
 
     void free() override

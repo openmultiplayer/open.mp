@@ -60,10 +60,14 @@ public:
         /// Detach player from player textdraws so they don't try to send an RPC
         for (IPlayerTextDraw* textDraw : storage) {
             PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            td->setPlayerQuitting();
         }
         delete this;
+    }
+
+    void reset() override
+    {
+        selecting = false;
+        storage.clear();
     }
 
     virtual Pair<size_t, size_t> bounds() const override
@@ -78,6 +82,8 @@ public:
 
     void release(int index) override
     {
+        PlayerTextDraw * td = storage.get(index);
+        td->destream();
         storage.release(index, false);
     }
 
@@ -170,6 +176,13 @@ public:
         NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
     }
 
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
+        //PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
+    }
+
     ~TextDrawsComponent()
     {
         if (core) {
@@ -225,7 +238,12 @@ public:
 
     void release(int index) override
     {
-        storage.release(index, false);
+        auto ptr = storage.get(index);
+        if (ptr)
+        {
+            static_cast<TextDraw*>(ptr)->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override

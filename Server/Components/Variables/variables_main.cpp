@@ -106,6 +106,11 @@ public:
     {
         delete this;
     }
+
+    void reset() override
+    {
+        // Do nothing.  Variables persist.
+    }
 };
 
 class VariablesComponent final : public VariableStorageBase<IVariablesComponent>, public PlayerEventHandler {
@@ -144,6 +149,11 @@ public:
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
         }
+    }
+
+    void reset() override
+    {
+        // Nothing to reset here.  SVars persist.
     }
 };
 

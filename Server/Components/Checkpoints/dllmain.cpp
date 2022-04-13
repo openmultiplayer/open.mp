@@ -120,6 +120,11 @@ public:
         delete this;
     }
 
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+    }
+
     ~CheckpointsComponent()
     {
         if (core) {

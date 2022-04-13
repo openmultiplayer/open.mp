@@ -50,13 +50,12 @@ public:
 
     void freeExtension() override
     {
-        for (IPlayerTextLabel* textLabel : storage) {
-            /// Detach player from player textlabels so they don't try to send an RPC
-            PlayerTextLabel* lbl = static_cast<PlayerTextLabel*>(textLabel);
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            lbl->setPlayerQuitting();
-        }
         delete this;
+    }
+
+    void reset() override
+    {
+        storage.clear();
     }
 
     Pair<size_t, size_t> bounds() const override
@@ -191,7 +190,12 @@ public:
 
     void release(int index) override
     {
-        storage.release(index, false);
+        auto ptr = storage.get(index);
+        if (ptr)
+        {
+            static_cast<TextLabel*>(ptr)->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override
@@ -275,6 +279,12 @@ public:
                 }
             }
         }
+    }
+
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
     }
 };
 

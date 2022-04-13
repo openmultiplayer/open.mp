@@ -22,5 +22,9 @@ public:
     {
         delete this;
     }
+
+    void reset() override
+    {
+    }
 };
 

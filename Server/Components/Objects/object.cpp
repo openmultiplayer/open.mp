@@ -4,7 +4,12 @@
 Object::~Object()
 {
     eraseFromProcessed(true /* force */);
-    for (IPlayer* player : objects_.getPlayers().entries()) {
+}
+
+void Object::destream()
+{
+    for (IPlayer* player : objects_.getPlayers().entries())
+    {
         destroyForPlayer(*player);
     }
 }
@@ -239,8 +244,9 @@ void PlayerObject::setRotation(GTAQuat rotation)
 PlayerObject::~PlayerObject()
 {
     eraseFromProcessed(true /* force*/);
+}
 
-    if (!playerQuitting_) {
-        destroyForPlayer();
-    }
+void PlayerObject::destream()
+{
+    destroyForPlayer();
 }

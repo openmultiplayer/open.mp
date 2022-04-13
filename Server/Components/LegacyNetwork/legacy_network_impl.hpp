@@ -243,6 +243,10 @@ public:
 
     void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
     void unban(const BanEntry& entry) override;
+
+    void reset() override
+    {
+    }
 };
 
 struct AnnounceHTTPResponseHandler final : HTTPResponseHandler {

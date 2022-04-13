@@ -92,6 +92,12 @@ public:
         delete this;
     }
 
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
+    }
+
     Pair<size_t, size_t> bounds() const override
     {
         return std::make_pair(storage.Lower, storage.Upper);
@@ -106,6 +112,7 @@ public:
     {
         Pickup* pickup = storage.get(index);
         if (pickup && !pickup->isStatic()) {
+            static_cast<Pickup*>(pickup)->destream();
             storage.release(index, false);
         }
     }
