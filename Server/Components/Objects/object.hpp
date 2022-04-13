@@ -135,7 +135,7 @@ public:
     }
 
 protected:
-    void setMtl(int index, int model, StringView txd, StringView texture, Colour colour)
+    void setMtl(int index, int model, StringView textureLibrary, StringView textureName, Colour colour)
     {
         if (!materials_[index].used) {
             ++materialsCount_;
@@ -144,12 +144,12 @@ protected:
 
         materials_[index].type = ObjectMaterialData::Type::Default;
         materials_[index].model = model;
-        materials_[index].textOrTXD = txd;
-        materials_[index].fontOrTexture = texture;
+        materials_[index].textOrTXD = textureLibrary;
+        materials_[index].fontOrTexture = textureName;
         materials_[index].materialColour = colour;
     }
 
-    void setMtlText(int index, StringView text, int size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
+    void setMtlText(int index, StringView text, ObjectMaterialSize size, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backgroundColour, ObjectMaterialTextAlign align)
     {
         if (!materials_[index].used) {
             ++materialsCount_;
@@ -163,7 +163,7 @@ protected:
         materials_[index].fontSize = fontSize;
         materials_[index].bold = bold;
         materials_[index].fontColour = fontColour;
-        materials_[index].backgroundColour = backColour;
+        materials_[index].backgroundColour = backgroundColour;
         materials_[index].alignment = align;
     }
 
@@ -196,7 +196,7 @@ protected:
         PacketHelper::send(destroyObjectRPC, player);
     }
 
-    NetCode::RPC::MoveObject move(const ObjectMoveData& data)
+    NetCode::RPC::MoveObject moveRPC(const ObjectMoveData& data)
     {
         moving_ = true;
         moveData_ = data;
@@ -321,25 +321,25 @@ public:
     {
     }
 
-    virtual void setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour) override
+    virtual void setMaterial(uint32_t index, int model, StringView textureLibrary, StringView textureName, Colour colour) override
     {
         if (index < MAX_OBJECT_MATERIAL_SLOTS) {
-            setMtl(index, model, txd, texture, colour);
+            setMtl(index, model, textureLibrary, textureName, colour);
             restream();
         }
     }
 
-    virtual void setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override
+    virtual void setMaterialText(uint32_t materialIndex, StringView text, ObjectMaterialSize materialSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backgroundColour, ObjectMaterialTextAlign align) override
     {
-        if (index < MAX_OBJECT_MATERIAL_SLOTS) {
-            setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
+        if (materialIndex < MAX_OBJECT_MATERIAL_SLOTS) {
+            setMtlText(materialIndex, text, materialSize, fontFace, fontSize, bold, fontColour, backgroundColour, align);
             restream();
         }
     }
 
-    void startMoving(const ObjectMoveData& data) override;
+    void move(const ObjectMoveData& data) override;
 
-    void stopMoving() override;
+    void stop() override;
 
     void resetAttachment() override
     {
@@ -430,13 +430,13 @@ public:
     {
     }
 
-    void setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour) override;
+    void setMaterial(uint32_t materialIndex, int model, StringView textureLibrary, StringView textureName, Colour colour) override;
 
-    void setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align) override;
+    void setMaterialText(uint32_t materialIndex, StringView text, ObjectMaterialSize materialSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backgroundColour, ObjectMaterialTextAlign align) override;
 
-    void startMoving(const ObjectMoveData& data) override;
+    void move(const ObjectMoveData& data) override;
 
-    void stopMoving() override;
+    void stop() override;
 
     bool advance(Microseconds elapsed, TimePoint now);
 

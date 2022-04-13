@@ -16,14 +16,14 @@ void Object::restream()
     }
 }
 
-void Object::startMoving(const ObjectMoveData& data)
+void Object::move(const ObjectMoveData& data)
 {
     if (isMoving()) {
-        stopMoving();
+        stop();
     }
 
     addToProcessed();
-    PacketHelper::broadcast(move(data), objects_.getPlayers());
+    PacketHelper::broadcast(moveRPC(data), objects_.getPlayers());
 }
 
 void Object::addToProcessed()
@@ -46,7 +46,7 @@ void Object::eraseFromProcessed(bool force)
     objects_.getProcessedObjects().erase(this);
 }
 
-void Object::stopMoving()
+void Object::stop()
 {
     PacketHelper::broadcast(stopMove(), objects_.getPlayers());
     eraseFromProcessed(false /* force */);
@@ -120,11 +120,11 @@ void PlayerObject::restream()
     createObjectForClient(objects_.getPlayer());
 }
 
-void PlayerObject::setMaterial(uint32_t index, int model, StringView txd, StringView texture, Colour colour)
+void PlayerObject::setMaterial(uint32_t index, int model, StringView textureLibrary, StringView textureName, Colour colour)
 {
     const ObjectMaterialData* mtl = nullptr;
     if (getMaterialData(index, mtl)) {
-        setMtl(index, model, txd, texture, colour);
+        setMtl(index, model, textureLibrary, textureName, colour);
         NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
         setPlayerObjectMaterialRPC.ObjectID = poolID;
         setPlayerObjectMaterialRPC.MaterialID = index;
@@ -132,14 +132,14 @@ void PlayerObject::setMaterial(uint32_t index, int model, StringView txd, String
     }
 }
 
-void PlayerObject::setMaterialText(uint32_t index, StringView text, int mtlSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backColour, ObjectMaterialTextAlign align)
+void PlayerObject::setMaterialText(uint32_t materialIndex, StringView text, ObjectMaterialSize materialSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backgroundColour, ObjectMaterialTextAlign align)
 {
     const ObjectMaterialData* mtl = nullptr;
-    if (getMaterialData(index, mtl)) {
-        setMtlText(index, text, mtlSize, fontFace, fontSize, bold, fontColour, backColour, align);
+    if (getMaterialData(materialIndex, mtl)) {
+        setMtlText(materialIndex, text, materialSize, fontFace, fontSize, bold, fontColour, backgroundColour, align);
         NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
         setPlayerObjectMaterialRPC.ObjectID = poolID;
-        setPlayerObjectMaterialRPC.MaterialID = index;
+        setPlayerObjectMaterialRPC.MaterialID = materialIndex;
         PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
     }
 }
@@ -164,17 +164,17 @@ void PlayerObject::eraseFromProcessed(bool force)
     objects_.getPlayerProcessedObjects().erase(this);
 }
 
-void PlayerObject::startMoving(const ObjectMoveData& data)
+void PlayerObject::move(const ObjectMoveData& data)
 {
     if (isMoving()) {
-        stopMoving();
+        stop();
     }
 
     addToProcessed();
-    PacketHelper::send(move(data), objects_.getPlayer());
+    PacketHelper::send(moveRPC(data), objects_.getPlayer());
 }
 
-void PlayerObject::stopMoving()
+void PlayerObject::stop()
 {
     PacketHelper::send(stopMove(), objects_.getPlayer());
     eraseFromProcessed(false /* force */);
