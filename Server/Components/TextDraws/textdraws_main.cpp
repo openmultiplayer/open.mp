@@ -60,7 +60,7 @@ public:
 
     IPlayerTextDraw* create(Vector2 position, int model) override
     {
-        return storage.emplace(player, position, "_", TextDrawStyle_Preview, model);
+        return storage.emplace(player, position, "_", TextDrawFont_Preview, model);
     }
 
     void freeExtension() override
@@ -225,7 +225,7 @@ public:
 
     ITextDraw* create(Vector2 position, int model) override
     {
-        return storage.emplace(position, "_", TextDrawStyle_Preview, model);
+        return storage.emplace(position, "_", TextDrawFont_Preview, model);
     }
 
     void free() override
