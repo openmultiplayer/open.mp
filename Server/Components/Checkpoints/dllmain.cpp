@@ -23,7 +23,7 @@ private:
     {
         PlayerCheckpointData* playerCheckpointData = queryExtension<PlayerCheckpointData>(player);
         if (playerCheckpointData) {
-            IPlayerStandardCheckpointData& cp = playerCheckpointData->getStandardCheckpoint();
+            ICheckpointData& cp = playerCheckpointData->getCheckpoint();
             if (cp.isEnabled()) {
                 float radius = cp.getRadius();
                 float maxDistanceSqr = radius * radius;
@@ -52,7 +52,7 @@ private:
     {
         PlayerCheckpointData* playerCheckpointData = queryExtension<PlayerCheckpointData>(player);
         if (playerCheckpointData) {
-            IPlayerRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
+            IRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
             if (cp.isEnabled()) {
                 float radius = cp.getRadius();
                 float maxDistanceSqr = radius * radius;
