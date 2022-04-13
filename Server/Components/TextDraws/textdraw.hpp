@@ -29,14 +29,14 @@ private:
     int shadowSize = 2;
     int outlineSize = 0;
     Colour backgroundColour = Colour::Black();
-    TextDrawStyle style;
+    TextDrawFont style;
     int previewModel;
     GTAQuat previewRotation = GTAQuat(Vector3(0.f));
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
 
 public:
-    TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+    TextDrawBase(Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_FontAharoniBold, int previewModel = 0)
         : pos(pos)
         , text(text)
         , style(style)
@@ -160,24 +160,24 @@ public:
         return outlineSize;
     }
 
-    T& setBackColour(Colour colour) override
+    T& setBackgroundColour(Colour colour) override
     {
         backgroundColour = colour;
         return *this;
     }
 
-    Colour getBackColour() const override
+    Colour getBackgroundColour() const override
     {
         return backgroundColour;
     }
 
-    T& setStyle(TextDrawStyle s) override
+    T& setFont(TextDrawFont s) override
     {
         style = s;
         return *this;
     }
 
-    TextDrawStyle getStyle() const override
+    TextDrawFont getFont() const override
     {
         return style;
     }
@@ -277,7 +277,7 @@ protected:
         playerShowTextDrawRPC.BoxColour = boxColour;
         playerShowTextDrawRPC.Shadow = shadowSize;
         playerShowTextDrawRPC.Outline = outlineSize;
-        playerShowTextDrawRPC.BackColour = backgroundColour;
+        playerShowTextDrawRPC.BackgroundColour = backgroundColour;
         playerShowTextDrawRPC.Style = style;
         playerShowTextDrawRPC.Selectable = selectable;
         playerShowTextDrawRPC.Position = pos;
@@ -369,6 +369,11 @@ public:
             setTextForClient(*player, txt, false);
         }
     }
+	
+    void setTextForPlayer(IPlayer& player, StringView txt) override
+    {
+        setTextForClient(player, txt, false);
+    }
 
     ~TextDraw()
     {
@@ -388,7 +393,7 @@ private:
     bool shown = false;
 
 public:
-    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_FontAharoniBold, int previewModel = 0)
         : TextDrawBase(pos, text, style, previewModel)
         , player(player)
     {

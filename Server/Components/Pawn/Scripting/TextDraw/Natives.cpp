@@ -10,6 +10,8 @@
 #include "Server/Components/TextDraws/textdraws.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include <amx/amx.h>
+#include "../../format.hpp"
 
 SCRIPT_API(TextDrawCreate, int(Vector2 position, const std::string& text))
 {
@@ -89,13 +91,13 @@ SCRIPT_API(TextDrawSetOutline, bool(ITextDraw& textdraw, int size))
 
 SCRIPT_API(TextDrawBackgroundColor, bool(ITextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setBackColour(Colour::FromRGBA(colour));
+    textdraw.setBackgroundColour(Colour::FromRGBA(colour));
     return true;
 }
 
 SCRIPT_API(TextDrawFont, bool(ITextDraw& textdraw, int font))
 {
-    textdraw.setStyle(TextDrawStyle(font));
+    textdraw.setFont(TextDrawFont(font));
     return true;
 }
 
@@ -208,7 +210,7 @@ SCRIPT_API(TextDrawGetBoxColor, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawGetBackgroundColor, int(ITextDraw& textdraw))
 {
-    return textdraw.getBackColour().RGBA();
+    return textdraw.getBackgroundColour().RGBA();
 }
 
 SCRIPT_API(TextDrawGetShadow, int(ITextDraw& textdraw))
@@ -223,7 +225,7 @@ SCRIPT_API(TextDrawGetOutline, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawGetFont, int(ITextDraw& textdraw))
 {
-    return static_cast<uint8_t>(textdraw.getStyle());
+    return static_cast<uint8_t>(textdraw.getFont());
 }
 
 SCRIPT_API(TextDrawIsBox, int(ITextDraw& textdraw))
@@ -265,3 +267,41 @@ SCRIPT_API(TextDrawGetPreviewVehCol, bool(ITextDraw& textdraw, int& colour1, int
     colour2 = colours.second;
     return true;
 }
+
+SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player))
+{
+	AMX *
+		amx = GetAMX();
+	cell *
+		params = GetParams();
+    int
+        num = params[0] / sizeof(cell);
+
+    if (num < 3)
+	{
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `TextDrawSetStringForPlayer`: %u < %u", num, 3);
+        return false;
+    }
+    int maxlen = params[2];
+
+    int param = 4;
+    cell* cinput = amx_Address(amx, params[3]);
+
+    char staticOutput[4096];
+
+    size_t len = atcprintf(staticOutput, maxlen - 1, cinput, amx, params, &param);
+
+    if (param - 1 < num && len < maxlen - 1)
+	{
+        char* fmt;
+        amx_StrParamChar(amx, params[3], fmt);
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
+    }
+	else
+	{
+		textdraw.setTextForPlayer(player, staticOutput);
+	}
+
+    return true;
+}
+

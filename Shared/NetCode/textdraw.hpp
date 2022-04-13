@@ -26,7 +26,7 @@ namespace RPC {
         Colour BoxColour;
         int Shadow;
         int Outline;
-        Colour BackColour;
+        Colour BackgroundColour;
         int Style;
         bool Selectable;
         Vector2 Position;
@@ -53,7 +53,7 @@ namespace RPC {
             bs.writeUINT32(BoxColour.ABGR());
             bs.writeUINT8(Shadow);
             bs.writeUINT8(Outline);
-            bs.writeUINT32(BackColour.ABGR());
+            bs.writeUINT32(BackgroundColour.ABGR());
             bs.writeUINT8(Style);
             bs.writeUINT8(Selectable);
             bs.writeVEC2(Position);
