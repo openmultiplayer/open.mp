@@ -514,7 +514,6 @@ public:
         storage.clear();
     }
 
-    void beginObjectSelection() override
     void beginSelecting() override
     {
         inObjectEdit_ = false;

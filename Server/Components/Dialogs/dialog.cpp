@@ -4,14 +4,17 @@
 
 using namespace Impl;
 
+String emptyString = " ";
+StringView emptyStringView = emptyString;
+
 static const NetCode::RPC::ShowDialog hideDialog = {
 	{},
 	INVALID_DIALOG_ID,
 	static_cast<uint8_t>(DialogStyle_MSGBOX),
-	" ",
-	" ",
-	" ",
-	" "
+	emptyStringView,
+	emptyStringView,
+	emptyStringView,
+	emptyStringView
 };
 
 class PlayerDialogData final : public IPlayerDialogData {

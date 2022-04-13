@@ -192,6 +192,6 @@ public:
     void reset() override
     {
         raceCheckpoint.reset();
-        standardCheckpoint.reset();
+        checkpoint.reset();
     }
 };
