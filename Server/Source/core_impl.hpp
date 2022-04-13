@@ -145,6 +145,14 @@ public:
                 pair.second->onInit(this);
             });
     }
+    
+    void reset()
+    {
+        std::for_each(components.begin(), components.end(),
+            [](const robin_hood::pair<UID, IComponent*>& pair) {
+                pair.second->reset();
+            });
+    }
 
     void ready()
     {
@@ -699,6 +707,7 @@ private:
     int* LagCompensation;
     String ServerName;
     int* EnableVehicleFriendlyFire;
+	bool reloading_ = false;
 
     int EnableLogTimestamp;
     String LogTimestampFormat;
@@ -786,6 +795,52 @@ private:
         printLn("Loaded %i component(s)", components.size());
     }
 
+    void playerInit(IPlayer& player)
+    {
+        NetCode::RPC::PlayerInit playerInitRPC;
+        playerInitRPC.EnableZoneNames = *EnableZoneNames;
+        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
+        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
+        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
+        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
+        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
+        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
+        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
+        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
+        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
+        playerInitRPC.ShowNameTags = *ShowNameTags;
+        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
+
+        // Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
+        playerInitRPC.SetWorldTime = player.getTime().first.count();
+        playerInitRPC.SetWeather = player.getWeather();
+
+        playerInitRPC.SetGravity = *SetGravity;
+        playerInitRPC.LanMode = *LanMode;
+        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
+        playerInitRPC.Instagib = *Instagib;
+        playerInitRPC.OnFootRate = *OnFootRate;
+        playerInitRPC.InCarRate = *InCarRate;
+        playerInitRPC.WeaponRate = *WeaponRate;
+        playerInitRPC.Multiplier = *Multiplier;
+        playerInitRPC.LagCompensation = *LagCompensation;
+        playerInitRPC.ServerName = StringView(ServerName);
+        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
+        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
+        playerInitRPC.PlayerID = player.getID();
+        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
+        static const StaticArray<uint8_t, 212> emptyModels { 0 };
+        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
+        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
+        PacketHelper::send(playerInitRPC, player);
+        
+        // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
+        NetCode::RPC::SetPlayerColor RPC;
+        RPC.PlayerID = player.getID();
+        RPC.Col = player.getColour();
+        PacketHelper::send(RPC, player);
+    }
+
 public:
     bool reloadLogFile()
     {
@@ -831,7 +886,28 @@ public:
         }
     }
 
-	void stop()
+    void resetAll() override
+    {
+		reloading_ = true;
+        NetCode::RPC::PlayerClose RPC;
+        PacketHelper::broadcast(RPC, players);
+        components.reset();
+        for (auto p : players.entries())
+        {
+            static_cast<Player *>(p)->resetExtensions();
+        }
+    }
+
+    void reloadAll() override
+    {
+		reloading_ = false;
+        for (auto p : players.entries())
+        {
+            playerInit(*p);
+        }
+    }
+
+    void stop()
     {
         run_ = false;
     }
@@ -866,9 +942,23 @@ public:
         config.setInt("max_players", glm::clamp(*config.getInt("max_players"), 1, 1000));
 
         if (cmd.count("script")) {
-            config.setString(
-                "pawn.entry_file",
-                cmd["script"].as<std::string>());
+            // Add the launch parameter to the start of the scripts list.
+            // Something here corrupts the strings between loading and inserting.  Hence doing this
+            // the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
+            // we got the old value, modified it, then passed it in for the new value.  But our
+            // modified value was only a pointer to the old value, which was now being overridden.
+            DynamicArray<String> const * mainScripts = config.getStrings("pawn.main_scripts");
+            DynamicArray<StringView> view {};
+            String entry_file = cmd["script"].as<String>();
+            view.push_back(entry_file);
+			if (mainScripts)
+			{
+				for (String const & v : *mainScripts)
+				{
+					view.push_back(v);
+				}
+			}
+            config.setStrings("pawn.main_scripts", view);
         }
 
         // Don't use config before this point
@@ -1149,49 +1239,14 @@ public:
 
     void onConnect(IPlayer& player) override
     {
-        NetCode::RPC::PlayerInit playerInitRPC;
-        playerInitRPC.EnableZoneNames = *EnableZoneNames;
-        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
-        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
-        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
-        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
-        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
-        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
-        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
-        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
-        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
-        playerInitRPC.ShowNameTags = *ShowNameTags;
-        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
-
-        // Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
-        playerInitRPC.SetWorldTime = player.getTime().first.count();
-        playerInitRPC.SetWeather = player.getWeather();
-
-        playerInitRPC.SetGravity = *SetGravity;
-        playerInitRPC.LanMode = *LanMode;
-        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
-        playerInitRPC.Instagib = *Instagib;
-        playerInitRPC.OnFootRate = *OnFootRate;
-        playerInitRPC.InCarRate = *InCarRate;
-        playerInitRPC.WeaponRate = *WeaponRate;
-        playerInitRPC.Multiplier = *Multiplier;
-        playerInitRPC.LagCompensation = *LagCompensation;
-        playerInitRPC.ServerName = StringView(ServerName);
-        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
-        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
-        playerInitRPC.PlayerID = player.getID();
-        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        static const StaticArray<uint8_t, 212> emptyModels { 0 };
-        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
-        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
-        PacketHelper::send(playerInitRPC, player);
-        
-        // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
-        NetCode::RPC::SetPlayerColor RPC;
-        RPC.PlayerID = player.getID();
-        RPC.Col = player.getColour();
-        PacketHelper::send(RPC, player);
-    }
+        playerInit(player);
+		if (reloading_)
+		{
+			// Close the player again.
+			NetCode::RPC::PlayerClose RPC;
+			PacketHelper::broadcast(RPC, players);
+		}
+	}
 
     void connectBot(StringView name, StringView script) override
     {

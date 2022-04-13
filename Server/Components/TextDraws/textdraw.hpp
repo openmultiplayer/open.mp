@@ -364,6 +364,10 @@ public:
 
     ~TextDraw()
     {
+    }
+
+    void destream()
+    {
         for (IPlayer* player : shownFor_.entries()) {
             hideForClient(*player, false);
         }
@@ -376,11 +380,6 @@ private:
     bool shown = false;
 
 public:
-    inline void setPlayerQuitting()
-    {
-        shown = false;
-    }
-
     PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : TextDrawBase(pos, text, style, previewModel)
         , player(player)
@@ -420,6 +419,10 @@ public:
     }
 
     ~PlayerTextDraw()
+    {
+    }
+
+    void destream()
     {
         if (shown) {
             hideForClient(player, true);

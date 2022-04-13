@@ -120,6 +120,7 @@ public:
     }
 
     ~Vehicle();
+    void destream();
 
     int getVirtualWorld() const override
     {
@@ -448,5 +449,12 @@ public:
     void freeExtension() override
     {
         delete this;
+    }
+
+    void reset() override
+    {
+        vehicle = nullptr;
+        seat = SEAT_NONE;
+        numStreamed = 0;
     }
 };

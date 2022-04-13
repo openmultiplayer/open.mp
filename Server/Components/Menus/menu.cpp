@@ -97,6 +97,12 @@ public:
         NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
     }
 
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        storage.clear();
+    }
+
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         const int pid = player.getID();

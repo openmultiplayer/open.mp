@@ -35,6 +35,11 @@ public:
         }
     }
 
+    void reset() override
+    {
+        storage.clear();
+    }
+
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const Vector3& playerPos = player.getPosition();
@@ -112,11 +117,14 @@ public:
 
     void release(int index) override
     {
-        if (checkingList.valid(index)) {
-            IGangZone* zone = get(index);
-            checkingList.remove(index, *zone);
+        IGangZone* zone = get(index);
+        if (zone) {
+            if (checkingList.valid(index)) {
+                checkingList.remove(index, *zone);
+            }
+            static_cast<GangZone*>(zone)->destream();
+            storage.release(index, false);
         }
-        storage.release(index, false);
     }
 
     void lock(int index) override

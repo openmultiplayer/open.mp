@@ -272,10 +272,12 @@ public:
 
     void release(int index) override
     {
-        if (index == 0) {
-            return;
-        }
+        auto ptr = storage.get(index);
+        if (ptr)
+        {
+            static_cast<Object*>(ptr)->destream();
         storage.release(index, false);
+    }
     }
 
     void lock(int index) override
@@ -368,6 +370,16 @@ public:
     }
 
     void onTick(Microseconds elapsed, TimePoint now) override;
+
+    void reset() override
+    {
+        // Destroy all stored entity instances.
+        processedPlayerObjects.clear();
+        processedObjects.clear();
+        storage.clear();
+        isPlayerObject.fill(0);
+        defCameraCollision = true;
+    }
 };
 
 class PlayerObjectData final : public IPlayerObjectData {
@@ -456,6 +468,10 @@ public:
             return;
         }
         component_.decrementPlayerCounter(index);
+
+        PlayerObject * obj = storage.get(index);
+        obj->destream();
+
         storage.release(index, false);
     }
 
@@ -482,17 +498,23 @@ public:
 
     void freeExtension() override
     {
-        /// Detach player from player objects so they don't try to send an RPC
         for (IPlayerObject* object : storage) {
             PlayerObject* obj = static_cast<PlayerObject*>(object);
             // Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
             component_.decrementPlayerCounter(obj->getID());
-            // free() is called on player quit so make sure not to send any hide RPCs to the player on destruction
-            obj->setPlayerQuitting();
         }
         delete this;
     }
 
+    void reset() override
+    {
+        inObjectEdit_ = false;
+        inObjectSelection_ = false;
+        slotsOccupied_.reset();
+        storage.clear();
+    }
+
+    void beginObjectSelection() override
     void beginSelecting() override
     {
         inObjectEdit_ = false;

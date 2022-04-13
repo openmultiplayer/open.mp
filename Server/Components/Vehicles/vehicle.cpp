@@ -624,7 +624,10 @@ Vehicle::~Vehicle()
     } else if (trailer && towing) {
         detachTrailer();
     }
+}
 
+void Vehicle::destream()
+{
     const auto& entries = pool->getPlayers().entries();
     for (IPlayer* player : entries) {
         PlayerVehicleData* vehicleData = queryExtension<PlayerVehicleData>(player);

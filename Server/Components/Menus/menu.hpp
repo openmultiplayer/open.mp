@@ -24,6 +24,11 @@ public:
     {
         delete this;
     }
+
+    void reset() override
+    {
+        menuId = INVALID_MENU_ID;
+    }
 };
 
 class Menu final : public IMenu, public PoolIDProvider, public NoCopy {

@@ -3,7 +3,8 @@
 #include "../../Singleton.hpp"
 #include "sdk.hpp"
 
-struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler, public Singleton<PlayerEvents> {
+class PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler, public Singleton<PlayerEvents> {
+public:
     void onConnect(IPlayer& player) override
     {
         PawnManager::Get()->CallInSidesWhile1("OnPlayerConnect", player.getID());
@@ -38,8 +39,8 @@ struct PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler
 
     void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-        PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
         PawnManager::Get()->CallInSidesWhile1("OnPlayerDisconnect", player.getID(), int(reason));
+        PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
     }
 
     bool onRequestSpawn(IPlayer& player) override

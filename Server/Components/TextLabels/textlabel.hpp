@@ -210,7 +210,12 @@ public:
 
     ~TextLabel()
     {
-        for (IPlayer* player : streamedFor_.entries()) {
+    }
+
+    void destream()
+    {
+        for (IPlayer* player : streamedFor_.entries())
+        {
             streamOutForClient(*player, false);
         }
     }
@@ -219,18 +224,11 @@ public:
 class PlayerTextLabel final : public TextLabelBase<IPlayerTextLabel> {
 private:
     IPlayer& player;
-    bool playerQuitting;
 
 public:
-    void setPlayerQuitting()
-    {
-        playerQuitting = true;
-    }
-    
     PlayerTextLabel(IPlayer& player, StringView text, Colour colour, Vector3 pos, float drawDist, bool testLOS)
         : TextLabelBase(text, colour, pos, drawDist, testLOS)
         , player(player)
-        , playerQuitting(false)
     {
     }
 
@@ -251,9 +249,11 @@ public:
 
     ~PlayerTextLabel()
     {
-        if (!playerQuitting) {
-            streamOutForClient(player, true);
-        }
+    }
+
+    void destream()
+    {
+        streamOutForClient(player, true);
     }
 };
 

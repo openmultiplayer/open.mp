@@ -56,10 +56,12 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
     reinterpret_cast<void*>(&amx_UTF8Put),
 };
 
-struct PawnComponent final : public IPawnComponent, public CoreEventHandler, ConsoleEventHandler {
+class PawnComponent final : public IPawnComponent, public CoreEventHandler, public ConsoleEventHandler {
+private:
     ICore* core = nullptr;
     Scripting scriptingInstance;
 
+public:
     StringView componentName() const override
     {
         return "Pawn";
@@ -134,7 +136,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
         PawnManager* mgr = PawnManager::Get();
         PawnPluginManager& pluginMgr = PawnManager::Get()->pluginManager;
 
-        // read values of plugins, entry_file and side_scripts from config file
+        // read values of plugins, main_scripts and side_scripts from config file
         IConfig& config = core->getConfig();
 
         // load plugins
@@ -151,8 +153,9 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
             mgr->Load(String(script), false);
         }
 
-        StringView entryFile = config.getString("pawn.entry_file");
-        mgr->Load(String(entryFile), true);
+        DynamicArray<StringView> mainScripts(config.getStringsCount("pawn.main_scripts"));
+        config.getStrings("pawn.main_scripts", Span<StringView>(mainScripts.data(), mainScripts.size()));
+        mgr->Load(mainScripts);
     }
 
     const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const override
@@ -168,6 +171,7 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
     void onTick(Microseconds elapsed, TimePoint now) override
     {
         PawnManager::Get()->pluginManager.ProcessTick();
+        PawnManager::Get()->ProcessTick(elapsed, now);
     }
 
     void onFree(IComponent* component) override
@@ -198,7 +202,8 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
     {
         if (defaults) {
-            config.setString("pawn.entry_file", "test.amx");
+            StringView scripts[] = { "test 1" };
+            config.setStrings("pawn.main_scripts", Span<StringView>(scripts, 1));
             config.setStrings("pawn.side_scripts", Span<StringView>());
             config.setStrings("pawn.legacy_plugins", Span<StringView>());
         }
@@ -216,6 +221,11 @@ struct PawnComponent final : public IPawnComponent, public CoreEventHandler, Con
     }
 
     void free() override { delete this; }
+
+    void reset() override
+    {
+        // Nothing to reset here.  This component did the resetting in the first place.
+    }
 };
 
 COMPONENT_ENTRY_POINT()

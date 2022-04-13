@@ -160,7 +160,12 @@ public:
 
     ~Pickup()
     {
-        for (IPlayer* player : streamedFor_.entries()) {
+    }
+
+    void destream()
+    {
+        for (IPlayer* player : streamedFor_.entries())
+        {
             streamOutForClient(*player);
         }
     }
