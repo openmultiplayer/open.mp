@@ -93,13 +93,13 @@ SCRIPT_API(MoveObject, bool(IObject& object, Vector3 position, float speed, Vect
     data.targetRot = rotation;
     data.speed = speed;
 
-    object.startMoving(data);
+    object.move(data);
     return true;
 }
 
 SCRIPT_API(StopObject, bool(IObject& object))
 {
-    object.stopMoving();
+    object.stop();
     return true;
 }
 
@@ -112,7 +112,7 @@ SCRIPT_API(EditObject, bool(IPlayer& player, IObject& object))
 {
     IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
     if (playerData) {
-        playerData->editObject(object);
+        playerData->beginEditing(object);
         return true;
     }
     return false;
@@ -122,7 +122,7 @@ SCRIPT_API(SelectObject, bool(IPlayer& player))
 {
     IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
     if (playerData) {
-        playerData->beginObjectSelection();
+        playerData->beginSelecting();
         return true;
     }
     return false;
@@ -132,21 +132,51 @@ SCRIPT_API(CancelEdit, bool(IPlayer& player))
 {
     IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
     if (playerData) {
-        playerData->endObjectEdit();
+        playerData->endEditing();
         return true;
     }
     return false;
 }
 
-SCRIPT_API(SetObjectMaterial, bool(IObject& object, int materialIndex, int modelId, const std::string& txdName, const std::string& textureName, uint32_t materialcolor))
+SCRIPT_API(BeginObjectEditing, bool(IPlayer& player, IObject& object))
 {
-    object.setMaterial(materialIndex, modelId, txdName, textureName, Colour::FromARGB(materialcolor));
+    IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
+    if (playerData) {
+        playerData->beginEditing(object);
+        return true;
+    }
+    return false;
+}
+
+SCRIPT_API(BeginObjectSelecting, bool(IPlayer& player))
+{
+    IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
+    if (playerData) {
+        playerData->beginSelecting();
+        return true;
+    }
+    return false;
+}
+
+SCRIPT_API(EndObjectEditing, bool(IPlayer& player))
+{
+    IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
+    if (playerData) {
+        playerData->endEditing();
+        return true;
+    }
+    return false;
+}
+
+SCRIPT_API(SetObjectMaterial, bool(IObject& object, int materialIndex, int modelId, const std::string& textureLibrary, const std::string& textureName, uint32_t materialColour))
+{
+    object.setMaterial(materialIndex, modelId, textureLibrary, textureName, Colour::FromARGB(materialColour));
     return true;
 }
 
-SCRIPT_API(SetObjectMaterialText, bool(IObject& object, const std::string& text, int materialindex, int materialsize, const std::string& fontface, int fontsize, bool bold, uint32_t fontcolor, uint32_t backcolor, int textalignment))
+SCRIPT_API(SetObjectMaterialText, bool(IObject& object, const std::string& text, int materialIndex, int materialSize, const std::string& fontface, int fontsize, bool bold, uint32_t fontColour, uint32_t backgroundColour, int textalignment))
 {
-    object.setMaterialText(materialindex, text, materialsize, fontface, fontsize, bold, Colour::FromARGB(fontcolor), Colour::FromARGB(backcolor), ObjectMaterialTextAlign(textalignment));
+    object.setMaterialText(materialIndex, text, ObjectMaterialSize(materialSize), fontface, fontsize, bold, Colour::FromARGB(fontColour), Colour::FromARGB(backgroundColour), ObjectMaterialTextAlign(textalignment));
     return true;
 }
 
@@ -171,48 +201,48 @@ SCRIPT_API(GetObjectMoveSpeed, float(IObject& object))
     return object.getMovingData().speed;
 }
 
-SCRIPT_API(GetObjectMovingTargetPos, bool(IObject& object, Vector3& pos))
+SCRIPT_API(GetObjectMovingTargetPos, bool(IObject& object, Vector3& target))
 {
     const ObjectMoveData& data = object.getMovingData();
-    pos = data.targetPos;
+    target = data.targetPos;
     return true;
 }
 
-SCRIPT_API(GetObjectTarget, bool(IObject& object, Vector3& pos))
+SCRIPT_API(GetObjectTarget, bool(IObject& object, Vector3& target))
 {
-    return openmp_scripting::GetObjectMovingTargetPos(object, pos);
+    return openmp_scripting::GetObjectMovingTargetPos(object, target);
 }
 
-SCRIPT_API(GetObjectMovingTargetRot, bool(IObject& object, Vector3& rot))
+SCRIPT_API(GetObjectMovingTargetRot, bool(IObject& object, Vector3& rotation))
 {
     const ObjectMoveData& data = object.getMovingData();
-    rot = data.targetRot;
+    rotation = data.targetRot;
     return true;
 }
 
-SCRIPT_API(GetObjectAttachedData, bool(IObject& object, int& attached_vehicleid, int& attached_objectid, int& attached_playerid))
+SCRIPT_API(GetObjectAttachedData, bool(IObject& object, int& parentVehicle, int& parentObject, int& parentPlayer))
 {
     const ObjectAttachmentData data = object.getAttachmentData();
-    attached_vehicleid = INVALID_VEHICLE_ID;
-    attached_objectid = INVALID_OBJECT_ID;
-    attached_playerid = INVALID_PLAYER_ID;
+    parentVehicle = INVALID_VEHICLE_ID;
+    parentObject = INVALID_OBJECT_ID;
+    parentPlayer = INVALID_PLAYER_ID;
 
     if (data.type == ObjectAttachmentData::Type::Object) {
-        attached_objectid = data.ID;
+        parentObject = data.ID;
     } else if (data.type == ObjectAttachmentData::Type::Player) {
-        attached_playerid = data.ID;
+        parentPlayer = data.ID;
     } else if (data.type == ObjectAttachmentData::Type::Vehicle) {
-        attached_vehicleid = data.ID;
+        parentVehicle = data.ID;
     }
 
     return true;
 }
 
-SCRIPT_API(GetObjectAttachedOffset, bool(IObject& object, Vector3& offset, Vector3& rot))
+SCRIPT_API(GetObjectAttachedOffset, bool(IObject& object, Vector3& offset, Vector3& rotation))
 {
     const ObjectAttachmentData data = object.getAttachmentData();
     offset = data.offset;
-    rot = data.rotation;
+    rotation = data.rotation;
     return true;
 }
 
@@ -221,33 +251,42 @@ SCRIPT_API(GetObjectSyncRotation, bool(IObject& object))
     return object.getAttachmentData().syncRotation;
 }
 
-SCRIPT_API(IsObjectMaterialSlotUsed, bool(IObject& object, int materialindex))
+SCRIPT_API(IsObjectMaterialSlotUsed, bool(IObject& object, int materialIndex))
 {
     const ObjectMaterialData* data = nullptr;
-    bool result = object.getMaterialData(materialindex, data);
+    bool result = object.getMaterialData(materialIndex, data);
     if (result) {
         return data->used;
     }
     return result;
 }
 
-SCRIPT_API(GetObjectMaterial, bool(IObject& object, int materialindex, int& modelid, OutputOnlyString& txdname))
+SCRIPT_API(GetObjectMaterial, bool(IObject& object, int materialIndex, int& modelid, OutputOnlyString& textureLibrary, OutputOnlyString& textureName, int& materialColour))
 {
     const ObjectMaterialData* data = nullptr;
-    bool result = object.getMaterialData(materialindex, data);
+    bool result = object.getMaterialData(materialIndex, data);
     if (result) {
-        txdname = data->textOrTXD;
+        textureLibrary = data->textOrTXD;
+        textureName = data->fontOrTexture;
+		materialColour = data->materialColour.RGBA();
     }
     return result;
 }
 
-SCRIPT_API(GetObjectMaterialText, bool(IObject& object, int materialindex, OutputOnlyString& text))
+SCRIPT_API(GetObjectMaterialText, bool(IObject& object, int materialIndex, OutputOnlyString& text, int& materialSize, OutputOnlyString& fontFace, int& fontSize, bool& bold, int& fontColour, int& backgroundColour, int& textAlignment))
 {
     const ObjectMaterialData* data = nullptr;
-    bool result = object.getMaterialData(materialindex, data);
+    bool result = object.getMaterialData(materialIndex, data);
     if (result) {
-        text = data->fontOrTexture;
-    }
+		text = data->textOrTXD;
+		materialSize = data->materialSize;
+		fontFace = data->fontOrTexture;
+		fontSize = data->fontSize;
+		bold = data->bold;
+		fontColour = data->fontColour.RGBA();
+		backgroundColour = data->backgroundColour.RGBA();
+		textAlignment = data->alignment;
+	}
     return result;
 }
 
