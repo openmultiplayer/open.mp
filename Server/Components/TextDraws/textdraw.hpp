@@ -72,7 +72,7 @@ public:
         return text;
     }
 
-    T& setLetterColour(Colour col) override
+    T& setColour(Colour col) override
     {
         letterColour = col;
         return *this;

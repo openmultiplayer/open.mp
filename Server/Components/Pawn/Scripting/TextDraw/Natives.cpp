@@ -65,7 +65,7 @@ SCRIPT_API(TextDrawAlignment, bool(ITextDraw& textdraw, int alignment))
 
 SCRIPT_API(TextDrawColor, bool(ITextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setLetterColour(Colour::FromRGBA(colour));
+    textdraw.setColour(Colour::FromRGBA(colour));
     return true;
 }
 

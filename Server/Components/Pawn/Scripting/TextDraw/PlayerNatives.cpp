@@ -63,7 +63,7 @@ SCRIPT_API(PlayerTextDrawAlignment, bool(IPlayer& player, IPlayerTextDraw& textd
 
 SCRIPT_API(PlayerTextDrawColor, bool(IPlayer& player, IPlayerTextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setLetterColour(Colour::FromRGBA(colour));
+    textdraw.setColour(Colour::FromRGBA(colour));
     return true;
 }
 
