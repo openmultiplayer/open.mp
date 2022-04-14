@@ -1236,11 +1236,11 @@ public:
         }
     }
 
-    void toggleStuntBonus(bool toggle) override
+    void useStuntBonuses(bool enable) override
     {
-        *EnableStuntBonus = toggle;
+        *EnableStuntBonus = enable;
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
-        RPC.Enable = toggle;
+        RPC.Enable = enable;
         PacketHelper::broadcast(RPC, players);
     }
 

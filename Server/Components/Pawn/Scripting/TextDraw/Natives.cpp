@@ -71,7 +71,7 @@ SCRIPT_API(TextDrawColor, bool(ITextDraw& textdraw, uint32_t colour))
 
 SCRIPT_API(TextDrawUseBox, bool(ITextDraw& textdraw, bool use))
 {
-    textdraw.setUsingBox(use);
+    textdraw.useBox(use);
     return true;
 }
 
@@ -234,7 +234,7 @@ SCRIPT_API(TextDrawGetFont, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawIsBox, int(ITextDraw& textdraw))
 {
-    return textdraw.isUsingBox();
+    return textdraw.hasBox();
 }
 
 SCRIPT_API(TextDrawIsProportional, int(ITextDraw& textdraw))

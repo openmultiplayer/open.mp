@@ -69,7 +69,7 @@ SCRIPT_API(PlayerTextDrawColor, bool(IPlayer& player, IPlayerTextDraw& textdraw,
 
 SCRIPT_API(PlayerTextDrawUseBox, bool(IPlayer& player, IPlayerTextDraw& textdraw, bool use))
 {
-    textdraw.setUsingBox(use);
+    textdraw.useBox(use);
     return true;
 }
 
@@ -214,7 +214,7 @@ SCRIPT_API(PlayerTextDrawGetFont, int(IPlayer& player, IPlayerTextDraw& textdraw
 
 SCRIPT_API(PlayerTextDrawIsBox, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
-    return textdraw.isUsingBox();
+    return textdraw.hasBox();
 }
 
 SCRIPT_API(PlayerTextDrawIsProportional, int(IPlayer& player, IPlayerTextDraw& textdraw))

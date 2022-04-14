@@ -116,13 +116,13 @@ public:
         return alignment;
     }
 
-    T& setUsingBox(bool use) override
+    T& useBox(bool use) override
     {
         box = use;
         return *this;
     }
 
-    bool isUsingBox() const override
+    bool hasBox() const override
     {
         return box;
     }
