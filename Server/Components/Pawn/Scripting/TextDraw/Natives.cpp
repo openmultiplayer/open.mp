@@ -38,6 +38,10 @@ SCRIPT_API(IsValidTextDraw, bool(ITextDraw* textdraw))
 
 SCRIPT_API(IsTextDrawVisibleForPlayer, bool(IPlayer& player, ITextDraw& textdraw))
 {
+	// TODO: Deprecate this native.  Mixing `visible` and `show` is bad.  In fact, just avoid the
+	// term `visible` entirely - it is too ambiguous when things might be available to a player but
+	// out of their current line of sight.  Does `visible` mean "can be seen right now" or "can in
+	// theory be seen some time"?  In this respect `shown` and `streamed` are less ambiguous.
     return textdraw.isShownForPlayer(player);
 }
 
