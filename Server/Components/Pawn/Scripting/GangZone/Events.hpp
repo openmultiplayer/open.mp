@@ -21,4 +21,14 @@ struct GangZoneEvents : public GangZoneEventHandler, public Singleton<GangZoneEv
     {
         PawnManager::Get()->CallAllInEntryFirst("OnPlayerLeaveGangZone", DefaultReturnValue_True, player.getID(), zone.getID());
     }
+
+	void onPlayerEnterPlayerGangZone(IPlayer& player, IGangZone& zone) override
+    {
+        PawnManager::Get()->CallAllInEntryFirst("OnPlayerEnterPlayerGangZone", DefaultReturnValue_True, player.getID(), zone.getID());
+    }
+
+    void onPlayerLeavePlayerGangZone(IPlayer& player, IGangZone& zone) override
+    {
+        PawnManager::Get()->CallAllInEntryFirst("OnPlayerLeavePlayerGangZone", DefaultReturnValue_True, player.getID(), zone.getID());
+    }
 };

@@ -22,8 +22,7 @@ private:
     StaticArray<Colour, PLAYER_POOL_SIZE> flashColorForPlayer_;
     StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
     StaticBitset<PLAYER_POOL_SIZE> playersInside_;
-	bool isPerPlayer_ = false;
-
+	
     void restream()
     {
         for (IPlayer* player : shownFor_.entries()) {
@@ -35,15 +34,7 @@ private:
     void hideForClient(IPlayer& player)
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id;
-		if (isPerPlayer_)
-		{
-			id = data->releasePrivateID(poolID);
-		}
-		else
-		{
-			id = data->releaseGlobalID(poolID);
-		}
+		int id = data->releaseGlobalID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
 			NetCode::RPC::HideGangZone hideGangZoneRPC;
@@ -107,15 +98,7 @@ public:
     void flashForPlayer(IPlayer& player, const Colour& colour) override
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id;
-		if (isPerPlayer_)
-		{
-			id = data->getPrivateID(poolID);
-		}
-		else
-		{
-			id = data->getGlobalID(poolID);
-		}
+		int id = data->getGlobalID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
 			NetCode::RPC::FlashGangZone flashGangZoneRPC;
@@ -132,15 +115,7 @@ public:
     void stopFlashForPlayer(IPlayer& player) override
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id;
-		if (isPerPlayer_)
-		{
-			id = data->getPrivateID(poolID);
-		}
-		else
-		{
-			id = data->getGlobalID(poolID);
-		}
+		int id = data->getGlobalID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
 			NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
@@ -197,15 +172,7 @@ public:
     void showForClient(IPlayer& player, const Colour& colour) const
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id;
-		if (isPerPlayer_)
-		{
-			id = data->reservePrivateID(poolID);
-		}
-		else
-		{
-			id = data->reserveGlobalID(poolID);
-		}
+		int id = data->reserveGlobalID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
 			NetCode::RPC::ShowGangZone showGangZoneRPC;
@@ -228,3 +195,176 @@ public:
         }
     }
 };
+
+class PlayerGangZone final : public IPlayerGangZone, public PoolIDProvider, public NoCopy {
+private:
+    GangZonePos pos;
+    bool flashingFor_;
+    Colour flashColorForPlayer_;
+    Colour colorForPlayer_;
+    bool playersInside_;
+
+    void restream()
+    {
+        hideForClient();
+        showForClient(col);
+    }
+
+    void hideForClient()
+    {
+		auto data = queryExtension<IPlayerGangZoneData>(player);
+		int id = data->releasePrivateID(poolID);
+		if (id != INVALID_GANG_ZONE_ID)
+		{
+			NetCode::RPC::HideGangZone hideGangZoneRPC;
+			hideGangZoneRPC.ID = id;
+			PacketHelper::send(hideGangZoneRPC, player);
+		}
+    }
+
+public:
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (shownFor_.valid(pid)) {
+            shownFor_.remove(pid, player);
+        }
+
+        playersInside_.reset(pid);
+        flashingFor_.reset(pid);
+        colorForPlayer_[pid] = Colour::None();
+        flashColorForPlayer_[pid] = Colour::None();
+    }
+
+    PlayerGangZone(GangZonePos pos)
+        : pos(pos)
+    {
+        playersInside_ = false;
+        flashingFor_ = false;
+        colorForPlayer_ = Colour::None();
+        flashColorForPlayer_ = Colour::None();
+    }
+
+    bool isShown() const override
+    {
+        return shownFor_;
+    }
+
+    bool isFlashing() const override
+    {
+        return flashingFor_.test(player.getID());
+    }
+
+    void show(const Colour& colour) override
+    {
+        col = colour;
+        const int playerId = player.getID();
+        shownFor_.add(playerId, player);
+
+        flashingFor_.reset(playerId);
+
+        colorForPlayer_[playerId] = colour;
+        flashColorForPlayer_[playerId] = Colour::None();
+        
+        showForClient(player, colour);
+    }
+
+    void hide() override
+    {
+        removeFor(player.getID(), player);
+        hideForClient(player);
+    }
+
+    void flash(const Colour& colour) override
+    {
+		auto data = queryExtension<IPlayerGangZoneData>(player);
+		int id = data->getPrivateID(poolID);
+		if (id != INVALID_GANG_ZONE_ID)
+		{
+			NetCode::RPC::FlashGangZone flashGangZoneRPC;
+			flashGangZoneRPC.ID = id;
+			flashGangZoneRPC.Col = colour;
+			PacketHelper::send(flashGangZoneRPC, player);
+
+			const int pid = player.getID();
+			flashColorForPlayer_[pid] = colour; 
+			flashingFor_.set(pid);
+		}
+    }
+
+    void stop() override
+    {
+		auto data = queryExtension<IPlayerGangZoneData>(player);
+		int id = data->getPrivateID(poolID);
+		if (id != INVALID_GANG_ZONE_ID)
+		{
+			NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
+			stopFlashGangZoneRPC.ID = id;
+			PacketHelper::send(stopFlashGangZoneRPC, player);
+
+			const int pid = player.getID();
+			flashColorForPlayer_[pid] = Colour::None();
+			flashingFor_.reset(pid);
+		}
+    }
+
+    const Colour getFlashingColor() const override
+    {
+        return flashColorForPlayer_[player.getID()];
+    }
+
+    const Colour getColor() const override
+    {
+        return colorForPlayer_[player.getID()];
+    }
+
+    bool isInside() const override
+    {
+        return playersInside_.test(player.getID());
+    }
+
+    void setInside(const bool status) 
+    {
+        playersInside_.set(player.getID(), status);
+    }
+
+    int getID() const override
+    {
+        return poolID;
+    }
+
+    GangZonePos getPosition() const override
+    {
+        return pos;
+    }
+
+    void setPosition(const GangZonePos& position) override
+    {
+        pos = position;
+        restream();
+    }
+
+    void showForClient(IPlayer& player, const Colour& colour) const
+    {
+		auto data = queryExtension<IPlayerGangZoneData>(player);
+		int id = data->reservePrivateID(poolID);
+		if (id != INVALID_GANG_ZONE_ID)
+		{
+			NetCode::RPC::ShowGangZone showGangZoneRPC;
+			showGangZoneRPC.ID = id;
+			showGangZoneRPC.Min = pos.min;
+			showGangZoneRPC.Max = pos.max;
+			showGangZoneRPC.Col = colour;
+			PacketHelper::send(showGangZoneRPC, player);
+		}
+    }
+
+    ~PlayerGangZone()
+    {
+    }
+
+    void destream()
+    {
+        hideForClient(*player);
+    }
+};
+
