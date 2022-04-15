@@ -162,6 +162,11 @@ public:
         storage.clear();
     }
 
+	void onConnect(IPlayer & player) override
+	{
+		player.addExtension(new PlayerGangZoneData(), true);
+	}
+
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const Vector3& playerPos = player.getPosition();
