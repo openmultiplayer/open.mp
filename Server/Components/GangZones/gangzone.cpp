@@ -10,6 +10,118 @@
 
 using namespace Impl;
 
+// TODO: This internal/external IDs mapping code should be extracted for other components to use.
+class PlayerGangZoneData final : public IPlayerGangZoneData {
+private:
+	struct ExternaGangZoneID {
+		int Private;
+		int Global;
+	};
+
+	StaticArray<ExternaGangZoneID, GANG_ZONE_POOL_SIZE> usedIDs_;
+
+	int findUnusedID()
+	{
+		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
+		{
+			if (usedIDs_[i].Global == INVALID_GANG_ZONE_ID && usedIDs_[i].Private == INVALID_GANG_ZONE_ID)
+			{
+				return i;
+			}
+		}
+		return INVALID_GANG_ZONE_ID;
+	}
+
+public:
+	PlayerGangZoneData()
+	{
+		reset();
+	}
+
+	virtual void freeExtension() override
+	{
+		delete this;
+	}
+
+	virtual void reset() override
+	{
+		// Clear all the IDs.
+		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
+		{
+			usedIDs_[i].Global = INVALID_GANG_ZONE_ID;
+			usedIDs_[i].Private = INVALID_GANG_ZONE_ID;
+		}
+	}
+	
+	virtual int getGlobalID(int zoneid) const override
+	{
+		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
+		{
+			if (usedIDs_[i].Global == zoneid)
+			{
+				return i;
+			}
+		}
+		return INVALID_GANG_ZONE_ID;
+	}
+
+	virtual int getPrivateID(int zoneid) const override
+	{
+		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
+		{
+			if (usedIDs_[i].Private == zoneid)
+			{
+				return i;
+			}
+		}
+		return INVALID_GANG_ZONE_ID;
+	}
+
+	virtual int reserveGlobalID(int zoneid) override
+	{
+		int i = findUnusedID();
+		if (i == INVALID_GANG_ZONE_ID)
+		{
+			return INVALID_GANG_ZONE_ID;
+		}
+		usedIDs_[i].Global = zoneid;
+		return i;
+	}
+
+	virtual int reservePrivateID(int zoneid) override
+	{
+		int i = findUnusedID();
+		if (i == INVALID_GANG_ZONE_ID)
+		{
+			return INVALID_GANG_ZONE_ID;
+		}
+		usedIDs_[i].Private = zoneid;
+		return i;
+	}
+	
+	virtual bool releaseGlobalID(int zoneid) override
+	{
+		int i = getGlobalID(zoneid);
+		if (i == INVALID_GANG_ZONE_ID)
+		{
+			return false;
+		}
+		usedIDs_[i].Global = INVALID_GANG_ZONE_ID;
+		return true;
+	}
+
+	virtual bool releasePrivateID(int zoneid) override
+	{
+		int i = getPrivateID(zoneid);
+		if (i == INVALID_GANG_ZONE_ID)
+		{
+			return false;
+		}
+		usedIDs_[i].Private = INVALID_GANG_ZONE_ID;
+		return true;
+	}
+};
+
 class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;

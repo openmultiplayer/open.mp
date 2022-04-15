@@ -138,7 +138,7 @@ SCRIPT_API(GangZoneGetPos, bool(IGangZone& zone, Vector2& min, Vector2& max))
     return true;
 }
 
-SCRIPT_API(ToggleGangZoneCheck, bool(IGangZone& zone, bool enable))
+SCRIPT_API(UseGangZoneCheck, bool(IGangZone& zone, bool enable))
 {
     IGangZonesComponent* component = PawnManager::Get()->gangzones;
     if (component) {
@@ -147,3 +147,4 @@ SCRIPT_API(ToggleGangZoneCheck, bool(IGangZone& zone, bool enable))
     }
     return false;
 }
+
