@@ -99,26 +99,26 @@ public:
 		return i;
 	}
 	
-	virtual bool releaseGlobalID(int zoneid) override
+	virtual int releaseGlobalID(int zoneid) override
 	{
 		int i = getGlobalID(zoneid);
 		if (i == INVALID_GANG_ZONE_ID)
 		{
-			return false;
+			return INVALID_GANG_ZONE_ID;
 		}
 		usedIDs_[i].Global = INVALID_GANG_ZONE_ID;
-		return true;
+		return i;
 	}
 
-	virtual bool releasePrivateID(int zoneid) override
+	virtual int releasePrivateID(int zoneid) override
 	{
 		int i = getPrivateID(zoneid);
 		if (i == INVALID_GANG_ZONE_ID)
 		{
-			return false;
+			return INVALID_GANG_ZONE_ID;
 		}
 		usedIDs_[i].Private = INVALID_GANG_ZONE_ID;
-		return true;
+		return i;
 	}
 };
 
