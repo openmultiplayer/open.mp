@@ -164,8 +164,7 @@ public:
 
     void destream()
     {
-        for (IPlayer* player : streamedFor_.entries())
-        {
+        for (IPlayer* player : streamedFor_.entries()) {
             streamOutForClient(*player);
         }
     }

@@ -44,4 +44,3 @@ private:
     /// @returns Query step result
     static int queryStepExecuted(void* userData, int fieldCount, char** values, char** fieldNames);
 };
-

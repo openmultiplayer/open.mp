@@ -116,8 +116,8 @@ SCRIPT_API(GetActorAnimation, bool(IActor& actor, OutputOnlyString& animationLib
 {
     const AnimationData& anim = actor.getAnimation();
 
-	animationLibrary = anim.lib;
-	animationName = anim.name;
+    animationLibrary = anim.lib;
+    animationName = anim.name;
     delta = anim.delta;
     loop = anim.loop;
     lockX = anim.lockX;
@@ -132,7 +132,7 @@ SCRIPT_API(GetActorSpawnInfo, bool(IActor& actor, int& skin, Vector3& position, 
 {
     const ActorSpawnData& spawnData = actor.getSpawnData();
 
-	position = spawnData.position;
+    position = spawnData.position;
     angle = spawnData.facingAngle;
     skin = spawnData.skin;
     return true;

@@ -171,4 +171,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new PickupsComponent();
 }
-

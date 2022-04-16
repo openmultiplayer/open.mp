@@ -14,7 +14,7 @@ public:
     inline void cancelSelecting()
     {
         selecting = false;
-	}
+    }
 
     PlayerTextDrawData(IPlayer& player)
         : player(player)
@@ -82,7 +82,7 @@ public:
 
     void release(int index) override
     {
-        PlayerTextDraw * td = storage.get(index);
+        PlayerTextDraw* td = storage.get(index);
         td->destream();
         storage.release(index, false);
     }
@@ -180,7 +180,7 @@ public:
     {
         // Destroy all stored entity instances.
         storage.clear();
-        //PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
+        // PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
     }
 
     ~TextDrawsComponent()
@@ -239,8 +239,7 @@ public:
     void release(int index) override
     {
         auto ptr = storage.get(index);
-        if (ptr)
-        {
+        if (ptr) {
             static_cast<TextDraw*>(ptr)->destream();
             storage.release(index, false);
         }
@@ -271,4 +270,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new TextDrawsComponent();
 }
-

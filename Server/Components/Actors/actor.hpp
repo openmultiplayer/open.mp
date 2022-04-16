@@ -82,7 +82,7 @@ public:
         , pos_(pos)
         , angle_(angle)
         , health_(100.f)
-        , spawnData_{pos, angle, skin}
+        , spawnData_ { pos, angle, skin }
     {
     }
 
