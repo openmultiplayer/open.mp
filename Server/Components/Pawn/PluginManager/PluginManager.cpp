@@ -39,7 +39,7 @@ void PawnPluginManager::Spawn(std::string const& name)
 {
     // if the user just supplied a script name, add the extension
     // otherwise, don't, as they may have supplied a full abs/rel path.
-    //std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
+    // std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
 
     std::string canon;
     utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
@@ -49,7 +49,7 @@ void PawnPluginManager::Spawn(std::string const& name)
     std::unique_ptr<PawnPlugin> ptr = std::make_unique<PawnPlugin>(canon, core);
 
     if (!ptr.get()->IsLoaded()) {
-        //core->printLn("Unable to load plugin %s\n\n", name.c_str());
+        // core->printLn("Unable to load plugin %s\n\n", name.c_str());
         return;
     }
 

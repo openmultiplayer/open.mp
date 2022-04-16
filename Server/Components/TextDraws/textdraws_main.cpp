@@ -180,7 +180,7 @@ public:
     {
         // Destroy all stored entity instances.
         storage.clear();
-        //PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
+        // PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
     }
 
     ~TextDrawsComponent()

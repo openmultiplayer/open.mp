@@ -14,12 +14,12 @@
 #include <math.h>
 #endif
 
-//Adapted from Quake3's vsprintf
-// thanks to cybermind for linking me to this :)
-//I made the following changes:
-// - Fixed spacing to be AMX Mod X standard
-// - Added 'n' support, no buffer overflows
-// - Templatized input/output buffers
+// Adapted from Quake3's vsprintf
+// Thanks to cybermind for linking me to this :)
+// I made the following changes:
+// 1. Fixed spacing to be AMX Mod X standard
+// 2. Added 'n' support, no buffer overflows
+// 3. Templatized input/output buffers
 
 #define ALT 0x00000001 /* alternate form */
 #define HEXPREFIX 0x00000002 /* add 0x or 0X prefix */
@@ -40,13 +40,6 @@
         return 0;                                                                                                              \
     }
 #define get_amxaddr(amx, addr) amx_Address(amx, addr)
-
-/*char* amx_StrFormat(AMX * amx, const cell * params, int param, int& len) {
-	static char buf[8192];
-	++param;
-	len = atcprintf(buf, sizeof(buf) - 1, get_amxaddr(amx, params[param - 1]), amx, params, &param);
-	return buf;
-}*/
 
 template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
 template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*);
@@ -397,7 +390,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
     int width;
     int prec;
     int n;
-    //char	sign;
+    // char sign;
     const S* fmt;
     size_t llen = maxlen;
 
@@ -423,7 +416,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
         flags = 0;
         width = 0;
         prec = -1;
-        //sign = '\0';
+        // sign = '\0';
 
     rflag:
         ch = static_cast<D>(*fmt++);
@@ -588,10 +581,10 @@ done:
  */
 void __WHOA_DONT_CALL_ME_PLZ_K_lol_o_O()
 {
-    //acsprintf
+    // acsprintf
     atcprintf((cell*)NULL, 0, (const char*)NULL, NULL, NULL, NULL);
-    //accprintf
+    // accprintf
     atcprintf((cell*)NULL, 0, (cell*)NULL, NULL, NULL, NULL);
-    //ascprintf
+    // ascprintf
     atcprintf((char*)NULL, 0, (cell*)NULL, NULL, NULL, NULL);
 }
