@@ -53,7 +53,7 @@ public:
 		}
 	}
 	
-	virtual int getGlobalID(int zoneid) const override
+	virtual int getExternalID(int zoneid) const override
 	{
 		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
 		{
@@ -65,7 +65,7 @@ public:
 		return INVALID_GANG_ZONE_ID;
 	}
 
-	virtual int getPrivateID(int zoneid) const override
+	virtual int getInternalID(int zoneid) const override
 	{
 		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
 		{
@@ -77,7 +77,7 @@ public:
 		return INVALID_GANG_ZONE_ID;
 	}
 
-	virtual int reserveGlobalID(int zoneid) override
+	virtual int reserveExternalID(int zoneid) override
 	{
 		int i = findUnusedID();
 		if (i == INVALID_GANG_ZONE_ID)
@@ -88,7 +88,7 @@ public:
 		return i;
 	}
 
-	virtual int reservePrivateID(int zoneid) override
+	virtual int reserveInternalID(int zoneid) override
 	{
 		int i = findUnusedID();
 		if (i == INVALID_GANG_ZONE_ID)
@@ -99,9 +99,9 @@ public:
 		return i;
 	}
 	
-	virtual int releaseGlobalID(int zoneid) override
+	virtual int releaseExternalID(int zoneid) override
 	{
-		int i = getGlobalID(zoneid);
+		int i = getExternalID(zoneid);
 		if (i == INVALID_GANG_ZONE_ID)
 		{
 			return INVALID_GANG_ZONE_ID;
@@ -110,9 +110,9 @@ public:
 		return i;
 	}
 
-	virtual int releasePrivateID(int zoneid) override
+	virtual int releaseInternalID(int zoneid) override
 	{
-		int i = getPrivateID(zoneid);
+		int i = getInternalID(zoneid);
 		if (i == INVALID_GANG_ZONE_ID)
 		{
 			return INVALID_GANG_ZONE_ID;

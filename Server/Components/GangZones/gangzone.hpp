@@ -34,7 +34,7 @@ private:
     void hideForClient(IPlayer& player)
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->releaseGlobalID(poolID);
+		int id = data->releaseExternalID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
 			NetCode::RPC::HideGangZone hideGangZoneRPC;
@@ -58,7 +58,7 @@ private:
 	void showForClient(IPlayer & player, const Colour & colour) const
 	{
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->reserveGlobalID(poolID);
+		int id = data->reserveExternalID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
 			NetCode::RPC::ShowGangZone showGangZoneRPC;
@@ -113,7 +113,7 @@ public:
     void flashForPlayer(IPlayer& player, const Colour& colour) override
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->getGlobalID(poolID);
+		int id = data->getExternalID(poolID);
 		const int pid = player.getID();
 		if (id != INVALID_GANG_ZONE_ID)
 		{
@@ -129,7 +129,7 @@ public:
     void stopFlashForPlayer(IPlayer& player) override
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->getGlobalID(poolID);
+		int id = data->getExternalID(poolID);
 		const int pid = player.getID();
 		if (id != INVALID_GANG_ZONE_ID)
 		{
@@ -191,176 +191,6 @@ public:
         for (IPlayer* player : shownFor_.entries()) {
             hideForClient(*player);
         }
-    }
-};
-
-class PlayerGangZone final : public IPlayerGangZone, public PoolIDProvider, public NoCopy {
-private:
-	IPlayer & player;
-    GangZonePos pos;
-    bool shownFor_;
-    bool flashingFor_;
-    Colour flashColorForPlayer_;
-    Colour colorForPlayer_;
-    bool playersInside_;
-
-    void restream()
-    {
-        hideForClient();
-        showForClient();
-    }
-
-    void hideForClient()
-    {
-		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->releasePrivateID(poolID);
-		if (id != INVALID_GANG_ZONE_ID)
-		{
-			NetCode::RPC::HideGangZone hideGangZoneRPC;
-			hideGangZoneRPC.ID = id;
-			PacketHelper::send(hideGangZoneRPC, player);
-		}
-    }
-
-    void removeFor()
-    {
-        shownFor_ = false;
-		flashingFor_ = false;
-        colorForPlayer_ = Colour::None();
-        flashColorForPlayer_ = Colour::None();
-		playersInside_ = false;
-    }
-
-	void showForClient() const
-	{
-		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->reservePrivateID(poolID);
-		if (id != INVALID_GANG_ZONE_ID)
-		{
-			NetCode::RPC::ShowGangZone showGangZoneRPC;
-			showGangZoneRPC.ID = id;
-			showGangZoneRPC.Min = pos.min;
-			showGangZoneRPC.Max = pos.max;
-			showGangZoneRPC.Col = colorForPlayer_;
-			PacketHelper::send(showGangZoneRPC, player);
-		}
-	}
-
-public:
-    PlayerGangZone(IPlayer & player, GangZonePos pos)
-		: player(player)
-        , pos(pos)
-    {
-        playersInside_ = false;
-        flashingFor_ = false;
-        colorForPlayer_ = Colour::None();
-        flashColorForPlayer_ = Colour::None();
-    }
-
-    bool isShown() const override
-    {
-        return shownFor_;
-    }
-
-    bool isFlashing() const override
-    {
-        return flashingFor_;
-    }
-
-    void show(const Colour& colour) override
-    {
-		// This is set to true even if the local ID assignemnt fails.  The reason being that "shown"
-		// is the term for "in theory enabled for the player" not "visible right now".  In a
-		// streamer setting it is very possible for entities to be "shown" but not "visible".
-		shownFor_ = true;
-		flashingFor_ = false;
-        colorForPlayer_ = colour;
-        flashColorForPlayer_ = Colour::None();
-        
-        showForClient();
-    }
-
-    void hide() override
-    {
-        removeFor();
-        hideForClient();
-    }
-
-    void flash(const Colour& colour) override
-    {
-		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->getPrivateID(poolID);
-		if (id != INVALID_GANG_ZONE_ID)
-		{
-			NetCode::RPC::FlashGangZone flashGangZoneRPC;
-			flashGangZoneRPC.ID = id;
-			flashGangZoneRPC.Col = colour;
-			PacketHelper::send(flashGangZoneRPC, player);
-		}
-		// TODO: Currently this doesn't stream at all.  If a gang zone can't be shown because the
-		// limit on zones is passed then one is hidden again no replacement will be shown in its
-		// place.
-		flashColorForPlayer_ = colour; 
-		flashingFor_ = true;
-    }
-
-    void stop() override
-    {
-		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->getPrivateID(poolID);
-		if (id != INVALID_GANG_ZONE_ID)
-		{
-			NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
-			stopFlashGangZoneRPC.ID = id;
-			PacketHelper::send(stopFlashGangZoneRPC, player);
-		}
-		flashColorForPlayer_ = Colour::None();
-		flashingFor_ = false;
-    }
-
-    const Colour getFlashingColor() const override
-    {
-        return flashColorForPlayer_;
-    }
-
-    const Colour getColor() const override
-    {
-        return colorForPlayer_;
-    }
-
-    bool isInside() const override
-    {
-        return playersInside_;
-    }
-
-    void setInside(const bool status) 
-    {
-        playersInside_ = status;
-    }
-
-    int getID() const override
-    {
-        return poolID;
-    }
-
-    GangZonePos getPosition() const override
-    {
-        return pos;
-    }
-
-    void setPosition(const GangZonePos& position) override
-    {
-        pos = position;
-        restream();
-    }
-
-    ~PlayerGangZone()
-    {
-    }
-
-    void destream()
-    {
-        hideForClient();
     }
 };
 
