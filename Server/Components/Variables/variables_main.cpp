@@ -15,7 +15,7 @@ public:
         data_[String(key)].emplace<String>(value);
     }
 
-	const StringView getString(StringView key) const override
+    const StringView getString(StringView key) const override
     {
         auto it = data_.find(String(key));
         if (it == data_.end()) {
@@ -161,4 +161,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new VariablesComponent();
 }
-

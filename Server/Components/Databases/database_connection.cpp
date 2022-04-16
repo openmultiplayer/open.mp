@@ -51,4 +51,3 @@ int DatabaseConnection::queryStepExecuted(void* userData, int fieldCount, char**
 {
     return reinterpret_cast<DatabaseResultSet*>(userData)->addRow(fieldCount, fieldNames, values) ? SQLITE_OK : SQLITE_ABORT;
 }
-

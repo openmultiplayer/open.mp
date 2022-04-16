@@ -268,7 +268,7 @@ SCRIPT_API(GetObjectMaterial, bool(IObject& object, int materialIndex, int& mode
     if (result) {
         textureLibrary = data->textOrTXD;
         textureName = data->fontOrTexture;
-		materialColour = data->materialColour.RGBA();
+        materialColour = data->materialColour.RGBA();
     }
     return result;
 }
@@ -278,15 +278,15 @@ SCRIPT_API(GetObjectMaterialText, bool(IObject& object, int materialIndex, Outpu
     const ObjectMaterialData* data = nullptr;
     bool result = object.getMaterialData(materialIndex, data);
     if (result) {
-		text = data->textOrTXD;
-		materialSize = data->materialSize;
-		fontFace = data->fontOrTexture;
-		fontSize = data->fontSize;
-		bold = data->bold;
-		fontColour = data->fontColour.RGBA();
-		backgroundColour = data->backgroundColour.RGBA();
-		textAlignment = data->alignment;
-	}
+        text = data->textOrTXD;
+        materialSize = data->materialSize;
+        fontFace = data->fontOrTexture;
+        fontSize = data->fontSize;
+        bold = data->bold;
+        fontColour = data->fontColour.RGBA();
+        backgroundColour = data->backgroundColour.RGBA();
+        textAlignment = data->alignment;
+    }
     return result;
 }
 

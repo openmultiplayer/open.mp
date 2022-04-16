@@ -145,7 +145,7 @@ public:
                 pair.second->onInit(this);
             });
     }
-    
+
     void reset()
     {
         std::for_each(components.begin(), components.end(),
@@ -707,7 +707,7 @@ private:
     int* LagCompensation;
     String ServerName;
     int* EnableVehicleFriendlyFire;
-	bool reloading_ = false;
+    bool reloading_ = false;
 
     int EnableLogTimestamp;
     String LogTimestampFormat;
@@ -737,9 +737,8 @@ private:
             printLn(
                 "\tFailed to load component: %s.",
                 isSAMPPlugin
-                ? "it is a SA-MP plugin, put it in plugins/ folder"
-                : "it is neither an open.mp component nor a SA-MP plugin"
-            );
+                    ? "it is a SA-MP plugin, put it in plugins/ folder"
+                    : "it is neither an open.mp component nor a SA-MP plugin");
             LIBRARY_FREE(componentLib);
             return nullptr;
         }
@@ -833,7 +832,7 @@ private:
         playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
         playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
         PacketHelper::send(playerInitRPC, player);
-        
+
         // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
         NetCode::RPC::SetPlayerColor RPC;
         RPC.PlayerID = player.getID();
@@ -888,21 +887,19 @@ public:
 
     void resetAll() override
     {
-		reloading_ = true;
+        reloading_ = true;
         NetCode::RPC::PlayerClose RPC;
         PacketHelper::broadcast(RPC, players);
         components.reset();
-        for (auto p : players.entries())
-        {
-            static_cast<Player *>(p)->resetExtensions();
+        for (auto p : players.entries()) {
+            static_cast<Player*>(p)->resetExtensions();
         }
     }
 
     void reloadAll() override
     {
-		reloading_ = false;
-        for (auto p : players.entries())
-        {
+        reloading_ = false;
+        for (auto p : players.entries()) {
             playerInit(*p);
         }
     }
@@ -947,17 +944,15 @@ public:
             // the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
             // we got the old value, modified it, then passed it in for the new value.  But our
             // modified value was only a pointer to the old value, which was now being overridden.
-            DynamicArray<String> const * mainScripts = config.getStrings("pawn.main_scripts");
+            DynamicArray<String> const* mainScripts = config.getStrings("pawn.main_scripts");
             DynamicArray<StringView> view {};
             String entry_file = cmd["script"].as<String>();
             view.push_back(entry_file);
-			if (mainScripts)
-			{
-				for (String const & v : *mainScripts)
-				{
-					view.push_back(v);
-				}
-			}
+            if (mainScripts) {
+                for (String const& v : *mainScripts) {
+                    view.push_back(v);
+                }
+            }
             config.setStrings("pawn.main_scripts", view);
         }
 
@@ -1240,13 +1235,12 @@ public:
     void onConnect(IPlayer& player) override
     {
         playerInit(player);
-		if (reloading_)
-		{
-			// Close the player again.
-			NetCode::RPC::PlayerClose RPC;
-			PacketHelper::broadcast(RPC, players);
-		}
-	}
+        if (reloading_) {
+            // Close the player again.
+            NetCode::RPC::PlayerClose RPC;
+            PacketHelper::broadcast(RPC, players);
+        }
+    }
 
     void connectBot(StringView name, StringView script) override
     {
@@ -1305,4 +1299,3 @@ public:
         return false;
     }
 };
-

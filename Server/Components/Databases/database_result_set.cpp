@@ -141,4 +141,3 @@ LegacyDBResult& DatabaseResultSet::getLegacyDBResult()
 {
     return legacyDbResult;
 }
-

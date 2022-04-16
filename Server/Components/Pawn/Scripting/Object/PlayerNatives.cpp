@@ -215,9 +215,9 @@ SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object,
     const ObjectMaterialData* data = nullptr;
     bool result = object.getMaterialData(materialIndex, data);
     if (result) {
-		textureLibrary = data->textOrTXD;
-		textureName = data->fontOrTexture;
-		materialColour = data->materialColour.RGBA();
+        textureLibrary = data->textOrTXD;
+        textureName = data->fontOrTexture;
+        materialColour = data->materialColour.RGBA();
     }
     return result;
 }
@@ -228,13 +228,13 @@ SCRIPT_API(GetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& obj
     bool result = object.getMaterialData(materialIndex, data);
     if (result) {
         text = data->textOrTXD;
-		materialSize = data->materialSize;
-		fontFace = data->fontOrTexture;
-		fontSize = data->fontSize;
-		bold = data->bold;
-		fontColour = data->fontColour.RGBA();
-		backgroundColour = data->backgroundColour.RGBA();
-		textAlignment = data->alignment;
+        materialSize = data->materialSize;
+        fontFace = data->fontOrTexture;
+        fontSize = data->fontSize;
+        bold = data->bold;
+        fontColour = data->fontColour.RGBA();
+        backgroundColour = data->backgroundColour.RGBA();
+        textAlignment = data->alignment;
     }
     return result;
 }

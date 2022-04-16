@@ -1224,8 +1224,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             "[connection] incoming connection: %s:%d id: %d",
             addressString.data(),
             port,
-            peer.getID()
-        );
+            peer.getID());
         eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, port);
 
         // Don't process player, about to be disconnected
@@ -1268,8 +1267,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.isBot_ ? "npc:" : "",
             PRINT_VIEW(player.name_),
             player.poolID,
-            addressString.data()
-        );
+            addressString.data());
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
@@ -1309,8 +1307,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.isBot_ ? "npc:" : "",
             PRINT_VIEW(player.name_),
             player.poolID,
-            reason
-        );
+            reason);
         eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
         auto& secondaryPool = player.isBot_ ? botList : playerList;

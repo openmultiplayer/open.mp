@@ -185,7 +185,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPosition(pos_);
         }
 
-        
         spectateData_.type = PlayerSpectateData::ESpectateType::None;
         spectateData_.spectateID = INVALID_PLAYER_ID;
 

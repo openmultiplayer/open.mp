@@ -477,4 +477,3 @@ public:
     ~PlayerObject();
     void destream();
 };
-

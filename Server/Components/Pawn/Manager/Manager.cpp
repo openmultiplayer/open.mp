@@ -39,7 +39,7 @@ PawnManager::PawnManager()
     , nextRestart_(TimePoint::min())
     , restartDelay_(12000)
     , nextSleep_(TimePoint::min())
-	, sleepData_()
+    , sleepData_()
     , scriptPath_("")
     , basePath_("./")
 {
@@ -47,15 +47,15 @@ PawnManager::PawnManager()
 
 PawnManager::~PawnManager()
 {
-	if (mainScript_) {
-		mainScript_->Call("OnGameModeExit", DefaultReturnValue_False);
-		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_->GetAMX());
-		pluginManager.AmxUnload(mainScript_->GetAMX());
-		PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
-	}
+    if (mainScript_) {
+        mainScript_->Call("OnGameModeExit", DefaultReturnValue_False);
+        eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_->GetAMX());
+        pluginManager.AmxUnload(mainScript_->GetAMX());
+        PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
+    }
     for (auto& cur : scripts_) {
         auto& script = *cur.second;
-            script.Call("OnFilterScriptExit", DefaultReturnValue_False);
+        script.Call("OnFilterScriptExit", DefaultReturnValue_False);
         eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
         pluginManager.AmxUnload(script.GetAMX());
         PawnTimerImpl::Get()->killTimers(script.GetAMX());
@@ -87,48 +87,37 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "gmx") {
-		if (reloading_)
-		{
-        return true;
-    }
+        if (reloading_) {
+            return true;
+        }
         // How many times should we repeat this mode?
         --gamemodeRepeat_;
         int initial = gamemodeIndex_;
-        for ( ; ; )
-        {
-            if (gamemodeRepeat_ == 0)
-            {
+        for (;;) {
+            if (gamemodeRepeat_ == 0) {
                 // Advance to the next script in the list.
                 ++gamemodeIndex_;
-                if (gamemodeIndex_ == gamemodes_.size())
-                {
+                if (gamemodeIndex_ == gamemodes_.size()) {
                     gamemodeIndex_ = 0;
                 }
                 gamemodeRepeat_ = repeats_[gamemodeIndex_];
             }
-            if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_]))
-            {
+            if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_])) {
                 break;
-            }
-            else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0))
-            {
+            } else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0)) {
                 // Tried all the GMs in the list, couldn't load any.
                 break;
-            }
-            else
-            {
+            } else {
                 // Couldn't load this mode, try the next one.
                 gamemodeRepeat_ = 0;
             }
         }
         return true;
     } else if (cmd == "changemode") {
-		if (reloading_)
-		{
-			return true;
-		}
-		if (Changemode("gamemodes/" + args))
-        {
+        if (reloading_) {
+            return true;
+        }
+        if (Changemode("gamemodes/" + args)) {
             gamemodeRepeat_ = 1;
         }
         return true;
@@ -161,10 +150,9 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 
 AMX* PawnManager::AMXFromID(int id) const
 {
-	if (mainScript_ && mainScript_->GetID() == id)
-	{
-		return mainScript_->GetAMX();
-	}
+    if (mainScript_ && mainScript_->GetID() == id) {
+        return mainScript_->GetAMX();
+    }
     for (auto& cur : scripts_) {
         if (cur.second->GetID() == id) {
             return cur.second->GetAMX();
@@ -175,10 +163,9 @@ AMX* PawnManager::AMXFromID(int id) const
 
 int PawnManager::IDFromAMX(AMX* amx) const
 {
-	if (mainScript_ && mainScript_->GetAMX() == amx)
-	{
-		return mainScript_->GetID();
-	}
+    if (mainScript_ && mainScript_->GetAMX() == amx) {
+        return mainScript_->GetID();
+    }
     for (auto& cur : scripts_) {
         if (cur.second->GetAMX() == amx) {
             return cur.second->GetID();
@@ -227,12 +214,11 @@ bool PawnManager::Changemode(std::string const& name)
     std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
     std::string canon;
     utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	// This is exactly the code that pawn itself uses to open a mode, and here we're basically
-	// checking that the mode will be loadable when it comes to it.  Using a different system such
-	// as `std::filesystem` might introduce incompatibilities between what we think can be loaded
-	// and what can actually be loaded.  So while this is "old" C, it is better in this use-case.
-    if ((fp = fopen(canon.c_str(), "rb")) == NULL)
-    {
+    // This is exactly the code that pawn itself uses to open a mode, and here we're basically
+    // checking that the mode will be loadable when it comes to it.  Using a different system such
+    // as `std::filesystem` might introduce incompatibilities between what we think can be loaded
+    // and what can actually be loaded.  So while this is "old" C, it is better in this use-case.
+    if ((fp = fopen(canon.c_str(), "rb")) == NULL) {
         core->printLn("Could not find:\n\n\t %s %s", name.c_str(),
             R"(
                 While attempting to load a PAWN gamemode, a file-not-found error was
@@ -257,81 +243,70 @@ bool PawnManager::Changemode(std::string const& name)
     mainName_ = name;
     // Start the changemode timer.
     nextRestart_ = Time::now() + restartDelay_;
-	reloading_ = true;
+    reloading_ = true;
     return true;
 }
 
 void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 {
-    if (nextRestart_ != TimePoint::min() && nextRestart_ <= now)
-    {
-	    // Reloading a script.  Restart is in the past, load the next GM.
+    if (nextRestart_ != TimePoint::min() && nextRestart_ <= now) {
+        // Reloading a script.  Restart is in the past, load the next GM.
         Load(mainName_, true);
         nextRestart_ = TimePoint::min();
     }
-    if (mainScript_ && nextSleep_ != TimePoint::min() && nextSleep_ <= now)
-    {
-	    // AMX_EXEC_CONT
-		// Restore the saved `sleep` data.  This is what sleep is meant to do itself, but the code
-		// wasn't written to account for other callbacks being called in the interim, and they thus
-		// clobber this data.
-		AMX * amx = mainScript_->GetAMX();
-		amx->cip = sleepData_.cip;
-		amx->frm = sleepData_.frm;
-		amx->hea = sleepData_.hea;
-		amx->stk = sleepData_.stk;
-		amx->pri = sleepData_.pri;
-		amx->alt = sleepData_.alt;
-		amx->reset_stk = sleepData_.reset_stk;
-		amx->reset_hea = sleepData_.reset_hea;
-		nextSleep_ = TimePoint::min();
-		cell retval;
-		int err = mainScript_->Exec(&retval, AMX_EXEC_CONT);
-		if (err == AMX_ERR_SLEEP)
-		{
-			nextSleep_ = Time::now() + Milliseconds(retval);
-			sleepData_ = {
-				amx->cip,
-				amx->frm,
-				amx->hea,
-				amx->stk,
-				amx->pri,
-				amx->alt,
-				amx->reset_stk,
-				amx->reset_hea,
-			};
-		}
-		else if (err != AMX_ERR_NONE)
-		{
-			// If there's no `main` ignore it for now.
-			core->logLn(LogLevel::Error, "%d %s", err, aux_StrError(err));
-		}
+    if (mainScript_ && nextSleep_ != TimePoint::min() && nextSleep_ <= now) {
+        // AMX_EXEC_CONT
+        // Restore the saved `sleep` data.  This is what sleep is meant to do itself, but the code
+        // wasn't written to account for other callbacks being called in the interim, and they thus
+        // clobber this data.
+        AMX* amx = mainScript_->GetAMX();
+        amx->cip = sleepData_.cip;
+        amx->frm = sleepData_.frm;
+        amx->hea = sleepData_.hea;
+        amx->stk = sleepData_.stk;
+        amx->pri = sleepData_.pri;
+        amx->alt = sleepData_.alt;
+        amx->reset_stk = sleepData_.reset_stk;
+        amx->reset_hea = sleepData_.reset_hea;
+        nextSleep_ = TimePoint::min();
+        cell retval;
+        int err = mainScript_->Exec(&retval, AMX_EXEC_CONT);
+        if (err == AMX_ERR_SLEEP) {
+            nextSleep_ = Time::now() + Milliseconds(retval);
+            sleepData_ = {
+                amx->cip,
+                amx->frm,
+                amx->hea,
+                amx->stk,
+                amx->pri,
+                amx->alt,
+                amx->reset_stk,
+                amx->reset_hea,
+            };
+        } else if (err != AMX_ERR_NONE) {
+            // If there's no `main` ignore it for now.
+            core->logLn(LogLevel::Error, "%d %s", err, aux_StrError(err));
+        }
     }
 }
 
 bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 {
-    if (mainScripts.empty())
-    {
+    if (mainScripts.empty()) {
         return false;
     }
     gamemodes_.clear();
     gamemodeIndex_ = 0;
-    for (auto const & i : mainScripts)
-    {
+    for (auto const& i : mainScripts) {
         // Split the mode name and count.
         auto space = i.find_last_of(' ');
-        if (space == std::string::npos)
-        {
+        if (space == std::string::npos) {
             repeats_.push_back(1);
             gamemodes_.push_back(String(i));
-        }
-        else
-        {
+        } else {
             int count = 0;
             auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size(), count, 10);
-            if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1)
-            {
+            if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1) {
                 count = 1;
             }
             repeats_.push_back(count);
@@ -344,20 +319,15 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 
 bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
-	if (mainName_ == name)
-	{
-		if (mainScript_)
-		{
-			return false;
-		}
-	}
-	else
-	{
-		if (findScript(name) != scripts_.end())
-		{
-			return false;
-		}
-	}
+    if (mainName_ == name) {
+        if (mainScript_) {
+            return false;
+        }
+    } else {
+        if (findScript(name) != scripts_.end()) {
+            return false;
+        }
+    }
 
     // if the user just supplied a script name, add the extension
     // otherwise, don't, as they may have supplied a full abs/rel path.
@@ -374,20 +344,17 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 
     PawnScript& script = *ptr;
 
-	if (isEntryScript)
-	{
+    if (isEntryScript) {
         mainName_ = name;
-		mainScript_ = std::move(ptr);
+        mainScript_ = std::move(ptr);
+    } else {
+        Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
+        scripts_.push_back(std::move(pair));
+        auto res = findScript(name);
+        if (res != scripts_.end()) {
+            amxToScript_.emplace(script.GetAMX(), res->second.get());
+        }
     }
-	else
-	{
-		Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
-		scripts_.push_back(std::move(pair));
-		auto res = findScript(name);
-		if (res != scripts_.end()) {
-			amxToScript_.emplace(script.GetAMX(), res->second.get());
-		}
-	}
     script.Register("CallLocalFunction", &utils::pawn_Script_Call);
     script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
     script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
@@ -404,64 +371,52 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     pluginManager.AmxLoad(script.GetAMX());
     eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX());
 
-	cell amxAddr;
-	cell * realAddr;
-	if (script.FindPubVar("__OPEN_MP_VERSION", &amxAddr) == AMX_ERR_NONE && script.GetAddr(amxAddr, &realAddr) == AMX_ERR_NONE)
-	{
-		// Compact the version number as tightly as we can.  This allows for up to 16 major
-		// versions, 127 minor and patch versions, and 16383 prerel versions (so all three
-		// minor segments can encode the full range of 2/4 digit decimal values).
-		auto version = core->getVersion();
-		*realAddr =
-			((version.major & 0x0F) << 28) |
-			((version.minor & 0x7F) << 21) |
-			((version.patch & 0x7F) << 14) |
-			(version.prerel & 0x3FFF);
-	}
+    cell amxAddr;
+    cell* realAddr;
+    if (script.FindPubVar("__OPEN_MP_VERSION", &amxAddr) == AMX_ERR_NONE && script.GetAddr(amxAddr, &realAddr) == AMX_ERR_NONE) {
+        // Compact the version number as tightly as we can.  This allows for up to 16 major
+        // versions, 127 minor and patch versions, and 16383 prerel versions (so all three
+        // minor segments can encode the full range of 2/4 digit decimal values).
+        auto version = core->getVersion();
+        *realAddr = ((version.major & 0x0F) << 28) | ((version.minor & 0x7F) << 21) | ((version.patch & 0x7F) << 14) | (version.prerel & 0x3FFF);
+    }
 
     CheckNatives(script);
 
-    if (isEntryScript)
-	{
-		if (reloading_)
-		{
-			core->reloadAll();
-			reloading_ = false;
-			setRestartMS(12000);
-		}
+    if (isEntryScript) {
+        if (reloading_) {
+            core->reloadAll();
+            reloading_ = false;
+            setRestartMS(12000);
+        }
         script.Call("OnGameModeInit", DefaultReturnValue_False);
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
-		nextSleep_ = TimePoint::min();
-		cell retval;
+        nextSleep_ = TimePoint::min();
+        cell retval;
         int err = script.Exec(&retval, AMX_EXEC_MAIN);
-        if (err == AMX_ERR_NONE)
-		{
+        if (err == AMX_ERR_NONE) {
             script.cache_.inited = true;
-        }
-		else if (err == AMX_ERR_SLEEP)
-		{
+        } else if (err == AMX_ERR_SLEEP) {
             script.cache_.inited = true;
-			nextSleep_ = Time::now() + Milliseconds(retval);
-			// Save the `sleep` state so it doesn't get clobbered by other callbacks.
-			AMX * amx = script.GetAMX();
-			sleepData_ = {
-				amx->cip,
-				amx->frm,
-				amx->hea,
-				amx->stk,
-				amx->pri,
-				amx->alt,
-				amx->reset_stk,
-				amx->reset_hea,
-			};
-		}
-		else
-		{
+            nextSleep_ = Time::now() + Milliseconds(retval);
+            // Save the `sleep` state so it doesn't get clobbered by other callbacks.
+            AMX* amx = script.GetAMX();
+            sleepData_ = {
+                amx->cip,
+                amx->frm,
+                amx->hea,
+                amx->stk,
+                amx->pri,
+                amx->alt,
+                amx->reset_stk,
+                amx->reset_hea,
+            };
+        } else {
             // If there's no `main` ignore it for now.
             core->logLn(LogLevel::Error, "%s", aux_StrError(err));
         }
-		// TODO: `AMX_EXEC_CONT` support.
+        // TODO: `AMX_EXEC_CONT` support.
     } else {
         script.Call("OnFilterScriptInit", DefaultReturnValue_False);
         script.cache_.inited = true;
@@ -471,8 +426,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     // cache public pointers.
 
     // Call `OnPlayerConnect` (can be after caching).
-    for (auto p : players->entries())
-    {
+    for (auto p : players->entries()) {
         script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
     }
     return true;
@@ -481,8 +435,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 bool PawnManager::Reload(std::string const& name)
 {
     // Entry script reload is not supported.
-    if (mainName_ == name)
-	{
+    if (mainName_ == name) {
         return false;
     }
 
@@ -492,28 +445,22 @@ bool PawnManager::Reload(std::string const& name)
 
 bool PawnManager::Unload(std::string const& name)
 {
-	auto pos = findScript(name);
+    auto pos = findScript(name);
     bool isEntryScript = mainName_ == name;
-	if (isEntryScript)
-	{
-		if (!mainScript_)
-		{
-        return false;
+    if (isEntryScript) {
+        if (!mainScript_) {
+            return false;
+        }
+    } else {
+        if (pos == scripts_.end()) {
+            return false;
+        }
     }
-	}
-	else
-	{
-		if (pos == scripts_.end())
-		{
-			return false;
-		}
-	}
     auto& script = isEntryScript ? *mainScript_ : *pos->second;
 
     // Call `OnPlayerDisconnect`.
-    for (auto const p : players->entries())
-    {
-		// Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
+    for (auto const p : players->entries()) {
+        // Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
         script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_ModeEnd);
     }
     if (isEntryScript) {
@@ -528,16 +475,13 @@ bool PawnManager::Unload(std::string const& name)
     PawnTimerImpl::Get()->killTimers(script.GetAMX());
     amxToScript_.erase(script.GetAMX());
 
-    if (isEntryScript)
-    {
+    if (isEntryScript) {
         core->resetAll();
         mainName_ = "";
-		mainScript_.reset();
+        mainScript_.reset();
+    } else {
+        scripts_.erase(pos);
     }
-	else
-	{
-    scripts_.erase(pos);
-	}
 
     return true;
 }

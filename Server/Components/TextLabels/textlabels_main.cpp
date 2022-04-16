@@ -191,8 +191,7 @@ public:
     void release(int index) override
     {
         auto ptr = storage.get(index);
-        if (ptr)
-        {
+        if (ptr) {
             static_cast<TextLabel*>(ptr)->destream();
             storage.release(index, false);
         }
@@ -231,7 +230,7 @@ public:
         return true;
     }
 
-    void updateLabelStateForPlayer(ITextLabel* textLabel, IPlayer& player, float maxDist) 
+    void updateLabelStateForPlayer(ITextLabel* textLabel, IPlayer& player, float maxDist)
     {
         TextLabel* label = static_cast<TextLabel*>(textLabel);
         const TextLabelAttachmentData& data = label->getAttachmentData();
@@ -266,7 +265,7 @@ public:
             if (label->getAttachmentData().playerID == pid) {
                 textLabel->detachFromPlayer(label->getPosition());
             }
-			label->removeFor(pid, player);
+            label->removeFor(pid, player);
         }
         for (IPlayer* player : players->entries()) {
             IPlayerTextLabelData* data = queryExtension<IPlayerTextLabelData>(player);
@@ -292,4 +291,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new TextLabelsComponent();
 }
-

@@ -101,4 +101,3 @@ public:
         // Nothing to reset here.
     }
 };
-

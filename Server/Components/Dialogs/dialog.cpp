@@ -8,30 +8,29 @@ String emptyString = " ";
 StringView emptyStringView = emptyString;
 
 static const NetCode::RPC::ShowDialog hideDialog = {
-	{},
-	INVALID_DIALOG_ID,
-	static_cast<uint8_t>(DialogStyle_MSGBOX),
-	emptyStringView,
-	emptyStringView,
-	emptyStringView,
-	emptyStringView
+    {},
+    INVALID_DIALOG_ID,
+    static_cast<uint8_t>(DialogStyle_MSGBOX),
+    emptyStringView,
+    emptyStringView,
+    emptyStringView,
+    emptyStringView
 };
 
 class PlayerDialogData final : public IPlayerDialogData {
 private:
     int activeId = INVALID_DIALOG_ID;
 
-	friend class DialogsComponent;
+    friend class DialogsComponent;
 
 public:
-	void hide(IPlayer & player) override
-	{
-		if (activeId != INVALID_DIALOG_ID)
-		{
-			PacketHelper::send(hideDialog, player);
-			activeId = INVALID_DIALOG_ID;
-		}
-	}
+    void hide(IPlayer& player) override
+    {
+        if (activeId != INVALID_DIALOG_ID) {
+            PacketHelper::send(hideDialog, player);
+            activeId = INVALID_DIALOG_ID;
+        }
+    }
 
     void show(IPlayer& player, int id, DialogStyle style, StringView caption, StringView info, StringView button1, StringView button2) override
     {
@@ -60,7 +59,7 @@ public:
 
     void reset() override
     {
-		// Could call `hide()` here, but then we'd have to store the player ID.
+        // Could call `hide()` here, but then we'd have to store the player ID.
         activeId = INVALID_DIALOG_ID;
     }
 };
@@ -132,13 +131,12 @@ public:
         NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
     }
 
-	void reset() override
-	{
-		for (IPlayer * player : core->getPlayers().entries())
-		{
-			queryExtension<IPlayerDialogData>(player)->hide(*player);
-		}
-	}
+    void reset() override
+    {
+        for (IPlayer* player : core->getPlayers().entries()) {
+            queryExtension<IPlayerDialogData>(player)->hide(*player);
+        }
+    }
 
     void free() override
     {
@@ -163,4 +161,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new DialogsComponent();
 }
-
