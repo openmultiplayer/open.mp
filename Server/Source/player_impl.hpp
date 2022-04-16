@@ -649,6 +649,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     PlayerSpecialAction getAction() const override
     {
+        if (state_ != PlayerState_OnFoot) {
+            return SpecialAction_None;
+        }
         return action_;
     }
 
