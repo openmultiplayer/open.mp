@@ -42,26 +42,26 @@ namespace utils {
 static bool initialized = false;
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-//Returns the last Win32 error, in string format. Returns an empty string if there is no error.
+// Returns the last Win32 error, in string format. Returns an empty string if there is no error.
 std::string GetLastErrorAsString()
 {
-    //Get the error message ID, if any.
+    // Get the error message ID, if any.
     DWORD errorMessageID = ::GetLastError();
     if (errorMessageID == 0) {
-        return std::string(); //No error message has been recorded
+        return std::string(); // No error message has been recorded
     }
 
     LPSTR messageBuffer = nullptr;
 
-    //Ask Win32 to give us the string version of that message ID.
-    //The parameters we pass in, tell Win32 to create the buffer that holds the message for us (because we don't yet know how long the message string will be).
+    // Ask Win32 to give us the string version of that message ID.
+    // The parameters we pass in, tell Win32 to create the buffer that holds the message for us (because we don't yet know how long the message string will be).
     size_t size = FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
         NULL, errorMessageID, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPSTR)&messageBuffer, 0, NULL);
 
-    //Copy the error message into a std::string.
+    // Copy the error message into a std::string.
     std::string message(messageBuffer, size);
 
-    //Free the Win32's string's buffer.
+    // Free the Win32's string's buffer.
     LocalFree(messageBuffer);
 
     return message;
@@ -93,7 +93,7 @@ void RunProcess(StringView exe, StringView args)
 #endif
 }
 
-// taken from RakNet::GetTime from GetTime.cpp
+// Taken from RakNet::GetTime from GetTime.cpp
 unsigned GetTickCount()
 {
     if (initialized == false) {

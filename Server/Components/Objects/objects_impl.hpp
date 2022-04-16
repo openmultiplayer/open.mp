@@ -142,33 +142,32 @@ public:
     inline void incrementPlayerCounter(int objid)
     {
         ++isPlayerObject[objid];
-	}
+    }
 
     inline void decrementPlayerCounter(int objid)
     {
-		if (objid < isPlayerObject.size())
-		{
-			assert(isPlayerObject[objid] != 0);
-			--isPlayerObject[objid];
-		}
-	}
+        if (objid < isPlayerObject.size()) {
+            assert(isPlayerObject[objid] != 0);
+            --isPlayerObject[objid];
+        }
+    }
 
     inline IPlayerPool& getPlayers()
     {
         return *players;
     }
 
-	// TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
-	inline FlatPtrHashSet<Object>& getProcessedObjects()
+    // TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
+    inline FlatPtrHashSet<Object>& getProcessedObjects()
     {
         return processedObjects;
-	}
-	
-	// TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
-	inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
+    }
+
+    // TODO: This is basically a cheap replacement for direct object access.  Wrap the functionality more correctly.
+    inline FlatPtrHashSet<PlayerObject>& getPlayerProcessedObjects()
     {
         return processedPlayerObjects;
-	}
+    }
 
     ObjectComponent()
         : playerSelectObjectEventHandler(*this)
@@ -273,11 +272,10 @@ public:
     void release(int index) override
     {
         auto ptr = storage.get(index);
-        if (ptr)
-        {
+        if (ptr) {
             static_cast<Object*>(ptr)->destream();
-        storage.release(index, false);
-    }
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override
@@ -393,7 +391,7 @@ private:
     bool inObjectEdit_;
 
 public:
-	// TODO: const.
+    // TODO: const.
     inline IPlayer& getPlayer()
     {
         return player_;
@@ -415,14 +413,14 @@ public:
     {
         int freeIdx = storage.findFreeIndex();
         while (freeIdx >= storage.Lower) {
-			// Per-player and global objects shared an ID pool in SA:MP.  If an
-			// ID was "assigned" to players each player could have a unique
-			// object with that ID, but if you created the maximum global
-			// objects you couldn't then create any per-player objects.  This
-			// replicates that by finding an ID that isn't assigned to a global
-			// object.  This looks to see if there is a global object in that
-			// slot, and if there isn't marks the slot as per-player, which in
-			// turn prevents the global pool from using it (BUG: ever again).
+            // Per-player and global objects shared an ID pool in SA:MP.  If an
+            // ID was "assigned" to players each player could have a unique
+            // object with that ID, but if you created the maximum global
+            // objects you couldn't then create any per-player objects.  This
+            // replicates that by finding an ID that isn't assigned to a global
+            // object.  This looks to see if there is a global object in that
+            // slot, and if there isn't marks the slot as per-player, which in
+            // turn prevents the global pool from using it (BUG: ever again).
             if (!component_.get(freeIdx)) {
                 break;
             }
@@ -469,7 +467,7 @@ public:
         }
         component_.decrementPlayerCounter(index);
 
-        PlayerObject * obj = storage.get(index);
+        PlayerObject* obj = storage.get(index);
         obj->destream();
 
         storage.release(index, false);
@@ -610,4 +608,3 @@ public:
         }
     }
 };
-

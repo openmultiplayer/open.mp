@@ -625,7 +625,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.weaponState = PlayerWeaponState(aimSync.WeaponState);
                 player.aimingData_.aspectRatio = (aimSync.AspectRatio * 1.f / 255) + 1.f;
 
-                //fix for camera shaking hack, i think there are more bugged ids
+                // Fix for camera shaking hack, i think there are more bugged ids
                 if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u)
                     aimSync.CamMode = 4u;
 
@@ -1224,8 +1224,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             "[connection] incoming connection: %s:%d id: %d",
             addressString.data(),
             port,
-            peer.getID()
-        );
+            peer.getID());
         eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, port);
 
         // Don't process player, about to be disconnected
@@ -1268,8 +1267,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.isBot_ ? "npc:" : "",
             PRINT_VIEW(player.name_),
             player.poolID,
-            addressString.data()
-        );
+            addressString.data());
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
@@ -1309,8 +1307,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.isBot_ ? "npc:" : "",
             PRINT_VIEW(player.name_),
             player.poolID,
-            reason
-        );
+            reason);
         eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
         auto& secondaryPool = player.isBot_ ? botList : playerList;

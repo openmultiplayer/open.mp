@@ -92,227 +92,6 @@ PawnScript::~PawnScript()
     }
 }
 
-/*
-void PawnScript::SubscribeAll()
-{
-
-}
-
-void PawnScript::PrintError(int err)
-{
-	std::string pawnError = aux_StrError(num);
-	switch (err)
-	{
-	case AMX_ERR_EXIT:         // forced exit
-		throw PawnException(err)
-			<< R"(
-This is triggered by the `exit` keyword in PAWN:
-
-```pawn
-	new
-		a = 5,
-		b = 2;
-	// Will pass, because `5` is greater than `2`.
-	if (a > b)
-	{
-		exit;
-	}
-```
-)";
-	case AMX_ERR_ASSERT:       // assertion failed
-		throw PawnException(err)
-			>> R"(
-This is triggered by the `assert` keyword in PAWN, when compiling with
-debugging enabled, and the condition is false:
-
-```pawn
-	#pragma option -d1
-	new
-		a = 5,
-		b = 2;
-	// Will fail, because `5` is greater than `2`.
-	assert(a <= b);
-```
-)";
-	case AMX_ERR_STACKERR:     // stack/heap collision
-		throw PawnException(err)
-			>> R"(
-This generally happens when too many local variables are created; as a few very
-large variables, lots of small ones, or too much recursion recreating the same
-ones over and over again:
-
-```pawn
-	FuncA()
-	{
-		new
-			// One large.
-			largeLocal[1024],
-			// Many small.
-			a, b, c, d, e, f, g, h, i, j, k, l, m,
-			n, o, p, q, r, s, t, u, v, w, x, y, z;
-		// Recursion.
-		FuncA();
-	}
-```
-
-Note that none of these techniques are bad on their own, it is only when they
-are used extensively or excessively that the memory requirements mount.  With
-`-v` or `-d3` you can get a local memory report from the compiler:
-
-```
-	Header size:         1744 bytes
-	Code size:          97808 bytes
-	Data size:          35028 bytes
-	Stack/heap size:   239360 bytes; estimated max. usage=138 cells (552 bytes)
-	Total requirements:273940 bytes
-```
-
-It is the `Stack/heap size` and `estimated max. usage` statistics that are
-important here.  Obviously the size should be greater than the usage.  The
-compiler can also detect some overflows and will display the above message in
-those cases.
-
-Regardless of the cause, there are two solutions - reduce your memory usage or
-increase your local memory space.  The latter is done by:
-
-```pawn
-	// Without YSI.
-	#pragma dynamic 4096
-
-	// With YSI.
-	#define DYNAMIC_MEMORY 4096
-```
-)";
-	case AMX_ERR_BOUNDS:       // index out of bounds
-		throw PawnException(err)
-			>> R"(
-This is caused by attempting to access an array slot that doesn't exist, often
-by not checking that a provided index is valid.  One very common cause is shown
-below:
-
-```pawn
-	new gKills[MAX_PLAYERS];
-
-	public OnPlayerDeath(playerid, killerid, reason)
-	{
-		++gKills[killerid];
-	}
-```
-
-Here the number of kills that the killer has is increased every time someone
-dies.  However, when a player kills themselves, `killerid` is not valid, i.e.
-it is `INVALID_PLAYER_ID`, because there is no killer.  If `MAX_PLAYERS` is
-`100` and `INVALID_PLAYER_ID` is `65535` then this code attempts to increment
-a value in slot `65535` of a `100` slot array.  This can't be done.
-
-Another very common cause is an `OBOE` - an Off-By-One Error.  These can be
-even more confusing, because they happen when you attempt to access slot `100`
-in a `100` slot array (for example).  Surely that exists?  No, it doesn't.  If
-an array has `2` slots, they are numbered `0`, and `1`.  `2` is the size of the
-array, but not in the array.  Similarly with `[100]` the slots are numbered `0`
-to `99`, `100` is not valid.  This code should use `<` in the loop condition,
-not `<=`, so that the size of the array is excluded from the loop body:
-
-```pawn
-	new array[100];
-
-	for (new i = 0; i <= sizeof (array); ++i)
-	{
-		array[i] = 10;
-	}
-```
-)";
-	case AMX_ERR_MEMACCESS:    // invalid memory access
-		throw PawnException(err) >> "TODO: A good explanation of \"invalid memory access\".";
-	case AMX_ERR_INVINSTR:     // invalid instruction
-		throw PawnException(err) >> "TODO: A good explanation of \"invalid instruction\".";
-	case AMX_ERR_STACKLOW:     // stack underflow
-		throw PawnException(err) >> "TODO: A good explanation of \"stack underflow\".";
-	case AMX_ERR_HEAPLOW:      // heap underflow
-		throw PawnException(err) >> "TODO: A good explanation of \"heap underflow\".";
-	case AMX_ERR_CALLBACK:     // no callback: or invalid callback
-		throw PawnException(err) >> "TODO: A good explanation of \"no callback: or invalid callback\".";
-	case AMX_ERR_NATIVE:       // native function failed
-		throw PawnException(err) >> "TODO: A good explanation of \"native function failed\".";
-	case AMX_ERR_DIVIDE:       // divide by zero
-		throw PawnException(err)
-			>> R"(
-Something attempted to divide something else by `0`, which is mathematically
-undefined:
-
-```pawn
-	main()
-	{
-		new
-			a = 10,
-			b; // Defaults to `0`.
-		printf("%d", a / b); // `10 / 0` doesn't exist.
-	}
-```
-)";
-	case AMX_ERR_SLEEP:        // go into sleepmode - code can be restarted
-		throw PawnException(err) >> "TODO: A good explanation of \"go into sleepmode - code can be restarted\".";
-	case AMX_ERR_INVSTATE:     // invalid state for this access
-		throw PawnException(err) >> "TODO: A good explanation of \"invalid state for this access\".";
-	case AMX_ERR_MEMORY:
-		throw PawnException(err) >> "TODO: A good explanation of \"AMX_ERR_MEMORY\".";
-	case AMX_ERR_FORMAT:       // invalid file format
-		throw PawnException(err) >> "TODO: A good explanation of \"invalid file format\".";
-	case AMX_ERR_VERSION:      // file is for a newer version of the AMX
-		throw PawnException(err) >> "The most common cause of this is compiling with `-O2`, which generates macro instructions we don't have.  Use `-O1`.";
-	case AMX_ERR_NOTFOUND:     // function not found
-		throw PawnException(err)
-			>> R"(
-One (or move) native function(s) was used in your script, but doesn't exist in the server.  See
-above for the exact list of which.  This could be a typo in a native declaration:
-
-```pawn
-native Player_SetPosution(Player:p, Float:x, Float:y, Float:z);
-```
-
-It could be that the function hasn't been written yet, in which case contact the author or the
-component you think it should be in (this is often obvious from the module name at the start of the
-function name).  If you aren't sure, ask on forums or other chat systems.
-
-Finally, it could be that the function has been removed.  This should be done with deprecation
-first - check any warnings when compiling your code for messages like below and follow them:
-
-```
-warning 234: function is deprecated (symbol "AddPlayerClass") Use `Class_Add` instead.
-```
-
-Also check changelogs and component code - it could have been removed without warning, but this is bad.
-)";
-
-	case AMX_ERR_INDEX:        // invalid index parameter (bad entry point)
-		throw PawnException(err)
-			>> R"(
-Your code is probably missing `main`.  Just add this:
-
-```pawn
-	main()
-	{
-	}
-```
-)";
-	case AMX_ERR_DEBUG:        // debugger cannot run
-		throw PawnException(err) >> "TODO: A good explanation of \"debugger cannot run\".";
-	case AMX_ERR_INIT:         // AMX not initialized (or doubly initialized)
-		throw PawnException(err) >> "TODO: A good explanation of \"AMX not initialized (or doubly initialized)\".";
-	case AMX_ERR_USERDATA:     // unable to set user data field (table full)
-		throw PawnException(err) >> "TODO: A good explanation of \"unable to set user data field (table full)\".";
-	case AMX_ERR_INIT_JIT:     // cannot initialize the JIT
-		throw PawnException(err) >> "TODO: A good explanation of \"cannot initialize the JIT\".";
-	case AMX_ERR_PARAMS:       // parameter error
-		throw PawnException(err) >> "TODO: A good explanation of \"parameter error\".";
-	case AMX_ERR_DOMAIN:       // domain error: expression result does not fit in range
-		throw PawnException(err) >> "TODO: A good explanation of \"domain error: expression result does not fit in range\".";
-	case AMX_ERR_GENERAL:      // general error (unknown or unspecific error)
-		throw PawnException(err) >> "TODO: A good explanation of \"eneral error (unknown or unspecific error)\".";
-	}
-}
-*/
-
 int AMXAPI amx_NumPublics(AMX* amx, int* number)
 {
     AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
@@ -325,8 +104,8 @@ int AMXAPI amx_NumPublics(AMX* amx, int* number)
 
 int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
 {
-    AMX_HEADER * hdr;
-	AMX_FUNCPART * func;
+    AMX_HEADER* hdr;
+    AMX_FUNCPART* func;
 
     hdr = (AMX_HEADER*)amx->base;
     assert(hdr != NULL);
@@ -342,11 +121,11 @@ int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
 
 __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, int* index)
 {
-	AMX_HEADER * hdr = (AMX_HEADER *)amx->base;
+    AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
     char* pname;
-	AMX_FUNCPART * func;
+    AMX_FUNCPART* func;
 
-	// Attempt to find index in publics cache
+    // Attempt to find index in publics cache
     auto amxIter = cache.find(amx);
     const bool cacheExists = amxIter != cache.end();
     if (cacheExists) {
@@ -355,15 +134,14 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
             auto lookupIter = amxCache.publics.find(name);
             if (lookupIter != amxCache.publics.end()) {
                 // https://github.com/IllidanS4/pawn-conventions/blob/master/guidelines.md#do-not-rely-on-consistency
-				if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives))
-				{
-					func = GETENTRY(hdr, publics, lookupIter->second);
-					pname = GETENTRYNAME(hdr, func);
-					if (!strcmp(name, pname)) {
-						*index = lookupIter->second;
-						return AMX_ERR_NONE;
-					}
-				}
+                if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives)) {
+                    func = GETENTRY(hdr, publics, lookupIter->second);
+                    pname = GETENTRYNAME(hdr, func);
+                    if (!strcmp(name, pname)) {
+                        *index = lookupIter->second;
+                        return AMX_ERR_NONE;
+                    }
+                }
             }
         }
     }
@@ -377,8 +155,8 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
     /* binary search */
     while (first <= last) {
         mid = (first + last) / 2;
-		func = GETENTRY(hdr, publics, mid);
-		pname = GETENTRYNAME(hdr, func);
+        func = GETENTRY(hdr, publics, mid);
+        pname = GETENTRYNAME(hdr, func);
         result = strcmp(pname, name);
         if (result > 0) {
             last = mid - 1;
@@ -475,7 +253,7 @@ int AMXAPI amx_StrSize(const cell* cstr, int* length)
         /* packed string */
         assert_static(sizeof(char) == 1);
         len = strlen(reinterpret_cast<char const*>(cstr)); /* find '\0' */
-        //assert(check_endian());
+        // assert(check_endian());
 #if BYTE_ORDER == LITTLE_ENDIAN
         /* on Little Endian machines, toggle the last bytes */
         c = cstr[len / sizeof(cell)]; /* get last cell */

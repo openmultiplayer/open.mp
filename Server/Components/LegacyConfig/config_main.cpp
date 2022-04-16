@@ -119,25 +119,23 @@ public:
 private:
     ICore* core;
     IConsoleComponent* console;
-	DynamicArray<String> gamemodes_;
+    DynamicArray<String> gamemodes_;
 
     bool processCustom(ILogger& logger, IEarlyConfig& config, String name, String right)
     {
         if (name.find("gamemode") == 0) {
             auto it = dictionary.find("gamemode");
             if (it != dictionary.end()) {
-				int gmidx = 0;
-				auto conv = std::from_chars(name.data() + 8, name.data() + name.size(), gmidx, 10);
-				if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || gmidx < 0)
-				{
-					gmidx = 0;
-				}
-				while (gamemodes_.size() <= gmidx)
-				{
-					gamemodes_.push_back("");
-				}
-				// Don't strip spaces here.  That was to find the count, but that is now done later.
-				gamemodes_[gmidx] = right;
+                int gmidx = 0;
+                auto conv = std::from_chars(name.data() + 8, name.data() + name.size(), gmidx, 10);
+                if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || gmidx < 0) {
+                    gmidx = 0;
+                }
+                while (gamemodes_.size() <= gmidx) {
+                    gamemodes_.push_back("");
+                }
+                // Don't strip spaces here.  That was to find the count, but that is now done later.
+                gamemodes_[gmidx] = right;
                 return true;
             }
         }
@@ -243,7 +241,7 @@ private:
     {
         std::ifstream cfg(filename);
         if (cfg.good()) {
-			gamemodes_.clear();
+            gamemodes_.clear();
             for (String line; std::getline(cfg, line);) {
                 size_t idx;
                 // Ignore // comments
@@ -297,20 +295,17 @@ private:
                     logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                 }
             }
-			size_t gmcount = 0;
-			DynamicArray<StringView> list;
-			for (int i = 0; i < gamemodes_.size(); ++i)
-			{
-				if (gamemodes_[i] != "")
-				{
-					++gmcount;
-					list.emplace_back(gamemodes_[i]);
-				}
-			}
-			if (gmcount != 0)
-			{
-				config.setStrings("pawn.main_scripts", list);
-			}
+            size_t gmcount = 0;
+            DynamicArray<StringView> list;
+            for (int i = 0; i < gamemodes_.size(); ++i) {
+                if (gamemodes_[i] != "") {
+                    ++gmcount;
+                    list.emplace_back(gamemodes_[i]);
+                }
+            }
+            if (gmcount != 0) {
+                config.setStrings("pawn.main_scripts", list);
+            }
             return true;
         }
         return false;
@@ -417,4 +412,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new LegacyConfigComponent();
 }
-

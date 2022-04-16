@@ -185,7 +185,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPosition(pos_);
         }
 
-        
         spectateData_.type = PlayerSpectateData::ESpectateType::None;
         spectateData_.spectateID = INVALID_PLAYER_ID;
 
@@ -432,7 +431,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
 
-        //local player needs to know his teamId
+        // Local player needs to know his teamId
         PacketHelper::broadcastToStreamed(setPlayerTeamRPC, *this, false /* skipFrom */);
     }
 
@@ -649,6 +648,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     PlayerSpecialAction getAction() const override
     {
+        if (state_ != PlayerState_OnFoot) {
+            return SpecialAction_None;
+        }
         return action_;
     }
 

@@ -203,7 +203,7 @@ public:
 
     IClass* create(int skin, int team, Vector3 spawn, float angle, const WeaponSlots& weapons) override
     {
-		size_t count = storage._entries().size();
+        size_t count = storage._entries().size();
         if (count == CLASS_POOL_SIZE) {
             Class* lastClass = storage.get(storage.Upper - 1);
 
@@ -213,24 +213,23 @@ public:
         }
 
         IClass* ret = storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
-		if (count == 0) {
-			// First class.  Initialise all the players with this.
-			for (auto i : core->getPlayers().entries()) {
-				queryExtension<IPlayerClassData>(i)->setSpawnInfo(ret->getClass());
-			}
-		}
+        if (count == 0) {
+            // First class.  Initialise all the players with this.
+            for (auto i : core->getPlayers().entries()) {
+                queryExtension<IPlayerClassData>(i)->setSpawnInfo(ret->getClass());
+            }
+        }
 
-		return ret;
+        return ret;
     }
 
     void onConnect(IPlayer& player) override
     {
-		auto first = storage.begin();
-		if (player.addExtension(new PlayerClassData(player), true) && first != storage.end())
-		{
-			// Initialise the player's current spawn data to the first defined class.
-			queryExtension<IPlayerClassData>(player)->setSpawnInfo((*first)->getClass());
-		}
+        auto first = storage.begin();
+        if (player.addExtension(new PlayerClassData(player), true) && first != storage.end()) {
+            // Initialise the player's current spawn data to the first defined class.
+            queryExtension<IPlayerClassData>(player)->setSpawnInfo((*first)->getClass());
+        }
     }
 
     void free() override
