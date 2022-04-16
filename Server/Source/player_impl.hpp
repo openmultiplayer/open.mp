@@ -431,7 +431,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setPlayerTeamRPC.PlayerID = poolID;
         setPlayerTeamRPC.Team = team;
 
-        //local player needs to know his teamId
+        // Local player needs to know his teamId
         PacketHelper::broadcastToStreamed(setPlayerTeamRPC, *this, false /* skipFrom */);
     }
 

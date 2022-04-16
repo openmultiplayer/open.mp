@@ -165,7 +165,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
         updateOccupied();
     }
 
-    //Reset the detaching flag when trailer is detached on driver's client.
+    // Reset the detaching flag when trailer is detached on driver's client.
     if (vehicleSync.TrailerID == 0) {
         detaching = false;
     }

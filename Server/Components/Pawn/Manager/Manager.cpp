@@ -338,7 +338,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
 
     if (!ptr.get()->IsLoaded()) {
-        //core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
+        // core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
         return false;
     }
 

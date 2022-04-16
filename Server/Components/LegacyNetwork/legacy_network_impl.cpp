@@ -318,7 +318,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
     Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
-    //Allow only 0.3.7 client for now
+    // Allow only 0.3.7 client for now
     if (version != LegacyClientVersion_037 || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_037)) {
         newConnectionResult.first = NewConnectionResult_VersionMismatch;
     } else {

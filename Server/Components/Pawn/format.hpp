@@ -12,7 +12,7 @@
 
 #include <amx/amx.h>
 
-//Amx Templatized Cell Printf
+// Amx Templatized Cell Printf
 template <typename D, typename S>
 size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param);
 
