@@ -69,7 +69,6 @@ private:
     }
 
 public:
-
     bool hasBeenOccupied() override
     {
         return beenOccupied;

@@ -8,8 +8,7 @@ Object::~Object()
 
 void Object::destream()
 {
-    for (IPlayer* player : objects_.getPlayers().entries())
-    {
+    for (IPlayer* player : objects_.getPlayers().entries()) {
         destroyForPlayer(*player);
     }
 }

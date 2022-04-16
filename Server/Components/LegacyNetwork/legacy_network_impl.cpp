@@ -657,7 +657,7 @@ void RakNetLegacyNetwork::update()
 void RakNetLegacyNetwork::init(ICore* c)
 {
     core = c;
-    
+
     core->getEventDispatcher().addEventHandler(this);
     core->getPlayers().getEventDispatcher().addEventHandler(this);
 }

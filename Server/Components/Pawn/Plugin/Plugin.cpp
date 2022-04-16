@@ -422,8 +422,7 @@ void PawnPlugin::Unload()
 int PluginCallGM(char* name)
 {
     auto manager = PawnManager::Get();
-	if (manager->mainScript_)
-    {
+    if (manager->mainScript_) {
         return manager->mainScript_->Call(name, DefaultReturnValue_False);
     }
     return 0;
@@ -450,4 +449,3 @@ void PluginLogprintf(const char* fmt, ...)
     PawnManager::Get()->core->vprintLn(fmt, args);
     va_end(args);
 }
-

@@ -376,7 +376,7 @@ public:
         Vehicle* vehiclePtr = storage.get(index);
         if (vehiclePtr) {
             Vehicle& vehicle = *vehiclePtr;
-            
+
             int veh_model = vehicle.getModel();
             if (veh_model == 538 || veh_model == 537) {
                 for (IVehicle* c : vehicle.getCarriages()) {

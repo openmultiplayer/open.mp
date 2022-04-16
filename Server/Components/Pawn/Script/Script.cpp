@@ -325,8 +325,8 @@ int AMXAPI amx_NumPublics(AMX* amx, int* number)
 
 int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
 {
-    AMX_HEADER * hdr;
-	AMX_FUNCPART * func;
+    AMX_HEADER* hdr;
+    AMX_FUNCPART* func;
 
     hdr = (AMX_HEADER*)amx->base;
     assert(hdr != NULL);
@@ -342,11 +342,11 @@ int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
 
 __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, int* index)
 {
-	AMX_HEADER * hdr = (AMX_HEADER *)amx->base;
+    AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
     char* pname;
-	AMX_FUNCPART * func;
+    AMX_FUNCPART* func;
 
-	// Attempt to find index in publics cache
+    // Attempt to find index in publics cache
     auto amxIter = cache.find(amx);
     const bool cacheExists = amxIter != cache.end();
     if (cacheExists) {
@@ -355,15 +355,14 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
             auto lookupIter = amxCache.publics.find(name);
             if (lookupIter != amxCache.publics.end()) {
                 // https://github.com/IllidanS4/pawn-conventions/blob/master/guidelines.md#do-not-rely-on-consistency
-				if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives))
-				{
-					func = GETENTRY(hdr, publics, lookupIter->second);
-					pname = GETENTRYNAME(hdr, func);
-					if (!strcmp(name, pname)) {
-						*index = lookupIter->second;
-						return AMX_ERR_NONE;
-					}
-				}
+                if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives)) {
+                    func = GETENTRY(hdr, publics, lookupIter->second);
+                    pname = GETENTRYNAME(hdr, func);
+                    if (!strcmp(name, pname)) {
+                        *index = lookupIter->second;
+                        return AMX_ERR_NONE;
+                    }
+                }
             }
         }
     }
@@ -377,8 +376,8 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
     /* binary search */
     while (first <= last) {
         mid = (first + last) / 2;
-		func = GETENTRY(hdr, publics, mid);
-		pname = GETENTRYNAME(hdr, func);
+        func = GETENTRY(hdr, publics, mid);
+        pname = GETENTRYNAME(hdr, func);
         result = strcmp(pname, name);
         if (result > 0) {
             last = mid - 1;

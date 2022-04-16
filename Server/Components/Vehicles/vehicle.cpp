@@ -10,20 +10,20 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     }
 
     PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
-	if (!data) {
+    if (!data) {
         return;
-	}
+    }
     int numStreamed = data->getNumStreamed();
     if (numStreamed >= MAX_STREAMED_VEHICLES) {
         return;
     }
-	data->setNumStreamed(numStreamed + 1);
+    data->setNumStreamed(numStreamed + 1);
 
     NetCode::RPC::StreamInVehicle streamIn;
     streamIn.VehicleID = poolID;
     streamIn.ModelID = spawnData.modelID;
     streamIn.Position = pos;
-    
+
     streamIn.Angle = rot.ToEuler().z;
 
     // Trains should always be streamed with default rotation.
@@ -41,8 +41,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.PanelDamage = panelDamage;
     streamIn.Siren = spawnData.siren;
     int mod = 0;
-    while (mod != MAX_VEHICLE_COMPONENT_SLOT_IN_RPC)
-    {
+    while (mod != MAX_VEHICLE_COMPONENT_SLOT_IN_RPC) {
         streamIn.Mods[mod] = mods[mod];
         ++mod;
     }
@@ -51,11 +50,9 @@ void Vehicle::streamInForPlayer(IPlayer& player)
     streamIn.BodyColour2 = bodyColour2;
     PacketHelper::send(streamIn, player);
 
-	// Add two more mods (front and rear bullbars).
-    while (mod != MAX_VEHICLE_COMPONENT_SLOT)
-    {
-        if (mods[mod] != 0)
-        {
+    // Add two more mods (front and rear bullbars).
+    while (mod != MAX_VEHICLE_COMPONENT_SLOT) {
+        if (mods[mod] != 0) {
             NetCode::RPC::SCMEvent modRPC;
             modRPC.PlayerID = pid;
             modRPC.EventType = VehicleSCMEvent_AddComponent;
@@ -410,7 +407,7 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
 
     auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
-		auto vehicle = static_cast<Vehicle *>(vehicleData->getVehicle());
+        auto vehicle = static_cast<Vehicle*>(vehicleData->getVehicle());
         if (vehicle != nullptr) {
             vehicle->unoccupy(player);
             player.setPosition(pos);
@@ -641,4 +638,3 @@ void Vehicle::destream()
         }
     }
 }
-

@@ -72,7 +72,7 @@ public:
 
         colorForPlayer_[playerId] = colour;
         flashColorForPlayer_[playerId] = Colour::None();
-        
+
         showForClient(player, colour);
     }
 
@@ -90,7 +90,7 @@ public:
         PacketHelper::send(flashGangZoneRPC, player);
 
         const int pid = player.getID();
-        flashColorForPlayer_[pid] = colour; 
+        flashColorForPlayer_[pid] = colour;
         flashingFor_.set(pid);
     }
 
@@ -125,7 +125,7 @@ public:
         return playersInside_.test(player.getID());
     }
 
-    void setPlayerInside(const IPlayer& player, const bool status) 
+    void setPlayerInside(const IPlayer& player, const bool status)
     {
         playersInside_.set(player.getID(), status);
     }

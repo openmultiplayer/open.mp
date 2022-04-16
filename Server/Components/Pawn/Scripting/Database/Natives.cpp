@@ -213,4 +213,3 @@ SCRIPT_API(DB_GetDatabaseResultSetCount, int())
 {
     return static_cast<int>(PawnManager::Get()->databases->getDatabaseResultSetCount());
 }
-
