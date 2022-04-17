@@ -231,11 +231,11 @@ SCRIPT_API(PlayerGangZoneGetPos, bool(IPlayer & player, IGangZone& zone, Vector2
     return true;
 }
 
-SCRIPT_API(UsePlayerGangZoneCheck, bool(IPlayer &, IGangZone& zone, bool toggle))
+SCRIPT_API(UsePlayerGangZoneCheck, bool(IPlayer &, IGangZone& zone, bool enable))
 {
     IGangZonesComponent* component = PawnManager::Get()->gangzones;
     if (component) {
-        component->toggleGangZoneCheck(zone, toggle);
+        component->useGangZoneCheck(zone, enable);
         return true;
     }
     return false;
