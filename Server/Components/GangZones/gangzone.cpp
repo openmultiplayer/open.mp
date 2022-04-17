@@ -140,7 +140,7 @@ public:
 	{
 		player.addExtension(new PlayerGangZoneData(), true);
 	}
-
+	
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const Vector3& playerPos = player.getPosition();
@@ -257,9 +257,27 @@ public:
     void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
-        for (IGangZone* g : storage) {
-            GangZone* gangzone = static_cast<GangZone*>(g);
-            gangzone->removeFor(pid, player);
+		auto next = storage.begin();
+		auto end = storage.end();
+		while (next != end) {
+			// The iterators don't have post-increment yet.
+			auto cur = next;
+			++next;
+            GangZone* gangzone = static_cast<GangZone*>(*cur);
+			// Release all the per-player (legacy) gangzones.
+			if (gangzone->getLegacyPlayer() == &player)
+			{
+				int index = gangzone->getID();
+				if (checkingList.valid(index)) {
+					checkingList.remove(index, *gangzone);
+				}
+				gangzone->destream();
+				storage.release(index, false);
+			}
+			else
+			{
+				gangzone->removeFor(pid, player);
+			}
         }
     }
 
