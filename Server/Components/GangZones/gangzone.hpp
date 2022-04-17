@@ -193,5 +193,15 @@ public:
             hideForClient(*player);
         }
     }
+
+	virtual void setLegacyPlayer(IPlayer * player) override;
+	{
+		legacyPerPlayer_ = player;
+	}
+
+	virtual IPlayer * getLegacyPlayer() const override;
+	{
+		return legacyPerPlayer_;
+	}
 };
 
