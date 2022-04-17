@@ -212,6 +212,10 @@ private:
         return ret;
     }
 
+    // TL;DR: BAD
+    template <typename... T>
+    inline int PushOne(char* arg, T... args) = delete;
+
     template <typename... T>
     inline int PushOne(StringView arg, T... args)
     {
