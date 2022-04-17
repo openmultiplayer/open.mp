@@ -465,12 +465,13 @@ public:
         if (index == 0) {
             return;
         }
-        component_.decrementPlayerCounter(index);
 
         PlayerObject* obj = storage.get(index);
-        obj->destream();
-
-        storage.release(index, false);
+        if (obj) {
+            component_.decrementPlayerCounter(index);
+            obj->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override
