@@ -23,8 +23,9 @@ struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
         PeerNetworkData data = player.getNetworkData();
         PeerAddress::AddressString addressString;
         PeerAddress::ToString(data.networkID.address, addressString);
+        StringView addressStringView = StringView(addressString.data(), addressString.length());
 
-        PawnManager::Get()->CallInSides("OnRconLoginAttempt", DefaultReturnValue_True, addressString.data(), password, success);
-        PawnManager::Get()->CallInEntry("OnRconLoginAttempt", DefaultReturnValue_True, addressString.data(), password, success);
+        PawnManager::Get()->CallInSides("OnRconLoginAttempt", DefaultReturnValue_True, addressStringView, password, success);
+        PawnManager::Get()->CallInEntry("OnRconLoginAttempt", DefaultReturnValue_True, addressStringView, password, success);
     }
 };
