@@ -70,7 +70,11 @@ public:
 
     void release(int index) override
     {
-        storage.release(index, false);
+        auto ptr = storage.get(index);
+        if (ptr) {
+            ptr->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override

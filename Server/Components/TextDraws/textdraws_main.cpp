@@ -83,8 +83,10 @@ public:
     void release(int index) override
     {
         PlayerTextDraw* td = storage.get(index);
-        td->destream();
-        storage.release(index, false);
+        if (td) {
+            td->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override
