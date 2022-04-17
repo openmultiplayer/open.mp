@@ -96,19 +96,32 @@ namespace pawn_natives {
     };
 }
 
-SCRIPT_API(PlayerGangZoneCreate, int(Vector2 min, Vector2 max))
+SCRIPT_API(CreatePlayerGangZone, int(IPlayer& player, Vector2 min, Vector2 max))
 {
     IGangZonesComponent* component = PawnManager::Get()->gangzones;
-    if (component) {
-        GangZonePos pos;
+	auto data = queryExtension<IPlayerGangZoneData>(player);
+	if (component && data) {
+		int id = data->reserveLegacyID();
+		if (id == INVALID_GANG_ZONE_ID)
+		{
+			return INVALID_GANG_ZONE_ID;
+		}
+
+		GangZonePos pos;
         pos.min = min;
         pos.max = max;
 
         IGangZone* gz = component->create(pos);
-        if (gz) {
-            return gz->getID();
-        }
-    }
+		if (gz)
+		{
+			data->setLegacyID(id, gz->getID());
+			return id;
+		}
+		else
+		{
+			data->releaseLegacyID(id);
+		}
+	}
     return INVALID_GANG_ZONE_ID;
 }
 
