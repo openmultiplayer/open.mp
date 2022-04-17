@@ -309,9 +309,9 @@ public:
 		return legacyIDs_.reserve();
 	}
 
-	virtual int releaseLegacyID(int legacy) override
+	virtual void releaseLegacyID(int legacy) override
 	{
-		return legacyIDs_.release(legacy);
+		legacyIDs_.release(legacy);
 	}
 
 	virtual void setLegacyID(int legacy, int zoneid) override
