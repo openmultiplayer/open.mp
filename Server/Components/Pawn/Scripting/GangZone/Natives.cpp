@@ -125,10 +125,20 @@ SCRIPT_API(GangZoneCreate, int(Vector2 min, Vector2 max))
     return INVALID_GANG_ZONE_ID;
 }
 
-SCRIPT_API(GangZoneDestroy, bool(IGangZone& gangzone))
+SCRIPT_API(GangZoneDestroy, bool(int legacyid))
 {
-    PawnManager::Get()->gangzones->release(gangzone.getID());
-    return true;
+	auto pool = PawnManager::Get()->gangzones;
+	if (pool)
+	{
+		int realid = pool->fromLegacyID(legacyid);
+		if (realid)
+		{
+			pool->release(realid);
+			pool->releaseLegacyID(legacyid);
+		}
+	}
+
+	return false;
 }
 
 SCRIPT_API(GangZoneShowForPlayer, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))

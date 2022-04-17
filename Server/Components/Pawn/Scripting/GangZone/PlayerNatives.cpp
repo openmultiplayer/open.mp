@@ -115,6 +115,7 @@ SCRIPT_API(CreatePlayerGangZone, int(IPlayer& player, Vector2 min, Vector2 max))
 		if (gz)
 		{
 			data->setLegacyID(id, gz->getID());
+			gz->setLegayPlayer(&player);
 			return id;
 		}
 		else
@@ -125,10 +126,21 @@ SCRIPT_API(CreatePlayerGangZone, int(IPlayer& player, Vector2 min, Vector2 max))
     return INVALID_GANG_ZONE_ID;
 }
 
-SCRIPT_API(PlayerGangZoneDestroy, bool(IGangZone& gangzone))
+SCRIPT_API(PlayerGangZoneDestroy, bool(IPlayer & player, int legacyid))
 {
-    PawnManager::Get()->gangzones->release(gangzone.getID());
-    return true;
+	auto data = queryExtension<IPlayerGangZoneData>(player);
+	auto pool = PawnManager::Get()->gangzones;
+	if (data && pool)
+	{
+		int realid = data->fromLegacyID(legacyid);
+		if (realid)
+		{
+			pool->release(realid);
+			data->releaseLegacyID(legacyid);
+		}
+	}
+
+    return false;
 }
 
 SCRIPT_API(PlayerGangZoneShow, bool(IPlayer& player, IGangZone& gangzone, uint32_t colour))
@@ -155,7 +167,7 @@ SCRIPT_API(PlayerGangZoneStopFlash, bool(IPlayer& player, IGangZone& gangzone))
     return true;
 }
 
-SCRIPT_API(IsValidPlayerGangZone, bool(IGangZone* zone))
+SCRIPT_API(IsValidPlayerGangZone, bool(IPlayer & player, IGangZone* zone))
 {
     return zone != nullptr;
 }
@@ -211,7 +223,7 @@ SCRIPT_API(IsPlayerGangZoneFlashing, bool(IPlayer& player, IGangZone& zone))
     return zone.isFlashingForPlayer(player);
 }
 
-SCRIPT_API(PlayerGangZoneGetPos, bool(IGangZone& zone, Vector2& min, Vector2& max))
+SCRIPT_API(PlayerGangZoneGetPos, bool(IPlayer & player, IGangZone& zone, Vector2& min, Vector2& max))
 {
     const GangZonePos& pos = zone.getPosition();
     min = pos.min;
@@ -219,7 +231,7 @@ SCRIPT_API(PlayerGangZoneGetPos, bool(IGangZone& zone, Vector2& min, Vector2& ma
     return true;
 }
 
-SCRIPT_API(UseGangZoneCheck, bool(IGangZone& zone, bool toggle))
+SCRIPT_API(UsePlayerGangZoneCheck, bool(IPlayer &, IGangZone& zone, bool toggle))
 {
     IGangZonesComponent* component = PawnManager::Get()->gangzones;
     if (component) {
