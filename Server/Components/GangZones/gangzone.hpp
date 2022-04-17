@@ -22,6 +22,7 @@ private:
     StaticArray<Colour, PLAYER_POOL_SIZE> flashColorForPlayer_;
     StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
     StaticBitset<PLAYER_POOL_SIZE> playersInside_;
+	IPlayer* legacyPerPlayer_;
 	
     void restream()
     {
@@ -43,18 +44,6 @@ private:
 		}
     }
 
-    void removeFor(int pid, IPlayer& player)
-    {
-        if (shownFor_.valid(pid)) {
-            shownFor_.remove(pid, player);
-        }
-
-        playersInside_.reset(pid);
-        flashingFor_.reset(pid);
-        colorForPlayer_[pid] = Colour::None();
-        flashColorForPlayer_[pid] = Colour::None();
-    }
-
 	void showForClient(IPlayer & player, const Colour & colour) const
 	{
 		auto data = queryExtension<IPlayerGangZoneData>(player);
@@ -71,6 +60,18 @@ private:
 	}
 
 public:
+    void removeFor(int pid, IPlayer& player)
+    {
+        if (shownFor_.valid(pid)) {
+            shownFor_.remove(pid, player);
+        }
+
+        playersInside_.reset(pid);
+        flashingFor_.reset(pid);
+        colorForPlayer_[pid] = Colour::None();
+        flashColorForPlayer_[pid] = Colour::None();
+    }
+
     GangZone(GangZonePos pos)
         : pos(pos)
     {
