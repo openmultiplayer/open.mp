@@ -175,20 +175,18 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
 bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupiedSync, IPlayer& player)
 {
-    if ((isTrailer() && tower->getDriver() != nullptr && tower->getDriver() != &player) || respawning) {
+    if (respawning || (isTrailer() && tower->getDriver() != &player) || isOccupied()) {
         return false;
     } else if (!unoccupiedSync.SeatID) {
-        float playerDistance = glm::distance(player.getPosition(), pos);
+        const Vector3 playerDist3D = player.getPosition() - pos;
+        const float dist = glm::dot(playerDist3D, playerDist3D);
         auto& entries = streamedFor_.entries();
         for (IPlayer* comparable : entries) {
             if (comparable == &player) {
                 continue;
             }
-            PlayerState state = comparable->getState();
-            if ((state == PlayerState_Driver || state == PlayerState_Passenger) && queryExtension<IPlayerVehicleData>(comparable)->getVehicle() == this) {
-                return false;
-            }
-            if (glm::distance(comparable->getPosition(), pos) < playerDistance) {
+            const Vector3 otherDist3D = comparable->getPosition() - pos;
+            if (glm::dot(otherDist3D, otherDist3D) < dist) {
                 return false;
             }
         }
