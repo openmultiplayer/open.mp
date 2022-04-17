@@ -465,12 +465,13 @@ public:
         if (index == 0) {
             return;
         }
-        component_.decrementPlayerCounter(index);
 
         PlayerObject* obj = storage.get(index);
-        obj->destream();
-
-        storage.release(index, false);
+        if (obj) {
+            component_.decrementPlayerCounter(index);
+            obj->destream();
+            storage.release(index, false);
+        }
     }
 
     void lock(int index) override
@@ -562,7 +563,7 @@ public:
 
     void setAttachedObject(int index, const ObjectAttachmentSlotData& data) override
     {
-        if (index < MAX_ATTACHED_OBJECT_SLOTS) {
+        if (index >= 0 && index < MAX_ATTACHED_OBJECT_SLOTS) {
             slotsOccupied_.set(index);
             slots_[index] = data;
 
@@ -577,17 +578,22 @@ public:
 
     void removeAttachedObject(int index) override
     {
-        slotsOccupied_.reset(index);
+        if (index >= 0 && index < MAX_ATTACHED_OBJECT_SLOTS) {
+            slotsOccupied_.reset(index);
 
-        NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
-        setPlayerAttachedObjectRPC.PlayerID = player_.getID();
-        setPlayerAttachedObjectRPC.Index = index;
-        setPlayerAttachedObjectRPC.Create = false;
-        PacketHelper::broadcastToStreamed(setPlayerAttachedObjectRPC, player_);
+            NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
+            setPlayerAttachedObjectRPC.PlayerID = player_.getID();
+            setPlayerAttachedObjectRPC.Index = index;
+            setPlayerAttachedObjectRPC.Create = false;
+            PacketHelper::broadcastToStreamed(setPlayerAttachedObjectRPC, player_);
+        }
     }
 
     bool hasAttachedObject(int index) const override
     {
+        if (index < 0 || index >= MAX_ATTACHED_OBJECT_SLOTS) {
+            return false;
+        }
         return slotsOccupied_.test(index);
     }
 
@@ -598,13 +604,15 @@ public:
 
     void editAttachedObject(int index) override
     {
-        if (slotsOccupied_.test(index)) {
-            inObjectSelection_ = false;
-            inObjectEdit_ = true;
-
-            NetCode::RPC::PlayerBeginAttachedObjectEdit playerBeginAttachedObjectEditRPC;
-            playerBeginAttachedObjectEditRPC.Index = index;
-            PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
+        if (index < 0 || index >= MAX_ATTACHED_OBJECT_SLOTS || !slotsOccupied_.test(index)) {
+            return;
         }
+
+        inObjectSelection_ = false;
+        inObjectEdit_ = true;
+
+        NetCode::RPC::PlayerBeginAttachedObjectEdit playerBeginAttachedObjectEditRPC;
+        playerBeginAttachedObjectEditRPC.Index = index;
+        PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
     }
 };
