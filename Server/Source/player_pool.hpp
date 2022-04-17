@@ -382,11 +382,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             if (send) {
                 if (*limitGlobalChatRadius) {
-                    const float limit = *globalChatRadiusLimit;
+                    const float limit = *globalChatRadiusLimit * *globalChatRadiusLimit;
                     const Vector3 pos = peer.getPosition();
                     for (IPlayer* other : self.storage.entries()) {
-                        float dist = glm::distance(pos, other->getPosition());
-                        if (dist < limit) {
+                        Vector3 dist3D = pos - other->getPosition();
+                        if (glm::dot(dist3D, dist3D) <= limit) {
                             other->sendChatMessage(peer, filteredMessage);
                         }
                     }
