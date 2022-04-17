@@ -489,14 +489,14 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
             AddFloat(&buf_p, llen, amx_ctof(*get_amxaddr(amx, params[arg])), width, prec, flags);
             arg++;
             break;
-        case 'X':
+        case 'H':
+        case 'x':
             CHECK_ARGS(0);
             flags |= UPPERDIGITS;
             AddHex(&buf_p, llen, static_cast<unsigned int>(*get_amxaddr(amx, params[arg])), width, flags);
             arg++;
             break;
         case 'h':
-        case 'x':
             CHECK_ARGS(0);
             AddHex(&buf_p, llen, static_cast<unsigned int>(*get_amxaddr(amx, params[arg])), width, flags);
             arg++;
