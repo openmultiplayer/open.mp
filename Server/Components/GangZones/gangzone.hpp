@@ -35,9 +35,10 @@ private:
     void hideForClient(IPlayer& player)
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->releaseExternalID(poolID);
+		int id = data->toClientID(poolID);
 		if (id != INVALID_GANG_ZONE_ID)
 		{
+			data->releaseClientID(id);
 			NetCode::RPC::HideGangZone hideGangZoneRPC;
 			hideGangZoneRPC.ID = id;
 			PacketHelper::send(hideGangZoneRPC, player);
@@ -47,9 +48,10 @@ private:
 	void showForClient(IPlayer & player, const Colour & colour) const
 	{
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->reserveExternalID(poolID);
+		int id = data->reserveClientID();
 		if (id != INVALID_GANG_ZONE_ID)
 		{
+			data->setClientID(id, poolID);
 			NetCode::RPC::ShowGangZone showGangZoneRPC;
 			showGangZoneRPC.ID = id;
 			showGangZoneRPC.Min = pos.min;
@@ -114,7 +116,7 @@ public:
     void flashForPlayer(IPlayer& player, const Colour& colour) override
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->getExternalID(poolID);
+		int id = data->toClientID(poolID);
 		const int pid = player.getID();
 		if (id != INVALID_GANG_ZONE_ID)
 		{
@@ -130,7 +132,7 @@ public:
     void stopFlashForPlayer(IPlayer& player) override
     {
 		auto data = queryExtension<IPlayerGangZoneData>(player);
-		int id = data->getExternalID(poolID);
+		int id = data->toClientID(poolID);
 		const int pid = player.getID();
 		if (id != INVALID_GANG_ZONE_ID)
 		{
@@ -142,12 +144,12 @@ public:
 		flashingFor_.reset(pid);
     }
 
-    const Colour getFlashingColorForPlayer(IPlayer& player) const override
+    const Colour getFlashingColourForPlayer(IPlayer& player) const override
     {
         return flashColorForPlayer_[player.getID()];
     }
 
-    const Colour getColorForPlayer(IPlayer& player) const override
+    const Colour getColourForPlayer(IPlayer& player) const override
     {
         return colorForPlayer_[player.getID()];
     }
@@ -194,12 +196,12 @@ public:
         }
     }
 
-	virtual void setLegacyPlayer(IPlayer * player) override;
+	virtual void setLegacyPlayer(IPlayer * player) override
 	{
 		legacyPerPlayer_ = player;
 	}
 
-	virtual IPlayer * getLegacyPlayer() const override;
+	virtual IPlayer * getLegacyPlayer() const override
 	{
 		return legacyPerPlayer_;
 	}
