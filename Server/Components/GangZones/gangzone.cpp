@@ -158,7 +158,7 @@ public:
 
             const GangZonePos& pos = gangzone->getPosition();
             bool isPlayerInInsideList = gangzone->isPlayerInside(player);
-            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y;
+            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x < pos.max.x && playerPos.y >= pos.min.y && playerPos.y < pos.max.y;
 
             if (isPlayerInZoneArea && !isPlayerInInsideList) {
 
@@ -305,7 +305,7 @@ public:
 			}
 
 			const GangZonePos & pos = gangzone->getPosition();
-			bool isClickInZoneArea = clickPos.x >= pos.min.x && clickPos.x <= pos.max.x && clickPos.y >= pos.min.y && clickPos.y <= pos.max.y;
+			bool isClickInZoneArea = clickPos.x >= pos.min.x && clickPos.x < pos.max.x && clickPos.y >= pos.min.y && clickPos.y < pos.max.y;
 
 			if (isClickInZoneArea) {
 
