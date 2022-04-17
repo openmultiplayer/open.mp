@@ -93,8 +93,11 @@ public:
 class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
-    MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
-    UniqueIDArray<IGangZone, GANG_ZONE_POOL_SIZE> checkingList;
+	constexpr static const size_t Lower = 1;
+	constexpr static const size_t Upper = GANG_ZONE_POOL_SIZE * PLAYER_POOL_SIZE + GANG_ZONE_POOL_SIZE + 1;
+
+    MarkedPoolStorage<GangZone, IGangZone, Lower, Upper> storage;
+    UniqueIDArray<IGangZone, Upper> checkingList;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 	FiniteLegacyIDMapper<GANG_ZONE_POOL_SIZE> legacyIDs_;
 
@@ -161,19 +164,39 @@ public:
 
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
-                eventDispatcher.dispatch(
-                    &GangZoneEventHandler::onPlayerEnterGangZone,
-                    player,
-                    *lock.entry);
+				if (gangzone->getLegacyPlayer())
+				{
+					eventDispatcher.dispatch(
+						&GangZoneEventHandler::onPlayerEnterPlayerGangZone,
+						player,
+						*lock.entry);
+				}
+				else
+				{
+					eventDispatcher.dispatch(
+						&GangZoneEventHandler::onPlayerEnterGangZone,
+						player,
+						*lock.entry);
+				}
 
             } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
 
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
-                eventDispatcher.dispatch(
-                    &GangZoneEventHandler::onPlayerLeaveGangZone,
-                    player,
-                    *lock.entry);
+				if (gangzone->getLegacyPlayer())
+				{
+					eventDispatcher.dispatch(
+						&GangZoneEventHandler::onPlayerLeavePlayerGangZone,
+						player,
+						*lock.entry);
+				}
+				else
+				{
+					eventDispatcher.dispatch(
+						&GangZoneEventHandler::onPlayerLeaveGangZone,
+						player,
+						*lock.entry);
+				}
             }
         }
 
