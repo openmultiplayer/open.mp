@@ -257,22 +257,12 @@ public:
     void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
-		auto next = storage.begin();
-		auto end = storage.end();
-		while (next != end) {
-			// The iterators don't have post-increment yet.
-			auto cur = next;
-			++next;
-            GangZone* gangzone = static_cast<GangZone*>(*cur);
+        for (IGangZone* g : storage) {
+            GangZone* gangzone = static_cast<GangZone*>(g);
 			// Release all the per-player (legacy) gangzones.
 			if (gangzone->getLegacyPlayer() == &player)
 			{
-				int index = gangzone->getID();
-				if (checkingList.valid(index)) {
-					checkingList.remove(index, *gangzone);
-				}
-				gangzone->destream();
-				storage.release(index, false);
+				release(gangzone->getID());
 			}
 			else
 			{
