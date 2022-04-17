@@ -294,6 +294,10 @@ public:
         }
     }
 
+	void onPlayerClickMap(IPlayer & player, Vector3 pos) override
+	{
+	}
+
 	virtual int toLegacyID(int zoneid) const override
 	{
 		return legacyIDs_.toLegacy(zoneid);
