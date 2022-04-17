@@ -93,7 +93,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
     if (param - 1 < num && len < maxlen - 1) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
-        PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given to `format`: \"%s\" < %u", fmt, num - 3);
     }
 
     cell* coutput = amx_Address(amx, params[1]);
@@ -123,7 +123,7 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
     if (param <= num) {
         char* fmt;
         amx_StrParamChar(amx, params[1], fmt);
-        PawnManager::Get()->core->logLn(LogLevel::Warning, "printf: not enough arguments given. fmt: \"%s\"", fmt);
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given to `printf`: \"%s\" < %u", fmt, num - 1);
     }
 
     if (len > 0) {
