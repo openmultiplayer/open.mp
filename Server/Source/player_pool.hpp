@@ -131,7 +131,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            if (onPlayerGiveTakeDamageRPC.Bodypart < 3) {
+            if (onPlayerGiveTakeDamageRPC.Bodypart < BodyPart_Torso || onPlayerGiveTakeDamageRPC.Bodypart > BodyPart_Head) {
                 return false;
             }
 
@@ -306,7 +306,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     player.skin_ = cls.skin;
 
                     const WeaponSlots& weapons = cls.weapons;
-                    for (size_t i = 3; i < weapons.size(); ++i) {
+                    const size_t weapons_size = weapons.size();
+                    for (size_t i = 3; i != weapons_size; ++i) {
                         if (weapons[i].id == 0) {
                             continue;
                         }
