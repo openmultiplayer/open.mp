@@ -294,8 +294,39 @@ public:
         }
     }
 
-	void onPlayerClickMap(IPlayer & player, Vector3 pos) override
+	void onPlayerClickMap(IPlayer & player, Vector3 clickPos) override
 	{
+		// only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+		for (auto gangzone : checkingList.entries()) {
+
+			// only check visible gangzones
+			if (!gangzone->isShownForPlayer(player)) {
+				continue;
+			}
+
+			const GangZonePos & pos = gangzone->getPosition();
+			bool isClickInZoneArea = clickPos.x >= pos.min.x && clickPos.x <= pos.max.x && clickPos.y >= pos.min.y && clickPos.y <= pos.max.y;
+
+			if (isClickInZoneArea) {
+
+				ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+				if (gangzone->getLegacyPlayer())
+				{
+					eventDispatcher.dispatch(
+						&GangZoneEventHandler::onPlayerClickPlayerGangZone,
+						player,
+						*lock.entry);
+				}
+				else
+				{
+					eventDispatcher.dispatch(
+						&GangZoneEventHandler::onPlayerClickGangZone,
+						player,
+						*lock.entry);
+				}
+
+			}
+		}
 	}
 
 	virtual int toLegacyID(int zoneid) const override
