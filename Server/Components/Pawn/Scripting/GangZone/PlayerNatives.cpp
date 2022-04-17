@@ -115,7 +115,7 @@ SCRIPT_API(CreatePlayerGangZone, int(IPlayer& player, Vector2 min, Vector2 max))
 		if (gz)
 		{
 			data->setLegacyID(id, gz->getID());
-			gz->setLegayPlayer(&player);
+			gz->setLegacyPlayer(&player);
 			return id;
 		}
 		else
