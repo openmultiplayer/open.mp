@@ -7,30 +7,16 @@
  */
 
 #include "gangzone.hpp"
+#include <legacy_id_mapper.hpp>
 
 using namespace Impl;
 
 // TODO: This internal/external IDs mapping code should be extracted for other components to use.
 class PlayerGangZoneData final : public IPlayerGangZoneData {
 private:
-	struct ExternaGangZoneID {
-		int Private;
-		int Global;
-	};
-
-	StaticArray<ExternaGangZoneID, GANG_ZONE_POOL_SIZE> usedIDs_;
-
-	int findUnusedID()
-	{
-		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
-		{
-			if (usedIDs_[i].Global == INVALID_GANG_ZONE_ID && usedIDs_[i].Private == INVALID_GANG_ZONE_ID)
-			{
-				return i;
-			}
-		}
-		return INVALID_GANG_ZONE_ID;
-	}
+	FiniteLegacyIDMapper<GANG_ZONE_POOL_SIZE>
+		legacyIDs_,
+		clientIDs_;
 
 public:
 	PlayerGangZoneData()
@@ -48,77 +34,59 @@ public:
 		// Clear all the IDs.
 		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
 		{
-			usedIDs_[i].Global = INVALID_GANG_ZONE_ID;
-			usedIDs_[i].Private = INVALID_GANG_ZONE_ID;
+			legacyIDs_.release(i);
+			clientIDs_.release(i);
 		}
 	}
 	
-	virtual int getExternalID(int zoneid) const override
+	virtual int toLegacyID(int zoneid) const override
 	{
-		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
-		{
-			if (usedIDs_[i].Global == zoneid)
-			{
-				return i;
-			}
-		}
-		return INVALID_GANG_ZONE_ID;
+		return legacyIDs_.toLegacy(zoneid);
 	}
 
-	virtual int getInternalID(int zoneid) const override
+	virtual int fromLegacyID(int legacy) const override
 	{
-		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
-		{
-			if (usedIDs_[i].Private == zoneid)
-			{
-				return i;
-			}
-		}
-		return INVALID_GANG_ZONE_ID;
+		return legacyIDs_.fromLegacy(legacy);
 	}
 
-	virtual int reserveExternalID(int zoneid) override
+	virtual int reserveLegacyID() override
 	{
-		int i = findUnusedID();
-		if (i == INVALID_GANG_ZONE_ID)
-		{
-			return INVALID_GANG_ZONE_ID;
-		}
-		usedIDs_[i].Global = zoneid;
-		return i;
-	}
-
-	virtual int reserveInternalID(int zoneid) override
-	{
-		int i = findUnusedID();
-		if (i == INVALID_GANG_ZONE_ID)
-		{
-			return INVALID_GANG_ZONE_ID;
-		}
-		usedIDs_[i].Private = zoneid;
-		return i;
+		return legacyIDs_.reserve();
 	}
 	
-	virtual int releaseExternalID(int zoneid) override
+	virtual int releaseLegacyID(int legacy) override
 	{
-		int i = getExternalID(zoneid);
-		if (i == INVALID_GANG_ZONE_ID)
-		{
-			return INVALID_GANG_ZONE_ID;
-		}
-		usedIDs_[i].Global = INVALID_GANG_ZONE_ID;
-		return i;
+		return legacyIDs_.release(legacy);
+	}
+	
+	virtual void setLegacyID(int legacy, int zoneid) override
+	{
+		return legacyIDs_.set(legacy, zoneid);
 	}
 
-	virtual int releaseInternalID(int zoneid) override
+	virtual int toClientID(int zoneid) const override
 	{
-		int i = getInternalID(zoneid);
-		if (i == INVALID_GANG_ZONE_ID)
-		{
-			return INVALID_GANG_ZONE_ID;
-		}
-		usedIDs_[i].Private = INVALID_GANG_ZONE_ID;
-		return i;
+		return clientIDs_.toLegacy(zoneid);
+	}
+
+	virtual int fromClientID(int client) const override
+	{
+		return clientIDs_.fromLegacy(client);
+	}
+
+	virtual int reserveClientID() override
+	{
+		return clientIDs_.reserve();
+	}
+	
+	virtual int releaseClientID(int client) override
+	{
+		return clientIDs_.release(client);
+	}
+	
+	virtual void setClientID(int client, int zoneid) override
+	{
+		return clientIDs_.set(client, zoneid);
 	}
 };
 
@@ -128,6 +96,7 @@ private:
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
     UniqueIDArray<IGangZone, GANG_ZONE_POOL_SIZE> checkingList;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
+	FiniteLegacyIDMapper<GANG_ZONE_POOL_SIZE> legacyIDs_;
 
 public:
     StringView componentName() const override
@@ -160,6 +129,11 @@ public:
     void reset() override
     {
         storage.clear();
+		// Clear all the IDs.
+		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
+		{
+			legacyIDs_.release(i);
+		}
     }
 
 	void onConnect(IPlayer & player) override
@@ -288,6 +262,31 @@ public:
             gangzone->removeFor(pid, player);
         }
     }
+
+	virtual int toLegacyID(int zoneid) const override
+	{
+		return legacyIDs_.toLegacy(zoneid);
+	}
+
+	virtual int fromLegacyID(int legacy) const override
+	{
+		return legacyIDs_.fromLegacy(legacy);
+	}
+
+	virtual int reserveLegacyID() override
+	{
+		return legacyIDs_.reserve();
+	}
+
+	virtual int releaseLegacyID(int legacy) override
+	{
+		return legacyIDs_.release(legacy);
+	}
+
+	virtual void setLegacyID(int legacy, int zoneid) override
+	{
+		return legacyIDs_.set(legacy, zoneid);
+	}
 };
 
 COMPONENT_ENTRY_POINT()
