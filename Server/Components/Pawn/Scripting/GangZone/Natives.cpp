@@ -10,18 +10,117 @@
 #include "sdk.hpp"
 #include <iostream>
 
+// Custom parameter lookup with ID translation.
+namespace pawn_natives
+{
+	template <>
+    struct ParamLookup<IGangZone> {
+        static IGangZone& ValReq(cell ref)
+        {
+            auto pool = PawnManager::Get()->gangzones;
+            if (pool) {
+                auto ptr = pool->get(pool->fromLegacyID(ref));
+                if (ptr) {
+                    return *ptr;
+                }
+            }
+            throw pawn_natives::ParamCastFailure();
+        }
+
+        static IGangZone* Val(cell ref) noexcept
+        {
+            auto pool = PawnManager::Get()->gangzones;
+            if (pool) {
+                return pool->get(pool->fromLegacyID(ref));
+            }
+            return nullptr;
+        }
+    };
+
+    template <>
+    class ParamCast<IGangZone*> {
+    public:
+        ParamCast(AMX* amx, cell* params, int idx) noexcept
+        {
+            value_ = ParamLookup<IGangZone>::Val(params[idx]);
+        }
+
+        ~ParamCast()
+        {
+        }
+
+        ParamCast(ParamCast<IGangZone*> const&) = delete;
+        ParamCast(ParamCast<IGangZone*>&&) = delete;
+
+        operator IGangZone*()
+        {
+            return value_;
+        }
+
+        static constexpr int Size = 1;
+
+    private:
+        IGangZone* value_;
+    };
+
+    template <>
+    class ParamCast<IGangZone&> {
+    public:
+        ParamCast(AMX* amx, cell* params, int idx)
+            : value_(ParamLookup<IGangZone>::ValReq(params[idx]))
+        {
+        }
+
+        ~ParamCast()
+        {
+        }
+
+        ParamCast(ParamCast<IGangZone&> const&) = delete;
+        ParamCast(ParamCast<IGangZone&>&&) = delete;
+
+        operator IGangZone&()
+        {
+            return value_;
+        }
+
+        static constexpr int Size = 1;
+
+    private:
+        IGangZone& value_;
+    };
+
+    template <>
+    class ParamCast<const IGangZone&> {
+    public:
+        ParamCast(AMX*, cell*, int) = delete;
+        ParamCast() = delete;
+    };
+}
+
 SCRIPT_API(GangZoneCreate, int(Vector2 min, Vector2 max))
 {
     IGangZonesComponent* component = PawnManager::Get()->gangzones;
     if (component) {
+		int id = component->reserveLegacyID();
+		if (id == INVALID_GANG_ZONE_ID)
+		{
+			return INVALID_GANG_ZONE_ID;
+		}
+
         GangZonePos pos;
         pos.min = min;
         pos.max = max;
 
         IGangZone* gz = component->create(pos);
-        if (gz) {
-            return gz->getID();
-        }
+        if (gz)
+		{
+			component->setLegacyID(id, gz->getID());
+            return id;
+		}
+		else
+		{
+			component->releaseLegacyID(id);
+		}
     }
     return INVALID_GANG_ZONE_ID;
 }
@@ -110,7 +209,7 @@ SCRIPT_API(IsGangZoneVisibleForPlayer, bool(IPlayer& player, IGangZone& zone))
 SCRIPT_API(GangZoneGetColorForPlayer, int(IPlayer& player, IGangZone& zone))
 {
     if (zone.isShownForPlayer(player)) {
-        return zone.getColorForPlayer(player).RGBA();
+        return zone.getColourForPlayer(player).RGBA();
     } else {
         return 0;
     }
@@ -119,7 +218,25 @@ SCRIPT_API(GangZoneGetColorForPlayer, int(IPlayer& player, IGangZone& zone))
 SCRIPT_API(GangZoneGetFlashColorForPlayer, int(IPlayer& player, IGangZone& zone))
 {
     if (zone.isShownForPlayer(player)) {
-        return zone.getFlashingColorForPlayer(player).RGBA();
+        return zone.getFlashingColourForPlayer(player).RGBA();
+    } else {
+        return 0;
+    }
+}
+
+SCRIPT_API(GangZoneGetColourForPlayer, int(IPlayer& player, IGangZone& zone))
+{
+    if (zone.isShownForPlayer(player)) {
+        return zone.getColourForPlayer(player).RGBA();
+    } else {
+        return 0;
+    }
+}
+
+SCRIPT_API(GangZoneGetFlashColourForPlayer, int(IPlayer& player, IGangZone& zone))
+{
+    if (zone.isShownForPlayer(player)) {
+        return zone.getFlashingColourForPlayer(player).RGBA();
     } else {
         return 0;
     }
