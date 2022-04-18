@@ -6,7 +6,7 @@
 struct CoreEvents : public ConsoleEventHandler, public Singleton<CoreEvents> {
     bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
-        std::string fullCommand = command.data();
+        std::string fullCommand = std::string(command.data(), command.length());
         if (!parameters.empty()) {
             fullCommand.append(" ");
             fullCommand.append(parameters.data());
