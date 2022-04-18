@@ -936,7 +936,7 @@ public:
         }
 
         components.configure(*this, config, false);
-        config.setInt("max_players", glm::clamp(*config.getInt("max_players"), 1, 1000));
+        config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
 
         if (cmd.count("script")) {
             // Add the launch parameter to the start of the scripts list.
