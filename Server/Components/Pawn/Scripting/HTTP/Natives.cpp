@@ -4,24 +4,29 @@
 struct PawnHTTPResponseHandler final : HTTPResponseHandler {
     int index;
     String callback;
-    PawnScript& script;
+    AMX* amx;
 
-    PawnHTTPResponseHandler(int index, StringView callback, PawnScript& script)
+    PawnHTTPResponseHandler(int index, StringView callback, AMX* amx)
         : index(index)
         , callback(callback)
-        , script(script)
+        , amx(amx)
     {
     }
 
     void onHTTPResponse(int status, StringView body) override
     {
-        script.Call(callback, DefaultReturnValue_True, index, status, body);
+        // Check if the script is still loaded.
+        auto& amx_map = PawnManager::Get()->amxToScript_;
+        auto script_itr = amx_map.find(amx);
+        if (script_itr != amx_map.end()) {
+            script_itr->second->Call(callback, DefaultReturnValue_True, index, status, body);
+        }
         delete this;
     }
 };
 
-SCRIPT_API(HTTP, bool(int index, int method, std::string const& url, std::string const& data, std::string const& callback, PawnScript& script))
+SCRIPT_API(HTTP, bool(int index, int method, std::string const& url, std::string const& data, std::string const& callback))
 {
-    PawnManager::Get()->core->requestHTTP(new PawnHTTPResponseHandler(index, callback, script), HTTPRequestType(method), url, data);
+    PawnManager::Get()->core->requestHTTP(new PawnHTTPResponseHandler(index, callback, GetAMX()), HTTPRequestType(method), url, data);
     return true;
 }
