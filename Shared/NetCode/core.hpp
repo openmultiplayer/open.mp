@@ -1372,7 +1372,7 @@ namespace RPC {
         {
             bs.readUINT8(Type);
             bs.readUINT32(Address);
-            bs.readUINT16(Results);
+            bs.readUINT8(Results);
             return true;
         }
 
