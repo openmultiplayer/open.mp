@@ -1003,3 +1003,13 @@ SCRIPT_API(GetPlayerGravity, float(IPlayer& player))
 {
     return player.getGravity();
 }
+
+SCRIPT_API(SetPlayerAdmin, bool(IPlayer& player, bool set))
+{
+    IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
+    if (data) {
+        data->setConsoleAccessibility(set);
+        return true;
+    }
+    return false;
+}
