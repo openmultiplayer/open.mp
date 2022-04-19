@@ -347,6 +347,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     if (isEntryScript) {
         mainName_ = name;
         mainScript_ = std::move(ptr);
+        amxToScript_.emplace(mainScript_->GetAMX(), mainScript_.get());
     } else {
         Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
         scripts_.push_back(std::move(pair));
