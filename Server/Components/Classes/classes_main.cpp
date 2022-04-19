@@ -80,6 +80,11 @@ public:
     {
         return cls;
     }
+
+    void setClass(const PlayerClass& data) override
+    {
+        cls = data;
+    }
 };
 
 class ClassesComponent final : public IClassesComponent, public PlayerEventHandler {
