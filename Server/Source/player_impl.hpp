@@ -97,6 +97,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     TimePoint lastGameTimeUpdate_;
     PlayerSpectateData spectateData_;
     int gravity_;
+    bool ghostMode_;
 
     PrimarySyncUpdateType primarySyncUpdateType_;
     int secondarySyncUpdateType_;
@@ -168,10 +169,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , toSpawn_(false)
         , lastGameTimeUpdate_()
         , spectateData_({ INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
+        , gravity_(0)
+        , ghostMode_(false)
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
-        , gravity_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -1196,5 +1198,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rpc.Offset = offset;
         rpc.Count = count;
         PacketHelper::send(rpc, *this);
+    }
+
+    void toggleGhostMode(bool toggle) override
+    {
+        ghostMode_ = toggle;
+    }
+
+    bool isGhostModeEnabled() const override
+    {
+        return ghostMode_;
     }
 };

@@ -1577,6 +1577,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     player->footSync_.LeftRight = 0;
                 }
 
+                // Setting player's special action to enter vehicle
+                if (player->ghostMode_) {
+                    player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
+                }
+
                 PacketHelper::broadcastSyncPacket(player->footSync_, *player);
                 break;
             }
