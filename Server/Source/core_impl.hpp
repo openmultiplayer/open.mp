@@ -1038,7 +1038,8 @@ public:
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
     }
 
-    int getNetworkBitStreamVersion() const override {
+    int getNetworkBitStreamVersion() const override
+    {
         return NetworkBitStream::Version;
     }
 
