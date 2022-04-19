@@ -446,6 +446,11 @@ SCRIPT_API(RemoveBuildingForPlayer, bool(IPlayer& player, uint32_t model, Vector
     return true;
 }
 
+SCRIPT_API(GetPlayerBuildingsRemoved, int(IPlayer& player))
+{
+    return player.getDefaultObjectsRemoved();
+}
+
 SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
     player.removeFromVehicle();

@@ -98,6 +98,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerSpectateData spectateData_;
     int gravity_;
     bool ghostMode_;
+    int defaultObjectsRemoved_;
 
     PrimarySyncUpdateType primarySyncUpdateType_;
     int secondarySyncUpdateType_;
@@ -171,6 +172,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , spectateData_({ INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
         , gravity_(0)
         , ghostMode_(false)
+        , defaultObjectsRemoved_(0)
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
@@ -707,11 +709,17 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void removeDefaultObjects(unsigned model, Vector3 pos, float radius) override
     {
+        defaultObjectsRemoved_++;
         NetCode::RPC::RemoveBuildingForPlayer removeBuildingForPlayerRPC;
         removeBuildingForPlayerRPC.ModelID = model;
         removeBuildingForPlayerRPC.Position = pos;
         removeBuildingForPlayerRPC.Radius = radius;
         PacketHelper::send(removeBuildingForPlayerRPC, *this);
+    }
+
+    int getDefaultObjectsRemoved() const override
+    {
+        return defaultObjectsRemoved_;
     }
 
     void forceClassSelection() override
