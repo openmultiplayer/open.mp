@@ -420,6 +420,12 @@ public:
         }
     }
 
+    void clearBans() override
+    {
+        bans.clear();
+        writeBans();
+    }
+
     size_t getBansCount() const override
     {
         return bans.size();

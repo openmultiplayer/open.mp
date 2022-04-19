@@ -578,3 +578,39 @@ SCRIPT_API(IsNickNameCharacterAllowed, bool(char character))
 {
     return PawnManager::Get()->players->isNickNameCharacterAllowed(character);
 }
+
+SCRIPT_API(ClearBanList, bool())
+{
+    ICore* core = PawnManager::Get()->core;
+    if (core) {
+        return false;
+    }
+
+    core->getConfig().clearBans();
+    return true;
+}
+
+SCRIPT_API(IsBanned, bool(const std::string& ip))
+{
+    ICore* core = PawnManager::Get()->core;
+    if (core) {
+        return false;
+    }
+
+    BanEntry unban(ip);
+    for (INetwork* network : core->getNetworks()) {
+        network->unban(unban);
+    }
+
+    bool found = false;
+    size_t index = 0;
+    for (size_t j = core->getConfig().getBansCount(); index < j; index++) {
+        const BanEntry& entry = core->getConfig().getBan(index);
+        if (entry.address == unban.address) {
+            found = true;
+            break;
+        }
+    }
+
+    return found;
+}
