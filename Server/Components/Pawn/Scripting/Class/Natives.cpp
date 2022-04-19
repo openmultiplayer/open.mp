@@ -102,3 +102,16 @@ SCRIPT_API(GetPlayerClass, bool(IClass& class_, int& teamid, int& skin, Vector3&
     return true;
 }
 
+SCRIPT_API(EditPlayerClass, bool(IClass& class_, int teamid, int skin, Vector3 spawnPos, float angle, int weapon1, int weapon1_ammo, int weapon2, int weapon2_ammo, int weapon3, int weapon3_ammo))
+{
+    WeaponSlots weapons;
+    weapons[0].id = weapon1;
+    weapons[0].ammo = weapon1_ammo;
+    weapons[1].id = weapon2;
+    weapons[1].ammo = weapon2_ammo;
+    weapons[2].id = weapon3;
+    weapons[2].ammo = weapon3_ammo;
+    PlayerClass data = PlayerClass(skin, teamid, spawnPos, angle, weapons);
+    class_.setClass(data);
+    return true;
+}
