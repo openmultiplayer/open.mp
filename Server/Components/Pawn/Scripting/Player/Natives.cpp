@@ -1013,3 +1013,22 @@ SCRIPT_API(SetPlayerAdmin, bool(IPlayer& player, bool set))
     }
     return false;
 }
+
+SCRIPT_API(IsPlayerSpawned, bool(IPlayer& player))
+{
+    PlayerState state = player.getState();
+    switch (state) {
+    case PlayerState_OnFoot:
+    case PlayerState_Driver:
+    case PlayerState_Passenger:
+    case PlayerState_Spawned: {
+        return true;
+    }
+    }
+    return false;
+}
+
+SCRIPT_API(IsPlayerControllable, bool(IPlayer& player))
+{
+    return player.getControllable();
+}
