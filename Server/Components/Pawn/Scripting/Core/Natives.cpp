@@ -486,6 +486,11 @@ SCRIPT_API(SetGravity, bool(float gravity))
     return true;
 }
 
+SCRIPT_API(GetGravity, float())
+{
+    return PawnManager::Get()->core->getGravity();
+}
+
 SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 {
     *PawnManager::Get()->config->getFloat("name_tag_draw_distance") = distance;
