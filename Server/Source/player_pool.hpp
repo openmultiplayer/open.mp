@@ -1261,6 +1261,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         player.time_ = duration_cast<Minutes>(Hours(*hour));
         player.weather_ = *weather;
+        player.gravity_ = core.getGravity();
 
         core.logLn(
             LogLevel::Message,
