@@ -807,6 +807,23 @@ SCRIPT_API(SetPlayerAttachedObject, bool(IPlayer& player, int index, int modelid
     return false;
 }
 
+SCRIPT_API(GetPlayerAttachedObject, bool(IPlayer& player, int index, int& modelid, int& bone, Vector3& offset, Vector3& rotation, Vector3& scale, uint32_t& materialcolor1, uint32_t& materialcolor2))
+{
+    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+    if (data) {
+        ObjectAttachmentSlotData attachment = data->getAttachedObject(index);
+        modelid = attachment.model;
+        bone = attachment.bone;
+        offset = attachment.offset;
+        rotation = attachment.rotation;
+        scale = attachment.scale;
+        materialcolor1 = attachment.colour1.ARGB();
+        materialcolor2 = attachment.colour2.ARGB();
+        return true;
+    }
+    return false;
+}
+
 SCRIPT_API(SetPlayerFacingAngle, bool(IPlayer& player, float angle))
 {
     Vector3 rotation = player.getRotation().ToEuler();
