@@ -426,6 +426,20 @@ public:
         writeBans();
     }
 
+    bool isBanned(const BanEntry& entry) const override
+    {
+        bool found = false;
+        size_t index = 0;
+        for (size_t j = getBansCount(); index < j; index++) {
+            const BanEntry& ban = getBan(index);
+            if (ban.address == entry.address) {
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
+
     size_t getBansCount() const override
     {
         return bans.size();
