@@ -96,6 +96,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     bool toSpawn_;
     TimePoint lastGameTimeUpdate_;
     PlayerSpectateData spectateData_;
+    int gravity_;
 
     PrimarySyncUpdateType primarySyncUpdateType_;
     int secondarySyncUpdateType_;
@@ -170,6 +171,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
+        , gravity_(0)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -630,6 +632,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerGravity RPC;
         RPC.Gravity = gravity;
         PacketHelper::send(RPC, *this);
+        gravity_ = gravity;
+    }
+
+    float getGravity() const override
+    {
+        return gravity_;
     }
 
     void setAction(PlayerSpecialAction action) override
