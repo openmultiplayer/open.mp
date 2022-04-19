@@ -992,3 +992,14 @@ SCRIPT_API(GetPlayerRawIp, int(IPlayer& player))
 {
     return player.getNetworkData().networkID.address.v4;
 }
+
+SCRIPT_API(SetPlayerGravity, bool(IPlayer& player, float gravity))
+{
+    player.setGravity(gravity);
+    return true;
+}
+
+SCRIPT_API(GetPlayerGravity, float(IPlayer& player))
+{
+    return player.getGravity();
+}
