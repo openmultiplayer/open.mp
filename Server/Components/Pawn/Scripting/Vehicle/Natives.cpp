@@ -585,3 +585,40 @@ SCRIPT_API(GetVehicleTrainSpeed, float(IVehicle& vehicle))
 {
     return vehicle.getTrainSpeed();
 }
+
+SCRIPT_API(GetVehicleMatrix, bool(IVehicle& vehicle, Vector3& right, Vector3& up, Vector3& at))
+{
+    const glm::quat& q = vehicle.getRotation().q;
+    Vector3 right_;
+    Vector3 up_;
+    Vector3 at_;
+    float ww, xx, yy, zz, xy, wz, xz, wy, yz, wx = 0.0f;
+
+    ww = q.w * q.w;
+    xx = q.x * q.x;
+    yy = q.y * q.y;
+    zz = q.z * q.z;
+    right_.x = xx - yy - zz + ww;
+    up_.y = yy - xx - zz + ww;
+    at_.z = zz - (yy + xx) + ww;
+
+    xy = q.x * q.y;
+    wz = q.w * q.z;
+    up_.x = wz + xy + wz + xy;
+    right_.y = xy - wz + xy - wz;
+
+    xz = q.x * q.z;
+    wy = q.w * q.y;
+    at_.x = xz - wy + xz - wy;
+    right_.z = wy + xz + wy + xz;
+
+    yz = q.y * q.z;
+    wx = q.w * q.x;
+    at_.y = wx + yz + wx + yz;
+    up_.z = yz - wx + yz - wx;
+
+    right = right_;
+    up = up_;
+    at = at_;
+    return true;
+}
