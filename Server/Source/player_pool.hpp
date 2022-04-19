@@ -432,12 +432,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 filteredMessage = String(StringView(playerRequestCommandMessage.message));
             }
 
-            bool send = filteredMessage.size() > 1 && self.eventDispatcher.anyTrue([&peer, filteredMessage](PlayerEventHandler* handler) {
-                return handler->onCommandText(peer, filteredMessage);
-            });
+            if (filteredMessage.size() > 1) {
+                bool send = self.eventDispatcher.anyTrue([&peer, filteredMessage](PlayerEventHandler* handler) {
+                    return handler->onCommandText(peer, filteredMessage);
+                });
 
-            if (!send) {
-                peer.sendClientMessage(Colour::White(), "SERVER: Unknown command.");
+                if (!send) {
+                    peer.sendClientMessage(Colour::White(), "SERVER: Unknown command.");
+                }
             }
 
             return true;
