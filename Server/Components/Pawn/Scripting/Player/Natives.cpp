@@ -1024,8 +1024,9 @@ SCRIPT_API(IsPlayerSpawned, bool(IPlayer& player))
     case PlayerState_Spawned: {
         return true;
     }
+    default:
+        return false;
     }
-    return false;
 }
 
 SCRIPT_API(IsPlayerControllable, bool(IPlayer& player))
@@ -1036,4 +1037,15 @@ SCRIPT_API(IsPlayerControllable, bool(IPlayer& player))
 SCRIPT_API(IsPlayerCameraTargetEnabled, bool(IPlayer& player))
 {
     return player.hasCameraTargeting();
+}
+
+SCRIPT_API(TogglePlayerGhostMode, bool(IPlayer& player, bool toggle))
+{
+    player.toggleGhostMode(toggle);
+    return true;
+}
+
+SCRIPT_API(GetPlayerGhostMode, bool(IPlayer& player))
+{
+    return player.isGhostModeEnabled();
 }
