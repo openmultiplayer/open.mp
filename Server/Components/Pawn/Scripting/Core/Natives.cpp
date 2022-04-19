@@ -271,11 +271,6 @@ SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, OutputOnlyString&
     return getConfigOptionAsString(cvar, buffer);
 }
 
-SCRIPT_API(GetGravity, float())
-{
-    return *PawnManager::Get()->config->getFloat("gravity");
-}
-
 SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
 {
     std::stringstream stream;
