@@ -1032,3 +1032,8 @@ SCRIPT_API(IsPlayerControllable, bool(IPlayer& player))
 {
     return player.getControllable();
 }
+
+SCRIPT_API(IsPlayerCameraTargetEnabled, bool(IPlayer& player))
+{
+    return player.hasCameraTargeting();
+}
