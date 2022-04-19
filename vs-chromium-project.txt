@@ -13,6 +13,39 @@
 [SearchableFiles.ignore]
 build/
 .git/
+*.log
+*.pdb
+*.obj
+# clang compiler (see https://reviews.llvm.org/D36238)
+*.obj-*
+*.pack
+*.pch
+# clang compiler (see https://reviews.llvm.org/D36238)
+*.pch-*
+*.lib
+*.ilk
+*.exe
+*.dll
+*.sdf
+*.opensdf
+*.o
+*.7z
+*.pak
+*.nexe
+*.res
+*.tgz
+*.gz
+*.mo
+*.so
+*.so.*
+*.gif
+*.png
+*.jpg
+*.jpeg
+*.ogg
+*.ex_
+*.mp4
+*.ac3
 
 [SearchableFiles.include]
 *

@@ -733,7 +733,7 @@ private:
         }
         ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
         if (OnComponentLoad == nullptr) {
-            void* isSAMPPlugin = LIBRARY_GET_ADDR(componentLib, "Supports");
+            void* isSAMPPlugin = reinterpret_cast<void*>(LIBRARY_GET_ADDR(componentLib, "Supports"));
             printLn(
                 "\tFailed to load component: %s.",
                 isSAMPPlugin
