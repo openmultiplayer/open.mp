@@ -1157,7 +1157,16 @@ public:
         RPC.Gravity = gravity;
         PacketHelper::broadcast(RPC, players);
 
+        for (IPlayer* player : players.entries()) {
+            static_cast<Player*>(player)->gravity_ = gravity;
+        }
+
         updateNetworks();
+    }
+
+    float getGravity() const override
+    {
+        return *SetGravity;
     }
 
     void setWeather(int weather) override
