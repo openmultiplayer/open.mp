@@ -1033,9 +1033,13 @@ public:
         return ticksPerSecond;
     }
 
-    SemanticVersion getVersion() override
+    SemanticVersion getVersion() const override
     {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+    }
+
+    int getNetworkBitStreamVersion() const override {
+        return NetworkBitStream::Version;
     }
 
     void printLn(const char* fmt, ...) override

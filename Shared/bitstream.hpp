@@ -36,8 +36,10 @@ class NetworkBitStream {
     /// Arbitrary size, just picking something likely to be larger than most packets
     constexpr static const size_t StackAllocationSize = 256;
     constexpr static const float CompressedVecMagnitudeEpsilon = 0.00001f;
-
 public:
+    /// The version of the NetworkBitStream class; increased when breaking changes are introduced
+    constexpr static const int Version = 0;
+
     /// Default Constructor
     NetworkBitStream();
 
