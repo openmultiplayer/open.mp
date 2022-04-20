@@ -118,51 +118,37 @@ private:
 
             self.inClassRequest = true;
             self.skipDefaultClassRequest = false;
+
+            const PlayerClass* used_class = &defClass;
+
+            if (self.skipDefaultClassRequest) {
+                IPlayerClassData* player_data = queryExtension<IPlayerClassData>(peer);
+                if (player_data) {
+                    used_class = &player_data->getClass();
+                }
+            } else if (Class* class_ptr = self.storage.get(playerRequestClassPacket.Classid)) {
+                used_class = &class_ptr->getClass();
+                PlayerClassData* player_data = queryExtension<PlayerClassData>(peer);
+                if (player_data) {
+                    player_data->cls = *used_class;
+                }
+            }
+
+            peer.setSkin(used_class->skin, false);
+
             if (self.eventDispatcher.stopAtFalse(
                     [&peer, &playerRequestClassPacket](ClassEventHandler* handler) {
                         return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
                     })) {
-                if (self.skipDefaultClassRequest) {
-                    IPlayerClassData* clsData = queryExtension<IPlayerClassData>(peer);
-                    if (clsData) {
-                        const PlayerClass& cls = clsData->getClass();
-                        const WeaponSlots& weapons = cls.weapons;
-                        StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-                        StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                        NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
-                        playerRequestClassResponse.Selectable = true;
-                        playerRequestClassResponse.Unknown1 = 0;
-                        playerRequestClassResponse.Weapons = weaponIDsArray;
-                        playerRequestClassResponse.Ammos = weaponAmmoArray;
-                        PacketHelper::send(playerRequestClassResponse, peer);
-                    }
-                } else if (Class* clsPtr = (self.storage.get(playerRequestClassPacket.Classid))) {
-                    const PlayerClass& cls = clsPtr->getClass();
-                    IPlayerClassData* clsData = queryExtension<IPlayerClassData>(peer);
-                    if (clsData) {
-                        PlayerClassData* clsDataCast = static_cast<PlayerClassData*>(clsData);
-                        clsDataCast->cls = cls;
-                    }
-                    const WeaponSlots& weapons = cls.weapons;
-                    StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-                    StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                    NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(cls.team, cls.skin, cls.spawn, cls.angle);
-                    playerRequestClassResponse.Selectable = true;
-                    playerRequestClassResponse.Unknown1 = 0;
-                    playerRequestClassResponse.Weapons = weaponIDsArray;
-                    playerRequestClassResponse.Ammos = weaponAmmoArray;
-                    PacketHelper::send(playerRequestClassResponse, peer);
-                } else {
-                    const WeaponSlots& weapons = defClass.weapons;
-                    StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
-                    StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                    NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(defClass.team, defClass.skin, defClass.spawn, defClass.angle);
-                    playerRequestClassResponse.Selectable = true;
-                    playerRequestClassResponse.Unknown1 = 0;
-                    playerRequestClassResponse.Weapons = weaponIDsArray;
-                    playerRequestClassResponse.Ammos = weaponAmmoArray;
-                    PacketHelper::send(playerRequestClassResponse, peer);
-                }
+                const WeaponSlots& weapons = used_class->weapons;
+                StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
+                StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
+                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(used_class->team, used_class->skin, used_class->spawn, used_class->angle);
+                playerRequestClassResponse.Selectable = true;
+                playerRequestClassResponse.Unknown1 = 0;
+                playerRequestClassResponse.Weapons = weaponIDsArray;
+                playerRequestClassResponse.Ammos = weaponAmmoArray;
+                PacketHelper::send(playerRequestClassResponse, peer);
             } else {
                 StaticArray<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
