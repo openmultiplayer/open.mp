@@ -515,6 +515,7 @@ namespace RPC {
         void write(NetworkBitStream& bs) const
         {
             bs.writeVEC3(Pos);
+            bs.writeUINT8(cutType);
         }
     };
 
