@@ -1271,6 +1271,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         player.time_ = duration_cast<Minutes>(Hours(*hour));
         player.weather_ = *weather;
+        player.gravity_ = core.getGravity();
 
         core.logLn(
             LogLevel::Message,
@@ -1584,6 +1585,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     player->footSync_.Keys = 0;
                     player->footSync_.UpDown = 0;
                     player->footSync_.LeftRight = 0;
+                }
+
+                // Setting player's special action to enter vehicle
+                if (player->ghostMode_) {
+                    player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
                 }
 
                 PacketHelper::broadcastSyncPacket(player->footSync_, *player);

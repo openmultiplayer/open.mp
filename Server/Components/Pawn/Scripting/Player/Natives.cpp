@@ -454,6 +454,11 @@ SCRIPT_API(RemoveBuildingForPlayer, bool(IPlayer& player, uint32_t model, Vector
     return true;
 }
 
+SCRIPT_API(GetPlayerBuildingsRemoved, int(IPlayer& player))
+{
+    return player.getDefaultObjectsRemoved();
+}
+
 SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
     player.removeFromVehicle();
@@ -810,6 +815,23 @@ SCRIPT_API(SetPlayerAttachedObject, bool(IPlayer& player, int index, int modelid
     return false;
 }
 
+SCRIPT_API(GetPlayerAttachedObject, bool(IPlayer& player, int index, int& modelid, int& bone, Vector3& offset, Vector3& rotation, Vector3& scale, uint32_t& materialcolor1, uint32_t& materialcolor2))
+{
+    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+    if (data) {
+        ObjectAttachmentSlotData attachment = data->getAttachedObject(index);
+        modelid = attachment.model;
+        bone = attachment.bone;
+        offset = attachment.offset;
+        rotation = attachment.rotation;
+        scale = attachment.scale;
+        materialcolor1 = attachment.colour1.ARGB();
+        materialcolor2 = attachment.colour2.ARGB();
+        return true;
+    }
+    return false;
+}
+
 SCRIPT_API(SetPlayerFacingAngle, bool(IPlayer& player, float angle))
 {
     Vector3 rotation = player.getRotation().ToEuler();
@@ -999,4 +1021,61 @@ SCRIPT_API(GetPlayerSpectateType, int(IPlayer& player))
 SCRIPT_API(GetPlayerRawIp, int(IPlayer& player))
 {
     return player.getNetworkData().networkID.address.v4;
+}
+
+SCRIPT_API(SetPlayerGravity, bool(IPlayer& player, float gravity))
+{
+    player.setGravity(gravity);
+    return true;
+}
+
+SCRIPT_API(GetPlayerGravity, float(IPlayer& player))
+{
+    return player.getGravity();
+}
+
+SCRIPT_API(SetPlayerAdmin, bool(IPlayer& player, bool set))
+{
+    IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
+    if (data) {
+        data->setConsoleAccessibility(set);
+        return true;
+    }
+    return false;
+}
+
+SCRIPT_API(IsPlayerSpawned, bool(IPlayer& player))
+{
+    PlayerState state = player.getState();
+    switch (state) {
+    case PlayerState_OnFoot:
+    case PlayerState_Driver:
+    case PlayerState_Passenger:
+    case PlayerState_Spawned: {
+        return true;
+    }
+    default:
+        return false;
+    }
+}
+
+SCRIPT_API(IsPlayerControllable, bool(IPlayer& player))
+{
+    return player.getControllable();
+}
+
+SCRIPT_API(IsPlayerCameraTargetEnabled, bool(IPlayer& player))
+{
+    return player.hasCameraTargeting();
+}
+
+SCRIPT_API(TogglePlayerGhostMode, bool(IPlayer& player, bool toggle))
+{
+    player.toggleGhostMode(toggle);
+    return true;
+}
+
+SCRIPT_API(GetPlayerGhostMode, bool(IPlayer& player))
+{
+    return player.isGhostModeEnabled();
 }

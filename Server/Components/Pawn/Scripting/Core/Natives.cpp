@@ -279,11 +279,6 @@ SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, OutputOnlyString&
     return getConfigOptionAsString(cvar, buffer);
 }
 
-SCRIPT_API(GetGravity, float())
-{
-    return *PawnManager::Get()->config->getFloat("gravity");
-}
-
 SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
 {
     std::stringstream stream;
@@ -494,6 +489,11 @@ SCRIPT_API(SetGravity, bool(float gravity))
     return true;
 }
 
+SCRIPT_API(GetGravity, float())
+{
+    return PawnManager::Get()->core->getGravity();
+}
+
 SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 {
     *PawnManager::Get()->config->getFloat("name_tag_draw_distance") = distance;
@@ -585,4 +585,25 @@ SCRIPT_API(AllowNickNameCharacter, bool(char character, bool allow))
 SCRIPT_API(IsNickNameCharacterAllowed, bool(char character))
 {
     return PawnManager::Get()->players->isNickNameCharacterAllowed(character);
+}
+
+SCRIPT_API(ClearBanList, bool())
+{
+    ICore* core = PawnManager::Get()->core;
+    if (core) {
+        return false;
+    }
+
+    core->getConfig().clearBans();
+    return true;
+}
+
+SCRIPT_API(IsBanned, bool(const std::string& ip))
+{
+    ICore* core = PawnManager::Get()->core;
+    if (core) {
+        return false;
+    }
+    BanEntry entry(ip);
+    return core->getConfig().isBanned(entry);
 }
