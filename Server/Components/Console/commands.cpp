@@ -223,20 +223,7 @@ ADD_CONSOLE_CMD(unbanip, [](const String& params, const ConsoleCommandSenderData
         network->unban(unban);
     }
 
-    bool found = false;
-    size_t index = 0;
-    for (size_t j = core->getConfig().getBansCount(); index < j; index++) {
-        const BanEntry& entry = core->getConfig().getBan(index);
-        if (entry.address == unban.address) {
-            found = true;
-            break;
-        }
-    }
-
-    if (found) {
-        core->getConfig().removeBan(index);
-        core->getConfig().writeBans();
-    }
+    core->getConfig().removeBan(unban);
 });
 
 ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {

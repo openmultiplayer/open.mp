@@ -375,7 +375,19 @@ public:
 
     void addBan(const BanEntry& entry) override
     {
-        bans.emplace_back(BanEntry(entry.address, entry.name, entry.reason));
+        bans.emplace_back(entry);
+    }
+
+    void removeBan(const BanEntry& entry) override
+    {
+        auto ban_itr = std::find_if(bans.begin(), bans.end(), [&](const BanEntry& ban) {
+            return ban.address == entry.address;
+        });
+
+        if (ban_itr != bans.end()) {
+            bans.erase(ban_itr);
+            writeBans();
+        }
     }
 
     void removeBan(size_t index) override
@@ -428,16 +440,9 @@ public:
 
     bool isBanned(const BanEntry& entry) const override
     {
-        bool found = false;
-        size_t index = 0;
-        for (size_t j = getBansCount(); index < j; index++) {
-            const BanEntry& ban = getBan(index);
-            if (ban.address == entry.address) {
-                found = true;
-                break;
-            }
-        }
-        return found;
+        return std::any_of(bans.begin(), bans.end(), [&](const BanEntry& ban) {
+            return entry.address == ban.address;
+        });
     }
 
     size_t getBansCount() const override
