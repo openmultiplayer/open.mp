@@ -595,5 +595,9 @@ static const FlatHashMap<String, String> DeprecatedNatives {
     { "GetServerVarAsBool", "GetConsoleVarAsString" },
     { "GetServerVarAsInt", "GetConsoleVarAsInt" },
     { "GetServerVarAsFloat", "GetConsoleVarAsFloat" },
-    { "GetServerVarAsString", "GetConsoleVarAsString" }
+    { "GetServerVarAsString", "GetConsoleVarAsString" },
+    { "GetPlayerDialog", "GetPlayerDialogID" },
+    { "GetPlayerPoolSize", "MAX_PLAYERS" },
+    { "GetVehiclePoolSize", "MAX_VEHICLES" },
+    { "GetActorPoolSize", "MAX_ACTORS" },
 };
