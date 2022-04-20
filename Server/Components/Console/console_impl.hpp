@@ -21,7 +21,7 @@ public:
         return hasAccess;
     }
 
-    void setConsoleAccessibility(bool set)
+    void setConsoleAccessibility(bool set) override
     {
         hasAccess = set;
     }

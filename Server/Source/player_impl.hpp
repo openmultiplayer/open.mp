@@ -104,6 +104,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     bool toSpawn_;
     TimePoint lastGameTimeUpdate_;
     PlayerSpectateData spectateData_;
+    int gravity_;
+    bool ghostMode_;
+    int defaultObjectsRemoved_;
 
     PrimarySyncUpdateType primarySyncUpdateType_;
     int secondarySyncUpdateType_;
@@ -175,6 +178,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , toSpawn_(false)
         , lastGameTimeUpdate_()
         , spectateData_({ INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
+        , gravity_(0)
+        , ghostMode_(false)
+        , defaultObjectsRemoved_(0)
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
@@ -638,6 +644,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         NetCode::RPC::SetPlayerGravity RPC;
         RPC.Gravity = gravity;
         PacketHelper::send(RPC, *this);
+        gravity_ = gravity;
+    }
+
+    float getGravity() const override
+    {
+        return gravity_;
     }
 
     void setAction(PlayerSpecialAction action) override
@@ -705,11 +717,17 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void removeDefaultObjects(unsigned model, Vector3 pos, float radius) override
     {
+        defaultObjectsRemoved_++;
         NetCode::RPC::RemoveBuildingForPlayer removeBuildingForPlayerRPC;
         removeBuildingForPlayerRPC.ModelID = model;
         removeBuildingForPlayerRPC.Position = pos;
         removeBuildingForPlayerRPC.Radius = radius;
         PacketHelper::send(removeBuildingForPlayerRPC, *this);
+    }
+
+    int getDefaultObjectsRemoved() const override
+    {
+        return defaultObjectsRemoved_;
     }
 
     void forceClassSelection() override
@@ -1196,5 +1214,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         rpc.Offset = offset;
         rpc.Count = count;
         PacketHelper::send(rpc, *this);
+    }
+
+    void toggleGhostMode(bool toggle) override
+    {
+        ghostMode_ = toggle;
+    }
+
+    bool isGhostModeEnabled() const override
+    {
+        return ghostMode_;
     }
 };

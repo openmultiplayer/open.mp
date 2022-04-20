@@ -383,7 +383,19 @@ public:
 
     void addBan(const BanEntry& entry) override
     {
-        bans.emplace_back(BanEntry(entry.address, entry.name, entry.reason));
+        bans.emplace_back(entry);
+    }
+
+    void removeBan(const BanEntry& entry) override
+    {
+        auto ban_itr = std::find_if(bans.begin(), bans.end(), [&](const BanEntry& ban) {
+            return ban.address == entry.address;
+        });
+
+        if (ban_itr != bans.end()) {
+            bans.erase(ban_itr);
+            writeBans();
+        }
     }
 
     void removeBan(size_t index) override
@@ -426,6 +438,19 @@ public:
         if (file.good()) {
             file << top.dump(4, ' ', false, nlohmann::detail::error_handler_t::ignore);
         }
+    }
+
+    void clearBans() override
+    {
+        bans.clear();
+        writeBans();
+    }
+
+    bool isBanned(const BanEntry& entry) const override
+    {
+        return std::any_of(bans.begin(), bans.end(), [&](const BanEntry& ban) {
+            return entry.address == ban.address;
+        });
     }
 
     size_t getBansCount() const override
@@ -1170,7 +1195,16 @@ public:
         RPC.Gravity = gravity;
         PacketHelper::broadcast(RPC, players);
 
+        for (IPlayer* player : players.entries()) {
+            static_cast<Player*>(player)->gravity_ = gravity;
+        }
+
         updateNetworks();
+    }
+
+    float getGravity() const override
+    {
+        return *SetGravity;
     }
 
     void setWeather(int weather) override

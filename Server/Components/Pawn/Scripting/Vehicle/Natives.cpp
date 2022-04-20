@@ -593,3 +593,13 @@ SCRIPT_API(GetVehicleTrainSpeed, float(IVehicle& vehicle))
 {
     return vehicle.getTrainSpeed();
 }
+
+SCRIPT_API(GetVehicleMatrix, bool(IVehicle& vehicle, Vector3& right, Vector3& up, Vector3& at))
+{
+    glm::mat3 mat = glm::transpose(glm::mat3_cast(vehicle.getRotation().q));
+
+    right = mat[0];
+    up = mat[1];
+    at = mat[2];
+    return true;
+}

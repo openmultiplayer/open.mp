@@ -302,3 +302,22 @@ SCRIPT_API(IsObjectNoCameraCol, bool(IObject& object))
 {
     return !object.getCameraCollision();
 }
+
+SCRIPT_API(GetObjectType, int(IPlayer& player, int objectid))
+{
+    IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
+    if (playerData) {
+        if (playerData->get(objectid) != nullptr) {
+            return 2; // Player object type
+        }
+    }
+
+    IObjectsComponent* component = PawnManager::Get()->objects;
+    if (component) {
+        if (component->get(objectid) != nullptr) {
+            return 1; // Global object type
+        }
+    }
+
+    return 0;
+}
