@@ -525,8 +525,8 @@ SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& 
     StaticArray<char, 64 + 1> hash;
     bool res = PawnManager::Get()->core->sha256(password, salt, hash);
     if (res) {
-        output = hash.data();
-        return std::get<String>(output).length();
+        output = String(hash.data());
+        return hash.size();
     }
     output = "";
     return 0;
