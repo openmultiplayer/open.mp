@@ -733,7 +733,7 @@ private:
         }
         ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
         if (OnComponentLoad == nullptr) {
-            void* isSAMPPlugin = LIBRARY_GET_ADDR(componentLib, "Supports");
+            void* isSAMPPlugin = reinterpret_cast<void*>(LIBRARY_GET_ADDR(componentLib, "Supports"));
             printLn(
                 "\tFailed to load component: %s.",
                 isSAMPPlugin
@@ -1033,9 +1033,14 @@ public:
         return ticksPerSecond;
     }
 
-    SemanticVersion getVersion() override
+    SemanticVersion getVersion() const override
     {
         return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+    }
+
+    int getNetworkBitStreamVersion() const override
+    {
+        return NetworkBitStream::Version;
     }
 
     void printLn(const char* fmt, ...) override
