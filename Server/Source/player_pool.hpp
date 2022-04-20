@@ -1280,6 +1280,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             PRINT_VIEW(player.name_),
             player.poolID,
             addressString.data());
+
+        NetCode::RPC::SendGameTimeUpdate RPC;
+        RPC.Time = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count();
+        PacketHelper::send(RPC, peer);
+
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
