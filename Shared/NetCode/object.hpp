@@ -98,7 +98,7 @@ namespace RPC {
             }
 
             bs.writeUINT8(MaterialsCount);
-            for (int i = 0; i < MAX_OBJECT_MATERIAL_SLOTS; ++i) {
+            for (int i = 0; i != MAX_OBJECT_MATERIAL_SLOTS; ++i) {
                 const ObjectMaterialData& data = Materials[i];
 
                 if (!data.used) {
@@ -112,7 +112,7 @@ namespace RPC {
                     bs.writeUINT16(data.model);
                     bs.writeDynStr8(StringView(data.textOrTXD));
                     bs.writeDynStr8(StringView(data.fontOrTexture));
-                    bs.writeUINT32(data.materialColour.ARGB());
+                    bs.writeUINT32(data.materialColour.ABGR());
                 } else if (data.type == ObjectMaterialData::Type::Text) {
                     bs.writeUINT8(data.materialSize);
                     bs.writeDynStr8(StringView(data.fontOrTexture));
