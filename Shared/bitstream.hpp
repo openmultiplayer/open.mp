@@ -38,6 +38,9 @@ class NetworkBitStream {
     constexpr static const float CompressedVecMagnitudeEpsilon = 0.00001f;
 
 public:
+    /// The version of the NetworkBitStream class; increased when breaking changes are introduced
+    constexpr static const int Version = 0;
+
     /// Default Constructor
     NetworkBitStream();
 
@@ -65,7 +68,7 @@ public:
     /// Resets the bitstream for reuse.
     void reset(void);
 
-    ///Sets the read pointer back to the beginning of your data.
+    /// Sets the read pointer back to the beginning of your data.
     void resetReadPointer(void);
 
     /// Sets the write pointer back to the beginning of your data.
@@ -393,8 +396,8 @@ public:
     template <class templateType>
     bool ReadCompressed(templateType& var);
 
-    ///This is good to call when you are done with the stream to make
-    /// sure you didn't leave any data left over void
+    /// This is good to call when you are done with the stream to make
+    ///  sure you didn't leave any data left over void
     void AssertStreamEmpty(void);
 
     /// printf the bits in the stream.  Great for debugging.
@@ -404,27 +407,27 @@ public:
     /// \param[in] numberOfBits The number of bits to ignore
     void IgnoreBits(const int numberOfBits);
 
-    ///Move the write pointer to a position on the array.
-    /// \param[in] offset the offset from the start of the array.
-    /// \attention
-    /// Dangerous if you don't know what you are doing!
-    /// For efficiency reasons you can only write mid-stream if your data is byte aligned.
+    /// Move the write pointer to a position on the array.
+    ///  \param[in] offset the offset from the start of the array.
+    ///  \attention
+    ///  Dangerous if you don't know what you are doing!
+    ///  For efficiency reasons you can only write mid-stream if your data is byte aligned.
     void SetWriteOffset(const int offset);
 
     /// Returns the length in bits of the stream
     inline int GetNumberOfBitsUsed(void) const { return GetWriteOffset(); }
     inline int GetWriteOffset(void) const { return numberOfBitsUsed; }
 
-    ///Returns the length in bytes of the stream
+    /// Returns the length in bytes of the stream
     inline int GetNumberOfBytesUsed(void) const { return bitsToBytes(numberOfBitsUsed); }
 
-    ///Returns the number of bits into the stream that we have read
+    /// Returns the number of bits into the stream that we have read
     inline int GetReadOffset(void) const { return readOffset; }
 
     // Sets the read bit index
     inline void SetReadOffset(int newReadOffset) { readOffset = newReadOffset; }
 
-    ///Returns the number of bits left in the stream that haven't been read
+    /// Returns the number of bits left in the stream that haven't been read
     inline int GetNumberOfUnreadBits(void) const { return readOffset > numberOfBitsUsed ? 0 : numberOfBitsUsed - readOffset; }
 
     /// Makes a copy of the internal data for you \a _data will point to
@@ -954,7 +957,7 @@ inline void NetworkBitStream::WriteCompressed(bool var)
 template <>
 inline void NetworkBitStream::WriteCompressed(float var)
 {
-    //RakAssert(var > -1.01f && var < 1.01f);
+    // RakAssert(var > -1.01f && var < 1.01f);
     if (var < -1.0f)
         var = -1.0f;
     if (var > 1.0f)
@@ -1161,14 +1164,14 @@ void NetworkBitStream::WriteNormVector(templateType x, templateType y, templateT
     else {
         Write(false);
         WriteCompressed((float)y);
-        //Write((unsigned short)((y+1.0f)*32767.5f));
+        // Write((unsigned short)((y+1.0f)*32767.5f));
     }
     if (z == 0.0)
         Write(true);
     else {
         Write(false);
         WriteCompressed((float)z);
-        //Write((unsigned short)((z+1.0f)*32767.5f));
+        // Write((unsigned short)((z+1.0f)*32767.5f));
     }
 }
 
@@ -1261,8 +1264,8 @@ bool NetworkBitStream::ReadNormVector(templateType& x, templateType& y, template
     else {
         ReadCompressed(cy);
         y = cy;
-        //Read(sy);
-        //y=((float)sy / 32767.5f - 1.0f);
+        // Read(sy);
+        // y=((float)sy / 32767.5f - 1.0f);
     }
 
     if (!Read(zZero))
@@ -1290,7 +1293,7 @@ template <class templateType> // templateType for this function must be a float 
 bool NetworkBitStream::ReadVector(templateType& x, templateType& y, templateType& z)
 {
     float magnitude;
-    //unsigned short sx,sy,sz;
+    // unsigned short sx,sy,sz;
     if (!Read(magnitude))
         return false;
     if (magnitude != 0.0) {

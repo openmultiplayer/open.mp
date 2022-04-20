@@ -57,10 +57,6 @@ public:
 
     void freeExtension() override
     {
-        /// Detach player from player textdraws so they don't try to send an RPC
-        for (IPlayerTextDraw* textDraw : storage) {
-            PlayerTextDraw* td = static_cast<PlayerTextDraw*>(textDraw);
-        }
         delete this;
     }
 
