@@ -11,7 +11,7 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialogId, int style, const std::string& caption, const std::string& info, const std::string& button1, const std::string& button2))
+SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int16_t dialogId, int style, const std::string& caption, const std::string& info, const std::string& button1, const std::string& button2))
 {
     IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
     if (dialog) {
