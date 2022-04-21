@@ -16,7 +16,6 @@ set(CMAKE_CXX_STANDARD 17)
 # MSVC
 if(MSVC)
 	set(CMAKE_CXX_STANDARD_REQUIRED ON)
-	add_compile_options("/clang:-v")
 	add_link_options("/LARGEADDRESSAWARE")
 	# Use strict intermediate floating-point precision
 	add_compile_options("/fp:strict")
