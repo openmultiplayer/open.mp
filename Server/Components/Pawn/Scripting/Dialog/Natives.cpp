@@ -2,7 +2,7 @@
  *  This Source Code Form is subject to the terms of the Mozilla Public License,
  *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
  *  obtain one at http://mozilla.org/MPL/2.0/.
- *  
+ *
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
 
@@ -11,7 +11,7 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialogId, int style, const std::string& caption, const std::string& info, const std::string& button1, const std::string& button2))
+SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int16_t dialogId, int style, const std::string& caption, const std::string& info, const std::string& button1, const std::string& button2))
 {
     IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
     if (dialog) {

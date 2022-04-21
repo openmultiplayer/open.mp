@@ -2,7 +2,7 @@
  *  This Source Code Form is subject to the terms of the Mozilla Public License,
  *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
  *  obtain one at http://mozilla.org/MPL/2.0/.
- *  
+ *
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
 
@@ -1280,6 +1280,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             PRINT_VIEW(player.name_),
             player.poolID,
             addressString.data());
+
+        NetCode::RPC::SendGameTimeUpdate RPC;
+        RPC.Time = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count();
+        PacketHelper::send(RPC, peer);
+
         eventDispatcher.dispatch(&PlayerEventHandler::onConnect, peer);
     }
 
