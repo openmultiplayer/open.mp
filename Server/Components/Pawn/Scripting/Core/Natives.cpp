@@ -608,3 +608,8 @@ SCRIPT_API(IsBanned, bool(const std::string& ip))
     BanEntry entry(ip);
     return core->getConfig().isBanned(entry);
 }
+
+SCRIPT_API(GetWeaponSlot, int(uint8_t weapon))
+{
+    return WeaponSlotData { weapon }.slot();
+}
