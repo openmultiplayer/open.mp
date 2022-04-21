@@ -12,8 +12,14 @@
 #include <Server/Components/Vehicles/vehicle_colours.hpp>
 #include <sdk.hpp>
 
-SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colour1, int colour2, int respawnDelay, bool addSiren))
+SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colour1, int colour2, int respawnDelay))
 {
+    bool addSiren = false;
+    auto params = GetParams();
+    if ((params[0] / sizeof(cell)) >= 9) {
+        addSiren = params[9];
+    }
+
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {
         IVehicle* vehicle = vehicles->create(false, modelid, pos, rotation, colour1, colour2, Seconds(respawnDelay), addSiren);
@@ -341,8 +347,14 @@ SCRIPT_API(AddStaticVehicle, int(int modelid, Vector3 spawn, float angle, int co
     return INVALID_VEHICLE_ID;
 }
 
-SCRIPT_API(AddStaticVehicleEx, int(int modelid, Vector3 spawn, float angle, int colour1, int colour2, int respawnDelay, bool addSiren))
+SCRIPT_API(AddStaticVehicleEx, int(int modelid, Vector3 spawn, float angle, int colour1, int colour2, int respawnDelay))
 {
+    bool addSiren = false;
+    auto params = GetParams();
+    if ((params[0] / sizeof(cell)) >= 9) {
+        addSiren = params[9];
+    }
+
     IVehiclesComponent* vehicles = PawnManager().Get()->vehicles;
     if (vehicles) {
         IVehicle* vehicle = vehicles->create(true, modelid, spawn, angle, colour1, colour2, Seconds(respawnDelay), addSiren);
