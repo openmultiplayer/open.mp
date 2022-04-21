@@ -1246,6 +1246,7 @@ public:
         switch (type) {
         case SettableCoreDataType::ServerName:
             config.setString("server_name", data);
+            ServerName = String(data);
             break;
         case SettableCoreDataType::ModeText:
             config.setString("mode_name", data);
