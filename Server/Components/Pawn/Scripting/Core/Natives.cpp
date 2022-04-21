@@ -192,7 +192,8 @@ SCRIPT_API(FindTextureFileNameFromCRC, bool(int crc, std::string& output))
 
 SCRIPT_API(GameModeExit, bool())
 {
-    throw pawn_natives::NotImplemented();
+    PawnManager::Get()->EndMainScript(true);
+    return true;
 }
 
 SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
