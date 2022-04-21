@@ -8,6 +8,23 @@
 
 #include "PluginManager.hpp"
 #include "../utils.hpp"
+#include <filesystem>
+
+static const StaticArray<StringView, 13> BrokenPlugins = {
+    "YSF",
+    "YSF_DL",
+    "YSF_static",
+    "YSF_DL_static",
+    "pawnraknet",
+    "pawncmd",
+    "SKY",
+    "FCNPC",
+    "FCNPC-DL",
+    "sampcac_server",
+    "sampvoice",
+    "rustext",
+    "ASAN",
+};
 
 PawnPluginManager::PawnPluginManager()
     : pluginPath_("plugins/")
@@ -27,6 +44,17 @@ void PawnPluginManager::Load(std::string const& name)
     if (plugins_.count(name)) {
         return;
     }
+
+    String pluginName = std::filesystem::path(name).stem().string();
+    for (StringView brokenPlugin : BrokenPlugins) {
+        if (pluginName == brokenPlugin) {
+            core->logLn(LogLevel::Error,
+                "The legacy plugin '%.*s' requires memory hacking to run and is therefore broken on open.mp, skipping it. There should be a replacement component supported by open.mp",
+                PRINT_VIEW(brokenPlugin));
+            return;
+        }
+    }
+
     Spawn(name);
 }
 
