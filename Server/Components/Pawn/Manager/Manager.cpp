@@ -95,31 +95,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
         }
         return true;
     } else if (cmd == "gmx") {
-        if (reloading_) {
-            return true;
-        }
-        // How many times should we repeat this mode?
-        --gamemodeRepeat_;
-        int initial = gamemodeIndex_;
-        for (;;) {
-            if (gamemodeRepeat_ == 0) {
-                // Advance to the next script in the list.
-                ++gamemodeIndex_;
-                if (gamemodeIndex_ == gamemodes_.size()) {
-                    gamemodeIndex_ = 0;
-                }
-                gamemodeRepeat_ = repeats_[gamemodeIndex_];
-            }
-            if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_])) {
-                break;
-            } else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0)) {
-                // Tried all the GMs in the list, couldn't load any.
-                break;
-            } else {
-                // Couldn't load this mode, try the next one.
-                gamemodeRepeat_ = 0;
-            }
-        }
+        EndMainScript();
         return true;
     } else if (cmd == "changemode") {
         if (reloading_) {
@@ -244,19 +220,71 @@ bool PawnManager::Changemode(std::string const& name)
     }
     // Close it for now, it'll be reopened again by `aux_LoadProgram`.
     fclose(fp);
-    // Disconnect players.
-    // Unload the old main script.
-    Unload(mainName_);
-    // Save the name of the next script.
-    mainName_ = name;
-    // Start the changemode timer.
-    nextRestart_ = Time::now() + restartDelay_;
-    reloading_ = true;
+
+    if (!delayModeUnload_) {
+        // Disconnect players.
+        // Unload the old main script.
+        Unload(mainName_);
+        // Save the name of the next script.
+        mainName_ = name;
+        // Start the changemode timer.
+        nextRestart_ = Time::now() + restartDelay_;
+        reloading_ = true;
+    } else {
+        // Unload the main script in the next server tick.
+        unloadNextTick_ = true;
+        nextScriptName_ = name;
+    }
     return true;
+}
+
+void PawnManager::EndMainScript(bool delayed)
+{
+    if (reloading_) {
+        return;
+    }
+    // How many times should we repeat this mode?
+    --gamemodeRepeat_;
+    int initial = gamemodeIndex_;
+    for (;;) {
+        if (gamemodeRepeat_ == 0) {
+            // Advance to the next script in the list.
+            ++gamemodeIndex_;
+            if (gamemodeIndex_ == gamemodes_.size()) {
+                gamemodeIndex_ = 0;
+            }
+            gamemodeRepeat_ = repeats_[gamemodeIndex_];
+        }
+
+        delayModeUnload_ = delayed;
+        if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_])) {
+            break;
+        } else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0)) {
+            // Tried all the GMs in the list, couldn't load any.
+            break;
+        } else {
+            // Couldn't load this mode, try the next one.
+            gamemodeRepeat_ = 0;
+        }
+    }
 }
 
 void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 {
+    if (unloadNextTick_) {
+        // Disconnect players.
+        // Unload the old main script.
+        Unload(mainName_);
+        // Save the name of the next script.
+        mainName_ = nextScriptName_;
+        // Start the changemode timer.
+        nextRestart_ = Time::now() + restartDelay_;
+        reloading_ = true;
+
+        // Reset delayed unloading.
+        unloadNextTick_ = false;
+        nextScriptName_ = "";
+    }
     if (nextRestart_ != TimePoint::min() && nextRestart_ <= now) {
         // Reloading a script.  Restart is in the past, load the next GM.
         Load(mainName_, true);
@@ -356,6 +384,9 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
         mainName_ = name;
         mainScript_ = std::move(ptr);
         amxToScript_.emplace(mainScript_->GetAMX(), mainScript_.get());
+
+        unloadNextTick_ = false;
+        nextScriptName_ = "";
     } else {
         Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
         scripts_.push_back(std::move(pair));
