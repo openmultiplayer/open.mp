@@ -196,19 +196,29 @@ private:
         return false;
     }
 
-    bool processDefault(IEarlyConfig& config, ParamType type, String name, String right)
+    bool processDefault(ILogger& logger, IEarlyConfig& config, ParamType type, String name, String right)
     {
         auto dictIt = dictionary.find(name);
         if (dictIt != dictionary.end()) {
             switch (type) {
             case ParamType::Int: {
-                const int value = std::stoi(right);
-                config.setInt(dictIt->second, value);
+                try {
+                    const int value = std::stoi(right);
+                    config.setInt(dictIt->second, value);
+                } catch (std::out_of_range e) {
+                    logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is out of integer bounds (0-%d).", name.c_str(), right.c_str(), INT_MAX);
+                } catch (std::invalid_argument e) {
+                    logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not an integer.", name.c_str(), right.c_str());
+                }
                 return true;
             }
             case ParamType::Float: {
-                const float value = std::stof(right);
-                config.setFloat(dictIt->second, value);
+                try {
+                    const float value = std::stof(right);
+                    config.setFloat(dictIt->second, value);
+                } catch (std::invalid_argument e) {
+                    logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not a floating number.", name.c_str(), right.c_str());
+                }
                 return true;
             }
             case ParamType::String: {
@@ -296,7 +306,7 @@ private:
                         }
                     } else if (typeIt->second == ParamType::Obsolete) {
                         logger.logLn(LogLevel::Warning, "Parsing obsolete legacy option %s", name.c_str());
-                    } else if (!processDefault(config, typeIt->second, name, line.substr(idx + 1))) {
+                    } else if (!processDefault(logger, config, typeIt->second, name, line.substr(idx + 1))) {
                         logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
                     }
                 } else if (!processCustom(logger, config, name, line.substr(idx + 1))) {

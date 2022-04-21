@@ -78,6 +78,9 @@ private:
     Milliseconds restartDelay_;
     bool reloading_ = false;
     TimePoint nextSleep_;
+    bool delayModeUnload_ = false;
+    bool unloadNextTick_ = true;
+    String nextScriptName_ = "";
 
     // To preserve main script `sleep` information between callbacks.
     struct
@@ -116,6 +119,7 @@ public:
     bool Reload(std::string const& name);
     bool Unload(std::string const& name);
     bool Changemode(std::string const& name);
+    void EndMainScript(bool delayed = false);
 
     void ProcessTick(Microseconds elapsed, TimePoint now);
     inline int getRestartMS() const
