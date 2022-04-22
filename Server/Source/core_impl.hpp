@@ -925,7 +925,9 @@ public:
         PacketHelper::broadcast(RPC, players);
         components.reset();
         for (auto p : players.entries()) {
-            static_cast<Player*>(p)->resetExtensions();
+            Player* player = static_cast<Player*>(p);
+            player->resetExtensions();
+            player->pos_ = Vector3(0.0f, 0.0f, 0.0f);
         }
     }
 
