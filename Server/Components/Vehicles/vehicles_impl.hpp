@@ -357,8 +357,10 @@ public:
         if (vehicle) {
             ++preloadModels[data.modelID - 400];
 
-            if (data.respawnDelay == Seconds(0)) {
+            static bool delay_warn = false;
+            if (!delay_warn && data.respawnDelay == Seconds(0)) {
                 core->logLn(LogLevel::Warning, "Vehicle created with respawn delay 0 which is undefined behaviour that might change in the future.");
+                delay_warn = true;
             }
         }
 
