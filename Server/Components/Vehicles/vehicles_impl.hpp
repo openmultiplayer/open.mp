@@ -356,6 +356,10 @@ public:
 
         if (vehicle) {
             ++preloadModels[data.modelID - 400];
+
+            if (data.respawnDelay == Seconds(0)) {
+                core->logLn(LogLevel::Warning, "Vehicle created with respawn delay 0 which is undefined behaviour that might change in the future.");
+            }
         }
 
         return vehicle;
@@ -437,7 +441,7 @@ public:
                     if (now - lastInteraction >= Seconds(*deathRespawnDelay)) {
                         vehicle->respawn();
                     }
-                } else if (vehicle->hasBeenOccupied() && delay != Seconds(-1)) {
+                } else if (vehicle->hasBeenOccupied() && delay > Seconds(0)) {
 
                     // Trains shouldn't be respawned.
                     const int model = vehicle->getModel();
