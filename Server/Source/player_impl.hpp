@@ -139,6 +139,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , netData_(netData)
         , version_(params.version)
         , versionName_(params.versionName)
+        , pos_(0.0f, 0.0f, 0.0f)
         , cameraPos_(0.f, 0.f, 0.f)
         , cameraLookAt_(0.f, 0.f, 0.f)
         , name_(params.name)
