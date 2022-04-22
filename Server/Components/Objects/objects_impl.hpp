@@ -190,7 +190,7 @@ public:
         this->core = core;
         this->players = &core->getPlayers();
         core->getEventDispatcher().addEventHandler(this);
-        players->getEventDispatcher().addEventHandler(this);
+        players->getEventDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
