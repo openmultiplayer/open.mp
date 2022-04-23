@@ -97,7 +97,7 @@ void RunProcess(StringView exe, StringView args, bool runInBackground = false)
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
     ShellExecute(nullptr, "open", exePath.string().c_str(), args.data(), nullptr, FALSE);
 #else
-    system((exePath.string() + " " + args.data() + (runInBackground ? " &" : "").c_str());
+    system((exePath.string() + " " + args.data() + (runInBackground ? " &" : "")).c_str());
 #endif
 }
 
