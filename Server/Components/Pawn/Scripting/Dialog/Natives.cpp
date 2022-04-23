@@ -11,30 +11,79 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int16_t dialogId, int style, const std::string& caption, const std::string& info, const std::string& button1, const std::string& button2))
+SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
 {
-    IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
-    if (dialog) {
-        dialog->show(player, dialogId, DialogStyle(style), caption, info, button1, button2);
+    IPlayerDialogData* data = queryExtension<IPlayerDialogData>(player);
+	// Put it back to `int` so we can detect and handle this special case.
+	if (dialog == INVALID_DIALOG_ID)
+	{
+		// Some old code uses invalid IDs to hide dialogs.
+		PawnManager::Get()->core->logLn(LogLevel::Warning, "Invalid dialog ID %d used.  Use `HidePlayerDialog()`.", dialog);
+		if (dialog)
+		{
+			data->hide(player);
+		}
+		return false;
+	}
+    if (data) {
+		// And instead mask the ID here.
+		data->show(player, dialog & 0xFFFF, DialogStyle(style), title, body, button1, button2);
         return true;
     }
     return false;
 }
 
-SCRIPT_API_FAILRET(GetPlayerDialog, INVALID_DIALOG_ID, int(IPlayer& player))
+/// Added for fixes.inc compatibility, but as `GetPlayerDialogID` from YSF also exists we don't need
+/// two.This one is thus deprecated as then we have `ID` and `Data` suffixes for differentiation and
+/// clarity.
+/// 
+/// TODO: Add a deprecation warning to this native.
+SCRIPT_API_FAILRET(GetPlayerDialog, INVALID_DIALOG_ID, int(IPlayer & player))
 {
     IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
     if (dialog) {
         return dialog->getActiveID();
     }
-    return FailRet;
+	return INVALID_DIALOG_ID;
 }
 
-SCRIPT_API(GetPlayerDialogID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerDialogID, INVALID_DIALOG_ID, int(IPlayer & player))
 {
-    IPlayerDialogData* data = queryExtension<IPlayerDialogData>(player);
-    if (data) {
-        return data->getActiveID();
-    }
-    return -1;
+	IPlayerDialogData * data = queryExtension<IPlayerDialogData>(player);
+	if (data) {
+		return data->getActiveID();
+	}
+	return INVALID_DIALOG_ID;
 }
+
+SCRIPT_API(GetPlayerDialogData, bool(IPlayer& player, int& style, OutputOnlyString& title, OutputOnlyString& body, OutputOnlyString& button1, OutputOnlyString& button2))
+{
+    IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
+    if (dialog) {
+		DialogStyle styleVar {};
+		StringView titleVar {};
+		StringView bodyVar {};
+		StringView button1Var{};
+		StringView button2Var{};
+		int dialogid;
+        dialog->get(dialogid, styleVar, titleVar, bodyVar, button1Var, button2Var);
+		style = int(styleVar);
+		title = titleVar;
+		body = bodyVar;
+		button1 = button1Var;
+		button2 = button2Var;
+		return dialogid != INVALID_DIALOG_ID;
+    }
+    return false;
+}
+
+SCRIPT_API(HidePlayerDialog, bool(IPlayer& player))
+{
+    IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
+    if (dialog && dialog->getActiveID() != INVALID_DIALOG_ID) {
+        dialog->hide(player);
+        return true;
+	}
+    return false;
+}
+
