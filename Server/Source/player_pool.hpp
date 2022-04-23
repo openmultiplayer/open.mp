@@ -219,7 +219,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         void init(IConfig& config)
         {
-            logDeaths = config.getInt("logging_deaths");
+            logDeaths = config.getInt("logging.log_deaths");
         }
 
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
@@ -355,9 +355,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         void init(IConfig& config)
         {
-            limitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
-            globalChatRadiusLimit = config.getFloat("limit_global_chat_radius");
-            logChat = config.getInt("logging_chat");
+            limitGlobalChatRadius = config.getInt("game.use_chat_radius");
+            globalChatRadiusLimit = config.getFloat("game.chat_radius");
+            logChat = config.getInt("logging.log_chat");
             filterText = config.getInt("chat_input_filter");
         }
 
@@ -1278,8 +1278,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         }
 
         // Set player's time & weather to global ones.
-        static int* hour = core.getConfig().getInt("world_time");
-        static int* weather = core.getConfig().getInt("weather");
+        static int* hour = core.getConfig().getInt("game.time");
+        static int* weather = core.getConfig().getInt("game.weather");
 
         player.time_ = duration_cast<Minutes>(Hours(*hour));
         player.weather_ = *weather;
@@ -1502,11 +1502,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerTextRPCHandler.init(config);
         playerCommandRPCHandler.init(config);
         playerDeathRPCHandler.init(config);
-        markersShow = config.getInt("show_player_markers");
-        markersLimit = config.getInt("limit_player_markers");
-        markersLimitRadius = config.getFloat("player_markers_draw_distance");
-        markersUpdateRate = config.getInt("player_markers_update_rate");
-        gameTimeUpdateRate = config.getInt("player_time_update_rate");
+        markersShow = config.getInt("game.player_marker_mode");
+        markersLimit = config.getInt("game.use_player_marker_radius");
+        markersLimitRadius = config.getFloat("game.player_marker_radius");
+        markersUpdateRate = config.getInt("network.player_marker_rate");
+        gameTimeUpdateRate = config.getInt("network.time_sync_rate");
         maxBots = *config.getInt("max_bots");
 
         playerUpdateDispatcher.addEventHandler(this);
