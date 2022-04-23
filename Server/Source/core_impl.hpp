@@ -45,64 +45,64 @@ static const std::map<String, ConfigStorage> Defaults {
     { "bind", "" },
     { "password", "" },
     { "enable_zone_names", false },
-    { "use_player_ped_anims", false },
-    { "allow_interior_weapons", true },
-    { "use_limit_global_chat_radius", false },
-    { "limit_global_chat_radius", 200.0f },
-    { "enable_stunt_bonus", true },
-    { "name_tag_draw_distance", 70.0f },
-    { "disable_interior_enter_exits", false },
-    { "disable_name_tag_los", false },
-    { "manual_vehicle_engine_and_lights", false },
-    { "show_name_tags", true },
-    { "show_player_markers", PlayerMarkerMode_Global },
-    { "limit_player_markers", false },
-    { "player_markers_draw_distance", 250.f },
-    { "player_markers_update_rate", 2500 },
-    { "world_time", 12 },
-    { "weather", 10 },
-    { "gravity", 0.008f },
-    { "lan_mode", false },
-    { "death_drop_amount", 0 },
-    { "instagib", false },
-    { "on_foot_rate", 30 },
-    { "in_car_rate", 30 },
-    { "weapon_rate", 30 },
-    { "multiplier", 10 },
-    { "lag_compensation", true },
-    { "server_name", "open.mp server" },
-    { "mode_name", "" },
-    { "map_name", "" },
+    { "game.use_player_ped_anims", false },
+    { "game.allow_interior_weapons", true },
+    { "game.use_chat_radius", false },
+    { "game.chat_radius", 200.0f },
+    { "game.enable_stunt_bonuses", true },
+    { "game.nametag_radius", 70.0f },
+    { "game.enable_enexes", true },
+    { "game.use_nametag_los", true },
+    { "game.use_manual_vehicle_switches", false },
+    { "game.use_nametags", true },
+    { "game.player_marker_mode", PlayerMarkerMode_Global },
+    { "game.use_player_marker_radius", false },
+    { "game.player_marker_radius", 250.f },
+    { "network.player_marker_rate", 2500 },
+    { "game.time", 12 },
+    { "game.weather", 10 },
+    { "game.gravity", 0.008f },
+    { "network.use_lan_mode", false },
+    { "game.death_drop_amount", 0 },
+    { "game.use_instagib", false },
+    { "network.on_foot_rate", 30 },
+    { "network.in_car_rate", 30 },
+    { "network.weapon_rate", 30 },
+    { "network.multiplier", 10 },
+    { "network.use_lag_compensation", true },
+    { "name", "open.mp server" },
+    { "game.mode", "" },
+    { "game.map", "" },
     { "language", "" },
-    { "player_time_update_rate", 30000 },
-    { "stream_rate", 1000 },
-    { "stream_distance", 200.f },
+    { "network.time_sync_rate", 30000 },
+    { "network.stream_rate", 1000 },
+    { "network.stream_radius", 200.f },
     { "max_bots", 0 },
-    { "cookie_reseed_time", 300000 },
-    { "min_connection_time", 0 },
-    { "messages_limit", 500 },
-    { "message_hole_limit", 3000 },
-    { "acks_limit", 3000 },
-    { "network_limits_ban_time", 60000 },
-    { "player_timeout", 10000 },
+    { "network.cookie_reseed_time", 300000 },
+    { "network.minimum_connection_time", 0 },
+    { "network.messages_limit", 500 },
+    { "network.message_holes_limit", 3000 },
+    { "network.acks_limit", 3000 },
+    { "network.limits_ban_time", 60000 },
+    { "network.player_timeout", 10000 },
     { "announce", true },
-    { "logging", true },
-    { "enable_rcon", false },
+    { "logging.enable", true },
+    { "rcon.enable", false },
     { "enable_query", true },
     { "website", "open.mp" },
-    { "network_mtu", 576 },
-    { "logging_timestamp", true },
-    { "logging_timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
-    { "logging_queries", false },
-    { "logging_chat", true },
-    { "logging_deaths", true },
-    { "logging_sqlite", false },
-    { "logging_sqlite_queries", false },
-    { "logging_cookies", false },
-    { "rcon_allow_teleport", false },
-    { "rcon_password", "" }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
-    { "vehicle_friendly_fire", false },
-    { "vehicle_death_respawn_delay", 10 },
+    { "network.mtu", 576 },
+    { "logging.prepend_timestamp", true },
+    { "logging.timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
+    { "logging.log_queries", false },
+    { "logging.log_chat", true },
+    { "logging.log_deaths", true },
+    { "logging.log_sqlite", false },
+    { "logging.log_sqlite_queries", false },
+    { "logging.log_cookies", false },
+    { "rcon.allow_teleport", false },
+    { "rcon.password", "" }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
+    { "game.use_vehicle_friendly_fire", false },
+    { "game.vehicle_death_respawn_delay", 10 },
     { "chat_input_filter", true }
 };
 
@@ -994,38 +994,38 @@ public:
 
         // Don't use config before this point
 
-        if (*config.getInt("logging")) {
+        if (*config.getInt("logging.enable")) {
             logFile = ::fopen(LogFileName, "a");
         }
 
         EnableZoneNames = config.getInt("enable_zone_names");
-        UsePlayerPedAnims = config.getInt("use_player_ped_anims");
-        AllowInteriorWeapons = config.getInt("allow_interior_weapons");
-        UseLimitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
-        LimitGlobalChatRadius = config.getFloat("limit_global_chat_radius");
-        EnableStuntBonus = config.getInt("enable_stunt_bonus");
-        SetNameTagDrawDistance = config.getFloat("name_tag_draw_distance");
-        DisableInteriorEnterExits = config.getInt("disable_interior_enter_exits");
-        DisableNameTagLOS = config.getInt("disable_name_tag_los");
-        ManualVehicleEngineAndLights = config.getInt("manual_vehicle_engine_and_lights");
-        ShowNameTags = config.getInt("show_name_tags");
-        ShowPlayerMarkers = config.getInt("show_player_markers");
-        SetWorldTime = config.getInt("world_time");
-        SetWeather = config.getInt("weather");
-        SetGravity = config.getFloat("gravity");
-        LanMode = config.getInt("lan_mode");
-        SetDeathDropAmount = config.getInt("death_drop_amount");
-        Instagib = config.getInt("instagib");
-        OnFootRate = config.getInt("on_foot_rate");
-        InCarRate = config.getInt("in_car_rate");
-        WeaponRate = config.getInt("weapon_rate");
-        Multiplier = config.getInt("multiplier");
-        LagCompensation = config.getInt("lag_compensation");
-        ServerName = String(config.getString("server_name"));
-        EnableVehicleFriendlyFire = config.getInt("vehicle_friendly_fire");
+        UsePlayerPedAnims = config.getInt("game.use_player_ped_anims");
+        AllowInteriorWeapons = config.getInt("game.allow_interior_weapons");
+        UseLimitGlobalChatRadius = config.getInt("game.use_chat_radius");
+        LimitGlobalChatRadius = config.getFloat("game.chat_radius");
+        EnableStuntBonus = config.getInt("game.enable_stunt_bonuses");
+        SetNameTagDrawDistance = config.getFloat("game.nametag_radius");
+        DisableInteriorEnterExits = config.getInt("game.enable_enexes");
+        DisableNameTagLOS = config.getInt("game.use_nametag_los");
+        ManualVehicleEngineAndLights = config.getInt("game.use_manual_vehicle_switches");
+        ShowNameTags = config.getInt("game.use_nametags");
+        ShowPlayerMarkers = config.getInt("game.player_marker_mode");
+        SetWorldTime = config.getInt("game.time");
+        SetWeather = config.getInt("game.weather");
+        SetGravity = config.getFloat("game.gravity");
+        LanMode = config.getInt("network.use_lan_mode");
+        SetDeathDropAmount = config.getInt("game.death_drop_amount");
+        Instagib = config.getInt("game.use_instagib");
+        OnFootRate = config.getInt("network.on_foot_rate");
+        InCarRate = config.getInt("network.in_car_rate");
+        WeaponRate = config.getInt("network.weapon_rate");
+        Multiplier = config.getInt("network.multiplier");
+        LagCompensation = config.getInt("network.use_lag_compensation");
+        ServerName = String(config.getString("name"));
+        EnableVehicleFriendlyFire = config.getInt("game.use_vehicle_friendly_fire");
 
-        EnableLogTimestamp = *config.getInt("logging_timestamp");
-        LogTimestampFormat = String(config.getString("logging_timestamp_format"));
+        EnableLogTimestamp = *config.getInt("logging.prepend_timestamp");
+        LogTimestampFormat = String(config.getString("logging.timestamp_format"));
 
         config.optimiseBans();
         config.writeBans();
@@ -1248,14 +1248,14 @@ public:
     {
         switch (type) {
         case SettableCoreDataType::ServerName:
-            config.setString("server_name", data);
+            config.setString("name", data);
             ServerName = String(data);
             break;
         case SettableCoreDataType::ModeText:
-            config.setString("mode_name", data);
+            config.setString("game.mode", data);
             break;
         case SettableCoreDataType::MapName:
-            config.setString("map_name", data);
+            config.setString("game.map", data);
             break;
         case SettableCoreDataType::Language:
             config.setString("language", data);
@@ -1264,7 +1264,7 @@ public:
             config.setString("password", data);
             break;
         case SettableCoreDataType::AdminPassword:
-            config.setString("rcon_password", data);
+            config.setString("rcon.password", data);
             break;
         case SettableCoreDataType::URL:
             config.setString("website", data);

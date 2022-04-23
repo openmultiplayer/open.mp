@@ -81,7 +81,7 @@ private:
                     StringView commandName = trim(command.substr(0, split));
                     StringView password = trim(command.substr(split + 1));
                     if (commandName == "login") {
-                        StringView rconPassword = self.core->getConfig().getString("rcon_password");
+                        StringView rconPassword = self.core->getConfig().getString("rcon.password");
                         bool success = false;
 
                         if (rconPassword == "") {
@@ -168,13 +168,13 @@ public:
 
     void onReady() override
     {
-        // Server without a config file has rcon_password empty so we disable rcon manually too.
-        if (core->getConfig().getString("rcon_password") == "") {
-            static_cast<IEarlyConfig&>(core->getConfig()).setInt("enable_rcon", 0);
+        // Server without a config file has rcon.password empty so we disable rcon manually too.
+        if (core->getConfig().getString("rcon.password") == "") {
+            static_cast<IEarlyConfig&>(core->getConfig()).setInt("rcon.enable", 0);
         }
 
         // Server exit server if rcon_password is set to changeme
-        if (core->getConfig().getString("rcon_password") == "changeme") {
+        if (core->getConfig().getString("rcon.password") == "changeme") {
             core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password. Please change your rcon password.");
             send("exit");
         }

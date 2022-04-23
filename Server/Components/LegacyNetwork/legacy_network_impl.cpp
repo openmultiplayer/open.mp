@@ -619,54 +619,54 @@ void RakNetLegacyNetwork::update()
 {
     IConfig& config = core->getConfig();
 
-    cookieSeedTime = Milliseconds(*config.getInt("cookie_reseed_time"));
+    cookieSeedTime = Milliseconds(*config.getInt("network.cookie_reseed_time"));
 
-    SAMPRakNet::SetTimeout(*config.getInt("player_timeout"));
-    SAMPRakNet::SetMinConnectionTime(*config.getInt("min_connection_time"));
-    SAMPRakNet::SetMessagesLimit(*config.getInt("messages_limit"));
-    SAMPRakNet::SetMessageHoleLimit(*config.getInt("message_hole_limit"));
-    SAMPRakNet::SetAcksLimit(*config.getInt("acks_limit"));
-    SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network_limits_ban_time"));
+    SAMPRakNet::SetTimeout(*config.getInt("network.player_timeout"));
+    SAMPRakNet::SetMinConnectionTime(*config.getInt("network.minimum_connection_time"));
+    SAMPRakNet::SetMessagesLimit(*config.getInt("network.messages_limit"));
+    SAMPRakNet::SetMessageHoleLimit(*config.getInt("network.message_holes_limit"));
+    SAMPRakNet::SetAcksLimit(*config.getInt("network.acks_limit"));
+    SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network.limits_ban_time"));
 
-    SAMPRakNet::SetLogCookies(*config.getInt("logging_cookies"));
+    SAMPRakNet::SetLogCookies(*config.getInt("logging.log_cookies"));
 
-    query.setLogQueries(*config.getInt("logging_queries"));
+    query.setLogQueries(*config.getInt("logging.log_queries"));
     if (*config.getInt("enable_query")) {
         SAMPRakNet::SetQuery(&query);
     }
 
-    StringView hostName = config.getString("server_name");
+    StringView hostName = config.getString("name");
     if (!hostName.empty()) {
         query.setServerName(hostName);
     }
 
-    query.setRuleValue("lagcomp", *config.getInt("lag_compensation") ? "On" : "Off");
+    query.setRuleValue("lagcomp", *config.getInt("network.use_lag_compensation") ? "On" : "Off");
 
     StringView language = config.getString("language");
     if (!language.empty()) {
         query.setLanguage(String(language));
     }
-    StringView modeName = config.getString("mode_name");
+    StringView modeName = config.getString("game.mode");
     if (!modeName.empty()) {
         query.setGameModeName(modeName);
     }
-    StringView mapName = config.getString("map_name");
+    StringView mapName = config.getString("game.map");
     if (!mapName.empty()) {
         query.setRuleValue("mapname", String(mapName));
     }
 
-    query.setRuleValue("weather", std::to_string(*config.getInt("weather")));
+    query.setRuleValue("weather", std::to_string(*config.getInt("game.weather")));
 
     StringView website = config.getString("website");
     if (!website.empty()) {
         query.setRuleValue("weburl", String(website));
     }
 
-    query.setRuleValue("worldtime", String(std::to_string(*config.getInt("world_time")) + ":00"));
+    query.setRuleValue("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
 
-    StringView rconPassword = config.getString("rcon_password");
+    StringView rconPassword = config.getString("rcon.password");
     query.setRconPassword(rconPassword);
-    query.setRconEnabled(*config.getInt("enable_rcon"));
+    query.setRconEnabled(*config.getInt("rcon.enable"));
 
     StringView password = config.getString("password");
     query.setPassworded(!password.empty());
@@ -674,7 +674,7 @@ void RakNetLegacyNetwork::update()
 
     query.buildConfigDependentBuffers();
 
-    int mtu = *config.getInt("network_mtu");
+    int mtu = *config.getInt("network.mtu");
     rakNetServer.SetMTUSize(mtu);
 }
 
