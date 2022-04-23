@@ -48,6 +48,8 @@ public:
 
     void show(IPlayer& player, int id, DialogStyle style, StringView title, StringView body, StringView button1, StringView button2) override
     {
+		// We can enforce this more strictly in the component.  The legacy IDs
+		// should only be in Pawn.
 		if (id <= INVALID_DIALOG_ID || id >= MAX_DIALOG)
 		{
 			return;
