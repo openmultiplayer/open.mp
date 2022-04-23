@@ -1301,7 +1301,7 @@ public:
         if (!password.empty()) {
             args += " -z " + std::string(password);
         }
-        utils::RunProcess(config.getString("bot_exe"), args);
+        utils::RunProcess(config.getString("bot_exe"), args, true);
     }
 
     void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override
