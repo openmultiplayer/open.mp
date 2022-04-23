@@ -485,7 +485,39 @@ public:
 
         Config config(core, true /* defaultsOnly */);
         components.configure(core, config, true /* defaults */);
-        config.setString("rcon_password", "changeme");
+        config.setString("rcon.password", "changeme");
+
+        if (ofs.good()) {
+            for (const auto& kv : config.options()) {
+                nlohmann::ordered_json* sub = &json;
+                size_t cur = String::npos, prev = 0;
+                // Process hierarchy
+                while ((cur = kv.first.find('.', prev)) != String::npos) {
+                    String substr = kv.first.substr(prev, cur - prev);
+                    sub = &(*sub)[substr];
+                    prev = cur + sizeof('.');
+                }
+                // Set the leaf's value
+                (*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
+            }
+            ofs << json.dump(4) << std::endl;
+        }
+        return true;
+    }
+
+    static bool writeCurrent(ICore& core, Config& config)
+    {
+        core.printLn("Generating %s...", ConfigFileName);
+
+        // Creates default config.json file if it doesn't exist
+        // Returns true if a config file was written, false otherwise
+        std::ifstream ifs(ConfigFileName);
+        if (ifs.good()) {
+            return false;
+        }
+
+        std::ofstream ofs(ConfigFileName);
+        nlohmann::ordered_json json;
 
         if (ofs.good()) {
             for (const auto& kv : config.options()) {
@@ -964,7 +996,7 @@ public:
 
         loadComponents("components");
 
-        if (cmd.count("write-config")) {
+        if (cmd.count("default-config")) {
             // Generate config
             Config::writeDefault(*this, components);
             stop();
@@ -972,6 +1004,14 @@ public:
         }
 
         components.configure(*this, config, false);
+
+        if (cmd.count("dump-config")) {
+            // Generate config
+            Config::writeCurrent(*this, config);
+            stop();
+            return;
+        }
+
         config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
 
         if (cmd.count("script")) {
