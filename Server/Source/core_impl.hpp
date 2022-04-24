@@ -53,7 +53,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.nametag_radius", 70.0f },
     { "game.use_enex_markers", true },
     { "game.use_nametag_los", true },
-    { "game.use_manual_vehicle_switches", false },
+    { "game.use_vehicle_manual_activation", false },
     { "game.use_nametags", true },
     { "game.player_marker_mode", PlayerMarkerMode_Global },
     { "game.use_player_marker_radius", false },
@@ -91,7 +91,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "enable_query", true },
     { "website", String("open.mp") },
     { "network.mtu", 576 },
-    { "logging.prepend_timestamp", true },
+    { "logging.use_timestamp", true },
     { "logging.timestamp_format", String("[%Y-%m-%dT%H:%M:%SZ]") },
     { "logging.log_queries", false },
     { "logging.log_chat", true },
@@ -102,7 +102,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "rcon.allow_teleport", false },
     { "rcon.password", String("").}, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
     { "game.use_vehicle_friendly_fire", false },
-    { "game.vehicle_death_respawn_delay", 10 },
+    { "game.vehicle_respawn_time", 10 },
     { "chat_input_filter", true }
 };
 
@@ -1060,7 +1060,7 @@ public:
         SetNameTagDrawDistance = config.getFloat("game.nametag_radius");
         DisableInteriorEnterExits = config.getInt("game.use_enex_markers");
         DisableNameTagLOS = config.getInt("game.use_nametag_los");
-        ManualVehicleEngineAndLights = config.getInt("game.use_manual_vehicle_switches");
+        ManualVehicleEngineAndLights = config.getInt("game.use_vehicle_manual_activation");
         ShowNameTags = config.getInt("game.use_nametags");
         ShowPlayerMarkers = config.getInt("game.player_marker_mode");
         SetWorldTime = config.getInt("game.time");
@@ -1077,7 +1077,7 @@ public:
         ServerName = String(config.getString("name"));
         EnableVehicleFriendlyFire = config.getInt("game.use_vehicle_friendly_fire");
 
-        EnableLogTimestamp = *config.getInt("logging.prepend_timestamp");
+        EnableLogTimestamp = *config.getInt("logging.use_timestamp");
         LogTimestampFormat = String(config.getString("logging.timestamp_format"));
 
         config.optimiseBans();
