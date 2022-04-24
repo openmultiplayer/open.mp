@@ -311,7 +311,7 @@ public:
         NetCode::RPC::SCMEvent::addEventHandler(*core, &playerSCMEventHandler);
         NetCode::RPC::VehicleDeath::addEventHandler(*core, &vehicleDeathHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
-        deathRespawnDelay = core->getConfig().getInt("game.vehicle_death_respawn_delay");
+        deathRespawnDelay = core->getConfig().getInt("game.vehicle_respawn_time");
     }
 
     void onPlayerConnect(IPlayer& player) override

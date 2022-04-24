@@ -106,7 +106,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "ackslimit", "network.acks_limit" },
     { "playertimeout", "network.player_timeout" },
     { "mtu", "network.mtu" },
-    { "timestamp", "logging.prepend_timestamp" },
+    { "timestamp", "logging.use_timestamp" },
     { "logtimeformat", "logging.timestamp_format" },
     { "logqueries", "logging.log_queries" },
     { "chatlogging", "logging.log_chat" },
