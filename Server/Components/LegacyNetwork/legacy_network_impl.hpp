@@ -75,7 +75,7 @@ public:
         rakNetServer.Kick(rid);
     }
 
-    bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel) override
+    bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents) override
     {
         const PeerNetworkData& netData = peer.getNetworkData();
         if (netData.network != this) {
@@ -88,20 +88,22 @@ public:
         bs.SetWriteOffset(data.size());
         bs.SetReadOffset(0);
 
-        uint8_t type;
-        if (bs.readUINT8(type)) {
-            if (!outEventDispatcher.stopAtFalse([&peer, type, &bs](NetworkOutEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->sentPacket(&peer, type, bs);
-                })) {
-                return false;
-            }
+        if (dispatchEvents) {
+            uint8_t type;
+            if (bs.readUINT8(type)) {
+                if (!outEventDispatcher.stopAtFalse([&peer, type, &bs](NetworkOutEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
+                        return handler->sentPacket(&peer, type, bs);
+                    })) {
+                    return false;
+                }
 
-            if (!packetOutEventDispatcher.stopAtFalse(type, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->sent(&peer, bs);
-                })) {
-                return false;
+                if (!packetOutEventDispatcher.stopAtFalse(type, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
+                        return handler->sent(&peer, bs);
+                    })) {
+                    return false;
+                }
             }
         }
 
@@ -151,7 +153,7 @@ public:
         return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
     }
 
-    bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel) override
+    bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel, bool dispatchEvents) override
     {
         if (id == INVALID_PACKET_ID) {
             return false;
@@ -168,18 +170,20 @@ public:
         bs.SetWriteOffset(data.size());
         bs.SetReadOffset(0);
 
-        if (!outEventDispatcher.stopAtFalse([&peer, id, &bs](NetworkOutEventHandler* handler) {
-                bs.resetReadPointer();
-                return handler->sentRPC(&peer, id, bs);
-            })) {
-            return false;
-        }
+        if (dispatchEvents) {
+            if (!outEventDispatcher.stopAtFalse([&peer, id, &bs](NetworkOutEventHandler* handler) {
+                    bs.resetReadPointer();
+                    return handler->sentRPC(&peer, id, bs);
+                })) {
+                return false;
+            }
 
-        if (!rpcOutEventDispatcher.stopAtFalse(id, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
-                bs.resetReadPointer();
-                return handler->sent(&peer, bs);
-            })) {
-            return false;
+            if (!rpcOutEventDispatcher.stopAtFalse(id, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
+                    bs.resetReadPointer();
+                    return handler->sent(&peer, bs);
+                })) {
+                return false;
+            }
         }
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
