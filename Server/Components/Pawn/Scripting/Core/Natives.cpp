@@ -192,7 +192,7 @@ SCRIPT_API(FindTextureFileNameFromCRC, bool(int crc, std::string& output))
 
 SCRIPT_API(GameModeExit, bool())
 {
-    PawnManager::Get()->EndMainScript(true);
+    PawnManager::Get()->EndMainScript();
     return true;
 }
 

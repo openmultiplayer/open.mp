@@ -221,24 +221,14 @@ bool PawnManager::Changemode(std::string const& name)
     // Close it for now, it'll be reopened again by `aux_LoadProgram`.
     fclose(fp);
 
-    if (!delayModeUnload_) {
-        // Disconnect players.
-        // Unload the old main script.
-        Unload(mainName_);
-        // Save the name of the next script.
-        mainName_ = name;
-        // Start the changemode timer.
-        nextRestart_ = Time::now() + restartDelay_;
-        reloading_ = true;
-    } else {
-        // Unload the main script in the next server tick.
-        unloadNextTick_ = true;
-        nextScriptName_ = name;
-    }
+    // Unload the main script in the next server tick.
+    unloadNextTick_ = true;
+    nextScriptName_ = name;
+
     return true;
 }
 
-void PawnManager::EndMainScript(bool delayed)
+void PawnManager::EndMainScript()
 {
     if (reloading_) {
         return;
@@ -256,7 +246,6 @@ void PawnManager::EndMainScript(bool delayed)
             gamemodeRepeat_ = repeats_[gamemodeIndex_];
         }
 
-        delayModeUnload_ = delayed;
         if (Changemode("gamemodes/" + gamemodes_[gamemodeIndex_])) {
             break;
         } else if ((gamemodeIndex_ + 1 == initial) || (gamemodeIndex_ + 1 == gamemodes_.size() && initial == 0)) {
