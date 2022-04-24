@@ -122,7 +122,18 @@ int main(int argc, char** argv)
     SET_TICKER_RESOLUTION(1);
 
     try {
-        auto result = options.parse(argc, argv);
+		// Hide parameters after `--` from cxxopts.
+		int argcount = 0;
+		while (argcount < argc)
+		{
+			// Who needs `strcmp`?
+			if (argv[argcount][0] == '-' && argv[argcount][1] == '-' && argv[argcount][2] == '\0')
+			{
+				break;
+			}
+			++argcount;
+		}
+        auto result = options.parse(argcount, argv);
 
         if (result.count("help")) {
             // Print help text
