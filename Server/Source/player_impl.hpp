@@ -876,6 +876,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         cutType_ = cutType;
         NetCode::RPC::SetPlayerCameraLookAt setCameraLookAtPosRPC;
         setCameraLookAtPosRPC.Pos = position;
+        setCameraLookAtPosRPC.CutType = cutType;
         PacketHelper::send(setCameraLookAtPosRPC, *this);
     }
 
