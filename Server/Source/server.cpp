@@ -109,9 +109,15 @@ int main(int argc, char** argv)
 
     cxxopts::Options options(argv[0], "The open.mp game server");
 
-    options.add_options()("h,help", "Print usage information")("default-config", "Generate default config.json")("dump-config", "Convert server.cfg to config.json")("script", "Script to run", cxxopts::value<std::string>());
+    options.add_options()
+		("h,help", "Print usage information")
+		("default-config", "Generate default config.json")
+		("dump-config", "Convert server.cfg to config.json")
+		("c,config", "Pass (multiple) config option as `option.path=5`", cxxopts::value<std::vector<std::string>>())
+		("script", "Script to run", cxxopts::value<std::string>());
     options.parse_positional("script");
-    options.show_positional_help();
+    options.positional_help("[script] -- [script-options...]");
+    options.custom_help("[server-options...]");
 
     SET_TICKER_RESOLUTION(1);
 
