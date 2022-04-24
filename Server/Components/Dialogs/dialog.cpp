@@ -29,13 +29,13 @@ class PlayerDialogData final : public IPlayerDialogData {
 private:
     int activeId = INVALID_DIALOG_ID;
 
-	String title_ = "";
-	String body_ = "";
-	String button1_ = "";
-	String button2_ = "";
-	DialogStyle style_ = DialogStyle_MSGBOX;
+    String title_ = "";
+    String body_ = "";
+    String button1_ = "";
+    String button2_ = "";
+    DialogStyle style_ = DialogStyle_MSGBOX;
 
-	friend class DialogsComponent;
+    friend class DialogsComponent;
 
 public:
     void hide(IPlayer& player) override
@@ -48,29 +48,25 @@ public:
 
     void show(IPlayer& player, int id, DialogStyle style, StringView title, StringView body, StringView button1, StringView button2) override
     {
-		// We can enforce this more strictly in the component.  The legacy IDs
-		// should only be in Pawn.
-		if (id <= INVALID_DIALOG_ID || id >= MAX_DIALOG)
-		{
-			return;
-		}
-		if (title.size() > 64)
-		{
-			// Titles have a client-side limit.
-			title_ = String(title.data(), 64);
-		}
-		else
-		{
-			title_ = String(title);
-		}
-		style_ = style;
-		body_ = String(body);
-		button1_ = String(button1);
-		button2_ = String(button2);
-		NetCode::RPC::ShowDialog showDialog;
+        // We can enforce this more strictly in the component.  The legacy IDs
+        // should only be in Pawn.
+        if (id <= INVALID_DIALOG_ID || id >= MAX_DIALOG) {
+            return;
+        }
+        if (title.size() > 64) {
+            // Titles have a client-side limit.
+            title_ = String(title.data(), 64);
+        } else {
+            title_ = String(title);
+        }
+        style_ = style;
+        body_ = String(body);
+        button1_ = String(button1);
+        button2_ = String(button2);
+        NetCode::RPC::ShowDialog showDialog;
         showDialog.ID = id;
         showDialog.Style = static_cast<uint8_t>(style);
-		showDialog.Title = title_;
+        showDialog.Title = title_;
         showDialog.Body = body;
         showDialog.FirstButton = button1;
         showDialog.SecondButton = button2;
@@ -82,12 +78,12 @@ public:
 
     void get(int& id, DialogStyle& style, StringView& title, StringView& body, StringView& button1, StringView& button2) override
     {
-		id = activeId;
-		style = style_;
-		title = title_;
-		body = body_;
-		button1 = button1_;
-		button2 = button2_;
+        id = activeId;
+        style = style_;
+        title = title_;
+        body = body_;
+        button1 = button1_;
+        button2 = button2_;
     }
 
     int getActiveID() const override
@@ -204,4 +200,3 @@ COMPONENT_ENTRY_POINT()
 {
     return new DialogsComponent();
 }
-

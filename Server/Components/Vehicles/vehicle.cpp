@@ -429,7 +429,7 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
         auto vehicle = static_cast<Vehicle*>(vehicleData->getVehicle());
-        
+
         // Player is already in this vehicle and in this seat.
         if (vehicle == this && SeatID == vehicleData->getSeat()) {
             return;
