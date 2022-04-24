@@ -109,7 +109,7 @@ struct VehicleEvents : public VehicleEventHandler, public Singleton<VehicleEvent
 
     bool onVehicleSirenStateChange(IPlayer& player, IVehicle& vehicle, uint8_t sirenState) override
     {
-        cell ret = PawnManager::Get()->CallInSides("OnVehicleSirenStateChange", DefaultReturnValue_True, player.getID(), vehicle.getID(), sirenState);
+        cell ret = PawnManager::Get()->CallInSides("OnVehicleSirenStateChange", DefaultReturnValue_False, player.getID(), vehicle.getID(), sirenState);
         if (!ret) {
             ret = PawnManager::Get()->CallInEntry("OnVehicleSirenStateChange", DefaultReturnValue_True, player.getID(), vehicle.getID(), sirenState);
         }
