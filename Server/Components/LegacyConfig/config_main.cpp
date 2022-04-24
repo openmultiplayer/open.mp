@@ -25,7 +25,8 @@ enum class ParamType {
     String,
     StringList,
     Custom,
-    Obsolete
+    Obsolete,
+    Bool,
 };
 
 const FlatHashMap<StringView, ParamType> types = {
@@ -35,8 +36,8 @@ const FlatHashMap<StringView, ParamType> types = {
     { "gamemode", ParamType::Custom },
     { "filterscripts", ParamType::Custom },
     { "plugins", ParamType::StringList },
-    { "announce", ParamType::Int },
-    { "query", ParamType::Int },
+    { "announce", ParamType::Bool },
+    { "query", ParamType::Bool },
     { "hostname", ParamType::String },
     { "language", ParamType::String },
     { "mapname", ParamType::String },
@@ -48,11 +49,11 @@ const FlatHashMap<StringView, ParamType> types = {
     { "maxplayers", ParamType::Int },
     { "password", ParamType::Custom },
     { "sleep", ParamType::Int },
-    { "lanmode", ParamType::Int },
+    { "lanmode", ParamType::Bool },
     { "bind", ParamType::String },
     { "port", ParamType::Int },
     { "conncookies", ParamType::Obsolete },
-    { "cookielogging", ParamType::Int },
+    { "cookielogging", ParamType::Bool },
     { "connseedtime", ParamType::Int },
     { "minconnectiontime", ParamType::Int },
     { "messageslimit", ParamType::Int },
@@ -61,19 +62,19 @@ const FlatHashMap<StringView, ParamType> types = {
     { "playertimeout", ParamType::Int },
     { "mtu", ParamType::Int },
     { "output", ParamType::Obsolete },
-    { "timestamp", ParamType::Int },
+    { "timestamp", ParamType::Bool },
     { "logtimeformat", ParamType::String },
-    { "logqueries", ParamType::Int },
-    { "chatlogging", ParamType::Int },
-    { "db_logging", ParamType::Int },
-    { "db_log_queries", ParamType::Int },
+    { "logqueries", ParamType::Bool },
+    { "chatlogging", ParamType::Bool },
+    { "db_logging", ParamType::Bool },
+    { "db_log_queries", ParamType::Bool },
     { "onfoot_rate", ParamType::Int },
     { "incar_rate", ParamType::Int },
     { "weapon_rate", ParamType::Int },
     { "stream_distance", ParamType::Float },
     { "stream_rate", ParamType::Int },
     { "maxnpc", ParamType::Int },
-    { "lagcompmode", ParamType::Int }
+    { "lagcompmode", ParamType::Bool }
 };
 
 const FlatHashMap<StringView, StringView> dictionary = {
@@ -207,6 +208,23 @@ private:
                 } catch (std::invalid_argument e) {
                     logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not an integer.", name.c_str(), right.c_str());
                 }
+                return true;
+            }
+            case ParamType::Bool: {
+				Impl::String lower(right);
+				std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
+				if (lower == "true" || lower == "1")
+				{
+					config.setBool(dictIt->second, true);
+				}
+				else if (lower == "false" || lower == "0")
+				{
+					config.setBool(dictIt->second, false);
+				}
+				else
+				{
+					logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not a boolean.", name.c_str(), right.c_str());
+				}
                 return true;
             }
             case ParamType::Float: {

@@ -36,15 +36,15 @@ using namespace Impl;
 
 #include <openssl/sha.h>
 
-typedef std::variant<int, String, float, DynamicArray<String>> ConfigStorage;
+typedef std::variant<int, String, float, DynamicArray<String>, bool> ConfigStorage;
 
 static const std::map<String, ConfigStorage> Defaults {
     { "max_players", 50 },
     { "sleep", 5 },
     { "port", 7777 },
-    { "bind", "" },
-    { "password", "" },
-    { "enable_zone_names", false },
+    { "bind", String("") },
+    { "password", String("") },
+    { "game.use_zone_names", false },
     { "game.use_player_ped_anims", false },
     { "game.allow_interior_weapons", true },
     { "game.use_chat_radius", false },
@@ -70,10 +70,10 @@ static const std::map<String, ConfigStorage> Defaults {
     { "network.weapon_rate", 30 },
     { "network.multiplier", 10 },
     { "network.use_lag_compensation", true },
-    { "name", "open.mp server" },
-    { "game.mode", "" },
-    { "game.map", "" },
-    { "language", "" },
+    { "name", String("open.mp server") },
+    { "game.mode", String("") },
+    { "game.map", String("") },
+    { "language", String("") },
     { "network.time_sync_rate", 30000 },
     { "network.stream_rate", 1000 },
     { "network.stream_radius", 200.f },
@@ -89,10 +89,10 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging.enable", true },
     { "rcon.enable", false },
     { "enable_query", true },
-    { "website", "open.mp" },
+    { "website", String("open.mp") },
     { "network.mtu", 576 },
     { "logging.prepend_timestamp", true },
-    { "logging.timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
+    { "logging.timestamp_format", String("[%Y-%m-%dT%H:%M:%SZ]") },
     { "logging.log_queries", false },
     { "logging.log_chat", true },
     { "logging.log_deaths", true },
@@ -100,7 +100,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging.log_sqlite_queries", false },
     { "logging.log_cookies", false },
     { "rcon.allow_teleport", false },
-    { "rcon.password", "" }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
+    { "rcon.password", String("").}, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
     { "game.use_vehicle_friendly_fire", false },
     { "game.vehicle_death_respawn_delay", 10 },
     { "chat_input_filter", true }
@@ -302,6 +302,15 @@ public:
         }
         return &std::get<int>(*res);
     }
+	
+    bool* getBool(StringView key) override
+    {
+        ConfigStorage* res = nullptr;
+        if (!getFromKey(key, ConfigOptionType_Bool, res)) {
+            return 0;
+        }
+        return &std::get<bool>(*res);
+    }
 
     float* getFloat(StringView key) override
     {
@@ -364,6 +373,11 @@ public:
     }
 
     void setInt(StringView key, int value) override
+    {
+        processed[String(key)] = value;
+    }
+	
+    void setBool(StringView key, bool value) override
     {
         processed[String(key)] = value;
     }
@@ -1038,7 +1052,7 @@ public:
             logFile = ::fopen(LogFileName, "a");
         }
 
-        EnableZoneNames = config.getInt("enable_zone_names");
+        EnableZoneNames = config.getInt("game.use_zone_names");
         UsePlayerPedAnims = config.getInt("game.use_player_ped_anims");
         AllowInteriorWeapons = config.getInt("game.allow_interior_weapons");
         UseLimitGlobalChatRadius = config.getInt("game.use_chat_radius");

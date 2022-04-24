@@ -176,7 +176,7 @@ SCRIPT_API(EnableTirePopping, bool(bool enable))
 
 SCRIPT_API(EnableZoneNames, bool(bool enable))
 {
-    *PawnManager::Get()->config->getInt("enable_zone_names") = enable;
+    *PawnManager::Get()->config->getInt("game.use_zone_names") = enable;
     return true;
 }
 
