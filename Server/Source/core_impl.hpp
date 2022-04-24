@@ -53,7 +53,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.nametag_radius", 70.0f },
     { "game.use_enex_markers", true },
     { "game.use_nametag_los", true },
-    { "game.use_vehicle_manual_activation", false },
+    { "game.use_vehicle_activation", false },
     { "game.use_nametags", true },
     { "game.player_marker_mode", PlayerMarkerMode_Global },
     { "game.use_player_marker_radius", false },
@@ -1060,7 +1060,7 @@ public:
         SetNameTagDrawDistance = config.getFloat("game.nametag_radius");
         DisableInteriorEnterExits = config.getInt("game.use_enex_markers");
         DisableNameTagLOS = config.getInt("game.use_nametag_los");
-        ManualVehicleEngineAndLights = config.getInt("game.use_vehicle_manual_activation");
+        ManualVehicleEngineAndLights = config.getInt("game.use_vehicle_activation");
         ShowNameTags = config.getInt("game.use_nametags");
         ShowPlayerMarkers = config.getInt("game.player_marker_mode");
         SetWorldTime = config.getInt("game.time");
