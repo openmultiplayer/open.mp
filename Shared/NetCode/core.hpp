@@ -505,7 +505,7 @@ namespace RPC {
 
     struct SetPlayerCameraLookAt : NetworkPacketBase<158, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 Pos;
-        uint8_t cutType;
+        uint8_t CutType;
 
         bool read(NetworkBitStream& bs)
         {
@@ -515,7 +515,7 @@ namespace RPC {
         void write(NetworkBitStream& bs) const
         {
             bs.writeVEC3(Pos);
-            bs.writeUINT8(cutType);
+            bs.writeUINT8(CutType);
         }
     };
 
