@@ -1019,13 +1019,6 @@ public:
 
         components.configure(*this, config, false);
 
-        if (cmd.count("dump-config")) {
-            // Generate config
-            Config::writeCurrent(*this, config);
-            stop();
-            return;
-        }
-
         config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
 
         if (cmd.count("script")) {
@@ -1047,6 +1040,12 @@ public:
         }
 
         // Don't use config before this point
+        if (cmd.count("dump-config")) {
+            // Generate config
+            Config::writeCurrent(*this, config);
+            stop();
+            return;
+        }
 
         if (*config.getInt("logging.enable")) {
             logFile = ::fopen(LogFileName, "a");
