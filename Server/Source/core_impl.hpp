@@ -58,7 +58,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.player_marker_mode", PlayerMarkerMode_Global },
     { "game.use_player_marker_radius", false },
     { "game.player_marker_radius", 250.f },
-    { "network.player_marker_update_rate", 2500 },
+    { "network.player_marker_sync_rate", 2500 },
     { "game.time", 12 },
     { "game.weather", 10 },
     { "game.gravity", 0.008f },
