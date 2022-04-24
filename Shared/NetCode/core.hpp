@@ -1114,7 +1114,7 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeBIT(enable);
+            bs.writeUINT8(enable);
         }
     };
 
