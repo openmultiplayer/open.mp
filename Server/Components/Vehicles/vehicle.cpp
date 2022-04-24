@@ -165,17 +165,27 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
     if (driver != &player) {
         PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
-        if (data->getVehicle()) {
-            static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
+        if (data) {
+            auto player_vehicle = data->getVehicle();
+            if (player_vehicle) {
+                static_cast<Vehicle*>(player_vehicle)->unoccupy(player);
+            }
+            driver = &player;
+            data->setVehicle(this, 0);
         }
-        driver = &player;
-        data->setVehicle(this, 0);
         updateOccupied();
     }
 
     // Reset the detaching flag when trailer is detached on driver's client.
     if (vehicleSync.TrailerID == 0) {
         detaching = false;
+
+        // Client is reporting no trailer (probably lost it) but server thinks there's still one. Detaching it server side.
+        if (trailer && Time::now() - trailer->trailerUpdateTime > Seconds(0)) {
+            trailer->tower = nullptr;
+            towing = false;
+            trailer = nullptr;
+        }
     }
 
     return true;
@@ -233,6 +243,10 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
     if (!vehicle || vehicle->detaching) {
         return false;
     } else if (tower != vehicle) {
+        if (tower && tower->trailer == this) {
+            tower->towing = false;
+            tower->trailer = nullptr;
+        }
         vehicle->attachTrailer(*this);
     }
 
@@ -581,6 +595,7 @@ void Vehicle::attachTrailer(IVehicle& trailer)
     this->trailer = static_cast<Vehicle*>(&trailer);
     towing = true;
     this->trailer->setTower(this);
+    this->trailer->trailerUpdateTime = Time::now();
     NetCode::RPC::AttachTrailer trailerRPC;
     trailerRPC.TrailerID = this->trailer->poolID;
     trailerRPC.VehicleID = poolID;
