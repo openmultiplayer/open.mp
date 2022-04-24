@@ -10,20 +10,28 @@
 #include "../utils.hpp"
 #include <filesystem>
 
-static const StaticArray<StringView, 13> BrokenPlugins = {
-    "YSF",
-    "YSF_DL",
-    "YSF_static",
-    "YSF_DL_static",
-    "pawnraknet",
-    "pawncmd",
-    "SKY",
-    "FCNPC",
-    "FCNPC-DL",
-    "sampcac_server",
-    "sampvoice",
-    "rustext",
-    "ASAN",
+struct BrokenPluginMessageData {
+    StringView name;
+    StringView message;
+};
+
+static const StaticArray<BrokenPluginMessageData, 14> BrokenPlugins = {
+    {
+        { "YSF", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
+        { "YSF_DL", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
+        { "YSF_static", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
+        { "YSF_DL_static", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
+        { "pawnraknet", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "pawncmd", "There is an open.mp compatible version you can find here: https://github.com/katursis/Pawn.CMD/releases , make sure to download x.x.x-omp version." },
+        { "SKY", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "FCNPC", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "FCNPC-DL", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "sampcac_server", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "sampvoice", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "rustext", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "ASAN", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "nativechecker", "It is not needed anymore since open.mp has built in native checking mechanism when a script is being loaded" },
+    }
 };
 
 PawnPluginManager::PawnPluginManager()
@@ -46,11 +54,11 @@ void PawnPluginManager::Load(std::string const& name)
     }
 
     String pluginName = std::filesystem::path(name).stem().string();
-    for (StringView brokenPlugin : BrokenPlugins) {
-        if (pluginName == brokenPlugin) {
+    for (BrokenPluginMessageData brokenPlugin : BrokenPlugins) {
+        if (pluginName == brokenPlugin.name) {
             core->logLn(LogLevel::Error,
-                "The legacy plugin '%.*s' requires memory hacking to run and is therefore broken on open.mp, skipping it. There should be a replacement component supported by open.mp",
-                PRINT_VIEW(brokenPlugin));
+                "Skipping legacy plugin '%.*s'; %.*s",
+                PRINT_VIEW(brokenPlugin.name), PRINT_VIEW(brokenPlugin.message));
             return;
         }
     }
