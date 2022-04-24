@@ -88,7 +88,7 @@ SCRIPT_API(SetVehicleParamsForPlayer, bool(IVehicle& vehicle, IPlayer& player, i
 SCRIPT_API(ManualVehicleEngineAndLights, bool())
 {
     if (PawnManager().Get()->config) {
-        *PawnManager().Get()->config->getInt("game.use_vehicle_manual_activation") = true;
+        *PawnManager().Get()->config->getInt("game.use_vehicle_activation") = true;
     }
     return true;
 }
