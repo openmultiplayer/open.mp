@@ -442,7 +442,7 @@ public:
                     if (vehicle->hasBeenOccupied()) {
                         lastInteraction = std::max(lastInteraction, vehicle->getLastOccupiedTime());
                     }
-                    if (now - lastInteraction >= Seconds(*deathRespawnDelay)) {
+                    if (now - lastInteraction >= Milliseconds(*deathRespawnDelay)) {
                         vehicle->respawn();
                     }
                 } else if (vehicle->hasBeenOccupied() && delay > Seconds(0)) {
