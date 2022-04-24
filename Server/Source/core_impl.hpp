@@ -102,7 +102,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "rcon.allow_teleport", false },
     { "rcon.password", String("").}, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
     { "game.use_vehicle_friendly_fire", false },
-    { "game.vehicle_respawn_time", 10 },
+    { "game.vehicle_respawn_time", 10000 },
     { "chat_input_filter", true }
 };
 
