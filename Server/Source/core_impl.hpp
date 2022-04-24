@@ -49,25 +49,25 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.allow_interior_weapons", true },
     { "game.use_chat_radius", false },
     { "game.chat_radius", 200.0f },
-    { "game.enable_stunt_bonuses", true },
+    { "game.use_stunt_bonuses", true },
     { "game.nametag_radius", 70.0f },
-    { "game.enable_enexes", true },
+    { "game.use_enex_markers", true },
     { "game.use_nametag_los", true },
     { "game.use_manual_vehicle_switches", false },
     { "game.use_nametags", true },
     { "game.player_marker_mode", PlayerMarkerMode_Global },
     { "game.use_player_marker_radius", false },
     { "game.player_marker_radius", 250.f },
-    { "network.player_marker_rate", 2500 },
+    { "network.player_marker_update_rate", 2500 },
     { "game.time", 12 },
     { "game.weather", 10 },
     { "game.gravity", 0.008f },
     { "network.use_lan_mode", false },
     { "game.death_drop_amount", 0 },
     { "game.use_instagib", false },
-    { "network.on_foot_rate", 30 },
-    { "network.in_car_rate", 30 },
-    { "network.weapon_rate", 30 },
+    { "network.on_foot_sync_rate", 30 },
+    { "network.in_vehicle_sync_rate", 30 },
+    { "network.aiming_sync_rate", 30 },
     { "network.multiplier", 10 },
     { "network.use_lag_compensation", true },
     { "name", String("open.mp server") },
@@ -1056,9 +1056,9 @@ public:
         AllowInteriorWeapons = config.getInt("game.allow_interior_weapons");
         UseLimitGlobalChatRadius = config.getInt("game.use_chat_radius");
         LimitGlobalChatRadius = config.getFloat("game.chat_radius");
-        EnableStuntBonus = config.getInt("game.enable_stunt_bonuses");
+        EnableStuntBonus = config.getInt("game.use_stunt_bonuses");
         SetNameTagDrawDistance = config.getFloat("game.nametag_radius");
-        DisableInteriorEnterExits = config.getInt("game.enable_enexes");
+        DisableInteriorEnterExits = config.getInt("game.use_enex_markers");
         DisableNameTagLOS = config.getInt("game.use_nametag_los");
         ManualVehicleEngineAndLights = config.getInt("game.use_manual_vehicle_switches");
         ShowNameTags = config.getInt("game.use_nametags");
@@ -1069,9 +1069,9 @@ public:
         LanMode = config.getInt("network.use_lan_mode");
         SetDeathDropAmount = config.getInt("game.death_drop_amount");
         Instagib = config.getInt("game.use_instagib");
-        OnFootRate = config.getInt("network.on_foot_rate");
-        InCarRate = config.getInt("network.in_car_rate");
-        WeaponRate = config.getInt("network.weapon_rate");
+        OnFootRate = config.getInt("network.on_foot_sync_rate");
+        InCarRate = config.getInt("network.in_vehicle_sync_rate");
+        WeaponRate = config.getInt("network.aiming_sync_rate");
         Multiplier = config.getInt("network.multiplier");
         LagCompensation = config.getInt("network.use_lag_compensation");
         ServerName = String(config.getString("name"));
