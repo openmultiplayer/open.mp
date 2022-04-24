@@ -155,7 +155,8 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
         }
     }
 
-    if (vehicleSync.Siren != sirenState && spawnData.siren) {
+    // Don't check if vehicle was created with siren. There are some vehicles that have siren by default in the game (ex: police cars).
+    if (vehicleSync.Siren != sirenState) {
         sirenState = vehicleSync.Siren;
         params.siren = sirenState != 0;
         static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler) {
@@ -165,17 +166,27 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
     if (driver != &player) {
         PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
-        if (data->getVehicle()) {
-            static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
+        if (data) {
+            auto player_vehicle = data->getVehicle();
+            if (player_vehicle) {
+                static_cast<Vehicle*>(player_vehicle)->unoccupy(player);
+            }
+            driver = &player;
+            data->setVehicle(this, 0);
         }
-        driver = &player;
-        data->setVehicle(this, 0);
         updateOccupied();
     }
 
     // Reset the detaching flag when trailer is detached on driver's client.
     if (vehicleSync.TrailerID == 0) {
         detaching = false;
+
+        // Client is reporting no trailer (probably lost it) but server thinks there's still one. Detaching it server side.
+        if (trailer && Time::now() - trailer->trailerUpdateTime > Seconds(0)) {
+            trailer->tower = nullptr;
+            towing = false;
+            trailer = nullptr;
+        }
     }
 
     return true;
@@ -233,6 +244,10 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
     if (!vehicle || vehicle->detaching) {
         return false;
     } else if (tower != vehicle) {
+        if (tower && tower->trailer == this) {
+            tower->towing = false;
+            tower->trailer = nullptr;
+        }
         vehicle->attachTrailer(*this);
     }
 
@@ -414,11 +429,17 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
         auto vehicle = static_cast<Vehicle*>(vehicleData->getVehicle());
+        
+        // Player is already in this vehicle and in this seat.
+        if (vehicle == this && SeatID == vehicleData->getSeat()) {
+            return;
+        }
+
         if (vehicle != nullptr) {
             vehicle->unoccupy(player);
             player.setPosition(pos);
         }
-        vehicleData->setVehicle(this, vehicleData->getSeat());
+        vehicleData->setVehicle(this, SeatID);
     }
 
     putPlayerInVehicleRPC.VehicleID = poolID;
@@ -575,6 +596,7 @@ void Vehicle::attachTrailer(IVehicle& trailer)
     this->trailer = static_cast<Vehicle*>(&trailer);
     towing = true;
     this->trailer->setTower(this);
+    this->trailer->trailerUpdateTime = Time::now();
     NetCode::RPC::AttachTrailer trailerRPC;
     trailerRPC.TrailerID = this->trailer->poolID;
     trailerRPC.VehicleID = poolID;
