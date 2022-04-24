@@ -155,7 +155,8 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
         }
     }
 
-    if (vehicleSync.Siren != sirenState && spawnData.siren) {
+    // Don't check if vehicle was created with siren. There are some vehicles that have siren by default in the game (ex: police cars).
+    if (vehicleSync.Siren != sirenState) {
         sirenState = vehicleSync.Siren;
         params.siren = sirenState != 0;
         static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler) {
