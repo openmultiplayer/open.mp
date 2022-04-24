@@ -1459,6 +1459,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         sendDeathMessageRPC.HasKiller = killer != nullptr;
         if (killer) {
             sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
+        } else {
+            sendDeathMessageRPC.KillerID = INVALID_PLAYER_ID;
         }
         sendDeathMessageRPC.reason = weapon;
         PacketHelper::broadcast(sendDeathMessageRPC, *this);

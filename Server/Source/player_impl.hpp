@@ -358,6 +358,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         sendDeathMessageRPC.HasKiller = killer != nullptr;
         if (killer) {
             sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
+        } else {
+            sendDeathMessageRPC.KillerID = INVALID_PLAYER_ID;
         }
         sendDeathMessageRPC.reason = weapon;
         PacketHelper::send(sendDeathMessageRPC, *this);
@@ -498,8 +500,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setSpectating(bool spectating) override
     {
-        setState(PlayerState_Spectating);
-
         if (!spectating) {
             toSpawn_ = true;
             spectateData_.type = PlayerSpectateData::ESpectateType::None;
