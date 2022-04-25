@@ -214,6 +214,9 @@ void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in
                             console->send(cmd, ConsoleCommandSenderData(handler));
                         }
                     }
+                } else {
+                    LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
+                    handler.handleConsoleMessage("Invalid RCON password.");
                 }
             }
         }
