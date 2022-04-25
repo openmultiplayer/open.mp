@@ -25,6 +25,10 @@ using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
 
+static const StaticArray<StringView, 1> ProtectedRules = {
+    { "version" },
+};
+
 class Core;
 
 class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerEventHandler, public INetworkQueryExtension {
@@ -226,16 +230,41 @@ public:
         query.buildPlayerDependentBuffers(&player);
     }
 
-    void addRule(StringView rule, StringView value) override
+    bool addRule(StringView rule, StringView value) override
     {
+        if (isRuleProtected(rule)) {
+            return false;
+        }
+
         query.setRuleValue(String(rule), String(value));
         query.buildRulesBuffer();
+        return true;
     }
 
-    void removeRule(StringView rule) override
+    bool removeRule(StringView rule) override
     {
+        if (isRuleProtected(rule)) {
+            return false;
+        }
+
         query.removeRule(rule);
         query.buildRulesBuffer();
+        return true;
+    }
+
+    bool isValidRule(StringView rule) override
+    {
+        return query.isValidRule(rule);
+    }
+
+    bool isRuleProtected(StringView rule)
+    {
+        for (StringView r : ProtectedRules) {
+            if (r == rule) {
+                return true;
+            }
+        }
+        return false;
     }
 
     NetworkStats getStatistics(int playerIndex = -1) override;

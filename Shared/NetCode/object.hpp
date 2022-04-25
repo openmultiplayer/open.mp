@@ -42,7 +42,7 @@ namespace RPC {
                 bs.writeUINT16(MaterialData.model);
                 bs.writeDynStr8(StringView(MaterialData.textOrTXD));
                 bs.writeDynStr8(StringView(MaterialData.fontOrTexture));
-                bs.writeUINT32(MaterialData.materialColour.ARGB());
+                bs.writeUINT32(MaterialData.materialColour.ABGR());
             } else if (MaterialData.type == ObjectMaterialData::Type::Text) {
                 bs.writeUINT8(MaterialData.materialSize);
                 bs.writeDynStr8(StringView(MaterialData.fontOrTexture));
@@ -249,8 +249,8 @@ namespace RPC {
                 bs.writeVEC3(AttachmentData.offset);
                 bs.writeVEC3(AttachmentData.rotation);
                 bs.writeVEC3(AttachmentData.scale);
-                bs.writeUINT32(AttachmentData.colour1.ARGB());
-                bs.writeUINT32(AttachmentData.colour2.ARGB());
+                bs.writeUINT32(AttachmentData.colour1.ABGR());
+                bs.writeUINT32(AttachmentData.colour2.ABGR());
             }
         }
     };
