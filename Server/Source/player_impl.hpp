@@ -820,6 +820,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setFightingStyle(PlayerFightingStyle style) override
     {
+        if (style != PlayerFightingStyle_Normal && style != PlayerFightingStyle_Boxing && style != PlayerFightingStyle_KungFu
+            && style != PlayerFightingStyle_KneeHead && style != PlayerFightingStyle_GrabKick && style != PlayerFightingStyle_Elbow) {
+            return;
+        }
+
         fightingStyle_ = style;
         NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
         setPlayerFightingStyleRPC.PlayerID = poolID;
