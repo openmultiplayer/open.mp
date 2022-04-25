@@ -252,11 +252,13 @@ public:
         return true;
     }
 
-    bool isValidRule(StringView rule) override {
+    bool isValidRule(StringView rule) override
+    {
         return query.isValidRule(rule);
     }
 
-    bool isRuleProtected(StringView rule) {
+    bool isRuleProtected(StringView rule)
+    {
         for (StringView r : ProtectedRules) {
             if (r == rule) {
                 return true;
