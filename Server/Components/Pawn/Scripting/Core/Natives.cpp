@@ -591,7 +591,7 @@ SCRIPT_API(IsNickNameCharacterAllowed, bool(char character))
 SCRIPT_API(ClearBanList, bool())
 {
     ICore* core = PawnManager::Get()->core;
-    if (core) {
+    if (!core) {
         return false;
     }
 
@@ -602,7 +602,7 @@ SCRIPT_API(ClearBanList, bool())
 SCRIPT_API(IsBanned, bool(const std::string& ip))
 {
     ICore* core = PawnManager::Get()->core;
-    if (core) {
+    if (!core) {
         return false;
     }
     BanEntry entry(ip);
