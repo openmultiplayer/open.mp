@@ -110,6 +110,11 @@ public:
         }
     }
 
+    bool isValidRule(StringView ruleName)
+    {
+        return rules.find(String(ruleName)) != rules.end();
+    }
+
     void setServerName(StringView value)
     {
         serverName = String(value);
