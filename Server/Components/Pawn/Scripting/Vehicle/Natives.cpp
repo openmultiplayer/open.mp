@@ -408,7 +408,7 @@ SCRIPT_API(GetVehicleModelsUsed, int())
     });
 }
 
-SCRIPT_API(GetVehiclePaintJob, int(IVehicle& vehicle))
+SCRIPT_API(GetVehiclePaintjob, int(IVehicle& vehicle))
 {
     return vehicle.getPaintJob();
 }
