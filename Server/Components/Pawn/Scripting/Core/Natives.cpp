@@ -620,10 +620,10 @@ SCRIPT_API(AddServerRule, bool(const std::string& name, const std::string& value
     if (!core) {
         return false;
     }
-    
+
     for (INetwork* network : core->getNetworks()) {
         INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
-        
+
         if (query) {
             return query->addRule(name, value);
         }
