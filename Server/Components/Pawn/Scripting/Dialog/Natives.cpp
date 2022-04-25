@@ -14,21 +14,28 @@
 SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
 {
     IPlayerDialogData* data = queryExtension<IPlayerDialogData>(player);
-    // Put it back to `int` so we can detect and handle this special case.
-    if (dialog == INVALID_DIALOG_ID) {
-        // Some old code uses invalid IDs to hide dialogs.
-        PawnManager::Get()->core->logLn(LogLevel::Warning, "Invalid dialog ID %d used.  Use `HidePlayerDialog()`.", dialog);
-        if (dialog) {
-            data->hide(player);
-        }
+
+    if (!data) {
         return false;
     }
-    if (data) {
-        // And instead mask the ID here.
-        data->show(player, dialog & 0xFFFF, DialogStyle(style), title, body, button1, button2);
+
+    // Put it back to `int` so we can detect and handle this special case.
+    // Some old code uses invalid IDs to hide dialogs.
+    if (dialog == INVALID_DIALOG_ID) {
+        static bool warned = false;
+        if (!warned) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Invalid dialog ID %d used.  Use `HidePlayerDialog()`.", dialog);
+            warned = true;
+        }
+
+        data->hide(player);
+        // Keep the return value true, some people rely on it.
         return true;
     }
-    return false;
+
+    // And instead mask the ID here.
+    data->show(player, dialog & 0xFFFF, DialogStyle(style), title, body, button1, button2);
+    return true;
 }
 
 /// Added for fixes.inc compatibility, but as `GetPlayerDialogID` from YSF also exists we don't need
