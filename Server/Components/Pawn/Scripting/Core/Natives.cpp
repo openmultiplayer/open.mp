@@ -613,3 +613,59 @@ SCRIPT_API(GetWeaponSlot, int(uint8_t weapon))
 {
     return WeaponSlotData { weapon }.slot();
 }
+
+SCRIPT_API(AddServerRule, bool(const std::string& name, const std::string& value))
+{
+    ICore* core = PawnManager::Get()->core;
+    if (!core) {
+        return false;
+    }
+    
+    for (INetwork* network : core->getNetworks()) {
+        INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
+        
+        if (query) {
+            return query->addRule(name, value);
+        }
+    }
+    return false;
+}
+
+SCRIPT_API(SetServerRule, bool(const std::string& name, const std::string& value))
+{
+    return openmp_scripting::AddServerRule(name, value);
+}
+
+SCRIPT_API(IsValidServerRule, bool(const std::string& name))
+{
+    ICore* core = PawnManager::Get()->core;
+    if (!core) {
+        return false;
+    }
+
+    for (INetwork* network : core->getNetworks()) {
+        INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
+
+        if (query) {
+            return query->isValidRule(name);
+        }
+    }
+    return false;
+}
+
+SCRIPT_API(RemoveServerRule, bool(const std::string& name))
+{
+    ICore* core = PawnManager::Get()->core;
+    if (!core) {
+        return false;
+    }
+
+    for (INetwork* network : core->getNetworks()) {
+        INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
+
+        if (query) {
+            return query->removeRule(name);
+        }
+    }
+    return false;
+}
