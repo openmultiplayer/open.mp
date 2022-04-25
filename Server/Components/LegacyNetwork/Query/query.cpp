@@ -214,11 +214,12 @@ void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in
                             console->send(cmd, ConsoleCommandSenderData(handler));
                         }
                     }
-                } else {
-                    LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
-                    handler.handleConsoleMessage("Invalid RCON password.");
+                    return;
                 }
             }
+
+            LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
+            handler.handleConsoleMessage("Invalid RCON password.");
         }
     }
 }
@@ -259,7 +260,7 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, cons
         else if (buffer[QUERY_TYPE_INDEX] == 'r' && rulesBuffer) {
             return getBuffer(buffer, rulesBuffer, rulesBufferLength);
         }
-    } else if (buffer[QUERY_TYPE_INDEX] == 'x' && console) {
+    } else if (buffer[QUERY_TYPE_INDEX] == 'x' && console && rconEnabled) {
         // RCON
         handleRCON(buffer, sock, client, tolen);
     }
