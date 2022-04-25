@@ -100,7 +100,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging_sqlite_queries", false },
     { "logging_cookies", false },
     { "rcon_allow_teleport", false },
-    { "rcon_command", "changeme" },
+    { "rcon_password", "changeme" },
     { "vehicle_friendly_fire", false },
     { "vehicle_death_respawn_delay", 10 },
     { "chat_input_filter", true }
