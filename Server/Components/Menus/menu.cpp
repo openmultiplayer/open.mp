@@ -10,7 +10,7 @@
 
 using namespace Impl;
 
-class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler {
+class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Menu, IMenu, 1, MENU_POOL_SIZE> storage;
@@ -101,6 +101,7 @@ public:
         this->core = core;
         players = &core->getPlayers();
         players->getEventDispatcher().addEventHandler(this);
+        players->getPoolEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectedMenuRow::addEventHandler(*core, &playerSelectedMenuRowEventHandler);
         NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
     }
@@ -111,7 +112,7 @@ public:
         storage.clear();
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
         for (IMenu* m : storage) {
@@ -123,6 +124,7 @@ public:
     {
         if (core) {
             players->getEventDispatcher().removeEventHandler(this);
+            players->getPoolEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectedMenuRow::removeEventHandler(*core, &playerSelectedMenuRowEventHandler);
             NetCode::RPC::OnPlayerExitedMenu::removeEventHandler(*core, &playerExitedMenuEventHandler);
         }

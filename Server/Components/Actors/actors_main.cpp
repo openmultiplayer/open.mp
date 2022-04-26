@@ -8,7 +8,7 @@
 
 #include "actor.hpp"
 
-class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Actor, IActor, 0, ACTOR_POOL_SIZE> storage;
@@ -71,6 +71,7 @@ public:
         players = &core->getPlayers();
         players->getEventDispatcher().addEventHandler(this);
         players->getPlayerUpdateDispatcher().addEventHandler(this);
+        players->getPoolEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerDamageActor::addEventHandler(*core, &playerDamageActorEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
@@ -80,6 +81,7 @@ public:
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
+            players->getPoolEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerDamageActor::removeEventHandler(*core, &playerDamageActorEventHandler);
         }
     }
@@ -89,7 +91,7 @@ public:
         player.addExtension(new PlayerActorData(), true);
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
         for (IActor* a : storage) {

@@ -10,7 +10,7 @@
 
 using namespace Impl;
 
-class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
@@ -33,13 +33,15 @@ public:
         this->core = core;
         this->core->getPlayers().getEventDispatcher().addEventHandler(this);
         this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
+        this->core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
     }
 
     ~GangZonesComponent()
     {
         if (core) {
-            core->getPlayers().getEventDispatcher().addEventHandler(this);
-            core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
+            core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
+            core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -161,7 +163,7 @@ public:
         return storage._entries();
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
         for (IGangZone* g : storage) {
