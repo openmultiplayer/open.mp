@@ -12,7 +12,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler {
+class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;
@@ -191,6 +191,7 @@ public:
         this->players = &core->getPlayers();
         core->getEventDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
+        players->getPoolEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
@@ -201,6 +202,7 @@ public:
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
+            players->getPoolEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
             NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
             NetCode::RPC::OnPlayerEditAttachedObject::removeEventHandler(*core, &playerEditAttachedObjectEventHandler);
@@ -312,7 +314,7 @@ public:
         return storage._entries();
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
         for (IObject* obj : storage) {

@@ -1196,6 +1196,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return playerUpdateDispatcher;
     }
 
+    IEventDispatcher<PoolEventHandler<IPlayer>>& getPoolEventDispatcher() override
+    {
+        return storage.getEventDispatcher();
+    }
+
     void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr) override
     {
         for (INetwork* network : networks) {

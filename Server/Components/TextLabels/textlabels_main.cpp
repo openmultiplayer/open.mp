@@ -107,7 +107,7 @@ public:
     }
 };
 
-class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextLabel, ITextLabel, 0, TEXT_LABEL_POOL_SIZE> storage;
@@ -132,6 +132,7 @@ public:
         players = &core->getPlayers();
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
+        players->getPoolEventDispatcher().addEventHandler(this);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
@@ -145,6 +146,7 @@ public:
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
+            players->getPoolEventDispatcher().removeEventHandler(this);
         }
     }
 
@@ -269,7 +271,7 @@ public:
         }
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
         for (ITextLabel* textLabel : storage) {
