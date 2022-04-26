@@ -115,7 +115,7 @@ public:
     }
 };
 
-class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler {
+class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<TextDraw, ITextDraw, 0, GLOBAL_TEXTDRAW_POOL_SIZE> storage;
@@ -179,6 +179,7 @@ public:
     {
         core = c;
         core->getPlayers().getEventDispatcher().addEventHandler(this);
+        core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
     }
 
@@ -186,13 +187,13 @@ public:
     {
         // Destroy all stored entity instances.
         storage.clear();
-        // PlayerTextDrawData* data = queryData<PlayerTextDrawData>(peer);
     }
 
     ~TextDrawsComponent()
     {
         if (core) {
             core->getPlayers().getEventDispatcher().removeEventHandler(this);
+            core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerSelectTextDraw::removeEventHandler(*core, &playerSelectTextDrawEventHandler);
         }
     }
@@ -202,7 +203,7 @@ public:
         player.addExtension(new PlayerTextDrawData(player), true);
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
 

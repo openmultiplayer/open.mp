@@ -11,7 +11,7 @@
 
 using namespace Impl;
 
-class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler {
+class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
     MarkedPoolStorage<Pickup, IPickup, 0, PICKUP_POOL_SIZE> storage;
@@ -68,6 +68,7 @@ public:
         players = &core->getPlayers();
         players->getPlayerUpdateDispatcher().addEventHandler(this);
         players->getEventDispatcher().addEventHandler(this);
+        players->getPoolEventDispatcher().addEventHandler(this);
         NetCode::RPC::OnPlayerPickUpPickup::addEventHandler(*core, &playerPickUpPickupEventHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
@@ -77,6 +78,7 @@ public:
         if (core) {
             players->getPlayerUpdateDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
+            players->getPoolEventDispatcher().removeEventHandler(this);
             NetCode::RPC::OnPlayerPickUpPickup::removeEventHandler(*core, &playerPickUpPickupEventHandler);
         }
     }
@@ -86,7 +88,7 @@ public:
         return storage.emplace(modelId, type, pos, virtualWorld, isStatic);
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPoolEntryDestroyed(IPlayer& player) override
     {
         const int pid = player.getID();
         for (IPickup* p : storage) {
