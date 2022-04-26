@@ -71,7 +71,7 @@ void Scripting::addEvents() const
 
     // add event handlers
     if (mgr->players) {
-        mgr->players->getEventDispatcher().addEventHandler(PlayerEvents::Get(), EventPriority_Highest);
+        mgr->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
         mgr->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
     }
     if (mgr->actors) {
