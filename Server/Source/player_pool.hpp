@@ -24,7 +24,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     StreamConfigHelper streamConfigHelper;
     int* markersShow;
     int* markersUpdateRate;
-    int* markersLimit;
+    bool* markersLimit;
     float* markersLimitRadius;
     int* gameTimeUpdateRate;
     int maxBots = 0;
@@ -210,7 +210,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     struct PlayerDeathRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
-        int* logDeaths;
+        bool* logDeaths;
 
         PlayerDeathRPCHandler(PlayerPool& self)
             : self(self)
@@ -219,7 +219,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         void init(IConfig& config)
         {
-            logDeaths = config.getInt("logging.log_deaths");
+            logDeaths = config.getBool("logging.log_deaths");
         }
 
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
@@ -345,8 +345,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         PlayerPool& self;
         int* limitGlobalChatRadius;
         float* globalChatRadiusLimit;
-        int* logChat;
-        int* filterText;
+        bool* logChat;
+        bool* filterText;
 
         PlayerTextRPCHandler(PlayerPool& self)
             : self(self)
@@ -357,8 +357,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
             limitGlobalChatRadius = config.getInt("game.use_chat_radius");
             globalChatRadiusLimit = config.getFloat("game.chat_radius");
-            logChat = config.getInt("logging.log_chat");
-            filterText = config.getInt("chat_input_filter");
+            logChat = config.getBool("logging.log_chat");
+            filterText = config.getBool("chat_input_filter");
         }
 
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
@@ -410,7 +410,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     struct PlayerCommandRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
-        int* filterText;
+        bool* filterText;
         PlayerCommandRPCHandler(PlayerPool& self)
             : self(self)
         {
@@ -418,7 +418,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         void init(IConfig& config)
         {
-            filterText = config.getInt("chat_input_filter");
+            filterText = config.getBool("chat_input_filter");
         }
 
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
@@ -1503,7 +1503,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerCommandRPCHandler.init(config);
         playerDeathRPCHandler.init(config);
         markersShow = config.getInt("game.player_marker_mode");
-        markersLimit = config.getInt("game.use_player_marker_radius");
+        markersLimit = config.getBool("game.use_player_marker_radius");
         markersLimitRadius = config.getFloat("game.player_marker_radius");
         markersUpdateRate = config.getInt("network.player_marker_sync_rate");
         gameTimeUpdateRate = config.getInt("network.time_sync_rate");

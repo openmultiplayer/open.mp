@@ -628,10 +628,10 @@ void RakNetLegacyNetwork::update()
     SAMPRakNet::SetAcksLimit(*config.getInt("network.acks_limit"));
     SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network.limits_ban_time"));
 
-    SAMPRakNet::SetLogCookies(*config.getInt("logging.log_cookies"));
+    SAMPRakNet::SetLogCookies(*config.getBool("logging.log_cookies"));
 
-    query.setLogQueries(*config.getInt("logging.log_queries"));
-    if (*config.getInt("enable_query")) {
+    query.setLogQueries(*config.getBool("logging.log_queries"));
+    if (*config.getBool("enable_query")) {
         SAMPRakNet::SetQuery(&query);
     }
 
@@ -666,7 +666,7 @@ void RakNetLegacyNetwork::update()
 
     StringView rconPassword = config.getString("rcon.password");
     query.setRconPassword(rconPassword);
-    query.setRconEnabled(*config.getInt("rcon.enable"));
+    query.setRconEnabled(*config.getBool("rcon.enable"));
 
     StringView password = config.getString("password");
     query.setPassworded(!password.empty());
@@ -728,7 +728,7 @@ void RakNetLegacyNetwork::start()
         }
 
         // Do the request after network is started.
-        if (*config.getInt("announce")) {
+        if (*config.getBool("announce")) {
             const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
             core->requestHTTP(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
         }
