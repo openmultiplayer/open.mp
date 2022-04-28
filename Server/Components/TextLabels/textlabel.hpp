@@ -71,10 +71,12 @@ public:
         return text;
     }
 
-    void setColour(Colour col) override
+    void setColour(Colour col, bool stream) override
     {
         colour = col;
-        restream();
+        if (stream) {
+            restream();
+        }
     }
 
     Colour getColour() const override
