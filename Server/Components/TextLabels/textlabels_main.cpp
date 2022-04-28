@@ -163,7 +163,7 @@ public:
             const float maxDist = streamConfigHelper.getDistanceSqr();
 
             for (IPlayer* player : players->entries()) {
-                updateLabelStateForPlayer(created, *player, maxDist);
+                updateLabelStateForPlayer(static_cast<TextLabel*>(created), *player, maxDist);
             }
         }
         return created;
@@ -237,31 +237,35 @@ public:
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (ITextLabel* textLabel : storage) {
-                updateLabelStateForPlayer(textLabel, player, maxDist);
+                updateLabelStateForPlayer(static_cast<TextLabel*>(textLabel), player, maxDist);
             }
         }
 
         return true;
     }
 
-    void updateLabelStateForPlayer(ITextLabel* textLabel, IPlayer& player, float maxDist)
+    void updateLabelStateForPlayer(TextLabel* label, IPlayer& player, float maxDist)
     {
-        TextLabel* label = static_cast<TextLabel*>(textLabel);
         const TextLabelAttachmentData& data = label->getAttachmentData();
         Vector3 pos = label->getPosition();
+        const int world = label->getVirtualWorld();
+        bool worldOrAttached = player.getVirtualWorld() == world || world == -1;
+
         IPlayer* textLabelPlayer = players->get(data.playerID);
         if (textLabelPlayer) {
+            worldOrAttached = textLabelPlayer->isStreamedInForPlayer(player);
             pos = textLabelPlayer->getPosition();
         } else if (vehicles) {
             IVehicle* textLabelVehicle = vehicles->get(data.vehicleID);
             if (textLabelVehicle) {
+                worldOrAttached = textLabelVehicle->isStreamedInForPlayer(player);
                 pos = textLabelVehicle->getPosition();
             }
         }
 
         const PlayerState state = player.getState();
         const Vector3 dist3D = pos - player.getPosition();
-        const bool shouldBeStreamedIn = state != PlayerState_None && (player.getVirtualWorld() == label->getVirtualWorld() || label->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
+        const bool shouldBeStreamedIn = state != PlayerState_None && worldOrAttached && glm::dot(dist3D, dist3D) < maxDist;
 
         const bool isStreamedIn = label->isStreamedInForPlayer(player);
         if (!isStreamedIn && shouldBeStreamedIn) {
