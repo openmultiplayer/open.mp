@@ -1050,10 +1050,12 @@ public:
 					config.setString(key, value);
 					break;
 				case ConfigOptionType_Float:
-					config.setInt(key, std::stod(value.data()));
+					config.setFloat(key, std::stod(value.data()));
 					break;
 				case ConfigOptionType_Strings:
-					config.setString(key, value);
+					// Unfortunately we're still setting up the config options so this may display
+					// oddly (wrong place/prefix etc).
+					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
 					break;
 				case ConfigOptionType_Bool:
 					config.setBool(key, value == "true" || (value != "false" && !!std::stoi(value.data())));
