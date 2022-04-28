@@ -100,7 +100,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging_sqlite_queries", false },
     { "logging_cookies", false },
     { "rcon_allow_teleport", false },
-    { "rcon_password", "changeme" },
+    { "rcon_password", "" }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
     { "vehicle_friendly_fire", false },
     { "vehicle_death_respawn_delay", 10 },
     { "chat_input_filter", true }
@@ -485,6 +485,7 @@ public:
 
         Config config(core, true /* defaultsOnly */);
         components.configure(core, config, true /* defaults */);
+        config.setString("rcon_password", "changeme");
 
         if (ofs.good()) {
             for (const auto& kv : config.options()) {
