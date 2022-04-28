@@ -10,6 +10,7 @@
 #include "console_impl.hpp"
 #include <Impl/events_impl.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <utils.hpp>
 #include <atomic>
 #include <codecvt>
 #include <iostream>
@@ -21,17 +22,6 @@
 #include <thread>
 
 using namespace Impl;
-
-StringView trim(StringView view)
-{
-    char const* const whitespace = " \t\n\r\f\v";
-    const size_t start = view.find_first_not_of(whitespace);
-    if (start == StringView::npos) {
-        return "";
-    }
-    const size_t end = view.find_last_not_of(whitespace);
-    return view.substr(start, end - start + 1);
-}
 
 class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler {
 private:

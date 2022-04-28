@@ -25,6 +25,7 @@
 #include <sstream>
 #include <thread>
 #include <variant>
+#include <utils.hpp>
 
 using namespace Impl;
 
@@ -1024,6 +1025,45 @@ public:
         components.configure(*this, config, false);
 
         config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
+		
+		if (cmd.count("config"))
+		{
+			auto configs = cmd["config"].as<std::vector<std::string>>();
+			// Loop through all the config options, get the key/value pair, and store it.
+			for (auto const & conf : configs)
+			{
+				size_t split = conf.find_first_of('=');
+				if (split == StringView::npos)
+				{
+					// Invalid option.  No `=`.
+					continue;
+				}
+				// Get the type of this option from the existing options (defaults and files).
+				StringView key = trim(StringView(conf.data(), split));
+				StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
+				switch (config.getType(key))
+				{
+				case ConfigOptionType_Int:
+					config.setInt(key, std::stoi(value.data()));
+					break;
+				case ConfigOptionType_String:
+					config.setString(key, value);
+					break;
+				case ConfigOptionType_Float:
+					config.setInt(key, std::stod(value.data()));
+					break;
+				case ConfigOptionType_Strings:
+					config.setString(key, value);
+					break;
+				case ConfigOptionType_Bool:
+					config.setBool(key, value == "true" || (value != "false" && !!std::stoi(value.data())));
+					break;
+				default:
+					// Do nothing.
+					break;
+				}
+			}
+        }
 
         if (cmd.count("script")) {
             // Add the launch parameter to the start of the scripts list.
@@ -1042,7 +1082,6 @@ public:
             }
             config.setStrings("pawn.main_scripts", view);
         }
-
         // Don't use config before this point
         if (cmd.count("dump-config")) {
             // Generate config
