@@ -80,17 +80,23 @@ private:
                     StringView commandName = trim(command.substr(0, split));
                     StringView password = trim(command.substr(split + 1));
                     if (commandName == "login") {
+                        StringView rconPassword = self.core->getConfig().getString("rcon_password");
                         bool success = false;
 
-                        if (password == self.core->getConfig().getString("rcon_password")) {
-                            pdata->setConsoleAccessibility(true);
-                            self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%.*s) has logged in.", peer.getID(), PRINT_VIEW(peer.getName()));
-                            peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
-                            success = true;
-                        } else {
-                            self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%.*s) failed login.", peer.getID(), PRINT_VIEW(peer.getName()));
-                            peer.sendClientMessage(Colour::White(), "SERVER: Bad admin password. Repeated attempts will get you banned.");
+                        if (rconPassword == "") {
+                            peer.sendClientMessage(Colour::White(), "SERVER: Server's rcon_password is empty.");
                             success = false;
+                        } else {
+                            if (password == rconPassword) {
+                                pdata->setConsoleAccessibility(true);
+                                self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%.*s) has logged in.", peer.getID(), PRINT_VIEW(peer.getName()));
+                                peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
+                                success = true;
+                            } else {
+                                self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%.*s) failed login.", peer.getID(), PRINT_VIEW(peer.getName()));
+                                peer.sendClientMessage(Colour::White(), "SERVER: Bad admin password. Repeated attempts will get you banned.");
+                                success = false;
+                            }
                         }
 
                         self.eventDispatcher.all(
