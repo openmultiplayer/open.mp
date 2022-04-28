@@ -220,7 +220,7 @@ private:
             if (v.is_number_integer()) {
                 processed[key].emplace<int>(v.get<int>());
             } else if (v.is_boolean()) {
-                processed[key].emplace<int>(v.get<bool>());
+                processed[key].emplace<bool>(v.get<bool>());
             } else if (v.is_number_float()) {
                 processed[key].emplace<float>(v.get<float>());
             } else if (v.is_string()) {
