@@ -71,12 +71,10 @@ public:
         return text;
     }
 
-    void setColour(Colour col, bool stream) override
+    void setColour(Colour col) override
     {
         colour = col;
-        if (stream) {
-            restream();
-        }
+        restream();
     }
 
     Colour getColour() const override
@@ -160,6 +158,13 @@ public:
         hideTextLabelRPC.PlayerTextLabel = isPlayerTextLabel;
         hideTextLabelRPC.TextLabelID = poolID;
         PacketHelper::send(hideTextLabelRPC, player);
+    }
+
+    void setColourAndText(Colour col, StringView txt) override
+    {
+        colour = col;
+        text = txt;
+        restream();
     }
 };
 
