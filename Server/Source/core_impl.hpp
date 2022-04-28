@@ -1046,7 +1046,19 @@ public:
 				switch (config.getType(key))
 				{
 				case ConfigOptionType_Int:
-					config.setInt(key, std::stoi(value.data()));
+					// Some settings refuse to be `bool` in the variant.
+					if (value == "true")
+					{
+						config.setBool(key, true);
+					}
+					else if (value == "false")
+					{
+						config.setBool(key, false);
+					}
+					else
+					{
+						config.setInt(key, std::stoi(value.data()));
+					}
 					break;
 				case ConfigOptionType_String:
 					config.setString(key, value);
