@@ -160,6 +160,12 @@ public:
 
     void onReady() override
     {
+        // Server without a config file has rcon_password empty so we disable rcon manually too.
+        if (core->getConfig().getString("rcon_password") == "") {
+            static_cast<IEarlyConfig&>(core->getConfig()).setInt("enable_rcon", 0);
+        }
+
+        // Server exit server if rcon_password is set to changeme
         if (core->getConfig().getString("rcon_password") == "changeme") {
             core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password. Please change your rcon password.");
             send("exit");
