@@ -86,6 +86,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging.log_sqlite_queries", false },
     { "logging.timestamp_format", String("[%Y-%m-%dT%H:%M:%SZ]") },
     { "logging.use_timestamp", true },
+    { "logging.use_prefix", true },
     // network
     { "network.acks_limit", 3000 },
     { "network.aiming_sync_rate", 30 },
@@ -794,7 +795,8 @@ private:
     int* EnableVehicleFriendlyFire;
     bool reloading_ = false;
 
-    int EnableLogTimestamp;
+    bool EnableLogTimestamp;
+    bool EnableLogPrefix;
     String LogTimestampFormat;
 
     void addComponent(IComponent* component)
@@ -1122,7 +1124,8 @@ public:
         ServerName = String(config.getString("name"));
         EnableVehicleFriendlyFire = config.getInt("game.use_vehicle_friendly_fire");
 
-        EnableLogTimestamp = *config.getInt("logging.use_timestamp");
+        EnableLogTimestamp = *config.getBool("logging.use_timestamp");
+        EnableLogPrefix = *config.getBool("logging.use_prefix");
         LogTimestampFormat = String(config.getString("logging.timestamp_format"));
 
         config.optimiseBans();
@@ -1204,7 +1207,10 @@ public:
             fputs(iso8601, stream);
             fputs(" ", stream);
         }
-        fputs(prefix, stream);
+		if (prefix)
+		{
+			fputs(prefix, stream);
+		}
         fputs(message, stream);
         fputs("\n", stream);
         fflush(stream);
@@ -1226,19 +1232,22 @@ public:
         }
 #endif
         const char* prefix = nullptr;
-        switch (level) {
-        case LogLevel::Debug:
-            prefix = "[Debug] ";
-            break;
-        case LogLevel::Message:
-            prefix = "[Info] ";
-            break;
-        case LogLevel::Warning:
-            prefix = "[Warning] ";
-            break;
-        case LogLevel::Error:
-            prefix = "[Error] ";
-        }
+		if (EnableLogPrefix)
+		{
+			switch (level) {
+			case LogLevel::Debug:
+				prefix = "[Debug] ";
+				break;
+			case LogLevel::Message:
+				prefix = "[Info] ";
+				break;
+			case LogLevel::Warning:
+				prefix = "[Warning] ";
+				break;
+			case LogLevel::Error:
+				prefix = "[Error] ";
+			}
+		}
 
         char iso8601[32] = { 0 };
         if (EnableLogTimestamp && !LogTimestampFormat.empty()) {
