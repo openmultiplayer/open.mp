@@ -768,31 +768,31 @@ private:
     TimePoint ticksPerSecondLastUpdate;
     std::set<HTTPAsyncIO*> httpFutures;
 
-    int* EnableZoneNames;
-    int* UsePlayerPedAnims;
-    int* AllowInteriorWeapons;
-    int* UseLimitGlobalChatRadius;
+    bool* EnableZoneNames;
+    bool* UsePlayerPedAnims;
+    bool* AllowInteriorWeapons;
+    bool* UseLimitGlobalChatRadius;
     float* LimitGlobalChatRadius;
-    int* EnableStuntBonus;
+    bool* EnableStuntBonus;
     float* SetNameTagDrawDistance;
-    int* DisableInteriorEnterExits;
-    int* DisableNameTagLOS;
-    int* ManualVehicleEngineAndLights;
-    int* ShowNameTags;
+    bool* EnableInteriorEnterExits;
+    bool* EnableNameTagLOS;
+    bool* ManualVehicleEngineAndLights;
+    bool* ShowNameTags;
     int* ShowPlayerMarkers;
     int* SetWorldTime;
     int* SetWeather;
     float* SetGravity;
-    int* LanMode;
+    bool* LanMode;
     int* SetDeathDropAmount;
-    int* Instagib;
+    bool* Instagib;
     int* OnFootRate;
     int* InCarRate;
     int* WeaponRate;
     int* Multiplier;
-    int* LagCompensation;
+    bool* LagCompensation;
     String ServerName;
-    int* EnableVehicleFriendlyFire;
+    bool* EnableVehicleFriendlyFire;
     bool reloading_ = false;
 
     bool EnableLogTimestamp;
@@ -891,8 +891,8 @@ private:
         playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
         playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
         playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
-        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
-        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
+        playerInitRPC.DisableInteriorEnterExits = !*EnableInteriorEnterExits;
+        playerInitRPC.DisableNameTagLOS = !*EnableNameTagLOS;
         playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
         playerInitRPC.ShowNameTags = *ShowNameTags;
         playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
@@ -1094,35 +1094,35 @@ public:
             return;
         }
 
-        if (*config.getInt("logging.enable")) {
+        if (*config.getBool("logging.enable")) {
             logFile = ::fopen(LogFileName, "a");
         }
 
-        EnableZoneNames = config.getInt("game.use_zone_names");
-        UsePlayerPedAnims = config.getInt("game.use_player_ped_anims");
-        AllowInteriorWeapons = config.getInt("game.allow_interior_weapons");
-        UseLimitGlobalChatRadius = config.getInt("game.use_chat_radius");
+        EnableZoneNames = config.getBool("game.use_zone_names");
+        UsePlayerPedAnims = config.getBool("game.use_player_ped_anims");
+        AllowInteriorWeapons = config.getBool("game.allow_interior_weapons");
+        UseLimitGlobalChatRadius = config.getBool("game.use_chat_radius");
         LimitGlobalChatRadius = config.getFloat("game.chat_radius");
-        EnableStuntBonus = config.getInt("game.use_stunt_bonuses");
+        EnableStuntBonus = config.getBool("game.use_stunt_bonuses");
         SetNameTagDrawDistance = config.getFloat("game.nametag_radius");
-        DisableInteriorEnterExits = config.getInt("game.use_enex_markers");
-        DisableNameTagLOS = config.getInt("game.use_nametag_los");
-        ManualVehicleEngineAndLights = config.getInt("game.use_vehicle_activation");
-        ShowNameTags = config.getInt("game.use_nametags");
+        EnableInteriorEnterExits = config.getBool("game.use_enex_markers");
+        EnableNameTagLOS = config.getBool("game.use_nametag_los");
+        ManualVehicleEngineAndLights = config.getBool("game.use_vehicle_activation");
+        ShowNameTags = config.getBool("game.use_nametags");
         ShowPlayerMarkers = config.getInt("game.player_marker_mode");
         SetWorldTime = config.getInt("game.time");
         SetWeather = config.getInt("game.weather");
         SetGravity = config.getFloat("game.gravity");
-        LanMode = config.getInt("network.use_lan_mode");
+        LanMode = config.getBool("network.use_lan_mode");
         SetDeathDropAmount = config.getInt("game.death_drop_amount");
-        Instagib = config.getInt("game.use_instagib");
+        Instagib = config.getBool("game.use_instagib");
         OnFootRate = config.getInt("network.on_foot_sync_rate");
         InCarRate = config.getInt("network.in_vehicle_sync_rate");
         WeaponRate = config.getInt("network.aiming_sync_rate");
         Multiplier = config.getInt("network.multiplier");
-        LagCompensation = config.getInt("network.use_lag_compensation");
+        LagCompensation = config.getBool("network.use_lag_compensation");
         ServerName = String(config.getString("name"));
-        EnableVehicleFriendlyFire = config.getInt("game.use_vehicle_friendly_fire");
+        EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
         EnableLogTimestamp = *config.getBool("logging.use_timestamp");
         EnableLogPrefix = *config.getBool("logging.use_prefix");

@@ -88,7 +88,7 @@ SCRIPT_API(SetVehicleParamsForPlayer, bool(IVehicle& vehicle, IPlayer& player, i
 SCRIPT_API(ManualVehicleEngineAndLights, bool())
 {
     if (PawnManager().Get()->config) {
-        *PawnManager().Get()->config->getInt("game.use_vehicle_activation") = true;
+        *PawnManager().Get()->config->getBool("game.use_vehicle_activation") = true;
     }
     return true;
 }
@@ -367,7 +367,7 @@ SCRIPT_API(AddStaticVehicleEx, int(int modelid, Vector3 spawn, float angle, int 
 
 SCRIPT_API(EnableVehicleFriendlyFire, bool())
 {
-    *PawnManager::Get()->config->getInt("game.use_vehicle_friendly_fire") = true;
+    *PawnManager::Get()->config->getBool("game.use_vehicle_friendly_fire") = true;
     return true;
 }
 
