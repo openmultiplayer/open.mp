@@ -12,13 +12,24 @@
 #include "sdk.hpp"
 
 struct TextDrawEvents : public TextDrawEventHandler, public Singleton<TextDrawEvents> {
-    virtual void onPlayerCancelTextDraw(IPlayer& player) override
+    virtual bool onPlayerCloseTextDraw(IPlayer& player) override
     {
         cell ret = PawnManager::Get()->CallInSidesWhile0("OnPlayerClickTextDraw", player.getID(), INVALID_TEXTDRAW);
         if (!ret) {
             PawnManager::Get()->CallInEntry("OnPlayerClickTextDraw", DefaultReturnValue_False, player.getID(), INVALID_TEXTDRAW);
         }
-		// TODO: Call `OnPlayerClickPlayerTextDraw` as well here.
+		// TODO: New callback?
+		return true;
+    }
+
+    virtual bool onPlayerClosePlayerTextDraw(IPlayer& player) override
+    {
+        cell ret = PawnManager::Get()->CallInSidesWhile0("OnPlayerClickPlayerTextDraw", player.getID(), INVALID_TEXTDRAW);
+        if (!ret) {
+            PawnManager::Get()->CallInEntry("OnPlayerClickPlayerTextDraw", DefaultReturnValue_False, player.getID(), INVALID_TEXTDRAW);
+        }
+		// TODO: New callback?
+		return true;
     }
 
     void onPlayerClickTextDraw(IPlayer& player, ITextDraw& td) override

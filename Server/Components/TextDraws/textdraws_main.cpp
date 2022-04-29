@@ -150,7 +150,10 @@ public:
             if (data) {
                 if (RPC.Invalid) {
                     data->cancelSelecting();
-                    self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerCancelTextDraw, peer);
+					bool reopen = !self.dispatcher.all(
+						[&peer](TextDrawEventHandler * handler) {
+							return handler->onPlayerCloseTextDraw(peer);
+						});
                 } else {
                     if (RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
