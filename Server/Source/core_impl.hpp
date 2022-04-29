@@ -927,6 +927,43 @@ private:
         PacketHelper::send(RPC, player);
     }
 
+	bool setConfigFromString(StringView conf)
+	{
+		size_t split = conf.find_first_of('=');
+		if (split == StringView::npos)
+		{
+			// Invalid option.  No `=`.
+			return false;
+		}
+		// Get the type of this option from the existing options (defaults and files).
+		StringView key = trim(StringView(conf.data(), split));
+		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
+		switch (config.getType(key))
+		{
+		case ConfigOptionType_Int:
+			config.setInt(key, std::stoi(value.data()));
+			break;
+		case ConfigOptionType_String:
+			config.setString(key, value);
+			break;
+		case ConfigOptionType_Float:
+			config.setFloat(key, std::stod(value.data()));
+			break;
+		case ConfigOptionType_Strings:
+			// Unfortunately we're still setting up the config options so this may display
+			// oddly (wrong place/prefix etc).
+			logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+			break;
+		case ConfigOptionType_Bool:
+			config.setBool(key, value == "true" || (value != "false" && !!std::stoi(value.data())));
+			break;
+		default:
+			// Do nothing.
+			break;
+		}
+		return true;
+	}
+
 public:
     bool reloadLogFile()
     {
@@ -1034,38 +1071,7 @@ public:
 			// Loop through all the config options, get the key/value pair, and store it.
 			for (auto const & conf : configs)
 			{
-				size_t split = conf.find_first_of('=');
-				if (split == StringView::npos)
-				{
-					// Invalid option.  No `=`.
-					continue;
-				}
-				// Get the type of this option from the existing options (defaults and files).
-				StringView key = trim(StringView(conf.data(), split));
-				StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
-				switch (config.getType(key))
-				{
-				case ConfigOptionType_Int:
-					config.setInt(key, std::stoi(value.data()));
-					break;
-				case ConfigOptionType_String:
-					config.setString(key, value);
-					break;
-				case ConfigOptionType_Float:
-					config.setFloat(key, std::stod(value.data()));
-					break;
-				case ConfigOptionType_Strings:
-					// Unfortunately we're still setting up the config options so this may display
-					// oddly (wrong place/prefix etc).
-					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-					break;
-				case ConfigOptionType_Bool:
-					config.setBool(key, value == "true" || (value != "false" && !!std::stoi(value.data())));
-					break;
-				default:
-					// Do nothing.
-					break;
-				}
+				setConfigFromString(conf);
 			}
         }
 
@@ -1452,6 +1458,11 @@ public:
             if (reloadLogFile()) {
                 console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
             }
+            return true;
+        }
+		else if (command == "config")
+		{
+			setConfigFromString(parameters);
             return true;
         }
         return false;
