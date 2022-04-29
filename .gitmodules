@@ -13,6 +13,3 @@
 [submodule "lib/ttmath"]
 	path = lib/ttmath
 	url = git@github.com:openmultiplayer/ttmath.git
-[submodule "SDK"]
-	path = SDK
-	url = git@github.com:openmultiplayer/open.mp-sdk.git
