@@ -12,6 +12,30 @@
 
 using namespace Impl;
 
+char ascii_toupper_char(char c)
+{
+    return ('a' <= c && c <= 'z') ? c ^ 0x20 : c;
+}
+
+// Auto-vectorized toupper function
+// You can find out why this is being used in here: https://stackoverflow.com/a/37151084
+// Ours is probably going to be even faster since we don't have to use strlen;
+// Because string_view::length() already holds string length
+// TODO: Move this to somewhere more appropiate, we don't have shared utils yet.
+size_t strtoupper(String& dst, const StringView& src)
+{
+    size_t length = src.length();
+    dst.resize(length);
+    for (size_t i = 0; i < length; ++i) {
+        dst[i] = ascii_toupper_char(src[i]);
+    }
+    return length;
+}
+
+#define TO_UPPER_KEY(dest, source) \
+    String dest;                   \
+    strtoupper(dest, source);
+
 template <class ToInherit>
 class VariableStorageBase : public ToInherit {
 private:
@@ -20,12 +44,14 @@ private:
 public:
     void setString(StringView key, StringView value) override
     {
-        data_[String(key)].emplace<String>(value);
+        TO_UPPER_KEY(upperKey, key);
+        data_[upperKey].emplace<String>(value);
     }
 
     const StringView getString(StringView key) const override
     {
-        auto it = data_.find(String(key));
+        TO_UPPER_KEY(upperKey, key);
+        auto it = data_.find(upperKey);
         if (it == data_.end()) {
             return StringView();
         }
@@ -37,12 +63,14 @@ public:
 
     void setInt(StringView key, int value) override
     {
-        data_[String(key)].emplace<int>(value);
+        TO_UPPER_KEY(upperKey, key);
+        data_[upperKey].emplace<int>(value);
     }
 
     int getInt(StringView key) const override
     {
-        auto it = data_.find(String(key));
+        TO_UPPER_KEY(upperKey, key);
+        auto it = data_.find(upperKey);
         if (it == data_.end()) {
             return 0;
         }
@@ -54,12 +82,14 @@ public:
 
     void setFloat(StringView key, float value) override
     {
-        data_[String(key)].emplace<float>(value);
+        TO_UPPER_KEY(upperKey, key);
+        data_[upperKey].emplace<float>(value);
     }
 
     float getFloat(StringView key) const override
     {
-        auto it = data_.find(String(key));
+        TO_UPPER_KEY(upperKey, key);
+        auto it = data_.find(upperKey);
         if (it == data_.end()) {
             return 0;
         }
@@ -71,7 +101,8 @@ public:
 
     VariableType getType(StringView key) const override
     {
-        auto it = data_.find(String(key));
+        TO_UPPER_KEY(upperKey, key);
+        auto it = data_.find(upperKey);
         if (it == data_.end()) {
             return VariableType_None;
         }
@@ -84,7 +115,8 @@ public:
 
     bool erase(StringView key) override
     {
-        auto it = data_.find(String(key));
+        TO_UPPER_KEY(upperKey, key);
+        auto it = data_.find(upperKey);
         if (it == data_.end()) {
             return false;
         }
