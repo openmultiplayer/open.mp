@@ -109,7 +109,7 @@ static const std::map<String, ConfigStorage> Defaults {
     // rcon
     { "rcon.allow_teleport", false },
     { "rcon.enable", false },
-    { "rcon.password", String("").}, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
+    { "rcon.password", String("") }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
 };
 
 // Provide automatic Defaults → JSON conversion in Config
