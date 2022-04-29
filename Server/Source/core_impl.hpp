@@ -15,6 +15,7 @@
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/Unicode/unicode.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -940,37 +941,48 @@ private:
 		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
 		try
 		{
-			switch (config.getType(key))
+			// Try the code twice - once for the given config, once for it translated from legacy.
+			for (int attempts = 0; !key.empty() && attempts != 2; ++attempts)
 			{
-			case ConfigOptionType_Int:
-				*config.getInt(key) = std::stoi(value.data());
-				return true;
-			case ConfigOptionType_String:
-				// TODO: This is a problem.  Most uses hold references to the internal config data,
-				// which we can modify.  Strings don't.  Thus setting a string here won't update all the
-				// uses of that string.
-				config.setString(key, value);
-				return true;
-			case ConfigOptionType_Float:
-				*config.getFloat(key) = std::stod(value.data());
-				return true;
-			case ConfigOptionType_Strings:
-				// Unfortunately we're still setting up the config options so this may display
-				// oddly (wrong place/prefix etc).
-				logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-				return false;
-			case ConfigOptionType_Bool:
-				*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
-				return true;
-			default:
-				// Do nothing.  Unknown or unparseable.
-				return false;
+				switch (config.getType(key))
+				{
+				case ConfigOptionType_Int:
+					*config.getInt(key) = std::stoi(value.data());
+					return true;
+				case ConfigOptionType_String:
+					// TODO: This is a problem.  Most uses hold references to the internal config data,
+					// which we can modify.  Strings don't.  Thus setting a string here won't update all the
+					// uses of that string.
+					config.setString(key, value);
+					return true;
+				case ConfigOptionType_Float:
+					*config.getFloat(key) = std::stod(value.data());
+					return true;
+				case ConfigOptionType_Strings:
+					// Unfortunately we're still setting up the config options so this may display
+					// oddly (wrong place/prefix etc).
+					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+					return false;
+				case ConfigOptionType_Bool:
+					*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+					return true;
+				default:
+					// Try the loop again with a new key.
+					auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
+					if (legacyLookup)
+					{
+						// Did they type a legacy key?
+						key = legacyLookup->getConfig(key);
+					}
+					break;
+				}
 			}
 		}
 		catch (std::invalid_argument const & e)
 		{
-			return false;
+			// The value was wrong.
 		}
+		return false;
 	}
 
 public:
