@@ -441,10 +441,24 @@ public:
 	// Inherited via ILegacyConfigComponent
 	virtual StringView getConfig(StringView legacyName) override
 	{
-		return StringView();
+		auto it = dictionary.find(legacyName);
+		if (it == dictionary.end())
+		{
+			return StringView();
+		}
+		return it->second;
 	}
+
 	virtual StringView getLegacy(StringView configName) override
 	{
+		// The code is tuned for looking up the new names, not the old names.
+		for (auto const & it : dictionary)
+		{
+			if (it.second == configName)
+			{
+				return it.first;
+			}
+		}
 		return StringView();
 	}
 };
@@ -453,3 +467,4 @@ COMPONENT_ENTRY_POINT()
 {
     return new LegacyConfigComponent();
 }
+
