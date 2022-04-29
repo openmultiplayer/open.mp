@@ -939,49 +939,74 @@ private:
 		// Get the type of this option from the existing options (defaults and files).
 		StringView key = trim(StringView(conf.data(), split));
 		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
+		if (key.empty())
+		{
+			logLn(LogLevel::Warning, "No key supplied to `--config`");
+			return false;
+		}
+		if (value.empty())
+		{
+			logLn(LogLevel::Warning, "No value supplied to `--config`");
+			return false;
+		}
 		try
 		{
 			// Try the code twice - once for the given config, once for it translated from legacy.
-			for (int attempts = 0; !key.empty() && attempts != 2; ++attempts)
+			bool retry = true;
+setConfigFromString_retry:
+			switch (config.getType(key))
 			{
-				switch (config.getType(key))
+			case ConfigOptionType_Int:
+				*config.getInt(key) = std::stoi(value.data());
+				return true;
+			case ConfigOptionType_String:
+				// TODO: This is a problem.  Most uses hold references to the internal config data,
+				// which we can modify.  Strings don't.  Thus setting a string here won't update all the
+				// uses of that string.
+				config.setString(key, value);
+				return true;
+			case ConfigOptionType_Float:
+				*config.getFloat(key) = std::stod(value.data());
+				return true;
+			case ConfigOptionType_Strings:
+				// Unfortunately we're still setting up the config options so this may display
+				// oddly (wrong place/prefix etc).
+				logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+				return false;
+			case ConfigOptionType_Bool:
+				*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+				return true;
+			default:
+				// Try the loop again with a new key.
+				auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
+				// Check for the second time getting to here.  Shouldn't happen, as that means a
+				// legacy option is unknown, but handle it anyway.
+				if (!retry && legacyLookup)
 				{
-				case ConfigOptionType_Int:
-					*config.getInt(key) = std::stoi(value.data());
-					return true;
-				case ConfigOptionType_String:
-					// TODO: This is a problem.  Most uses hold references to the internal config data,
-					// which we can modify.  Strings don't.  Thus setting a string here won't update all the
-					// uses of that string.
-					config.setString(key, value);
-					return true;
-				case ConfigOptionType_Float:
-					*config.getFloat(key) = std::stod(value.data());
-					return true;
-				case ConfigOptionType_Strings:
-					// Unfortunately we're still setting up the config options so this may display
-					// oddly (wrong place/prefix etc).
-					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-					return false;
-				case ConfigOptionType_Bool:
-					*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
-					return true;
-				default:
-					// Try the loop again with a new key.
-					auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
-					if (legacyLookup)
+					// Did they type a legacy key?
+					StringView nu = legacyLookup->getConfig(key);
+					if (!nu.empty())
 					{
-						// Did they type a legacy key?
-						key = legacyLookup->getConfig(key);
+						logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
+						key = nu;
+						// Yes, it is a `goto`.  I used a loop originally, but it made all the code
+						// to print messages in different cases more complex.  There was way more
+						// code to avoid repetition of messages (both in code and console).  This is
+						// the much more readable solution.
+						retry = true;
+						goto setConfigFromString_retry;
 					}
-					break;
 				}
+				break;
 			}
 		}
 		catch (std::invalid_argument const & e)
 		{
 			// The value was wrong.
+			logLn(LogLevel::Warning, "Value %.*s could not be parsed", value.length(), value.data());
+			return false;
 		}
+		logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
 		return false;
 	}
 
