@@ -159,6 +159,13 @@ public:
         hideTextLabelRPC.TextLabelID = poolID;
         PacketHelper::send(hideTextLabelRPC, player);
     }
+
+    void setColourAndText(Colour col, StringView txt) override
+    {
+        colour = col;
+        text = txt;
+        restream();
+    }
 };
 
 class TextLabel final : public TextLabelBase<ITextLabel> {

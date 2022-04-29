@@ -42,8 +42,7 @@ SCRIPT_API(Attach3DTextLabelToVehicle, bool(ITextLabel& textlabel, IVehicle& veh
 
 SCRIPT_API(Update3DTextLabelText, bool(ITextLabel& textlabel, uint32_t colour, const std::string& text))
 {
-    textlabel.setColour(Colour::FromRGBA(colour));
-    textlabel.setText(text);
+    textlabel.setColourAndText(Colour::FromRGBA(colour), text);
     return true;
 }
 
@@ -146,8 +145,7 @@ SCRIPT_API(DeletePlayer3DTextLabel, bool(IPlayer& player, IPlayerTextLabel& text
 
 SCRIPT_API(UpdatePlayer3DTextLabelText, bool(IPlayer& player, IPlayerTextLabel& textlabel, uint32_t colour, const std::string& text))
 {
-    textlabel.setColour(Colour::FromRGBA(colour));
-    textlabel.setText(text);
+    textlabel.setColourAndText(Colour::FromRGBA(colour), text);
     return true;
 }
 
