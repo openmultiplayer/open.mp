@@ -1005,7 +1005,7 @@ private:
 		catch (std::invalid_argument const & e)
 		{
 			// The value was wrong.
-			logLn(LogLevel::Warning, "Value %.*s could not be parsed", value.length(), value.data());
+			logLn(LogLevel::Warning, "Value `%.*s` could not be parsed", value.length(), value.data());
 			return false;
 		}
 		logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
