@@ -51,7 +51,7 @@ SCRIPT_API(AddPlayerClassEx, int(uint8_t team, int skin, Vector3 spawnPosition, 
     return 0;
 }
 
-SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 position, float angle, uint8_t weapon1, uint32_t ammo1, uint8_t weapon2, uint32_t ammo2, uint8_t weapon3, uint32_t ammo3))
+SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 spawnPosition, float angle, uint8_t weapon1, uint32_t ammo1, uint8_t weapon2, uint32_t ammo2, uint8_t weapon3, uint32_t ammo3))
 {
     IPlayerClassData* classData = queryExtension<IPlayerClassData>(player);
     if (classData) {
