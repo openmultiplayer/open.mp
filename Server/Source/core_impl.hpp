@@ -938,33 +938,39 @@ private:
 		// Get the type of this option from the existing options (defaults and files).
 		StringView key = trim(StringView(conf.data(), split));
 		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
-		switch (config.getType(key))
+		try
 		{
-		case ConfigOptionType_Int:
-			*config.getInt(key) = std::stoi(value.data());
-			break;
-		case ConfigOptionType_String:
-			// TODO: This is a problem.  Most uses hold references to the internal config data,
-			// which we can modify.  Strings don't.  Thus setting a string here won't update all the
-			// uses of that string.
-			config.setString(key, value);
-			break;
-		case ConfigOptionType_Float:
-			*config.getFloat(key) = std::stod(value.data());
-			break;
-		case ConfigOptionType_Strings:
-			// Unfortunately we're still setting up the config options so this may display
-			// oddly (wrong place/prefix etc).
-			logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-			break;
-		case ConfigOptionType_Bool:
-			*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data())	);
-			break;
-		default:
-			// Do nothing.
-			break;
+			switch (config.getType(key))
+			{
+			case ConfigOptionType_Int:
+				*config.getInt(key) = std::stoi(value.data());
+				return true;
+			case ConfigOptionType_String:
+				// TODO: This is a problem.  Most uses hold references to the internal config data,
+				// which we can modify.  Strings don't.  Thus setting a string here won't update all the
+				// uses of that string.
+				config.setString(key, value);
+				return true;
+			case ConfigOptionType_Float:
+				*config.getFloat(key) = std::stod(value.data());
+				return true;
+			case ConfigOptionType_Strings:
+				// Unfortunately we're still setting up the config options so this may display
+				// oddly (wrong place/prefix etc).
+				logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+				return false;
+			case ConfigOptionType_Bool:
+				*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+				return true;
+			default:
+				// Do nothing.  Unknown or unparseable.
+				return false;
+			}
 		}
-		return true;
+		catch (std::invalid_argument const & e)
+		{
+			return false;
+		}
 	}
 
 public:
