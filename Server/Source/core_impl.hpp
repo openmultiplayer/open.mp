@@ -1510,9 +1510,18 @@ public:
         }
 		else if (command == "config")
 		{
-			setConfigFromString(parameters);
+			if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"')
+			{
+				setConfigFromString(parameters);
+			}
+			else
+			{
+				// Remove `"`s.
+				setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
+			}
             return true;
         }
         return false;
     }
 };
+
