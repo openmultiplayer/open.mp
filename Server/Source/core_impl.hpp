@@ -952,53 +952,55 @@ private:
 		try
 		{
 			// Try the code twice - once for the given config, once for it translated from legacy.
-			bool retry = true;
-setConfigFromString_retry:
-			switch (config.getType(key))
+			bool retry = false;
+			do
 			{
-			case ConfigOptionType_Int:
-				*config.getInt(key) = std::stoi(value.data());
-				return true;
-			case ConfigOptionType_String:
-				// TODO: This is a problem.  Most uses hold references to the internal config data,
-				// which we can modify.  Strings don't.  Thus setting a string here won't update all the
-				// uses of that string.
-				config.setString(key, value);
-				return true;
-			case ConfigOptionType_Float:
-				*config.getFloat(key) = std::stod(value.data());
-				return true;
-			case ConfigOptionType_Strings:
-				// Unfortunately we're still setting up the config options so this may display
-				// oddly (wrong place/prefix etc).
-				logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-				return false;
-			case ConfigOptionType_Bool:
-				*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
-				return true;
-			default:
-				// Try the loop again with a new key.
-				auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
-				// Check for the second time getting to here.  Shouldn't happen, as that means a
-				// legacy option is unknown, but handle it anyway.
-				if (!retry && legacyLookup)
+				switch (config.getType(key))
 				{
-					// Did they type a legacy key?
-					StringView nu = legacyLookup->getConfig(key);
-					if (!nu.empty())
+				case ConfigOptionType_Int:
+					*config.getInt(key) = std::stoi(value.data());
+					return true;
+				case ConfigOptionType_String:
+					// TODO: This is a problem.  Most uses hold references to the internal config data,
+					// which we can modify.  Strings don't.  Thus setting a string here won't update all the
+					// uses of that string.
+					config.setString(key, value);
+					return true;
+				case ConfigOptionType_Float:
+					*config.getFloat(key) = std::stod(value.data());
+					return true;
+				case ConfigOptionType_Strings:
+					// Unfortunately we're still setting up the config options so this may display
+					// oddly (wrong place/prefix etc).
+					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+					return false;
+				case ConfigOptionType_Bool:
+					*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+					return true;
+				default:
+					// Try the loop again with a new key.
+					auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
+					if (retry)
 					{
-						logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
-						key = nu;
-						// Yes, it is a `goto`.  I used a loop originally, but it made all the code
-						// to print messages in different cases more complex.  There was way more
-						// code to avoid repetition of messages (both in code and console).  This is
-						// the much more readable solution.
-						retry = true;
-						goto setConfigFromString_retry;
+						// Check for the second time getting to here.  Shouldn't happen as that
+						// means a legacy option resolved to an unknown config, but handle it.
+						retry = false;
 					}
+					else if (legacyLookup)
+					{
+						// Did they type a legacy key?
+						StringView nu = legacyLookup->getConfig(key);
+						if (!nu.empty())
+						{
+							logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
+							key = nu;
+							retry = true;
+						}
+					}
+					break;
 				}
-				break;
 			}
+			while (retry);
 		}
 		catch (std::invalid_argument const & e)
 		{
