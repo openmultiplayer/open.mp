@@ -222,7 +222,7 @@ public:
             size_t split = trimmedCommand.find_first_of(' ');
             if (split == StringView::npos) {
                 // No parameters.
-                eventDispatcher.anyTrue(
+                eventDispatcher.stopAtTrue(
                     [trimmedCommand, sender](ConsoleEventHandler* handler) {
                         return handler->onConsoleText(trimmedCommand, "", sender);
                     });
@@ -230,7 +230,7 @@ public:
                 // Split parameters.
                 StringView trimmedCommandName = trim(trimmedCommand.substr(0, split));
                 StringView trimmedCommandParams = trim(trimmedCommand.substr(split + 1));
-                eventDispatcher.anyTrue(
+                eventDispatcher.stopAtTrue(
                     [trimmedCommandName, trimmedCommandParams, sender](ConsoleEventHandler* handler) {
                         return handler->onConsoleText(trimmedCommandName, trimmedCommandParams, sender);
                     });
