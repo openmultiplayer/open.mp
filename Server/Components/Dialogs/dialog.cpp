@@ -53,19 +53,19 @@ public:
         if (id <= INVALID_DIALOG_ID || id >= MAX_DIALOG) {
             return;
         }
-        if (title.size() > 64) {
-            // Titles have a client-side limit.
-            title_ = String(title.data(), 64);
-        } else {
-            title_ = String(title);
-        }
+
         style_ = style;
+        title_ = String(title);
         body_ = String(body);
         button1_ = String(button1);
         button2_ = String(button2);
+
         NetCode::RPC::ShowDialog showDialog;
         showDialog.ID = id;
         showDialog.Style = static_cast<uint8_t>(style);
+        // We don't have to truncate title to be less than 64 client sided size limit.
+        // Client won't crash or show any undefined behavior, it simply doesn't render.
+        // 64 char limit is without counting embedded colors, let client handle then.
         showDialog.Title = title_;
         showDialog.Body = body;
         showDialog.FirstButton = button1;

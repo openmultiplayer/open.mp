@@ -1318,6 +1318,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
         }
 
+        eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
+
         NetCode::RPC::PlayerQuit packet;
         packet.PlayerID = player.poolID;
         packet.Reason = reason;
@@ -1330,7 +1332,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             PRINT_VIEW(player.name_),
             player.poolID,
             reason);
-        eventDispatcher.dispatch(&PlayerEventHandler::onDisconnect, peer, reason);
 
         auto& secondaryPool = player.isBot_ ? botList : playerList;
         secondaryPool.erase(&player);
@@ -1464,8 +1465,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         sendDeathMessageRPC.HasKiller = killer != nullptr;
         if (killer) {
             sendDeathMessageRPC.KillerID = static_cast<Player*>(killer)->poolID;
-        } else {
-            sendDeathMessageRPC.KillerID = INVALID_PLAYER_ID;
         }
         sendDeathMessageRPC.reason = weapon;
         PacketHelper::broadcast(sendDeathMessageRPC, *this);
