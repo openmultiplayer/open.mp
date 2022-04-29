@@ -941,13 +941,16 @@ private:
 		switch (config.getType(key))
 		{
 		case ConfigOptionType_Int:
-			config.setInt(key, std::stoi(value.data()));
+			*config.getInt(key) = std::stoi(value.data());
 			break;
 		case ConfigOptionType_String:
+			// TODO: This is a problem.  Most uses hold references to the internal config data,
+			// which we can modify.  Strings don't.  Thus setting a string here won't update all the
+			// uses of that string.
 			config.setString(key, value);
 			break;
 		case ConfigOptionType_Float:
-			config.setFloat(key, std::stod(value.data()));
+			*config.getFloat(key) = std::stod(value.data());
 			break;
 		case ConfigOptionType_Strings:
 			// Unfortunately we're still setting up the config options so this may display
@@ -955,7 +958,7 @@ private:
 			logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
 			break;
 		case ConfigOptionType_Bool:
-			config.setBool(key, value == "true" || (value != "false" && !!std::stoi(value.data())));
+			*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data())	);
 			break;
 		default:
 			// Do nothing.
