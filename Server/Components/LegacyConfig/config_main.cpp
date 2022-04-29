@@ -8,6 +8,7 @@
 
 #include <Impl/network_impl.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <atomic>
 #include <filesystem>
 #include <fstream>
@@ -121,10 +122,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "lagcompmode", "network.use_lag_compensation" }
 };
 
-class LegacyConfigComponent final : public IComponent, public ConsoleEventHandler {
-public:
-    PROVIDE_UID(0x24ef6216838f9ffc);
-
+class LegacyConfigComponent final : public ILegacyConfigComponent, public ConsoleEventHandler {
 private:
     ICore* core;
     IConsoleComponent* console;
@@ -439,6 +437,16 @@ public:
     {
         // Nothing to reset here.
     }
+
+	// Inherited via ILegacyConfigComponent
+	virtual StringView getConfig(StringView legacyName) override
+	{
+		return StringView();
+	}
+	virtual StringView getLegacy(StringView configName) override
+	{
+		return StringView();
+	}
 };
 
 COMPONENT_ENTRY_POINT()
