@@ -29,6 +29,7 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Update SDK files from server repository
+        if: always()
         run: |
           rm -rf ./SDK/include/*
           mv -f ./Server/SDK/include ./SDK
