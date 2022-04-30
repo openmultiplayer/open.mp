@@ -23,7 +23,7 @@ private:
     StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
     StaticBitset<PLAYER_POOL_SIZE> playersInside_;
 	IPlayer* legacyPerPlayer_;
-	
+
     void restream()
     {
         for (IPlayer* player : shownFor_.entries()) {
@@ -126,7 +126,7 @@ public:
 			PacketHelper::send(flashGangZoneRPC, player);
 		}
         flashColorForPlayer_[pid] = colour;
-		flashingFor_.set(pid);
+        flashingFor_.set(pid);
     }
 
     void stopFlashForPlayer(IPlayer& player) override
@@ -164,7 +164,7 @@ public:
         return playersInside_.test(player.getID());
     }
 
-    void setPlayerInside(const IPlayer& player, const bool status) 
+    void setPlayerInside(const IPlayer& player, const bool status)
     {
         playersInside_.set(player.getID(), status);
     }
@@ -206,4 +206,3 @@ public:
 		return legacyPerPlayer_;
 	}
 };
-
