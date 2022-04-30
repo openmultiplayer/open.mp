@@ -1,3 +1,0 @@
-[submodule "lib/cmake-conan"]
-	path = lib/cmake-conan
-	url = https://github.com/openmultiplayer/cmake-conan
