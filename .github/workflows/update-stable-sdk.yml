@@ -36,5 +36,5 @@ jobs:
           git config user.name open.mp
           git config user.email open.mp@github.com
           git add .
-          git commit -m "Update SDK\n\nwith https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}"
+          git commit -m "Update SDK" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}"
           git push
