@@ -13,6 +13,6 @@
 [submodule "lib/ttmath"]
 	path = lib/ttmath
 	url = git@github.com:openmultiplayer/ttmath.git
-[submodule "SDK"]
-	path = SDK
-	url = git@github.com:openmultiplayer/open.mp-sdk.git
+[submodule "SDK/lib/cmake-conan"]
+	path = SDK/lib/cmake-conan
+	url = git@github.com:openmultiplayer/cmake-conan.git
