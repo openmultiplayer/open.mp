@@ -138,7 +138,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         }
     } vehicleEventWatcher;
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         // preload actor animation
         Animation anim("DANCING");
@@ -161,12 +161,14 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         }
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         static const String reasonStr[] = {
             "Timed out",
             "Quit",
-            "Kicked"
+            "Kicked",
+            "Custom",
+            "Server Restart"
         };
 
         for (IPlayer* other : c->getPlayers().entries()) {
@@ -174,7 +176,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         }
     }
 
-    bool onCommandText(IPlayer& player, StringView message) override
+    bool onPlayerCommandText(IPlayer& player, StringView message) override
     {
 
         if (message == "/kickmeplz") {
@@ -1117,39 +1119,39 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         player.sendClientMessage(Colour::White(), absl::StrFormat("Dialog response: %i", response));
     }
 
-    void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override
+    void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override
     {
         player.setChatBubble("ouch -" + std::to_string(amount), Colour::Yellow(), 50.f, Seconds(30));
     }
 
-    bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override
+    bool onPlayerShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) override
     {
         player.sendClientMessage(Colour::White(), "shot player " + String(target.getName()));
         return true;
     }
 
-    bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) override
+    bool onPlayerShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) override
     {
         player.sendClientMessage(Colour::White(), "shot vehicle id " + std::to_string(target.getID()));
         vehicles->release(target.getID());
         return true;
     }
 
-    bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) override
+    bool onPlayerShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) override
     {
         player.sendClientMessage(Colour::White(), "shot object id " + std::to_string(target.getID()));
         objects->release(target.getID());
         return true;
     }
 
-    bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override
+    bool onPlayerShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override
     {
         player.sendClientMessage(Colour::White(), "shot player object id " + std::to_string(target.getID()));
         player.queryExtension<IPlayerObjectData>()->release(target.getID());
         return true;
     }
 
-    void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) override
+    void onPlayerKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) override
     {
         if (player.getState() == PlayerState_Driver) {
             IVehicle* vehicle = player.queryExtension<IPlayerVehicleData>()->getVehicle();

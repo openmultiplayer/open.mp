@@ -36,7 +36,7 @@ EPlayerNameStatus Player::setName(StringView name)
     if (pool_.isNameTaken(name, this)) {
         return EPlayerNameStatus::Taken;
     }
-    pool_.eventDispatcher.dispatch(&PlayerEventHandler::onNameChange, *this, name_);
+    pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerNameChange, *this, name_);
 
     name_ = name;
 
@@ -184,7 +184,7 @@ void Player::setState(PlayerState state)
     if (state_ != state) {
         PlayerState oldstate = state_;
         state_ = state;
-        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onStateChange, *this, state, oldstate);
+        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStateChange, *this, state, oldstate);
     }
 }
 
@@ -192,7 +192,7 @@ void Player::setScore(int score)
 {
     if (score_ != score) {
         score_ = score;
-        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onScoreChange, *this, score);
+        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerScoreChange, *this, score);
     }
 }
 
@@ -226,7 +226,7 @@ void Player::streamInForPlayer(IPlayer& other)
                 PacketHelper::send(RPC, other);
             }
 
-            pool_.eventDispatcher.dispatch(&PlayerEventHandler::onStreamIn, *this, other);
+            pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStreamIn, *this, other);
         }
     }
 }
@@ -241,7 +241,7 @@ void Player::streamOutForPlayer(IPlayer& other)
         playerStreamOutRPC.PlayerID = poolID;
         PacketHelper::send(playerStreamOutRPC, other);
 
-        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onStreamOut, *this, other);
+        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStreamOut, *this, other);
     }
 }
 

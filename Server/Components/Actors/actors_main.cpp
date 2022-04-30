@@ -86,7 +86,7 @@ public:
         }
     }
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         player.addExtension(new PlayerActorData(), true);
     }

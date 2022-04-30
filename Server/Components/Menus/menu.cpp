@@ -17,7 +17,7 @@ private:
     DefaultEventDispatcher<MenuEventHandler> eventDispatcher;
     IPlayerPool* players = nullptr;
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         player.addExtension(new PlayerMenuData(), true);
     }
