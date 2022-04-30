@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - "stable"
-      - "remove-sdk"
 jobs:
   update-sdk:
     runs-on: ubuntu-latest
