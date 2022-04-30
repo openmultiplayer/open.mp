@@ -1,0 +1,40 @@
+name: Update SDK
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "stable"
+jobs:
+  update-sdk:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Clone server repository
+        uses: actions/checkout@v3
+        with:
+          clean: true
+          path: "Server"
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Clone SDK repository
+        uses: actions/checkout@v3
+        with:
+          clean: true
+          repository: "openmultiplayer/open.mp-sdk"
+          path: "SDK"
+          ref: "master"
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+
+      - name: Update SDK files from server repository
+        if: always()
+        run: |
+          rm -rf ./SDK/include/*
+          mv -f ./Server/SDK/include ./SDK
+          cd SDK
+          git config user.name open.mp
+          git config user.email open.mp@github.com
+          git add .
+          git commit -m "Update SDK" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}"
+          git push
