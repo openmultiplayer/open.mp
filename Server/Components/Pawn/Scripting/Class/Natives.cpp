@@ -72,7 +72,7 @@ SCRIPT_API(GetSpawnInfo, bool(IPlayer& player, uint8_t& team, int& skin, Vector3
     if (playerData) {
         const PlayerClass& data = playerData->getClass();
         team = data.team;
-		skin = data.skin;
+        skin = data.skin;
         spawnPosition = data.spawn;
         angle = data.angle;
         weapon1 = data.weapons[0].id;
