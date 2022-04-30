@@ -222,7 +222,7 @@ public:
         return ret;
     }
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         auto first = storage.begin();
         if (player.addExtension(new PlayerClassData(player), true) && first != storage.end()) {

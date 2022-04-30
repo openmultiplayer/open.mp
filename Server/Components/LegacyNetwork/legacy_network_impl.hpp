@@ -208,24 +208,24 @@ public:
 
     void OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason);
 
-    void onScoreChange(IPlayer& player, int score) override
+    void onPlayerScoreChange(IPlayer& player, int score) override
     {
         query.buildPlayerDependentBuffers();
     }
 
-    void onNameChange(IPlayer& player, StringView oldName) override
+    void onPlayerNameChange(IPlayer& player, StringView oldName) override
     {
         query.buildPlayerDependentBuffers();
     }
 
     void update() override;
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         query.buildPlayerDependentBuffers();
     }
 
-    void onDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
         query.buildPlayerDependentBuffers(&player);
     }

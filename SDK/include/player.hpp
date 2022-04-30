@@ -808,30 +808,30 @@ struct IPlayer : public IExtensible, public IEntity {
 /// A player event handler
 struct PlayerEventHandler {
     virtual void onIncomingConnection(IPlayer& player, StringView ipAddress, unsigned short port) { }
-    virtual void onConnect(IPlayer& player) { }
-    virtual void onDisconnect(IPlayer& player, PeerDisconnectReason reason) { }
-    virtual bool onRequestSpawn(IPlayer& player) { return true; }
-    virtual void preSpawn(IPlayer& player) { }
-    virtual void onSpawn(IPlayer& player) { }
-    virtual void onStreamIn(IPlayer& player, IPlayer& forPlayer) { }
-    virtual void onStreamOut(IPlayer& player, IPlayer& forPlayer) { }
-    virtual bool onText(IPlayer& player, StringView message) { return true; }
-    virtual bool onCommandText(IPlayer& player, StringView message) { return false; }
-    virtual bool onShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
-    virtual bool onShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) { return true; }
-    virtual bool onShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) { return true; }
-    virtual bool onShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
-    virtual bool onShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
-    virtual void onScoreChange(IPlayer& player, int score) { }
-    virtual void onNameChange(IPlayer& player, StringView oldName) { }
-    virtual void onDeath(IPlayer& player, IPlayer* killer, int reason) { }
-    virtual void onTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) { }
-    virtual void onGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) { }
-    virtual void onInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) { }
-    virtual void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) { }
-    virtual void onKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) { }
-    virtual void onClickedMap(IPlayer& player, Vector3 pos) { }
-    virtual void onClickedPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
+    virtual void onPlayerConnect(IPlayer& player) { }
+    virtual void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) { }
+    virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
+    virtual void onBeforePlayerSpawn(IPlayer& player) { }
+    virtual void onPlayerSpawn(IPlayer& player) { }
+    virtual void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) { }
+    virtual void onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer) { }
+    virtual bool onPlayerText(IPlayer& player, StringView message) { return true; }
+    virtual bool onPlayerCommandText(IPlayer& player, StringView message) { return false; }
+    virtual bool onPlayerShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
+    virtual bool onPlayerShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) { return true; }
+    virtual bool onPlayerShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) { return true; }
+    virtual bool onPlayerShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
+    virtual bool onPlayerShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
+    virtual void onPlayerScoreChange(IPlayer& player, int score) { }
+    virtual void onPlayerNameChange(IPlayer& player, StringView oldName) { }
+    virtual void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) { }
+    virtual void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) { }
+    virtual void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) { }
+    virtual void onPlayerInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) { }
+    virtual void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) { }
+    virtual void onPlayerKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) { }
+    virtual void onPlayerClickMap(IPlayer& player, Vector3 pos) { }
+    virtual void onPlayerClickPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
     virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) { }
 };
 

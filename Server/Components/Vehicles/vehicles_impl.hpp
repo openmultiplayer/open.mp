@@ -250,7 +250,7 @@ public:
         return eventDispatcher;
     }
 
-    void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
+    void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
     {
         if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
             PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
@@ -314,7 +314,7 @@ public:
         deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
     }
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         player.addExtension(new PlayerVehicleData(), true);
     }
