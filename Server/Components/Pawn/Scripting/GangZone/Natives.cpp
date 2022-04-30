@@ -274,4 +274,3 @@ SCRIPT_API(UseGangZoneCheck, bool(IGangZone& zone, bool enable))
     }
     return false;
 }
-
