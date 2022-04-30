@@ -11,18 +11,18 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(AddPlayerClass, int(int modelid, Vector3 position, float angle, uint8_t weapon1, uint32_t weapon1_ammo, uint8_t weapon2, uint32_t weapon2_ammo, uint8_t weapon3, uint32_t weapon3_ammo))
+SCRIPT_API(AddPlayerClass, int(int skin, Vector3 spawnPosition, float angle, uint8_t weapon1, uint32_t ammo1, uint8_t weapon2, uint32_t ammo2, uint8_t weapon3, uint32_t ammo3))
 {
     IClassesComponent* component = PawnManager::Get()->classes;
     if (component) {
 
         WeaponSlots slots = {
-            WeaponSlotData { weapon1, weapon1_ammo },
-            WeaponSlotData { weapon2, weapon2_ammo },
-            WeaponSlotData { weapon3, weapon3_ammo }
+            WeaponSlotData { weapon1, ammo1 },
+            WeaponSlotData { weapon2, ammo2 },
+            WeaponSlotData { weapon3, ammo3 }
         };
 
-        IClass* _class = component->create(modelid, TEAM_NONE, position, angle, slots);
+        IClass* _class = component->create(skin, TEAM_NONE, spawnPosition, angle, slots);
 
         if (_class) {
             return _class->getID();
@@ -32,18 +32,18 @@ SCRIPT_API(AddPlayerClass, int(int modelid, Vector3 position, float angle, uint8
     return 0;
 }
 
-SCRIPT_API(AddPlayerClassEx, int(int teamid, int modelid, Vector3 position, float angle, uint8_t weapon1, uint32_t weapon1_ammo, uint8_t weapon2, uint32_t weapon2_ammo, uint8_t weapon3, uint32_t weapon3_ammo))
+SCRIPT_API(AddPlayerClassEx, int(uint8_t team, int skin, Vector3 spawnPosition, float angle, uint8_t weapon1, uint32_t ammo1, uint8_t weapon2, uint32_t ammo2, uint8_t weapon3, uint32_t ammo3))
 {
     IClassesComponent* component = PawnManager::Get()->classes;
     if (component) {
 
         WeaponSlots slots = {
-            WeaponSlotData { weapon1, weapon1_ammo },
-            WeaponSlotData { weapon2, weapon2_ammo },
-            WeaponSlotData { weapon3, weapon3_ammo }
+            WeaponSlotData { weapon1, ammo1 },
+            WeaponSlotData { weapon2, ammo2 },
+            WeaponSlotData { weapon3, ammo3 }
         };
 
-        IClass* _class = component->create(modelid, teamid, position, angle, slots);
+        IClass* _class = component->create(skin, team, spawnPosition, angle, slots);
         if (_class) {
             return _class->getID();
         }
@@ -51,36 +51,36 @@ SCRIPT_API(AddPlayerClassEx, int(int teamid, int modelid, Vector3 position, floa
     return 0;
 }
 
-SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 position, float angle, uint8_t weapon1, uint32_t weapon1_ammo, uint8_t weapon2, uint32_t weapon2_ammo, uint8_t weapon3, uint32_t weapon3_ammo))
+SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 spawnPosition, float angle, uint8_t weapon1, uint32_t ammo1, uint8_t weapon2, uint32_t ammo2, uint8_t weapon3, uint32_t ammo3))
 {
     IPlayerClassData* classData = queryExtension<IPlayerClassData>(player);
     if (classData) {
         WeaponSlots slots = {
-            WeaponSlotData { weapon1, weapon1_ammo },
-            WeaponSlotData { weapon2, weapon2_ammo },
-            WeaponSlotData { weapon3, weapon3_ammo }
+            WeaponSlotData { weapon1, ammo1 },
+            WeaponSlotData { weapon2, ammo2 },
+            WeaponSlotData { weapon3, ammo3 }
         };
 
-        classData->setSpawnInfo(PlayerClass(skin, team, position, angle, slots));
+        classData->setSpawnInfo(PlayerClass(skin, team, spawnPosition, angle, slots));
     }
     return false;
 }
 
-SCRIPT_API(GetSpawnInfo, bool(IPlayer& player, int& teamid, int& modelid, Vector3& spawnPos, float& z_angle, int& weapon1, int& weapon1_ammo, int& weapon2, int& weapon2_ammo, int& weapon3, int& weapon3_ammo))
+SCRIPT_API(GetSpawnInfo, bool(IPlayer& player, uint8_t& team, int& skin, Vector3& spawnPosition, float& angle, int& weapon1, int& ammo1, int& weapon2, int& ammo2, int& weapon3, int& ammo3))
 {
     IPlayerClassData* playerData = queryExtension<IPlayerClassData>(player);
     if (playerData) {
         const PlayerClass& data = playerData->getClass();
-        teamid = data.team;
-        modelid = data.skin;
-        spawnPos = data.spawn;
-        z_angle = data.angle;
+        team = data.team;
+        skin = data.skin;
+        spawnPosition = data.spawn;
+        angle = data.angle;
         weapon1 = data.weapons[0].id;
-        weapon1_ammo = data.weapons[0].ammo;
+        ammo1 = data.weapons[0].ammo;
         weapon2 = data.weapons[1].id;
-        weapon2_ammo = data.weapons[1].ammo;
+        ammo2 = data.weapons[1].ammo;
         weapon3 = data.weapons[2].id;
-        weapon3_ammo = data.weapons[2].ammo;
+        ammo3 = data.weapons[2].ammo;
         return true;
     }
     return false;

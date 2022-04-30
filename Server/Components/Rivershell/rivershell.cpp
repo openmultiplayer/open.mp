@@ -159,7 +159,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
         return false;
     }
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         player.sendGameText("~r~open.mp~w~: Rivershell", Seconds(2), 5);
         player.setColour(Colour(136, 136, 136));
@@ -232,7 +232,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
         player.setWorldBounds(Vector4(2500.0f, 1850.0f, 631.2963f, -454.9898f));
     }
 
-    void onStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
+    void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
     {
         if (newState == PlayerState_Driver) {
             IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
@@ -288,7 +288,7 @@ struct RivershellMode : public IComponent, public PlayerEventHandler, public Cla
         }
     }
 
-    void onDeath(IPlayer& player, IPlayer* killer, int reason) override
+    void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) override
     {
         c->getPlayers().sendDeathMessageToAll(killer, player, reason);
         if (killer) {
