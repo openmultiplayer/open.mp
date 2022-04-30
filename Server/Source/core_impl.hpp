@@ -1283,7 +1283,7 @@ public:
         return PlayerWeaponNames[index];
     }
 
-    void onConnect(IPlayer& player) override
+    void onPlayerConnect(IPlayer& player) override
     {
         playerInit(player);
         if (reloading_) {

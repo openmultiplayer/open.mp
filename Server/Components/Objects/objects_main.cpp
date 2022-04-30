@@ -27,7 +27,7 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
     }
 }
 
-void ObjectComponent::onConnect(IPlayer& player)
+void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
     player.addExtension(new PlayerObjectData(*this, player), true);
 
