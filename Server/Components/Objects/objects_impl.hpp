@@ -209,7 +209,7 @@ public:
         }
     }
 
-    void onConnect(IPlayer& player) override;
+    void onPlayerConnect(IPlayer& player) override;
 
     void setDefaultCameraCollision(bool collision) override
     {
@@ -325,7 +325,7 @@ public:
         }
     }
 
-    void onStreamIn(IPlayer& player, IPlayer& forPlayer) override
+    void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) override
     {
         const int pid = player.getID();
         for (IObject* object : storage) {
@@ -357,7 +357,7 @@ public:
     }
 
     // Pre-spawn so you can safely attach onPlayerSpawn
-    void preSpawn(IPlayer& player) override
+    void onBeforePlayerSpawn(IPlayer& player) override
     {
         const int pid = player.getID();
         for (IObject* object : storage) {
