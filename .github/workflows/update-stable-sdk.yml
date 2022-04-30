@@ -7,20 +7,22 @@ on:
       - "remove-sdk"
 jobs:
   update-sdk:
-    name: Update stable SDK
     runs-on: ubuntu-latest
+
     steps:
       - name: Clone server repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
+          clean: true
           path: "Server"
           ref: "stable"
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Clone SDK repository
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
+          clean: true
           repository: "openmultiplayer/open.mp-sdk"
           path: "SDK"
           ref: "master"
