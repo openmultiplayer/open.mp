@@ -441,7 +441,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             if (filteredMessage.size() > 1) {
-                bool send = self.eventDispatcher.anyTrue([&peer, filteredMessage](PlayerEventHandler* handler) {
+                bool send = self.eventDispatcher.stopAtTrue([&peer, filteredMessage](PlayerEventHandler* handler) {
                     return handler->onPlayerCommandText(peer, filteredMessage);
                 });
 

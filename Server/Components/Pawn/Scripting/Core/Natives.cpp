@@ -561,9 +561,9 @@ SCRIPT_API(GetWorldTime, int())
     return *PawnManager::Get()->config->getInt("world_time");
 }
 
-SCRIPT_API(ToggleChatTextReplacement, bool(bool toggle))
+SCRIPT_API(ToggleChatTextReplacement, bool(bool enable))
 {
-    *PawnManager::Get()->config->getInt("chat_input_filter") = toggle;
+    *PawnManager::Get()->config->getInt("chat_input_filter") = enable;
     return true;
 }
 

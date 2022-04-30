@@ -54,7 +54,7 @@ public:
     {
         const Vector3& playerPos = player.getPosition();
 
-        // only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+        // only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
         for (auto gangzone : checkingList.entries()) {
 
             // only check visible gangzones
@@ -99,9 +99,9 @@ public:
         return checkingList.entries();
     }
 
-    void toggleGangZoneCheck(IGangZone& zone, bool toggle) override
+    void useGangZoneCheck(IGangZone& zone, bool enable) override
     {
-        if (toggle) {
+        if (enable) {
             checkingList.add(zone.getID(), zone);
         } else {
             if (checkingList.valid(zone.getID())) {

@@ -15,7 +15,13 @@ enum TextDrawAlignmentTypes {
 
 /// Textdraw's drawing style
 enum TextDrawStyle {
-    TextDrawStyle_FontBeckettRegular, ///< Font type
+    TextDrawStyle_0, ///< Font type
+    TextDrawStyle_1, ///< Font type
+    TextDrawStyle_2, ///< Font type
+    TextDrawStyle_3, ///< Font type
+    TextDrawStyle_4, ///< TXD sprite
+    TextDrawStyle_5, ///< Model preview
+    TextDrawStyle_FontBeckettRegular = 0, ///< Font type
     TextDrawStyle_FontAharoniBold, ///< Font type
     TextDrawStyle_FontBankGothic, ///< Font type
     TextDrawStyle_FontPricedown, ///< Font type
@@ -56,16 +62,16 @@ struct ITextDrawBase : public IExtensible, public IIDProvider {
     virtual TextDrawAlignmentTypes getAlignment() const = 0;
 
     /// Set the letters' colour
-    virtual ITextDrawBase& setLetterColour(Colour colour) = 0;
+    virtual ITextDrawBase& setColour(Colour colour) = 0;
 
     /// Get the letters' colour
     virtual Colour getLetterColour() const = 0;
 
     /// Set whether the textdraw uses a box
-    virtual ITextDrawBase& setUsingBox(bool use) = 0;
+    virtual ITextDrawBase& useBox(bool use) = 0;
 
     /// Get whether the textdraw uses a box
-    virtual bool isUsingBox() const = 0;
+    virtual bool hasBox() const = 0;
 
     /// Set the textdraw box's colour
     virtual ITextDrawBase& setBoxColour(Colour colour) = 0;
@@ -86,10 +92,10 @@ struct ITextDrawBase : public IExtensible, public IIDProvider {
     virtual int getOutline() const = 0;
 
     /// Set the textdraw's background colour
-    virtual ITextDrawBase& setBackColour(Colour colour) = 0;
+    virtual ITextDrawBase& setBackgroundColour(Colour colour) = 0;
 
     /// Get the textdraw's background colour
-    virtual Colour getBackColour() const = 0;
+    virtual Colour getBackgroundColour() const = 0;
 
     /// Set the textdraw's drawing style
     virtual ITextDrawBase& setStyle(TextDrawStyle style) = 0;
@@ -146,6 +152,9 @@ struct ITextDraw : public ITextDrawBase {
 
     /// Get whether the textdraw is shown for a player
     virtual bool isShownForPlayer(const IPlayer& player) const = 0;
+
+    /// Set the textdraw's text for one player
+    virtual void setTextForPlayer(IPlayer& player, StringView text) = 0;
 };
 
 struct IPlayerTextDraw : public ITextDrawBase {
@@ -160,9 +169,10 @@ struct IPlayerTextDraw : public ITextDrawBase {
 };
 
 struct TextDrawEventHandler {
-    virtual void onTextDrawSelectionCancel(IPlayer& player) { }
-    virtual void onTextDrawClick(IPlayer& player, ITextDraw& td) { }
-    virtual void onPlayerTextDrawClick(IPlayer& player, IPlayerTextDraw& td) { }
+    virtual void onPlayerClickTextDraw(IPlayer& player, ITextDraw& td) { }
+    virtual void onPlayerClickPlayerTextDraw(IPlayer& player, IPlayerTextDraw& td) { }
+    virtual bool onPlayerCancelTextDrawSelection(IPlayer& player) { return false; }
+    virtual bool onPlayerCancelPlayerTextDrawSelection(IPlayer& player) { return false; }
 };
 
 static const UID TextDrawsComponent_UID = UID(0x9b5dc2b1d15c992a);

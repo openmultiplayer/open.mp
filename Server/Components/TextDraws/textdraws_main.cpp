@@ -150,17 +150,20 @@ public:
             if (data) {
                 if (RPC.Invalid) {
                     data->cancelSelecting();
-                    self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawSelectionCancel, peer);
+                    self.dispatcher.all(
+                        [&peer](TextDrawEventHandler* handler) {
+                            handler->onPlayerCancelTextDrawSelection(peer);
+                        });
                 } else {
                     if (RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
                         if (lock.entry) {
-                            self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerTextDrawClick, peer, *lock.entry);
+                            self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerClickPlayerTextDraw, peer, *lock.entry);
                         }
                     } else if (!RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
                         if (lock.entry) {
-                            self.dispatcher.dispatch(&TextDrawEventHandler::onTextDrawClick, peer, *lock.entry);
+                            self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerClickTextDraw, peer, *lock.entry);
                         }
                     }
                 }

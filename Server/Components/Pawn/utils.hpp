@@ -33,21 +33,6 @@ typedef char TCHAR;
 
 #include "Manager/Manager.hpp"
 
-// The normal `amx_StrParam` macro gives warnings on newer compilers.  This doesn't.
-#define amx_StrParamChar(amx, param, result)                                                                                   \
-    do {                                                                                                                       \
-        cell* amx_cstr_;                                                                                                       \
-        int amx_length_;                                                                                                       \
-        amx_GetAddr((amx), (param), &amx_cstr_);                                                                               \
-        amx_StrLen(amx_cstr_, &amx_length_);                                                                                   \
-        if (amx_length_ > 0 && ((result) = reinterpret_cast<char*>(alloca((amx_length_ + 1) * sizeof(*(result))))) != nullptr) \
-            amx_GetString(reinterpret_cast<char*>(result), amx_cstr_, sizeof(*(result)) > 1, amx_length_ + 1);                 \
-        else                                                                                                                   \
-            (result) = const_cast<char*>("");                                                                                  \
-    } while (0)
-
-#define amx_NumParams(params) ((params)[0] / sizeof(cell))
-
 #define AMX_CHECK_PARAMETERS(name, params, n)                                                                                                 \
     do {                                                                                                                                      \
         if (amx_NumParams(params) != (n)) {                                                                                                   \
