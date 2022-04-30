@@ -273,10 +273,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(setWorldBoundsRPC, *this);
     }
 
-    void toggleStuntBonus(bool toggle) override
+    void useStuntBonuses(bool enable) override
     {
         NetCode::RPC::EnableStuntBonusForPlayer RPC;
-        RPC.Enable = toggle;
+        RPC.Enable = enable;
         PacketHelper::send(RPC, *this);
     }
 
@@ -374,7 +374,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(sendDeathMessageRPC, *this);
     }
 
-    void setWidescreen(bool enable) override
+    void useWidescreen(bool enable) override
     {
         widescreen_ = enable;
         NetCode::RPC::ToggleWidescreen toggleWidescreenRPC;
@@ -382,20 +382,20 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(toggleWidescreenRPC, *this);
     }
 
-    bool getWidescreen() const override
+    bool hasWidescreen() const override
     {
         return widescreen_;
     }
 
-    void toggleClock(bool toggle) override
+    void useClock(bool enable) override
     {
-        clockToggled_ = toggle;
+        clockToggled_ = enable;
         NetCode::RPC::TogglePlayerClock togglePlayerClockRPC;
-        togglePlayerClockRPC.Toggle = toggle;
+        togglePlayerClockRPC.Toggle = enable;
         PacketHelper::send(togglePlayerClockRPC, *this);
     }
 
-    bool clockToggled() const override
+    bool hasClock() const override
     {
         return clockToggled_;
     }
@@ -986,11 +986,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(RPC, *this);
     }
 
-    void toggleOtherNameTag(IPlayer& other, bool toggle) override
+    void toggleOtherNameTag(IPlayer& other, bool enable) override
     {
         NetCode::RPC::ShowPlayerNameTagForPlayer RPC;
         RPC.PlayerID = static_cast<Player&>(other).poolID;
-        RPC.Show = toggle;
+        RPC.Show = enable;
         PacketHelper::send(RPC, *this);
     }
 
@@ -1129,16 +1129,16 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void toggleCameraTargeting(bool toggle) override
+    void useCameraTargeting(bool enable) override
     {
         cameraTargetPlayer_ = INVALID_PLAYER_ID;
         cameraTargetVehicle_ = INVALID_VEHICLE_ID;
         cameraTargetObject_ = INVALID_OBJECT_ID;
         cameraTargetActor_ = INVALID_ACTOR_ID;
-        enableCameraTargeting_ = toggle;
+        enableCameraTargeting_ = enable;
 
         NetCode::RPC::SetPlayerCameraTargeting RPC;
-        RPC.Enabled = toggle;
+        RPC.Enabled = enable;
         PacketHelper::send(RPC, *this);
     }
 

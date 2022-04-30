@@ -136,7 +136,24 @@ struct DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType>,
     template <typename Fn>
     auto anyTrue(Fn fn)
     {
+        // `anyTrue` should still CALL them call, don't short-circuit.
+        bool ret = false;
+        std::for_each(handlers.begin(), handlers.end(), typename Storage::template Func<bool, Fn>([&fn, &ret]() { ret = fn() || ret; }));
+        return ret;
+    }
+
+    template <typename Fn>
+    auto stopAtTrue(Fn fn)
+    {
         return std::any_of(handlers.begin(), handlers.end(), typename Storage::template Func<bool, Fn>(fn));
+    }
+
+    template <typename Fn>
+    auto allTrue(Fn fn)
+    {
+        bool ret = true;
+        std::for_each(handlers.begin(), handlers.end(), typename Storage::template Func<bool, Fn>([&fn, &ret]() { ret = fn() && ret; }));
+        return ret;
     }
 
     size_t count() const override

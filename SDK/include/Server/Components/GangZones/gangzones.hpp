@@ -37,7 +37,7 @@ struct IGangZone : public IExtensible, public IIDProvider {
     /// Set position of gangzone. Takes a structure of vec2 min and vec2 max coordinates
     virtual void setPosition(const GangZonePos& position) = 0;
 
-    /// Check if specified player is within gangzone bounds (only works with IGangZonesComponent::toggleGangZoneCheck).
+    /// Check if specified player is within gangzone bounds (only works with IGangZonesComponent::useGangZoneCheck).
     virtual bool isPlayerInside(const IPlayer& player) const = 0;
 
     /// get a list of players gangzone is shown for
@@ -70,5 +70,5 @@ struct IGangZonesComponent : public IPoolComponent<IGangZone> {
     virtual const FlatHashSet<IGangZone*>& getCheckingGangZones() const = 0;
 
     /// add gangzone to checking list to loop through on player update, see if player enters or leaves
-    virtual void toggleGangZoneCheck(IGangZone& zone, bool toggle) = 0;
+    virtual void useGangZoneCheck(IGangZone& zone, bool enable) = 0;
 };

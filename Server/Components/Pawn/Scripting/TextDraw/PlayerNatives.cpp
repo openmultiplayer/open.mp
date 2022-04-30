@@ -63,13 +63,13 @@ SCRIPT_API(PlayerTextDrawAlignment, bool(IPlayer& player, IPlayerTextDraw& textd
 
 SCRIPT_API(PlayerTextDrawColor, bool(IPlayer& player, IPlayerTextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setLetterColour(Colour::FromRGBA(colour));
+    textdraw.setColour(Colour::FromRGBA(colour));
     return true;
 }
 
 SCRIPT_API(PlayerTextDrawUseBox, bool(IPlayer& player, IPlayerTextDraw& textdraw, bool use))
 {
-    textdraw.setUsingBox(use);
+    textdraw.useBox(use);
     return true;
 }
 
@@ -93,7 +93,7 @@ SCRIPT_API(PlayerTextDrawSetOutline, bool(IPlayer& player, IPlayerTextDraw& text
 
 SCRIPT_API(PlayerTextDrawBackgroundColor, bool(IPlayer& player, IPlayerTextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setBackColour(Colour::FromRGBA(colour));
+    textdraw.setBackgroundColour(Colour::FromRGBA(colour));
     return true;
 }
 
@@ -194,7 +194,7 @@ SCRIPT_API(PlayerTextDrawGetBoxColor, int(IPlayer& player, IPlayerTextDraw& text
 
 SCRIPT_API(PlayerTextDrawGetBackgroundCol, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
-    return textdraw.getBackColour().RGBA();
+    return textdraw.getBackgroundColour().RGBA();
 }
 
 SCRIPT_API(PlayerTextDrawGetShadow, int(IPlayer& player, IPlayerTextDraw& textdraw))
@@ -214,7 +214,7 @@ SCRIPT_API(PlayerTextDrawGetFont, int(IPlayer& player, IPlayerTextDraw& textdraw
 
 SCRIPT_API(PlayerTextDrawIsBox, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
-    return textdraw.isUsingBox();
+    return textdraw.hasBox();
 }
 
 SCRIPT_API(PlayerTextDrawIsProportional, int(IPlayer& player, IPlayerTextDraw& textdraw))

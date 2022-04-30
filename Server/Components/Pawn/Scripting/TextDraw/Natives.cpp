@@ -10,6 +10,8 @@
 #include "Server/Components/TextDraws/textdraws.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include <amx/amx.h>
+#include "../../format.hpp"
 
 SCRIPT_API(TextDrawCreate, int(Vector2 position, const std::string& text))
 {
@@ -36,6 +38,10 @@ SCRIPT_API(IsValidTextDraw, bool(ITextDraw* textdraw))
 
 SCRIPT_API(IsTextDrawVisibleForPlayer, bool(IPlayer& player, ITextDraw& textdraw))
 {
+    // TODO: Deprecate this native.  Mixing `visible` and `show` is bad.  In fact, just avoid the
+    // term `visible` entirely - it is too ambiguous when things might be available to a player but
+    // out of their current line of sight.  Does `visible` mean "can be seen right now" or "can in
+    // theory be seen some time"?  In this respect `shown` and `streamed` are less ambiguous.
     return textdraw.isShownForPlayer(player);
 }
 
@@ -59,13 +65,13 @@ SCRIPT_API(TextDrawAlignment, bool(ITextDraw& textdraw, int alignment))
 
 SCRIPT_API(TextDrawColor, bool(ITextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setLetterColour(Colour::FromRGBA(colour));
+    textdraw.setColour(Colour::FromRGBA(colour));
     return true;
 }
 
 SCRIPT_API(TextDrawUseBox, bool(ITextDraw& textdraw, bool use))
 {
-    textdraw.setUsingBox(use);
+    textdraw.useBox(use);
     return true;
 }
 
@@ -89,7 +95,7 @@ SCRIPT_API(TextDrawSetOutline, bool(ITextDraw& textdraw, int size))
 
 SCRIPT_API(TextDrawBackgroundColor, bool(ITextDraw& textdraw, uint32_t colour))
 {
-    textdraw.setBackColour(Colour::FromRGBA(colour));
+    textdraw.setBackgroundColour(Colour::FromRGBA(colour));
     return true;
 }
 
@@ -208,7 +214,7 @@ SCRIPT_API(TextDrawGetBoxColor, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawGetBackgroundColor, int(ITextDraw& textdraw))
 {
-    return textdraw.getBackColour().RGBA();
+    return textdraw.getBackgroundColour().RGBA();
 }
 
 SCRIPT_API(TextDrawGetShadow, int(ITextDraw& textdraw))
@@ -228,7 +234,7 @@ SCRIPT_API(TextDrawGetFont, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawIsBox, int(ITextDraw& textdraw))
 {
-    return textdraw.isUsingBox();
+    return textdraw.hasBox();
 }
 
 SCRIPT_API(TextDrawIsProportional, int(ITextDraw& textdraw))
@@ -263,5 +269,41 @@ SCRIPT_API(TextDrawGetPreviewVehCol, bool(ITextDraw& textdraw, int& colour1, int
     Pair<int, int> colours = textdraw.getPreviewVehicleColour();
     colour1 = colours.first;
     colour2 = colours.second;
+    return true;
+}
+
+SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player))
+{
+    AMX*
+        amx
+        = GetAMX();
+    cell*
+        params
+        = GetParams();
+    int
+        num
+        = params[0] / sizeof(cell);
+
+    if (num < 3) {
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `TextDrawSetStringForPlayer`: %u < %u", num, 3);
+        return false;
+    }
+    int maxlen = params[2];
+
+    int param = 4;
+    cell* cinput = amx_Address(amx, params[3]);
+
+    char staticOutput[4096];
+
+    size_t len = atcprintf(staticOutput, maxlen - 1, cinput, amx, params, &param);
+
+    if (param - 1 < num && len < maxlen - 1) {
+        char* fmt;
+        amx_StrParamChar(amx, params[3], fmt);
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
+    } else {
+        textdraw.setTextForPlayer(player, staticOutput);
+    }
+
     return true;
 }

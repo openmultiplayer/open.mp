@@ -123,13 +123,13 @@ SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer* killee, int weapon))
 
 SCRIPT_API(TogglePlayerWidescreen, bool(IPlayer& player, bool enable))
 {
-    player.setWidescreen(enable);
+    player.useWidescreen(enable);
     return true;
 }
 
 SCRIPT_API(IsPlayerWidescreenToggled, bool(IPlayer& player))
 {
-    return player.getWidescreen();
+    return player.hasWidescreen();
 }
 
 SCRIPT_API(SetPlayerHealth, bool(IPlayer& player, float health))
@@ -260,9 +260,9 @@ SCRIPT_API(GetPlayerTime, bool(IPlayer& player, int& hour, int& minute))
     return true;
 }
 
-SCRIPT_API(TogglePlayerClock, bool(IPlayer& player, bool toggle))
+SCRIPT_API(TogglePlayerClock, bool(IPlayer& player, bool enable))
 {
-    player.toggleClock(toggle);
+    player.useClock(enable);
     return true;
 }
 
@@ -522,21 +522,21 @@ SCRIPT_API(SetPlayerSpecialAction, bool(IPlayer& player, uint32_t action))
     return true;
 }
 
-SCRIPT_API(ShowPlayerNameTagForPlayer, bool(IPlayer& player, IPlayer& other, bool toggle))
+SCRIPT_API(ShowPlayerNameTagForPlayer, bool(IPlayer& player, IPlayer& other, bool enable))
 {
-    player.toggleOtherNameTag(other, toggle);
+    player.toggleOtherNameTag(other, enable);
     return true;
 }
 
-SCRIPT_API(TogglePlayerControllable, bool(IPlayer& player, bool toggle))
+SCRIPT_API(TogglePlayerControllable, bool(IPlayer& player, bool enable))
 {
-    player.setControllable(toggle);
+    player.setControllable(enable);
     return true;
 }
 
-SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool toggle))
+SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool enable))
 {
-    player.setSpectating(toggle);
+    player.setSpectating(enable);
     return true;
 }
 
@@ -566,19 +566,19 @@ SCRIPT_API(EditAttachedObject, bool(IPlayer& player, int index))
 
 SCRIPT_API(EnablePlayerCameraTarget, bool(IPlayer& player, bool enable))
 {
-    player.toggleCameraTargeting(enable);
+    player.useCameraTargeting(enable);
     return true;
 }
 
 SCRIPT_API(EnableStuntBonusForPlayer, bool(IPlayer& player, bool enable))
 {
-    player.toggleStuntBonus(enable);
+    player.useStuntBonuses(enable);
     return true;
 }
 
 SCRIPT_API(EnableStuntBonusForAll, bool(bool enable))
 {
-    PawnManager::Get()->core->toggleStuntBonus(enable);
+    PawnManager::Get()->core->useStuntBonuses(enable);
     return true;
 }
 

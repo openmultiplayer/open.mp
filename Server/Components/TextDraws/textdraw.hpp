@@ -72,7 +72,7 @@ public:
         return text;
     }
 
-    T& setLetterColour(Colour col) override
+    T& setColour(Colour col) override
     {
         letterColour = col;
         return *this;
@@ -116,13 +116,13 @@ public:
         return alignment;
     }
 
-    T& setUsingBox(bool use) override
+    T& useBox(bool use) override
     {
         box = use;
         return *this;
     }
 
-    bool isUsingBox() const override
+    bool hasBox() const override
     {
         return box;
     }
@@ -160,13 +160,13 @@ public:
         return outlineSize;
     }
 
-    T& setBackColour(Colour colour) override
+    T& setBackgroundColour(Colour colour) override
     {
         backgroundColour = colour;
         return *this;
     }
 
-    Colour getBackColour() const override
+    Colour getBackgroundColour() const override
     {
         return backgroundColour;
     }
@@ -277,7 +277,7 @@ protected:
         playerShowTextDrawRPC.BoxColour = boxColour;
         playerShowTextDrawRPC.Shadow = shadowSize;
         playerShowTextDrawRPC.Outline = outlineSize;
-        playerShowTextDrawRPC.BackColour = backgroundColour;
+        playerShowTextDrawRPC.BackgroundColour = backgroundColour;
         playerShowTextDrawRPC.Style = style;
         playerShowTextDrawRPC.Selectable = selectable;
         playerShowTextDrawRPC.Position = pos;
@@ -368,6 +368,11 @@ public:
         for (IPlayer* player : shownFor_.entries()) {
             setTextForClient(*player, txt, false);
         }
+    }
+
+    void setTextForPlayer(IPlayer& player, StringView txt) override
+    {
+        setTextForClient(player, txt, false);
     }
 
     ~TextDraw()

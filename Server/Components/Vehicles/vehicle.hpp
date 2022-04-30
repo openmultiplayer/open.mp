@@ -443,9 +443,9 @@ public:
         return seat;
     }
 
-    void setInModShop(bool toggle)
+    void setInModShop(bool enable)
     {
-        inModShop = toggle;
+        inModShop = enable;
     }
 
     bool isInModShop() const override
