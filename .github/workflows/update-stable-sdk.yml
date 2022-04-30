@@ -30,10 +30,10 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
 
       - name: Update SDK files from server repository
-          run: |
-            mv -f ./Server/SDK/include ./SDK
-            git config user.name open.mp
-            git config user.email open.mp@github.com
-            git add .
-            git commit -m "Update SDK"
-            git push
+        run: |
+          mv -f ./Server/SDK/include ./SDK
+          git config user.name open.mp
+          git config user.email open.mp@github.com
+          git add .
+          git commit -m "Update SDK"
+          git push
