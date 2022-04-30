@@ -185,7 +185,7 @@ struct ICore : public IExtensible, public ILogger {
     virtual void setWorldTime(Hours time) = 0;
 
     /// Toggle server stunt bonus
-    virtual void toggleStuntBonus(bool toggle) = 0;
+    virtual void useStuntBonuses(bool enable) = 0;
 
     /// Set string data during runtime
     virtual void setData(SettableCoreDataType type, StringView data) = 0;

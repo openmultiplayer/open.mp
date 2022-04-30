@@ -986,7 +986,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(RPC, *this);
     }
 
-    void useNameTag(IPlayer& other, bool enable) override
+    void toggleOtherNameTag(IPlayer& other, bool enable) override
     {
         NetCode::RPC::ShowPlayerNameTagForPlayer RPC;
         RPC.PlayerID = static_cast<Player&>(other).poolID;

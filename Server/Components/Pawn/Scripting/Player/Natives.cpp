@@ -524,7 +524,7 @@ SCRIPT_API(SetPlayerSpecialAction, bool(IPlayer& player, uint32_t action))
 
 SCRIPT_API(ShowPlayerNameTagForPlayer, bool(IPlayer& player, IPlayer& other, bool enable))
 {
-    player.useNameTag(other, enable);
+    player.toggleOtherNameTag(other, enable);
     return true;
 }
 

@@ -60,7 +60,7 @@ public:
 
     IPlayerTextDraw* create(Vector2 position, int model) override
     {
-        return storage.emplace(player, position, "_", TextDrawFont_Preview, model);
+        return storage.emplace(player, position, "_", TextDrawStyle_Preview, model);
     }
 
     void freeExtension() override
@@ -150,10 +150,10 @@ public:
             if (data) {
                 if (RPC.Invalid) {
                     data->cancelSelecting();
-					bool reopen = !self.dispatcher.all(
-						[&peer](TextDrawEventHandler * handler) {
-							return handler->onPlayerCloseTextDraw(peer);
-						});
+                    self.dispatcher.all(
+                        [&peer](TextDrawEventHandler* handler) {
+                            handler->onPlayerCancelTextDrawSelection(peer);
+                        });
                 } else {
                     if (RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
@@ -228,7 +228,7 @@ public:
 
     ITextDraw* create(Vector2 position, int model) override
     {
-        return storage.emplace(position, "_", TextDrawFont_Preview, model);
+        return storage.emplace(position, "_", TextDrawStyle_Preview, model);
     }
 
     void free() override

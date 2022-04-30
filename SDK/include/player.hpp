@@ -583,7 +583,7 @@ struct IPlayer : public IExtensible, public IEntity {
     virtual void unsetMapIcon(int id) = 0;
 
     /// Toggle stunt bonus for the player
-    virtual void toggleStuntBonus(bool toggle) = 0;
+    virtual void useStuntBonuses(bool enable) = 0;
 
     /// Toggle another player's name tag for the player
     virtual void toggleOtherNameTag(IPlayer& other, bool toggle) = 0;
@@ -597,16 +597,16 @@ struct IPlayer : public IExtensible, public IEntity {
     virtual Pair<Hours, Minutes> getTime() const = 0;
 
     /// Toggle the player's clock visibility
-    virtual void toggleClock(bool toggle) = 0;
+    virtual void useClock(bool enable) = 0;
 
     /// Get whether the clock is visible for the player
-    virtual bool clockToggled() const = 0;
+    virtual bool hasClock() const = 0;
 
     /// Toggle widescreen for player
-    virtual void setWidescreen(bool enable) = 0;
+    virtual void useWidescreen(bool enable) = 0;
 
     /// Get widescreen status from player
-    virtual bool getWidescreen() const = 0;
+    virtual bool hasWidescreen() const = 0;
 
     /// Set the transform applied to player rotation
     virtual void setTransform(GTAQuat tm) = 0;
@@ -754,7 +754,7 @@ struct IPlayer : public IExtensible, public IEntity {
     virtual const PlayerBulletData& getBulletData() const = 0;
 
     /// Toggle the camera targeting functions for the player
-    virtual void toggleCameraTargeting(bool toggle) = 0;
+    virtual void useCameraTargeting(bool enable) = 0;
 
     /// Get whether the player has camera targeting functions enabled
     virtual bool hasCameraTargeting() const = 0;

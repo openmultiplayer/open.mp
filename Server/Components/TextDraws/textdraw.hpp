@@ -29,14 +29,14 @@ private:
     int shadowSize = 2;
     int outlineSize = 0;
     Colour backgroundColour = Colour::Black();
-    TextDrawFont style;
+    TextDrawStyle style;
     int previewModel;
     GTAQuat previewRotation = GTAQuat(Vector3(0.f));
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
 
 public:
-    TextDrawBase(Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_AharoniBold, int previewModel = 0)
+    TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : pos(pos)
         , text(text)
         , style(style)
@@ -171,13 +171,13 @@ public:
         return backgroundColour;
     }
 
-    T& setFont(TextDrawFont s) override
+    T& setStyle(TextDrawStyle s) override
     {
         style = s;
         return *this;
     }
 
-    TextDrawFont getFont() const override
+    TextDrawStyle getStyle() const override
     {
         return style;
     }
@@ -369,7 +369,7 @@ public:
             setTextForClient(*player, txt, false);
         }
     }
-	
+
     void setTextForPlayer(IPlayer& player, StringView txt) override
     {
         setTextForClient(player, txt, false);
@@ -393,7 +393,7 @@ private:
     bool shown = false;
 
 public:
-    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawFont style = TextDrawFont_AharoniBold, int previewModel = 0)
+    PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
         : TextDrawBase(pos, text, style, previewModel)
         , player(player)
     {
