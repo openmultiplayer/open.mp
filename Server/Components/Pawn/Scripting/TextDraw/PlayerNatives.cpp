@@ -99,7 +99,7 @@ SCRIPT_API(PlayerTextDrawBackgroundColor, bool(IPlayer& player, IPlayerTextDraw&
 
 SCRIPT_API(PlayerTextDrawFont, bool(IPlayer& player, IPlayerTextDraw& textdraw, int font))
 {
-    textdraw.setFont(TextDrawFont(font));
+    textdraw.setStyle(TextDrawStyle(font));
     return true;
 }
 
@@ -209,7 +209,7 @@ SCRIPT_API(PlayerTextDrawGetOutline, int(IPlayer& player, IPlayerTextDraw& textd
 
 SCRIPT_API(PlayerTextDrawGetFont, int(IPlayer& player, IPlayerTextDraw& textdraw))
 {
-    return static_cast<uint8_t>(textdraw.getFont());
+    return static_cast<uint8_t>(textdraw.getStyle());
 }
 
 SCRIPT_API(PlayerTextDrawIsBox, int(IPlayer& player, IPlayerTextDraw& textdraw))

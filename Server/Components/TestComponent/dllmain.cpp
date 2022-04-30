@@ -143,17 +143,17 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         // preload actor animation
         Animation anim("DANCING");
         player.applyAnimation(anim, PlayerAnimationSyncType_NoSync);
-        player.toggleCameraTargeting(true);
+        player.useCameraTargeting(true);
         IPlayerTextDrawData* data = player.queryExtension<IPlayerTextDrawData>();
         if (data) {
             IPlayerTextDraw* textdraw = data->create(Vector2(20.f, 420.f), "Welcome to the test omp server");
             if (textdraw) {
-                textdraw->setLetterColour(Colour::Cyan()).setSelectable(true);
+                textdraw->setColour(Colour::Cyan()).setSelectable(true);
             }
 
             IPlayerTextDraw* textdraw2 = data->create(Vector2(400.f, 20.f), "");
             if (textdraw2) {
-                textdraw2->setLetterColour(Colour::White()).setStyle(TextDrawStyle::TextDrawStyle_FontBeckettRegular);
+                textdraw2->setColour(Colour::White()).setStyle(TextDrawStyle::TextDrawStyle_FontBeckettRegular);
             }
         }
         if (timers) {
@@ -300,15 +300,15 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
         if (message == "/widescreen") {
             player.sendClientMessage(Colour::White(), "widescreen Before:");
-            player.sendClientMessage(Colour::White(), std::to_string(player.getWidescreen()));
-            player.setWidescreen(true);
+            player.sendClientMessage(Colour::White(), std::to_string(player.hasWidescreen()));
+            player.useWidescreen(true);
             player.sendClientMessage(Colour::White(), "widescreen After:");
-            player.sendClientMessage(Colour::White(), std::to_string(player.getWidescreen()));
+            player.sendClientMessage(Colour::White(), std::to_string(player.hasWidescreen()));
             return true;
         }
 
         if (message == "/plreset") {
-            player.setWidescreen(false);
+            player.useWidescreen(false);
             player.setControllable(true);
             player.setSpectating(false);
             player.stopAudio();
@@ -921,11 +921,11 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
             skinPreview = tds->create(Vector2(460.f, 360.f), 10);
             if (skinPreview) {
-                skinPreview->setUsingBox(true).setBoxColour(Colour::White()).setTextSize(Vector2(80.f));
+                skinPreview->useBox(true).setBoxColour(Colour::White()).setTextSize(Vector2(80.f));
             }
             vehiclePreview = tds->create(Vector2(560.f, 360.f), 411);
             if (vehiclePreview) {
-                vehiclePreview->setUsingBox(true).setBoxColour(Colour::Cyan()).setTextSize(Vector2(80.f)).setPreviewRotation(GTAQuat(-30.f, 0.f, -45.f)).setPreviewZoom(0.5f).setPreviewVehicleColour(6, 126);
+                vehiclePreview->useBox(true).setBoxColour(Colour::Cyan()).setTextSize(Vector2(80.f)).setPreviewRotation(GTAQuat(-30.f, 0.f, -45.f)).setPreviewZoom(0.5f).setPreviewVehicleColour(6, 126);
             }
             sprite = tds->create(Vector2(360.f, 360.f), "ld_tatt:10ls");
             if (sprite) {
@@ -1038,17 +1038,17 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
         }
     }
 
-    void onTextDrawSelectionCancel(IPlayer& player) override
+    void onPlayerCancelTextDrawSelection(IPlayer& player) override
     {
         player.sendClientMessage(Colour::White(), "Canceled textdraw selection");
     }
 
-    void onTextDrawClick(IPlayer& player, ITextDraw& td) override
+    void onPlayerClickTextDraw(IPlayer& player, ITextDraw& td) override
     {
         player.sendClientMessage(Colour::White(), "Clicked textdraw " + std::to_string(td.getID()));
     }
 
-    void onPlayerTextDrawClick(IPlayer& player, IPlayerTextDraw& td) override
+    void onPlayerClickPlayerTextDraw(IPlayer& player, IPlayerTextDraw& td) override
     {
         player.sendClientMessage(Colour::White(), "Clicked player textdraw " + std::to_string(td.getID()));
     }

@@ -38,10 +38,10 @@ SCRIPT_API(IsValidTextDraw, bool(ITextDraw* textdraw))
 
 SCRIPT_API(IsTextDrawVisibleForPlayer, bool(IPlayer& player, ITextDraw& textdraw))
 {
-	// TODO: Deprecate this native.  Mixing `visible` and `show` is bad.  In fact, just avoid the
-	// term `visible` entirely - it is too ambiguous when things might be available to a player but
-	// out of their current line of sight.  Does `visible` mean "can be seen right now" or "can in
-	// theory be seen some time"?  In this respect `shown` and `streamed` are less ambiguous.
+    // TODO: Deprecate this native.  Mixing `visible` and `show` is bad.  In fact, just avoid the
+    // term `visible` entirely - it is too ambiguous when things might be available to a player but
+    // out of their current line of sight.  Does `visible` mean "can be seen right now" or "can in
+    // theory be seen some time"?  In this respect `shown` and `streamed` are less ambiguous.
     return textdraw.isShownForPlayer(player);
 }
 
@@ -101,7 +101,7 @@ SCRIPT_API(TextDrawBackgroundColor, bool(ITextDraw& textdraw, uint32_t colour))
 
 SCRIPT_API(TextDrawFont, bool(ITextDraw& textdraw, int font))
 {
-    textdraw.setFont(TextDrawFont(font));
+    textdraw.setStyle(TextDrawStyle(font));
     return true;
 }
 
@@ -229,7 +229,7 @@ SCRIPT_API(TextDrawGetOutline, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawGetFont, int(ITextDraw& textdraw))
 {
-    return static_cast<uint8_t>(textdraw.getFont());
+    return static_cast<uint8_t>(textdraw.getStyle());
 }
 
 SCRIPT_API(TextDrawIsBox, int(ITextDraw& textdraw))
@@ -274,15 +274,17 @@ SCRIPT_API(TextDrawGetPreviewVehCol, bool(ITextDraw& textdraw, int& colour1, int
 
 SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player))
 {
-	AMX *
-		amx = GetAMX();
-	cell *
-		params = GetParams();
+    AMX*
+        amx
+        = GetAMX();
+    cell*
+        params
+        = GetParams();
     int
-        num = params[0] / sizeof(cell);
+        num
+        = params[0] / sizeof(cell);
 
-    if (num < 3)
-	{
+    if (num < 3) {
         PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `TextDrawSetStringForPlayer`: %u < %u", num, 3);
         return false;
     }
@@ -295,17 +297,13 @@ SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player
 
     size_t len = atcprintf(staticOutput, maxlen - 1, cinput, amx, params, &param);
 
-    if (param - 1 < num && len < maxlen - 1)
-	{
+    if (param - 1 < num && len < maxlen - 1) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
+    } else {
+        textdraw.setTextForPlayer(player, staticOutput);
     }
-	else
-	{
-		textdraw.setTextForPlayer(player, staticOutput);
-	}
 
     return true;
 }
-
