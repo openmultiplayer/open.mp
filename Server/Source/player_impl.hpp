@@ -195,7 +195,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void spawn() override
     {
-        queryExtension<IPlayerFixesData>(*this)->setLastCash(getMoney());
+		auto fixes = queryExtension<IPlayerFixesData>(*this);
+		if (fixes)
+		{
+	        fixes->setLastCash(getMoney());
+		}
 
         // Remove from vehicle.
         if (state_ == PlayerState_Driver || state_ == PlayerState_Passenger) {

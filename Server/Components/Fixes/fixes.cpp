@@ -79,6 +79,12 @@ public:
 				}), Milliseconds(350));
 		}
 	}
+
+	// Inherited via IPlayerFixesData
+	virtual void reset() override
+	{
+		lastCash_ = 0;
+	}
 };
 
 class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler {
@@ -135,7 +141,7 @@ public:
 		timers_ = components->queryComponent<ITimersComponent>();
 	}
 
-	void onSpawn(IPlayer & player) override
+	void onPlayerSpawn(IPlayer & player) override
 	{
 		/*
 		 * <problem>
@@ -171,7 +177,7 @@ public:
 		return true;
 	}
 
-	void onDeath(IPlayer & player, IPlayer * killer, int reason) override
+	void onPlayerDeath(IPlayer & player, IPlayer * killer, int reason) override
 	{
 		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
 		data->setLastCash(player.getMoney());
@@ -198,7 +204,7 @@ public:
 		}
 	}
 
-	void onConnect(IPlayer & player) override
+	void onPlayerConnect(IPlayer & player) override
 	{
 		player.addExtension(new PlayerFixesData(player), true);
 		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
@@ -349,6 +355,11 @@ public:
 		// This is last because it is the library used in the test suite.  If that works while being
 		// loaded last all the others should load as well.
 		data->createAnimatedActor(timers_, "DEALER", "DEALER_DEAL");
+	}
+
+	// Inherited via IFixesComponent
+	virtual void reset() override
+	{
 	}
 };
 
