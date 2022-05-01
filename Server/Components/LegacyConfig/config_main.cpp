@@ -119,7 +119,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "stream_distance", "network.stream_radius" },
     { "stream_rate", "network.stream_rate" },
     { "maxnpc", "max_bots" },
-    { "lagcompmode", "network.use_lag_compensation" }
+    { "lagcompmode", "game.use_lag_compensation" }
 };
 
 class LegacyConfigComponent final : public ILegacyConfigComponent, public ConsoleEventHandler {

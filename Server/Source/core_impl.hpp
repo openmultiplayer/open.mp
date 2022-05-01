@@ -105,7 +105,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "network.stream_radius", 200.f },
     { "network.stream_rate", 1000 },
     { "network.time_sync_rate", 30000 },
-    { "network.use_lag_compensation", true },
+    { "game.use_lag_compensation", true },
     { "network.use_lan_mode", false },
     // rcon
     { "rcon.allow_teleport", false },
@@ -1174,7 +1174,7 @@ public:
         InCarRate = config.getInt("network.in_vehicle_sync_rate");
         WeaponRate = config.getInt("network.aiming_sync_rate");
         Multiplier = config.getInt("network.multiplier");
-        LagCompensation = config.getBool("network.use_lag_compensation");
+        LagCompensation = config.getBool("game.use_lag_compensation");
         ServerName = String(config.getString("name"));
         EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
