@@ -1,3 +1,5 @@
+#pragma once
+
 #include <chrono>
 #include <component.hpp>
 #include <events.hpp>
@@ -45,7 +47,7 @@ struct ITimersComponent : public IComponent {
     /// @param handler The handler which handlers time out
     /// @param interval The time after which the timer will time out
     /// @param repeating Whether the timer repeats when it times out
-    virtual ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) = 0;
+    virtual ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating = false) = 0;
 
     /// Create a new timer handled by a handler which times out after a certain time
     /// @param handler The handler which handlers time out.
@@ -54,3 +56,36 @@ struct ITimersComponent : public IComponent {
     /// @param count The number of times to call the timer, 0 = infinite.
     virtual ITimer* create(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count) = 0;
 };
+
+// Only a pointer to this is passed across binary boundaries, so using `std::function` should be ABI stable.
+class SimpleTimerHandler final : public TimerTimeOutHandler {
+private:
+	std::function<void()> handler_;
+
+	// Ensure only `free` can delete this.
+	~SimpleTimerHandler()
+	{
+	}
+
+public:
+	SimpleTimerHandler(std::function<void()> const & handler)
+		: handler_(handler)
+	{
+	}
+
+	SimpleTimerHandler(std::function<void()> && handler)
+		: handler_(std::move(handler))
+	{
+	}
+
+	void timeout(ITimer & timer) override
+	{
+		handler_();
+	}
+
+	void free(ITimer & timer) override
+	{
+		delete this;
+	}
+};
+
