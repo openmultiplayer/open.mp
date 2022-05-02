@@ -10,16 +10,16 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, Vector2 position, float col1Width, float col2Width))
+SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, Vector2 position, float column1Width, float column2Width))
 {
     IMenusComponent* component = PawnManager::Get()->menus;
     if (component) {
-        IMenu* menu = component->create(title, position, columns, col1Width, col2Width);
+        IMenu* menu = component->create(title, position, columns, column1Width, column2Width);
         if (menu) {
             return menu->getID();
         }
     }
-    return -1;
+    return INVALID_MENU_ID;
 }
 
 SCRIPT_API(DestroyMenu, bool(IMenu& menu))
@@ -30,7 +30,7 @@ SCRIPT_API(DestroyMenu, bool(IMenu& menu))
 
 SCRIPT_API(AddMenuItem, int(IMenu& menu, uint8_t column, const std::string& text))
 {
-    return menu.addMenuItem(text, column);
+    return menu.addCell(text, column);
 }
 
 SCRIPT_API(SetMenuColumnHeader, bool(IMenu& menu, uint8_t column, const std::string& headerTitle))
@@ -53,13 +53,13 @@ SCRIPT_API(HideMenuForPlayer, bool(IMenu& menu, IPlayer& player))
 
 SCRIPT_API(DisableMenu, bool(IMenu& menu))
 {
-    menu.disableMenu();
+    menu.disable();
     return true;
 }
 
 SCRIPT_API(DisableMenuRow, bool(IMenu& menu, uint8_t row))
 {
-    menu.disableMenuRow(row);
+    menu.disableRow(row);
     return true;
 }
 
@@ -94,7 +94,7 @@ SCRIPT_API(GetMenuColumns, int(IMenu& menu))
 
 SCRIPT_API(GetMenuItems, int(IMenu& menu, int column))
 {
-    return menu.getItemCount(column);
+    return menu.getRowCount(column);
 }
 
 SCRIPT_API(GetMenuPos, bool(IMenu& menu, Vector2& pos))
@@ -103,11 +103,11 @@ SCRIPT_API(GetMenuPos, bool(IMenu& menu, Vector2& pos))
     return true;
 }
 
-SCRIPT_API(GetMenuColumnWidth, bool(IMenu& menu, float& Column1, float& Column2))
+SCRIPT_API(GetMenuColumnWidth, bool(IMenu& menu, float& column1Width, float& column2Width))
 {
-    const Vector2 widths = menu.getColumnsWidth();
-    Column1 = widths.x;
-    Column2 = widths.y;
+    const Vector2 widths = menu.getColumnWidths();
+    column1Width = widths.x;
+    column2Width = widths.y;
     return true;
 }
 
@@ -117,8 +117,9 @@ SCRIPT_API(GetMenuColumnHeader, bool(IMenu& menu, int column, OutputOnlyString& 
     return true;
 }
 
-SCRIPT_API(GetMenuItem, bool(IMenu& menu, int column, int row, OutputOnlyString& item))
+SCRIPT_API(GetMenuItem, bool(IMenu& menu, int column, int row, OutputOnlyString& cell))
 {
-    item = menu.getItem(column, row);
+    cell = menu.getCell(column, row);
     return true;
 }
+

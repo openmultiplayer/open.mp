@@ -14,16 +14,16 @@ struct IMenu : public IExtensible, public IIDProvider {
     virtual void setColumnHeader(StringView header, MenuColumn column) = 0;
 
     /// Adds an item to given column
-    virtual int addMenuItem(StringView itemText, MenuColumn column) = 0;
+    virtual int addCell(StringView itemText, MenuColumn column) = 0;
 
     /// Disables a specific row in menu
-    virtual void disableMenuRow(MenuRow row) = 0;
+    virtual void disableRow(MenuRow row) = 0;
 
     /// Check if menu is enabled
     virtual bool isRowEnabled(MenuRow row) const = 0;
 
     /// Disables menu
-    virtual void disableMenu() = 0;
+    virtual void disable() = 0;
 
     /// Check if menu is enabled
     virtual bool isEnabled() const = 0;
@@ -32,19 +32,19 @@ struct IMenu : public IExtensible, public IIDProvider {
     virtual const Vector2& getPosition() const = 0;
 
     /// Get menu item count in a specific column
-    virtual int getItemCount(MenuColumn column) const = 0;
+    virtual int getRowCount(MenuColumn column) const = 0;
 
     /// Get menu item count
     virtual int getColumnCount() const = 0;
 
     /// Get columns width
-    virtual Vector2 getColumnsWidth() const = 0;
+    virtual Vector2 getColumnWidths() const = 0;
 
     /// Get column header
     virtual const StringView getColumnHeader(MenuColumn column) const = 0;
 
     /// Get column header
-    virtual const StringView getItem(MenuColumn column, MenuRow row) const = 0;
+    virtual const StringView getCell(MenuColumn column, MenuRow row) const = 0;
 
     /// Initialise menu for a player
     virtual void initForPlayer(IPlayer& player) = 0;
