@@ -161,43 +161,20 @@ public:
             bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x < pos.max.x && playerPos.y >= pos.min.y && playerPos.y < pos.max.y;
 
             if (isPlayerInZoneArea && !isPlayerInInsideList) {
-
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
-				if (gangzone->getLegacyPlayer())
-				{
-					eventDispatcher.dispatch(
-						&GangZoneEventHandler::onPlayerEnterPlayerGangZone,
-						player,
-						*lock.entry);
-				}
-				else
-				{
-					eventDispatcher.dispatch(
-						&GangZoneEventHandler::onPlayerEnterGangZone,
-						player,
-						*lock.entry);
-				}
-
+				eventDispatcher.dispatch(
+					&GangZoneEventHandler::onPlayerEnterGangZone,
+					player,
+					*lock.entry);
             } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
-
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
-				if (gangzone->getLegacyPlayer())
-				{
-					eventDispatcher.dispatch(
-						&GangZoneEventHandler::onPlayerLeavePlayerGangZone,
-						player,
-						*lock.entry);
-				}
-				else
-				{
-					eventDispatcher.dispatch(
-						&GangZoneEventHandler::onPlayerLeaveGangZone,
-						player,
-						*lock.entry);
-				}
-            }
+				eventDispatcher.dispatch(
+					&GangZoneEventHandler::onPlayerLeaveGangZone,
+					player,
+					*lock.entry);
+			}
         }
 
         return true;
@@ -308,23 +285,11 @@ public:
 			bool isClickInZoneArea = clickPos.x >= pos.min.x && clickPos.x < pos.max.x && clickPos.y >= pos.min.y && clickPos.y < pos.max.y;
 
 			if (isClickInZoneArea) {
-
 				ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
-				if (gangzone->getLegacyPlayer())
-				{
-					eventDispatcher.dispatch(
-						&GangZoneEventHandler::onPlayerClickPlayerGangZone,
-						player,
-						*lock.entry);
-				}
-				else
-				{
-					eventDispatcher.dispatch(
-						&GangZoneEventHandler::onPlayerClickGangZone,
-						player,
-						*lock.entry);
-				}
-
+				eventDispatcher.dispatch(
+					&GangZoneEventHandler::onPlayerClickGangZone,
+					player,
+					*lock.entry);
 			}
 		}
 	}
