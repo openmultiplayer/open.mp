@@ -167,7 +167,7 @@ IActor* Player::getTargetActor()
         return nullptr;
     }
 
-    IActor* target = component->get(cameraTargetActor_);
+    IActor* target = component->get(targetActor_);
     if (!target) {
         return nullptr;
     }
