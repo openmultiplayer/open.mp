@@ -465,6 +465,7 @@ struct DynamicPoolStorageBase : public NoCopy {
             eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *ptr);
             delete static_cast<Type*>(ptr);
         }
+        pool_.fill(nullptr);
         allocated_.clear();
         lowestFreeIndex_ = Lower;
     }
