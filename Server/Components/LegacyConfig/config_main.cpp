@@ -209,20 +209,15 @@ private:
                 return true;
             }
             case ParamType::Bool: {
-				Impl::String lower(right);
-				std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
-				if (lower == "true" || lower == "1")
-				{
-					config.setBool(dictIt->second, true);
-				}
-				else if (lower == "false" || lower == "0")
-				{
-					config.setBool(dictIt->second, false);
-				}
-				else
-				{
-					logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not a boolean.", name.c_str(), right.c_str());
-				}
+                Impl::String lower(right);
+                std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
+                if (lower == "true" || lower == "1") {
+                    config.setBool(dictIt->second, true);
+                } else if (lower == "false" || lower == "0") {
+                    config.setBool(dictIt->second, false);
+                } else {
+                    logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not a boolean.", name.c_str(), right.c_str());
+                }
                 return true;
             }
             case ParamType::Float: {
@@ -438,33 +433,29 @@ public:
         // Nothing to reset here.
     }
 
-	// Inherited via ILegacyConfigComponent
-	virtual StringView getConfig(StringView legacyName) override
-	{
-		auto it = dictionary.find(legacyName);
-		if (it == dictionary.end())
-		{
-			return StringView();
-		}
-		return it->second;
-	}
+    // Inherited via ILegacyConfigComponent
+    virtual StringView getConfig(StringView legacyName) override
+    {
+        auto it = dictionary.find(legacyName);
+        if (it == dictionary.end()) {
+            return StringView();
+        }
+        return it->second;
+    }
 
-	virtual StringView getLegacy(StringView configName) override
-	{
-		// The code is tuned for looking up the new names, not the old names.
-		for (auto const & it : dictionary)
-		{
-			if (it.second == configName)
-			{
-				return it.first;
-			}
-		}
-		return StringView();
-	}
+    virtual StringView getLegacy(StringView configName) override
+    {
+        // The code is tuned for looking up the new names, not the old names.
+        for (auto const& it : dictionary) {
+            if (it.second == configName) {
+                return it.first;
+            }
+        }
+        return StringView();
+    }
 };
 
 COMPONENT_ENTRY_POINT()
 {
     return new LegacyConfigComponent();
 }
-
