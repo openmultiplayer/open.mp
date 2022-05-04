@@ -309,7 +309,7 @@ public:
         }
         return &std::get<int>(*res);
     }
-	
+
     bool* getBool(StringView key) override
     {
         ConfigStorage* res = nullptr;
@@ -383,7 +383,7 @@ public:
     {
         processed[String(key)] = value;
     }
-	
+
     void setBool(StringView key, bool value) override
     {
         processed[String(key)] = value;
@@ -928,89 +928,76 @@ private:
         PacketHelper::send(RPC, player);
     }
 
-	bool setConfigFromString(StringView conf)
-	{
-		size_t split = conf.find_first_of('=');
-		if (split == StringView::npos)
-		{
-			// Invalid option.  No `=`.
-			return false;
-		}
-		// Get the type of this option from the existing options (defaults and files).
-		StringView key = trim(StringView(conf.data(), split));
-		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
-		if (key.empty())
-		{
-			logLn(LogLevel::Warning, "No key supplied to `--config`");
-			return false;
-		}
-		if (value.empty())
-		{
-			logLn(LogLevel::Warning, "No value supplied to `--config`");
-			return false;
-		}
-		try
-		{
-			// Try the code twice - once for the given config, once for it translated from legacy.
-			bool retry = false;
-			do
-			{
-				switch (config.getType(key))
-				{
-				case ConfigOptionType_Int:
-					*config.getInt(key) = std::stoi(value.data());
-					return true;
-				case ConfigOptionType_String:
-					// TODO: This is a problem.  Most uses hold references to the internal config data,
-					// which we can modify.  Strings don't.  Thus setting a string here won't update all the
-					// uses of that string.
-					config.setString(key, value);
-					return true;
-				case ConfigOptionType_Float:
-					*config.getFloat(key) = std::stod(value.data());
-					return true;
-				case ConfigOptionType_Strings:
-					// Unfortunately we're still setting up the config options so this may display
-					// oddly (wrong place/prefix etc).
-					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-					return false;
-				case ConfigOptionType_Bool:
-					*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
-					return true;
-				default:
-					// Try the loop again with a new key.
-					auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
-					if (retry)
-					{
-						// Check for the second time getting to here.  Shouldn't happen as that
-						// means a legacy option resolved to an unknown config, but handle it.
-						retry = false;
-					}
-					else if (legacyLookup)
-					{
-						// Did they type a legacy key?
-						StringView nu = legacyLookup->getConfig(key);
-						if (!nu.empty())
-						{
-							logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
-							key = nu;
-							retry = true;
-						}
-					}
-					break;
-				}
-			}
-			while (retry);
-		}
-		catch (std::invalid_argument const & e)
-		{
-			// The value was wrong.
-			logLn(LogLevel::Warning, "Value `%.*s` could not be parsed", value.length(), value.data());
-			return false;
-		}
-		logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
-		return false;
-	}
+    bool setConfigFromString(StringView conf)
+    {
+        size_t split = conf.find_first_of('=');
+        if (split == StringView::npos) {
+            // Invalid option.  No `=`.
+            return false;
+        }
+        // Get the type of this option from the existing options (defaults and files).
+        StringView key = trim(StringView(conf.data(), split));
+        StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
+        if (key.empty()) {
+            logLn(LogLevel::Warning, "No key supplied to `--config`");
+            return false;
+        }
+        if (value.empty()) {
+            logLn(LogLevel::Warning, "No value supplied to `--config`");
+            return false;
+        }
+        try {
+            // Try the code twice - once for the given config, once for it translated from legacy.
+            bool retry = false;
+            do {
+                switch (config.getType(key)) {
+                case ConfigOptionType_Int:
+                    *config.getInt(key) = std::stoi(value.data());
+                    return true;
+                case ConfigOptionType_String:
+                    // TODO: This is a problem.  Most uses hold references to the internal config data,
+                    // which we can modify.  Strings don't.  Thus setting a string here won't update all the
+                    // uses of that string.
+                    config.setString(key, value);
+                    return true;
+                case ConfigOptionType_Float:
+                    *config.getFloat(key) = std::stod(value.data());
+                    return true;
+                case ConfigOptionType_Strings:
+                    // Unfortunately we're still setting up the config options so this may display
+                    // oddly (wrong place/prefix etc).
+                    logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+                    return false;
+                case ConfigOptionType_Bool:
+                    *config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+                    return true;
+                default:
+                    // Try the loop again with a new key.
+                    auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
+                    if (retry) {
+                        // Check for the second time getting to here.  Shouldn't happen as that
+                        // means a legacy option resolved to an unknown config, but handle it.
+                        retry = false;
+                    } else if (legacyLookup) {
+                        // Did they type a legacy key?
+                        StringView nu = legacyLookup->getConfig(key);
+                        if (!nu.empty()) {
+                            logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
+                            key = nu;
+                            retry = true;
+                        }
+                    }
+                    break;
+                }
+            } while (retry);
+        } catch (std::invalid_argument const& e) {
+            // The value was wrong.
+            logLn(LogLevel::Warning, "Value `%.*s` could not be parsed", value.length(), value.data());
+            return false;
+        }
+        logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
+        return false;
+    }
 
 public:
     bool reloadLogFile()
@@ -1112,15 +1099,13 @@ public:
         components.configure(*this, config, false);
 
         config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
-		
-		if (cmd.count("config"))
-		{
-			auto configs = cmd["config"].as<std::vector<std::string>>();
-			// Loop through all the config options, get the key/value pair, and store it.
-			for (auto const & conf : configs)
-			{
-				setConfigFromString(conf);
-			}
+
+        if (cmd.count("config")) {
+            auto configs = cmd["config"].as<std::vector<std::string>>();
+            // Loop through all the config options, get the key/value pair, and store it.
+            for (auto const& conf : configs) {
+                setConfigFromString(conf);
+            }
         }
 
         if (cmd.count("script")) {
@@ -1261,10 +1246,9 @@ public:
             fputs(iso8601, stream);
             fputs(" ", stream);
         }
-		if (prefix)
-		{
-			fputs(prefix, stream);
-		}
+        if (prefix) {
+            fputs(prefix, stream);
+        }
         fputs(message, stream);
         fputs("\n", stream);
         fflush(stream);
@@ -1286,22 +1270,21 @@ public:
         }
 #endif
         const char* prefix = nullptr;
-		if (EnableLogPrefix)
-		{
-			switch (level) {
-			case LogLevel::Debug:
-				prefix = "[Debug] ";
-				break;
-			case LogLevel::Message:
-				prefix = "[Info] ";
-				break;
-			case LogLevel::Warning:
-				prefix = "[Warning] ";
-				break;
-			case LogLevel::Error:
-				prefix = "[Error] ";
-			}
-		}
+        if (EnableLogPrefix) {
+            switch (level) {
+            case LogLevel::Debug:
+                prefix = "[Debug] ";
+                break;
+            case LogLevel::Message:
+                prefix = "[Info] ";
+                break;
+            case LogLevel::Warning:
+                prefix = "[Warning] ";
+                break;
+            case LogLevel::Error:
+                prefix = "[Error] ";
+            }
+        }
 
         char iso8601[32] = { 0 };
         if (EnableLogTimestamp && !LogTimestampFormat.empty()) {
@@ -1507,21 +1490,15 @@ public:
                 console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
             }
             return true;
-        }
-		else if (command == "config")
-		{
-			if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"')
-			{
-				setConfigFromString(parameters);
-			}
-			else
-			{
-				// Remove `"`s.
-				setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
-			}
+        } else if (command == "config") {
+            if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"') {
+                setConfigFromString(parameters);
+            } else {
+                // Remove `"`s.
+                setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
+            }
             return true;
         }
         return false;
     }
 };
-

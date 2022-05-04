@@ -104,7 +104,7 @@ struct IConfig : public IExtensible {
     virtual void enumOptions(OptionEnumeratorCallback& callback) const = 0;
 
     /// Get a variable as a bool
-    virtual bool * getBool(StringView key) = 0;
+    virtual bool* getBool(StringView key) = 0;
 };
 
 /// Used for filling config parameters by Config components
@@ -128,7 +128,7 @@ struct IEarlyConfig : public IConfig {
     virtual void addAlias(StringView alias, StringView key, bool deprecated = false) = 0;
 
     /// Set or create a bool in the config
-	virtual void setBool(StringView key, bool value) = 0;
+    virtual void setBool(StringView key, bool value) = 0;
 };
 
 enum LogLevel {
