@@ -44,9 +44,9 @@ private:
     String title;
     uint8_t columnCount;
     Vector2 pos;
-    float col1Width;
-    float col2Width;
-    bool menuEnabled;
+    float column1Width;
+    float column2Width;
+    bool enabled_;
     StaticArray<bool, MAX_MENU_ITEMS> rowEnabled;
     StaticArray<String, 2> columnHeaders;
     StaticArray<uint8_t, 2> columnItemCount;
@@ -66,9 +66,9 @@ public:
         : title(String(title))
         , columnCount(columns)
         , pos(position)
-        , col1Width(col1Width)
-        , col2Width(col2Width)
-        , menuEnabled(true)
+        , column1Width(col1Width)
+        , column2Width(col2Width)
+        , enabled_(true)
         , columnHeaders { "" }
         , columnItemCount { 0 }
         , columnMenuItems { { { "" } } }
@@ -85,7 +85,7 @@ public:
         columnHeaders.at(column) = String(header);
     }
 
-    int addMenuItem(StringView itemText, MenuColumn column) override
+    int addCell(StringView itemText, MenuColumn column) override
     {
         if (column > columnCount) {
             return INVALID_MENU_ITEM_ID;
@@ -107,7 +107,7 @@ public:
         return res;
     }
 
-    void disableMenuRow(MenuRow row) override
+    void disableRow(MenuRow row) override
     {
         if (row >= MAX_MENU_ITEMS) {
             return;
@@ -126,15 +126,15 @@ public:
         return rowEnabled.at(row);
     }
 
-    void disableMenu() override
+    void disable() override
     {
-        menuEnabled = false;
+        enabled_ = false;
         initedFor_.clear();
     }
 
     bool isEnabled() const override
     {
-        return menuEnabled;
+        return enabled_;
     }
 
     const Vector2& getPosition() const override
@@ -147,7 +147,7 @@ public:
         return columnCount;
     }
 
-    int getItemCount(MenuColumn column) const override
+    int getRowCount(MenuColumn column) const override
     {
         if (column > columnCount) {
             return 0;
@@ -155,9 +155,9 @@ public:
         return columnItemCount.at(column);
     }
 
-    Vector2 getColumnsWidth() const override
+    Vector2 getColumnWidths() const override
     {
-        return { col1Width, col2Width };
+        return { column1Width, column2Width };
     }
 
     const StringView getColumnHeader(MenuColumn column) const override
@@ -169,7 +169,7 @@ public:
         return columnHeaders[column];
     }
 
-    const StringView getItem(MenuColumn column, MenuRow row) const override
+    const StringView getCell(MenuColumn column, MenuRow row) const override
     {
         if (column > columnCount) {
             return StringView();
@@ -189,9 +189,9 @@ public:
         playerInitMenu.HasTwoColumns = columnCount >= 1;
         playerInitMenu.Title = title;
         playerInitMenu.Position = pos;
-        playerInitMenu.Col1Width = col1Width;
-        playerInitMenu.Col2Width = col2Width;
-        playerInitMenu.MenuEnabled = menuEnabled;
+        playerInitMenu.Col1Width = column1Width;
+        playerInitMenu.Col2Width = column2Width;
+        playerInitMenu.MenuEnabled = enabled_;
         playerInitMenu.RowEnabled = rowEnabled;
 
         for (int i = 0; i < columnHeaders.size(); i++) {
