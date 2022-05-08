@@ -47,7 +47,7 @@ class NetworkBitStream {
 
 public:
     /// The version of the NetworkBitStream class; increased when breaking changes are introduced
-    constexpr static const int Version = 0;
+    constexpr static const int Version = 1;
 
     /// Default Constructor
     NetworkBitStream();
@@ -453,6 +453,10 @@ public:
     /// \return A pointer to the internal state
     inline unsigned char* GetData(void) const { return data; }
 
+    /// Makes a copy of the data if NetworkBitStream is not owning it so we can safely write.
+    /// Can be used to write on top of incoming packets.
+    void OwnData(void);
+
 private:
     /// Write a 0
     void Write0(void);
@@ -737,10 +741,6 @@ private:
     /// boundaries so so WriteAlignedBits and ReadAlignedBits both
     /// calculate the same offset when aligning.
     void AlignReadToByteBoundary(void);
-
-    /// If we used the constructor version with copy data off, this
-    /// *makes sure it is set to on and the data pointed to is copied.
-    void AssertCopyData(void);
 
     /// Use this if you pass a pointer copy to the constructor
     /// *(_copyData==false) and want to overallocate to prevent
