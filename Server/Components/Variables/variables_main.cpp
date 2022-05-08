@@ -138,6 +138,11 @@ public:
     {
         return data_.size();
     }
+
+    void clear()
+    {
+        data_.clear();
+    }
 };
 
 class PlayerVariableData final : public VariableStorageBase<IPlayerVariableData> {
@@ -149,7 +154,7 @@ public:
 
     void reset() override
     {
-        // Do nothing.  Variables persist.
+        clear();
     }
 };
 

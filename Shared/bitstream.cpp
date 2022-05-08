@@ -667,8 +667,8 @@ unsigned char* NetworkBitStream::GetData( void ) const
 }
 
 */
-// If we used the constructor version with copy data off, this makes sure it is set to on and the data pointed to is copied.
-void NetworkBitStream::AssertCopyData(void)
+
+void NetworkBitStream::OwnData(void)
 {
     if (copyData == false) {
         copyData = true;
@@ -680,10 +680,9 @@ void NetworkBitStream::AssertCopyData(void)
 
             memcpy(newdata, data, bitsToBytes(numberOfBitsAllocated));
             data = newdata;
-        }
-
-        else
+        } else {
             data = 0;
+        }
     }
 }
 
