@@ -19,7 +19,7 @@ SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, Vector2 p
             return menu->getID();
         }
     }
-    return INVALID_MENU_ID;
+    return -1; // INVALID_MENU_ID is 255 but samp returns -1 if CreateMenu fails
 }
 
 SCRIPT_API(DestroyMenu, bool(IMenu& menu))
@@ -122,4 +122,3 @@ SCRIPT_API(GetMenuItem, bool(IMenu& menu, int column, int row, OutputOnlyString&
     cell = menu.getCell(column, row);
     return true;
 }
-
