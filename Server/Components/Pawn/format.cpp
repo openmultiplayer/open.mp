@@ -47,7 +47,7 @@ template size_t atcprintf<cell, char>(cell*, size_t, const char*, AMX*, const ce
 template size_t atcprintf<char, char>(char*, size_t, const char*, AMX*, const cell*, int*);
 
 template <typename U, typename S>
-void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec)
+void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, int flags)
 {
     int size = 0;
     U* buf;
@@ -74,16 +74,28 @@ void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec)
     if (size > (int)maxlen)
         size = maxlen;
 
+	if ((flags & LADJUST)) {
+		while ((size < width) && maxlen) {
+			*buf++ = (flags & ZEROPAD) ? '0' : ' ';
+			width--;
+			maxlen--;
+		}
+	}
+
     maxlen -= size;
     width -= size;
 
     while (size--)
         *buf++ = static_cast<U>(*string++);
 
-    while (width-- > 0 && maxlen) {
-        *buf++ = ' ';
-        maxlen--;
-    }
+	// left justify if required.  backwards from most specifiers.
+	if ((flags & LADJUST) == 0) {
+		while (width-- && maxlen) {
+			// right-padding only with spaces, ZEROPAD is ignored
+			*buf++ = ' ';
+			maxlen--;
+		}
+	}
 
     *buf_p = buf;
 }
@@ -379,6 +391,45 @@ void AddHex(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
     *buf_p = buf;
 }
 
+template <typename U>
+void AddOctal(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
+{
+    U text[32];
+    int digits = 0;
+    U* buf = *buf_p;
+    U digit = 0;
+
+    do {
+        digit = ('0' + val % 8);
+
+        text[digits++] = digit;
+        val /= 8;
+    } while (val);
+
+    if (!(flags & LADJUST)) {
+        while (digits < width && maxlen) {
+            *buf++ = (flags & ZEROPAD) ? '0' : ' ';
+            width--;
+            maxlen--;
+        }
+    }
+
+    while (digits-- && maxlen) {
+        *buf++ = text[digits];
+        width--;
+        maxlen--;
+    }
+
+    if (flags & LADJUST) {
+        while (width-- && maxlen) {
+            *buf++ = (flags & ZEROPAD) ? '0' : ' ';
+            maxlen--;
+        }
+    }
+
+    *buf_p = buf;
+}
+
 template <typename D, typename S>
 size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param)
 {
@@ -473,6 +524,11 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
             AddBinary(&buf_p, llen, *get_amxaddr(amx, params[arg]), width, flags);
             arg++;
             break;
+        case 'o':
+            CHECK_ARGS(0);
+            AddOctal(&buf_p, llen, *get_amxaddr(amx, params[arg]), width, flags);
+            arg++;
+            break;
         case 'd':
         case 'i':
             CHECK_ARGS(0);
@@ -510,13 +566,13 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
                 return 0;
             }
 
-            AddString(&buf_p, llen, ptr, width, prec);
+            AddString(&buf_p, llen, ptr, width, prec, flags);
             arg++;
             break;
         }
         case 's':
             CHECK_ARGS(0);
-            AddString(&buf_p, llen, get_amxaddr(amx, params[arg]), width, prec);
+            AddString(&buf_p, llen, get_amxaddr(amx, params[arg]), width, prec, flags);
             arg++;
             break;
         case 'q': {
@@ -538,7 +594,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
                     pos += 2;
                 }
 
-                AddString(&buf_p, llen, strArg.c_str(), width, prec);
+                AddString(&buf_p, llen, strArg.c_str(), width, prec, flags);
             }
 
             arg++;
