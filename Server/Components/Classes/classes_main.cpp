@@ -140,10 +140,16 @@ private:
                     [&peer, &playerRequestClassPacket](ClassEventHandler* handler) {
                         return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
                     })) {
+
+                // Use the one stored in IPlayer, we have set it above with selected class
+                // But it matters to get it from IPlayer::getSkin in case player's skin is
+                // Manually set in onPlayerRequestClass event using IPlayer::setSkin
+                int skin = peer.getSkin();
+
                 const WeaponSlots& weapons = used_class->weapons;
                 StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(used_class->team, used_class->skin, used_class->spawn, used_class->angle);
+                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(used_class->team, skin, used_class->spawn, used_class->angle);
                 playerRequestClassResponse.Selectable = true;
                 playerRequestClassResponse.Unknown1 = 0;
                 playerRequestClassResponse.Weapons = weaponIDsArray;
