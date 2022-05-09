@@ -90,7 +90,7 @@ void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, 
 
 	// left justify if required.  backwards from most specifiers.
 	if ((flags & LADJUST) == 0) {
-		while (width-- && maxlen) {
+		while (width-- > 0 && maxlen) {
 			// right-padding only with spaces, ZEROPAD is ignored
 			*buf++ = ' ';
 			maxlen--;
