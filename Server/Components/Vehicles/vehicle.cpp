@@ -301,8 +301,8 @@ const StringView Vehicle::getPlate()
 
 void Vehicle::setColour(int col1, int col2)
 {
-    bodyColour1 = col1;
-    bodyColour2 = col2;
+    bodyColour1 = col1 & 0xFF;
+    bodyColour2 = col2 & 0xFF;
 
     NetCode::RPC::SCMEvent colourRPC;
     colourRPC.PlayerID = 0xFFFF;
@@ -315,7 +315,7 @@ void Vehicle::setColour(int col1, int col2)
 
 Pair<int, int> Vehicle::getColour() const
 {
-    return { bodyColour1, bodyColour2 };
+    return { bodyColour1 == -1 ? spawnData.colour1 : bodyColour1, bodyColour2 == -1 ? spawnData.colour2 : bodyColour2 };
 }
 
 void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStatus, uint8_t TyreStatus, IPlayer* vehicleUpdater)
