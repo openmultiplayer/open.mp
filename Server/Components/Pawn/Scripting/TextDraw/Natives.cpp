@@ -299,7 +299,7 @@ SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player
     if (param - 1 < num && len < MAX_TEXTDRAW_STR_LENGTH - 1) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
-        PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "TextDrawSetStringForPlayer: not enough arguments given. fmt: \"%s\"", fmt);
     } else {
         textdraw.setTextForPlayer(player, staticOutput);
     }
