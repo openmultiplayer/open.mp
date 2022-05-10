@@ -294,7 +294,7 @@ SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player
 
     char staticOutput[MAX_TEXTDRAW_STR_LENGTH];
 
-    size_t len = atcprintf(staticOutput, MAX_TEXTDRAW_STR_LENGTH, cinput, amx, params, &param);
+    size_t len = atcprintf(staticOutput, MAX_TEXTDRAW_STR_LENGTH - 1, cinput, amx, params, &param);
 
     if (param - 1 < num && len < MAX_TEXTDRAW_STR_LENGTH - 1) {
         char* fmt;
