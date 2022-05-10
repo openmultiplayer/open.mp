@@ -288,16 +288,15 @@ SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player
         PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `TextDrawSetStringForPlayer`: %u < %u", num, 3);
         return false;
     }
-    int maxlen = params[2];
 
     int param = 4;
     cell* cinput = amx_Address(amx, params[3]);
 
-    char staticOutput[4096];
+    char staticOutput[MAX_TEXTDRAW_STR_LENGTH];
 
-    size_t len = atcprintf(staticOutput, maxlen - 1, cinput, amx, params, &param);
+    size_t len = atcprintf(staticOutput, MAX_TEXTDRAW_STR_LENGTH, cinput, amx, params, &param);
 
-    if (param - 1 < num && len < maxlen - 1) {
+    if (param - 1 < num && len < MAX_TEXTDRAW_STR_LENGTH - 1) {
         char* fmt;
         amx_StrParamChar(amx, params[3], fmt);
         PawnManager::Get()->core->logLn(LogLevel::Warning, "format: not enough arguments given. fmt: \"%s\"", fmt);
