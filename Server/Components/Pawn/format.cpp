@@ -71,8 +71,9 @@ void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, 
         size--;
     }
 
-    if (size > (int)maxlen)
+    if (size > (int)maxlen) {
         size = maxlen;
+    }
 
 	if ((flags & LADJUST)) {
 		while ((size < width) && maxlen) {
@@ -85,8 +86,9 @@ void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, 
     maxlen -= size;
     width -= size;
 
-    while (size--)
+    while (size--) {
         *buf++ = static_cast<U>(*string++);
+    }
 
 	// left justify if required.  backwards from most specifiers.
 	if ((flags & LADJUST) == 0) {
