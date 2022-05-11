@@ -18,6 +18,8 @@ SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, std::string
 
 SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, std::string const& msg))
 {
+	cell* params = GetParams();
+	int count = params[0] / sizeof(cell);
     PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
     return true;
 }
