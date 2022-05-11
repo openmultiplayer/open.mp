@@ -1,11 +1,3 @@
-/*
- *  This Source Code Form is subject to the terms of the Mozilla Public License,
- *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
- *  obtain one at http://mozilla.org/MPL/2.0/.
- *
- *  The original code is copyright (c) 2022, open.mp team and contributors.
- */
-
 // vim: set ts=4 sw=4 tw=99 noet:
 //
 // AMX Mod X, based on AMX Mod by Aleksander Naszko ("OLO").
@@ -596,3 +588,40 @@ void __WHOA_DONT_CALL_ME_PLZ_K_lol_o_O()
     // ascprintf
     atcprintf((char*)NULL, 0, (cell*)NULL, NULL, NULL, NULL);
 }
+
+// StringView printf.
+StringView svprintf(AMX* amx, const cell* params, int param)
+{
+	static char buf[8192];
+	int count = params[0] / sizeof(cell);
+	int len;
+	buf[0] = '\0';
+	if (count == param + 1)
+	{
+		// No formatting.  Fallback.
+		cell*
+			addr;
+		amx_GetAddr(amx, params[param], &addr);
+		amx_StrLen(addr, &len);
+		if (len <= 0 || len >= sizeof (buf))
+		{
+			return StringView(buf, 0);
+		}
+		amx_GetString(buf, addr, 0, len + 1);
+	}
+	else
+	{
+		// Skip the format string.
+		cell* format = amx_Address(amx, params[param]);
+		++param;
+		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &param);
+		if (param <= count)
+		{
+			char* fmt;
+			amx_StrParamChar(amx, params[1], fmt);
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given: \"%s\" does not format %u parameters.", fmt, count - 1);
+		}
+	}
+	return StringView(buf, len);
+}
+
