@@ -10,6 +10,7 @@
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include "../Types.hpp"
+#include "../../format.hpp"
 #include <Impl/network_impl.hpp>
 #include <iomanip>
 #include <math.h>
@@ -196,12 +197,13 @@ SCRIPT_API(GameModeExit, bool())
     return true;
 }
 
-SCRIPT_API(GameTextForAll, bool(std::string const& string, int time, int style))
+SCRIPT_API(GameTextForAll, bool(cell const* format, int time, int style))
 {
-    if (string.empty()) {
+	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+    if (msg.empty()) {
         return false;
     }
-    PawnManager::Get()->players->sendGameTextToAll(string, Milliseconds(time), style);
+    PawnManager::Get()->players->sendGameTextToAll(msg, Milliseconds(time), style);
     return true;
 }
 
@@ -458,16 +460,18 @@ SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
     throw pawn_natives::NotImplemented();
 }
 
-SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, std::string const& message))
+SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, cell const* format))
 {
+	auto message = svprintf(format, GetAMX(), GetParams(), 2);
     PawnManager::Get()->players->sendChatMessageToAll(sender, message);
     return true;
 }
 
-SCRIPT_API(SendRconCommand, bool(std::string const& command))
+SCRIPT_API(SendRconCommand, bool(cell const* format))
 {
     IConsoleComponent* console = PawnManager::Get()->console;
     if (console) {
+		auto command = svprintf(format, GetAMX(), GetParams(), 2);
         console->send(command);
     }
     return true;
@@ -479,8 +483,9 @@ SCRIPT_API(SetDeathDropAmount, bool(int amount))
     return true;
 }
 
-SCRIPT_API(SetGameModeText, bool(std::string const& string))
+SCRIPT_API(SetGameModeText, bool(cell const* format))
 {
+	auto string = svprintf(format, GetAMX(), GetParams(), 2);
     PawnManager::Get()->core->setData(SettableCoreDataType::ModeText, string);
     return true;
 }
