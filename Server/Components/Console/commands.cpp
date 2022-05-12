@@ -12,7 +12,7 @@ FlatHashMap<String, CommandHandlerFuncType> ConsoleCmdHandler::Commands;
 
 ADD_CONSOLE_CMD(gamemodetext, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console.sendMessage(sender, String("gamemodetext = \"") + core->getConfig().getString("game.mode").data() + "\"");
+        console.sendMessage(sender, String("game.mode = \"") + core->getConfig().getString("game.mode").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::ModeText, params);
@@ -20,7 +20,7 @@ ADD_CONSOLE_CMD(gamemodetext, [](const String& params, const ConsoleCommandSende
 
 ADD_CONSOLE_CMD(hostname, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console.sendMessage(sender, String("hostname = \"") + core->getConfig().getString("name").data() + "\"");
+        console.sendMessage(sender, String("name = \"") + core->getConfig().getString("name").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::ServerName, params);
@@ -28,7 +28,7 @@ ADD_CONSOLE_CMD(hostname, [](const String& params, const ConsoleCommandSenderDat
 
 ADD_CONSOLE_CMD(mapname, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console.sendMessage(sender, String("mapname = \"") + core->getConfig().getString("game.map").data() + "\"");
+        console.sendMessage(sender, String("game.map = \"") + core->getConfig().getString("game.map").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::MapName, params);
@@ -36,7 +36,7 @@ ADD_CONSOLE_CMD(mapname, [](const String& params, const ConsoleCommandSenderData
 
 ADD_CONSOLE_CMD(weburl, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params.empty()) {
-        console.sendMessage(sender, String("weburl = \"") + core->getConfig().getString("website").data() + "\"");
+        console.sendMessage(sender, String("website = \"") + core->getConfig().getString("website").data() + "\"");
         return;
     }
     core->setData(SettableCoreDataType::URL, params);
@@ -237,7 +237,7 @@ ADD_CONSOLE_CMD(unbanip, [](const String& params, const ConsoleCommandSenderData
 ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     float gravity = 0.008f;
     if (sscanf(params.data(), "%f", &gravity) == EOF) {
-        console.sendMessage(sender, String("gravity = " + std::to_string(*core->getConfig().getFloat("game.gravity"))));
+        console.sendMessage(sender, String("game.gravity = " + std::to_string(*core->getConfig().getFloat("game.gravity"))));
         return;
     }
     core->setGravity(gravity);
@@ -246,7 +246,7 @@ ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData
 ADD_CONSOLE_CMD(weather, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int weather = 0;
     if (sscanf(params.data(), "%i", &weather) == EOF) {
-        console.sendMessage(sender, String("weather = " + std::to_string(*core->getConfig().getInt("game.weather"))));
+        console.sendMessage(sender, String("game.weather = " + std::to_string(*core->getConfig().getInt("game.weather"))));
         return;
     }
     core->setWeather(weather);
@@ -267,7 +267,7 @@ ADD_CONSOLE_CMD(echo, [](const String& params, const ConsoleCommandSenderData& s
 ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console.sendMessage(sender, String("messageslimit = \"") + std::to_string(*core->getConfig().getInt("network.messages_limit")) + "\"");
+        console.sendMessage(sender, String("network.messages_limit = \"") + std::to_string(*core->getConfig().getInt("network.messages_limit")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.messages_limit", value);
@@ -277,17 +277,17 @@ ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSend
 ADD_CONSOLE_CMD(messageholelimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console.sendMessage(sender, String("messageholelimit = \"") + std::to_string(*core->getConfig().getInt("message_hole_limit")) + "\"");
+        console.sendMessage(sender, String("network.message_hole_limit = \"") + std::to_string(*core->getConfig().getInt("network.message_hole_limit")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setInt("message_hole_limit", value);
+    static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.message_hole_limit", value);
     core->updateNetworks();
 });
 
 ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console.sendMessage(sender, String("ackslimit = \"") + std::to_string(*core->getConfig().getInt("network.acks_limit")) + "\"");
+        console.sendMessage(sender, String("network.acks_limit = \"") + std::to_string(*core->getConfig().getInt("network.acks_limit")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.acks_limit", value);
@@ -297,7 +297,7 @@ ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderDa
 ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%i", &value) == EOF) {
-        console.sendMessage(sender, String("playertimeout = \"") + std::to_string(*core->getConfig().getInt("network.player_timeout")) + "\"");
+        console.sendMessage(sender, String("network.player_timeout = \"") + std::to_string(*core->getConfig().getInt("network.player_timeout")) + "\"");
         return;
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.player_timeout", value);
@@ -307,13 +307,14 @@ ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSend
 ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params == "1") {
         console.sendMessage(sender, "Remote console enabled.");
-        static_cast<IEarlyConfig&>(core->getConfig()).setInt("enable_rcon", 1);
+        static_cast<IEarlyConfig&>(core->getConfig()).setInt("rcon.enable", 1);
         core->updateNetworks();
     } else if (params == "0") {
         console.sendMessage(sender, "Remote console disabled.");
-        static_cast<IEarlyConfig&>(core->getConfig()).setInt("enable_rcon", 0);
+        static_cast<IEarlyConfig&>(core->getConfig()).setInt("rcon.enable", 0);
         core->updateNetworks();
     } else {
         console.sendMessage(sender, "Unknown parameter. Use rcon 0 to disable remote console or rcon 1 to enable it.");
     }
 });
+
