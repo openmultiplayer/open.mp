@@ -115,7 +115,7 @@ conan_omp_add_lib(cpp-httplib 0.9.0)
 
 # OpenSSL
 # -------
-conan_omp_add_lib(openssl 1.1.1k)
+conan_omp_add_lib(openssl 3.0.3)
 
 # cxxopts
 # ----

@@ -30,6 +30,7 @@ using namespace Impl;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
 #define CPPHTTPLIB_OPENSSL_SUPPORT
 #include <httplib/httplib.h>
 #pragma clang diagnostic pop
@@ -1314,7 +1315,8 @@ public:
     bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override
     {
         String input(String(password) + String(salt));
-
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
         SHA256_CTX ctx {};
         if (!SHA256_Init(&ctx)) {
             return false;
@@ -1326,7 +1328,7 @@ public:
         if (!SHA256_Final(md, &ctx)) {
             return false;
         }
-
+#pragma clang diagnostic pop
         char* data = output.data();
         for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
             sprintf(data + 2 * i, "%02X", md[i]);
