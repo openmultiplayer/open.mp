@@ -1201,10 +1201,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return storage.getEventDispatcher();
     }
 
-    void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr) override
+    void broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
     {
         for (INetwork* network : networks) {
-            network->broadcastRPC(id, data, channel, skipFrom);
+            network->broadcastPacket(data, channel, skipFrom, dispatchEvents);
+        }
+    }
+
+    void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
+    {
+        for (INetwork* network : networks) {
+            network->broadcastRPC(id, data, channel, skipFrom, dispatchEvents);
         }
     }
 

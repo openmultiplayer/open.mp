@@ -390,17 +390,17 @@ struct IPlayer : public IExtensible, public IEntity {
 
     /// Attempt to send a packet to the network peer
     /// @param bs The bit stream with data to send
-    bool sendPacket(Span<uint8_t> data, int channel)
+    bool sendPacket(Span<uint8_t> data, int channel, bool dispatchEvents = true)
     {
-        return getNetworkData().network->sendPacket(*this, data, channel);
+        return getNetworkData().network->sendPacket(*this, data, channel, dispatchEvents);
     }
 
     /// Attempt to send an RPC to the network peer
     /// @param id The RPC ID for the current network
     /// @param bs The bit stream with data to send
-    bool sendRPC(int id, Span<uint8_t> data, int channel)
+    bool sendRPC(int id, Span<uint8_t> data, int channel, bool dispatchEvents = true)
     {
-        return getNetworkData().network->sendRPC(*this, id, data, channel);
+        return getNetworkData().network->sendRPC(*this, id, data, channel, dispatchEvents);
     }
 
     /// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
@@ -884,9 +884,18 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer> {
     /// Request a new player with the given network parameters
     virtual Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) = 0;
 
+    /// Attempt to broadcast an packet derived from NetworkPacketBase to all peers
+    /// @param data The data span with the length in BITS
+    /// @param skipFrom send packet to everyone except this player
+    /// @param dispatchEvents dispatch packet related events
+    virtual void broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) = 0;
+
     /// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
-    /// @param packet The packet to send
-    virtual void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr) = 0;
+    /// @param id The RPC ID for the current network
+    /// @param data The data span with the length in BITS
+    /// @param skipFrom send RPC to everyone except this peer
+    /// @param dispatchEvents dispatch RPC related events
+    virtual void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) = 0;
 
     /// Check if player name is valid.
     virtual bool isNameValid(StringView name) const = 0;
