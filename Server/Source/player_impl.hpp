@@ -151,6 +151,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , controllable_(true)
         , clockToggled_(false)
         , keys_ { 0u, 0, 0 }
+        , velocity_(0.0f, 0.0f, 0.0f)
         , surfing_ { PlayerSurfingData::Type::None }
         , armedWeapon_(0)
         , rotTransform_(0.f, 0.f, 0.f)
