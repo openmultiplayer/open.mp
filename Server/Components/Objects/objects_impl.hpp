@@ -199,6 +199,10 @@ public:
 
     ~ObjectComponent()
     {
+        processedPlayerObjects.clear();
+        processedObjects.clear();
+        storage.clear();
+
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
             players->getEventDispatcher().removeEventHandler(this);
