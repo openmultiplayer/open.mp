@@ -110,24 +110,24 @@ class NetworkBitStream;
 
 /// An event handler for incoming network I/O events
 struct NetworkInEventHandler {
-    virtual bool receivedPacket(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
-    virtual bool receivedRPC(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onReceivePacket(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onReceiveRPC(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
 };
 
 /// An event handler for incoming I/O events bound to a specific RPC/packet ID
 struct SingleNetworkInEventHandler {
-    virtual bool received(IPlayer& peer, NetworkBitStream& bs) { return true; }
+    virtual bool onReceive(IPlayer& peer, NetworkBitStream& bs) { return true; }
 };
 
 /// An event handler for outgoing network I/O events
 struct NetworkOutEventHandler {
-    virtual bool sentPacket(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
-    virtual bool sentRPC(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onSendPacket(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onSendRPC(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
 };
 
 /// An event handler for outgoing I/O events bound to a specific RPC/packet ID
 struct SingleNetworkOutEventHandler {
-    virtual bool sent(IPlayer* peer, NetworkBitStream& bs) { return true; }
+    virtual bool onSend(IPlayer* peer, NetworkBitStream& bs) { return true; }
 };
 
 /// A peer address with support for IPv4 and IPv6
@@ -265,9 +265,14 @@ struct INetwork : public IExtensible {
     /// Attempt to send a packet to a network peer
     /// @param peer The network peer to send the packet to
     /// @param data The data span with the length in BITS
-    /// @param data The data span with the length in BITS
     /// @param dispatchEvents If calling sendPacket should dispatch send events or not
     virtual bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents = true) = 0;
+
+    /// Attempt to broadcast a packet to everyone on this network
+    /// @param data The data span with the length in BITS
+    /// @param exceptPeer send packet to everyone except this peer
+    /// @param dispatchEvents dispatch packet related events
+    virtual bool broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* exceptPeer = nullptr, bool dispatchEvents = true) = 0;
 
     /// Attempt to send an RPC to a network peer
     /// @param peer The network peer to send the RPC to
@@ -280,7 +285,8 @@ struct INetwork : public IExtensible {
     /// @param id The RPC ID for the current network
     /// @param data The data span with the length in BITS
     /// @param exceptPeer send RPC to everyone except this peer
-    virtual bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer = nullptr) = 0;
+    /// @param dispatchEvents dispatch RPC related events
+    virtual bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer = nullptr, bool dispatchEvents = true) = 0;
 
     /// Get netowrk statistics
     virtual NetworkStats getStatistics(int playerIndex = -1) = 0;
