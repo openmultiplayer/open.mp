@@ -201,7 +201,7 @@ public:
     {
         if (threadData) {
             threadData->valid = false;
-            if(cinThread.joinable()) {
+            if (cinThread.joinable()) {
                 cinThread.join();
             }
             delete threadData;
