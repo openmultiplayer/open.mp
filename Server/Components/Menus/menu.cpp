@@ -29,7 +29,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerSelectedMenuRow onPlayerSelectedMenuRow;
             if (!onPlayerSelectedMenuRow.read(bs)) {
@@ -58,7 +58,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerExitedMenu onPlayerExitedMenu;
             if (!onPlayerExitedMenu.read(bs)) {

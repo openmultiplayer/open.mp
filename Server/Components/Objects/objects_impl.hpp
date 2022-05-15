@@ -30,7 +30,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerSelectObject onPlayerSelectObjectRPC;
             if (!onPlayerSelectObjectRPC.read(bs)) {
@@ -73,7 +73,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEditObject onPlayerEditObjectRPC;
             if (!onPlayerEditObjectRPC.read(bs)) {
@@ -123,7 +123,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEditAttachedObject onPlayerEditAttachedObjectRPC;
             if (!onPlayerEditAttachedObjectRPC.read(bs)) {

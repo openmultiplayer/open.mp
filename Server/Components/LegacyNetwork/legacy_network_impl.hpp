@@ -90,14 +90,14 @@ public:
         if (dispatchEvents) {
             if (!outEventDispatcher.stopAtFalse([&bs](NetworkOutEventHandler* handler) {
                     bs.resetReadPointer();
-                    return handler->sentPacket(nullptr, 0, bs);
+                    return handler->onSendPacket(nullptr, 0, bs);
                 })) {
                 return false;
             }
 
             if (!packetOutEventDispatcher.stopAtFalse(0, [&bs](SingleNetworkOutEventHandler* handler) {
                     bs.resetReadPointer();
-                    return handler->sent(nullptr, bs);
+                    return handler->onSend(nullptr, bs);
                 })) {
                 return false;
             }
@@ -135,14 +135,14 @@ public:
             if (bs.readUINT8(type)) {
                 if (!outEventDispatcher.stopAtFalse([&peer, type, &bs](NetworkOutEventHandler* handler) {
                         bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->sentPacket(&peer, type, bs);
+                        return handler->onSendPacket(&peer, type, bs);
                     })) {
                     return false;
                 }
 
                 if (!packetOutEventDispatcher.stopAtFalse(type, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
                         bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->sent(&peer, bs);
+                        return handler->onSend(&peer, bs);
                     })) {
                     return false;
                 }
@@ -170,14 +170,14 @@ public:
         if (dispatchEvents) {
             if (!outEventDispatcher.stopAtFalse([id, &bs](NetworkOutEventHandler* handler) {
                     bs.resetReadPointer();
-                    return handler->sentRPC(nullptr, id, bs);
+                    return handler->onSendRPC(nullptr, id, bs);
                 })) {
                 return false;
             }
 
             if (!rpcOutEventDispatcher.stopAtFalse(id, [&bs](SingleNetworkOutEventHandler* handler) {
                     bs.resetReadPointer();
-                    return handler->sent(nullptr, bs);
+                    return handler->onSend(nullptr, bs);
                 })) {
                 return false;
             }
@@ -217,14 +217,14 @@ public:
         if (dispatchEvents) {
             if (!outEventDispatcher.stopAtFalse([&peer, id, &bs](NetworkOutEventHandler* handler) {
                     bs.resetReadPointer();
-                    return handler->sentRPC(&peer, id, bs);
+                    return handler->onSendRPC(&peer, id, bs);
                 })) {
                 return false;
             }
 
             if (!rpcOutEventDispatcher.stopAtFalse(id, [&peer, &bs](SingleNetworkOutEventHandler* handler) {
                     bs.resetReadPointer();
-                    return handler->sent(&peer, bs);
+                    return handler->onSend(&peer, bs);
                 })) {
                 return false;
             }
