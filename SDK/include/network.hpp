@@ -110,24 +110,24 @@ class NetworkBitStream;
 
 /// An event handler for incoming network I/O events
 struct NetworkInEventHandler {
-    virtual bool receivedPacket(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
-    virtual bool receivedRPC(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onReceivePacket(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onReceiveRPC(IPlayer& peer, int id, NetworkBitStream& bs) { return true; }
 };
 
 /// An event handler for incoming I/O events bound to a specific RPC/packet ID
 struct SingleNetworkInEventHandler {
-    virtual bool received(IPlayer& peer, NetworkBitStream& bs) { return true; }
+    virtual bool onReceive(IPlayer& peer, NetworkBitStream& bs) { return true; }
 };
 
 /// An event handler for outgoing network I/O events
 struct NetworkOutEventHandler {
-    virtual bool sentPacket(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
-    virtual bool sentRPC(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onSendPacket(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
+    virtual bool onSendRPC(IPlayer* peer, int id, NetworkBitStream& bs) { return true; }
 };
 
 /// An event handler for outgoing I/O events bound to a specific RPC/packet ID
 struct SingleNetworkOutEventHandler {
-    virtual bool sent(IPlayer* peer, NetworkBitStream& bs) { return true; }
+    virtual bool onSend(IPlayer* peer, NetworkBitStream& bs) { return true; }
 };
 
 /// A peer address with support for IPv4 and IPv6
