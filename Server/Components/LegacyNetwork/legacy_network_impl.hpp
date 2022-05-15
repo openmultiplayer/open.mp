@@ -88,18 +88,21 @@ public:
         bs.SetReadOffset(0);
 
         if (dispatchEvents) {
-            if (!outEventDispatcher.stopAtFalse([&bs](NetworkOutEventHandler* handler) {
-                    bs.resetReadPointer();
-                    return handler->onSendPacket(nullptr, 0, bs);
-                })) {
-                return false;
-            }
+            uint8_t type;
+            if (bs.readUINT8(type)) {
+                if (!outEventDispatcher.stopAtFalse([type, &bs](NetworkOutEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
+                        return handler->onSendPacket(nullptr, type, bs);
+                    })) {
+                    return false;
+                }
 
-            if (!packetOutEventDispatcher.stopAtFalse(0, [&bs](SingleNetworkOutEventHandler* handler) {
-                    bs.resetReadPointer();
-                    return handler->onSend(nullptr, bs);
-                })) {
-                return false;
+                if (!packetOutEventDispatcher.stopAtFalse(type, [&bs](SingleNetworkOutEventHandler* handler) {
+                        bs.SetReadOffset(8); // Ignore packet ID
+                        return handler->onSend(nullptr, bs);
+                    })) {
+                    return false;
+                }
             }
         }
 
