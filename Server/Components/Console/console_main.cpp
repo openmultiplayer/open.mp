@@ -54,7 +54,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerRconCommand packet;
             if (!packet.read(bs)) {

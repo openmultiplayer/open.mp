@@ -115,7 +115,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerDialogResponse sendDialogResponse;
             if (!sendDialogResponse.read(bs)) {

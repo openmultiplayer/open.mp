@@ -32,7 +32,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerEnterVehicle onPlayerEnterVehicleRPC;
             if (!onPlayerEnterVehicleRPC.read(bs)) {
@@ -66,7 +66,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerExitVehicle onPlayerExitVehicleRPC;
             if (!onPlayerExitVehicleRPC.read(bs)) {
@@ -98,7 +98,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SetVehicleDamageStatus onDamageStatus;
             if (!onDamageStatus.read(bs) || !self.get(onDamageStatus.VehicleID)) {
@@ -121,7 +121,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::SCMEvent scmEvent;
             if (!scmEvent.read(bs)) {
@@ -215,7 +215,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::VehicleDeath vehicleDeath;
             if (!vehicleDeath.read(bs)) {

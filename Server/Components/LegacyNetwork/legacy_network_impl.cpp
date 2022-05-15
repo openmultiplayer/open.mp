@@ -403,7 +403,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 if (!network->inEventDispatcher.stopAtFalse(
                         [newPeer, &bs](NetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
+                            return handler->onReceiveRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
                         })) {
                     return;
                 }
@@ -412,7 +412,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                         NetCode::RPC::PlayerConnect::PacketID,
                         [newPeer, &bs](SingleNetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->received(*newPeer, bs);
+                            return handler->onReceive(*newPeer, bs);
                         })) {
                     return;
                 }
@@ -444,7 +444,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
                 if (!network->inEventDispatcher.stopAtFalse(
                         [newPeer, &bs](NetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
+                            return handler->onReceiveRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
                         })) {
                     return;
                 }
@@ -453,7 +453,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
                         NetCode::RPC::NPCConnect::PacketID,
                         [newPeer, &bs](SingleNetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->received(*newPeer, bs);
+                            return handler->onReceive(*newPeer, bs);
                         })) {
                     return;
                 }
@@ -499,7 +499,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     if (!network->inEventDispatcher.stopAtFalse(
             [&player, &bs](NetworkInEventHandler* handler) {
                 bs.resetReadPointer();
-                return handler->receivedRPC(*player, ID, bs);
+                return handler->onReceiveRPC(*player, ID, bs);
             })) {
         return;
     }
@@ -508,7 +508,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
             ID,
             [&player, &bs](SingleNetworkInEventHandler* handler) {
                 bs.resetReadPointer();
-                return handler->received(*player, bs);
+                return handler->onReceive(*player, bs);
             })) {
         return;
     }
@@ -738,13 +738,13 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
             if (bs.readUINT8(type)) {
                 const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
                     bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->receivedPacket(*player, type, bs);
+                    return handler->onReceivePacket(*player, type, bs);
                 });
 
                 if (res) {
                     packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
                         bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->received(*player, bs);
+                        return handler->onReceive(*player, bs);
                     });
                 }
 
