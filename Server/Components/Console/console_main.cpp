@@ -46,6 +46,7 @@ private:
     std::atomic_bool newCmd = false;
     String cmd;
     ThreadProcData* threadData;
+    std::thread cinThread;
 
     struct PlayerRconCommandHandler : public SingleNetworkInEventHandler {
         ConsoleComponent& self;
@@ -161,7 +162,8 @@ public:
         NetCode::Packet::PlayerRconCommand::addEventHandler(*core, &playerRconCommandHandler);
 
         threadData = new ThreadProcData { true, this };
-        std::thread(ThreadProc, threadData).detach();
+        cinThread = std::thread(ThreadProc, threadData);
+        cinThread.detach();
     }
 
     void onReady() override
@@ -190,7 +192,6 @@ public:
                 threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
                 threadData->component->newCmd = true;
             } else {
-                delete threadData;
                 return;
             }
         }
@@ -200,6 +201,11 @@ public:
     {
         if (threadData) {
             threadData->valid = false;
+            if (cinThread.joinable()) {
+                cinThread.join();
+            }
+            delete threadData;
+            threadData = nullptr;
         }
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
