@@ -79,54 +79,53 @@ struct IGangZonesComponent : public IPoolComponent<IGangZone> {
     /// add gangzone to checking list to loop through on player update, see if player enters or leaves
     virtual void useGangZoneCheck(IGangZone& zone, bool enable) = 0;
 
-	/// Get the ID of this zone as used in old pools (i.e. in pawn).
-	virtual int toLegacyID(int real) const = 0;
-	
-	/// Get the ID of this zone as used in the SDK.
-	virtual int fromLegacyID(int legacy) const = 0;
+    /// Get the ID of this zone as used in old pools (i.e. in pawn).
+    virtual int toLegacyID(int real) const = 0;
 
-	/// Release the ID used in limited pools.
-	virtual void releaseLegacyID(int legacy) = 0;
+    /// Get the ID of this zone as used in the SDK.
+    virtual int fromLegacyID(int legacy) const = 0;
 
-	/// Return an ID not yet used in pawn (et al) to represent this gang zone.
-	virtual int reserveLegacyID() = 0;
+    /// Release the ID used in limited pools.
+    virtual void releaseLegacyID(int legacy) = 0;
 
-	/// Assign a full ID to the legacy ID reserved earlier.
-	virtual void setLegacyID(int legacy, int real) = 0;
+    /// Return an ID not yet used in pawn (et al) to represent this gang zone.
+    virtual int reserveLegacyID() = 0;
+
+    /// Assign a full ID to the legacy ID reserved earlier.
+    virtual void setLegacyID(int legacy, int real) = 0;
 };
 
 static const UID GangZoneData_UID = UID(0xee8d8056b3351d11);
 struct IPlayerGangZoneData : public IExtension {
-	PROVIDE_EXT_UID(GangZoneData_UID);
+    PROVIDE_EXT_UID(GangZoneData_UID);
 
-	/// Get the ID of this zone as used in old pools (i.e. in pawn).
-	virtual int toLegacyID(int real) const = 0;
+    /// Get the ID of this zone as used in old pools (i.e. in pawn).
+    virtual int toLegacyID(int real) const = 0;
 
-	/// Get the ID of this zone as used in the SDK.
-	virtual int fromLegacyID(int legacy) const = 0;
+    /// Get the ID of this zone as used in the SDK.
+    virtual int fromLegacyID(int legacy) const = 0;
 
-	/// Release the ID used in limited pools.
-	virtual void releaseLegacyID(int legacy) = 0;
+    /// Release the ID used in limited pools.
+    virtual void releaseLegacyID(int legacy) = 0;
 
-	/// Return an ID not yet used in pawn (et al) to represent this gang zone.
-	virtual int reserveLegacyID() = 0;
+    /// Return an ID not yet used in pawn (et al) to represent this gang zone.
+    virtual int reserveLegacyID() = 0;
 
-	/// Assign a full ID to the legacy ID reserved earlier.
-	virtual void setLegacyID(int legacy, int real) = 0;
+    /// Assign a full ID to the legacy ID reserved earlier.
+    virtual void setLegacyID(int legacy, int real) = 0;
 
-	/// Get the ID of this zone as used internally (i.e. sent to the client).
-	virtual int toClientID(int real) const = 0;
+    /// Get the ID of this zone as used internally (i.e. sent to the client).
+    virtual int toClientID(int real) const = 0;
 
-	/// Get the ID of this zone as used in the SDK.
-	virtual int fromClientID(int legacy) const = 0;
+    /// Get the ID of this zone as used in the SDK.
+    virtual int fromClientID(int legacy) const = 0;
 
-	/// Release the ID used on the client.
-	virtual void releaseClientID(int legacy) = 0;
+    /// Release the ID used on the client.
+    virtual void releaseClientID(int legacy) = 0;
 
-	/// Return an ID not yet used on the client to represent this gang zone.
-	virtual int reserveClientID() = 0;
+    /// Return an ID not yet used on the client to represent this gang zone.
+    virtual int reserveClientID() = 0;
 
-	/// Assign a full ID to the legacy ID reserved earlier.
-	virtual void setClientID(int legacy, int real) = 0;
+    /// Assign a full ID to the legacy ID reserved earlier.
+    virtual void setClientID(int legacy, int real) = 0;
 };
-
