@@ -483,7 +483,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     PlayerAnimationData getAnimationData() const override
     {
-        return animation_;
+        if (state_ == PlayerState_OnFoot) {
+            return animation_;
+        } else {
+            PlayerAnimationData emptyAnim;
+            emptyAnim.ID = 0;
+            emptyAnim.flags = 0;
+            return emptyAnim;
+        }
     }
 
     void setControllable(bool controllable) override
