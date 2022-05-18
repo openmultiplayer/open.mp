@@ -1251,7 +1251,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, port);
 
         // Don't process player, about to be disconnected
-        if (peer.getState() == PlayerState_Kicked) {
+        if (peer.getKickStatus()) {
             return;
         }
 
@@ -1302,7 +1302,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
     {
-        if (peer.getState() == PlayerState_Kicked) {
+        if (peer.getKickStatus()) {
             reason = PeerDisconnectReason_Kicked;
         }
 

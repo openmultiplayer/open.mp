@@ -50,8 +50,8 @@ private:
     TimePoint timeOfSpawn;
     TimePoint lastOccupiedChange;
     bool beenOccupied = false;
-    Vector3 velocity;
-    Vector3 angularVelocity;
+    Vector3 velocity = Vector3(0.0f, 0.0f, 0.0f);
+    Vector3 angularVelocity = Vector3(0.0f, 0.0f, 0.0f);
     TimePoint trailerUpdateTime;
     union {
         Vehicle* trailer = nullptr;
