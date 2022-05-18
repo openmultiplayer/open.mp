@@ -122,6 +122,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
 
     TimePoint lastScoresAndPings_;
+    bool kicked_;
 
     void clearExtensions()
     {
@@ -186,6 +187,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
+        , kicked_(false)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -695,7 +697,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     Vector3 getVelocity() const override
     {
-        return velocity_;
+        if (state_ == PlayerState_OnFoot) {
+            return velocity_;
+        } else {
+            return Vector3(0.0f);
+        }
     }
 
     PlayerFightingStyle getFightingStyle() const override
@@ -705,7 +711,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void kick() override
     {
-        state_ = PlayerState_Kicked;
+        kicked_ = true;
         netData_.network->disconnect(*this);
     }
 
@@ -739,6 +745,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int getDefaultObjectsRemoved() const override
     {
         return defaultObjectsRemoved_;
+    }
+
+    bool getKickStatus() const override
+    {
+        return kicked_;
     }
 
     void forceClassSelection() override

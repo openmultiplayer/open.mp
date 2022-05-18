@@ -476,6 +476,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDiscon
     }
 
     playerFromRakIndex[rid] = nullptr;
+    playerKickState[rid] = false;
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
@@ -483,14 +484,15 @@ template <size_t ID>
 void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
+    const RakNet::PlayerIndex senderId = rpcParams->senderIndex;
 
-    if (rpcParams->senderIndex >= network->playerFromRakIndex.size()) {
+    if (senderId >= network->playerFromRakIndex.size()) {
         return;
     }
 
-    IPlayer* player = network->playerFromRakIndex[rpcParams->senderIndex];
+    IPlayer* player = network->playerFromRakIndex[senderId];
 
-    if (player == nullptr) {
+    if (player == nullptr || network->playerKickState[senderId]) {
         return;
     }
 
@@ -678,6 +680,7 @@ void RakNetLegacyNetwork::start()
     SAMPRakNet::SeedCookie();
 
     playerFromRakIndex.fill(nullptr);
+    playerKickState.fill(false);
 
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
@@ -736,16 +739,18 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
             NetworkBitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
             if (bs.readUINT8(type)) {
-                const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->onReceivePacket(*player, type, bs);
-                });
-
-                if (res) {
-                    packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
+                if (!playerKickState[pkt->playerIndex]) {
+                    const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
                         bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->onReceive(*player, bs);
+                        return handler->onReceivePacket(*player, type, bs);
                     });
+
+                    if (res) {
+                        packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
+                            bs.SetReadOffset(8); // Ignore packet ID
+                            return handler->onReceive(*player, bs);
+                        });
+                    }
                 }
 
                 if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {

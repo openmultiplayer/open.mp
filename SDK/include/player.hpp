@@ -34,8 +34,7 @@ enum PlayerState {
     PlayerState_EnterVehiclePassenger = 6,
     PlayerState_Wasted = 7,
     PlayerState_Spawned = 8,
-    PlayerState_Spectating = 9,
-    PlayerState_Kicked
+    PlayerState_Spectating = 9
 };
 
 enum PlayerWeaponSkill {
@@ -803,6 +802,9 @@ struct IPlayer : public IExtensible, public IEntity {
 
     /// Get default objects removed (basically just how many times removeDefaultObject is called)
     virtual int getDefaultObjectsRemoved() const = 0;
+
+    /// Get if player is kicked or not (about to be disconnected)
+    virtual bool getKickStatus() const = 0;
 };
 
 /// A player event handler
