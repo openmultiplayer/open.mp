@@ -345,7 +345,10 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
             RakNet::BitStream bss;
             bss.Write(uint8_t(newConnectionResult.first));
             rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
-            rakNetServer.Kick(rid);
+
+            if (newConnectionResult.first != NewConnectionResult_VersionMismatch) {
+                rakNetServer.Kick(rid);
+            }
         }
         return nullptr;
     }
@@ -420,7 +423,10 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
                 return;
             }
+        } else {
+            network->rakNetServer.Kick(rpcParams->sender);
         }
+        return;
     }
 
     network->rakNetServer.Kick(rpcParams->sender);
