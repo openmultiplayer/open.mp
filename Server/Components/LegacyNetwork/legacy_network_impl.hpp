@@ -37,6 +37,7 @@ private:
     Query query;
     RakNet::RakServerInterface& rakNetServer;
     std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+    std::array<bool, PLAYER_POOL_SIZE> playerKickState;
     Milliseconds cookieSeedTime;
     TimePoint lastCookieSeed;
 
@@ -76,6 +77,9 @@ public:
 
         const PeerNetworkData::NetworkID& nid = netData.networkID;
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
+
+        const int playerIndex = rakNetServer.GetIndexFromPlayerID(rid);
+        playerKickState[playerIndex] = true;
         rakNetServer.Kick(rid);
     }
 
