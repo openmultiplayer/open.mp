@@ -696,7 +696,7 @@ void RakNetLegacyNetwork::start()
     StringView bind = config.getString("bind");
 
     query.setCore(core);
-    query.setRuleValue("version", "0.3.7-R2 open.mp");
+    query.setRuleValue("version", "0.3.7-R2");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 
