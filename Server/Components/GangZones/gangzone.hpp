@@ -22,6 +22,7 @@ private:
     StaticArray<Colour, PLAYER_POOL_SIZE> flashColorForPlayer_;
     StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
     StaticBitset<PLAYER_POOL_SIZE> playersInside_;
+    IPlayer* legacyPerPlayer_;
 
     void restream()
     {
@@ -33,9 +34,29 @@ private:
 
     void hideForClient(IPlayer& player)
     {
-        NetCode::RPC::HideGangZone hideGangZoneRPC;
-        hideGangZoneRPC.ID = poolID;
-        PacketHelper::send(hideGangZoneRPC, player);
+        auto data = queryExtension<IPlayerGangZoneData>(player);
+        int id = data->toClientID(poolID);
+        if (id != INVALID_GANG_ZONE_ID) {
+            data->releaseClientID(id);
+            NetCode::RPC::HideGangZone hideGangZoneRPC;
+            hideGangZoneRPC.ID = id;
+            PacketHelper::send(hideGangZoneRPC, player);
+        }
+    }
+
+    void showForClient(IPlayer& player, const Colour& colour) const
+    {
+        auto data = queryExtension<IPlayerGangZoneData>(player);
+        int id = data->reserveClientID();
+        if (id != INVALID_GANG_ZONE_ID) {
+            data->setClientID(id, poolID);
+            NetCode::RPC::ShowGangZone showGangZoneRPC;
+            showGangZoneRPC.ID = id;
+            showGangZoneRPC.Min = pos.min;
+            showGangZoneRPC.Max = pos.max;
+            showGangZoneRPC.Col = colour;
+            PacketHelper::send(showGangZoneRPC, player);
+        }
     }
 
 public:
@@ -92,33 +113,39 @@ public:
 
     void flashForPlayer(IPlayer& player, const Colour& colour) override
     {
-        NetCode::RPC::FlashGangZone flashGangZoneRPC;
-        flashGangZoneRPC.ID = poolID;
-        flashGangZoneRPC.Col = colour;
-        PacketHelper::send(flashGangZoneRPC, player);
-
+        auto data = queryExtension<IPlayerGangZoneData>(player);
+        int id = data->toClientID(poolID);
         const int pid = player.getID();
+        if (id != INVALID_GANG_ZONE_ID) {
+            NetCode::RPC::FlashGangZone flashGangZoneRPC;
+            flashGangZoneRPC.ID = id;
+            flashGangZoneRPC.Col = colour;
+            PacketHelper::send(flashGangZoneRPC, player);
+        }
         flashColorForPlayer_[pid] = colour;
         flashingFor_.set(pid);
     }
 
     void stopFlashForPlayer(IPlayer& player) override
     {
-        NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
-        stopFlashGangZoneRPC.ID = poolID;
-        PacketHelper::send(stopFlashGangZoneRPC, player);
-
+        auto data = queryExtension<IPlayerGangZoneData>(player);
+        int id = data->toClientID(poolID);
         const int pid = player.getID();
+        if (id != INVALID_GANG_ZONE_ID) {
+            NetCode::RPC::StopFlashGangZone stopFlashGangZoneRPC;
+            stopFlashGangZoneRPC.ID = id;
+            PacketHelper::send(stopFlashGangZoneRPC, player);
+        }
         flashColorForPlayer_[pid] = Colour::None();
         flashingFor_.reset(pid);
     }
 
-    const Colour getFlashingColorForPlayer(IPlayer& player) const override
+    const Colour getFlashingColourForPlayer(IPlayer& player) const override
     {
         return flashColorForPlayer_[player.getID()];
     }
 
-    const Colour getColorForPlayer(IPlayer& player) const override
+    const Colour getColourForPlayer(IPlayer& player) const override
     {
         return colorForPlayer_[player.getID()];
     }
@@ -154,16 +181,6 @@ public:
         restream();
     }
 
-    void showForClient(IPlayer& player, const Colour& colour) const
-    {
-        NetCode::RPC::ShowGangZone showGangZoneRPC;
-        showGangZoneRPC.ID = poolID;
-        showGangZoneRPC.Min = pos.min;
-        showGangZoneRPC.Max = pos.max;
-        showGangZoneRPC.Col = colour;
-        PacketHelper::send(showGangZoneRPC, player);
-    }
-
     ~GangZone()
     {
     }
@@ -173,5 +190,15 @@ public:
         for (IPlayer* player : shownFor_.entries()) {
             hideForClient(*player);
         }
+    }
+
+    virtual void setLegacyPlayer(IPlayer* player) override
+    {
+        legacyPerPlayer_ = player;
+    }
+
+    virtual IPlayer* getLegacyPlayer() const override
+    {
+        return legacyPerPlayer_;
     }
 };
