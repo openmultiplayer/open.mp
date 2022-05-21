@@ -642,10 +642,6 @@ void RakNetLegacyNetwork::update()
 
     query.setRuleValue("lagcomp", *config.getInt("lag_compensation") ? "On" : "Off");
 
-    StringView language = config.getString("language");
-    if (!language.empty()) {
-        query.setRuleValue("language", String(language));
-    }
     StringView modeName = config.getString("mode_name");
     if (!modeName.empty()) {
         query.setGameModeName(modeName);
