@@ -68,11 +68,10 @@ public:
         }
     }
 
-    /// Release a previously used legacy ID and return the new ID it referenced.
+    /// Release a previously used legacy ID.
     virtual void release(int legacy) override
     {
         if (legacy >= MIN && legacy < MAX) {
-            int ret = ids_[legacy - MIN];
             ids_[legacy - MIN] = NOT_FOUND;
         }
     }
