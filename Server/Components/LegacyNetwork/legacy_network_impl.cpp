@@ -639,6 +639,9 @@ void RakNetLegacyNetwork::update()
     if (!hostName.empty()) {
         query.setServerName(hostName);
     }
+
+    query.setRuleValue("lagcomp", *config.getInt("lag_compensation") ? "On" : "Off");
+
     StringView language = config.getString("language");
     if (!language.empty()) {
         query.setRuleValue("language", String(language));
@@ -651,10 +654,15 @@ void RakNetLegacyNetwork::update()
     if (!mapName.empty()) {
         query.setRuleValue("mapname", String(mapName));
     }
+
+    query.setRuleValue("weather", std::to_string(*config.getInt("weather")));
+
     StringView website = config.getString("website");
     if (!website.empty()) {
         query.setRuleValue("weburl", String(website));
     }
+
+    query.setRuleValue("worldtime", String(std::to_string(*config.getInt("world_time")) + ":00"));
 
     StringView rconPassword = config.getString("rcon_password");
     query.setRconPassword(rconPassword);

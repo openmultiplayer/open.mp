@@ -381,7 +381,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             if (*logChat) {
-                self.core.printLn("[chat] %.*s: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
+                self.core.printLn("[chat] [%.*s]: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
             }
 
             bool send = self.eventDispatcher.stopAtFalse(
