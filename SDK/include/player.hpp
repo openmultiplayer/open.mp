@@ -230,9 +230,8 @@ static const StringView PlayerWeaponNames[] = {
     "Invalid",
     "Invalid",
     "Vehicle", // 49
-    "Helicopter Blades",
-    "Explosion", // 50
-    "Invalid",
+    "Helicopter Blades", // 50
+    "Explosion", // 51
     "Invalid",
     "Drowned", // 53
     "Splat"
