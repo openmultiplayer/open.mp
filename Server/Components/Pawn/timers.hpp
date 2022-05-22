@@ -106,8 +106,10 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider {
                 amx_RaiseError(amx, err);
                 return;
             }
-            // Push the parameters (many all at once).
-            memcpy(in, data.data(), data.size() * sizeof(cell));
+            if (data.data()) {
+                // Push the parameters (many all at once).
+                memcpy(in, data.data(), data.size() * sizeof(cell));
+            }
             for (size_t i = params.size(); i--;) {
                 switch (fmt[i]) {
                 case 'a':
