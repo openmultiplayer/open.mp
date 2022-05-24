@@ -26,7 +26,7 @@ private:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerPickUpPickup onPlayerPickUpPickupRPC;
             if (!onPlayerPickUpPickupRPC.read(bs)) {

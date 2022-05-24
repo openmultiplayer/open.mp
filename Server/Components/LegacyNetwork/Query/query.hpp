@@ -125,12 +125,18 @@ public:
         gameModeName = String(value);
     }
 
+    void setLanguage(StringView value)
+    {
+        language = String(value);
+    }
+
 private:
     ICore* core = nullptr;
     IConsoleComponent* console = nullptr;
     uint16_t maxPlayers = 0;
     String serverName = "open.mp server";
     String gameModeName = "Unknown";
+    String language = "EN";
     String rconPassword;
     bool passworded = false;
     bool logQueries = false;

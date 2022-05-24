@@ -139,7 +139,7 @@ public:
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerSelectTextDraw RPC;
             if (!RPC.read(bs)) {

@@ -7,15 +7,98 @@
  */
 
 #include "gangzone.hpp"
+#include <legacy_id_mapper.hpp>
 
 using namespace Impl;
+
+// TODO: This internal/external IDs mapping code should be extracted for other components to use.
+class PlayerGangZoneData final : public IPlayerGangZoneData {
+private:
+    FiniteLegacyIDMapper<GANG_ZONE_POOL_SIZE>
+        legacyIDs_,
+        clientIDs_;
+
+public:
+    PlayerGangZoneData()
+    {
+        reset();
+    }
+
+    virtual void freeExtension() override
+    {
+        delete this;
+    }
+
+    virtual void reset() override
+    {
+        // Clear all the IDs.
+        for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i) {
+            legacyIDs_.release(i);
+            clientIDs_.release(i);
+        }
+    }
+
+    virtual int toLegacyID(int zoneid) const override
+    {
+        return legacyIDs_.toLegacy(zoneid);
+    }
+
+    virtual int fromLegacyID(int legacy) const override
+    {
+        return legacyIDs_.fromLegacy(legacy);
+    }
+
+    virtual int reserveLegacyID() override
+    {
+        return legacyIDs_.reserve();
+    }
+
+    virtual void releaseLegacyID(int legacy) override
+    {
+        legacyIDs_.release(legacy);
+    }
+
+    virtual void setLegacyID(int legacy, int zoneid) override
+    {
+        return legacyIDs_.set(legacy, zoneid);
+    }
+
+    virtual int toClientID(int zoneid) const override
+    {
+        return clientIDs_.toLegacy(zoneid);
+    }
+
+    virtual int fromClientID(int client) const override
+    {
+        return clientIDs_.fromLegacy(client);
+    }
+
+    virtual int reserveClientID() override
+    {
+        return clientIDs_.reserve();
+    }
+
+    virtual void releaseClientID(int client) override
+    {
+        clientIDs_.release(client);
+    }
+
+    virtual void setClientID(int client, int zoneid) override
+    {
+        return clientIDs_.set(client, zoneid);
+    }
+};
 
 class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer> {
 private:
     ICore* core = nullptr;
-    MarkedPoolStorage<GangZone, IGangZone, 0, GANG_ZONE_POOL_SIZE> storage;
-    UniqueIDArray<IGangZone, GANG_ZONE_POOL_SIZE> checkingList;
+    constexpr static const size_t Lower = 1;
+    constexpr static const size_t Upper = GANG_ZONE_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + 1;
+
+    MarkedPoolStorage<GangZone, IGangZone, Lower, Upper> storage;
+    UniqueIDArray<IGangZone, Upper> checkingList;
     DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
+    FiniteLegacyIDMapper<GANG_ZONE_POOL_SIZE> legacyIDs_;
 
 public:
     StringView componentName() const override
@@ -48,6 +131,15 @@ public:
     void reset() override
     {
         storage.clear();
+        // Clear all the IDs.
+        for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i) {
+            legacyIDs_.release(i);
+        }
+    }
+
+    void onPlayerConnect(IPlayer& player) override
+    {
+        player.addExtension(new PlayerGangZoneData(), true);
     }
 
     bool onUpdate(IPlayer& player, TimePoint now) override
@@ -64,19 +156,16 @@ public:
 
             const GangZonePos& pos = gangzone->getPosition();
             bool isPlayerInInsideList = gangzone->isPlayerInside(player);
-            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x <= pos.max.x && playerPos.y >= pos.min.y && playerPos.y <= pos.max.y;
+            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x < pos.max.x && playerPos.y >= pos.min.y && playerPos.y < pos.max.y;
 
             if (isPlayerInZoneArea && !isPlayerInInsideList) {
-
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
                 eventDispatcher.dispatch(
                     &GangZoneEventHandler::onPlayerEnterGangZone,
                     player,
                     *lock.entry);
-
             } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
-
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
                 eventDispatcher.dispatch(
@@ -168,8 +257,61 @@ public:
         const int pid = player.getID();
         for (IGangZone* g : storage) {
             GangZone* gangzone = static_cast<GangZone*>(g);
-            gangzone->removeFor(pid, player);
+            // Release all the per-player (legacy) gangzones.
+            if (gangzone->getLegacyPlayer() == &player) {
+                release(gangzone->getID());
+            } else {
+                gangzone->removeFor(pid, player);
+            }
         }
+    }
+
+    void onPlayerClickMap(IPlayer& player, Vector3 clickPos) override
+    {
+        // only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+        for (auto gangzone : checkingList.entries()) {
+
+            // only check visible gangzones
+            if (!gangzone->isShownForPlayer(player)) {
+                continue;
+            }
+
+            const GangZonePos& pos = gangzone->getPosition();
+            bool isClickInZoneArea = clickPos.x >= pos.min.x && clickPos.x < pos.max.x && clickPos.y >= pos.min.y && clickPos.y < pos.max.y;
+
+            if (isClickInZoneArea) {
+                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                eventDispatcher.dispatch(
+                    &GangZoneEventHandler::onPlayerClickGangZone,
+                    player,
+                    *lock.entry);
+            }
+        }
+    }
+
+    virtual int toLegacyID(int zoneid) const override
+    {
+        return legacyIDs_.toLegacy(zoneid);
+    }
+
+    virtual int fromLegacyID(int legacy) const override
+    {
+        return legacyIDs_.fromLegacy(legacy);
+    }
+
+    virtual int reserveLegacyID() override
+    {
+        return legacyIDs_.reserve();
+    }
+
+    virtual void releaseLegacyID(int legacy) override
+    {
+        legacyIDs_.release(legacy);
+    }
+
+    virtual void setLegacyID(int legacy, int zoneid) override
+    {
+        return legacyIDs_.set(legacy, zoneid);
     }
 };
 

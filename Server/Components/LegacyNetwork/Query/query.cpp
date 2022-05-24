@@ -86,11 +86,9 @@ void Query::buildServerInfoBuffer()
 
     uint32_t serverNameLength = serverName.length();
     uint32_t gameModeNameLength = gameModeName.length();
+    uint32_t languageLength = language.length();
 
-    const String& languageName = (rules.find("language") != rules.end()) ? rules["language"] : "EN";
-    uint32_t languageNameLength = languageName.length();
-
-    serverInfoBufferLength = BASE_QUERY_SIZE + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(uint16_t) + sizeof(serverNameLength) + serverNameLength + sizeof(gameModeNameLength) + gameModeNameLength + sizeof(languageNameLength) + languageNameLength;
+    serverInfoBufferLength = BASE_QUERY_SIZE + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(uint16_t) + sizeof(serverNameLength) + serverNameLength + sizeof(gameModeNameLength) + gameModeNameLength + sizeof(languageLength) + languageLength;
     serverInfoBuffer.reset(new char[serverInfoBufferLength]);
     size_t offset = QUERY_TYPE_INDEX;
     char* output = serverInfoBuffer.get();
@@ -110,8 +108,8 @@ void Query::buildServerInfoBuffer()
     writeToBuffer(output, gameModeName.c_str(), offset, gameModeNameLength);
 
     // Write language name (since 0.3.7, it was map name before that)
-    writeToBuffer(output, offset, languageNameLength);
-    writeToBuffer(output, languageName.c_str(), offset, languageNameLength);
+    writeToBuffer(output, offset, languageLength);
+    writeToBuffer(output, language.c_str(), offset, languageLength);
 }
 
 void Query::updateServerInfoBufferPlayerCount(IPlayer* except)

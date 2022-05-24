@@ -37,7 +37,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             Player& player = static_cast<Player&>(peer);
 
@@ -61,7 +61,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             Player& player = static_cast<Player&>(peer);
             const TimePoint now = Time::now();
@@ -83,7 +83,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerClickMap onPlayerClickMapRPC;
             if (!onPlayerClickMapRPC.read(bs)) {
@@ -102,7 +102,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerClickPlayer onPlayerClickPlayerRPC;
             if (!onPlayerClickPlayerRPC.read(bs)) {
@@ -128,7 +128,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerGiveTakeDamage onPlayerGiveTakeDamageRPC;
             if (!onPlayerGiveTakeDamageRPC.read(bs)) {
@@ -191,7 +191,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerInteriorChange onPlayerInteriorChangeRPC;
             if (!onPlayerInteriorChangeRPC.read(bs)) {
@@ -222,7 +222,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             logDeaths = config.getInt("logging_deaths");
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerDeath onPlayerDeathRPC;
             if (!onPlayerDeathRPC.read(bs)) {
@@ -273,7 +273,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::OnPlayerCameraTarget onPlayerCameraTargetRPC;
             if (!onPlayerCameraTargetRPC.read(bs)) {
@@ -297,7 +297,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             Player& player = static_cast<Player&>(peer);
             if (player.toSpawn_ || player.isBot_) {
@@ -361,7 +361,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             filterText = config.getInt("chat_input_filter");
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::PlayerRequestChatMessage playerChatMessageRequest;
             if (!playerChatMessageRequest.read(bs)) {
@@ -381,7 +381,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             if (*logChat) {
-                self.core.printLn("[chat] %.*s: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
+                self.core.printLn("[chat] [%.*s]: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
             }
 
             bool send = self.eventDispatcher.stopAtFalse(
@@ -421,7 +421,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             filterText = config.getInt("chat_input_filter");
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::PlayerRequestCommandMessage playerRequestCommandMessage;
             if (!playerRequestCommandMessage.read(bs)) {
@@ -461,7 +461,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::ClientCheck rpc;
             if (!rpc.read(bs)) {
@@ -485,7 +485,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerFootSync footSync;
             if (!footSync.read(bs)) {
@@ -578,7 +578,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerSpectatorSync spectatorSync;
             if (!spectatorSync.read(bs)) {
@@ -618,7 +618,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerAimSync aimSync;
             if (!aimSync.read(bs)) {
@@ -655,7 +655,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerStatsSync statsSync;
             if (!statsSync.read(bs)) {
@@ -677,7 +677,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerBulletSync bulletSync;
             if (!bulletSync.read(bs)) {
@@ -791,7 +791,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerVehicleSync vehicleSync;
 
@@ -871,7 +871,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerWeaponsUpdate weaponsUpdatePacket;
             if (!weaponsUpdatePacket.read(bs)) {
@@ -1006,7 +1006,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerPassengerSync passengerSync;
 
@@ -1083,7 +1083,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync;
 
@@ -1122,7 +1122,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
         }
 
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerTrailerSync trailerSync;
 
@@ -1201,10 +1201,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         return storage.getEventDispatcher();
     }
 
-    void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr) override
+    void broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
     {
         for (INetwork* network : networks) {
-            network->broadcastRPC(id, data, channel, skipFrom);
+            network->broadcastPacket(data, channel, skipFrom, dispatchEvents);
+        }
+    }
+
+    void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
+    {
+        for (INetwork* network : networks) {
+            network->broadcastRPC(id, data, channel, skipFrom, dispatchEvents);
         }
     }
 
@@ -1244,7 +1251,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, port);
 
         // Don't process player, about to be disconnected
-        if (peer.getState() == PlayerState_Kicked) {
+        if (peer.getKickStatus()) {
             return;
         }
 
@@ -1295,7 +1302,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
     {
-        if (peer.getState() == PlayerState_Kicked) {
+        if (peer.getKickStatus()) {
             reason = PeerDisconnectReason_Kicked;
         }
 
