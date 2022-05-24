@@ -369,7 +369,7 @@ public:
         // Don't provide defaults for generating the config file
         if (!defaults) {
             if (config.getString("bot_exe").empty()) {
-                config.setString("bot_exe", "./samp-npc");
+                config.setString("bot_exe", "samp-npc");
             }
 
             // someone can parse samp.ban properly, I didn't care to
