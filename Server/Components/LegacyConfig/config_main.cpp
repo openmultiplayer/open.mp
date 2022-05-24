@@ -103,7 +103,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "connseedtime", "network.cookie_reseed_time" },
     { "minconnectiontime", "network.minimum_connection_time" },
     { "messageslimit", "network.messages_limit" },
-    { "messageholelimit", "message_hole_limit" },
+    { "messageholelimit", "network.message_hole_limit" },
     { "ackslimit", "network.acks_limit" },
     { "playertimeout", "network.player_timeout" },
     { "mtu", "network.mtu" },
