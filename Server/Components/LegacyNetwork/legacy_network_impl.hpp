@@ -79,7 +79,9 @@ public:
         const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 
         const int playerIndex = rakNetServer.GetIndexFromPlayerID(rid);
-        playerKickState[playerIndex] = true;
+        if (playerIndex >= 0 && playerIndex < PLAYER_POOL_SIZE) {
+            playerKickState[playerIndex] = true;
+        }
         rakNetServer.Kick(rid);
     }
 
