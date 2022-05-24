@@ -109,7 +109,7 @@ private:
             : self(self)
         {
         }
-        bool received(IPlayer& peer, NetworkBitStream& bs) override
+        bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::RPC::PlayerRequestClass playerRequestClassPacket;
             if (!playerRequestClassPacket.read(bs)) {

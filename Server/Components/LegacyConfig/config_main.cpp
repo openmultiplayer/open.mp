@@ -157,15 +157,12 @@ private:
                 for (;;) {
                     size_t next = listStr.find_first_of(' ', i);
 
-                    std::filesystem::path path("filterscripts");
                     if (next != String::npos) {
-                        path /= listStr.substr(i, next - i);
+                        storage.emplace_back("filterscripts/" + listStr.substr(i, next - i));
                     } else {
-                        path /= listStr.substr(i);
-                        storage.emplace_back(path.string());
+                        storage.emplace_back("filterscripts/" + listStr.substr(i));
                         break;
                     }
-                    storage.emplace_back(path.string());
 
                     i = next + 1;
                 }
@@ -369,7 +366,7 @@ public:
         // Don't provide defaults for generating the config file
         if (!defaults) {
             if (config.getString("bot_exe").empty()) {
-                config.setString("bot_exe", "./samp-npc");
+                config.setString("bot_exe", "samp-npc");
             }
 
             // someone can parse samp.ban properly, I didn't care to

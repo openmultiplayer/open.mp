@@ -345,7 +345,10 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
             RakNet::BitStream bss;
             bss.Write(uint8_t(newConnectionResult.first));
             rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
-            rakNetServer.Kick(rid);
+
+            if (newConnectionResult.first != NewConnectionResult_VersionMismatch) {
+                rakNetServer.Kick(rid);
+            }
         }
         return nullptr;
     }
@@ -403,7 +406,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 if (!network->inEventDispatcher.stopAtFalse(
                         [newPeer, &bs](NetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->receivedRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
+                            return handler->onReceiveRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
                         })) {
                     return;
                 }
@@ -412,7 +415,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                         NetCode::RPC::PlayerConnect::PacketID,
                         [newPeer, &bs](SingleNetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->received(*newPeer, bs);
+                            return handler->onReceive(*newPeer, bs);
                         })) {
                     return;
                 }
@@ -420,7 +423,10 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
                 network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
                 return;
             }
+        } else {
+            network->rakNetServer.Kick(rpcParams->sender);
         }
+        return;
     }
 
     network->rakNetServer.Kick(rpcParams->sender);
@@ -444,7 +450,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
                 if (!network->inEventDispatcher.stopAtFalse(
                         [newPeer, &bs](NetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->receivedRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
+                            return handler->onReceiveRPC(*newPeer, NetCode::RPC::NPCConnect::PacketID, bs);
                         })) {
                     return;
                 }
@@ -453,7 +459,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
                         NetCode::RPC::NPCConnect::PacketID,
                         [newPeer, &bs](SingleNetworkInEventHandler* handler) {
                             bs.resetReadPointer();
-                            return handler->received(*newPeer, bs);
+                            return handler->onReceive(*newPeer, bs);
                         })) {
                     return;
                 }
@@ -476,6 +482,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDiscon
     }
 
     playerFromRakIndex[rid] = nullptr;
+    playerKickState[rid] = false;
     networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
@@ -483,14 +490,15 @@ template <size_t ID>
 void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 {
     RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
+    const RakNet::PlayerIndex senderId = rpcParams->senderIndex;
 
-    if (rpcParams->senderIndex >= network->playerFromRakIndex.size()) {
+    if (senderId >= network->playerFromRakIndex.size()) {
         return;
     }
 
-    IPlayer* player = network->playerFromRakIndex[rpcParams->senderIndex];
+    IPlayer* player = network->playerFromRakIndex[senderId];
 
-    if (player == nullptr) {
+    if (player == nullptr || network->playerKickState[senderId]) {
         return;
     }
 
@@ -499,7 +507,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
     if (!network->inEventDispatcher.stopAtFalse(
             [&player, &bs](NetworkInEventHandler* handler) {
                 bs.resetReadPointer();
-                return handler->receivedRPC(*player, ID, bs);
+                return handler->onReceiveRPC(*player, ID, bs);
             })) {
         return;
     }
@@ -508,7 +516,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
             ID,
             [&player, &bs](SingleNetworkInEventHandler* handler) {
                 bs.resetReadPointer();
-                return handler->received(*player, bs);
+                return handler->onReceive(*player, bs);
             })) {
         return;
     }
@@ -631,9 +639,12 @@ void RakNetLegacyNetwork::update()
     if (!hostName.empty()) {
         query.setServerName(hostName);
     }
+
+    query.setRuleValue("lagcomp", *config.getInt("lag_compensation") ? "On" : "Off");
+
     StringView language = config.getString("language");
     if (!language.empty()) {
-        query.setRuleValue("language", String(language));
+        query.setLanguage(String(language));
     }
     StringView modeName = config.getString("mode_name");
     if (!modeName.empty()) {
@@ -643,10 +654,15 @@ void RakNetLegacyNetwork::update()
     if (!mapName.empty()) {
         query.setRuleValue("mapname", String(mapName));
     }
+
+    query.setRuleValue("weather", std::to_string(*config.getInt("weather")));
+
     StringView website = config.getString("website");
     if (!website.empty()) {
         query.setRuleValue("weburl", String(website));
     }
+
+    query.setRuleValue("worldtime", String(std::to_string(*config.getInt("world_time")) + ":00"));
 
     StringView rconPassword = config.getString("rcon_password");
     query.setRconPassword(rconPassword);
@@ -678,6 +694,7 @@ void RakNetLegacyNetwork::start()
     SAMPRakNet::SeedCookie();
 
     playerFromRakIndex.fill(nullptr);
+    playerKickState.fill(false);
 
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
@@ -687,7 +704,7 @@ void RakNetLegacyNetwork::start()
     StringView bind = config.getString("bind");
 
     query.setCore(core);
-    query.setRuleValue("version", "0.3.7-R2 open.mp");
+    query.setRuleValue("version", "0.3.7-R2");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 
@@ -736,16 +753,18 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
             NetworkBitStream bs(pkt->data, pkt->length, false);
             uint8_t type;
             if (bs.readUINT8(type)) {
-                const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->receivedPacket(*player, type, bs);
-                });
-
-                if (res) {
-                    packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
+                if (!playerKickState[pkt->playerIndex]) {
+                    const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
                         bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->received(*player, bs);
+                        return handler->onReceivePacket(*player, type, bs);
                     });
+
+                    if (res) {
+                        packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
+                            bs.SetReadOffset(8); // Ignore packet ID
+                            return handler->onReceive(*player, bs);
+                        });
+                    }
                 }
 
                 if (type == RakNet::ID_DISCONNECTION_NOTIFICATION) {

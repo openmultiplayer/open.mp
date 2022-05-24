@@ -122,6 +122,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     NetCode::Packet::PlayerUnoccupiedSync unoccupiedSync_;
 
     TimePoint lastScoresAndPings_;
+    bool kicked_;
 
     void clearExtensions()
     {
@@ -151,6 +152,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , controllable_(true)
         , clockToggled_(false)
         , keys_ { 0u, 0, 0 }
+        , velocity_(0.0f, 0.0f, 0.0f)
         , surfing_ { PlayerSurfingData::Type::None }
         , armedWeapon_(0)
         , rotTransform_(0.f, 0.f, 0.f)
@@ -185,6 +187,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , primarySyncUpdateType_(PrimarySyncUpdateType::None)
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
+        , kicked_(false)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -482,7 +485,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     PlayerAnimationData getAnimationData() const override
     {
-        return animation_;
+        if (state_ == PlayerState_OnFoot) {
+            return animation_;
+        } else {
+            PlayerAnimationData emptyAnim;
+            emptyAnim.ID = 0;
+            emptyAnim.flags = 0;
+            return emptyAnim;
+        }
     }
 
     void setControllable(bool controllable) override
@@ -687,7 +697,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     Vector3 getVelocity() const override
     {
-        return velocity_;
+        if (state_ == PlayerState_OnFoot) {
+            return velocity_;
+        } else {
+            return Vector3(0.0f);
+        }
     }
 
     PlayerFightingStyle getFightingStyle() const override
@@ -697,7 +711,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void kick() override
     {
-        state_ = PlayerState_Kicked;
+        kicked_ = true;
         netData_.network->disconnect(*this);
     }
 
@@ -731,6 +745,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     int getDefaultObjectsRemoved() const override
     {
         return defaultObjectsRemoved_;
+    }
+
+    bool getKickStatus() const override
+    {
+        return kicked_;
     }
 
     void forceClassSelection() override
