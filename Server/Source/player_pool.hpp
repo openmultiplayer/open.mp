@@ -1503,8 +1503,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         playerCommandRPCHandler.init(config);
         playerDeathRPCHandler.init(config);
         markersShow = config.getInt("game.player_marker_mode");
-        markersLimit = config.getBool("game.use_player_marker_radius");
-        markersLimitRadius = config.getFloat("game.player_marker_radius");
+        markersLimit = config.getBool("game.use_player_marker_draw_radius");
+        markersLimitRadius = config.getFloat("game.player_marker_draw_radius");
         markersUpdateRate = config.getInt("network.player_marker_sync_rate");
         gameTimeUpdateRate = config.getInt("network.time_sync_rate");
         maxBots = *config.getInt("max_bots");
