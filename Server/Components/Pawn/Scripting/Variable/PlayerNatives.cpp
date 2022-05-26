@@ -9,6 +9,7 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
 #define GET_PLAYER_VAR_COMP(comp, ret)                                       \
     IPlayerVariableData* comp = queryExtension<IPlayerVariableData>(player); \
@@ -28,10 +29,11 @@ SCRIPT_API(GetPVarInt, int(IPlayer& player, const std::string& varname))
     return component->getInt(varname);
 }
 
-SCRIPT_API(SetPVarString, bool(IPlayer& player, const std::string& varname, const std::string& value))
+SCRIPT_API(SetPVarString, bool(IPlayer& player, const std::string& varname, cell const* format))
 {
     GET_PLAYER_VAR_COMP(component, false);
-    component->setString(varname, value);
+	auto value = svprintf(format, GetAMX(), GetParams(), 3);
+	component->setString(varname, value);
     return true;
 }
 

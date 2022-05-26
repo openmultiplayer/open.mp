@@ -9,9 +9,10 @@
 #include "../Types.hpp"
 #include "Server/Components/Dialogs/dialogs.hpp"
 #include "sdk.hpp"
+#include "../../format.hpp"
 #include <iostream>
 
-SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const std::string& title, const std::string& body, const std::string& button1, const std::string& button2))
+SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const std::string& title, cell const* format, const std::string& button1, const std::string& button2))
 {
     IPlayerDialogData* data = queryExtension<IPlayerDialogData>(player);
 
@@ -34,7 +35,8 @@ SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const 
     }
 
     // And instead mask the ID here.
-    data->show(player, dialog & 0xFFFF, DialogStyle(style), title, body, button1, button2);
+	auto body = svprintf(format, GetAMX(), GetParams(), 7);
+	data->show(player, dialog & 0xFFFF, DialogStyle(style), title, body, button1, button2);
     return true;
 }
 

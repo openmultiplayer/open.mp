@@ -471,7 +471,7 @@ SCRIPT_API(SendRconCommand, bool(cell const* format))
 {
     IConsoleComponent* console = PawnManager::Get()->console;
     if (console) {
-		auto command = svprintf(format, GetAMX(), GetParams(), 2);
+		auto command = svprintf(format, GetAMX(), GetParams(), 1);
         console->send(command);
     }
     return true;
@@ -485,7 +485,7 @@ SCRIPT_API(SetDeathDropAmount, bool(int amount))
 
 SCRIPT_API(SetGameModeText, bool(cell const* format))
 {
-	auto string = svprintf(format, GetAMX(), GetParams(), 2);
+	auto string = svprintf(format, GetAMX(), GetParams(), 1);
     PawnManager::Get()->core->setData(SettableCoreDataType::ModeText, string);
     return true;
 }
@@ -620,9 +620,10 @@ SCRIPT_API(GetWeaponSlot, int(uint8_t weapon))
     return WeaponSlotData { weapon }.slot();
 }
 
-SCRIPT_API(AddServerRule, bool(const std::string& name, const std::string& value))
+SCRIPT_API(AddServerRule, bool(const std::string& name, cell const* format))
 {
-    ICore* core = PawnManager::Get()->core;
+	auto value = svprintf(format, GetAMX(), GetParams(), 2);
+	ICore* core = PawnManager::Get()->core;
     if (!core) {
         return false;
     }
@@ -637,9 +638,25 @@ SCRIPT_API(AddServerRule, bool(const std::string& name, const std::string& value
     return false;
 }
 
-SCRIPT_API(SetServerRule, bool(const std::string& name, const std::string& value))
+SCRIPT_API(SetServerRule, bool(const std::string& name, cell const* format))
 {
-    return openmp_scripting::AddServerRule(name, value);
+	auto value = svprintf(format, GetAMX(), GetParams(), 2);
+	ICore* core = PawnManager::Get()->core;
+	if (!core)
+	{
+		return false;
+	}
+
+	for (INetwork* network : core->getNetworks())
+	{
+		INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
+
+		if (query)
+		{
+			return query->addRule(name, value);
+		}
+	}
+	return false;
 }
 
 SCRIPT_API(IsValidServerRule, bool(const std::string& name))
