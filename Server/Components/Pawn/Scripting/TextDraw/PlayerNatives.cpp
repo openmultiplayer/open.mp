@@ -10,12 +10,14 @@
 #include "Server/Components/TextDraws/textdraws.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
-SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, Vector2 position, const std::string& text))
+SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, Vector2 position, cell const* format))
 {
     IPlayerTextDrawData* playerTextDraws = queryExtension<IPlayerTextDrawData>(player);
     if (playerTextDraws) {
-        IPlayerTextDraw* textdraw = playerTextDraws->create(position, text);
+		auto text = svprintf(format, GetAMX(), GetParams(), 4); // Not 3
+		IPlayerTextDraw* textdraw = playerTextDraws->create(position, text);
         if (textdraw) {
             return textdraw->getID();
         }
@@ -127,9 +129,10 @@ SCRIPT_API(PlayerTextDrawHide, bool(IPlayer& player, IPlayerTextDraw& textdraw))
     return true;
 }
 
-SCRIPT_API(PlayerTextDrawSetString, bool(IPlayer& player, IPlayerTextDraw& textdraw, const std::string& text))
+SCRIPT_API(PlayerTextDrawSetString, bool(IPlayer& player, IPlayerTextDraw& textdraw, cell const* format))
 {
-    textdraw.setText(text);
+	auto text = svprintf(format, GetAMX(), GetParams(), 3);
+	textdraw.setText(text);
     return true;
 }
 

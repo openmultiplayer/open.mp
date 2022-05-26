@@ -9,6 +9,7 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
 SCRIPT_API(CreatePlayerObject, int(IPlayer& player, int modelid, Vector3 position, Vector3 rotation, float drawDistance))
 {
@@ -142,9 +143,10 @@ SCRIPT_API(SetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object,
     return true;
 }
 
-SCRIPT_API(SetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, const std::string& text, int materialIndex, int materialSize, const std::string& fontface, int fontsize, bool bold, uint32_t fontColour, uint32_t backgroundColour, int textalignment))
+SCRIPT_API(SetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& object, cell const* format, int materialIndex, int materialSize, const std::string& fontface, int fontsize, bool bold, uint32_t fontColour, uint32_t backgroundColour, int textalignment))
 {
-    object.setMaterialText(materialIndex, text, ObjectMaterialSize(materialSize), fontface, fontsize, bold, Colour::FromARGB(fontColour), Colour::FromARGB(backgroundColour), ObjectMaterialTextAlign(textalignment));
+	auto text = svprintf(format, GetAMX(), GetParams(), 11);
+	object.setMaterialText(materialIndex, text, ObjectMaterialSize(materialSize), fontface, fontsize, bold, Colour::FromARGB(fontColour), Colour::FromARGB(backgroundColour), ObjectMaterialTextAlign(textalignment));
     return true;
 }
 
