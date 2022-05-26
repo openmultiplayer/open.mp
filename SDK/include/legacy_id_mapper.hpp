@@ -9,10 +9,10 @@
 /// `F` (`FAIL`) is the invalid new ID returned in errors.
 template <int /*MA*/ X, int /*MI*/ N = 0, int I /*NVALID*/ = -1, int F /*AIL*/ = 0>
 struct ILegacyIDMapper {
-    static const int MIN = N;
-    static const int MAX = X;
-    static const int INVALID = I;
-    static const int NOT_FOUND = F;
+    static const int MIN;
+    static const int MAX;
+    static const int INVALID;
+    static const int NOT_FOUND;
 
     /// Request a new legacy ID.
     virtual int reserve() = 0;
@@ -30,14 +30,26 @@ struct ILegacyIDMapper {
     virtual int fromLegacy(int legacy) const = 0;
 };
 
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int ILegacyIDMapper<X, N, I, F>::MIN = N;
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int ILegacyIDMapper<X, N, I, F>::MAX = X;
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int ILegacyIDMapper<X, N, I, F>::INVALID = I;
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int ILegacyIDMapper<X, N, I, F>::NOT_FOUND = F;
+
 // TODO: Use a faster `toLegacy` lookup system.  Maybe binary search or similar.
 template <int /*MA*/ X, int /*MI*/ N = 0, int I /*NVALID*/ = -1, int F /*AIL*/ = 0>
 class FiniteLegacyIDMapper final : public ILegacyIDMapper<X, N, I, F> {
 public:
-    static const int MIN = N;
-    static const int MAX = X;
-    static const int INVALID = I;
-    static const int NOT_FOUND = F;
+    static const int MIN;
+    static const int MAX;
+    static const int INVALID;
+    static const int NOT_FOUND;
 
 private:
     StaticArray<int, MAX - MIN> ids_;
@@ -96,3 +108,15 @@ public:
         return ids_[legacy - MIN];
     }
 };
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int FiniteLegacyIDMapper<X, N, I, F>::MIN = N;
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int FiniteLegacyIDMapper<X, N, I, F>::MAX = X;
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int FiniteLegacyIDMapper<X, N, I, F>::INVALID = I;
+
+template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
+const int FiniteLegacyIDMapper<X, N, I, F>::NOT_FOUND = F;
