@@ -60,19 +60,19 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.gravity", 0.008f },
     { "game.map", String("") },
     { "game.mode", String("") },
-    { "game.nametag_radius", 70.0f },
+    { "game.nametag_draw_radius", 70.0f },
     { "game.player_marker_mode", PlayerMarkerMode_Global },
-    { "game.player_marker_radius", 250.f },
+    { "game.player_marker_draw_radius", 250.f },
     { "game.time", 12 },
     { "game.use_chat_radius", false },
     { "game.use_enex_markers", true },
     { "game.use_instagib", false },
     { "game.use_nametag_los", true },
     { "game.use_nametags", true },
-    { "game.use_player_marker_radius", false },
+    { "game.use_player_marker_draw_radius", false },
     { "game.use_player_ped_anims", false },
     { "game.use_stunt_bonuses", true },
-    { "game.use_vehicle_activation", false },
+    { "game.use_manual_engine_and_lights", false },
     { "game.use_vehicle_friendly_fire", false },
     { "game.use_zone_names", false },
     { "game.vehicle_respawn_time", 10000 },
@@ -1143,10 +1143,10 @@ public:
         UseLimitGlobalChatRadius = config.getBool("game.use_chat_radius");
         LimitGlobalChatRadius = config.getFloat("game.chat_radius");
         EnableStuntBonus = config.getBool("game.use_stunt_bonuses");
-        SetNameTagDrawDistance = config.getFloat("game.nametag_radius");
+        SetNameTagDrawDistance = config.getFloat("game.nametag_draw_radius");
         EnableInteriorEnterExits = config.getBool("game.use_enex_markers");
         EnableNameTagLOS = config.getBool("game.use_nametag_los");
-        ManualVehicleEngineAndLights = config.getBool("game.use_vehicle_activation");
+        ManualVehicleEngineAndLights = config.getBool("game.use_manual_engine_and_lights");
         ShowNameTags = config.getBool("game.use_nametags");
         ShowPlayerMarkers = config.getInt("game.player_marker_mode");
         SetWorldTime = config.getInt("game.time");

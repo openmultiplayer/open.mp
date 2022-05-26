@@ -384,8 +384,8 @@ SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
 
 SCRIPT_API(LimitPlayerMarkerRadius, bool(float markerRadius))
 {
-    *PawnManager::Get()->config->getBool("game.use_player_marker_radius") = true;
-    *PawnManager::Get()->config->getFloat("game.player_marker_radius") = markerRadius;
+    *PawnManager::Get()->config->getBool("game.use_player_marker_draw_radius") = true;
+    *PawnManager::Get()->config->getFloat("game.player_marker_draw_radius") = markerRadius;
     return true;
 }
 
@@ -497,7 +497,7 @@ SCRIPT_API(GetGravity, float())
 
 SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 {
-    *PawnManager::Get()->config->getFloat("game.nametag_radius") = distance;
+    *PawnManager::Get()->config->getFloat("game.nametag_draw_radius") = distance;
     return true;
 }
 
