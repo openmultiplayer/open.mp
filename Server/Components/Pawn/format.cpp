@@ -654,6 +654,7 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 {
 	static char buf[8192];
 	int count = params[0] / sizeof(cell);
+	int diff = count - paramOffset;
 	int len;
 	int formatLength;
 	buf[0] = '\0';
@@ -663,7 +664,7 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 		// Too big.
 		return StringView(buf, 0);
 	}
-	if (count == paramOffset)
+	if (diff == 0)
 	{
 		// No formatting.  Fallback.
 		amx_GetString(buf, format, false, formatLength + 1);
@@ -671,6 +672,8 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 	}
 	else
 	{
+		// Adjust the offset by 1 to account for the initial hidden `count` parameter.
+		++paramOffset;
 		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &paramOffset);
 		if (paramOffset <= count)
 		{
@@ -683,7 +686,7 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 			{
 				fmt = const_cast<char*>("");
 			}
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given: \"%s\" does not format %u parameters.", fmt, count - 1);
+			PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given: \"%s\" does not format %u parameters.", fmt, diff);
 		}
 	}
 	return StringView(buf, len);
