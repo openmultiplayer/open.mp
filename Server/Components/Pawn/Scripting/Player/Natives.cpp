@@ -951,8 +951,9 @@ SCRIPT_API(Ban, bool(IPlayer& player))
     return true;
 }
 
-SCRIPT_API(BanEx, bool(IPlayer& player, std::string const& reason))
+SCRIPT_API(BanEx, bool(IPlayer& player, cell const* format))
 {
+	auto reason = svprintf(format, GetAMX(), GetParams(), 2);
     player.ban(reason);
     return true;
 }
