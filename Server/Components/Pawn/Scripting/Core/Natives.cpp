@@ -207,6 +207,16 @@ SCRIPT_API(GameTextForAll, bool(cell const* format, int time, int style))
     return true;
 }
 
+SCRIPT_API(GameTextForAllf, bool(cell const* format, int time, int style))
+{
+	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+    if (msg.empty()) {
+        return false;
+    }
+    PawnManager::Get()->players->sendGameTextToAll(msg, Milliseconds(time), style);
+    return true;
+}
+
 int getConfigOptionAsInt(std::string const& cvar)
 {
     IConfig* config = PawnManager::Get()->config;
@@ -467,7 +477,24 @@ SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, cell const* format))
     return true;
 }
 
+SCRIPT_API(SendPlayerMessageToAllf, bool(IPlayer& sender, cell const* format))
+{
+	auto message = svprintf(format, GetAMX(), GetParams(), 2);
+    PawnManager::Get()->players->sendChatMessageToAll(sender, message);
+    return true;
+}
+
 SCRIPT_API(SendRconCommand, bool(cell const* format))
+{
+    IConsoleComponent* console = PawnManager::Get()->console;
+    if (console) {
+		auto command = svprintf(format, GetAMX(), GetParams(), 1);
+        console->send(command);
+    }
+    return true;
+}
+
+SCRIPT_API(SendRconCommandf, bool(cell const* format))
 {
     IConsoleComponent* console = PawnManager::Get()->console;
     if (console) {

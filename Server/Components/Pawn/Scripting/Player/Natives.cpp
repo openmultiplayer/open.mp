@@ -18,7 +18,21 @@ SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, cell const*
     return true;
 }
 
+SCRIPT_API(SendClientMessagef, bool(IPlayer& player, uint32_t colour, cell const* format))
+{
+	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	player.sendClientMessage(Colour::FromRGBA(colour), msg);
+    return true;
+}
+
 SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, cell const* format))
+{
+	auto msg = svprintf(format, GetAMX(), GetParams(), 2);
+    PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
+    return true;
+}
+
+SCRIPT_API(SendClientMessageToAllf, bool(uint32_t colour, cell const* format))
 {
 	auto msg = svprintf(format, GetAMX(), GetParams(), 2);
     PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
@@ -945,6 +959,16 @@ SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, cell const* format, int time
     return true;
 }
 
+SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, cell const* format, int time, int style))
+{
+	auto string = svprintf(format, GetAMX(), GetParams(), 4);
+    if (string.empty()) {
+        return false;
+    }
+    player.sendGameText(string, Milliseconds(time), style);
+    return true;
+}
+
 SCRIPT_API(Ban, bool(IPlayer& player))
 {
     player.ban();
@@ -969,6 +993,13 @@ SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPla
 }
 
 SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, cell const* format))
+{
+	auto message = svprintf(format, GetAMX(), GetParams(), 3);
+    player.sendChatMessage(sender, message);
+    return true;
+}
+
+SCRIPT_API(SendPlayerMessageToPlayerf, bool(IPlayer& player, IPlayer& sender, cell const* format))
 {
 	auto message = svprintf(format, GetAMX(), GetParams(), 3);
     player.sendChatMessage(sender, message);
