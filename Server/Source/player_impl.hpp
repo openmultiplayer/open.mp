@@ -123,6 +123,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     TimePoint lastScoresAndPings_;
     bool kicked_;
+    bool* allAnimationLibraries_;
 
     void clearExtensions()
     {
@@ -135,7 +136,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         IExtensible::resetExtensions();
     }
 
-    Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params)
+    Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries)
         : pool_(pool)
         , netData_(netData)
         , version_(params.version)
@@ -188,6 +189,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , secondarySyncUpdateType_(0)
         , lastScoresAndPings_(Time::now())
         , kicked_(false)
+        , allAnimationLibraries_(allAnimationLibraries)
     {
         weapons_.fill({ 0, 0 });
         skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -594,7 +596,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
     {
-        if (!animationLibraryValid(animation.lib)) {
+        if (!animationLibraryValid(animation.lib, *allAnimationLibraries_)) {
             return;
         }
 

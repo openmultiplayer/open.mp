@@ -1225,7 +1225,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             return { NewConnectionResult_BadName, nullptr };
         }
 
-        Player* result = storage.emplace(*this, netData, params);
+        Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"));
         if (!result) {
             return { NewConnectionResult_NoPlayerSlot, nullptr };
         }
