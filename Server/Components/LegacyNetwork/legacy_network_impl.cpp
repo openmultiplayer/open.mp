@@ -646,13 +646,17 @@ void RakNetLegacyNetwork::update()
     if (!language.empty()) {
         query.setLanguage(String(language));
     }
+
     StringView modeName = config.getString("game.mode");
     if (!modeName.empty()) {
         query.setGameModeName(modeName);
     }
+
     StringView mapName = config.getString("game.map");
     if (!mapName.empty()) {
         query.setRuleValue("mapname", String(mapName));
+    } else {
+        query.setRuleValue("mapname", "San Andreas");
     }
 
     query.setRuleValue("weather", std::to_string(*config.getInt("game.weather")));
