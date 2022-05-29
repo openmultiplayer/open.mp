@@ -52,54 +52,114 @@ void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, 
     int size = 0;
     U* buf;
     static S nlstr[] = { '(', 'n', 'u', 'l', 'l', ')', '\0' };
+	if (*string > UNPACKEDMAX) {
+		buf = *buf_p;
 
-    buf = *buf_p;
-
-    if (string == NULL) {
-        string = nlstr;
-        prec = -1;
-    }
-
-    if (prec >= 0) {
-        for (size = 0; size < prec; size++) {
-            if (string[size] == '\0')
-                break;
-        }
-    } else {
-        while (string[size++])
-            ;
-        size--;
-    }
-
-    if (size > (int)maxlen) {
-        size = maxlen;
-    }
-
-	if ((flags & LADJUST)) {
-		while ((size < width) && maxlen) {
-			*buf++ = (flags & ZEROPAD) ? '0' : ' ';
-			width--;
-			maxlen--;
+		if (string == NULL)
+		{
+			string = nlstr;
+			prec = -1;
 		}
-	}
 
-    maxlen -= size;
-    width -= size;
-
-    while (size--) {
-        *buf++ = static_cast<U>(*string++);
-    }
-
-	// left justify if required.  backwards from most specifiers.
-	if ((flags & LADJUST) == 0) {
-		while (width-- > 0 && maxlen) {
-			// right-padding only with spaces, ZEROPAD is ignored
-			*buf++ = ' ';
-			maxlen--;
+		if (prec >= 0)
+		{
+			for (size = 0; size < prec; size++)
+			{
+				if (((char *)string)[size ^ (sizeof (cell) - 1)] == '\0')
+					break;
+			}
 		}
-	}
+		else
+		{
+			while (((char*)string)[size ^ (sizeof(cell) - 1)])
+				++size;
+		}
 
-    *buf_p = buf;
+		if (size > (int)maxlen)
+		{
+			size = maxlen;
+		}
+
+		if ((flags & LADJUST))
+		{
+			while ((size < width) && maxlen)
+			{
+				*buf++ = (flags & ZEROPAD) ? '0' : ' ';
+				width--;
+				maxlen--;
+			}
+		}
+
+		maxlen -= size;
+		width -= size;
+
+		while (size--)
+		{
+			*buf++ = static_cast<U>(*(char*)((intptr_t)string ^ (sizeof(cell) - 1)));
+			string = (S*)((char*)string + 1);
+		}
+
+		// left justify if required.  backwards from most specifiers.
+		if ((flags & LADJUST) == 0)
+		{
+			while (width-- > 0 && maxlen)
+			{
+				// right-padding only with spaces, ZEROPAD is ignored
+				*buf++ = ' ';
+				maxlen--;
+			}
+		}
+
+		*buf_p = buf;
+	} else {
+		buf = *buf_p;
+
+		if (string == NULL) {
+			string = nlstr;
+			prec = -1;
+		}
+
+		if (prec >= 0) {
+			for (size = 0; size < prec; size++) {
+				if (string[size] == '\0')
+					break;
+			}
+		} else {
+			while (string[size++])
+				;
+			size--;
+		}
+
+		if (size > (int)maxlen) {
+			size = maxlen;
+		}
+
+		if ((flags & LADJUST)) {
+			while ((size < width) && maxlen) {
+				*buf++ = (flags & ZEROPAD) ? '0' : ' ';
+				width--;
+				maxlen--;
+			}
+		}
+
+		maxlen -= size;
+		width -= size;
+
+		while (size--) {
+			*buf++ = static_cast<U>(*string++);
+		}
+
+		// left justify if required.  backwards from most specifiers.
+		if ((flags & LADJUST) == 0) {
+			while (width-- > 0 && maxlen) {
+				// right-padding only with spaces, ZEROPAD is ignored
+				*buf++ = ' ';
+				maxlen--;
+			}
+		}
+
+		*buf_p = buf;
+	}
 }
 
 template <typename U>
@@ -435,11 +495,11 @@ void AddOctal(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
 //#define ATCPRINTF_ADVANCE(fmt, ispacked) atcadvance(fmt, ispacked)
 
 template <typename S>
-static char atcadvance(char const ** fmt, bool ispacked)
+static inline char atcadvance(char const ** fmt, bool ispacked)
 {
+	// This code assumes cell alignment.
 	char ret = **fmt;
-	if (sizeof(S) == 1) ++(*fmt);
-	else if (ispacked) *fmt = (const char *)((((uintptr_t)*fmt ^ (sizeof(S) - 1)) + 1) ^ (sizeof(S) - 1));
+	if (ispacked) *fmt = (const char *)((((uintptr_t)*fmt ^ (sizeof(S) - 1)) + 1) ^ (sizeof(S) - 1));
 	else (*fmt) += sizeof(S);
 	return ret;
 }
@@ -462,7 +522,8 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
 
     buf_p = buffer;
     arg = *param;
-    fmt = (char *)format;
+	// Invert the byte order.
+    fmt = ispacked ? (char *)((intptr_t)format + sizeof (S) - 1) : (char *)format;
 
     while (true) {
         // run through the format string until we hit a '%' or '\0'
