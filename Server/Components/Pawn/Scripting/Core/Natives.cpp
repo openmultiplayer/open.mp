@@ -158,7 +158,7 @@ SCRIPT_API(ConnectNPC, bool(std::string const& name, std::string const& script))
 
 SCRIPT_API(DisableInteriorEnterExits, bool())
 {
-    *PawnManager::Get()->config->getBool("game.use_enex_markers") = false;
+    *PawnManager::Get()->config->getBool("game.use_entry_exit_markers") = false;
     return true;
 }
 

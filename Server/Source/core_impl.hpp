@@ -65,7 +65,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.player_marker_draw_radius", 250.f },
     { "game.time", 12 },
     { "game.use_chat_radius", false },
-    { "game.use_enex_markers", true },
+    { "game.use_entry_exit_markers", true },
     { "game.use_instagib", false },
     { "game.use_nametag_los", true },
     { "game.use_nametags", true },
@@ -1145,7 +1145,7 @@ public:
         LimitGlobalChatRadius = config.getFloat("game.chat_radius");
         EnableStuntBonus = config.getBool("game.use_stunt_bonuses");
         SetNameTagDrawDistance = config.getFloat("game.nametag_draw_radius");
-        EnableInteriorEnterExits = config.getBool("game.use_enex_markers");
+        EnableInteriorEnterExits = config.getBool("game.use_entry_exit_markers");
         EnableNameTagLOS = config.getBool("game.use_nametag_los");
         ManualVehicleEngineAndLights = config.getBool("game.use_manual_engine_and_lights");
         ShowNameTags = config.getBool("game.use_nametags");
