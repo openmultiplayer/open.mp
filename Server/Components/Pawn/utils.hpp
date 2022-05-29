@@ -81,7 +81,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
         output = dynamicOutput.get();
     }
 
-    size_t len = atcprintf(output, maxlen - 1, cinput, amx, params, &param);
+    size_t len = atcprintf(output, maxlen - 1, cinput, amx, params, &param, (ucell)*cinput > UNPACKEDMAX);
 
     if (param - 1 < num && len < maxlen - 1) {
         char* fmt;
@@ -111,7 +111,7 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
     char buf[8192];
     int param = 2;
     cstr = amx_Address(amx, params[1]);
-    int len = atcprintf(buf, sizeof(buf) - 1, cstr, amx, params, &param);
+    int len = atcprintf(buf, sizeof(buf) - 1, cstr, amx, params, &param, (ucell)*cstr > UNPACKEDMAX);
 
     if (param <= num) {
         char* fmt;

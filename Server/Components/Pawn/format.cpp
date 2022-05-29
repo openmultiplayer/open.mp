@@ -41,10 +41,10 @@
     }
 #define get_amxaddr(amx, addr) amx_Address(amx, addr)
 
-template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
-template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*);
-template size_t atcprintf<cell, char>(cell*, size_t, const char*, AMX*, const cell*, int*);
-template size_t atcprintf<char, char>(char*, size_t, const char*, AMX*, const cell*, int*);
+template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*, bool);
+template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*, bool);
+template size_t atcprintf<cell, char>(cell*, size_t, const char*, AMX*, const cell*, int*, bool);
+template size_t atcprintf<char, char>(char*, size_t, const char*, AMX*, const cell*, int*, bool);
 
 template <typename U, typename S>
 void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, int flags)
@@ -432,8 +432,20 @@ void AddOctal(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
     *buf_p = buf;
 }
 
+//#define ATCPRINTF_ADVANCE(fmt, ispacked) atcadvance(fmt, ispacked)
+
+template <typename S>
+static char atcadvance(char const ** fmt, bool ispacked)
+{
+	char ret = **fmt;
+	if (sizeof(S) == 1) ++(*fmt);
+	else if (ispacked) *fmt = (const char *)((((uintptr_t)*fmt ^ (sizeof(S) - 1)) + 1) ^ (sizeof(S) - 1));
+	else (*fmt) += sizeof(S);
+	return ret;
+}
+
 template <typename D, typename S>
-size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param)
+size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param, bool ispacked)
 {
     int arg;
     int args = params[0] / sizeof(cell);
@@ -444,18 +456,18 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
     int prec;
     int n;
     // char sign;
-    const S* fmt;
+    const char* fmt;
     size_t llen = maxlen;
 
     buf_p = buffer;
     arg = *param;
-    fmt = format;
+    fmt = (char *)format;
 
     while (true) {
         // run through the format string until we hit a '%' or '\0'
         for (ch = static_cast<D>(*fmt);
              llen && ((ch = static_cast<D>(*fmt)) != '\0' && ch != '%');
-             fmt++) {
+			 atcadvance<S>(&fmt, ispacked)) {
             *buf_p++ = static_cast<D>(ch);
             llen--;
         }
@@ -463,7 +475,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
             goto done;
 
         // skip over the '%'
-        fmt++;
+		atcadvance<S>(&fmt, ispacked);
 
         // reset formatting state
         flags = 0;
@@ -472,7 +484,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
         // sign = '\0';
 
     rflag:
-        ch = static_cast<D>(*fmt++);
+        ch = static_cast<D>(atcadvance<S>(&fmt, ispacked));
     reswitch:
         switch (ch) {
         case '-':
@@ -483,11 +495,11 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
             if (ch == '*') {
                 prec = *get_amxaddr(amx, params[arg]);
                 arg++;
-                fmt++;
+                atcadvance<S>(&fmt, ispacked);
                 goto rflag;
             } else {
                 n = 0;
-                while (is_digit((ch = static_cast<D>(*fmt++))))
+                while (is_digit((ch = static_cast<D>(atcadvance<S>(&fmt, ispacked)))))
                     n = 10 * n + (ch - '0');
                 prec = n < 0 ? -1 : n;
                 goto reswitch;
@@ -507,7 +519,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
             n = 0;
             do {
                 n = 10 * n + (ch - '0');
-                ch = static_cast<D>(*fmt++);
+                ch = static_cast<D>(atcadvance<S>(&fmt, ispacked));
             } while (is_digit(ch));
             width = n;
             goto reswitch;
@@ -640,13 +652,13 @@ done:
 void __WHOA_DONT_CALL_ME_PLZ_K_lol_o_O()
 {
     // acsprintf
-    atcprintf((cell*)NULL, 0, (char const*)NULL, NULL, NULL, NULL);
+    atcprintf((cell*)NULL, 0, (char const*)NULL, NULL, NULL, NULL, false);
     // accprintf
-    atcprintf((cell*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL);
+    atcprintf((cell*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL, false);
     // ascprintf
-    atcprintf((char*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL);
+    atcprintf((char*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL, false);
     // ascprintf
-    atcprintf((char*)NULL, 0, (char const*)NULL, NULL, NULL, NULL);
+    atcprintf((char*)NULL, 0, (char const*)NULL, NULL, NULL, NULL, false);
 }
 
 // StringView printf.
@@ -674,7 +686,7 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 	{
 		// Adjust the offset by 1 to account for the initial hidden `count` parameter.
 		++paramOffset;
-		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &paramOffset);
+		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &paramOffset, (ucell)*format>UNPACKEDMAX);
 		if (paramOffset <= count)
 		{
 			char* fmt;
