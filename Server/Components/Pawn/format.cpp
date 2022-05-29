@@ -41,10 +41,10 @@
     }
 #define get_amxaddr(amx, addr) amx_Address(amx, addr)
 
-template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*, bool);
-template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*, bool);
-template size_t atcprintf<cell, char>(cell*, size_t, const char*, AMX*, const cell*, int*, bool);
-template size_t atcprintf<char, char>(char*, size_t, const char*, AMX*, const cell*, int*, bool);
+template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
+template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*);
+template size_t atcprintf<cell, char>(cell*, size_t, const char*, AMX*, const cell*, int*);
+template size_t atcprintf<char, char>(char*, size_t, const char*, AMX*, const cell*, int*);
 
 template <typename U, typename S>
 void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, int flags)
@@ -445,7 +445,7 @@ static char atcadvance(char const ** fmt, bool ispacked)
 }
 
 template <typename D, typename S>
-size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param, bool ispacked)
+size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param)
 {
     int arg;
     int args = params[0] / sizeof(cell);
@@ -458,6 +458,7 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
     // char sign;
     const char* fmt;
     size_t llen = maxlen;
+	bool ispacked = sizeof (S) == sizeof (ucell) && (ucell)*format > UNPACKEDMAX;
 
     buf_p = buffer;
     arg = *param;
@@ -652,13 +653,13 @@ done:
 void __WHOA_DONT_CALL_ME_PLZ_K_lol_o_O()
 {
     // acsprintf
-    atcprintf((cell*)NULL, 0, (char const*)NULL, NULL, NULL, NULL, false);
+    atcprintf((cell*)NULL, 0, (char const*)NULL, NULL, NULL, NULL);
     // accprintf
-    atcprintf((cell*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL, false);
+    atcprintf((cell*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL);
     // ascprintf
-    atcprintf((char*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL, false);
+    atcprintf((char*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL);
     // ascprintf
-    atcprintf((char*)NULL, 0, (char const*)NULL, NULL, NULL, NULL, false);
+    atcprintf((char*)NULL, 0, (char const*)NULL, NULL, NULL, NULL);
 }
 
 // StringView printf.
@@ -686,7 +687,7 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 	{
 		// Adjust the offset by 1 to account for the initial hidden `count` parameter.
 		++paramOffset;
-		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &paramOffset, (ucell)*format>UNPACKEDMAX);
+		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &paramOffset);
 		if (paramOffset <= count)
 		{
 			char* fmt;
