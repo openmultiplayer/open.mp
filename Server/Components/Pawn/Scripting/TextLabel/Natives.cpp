@@ -216,11 +216,11 @@ SCRIPT_API(GetPlayer3DTextLabelVirtualWorld, int(IPlayer& player, IPlayerTextLab
     return player.getVirtualWorld();
 }
 
-//SCRIPT_API(SetPlayer3DTextLabelVirtualWorld, int(IPlayer& player, IPlayerTextLabel& textLabel))
-//{
-//    // Why is there no virtual world support?
-//    return player.setVirtualWorld();
-//}
+//  SCRIPT_API(SetPlayer3DTextLabelVirtualWorld, int(IPlayer& player, IPlayerTextLabel& textLabel))
+//  {
+//      Why is there no virtual world support?
+//      return player.setVirtualWorld();
+//  }
 
 SCRIPT_API(GetPlayer3DTextLabelAttached, int(IPlayer& player, IPlayerTextLabel& textLabel, int& attached_player, int& attached_vehicle))
 {

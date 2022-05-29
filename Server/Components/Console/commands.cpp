@@ -317,4 +317,3 @@ ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& s
         console.sendMessage(sender, "Unknown parameter. Use rcon 0 to disable remote console or rcon 1 to enable it.");
     }
 });
-
