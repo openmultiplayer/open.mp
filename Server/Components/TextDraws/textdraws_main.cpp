@@ -124,7 +124,7 @@ private:
 public:
     StringView componentName() const override
     {
-        return "TextLabels";
+        return "TextDraws";
     }
 
     SemanticVersion componentVersion() const override
