@@ -23,7 +23,7 @@
 
 // Amx Templatized Cell Printf
 template <typename D, typename S>
-size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, cell const* params, int* param, bool ispacked);
+size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, cell const* params, int* param);
 
 // StringView returning shared buffer format.
 StringView svprintf(cell const* format, AMX* amx, cell const* params, int offset);
