@@ -237,8 +237,15 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, cons
         core->printLn("[query:%c] from %.*s", buffer[QUERY_TYPE_INDEX], PRINT_VIEW(addrString));
     }
 
+    // This is how we detect open.mp, just resend the buffer
+    if (buffer[QUERY_TYPE_INDEX] == 'o') {
+        if (buffer.size() != BASE_QUERY_SIZE + sizeof(uint32_t)) {
+            return Span<char>();
+        }
+        return buffer;
+    }
     // Ping
-    if (buffer[QUERY_TYPE_INDEX] == 'p') {
+    else if (buffer[QUERY_TYPE_INDEX] == 'p') {
         if (buffer.size() != BASE_QUERY_SIZE + sizeof(uint32_t)) {
             return Span<char>();
         }
