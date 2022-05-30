@@ -289,7 +289,7 @@ struct INetwork : public IExtensible {
     virtual bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer = nullptr, bool dispatchEvents = true) = 0;
 
     /// Get netowrk statistics
-    virtual NetworkStats getStatistics(int playerIndex = -1) = 0;
+    virtual NetworkStats getStatistics(IPlayer* player = nullptr) = 0;
 
     /// Get the last ping for a peer on this network or 0 if the peer isn't on this network
     virtual unsigned getPing(const IPlayer& peer) = 0;
