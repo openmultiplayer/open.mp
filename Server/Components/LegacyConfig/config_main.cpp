@@ -33,7 +33,7 @@ enum class ParamType {
 const FlatHashMap<StringView, ParamType> types = {
     { "echo", ParamType::Custom },
     { "rcon_password", ParamType::String },
-    { "rcon", ParamType::Int },
+    { "rcon", ParamType::Bool },
     { "gamemode", ParamType::Custom },
     { "filterscripts", ParamType::Custom },
     { "plugins", ParamType::StringList },
