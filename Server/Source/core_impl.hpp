@@ -272,13 +272,6 @@ public:
                 } else {
                     processed = Defaults;
                 }
-
-                const SemanticVersion version = core.getVersion();
-                String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
-                if (version.prerel != 0) {
-                    versionStr += "." + std::to_string(version.prerel);
-                }
-                processed["version"].emplace<String>(versionStr);
             }
 
             loadBans();
@@ -1133,6 +1126,13 @@ public:
             stop();
             return;
         }
+
+        const SemanticVersion version = getVersion();
+        String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
+        if (version.prerel != 0) {
+            versionStr += "." + std::to_string(version.prerel);
+        }
+        config.setString("version", versionStr);
 
         if (*config.getBool("logging.enable")) {
             logFile = ::fopen(LogFileName, "a");
