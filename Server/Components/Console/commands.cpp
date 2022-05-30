@@ -307,11 +307,11 @@ ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSend
 ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params == "1") {
         console.sendMessage(sender, "Remote console enabled.");
-        static_cast<IEarlyConfig&>(core->getConfig()).setInt("rcon.enable", 1);
+        static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", true);
         core->updateNetworks();
     } else if (params == "0") {
         console.sendMessage(sender, "Remote console disabled.");
-        static_cast<IEarlyConfig&>(core->getConfig()).setInt("rcon.enable", 0);
+        static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", false);
         core->updateNetworks();
     } else {
         console.sendMessage(sender, "Unknown parameter. Use rcon 0 to disable remote console or rcon 1 to enable it.");
