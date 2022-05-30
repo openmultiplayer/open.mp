@@ -101,7 +101,7 @@ public:
 
     IActor* create(int skin, Vector3 pos, float angle) override
     {
-        return storage.emplace(skin, pos, angle);
+        return storage.emplace(skin, pos, angle, core->getConfig().getBool("game.use_all_animations"));
     }
 
     void free() override

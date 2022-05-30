@@ -311,7 +311,7 @@ public:
         NetCode::RPC::SCMEvent::addEventHandler(*core, &playerSCMEventHandler);
         NetCode::RPC::VehicleDeath::addEventHandler(*core, &vehicleDeathHandler);
         streamConfigHelper = StreamConfigHelper(core->getConfig());
-        deathRespawnDelay = core->getConfig().getInt("vehicle_death_respawn_delay");
+        deathRespawnDelay = core->getConfig().getInt("game.vehicle_respawn_time");
     }
 
     void onPlayerConnect(IPlayer& player) override
@@ -442,7 +442,7 @@ public:
                     if (vehicle->hasBeenOccupied()) {
                         lastInteraction = std::max(lastInteraction, vehicle->getLastOccupiedTime());
                     }
-                    if (now - lastInteraction >= Seconds(*deathRespawnDelay)) {
+                    if (now - lastInteraction >= Milliseconds(*deathRespawnDelay)) {
                         vehicle->respawn();
                     }
                 } else if (vehicle->hasBeenOccupied() && delay > Seconds(0)) {

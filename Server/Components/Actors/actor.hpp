@@ -40,6 +40,7 @@ private:
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     AnimationData animation_;
     ActorSpawnData spawnData_;
+    bool* allAnimationLibraries_;
 
     void restream()
     {
@@ -82,7 +83,7 @@ public:
         }
     }
 
-    Actor(int skin, Vector3 pos, float angle)
+    Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries)
         : virtualWorld_(0)
         , skin_(skin)
         , invulnerable_(true)
@@ -91,6 +92,7 @@ public:
         , angle_(angle)
         , health_(100.f)
         , spawnData_ { pos, angle, skin }
+        , allAnimationLibraries_(allAnimationLibraries)
     {
     }
 
@@ -121,7 +123,7 @@ public:
 
     void applyAnimation(const AnimationData& animation) override
     {
-        if (!animationLibraryValid(animation.lib)) {
+        if (!animationLibraryValid(animation.lib, *allAnimationLibraries_)) {
             return;
         }
 

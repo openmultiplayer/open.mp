@@ -8,6 +8,7 @@
 
 #include <Impl/network_impl.hpp>
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <atomic>
 #include <filesystem>
 #include <fstream>
@@ -25,7 +26,8 @@ enum class ParamType {
     String,
     StringList,
     Custom,
-    Obsolete
+    Obsolete,
+    Bool,
 };
 
 const FlatHashMap<StringView, ParamType> types = {
@@ -35,8 +37,8 @@ const FlatHashMap<StringView, ParamType> types = {
     { "gamemode", ParamType::Custom },
     { "filterscripts", ParamType::Custom },
     { "plugins", ParamType::StringList },
-    { "announce", ParamType::Int },
-    { "query", ParamType::Int },
+    { "announce", ParamType::Bool },
+    { "query", ParamType::Bool },
     { "hostname", ParamType::String },
     { "language", ParamType::String },
     { "mapname", ParamType::String },
@@ -48,11 +50,11 @@ const FlatHashMap<StringView, ParamType> types = {
     { "maxplayers", ParamType::Int },
     { "password", ParamType::Custom },
     { "sleep", ParamType::Int },
-    { "lanmode", ParamType::Int },
+    { "lanmode", ParamType::Bool },
     { "bind", ParamType::String },
     { "port", ParamType::Int },
     { "conncookies", ParamType::Obsolete },
-    { "cookielogging", ParamType::Int },
+    { "cookielogging", ParamType::Bool },
     { "connseedtime", ParamType::Int },
     { "minconnectiontime", ParamType::Int },
     { "messageslimit", ParamType::Int },
@@ -61,69 +63,66 @@ const FlatHashMap<StringView, ParamType> types = {
     { "playertimeout", ParamType::Int },
     { "mtu", ParamType::Int },
     { "output", ParamType::Obsolete },
-    { "timestamp", ParamType::Int },
+    { "timestamp", ParamType::Bool },
     { "logtimeformat", ParamType::String },
-    { "logqueries", ParamType::Int },
-    { "chatlogging", ParamType::Int },
-    { "db_logging", ParamType::Int },
-    { "db_log_queries", ParamType::Int },
+    { "logqueries", ParamType::Bool },
+    { "chatlogging", ParamType::Bool },
+    { "db_logging", ParamType::Bool },
+    { "db_log_queries", ParamType::Bool },
     { "onfoot_rate", ParamType::Int },
     { "incar_rate", ParamType::Int },
     { "weapon_rate", ParamType::Int },
     { "stream_distance", ParamType::Float },
     { "stream_rate", ParamType::Int },
     { "maxnpc", ParamType::Int },
-    { "lagcompmode", ParamType::Int }
+    { "lagcompmode", ParamType::Bool }
 };
 
 const FlatHashMap<StringView, StringView> dictionary = {
-    { "rcon", "enable_rcon" },
-    { "rcon_password", "rcon_password" },
+    { "rcon", "rcon.enable" },
+    { "rcon_password", "rcon.password" },
     { "gamemode", "pawn.main_scripts" },
     { "filterscripts", "pawn.side_scripts" },
     { "plugins", "pawn.legacy_plugins" },
     { "announce", "announce" },
     { "query", "enable_query" },
-    { "hostname", "server_name" },
+    { "hostname", "name" },
     { "language", "language" },
-    { "mapname", "map_name" },
-    { "gamemodetext", "mode_name" },
-    { "weather", "weather" },
-    { "gravity", "gravity" },
+    { "mapname", "game.map" },
+    { "gamemodetext", "game.mode" },
+    { "weather", "game.weather" },
+    { "gravity", "game.gravity" },
     { "weburl", "website" },
     { "maxplayers", "max_players" },
     { "password", "password" },
     { "sleep", "sleep" },
-    { "lanmode", "lan_mode" },
+    { "lanmode", "network.use_lan_mode" },
     { "bind", "bind" },
     { "port", "port" },
-    { "cookielogging", "logging_cookies" },
-    { "connseedtime", "cookie_reseed_time" },
-    { "minconnectiontime", "min_connection_time" },
-    { "messageslimit", "messages_limit" },
-    { "messageholelimit", "message_hole_limit" },
-    { "ackslimit", "acks_limit" },
-    { "playertimeout", "player_timeout" },
-    { "mtu", "network_mtu" },
-    { "timestamp", "logging_timestamp" },
-    { "logtimeformat", "logging_timestamp_format" },
-    { "logqueries", "logging_queries" },
-    { "chatlogging", "logging_chat" },
-    { "db_logging", "logging_sqlite" },
-    { "db_log_queries", "logging_sqlite_queries" },
-    { "onfoot_rate", "on_foot_rate" },
-    { "incar_rate", "in_car_rate" },
-    { "weapon_rate", "weapon_rate" },
-    { "stream_distance", "stream_distance" },
-    { "stream_rate", "stream_rate" },
+    { "cookielogging", "logging.log_cookies" },
+    { "connseedtime", "network.cookie_reseed_time" },
+    { "minconnectiontime", "network.minimum_connection_time" },
+    { "messageslimit", "network.messages_limit" },
+    { "messageholelimit", "network.message_hole_limit" },
+    { "ackslimit", "network.acks_limit" },
+    { "playertimeout", "network.player_timeout" },
+    { "mtu", "network.mtu" },
+    { "timestamp", "logging.use_timestamp" },
+    { "logtimeformat", "logging.timestamp_format" },
+    { "logqueries", "logging.log_queries" },
+    { "chatlogging", "logging.log_chat" },
+    { "db_logging", "logging.log_sqlite" },
+    { "db_log_queries", "logging.log_sqlite_queries" },
+    { "onfoot_rate", "network.on_foot_sync_rate" },
+    { "incar_rate", "network.in_vehicle_sync_rate" },
+    { "weapon_rate", "network.aiming_sync_rate" },
+    { "stream_distance", "network.stream_radius" },
+    { "stream_rate", "network.stream_rate" },
     { "maxnpc", "max_bots" },
-    { "lagcompmode", "lag_compensation" }
+    { "lagcompmode", "game.use_lag_compensation" }
 };
 
-class LegacyConfigComponent final : public IComponent, public ConsoleEventHandler {
-public:
-    PROVIDE_UID(0x24ef6216838f9ffc);
-
+class LegacyConfigComponent final : public ILegacyConfigComponent, public ConsoleEventHandler {
 private:
     ICore* core;
     IConsoleComponent* console;
@@ -206,6 +205,18 @@ private:
                     logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is out of integer bounds (0-%d).", name.c_str(), right.c_str(), INT_MAX);
                 } catch (std::invalid_argument e) {
                     logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not an integer.", name.c_str(), right.c_str());
+                }
+                return true;
+            }
+            case ParamType::Bool: {
+                Impl::String lower(right);
+                std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
+                if (lower == "true" || lower == "1") {
+                    config.setBool(dictIt->second, true);
+                } else if (lower == "false" || lower == "0") {
+                    config.setBool(dictIt->second, false);
+                } else {
+                    logger.logLn(LogLevel::Error, "Invalid '%s' value passed. '%s' is not a boolean.", name.c_str(), right.c_str());
                 }
                 return true;
             }
@@ -420,6 +431,27 @@ public:
     void reset() override
     {
         // Nothing to reset here.
+    }
+
+    // Inherited via ILegacyConfigComponent
+    virtual StringView getConfig(StringView legacyName) override
+    {
+        auto it = dictionary.find(legacyName);
+        if (it == dictionary.end()) {
+            return StringView();
+        }
+        return it->second;
+    }
+
+    virtual StringView getLegacy(StringView configName) override
+    {
+        // The code is tuned for looking up the new names, not the old names.
+        for (auto const& it : dictionary) {
+            if (it.second == configName) {
+                return it.first;
+            }
+        }
+        return StringView();
     }
 };
 

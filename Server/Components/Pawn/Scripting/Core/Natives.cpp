@@ -119,13 +119,13 @@ SCRIPT_API(AddSimpleModelTimed, bool(int virtualWorld, int baseid, int newid, st
 
 SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 {
-    *PawnManager::Get()->config->getInt("rcon_allow_teleport") = allow;
+    *PawnManager::Get()->config->getBool("rcon.allow_teleport") = allow;
     return true;
 }
 
 SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 {
-    *PawnManager::Get()->config->getInt("allow_interior_weapons") = allow;
+    *PawnManager::Get()->config->getBool("game.allow_interior_weapons") = allow;
     return true;
 }
 
@@ -158,13 +158,13 @@ SCRIPT_API(ConnectNPC, bool(std::string const& name, std::string const& script))
 
 SCRIPT_API(DisableInteriorEnterExits, bool())
 {
-    *PawnManager::Get()->config->getInt("disable_interior_enter_exits") = true;
+    *PawnManager::Get()->config->getBool("game.use_entry_exit_markers") = false;
     return true;
 }
 
 SCRIPT_API(DisableNameTagLOS, bool())
 {
-    *PawnManager::Get()->config->getInt("disable_name_tag_los") = true;
+    *PawnManager::Get()->config->getBool("game.use_nametag_los") = false;
     return true;
 }
 
@@ -176,7 +176,7 @@ SCRIPT_API(EnableTirePopping, bool(bool enable))
 
 SCRIPT_API(EnableZoneNames, bool(bool enable))
 {
-    *PawnManager::Get()->config->getInt("enable_zone_names") = enable;
+    *PawnManager::Get()->config->getBool("game.use_zone_names") = enable;
     return true;
 }
 
@@ -377,15 +377,15 @@ SCRIPT_API(GetWeaponName, bool(int weaponid, OutputOnlyString& weapon))
 
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
 {
-    *PawnManager::Get()->config->getInt("use_limit_global_chat_radius") = true;
-    *PawnManager::Get()->config->getFloat("limit_global_chat_radius") = chatRadius;
+    *PawnManager::Get()->config->getBool("game.use_chat_radius") = true;
+    *PawnManager::Get()->config->getFloat("game.chat_radius") = chatRadius;
     return true;
 }
 
 SCRIPT_API(LimitPlayerMarkerRadius, bool(float markerRadius))
 {
-    *PawnManager::Get()->config->getInt("limit_player_markers") = true;
-    *PawnManager::Get()->config->getFloat("player_markers_draw_distance") = markerRadius;
+    *PawnManager::Get()->config->getBool("game.use_player_marker_draw_radius") = true;
+    *PawnManager::Get()->config->getFloat("game.player_marker_draw_radius") = markerRadius;
     return true;
 }
 
@@ -474,7 +474,7 @@ SCRIPT_API(SendRconCommand, bool(std::string const& command))
 
 SCRIPT_API(SetDeathDropAmount, bool(int amount))
 {
-    *PawnManager::Get()->config->getInt("death_drop_amount") = amount;
+    *PawnManager::Get()->config->getInt("game.death_drop_amount") = amount;
     return true;
 }
 
@@ -497,7 +497,7 @@ SCRIPT_API(GetGravity, float())
 
 SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 {
-    *PawnManager::Get()->config->getFloat("name_tag_draw_distance") = distance;
+    *PawnManager::Get()->config->getFloat("game.nametag_draw_radius") = distance;
     return true;
 }
 
@@ -535,30 +535,30 @@ SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& 
 
 SCRIPT_API(ShowNameTags, bool(bool show))
 {
-    *PawnManager::Get()->config->getInt("show_name_tags") = show;
+    *PawnManager::Get()->config->getBool("game.use_nametags") = show;
     return true;
 }
 
 SCRIPT_API(ShowPlayerMarkers, bool(int mode))
 {
-    *PawnManager::Get()->config->getInt("show_player_markers") = mode;
+    *PawnManager::Get()->config->getInt("game.player_marker_mode") = mode;
     return true;
 }
 
 SCRIPT_API(UsePlayerPedAnims, bool())
 {
-    *PawnManager::Get()->config->getInt("use_player_ped_anims") = true;
+    *PawnManager::Get()->config->getBool("game.use_player_ped_anims") = true;
     return true;
 }
 
 SCRIPT_API(GetWeather, int())
 {
-    return *PawnManager::Get()->config->getInt("weather");
+    return *PawnManager::Get()->config->getInt("game.weather");
 }
 
 SCRIPT_API(GetWorldTime, int())
 {
-    return *PawnManager::Get()->config->getInt("world_time");
+    return *PawnManager::Get()->config->getInt("game.time");
 }
 
 SCRIPT_API(ToggleChatTextReplacement, bool(bool enable))
