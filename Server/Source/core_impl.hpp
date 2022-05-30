@@ -15,6 +15,7 @@
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/Unicode/unicode.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -25,6 +26,7 @@
 #include <sstream>
 #include <thread>
 #include <variant>
+#include <utils.hpp>
 
 using namespace Impl;
 
@@ -36,74 +38,80 @@ using namespace Impl;
 
 #include <openssl/sha.h>
 
-typedef std::variant<int, String, float, DynamicArray<String>> ConfigStorage;
+typedef std::variant<int, String, float, DynamicArray<String>, bool> ConfigStorage;
 
 static const std::map<String, ConfigStorage> Defaults {
-    { "max_players", 50 },
-    { "sleep", 5 },
-    { "port", 7777 },
-    { "bind", "" },
-    { "password", "" },
-    { "enable_zone_names", false },
-    { "use_player_ped_anims", false },
-    { "allow_interior_weapons", true },
-    { "use_limit_global_chat_radius", false },
-    { "limit_global_chat_radius", 200.0f },
-    { "enable_stunt_bonus", true },
-    { "name_tag_draw_distance", 70.0f },
-    { "disable_interior_enter_exits", false },
-    { "disable_name_tag_los", false },
-    { "manual_vehicle_engine_and_lights", false },
-    { "show_name_tags", true },
-    { "show_player_markers", PlayerMarkerMode_Global },
-    { "limit_player_markers", false },
-    { "player_markers_draw_distance", 250.f },
-    { "player_markers_update_rate", 2500 },
-    { "world_time", 12 },
-    { "weather", 10 },
-    { "gravity", 0.008f },
-    { "lan_mode", false },
-    { "death_drop_amount", 0 },
-    { "instagib", false },
-    { "on_foot_rate", 30 },
-    { "in_car_rate", 30 },
-    { "weapon_rate", 30 },
-    { "multiplier", 10 },
-    { "lag_compensation", true },
-    { "server_name", "open.mp server" },
-    { "mode_name", "" },
-    { "map_name", "" },
-    { "language", "" },
-    { "player_time_update_rate", 30000 },
-    { "stream_rate", 1000 },
-    { "stream_distance", 200.f },
-    { "max_bots", 0 },
-    { "cookie_reseed_time", 300000 },
-    { "min_connection_time", 0 },
-    { "messages_limit", 500 },
-    { "message_hole_limit", 3000 },
-    { "acks_limit", 3000 },
-    { "network_limits_ban_time", 60000 },
-    { "player_timeout", 10000 },
     { "announce", true },
-    { "logging", true },
-    { "enable_rcon", false },
+    { "bind", String("") },
+    { "chat_input_filter", true },
     { "enable_query", true },
-    { "website", "open.mp" },
-    { "network_mtu", 576 },
-    { "logging_timestamp", true },
-    { "logging_timestamp_format", "[%Y-%m-%dT%H:%M:%SZ]" },
-    { "logging_queries", false },
-    { "logging_chat", true },
-    { "logging_deaths", true },
-    { "logging_sqlite", false },
-    { "logging_sqlite_queries", false },
-    { "logging_cookies", false },
-    { "rcon_allow_teleport", false },
-    { "rcon_password", "" }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
-    { "vehicle_friendly_fire", false },
-    { "vehicle_death_respawn_delay", 10 },
-    { "chat_input_filter", true }
+    { "language", String("") },
+    { "max_bots", 0 },
+    { "max_players", 50 },
+    { "name", String("open.mp server") },
+    { "password", String("") },
+    { "port", 7777 },
+    { "sleep", 5 },
+    { "website", String("open.mp") },
+    // game
+    { "game.allow_interior_weapons", true },
+    { "game.chat_radius", 200.0f },
+    { "game.death_drop_amount", 0 },
+    { "game.gravity", 0.008f },
+    { "game.map", String("") },
+    { "game.mode", String("") },
+    { "game.nametag_draw_radius", 70.0f },
+    { "game.player_marker_mode", PlayerMarkerMode_Global },
+    { "game.player_marker_draw_radius", 250.f },
+    { "game.time", 12 },
+    { "game.use_chat_radius", false },
+    { "game.use_entry_exit_markers", true },
+    { "game.use_instagib", false },
+    { "game.use_nametag_los", true },
+    { "game.use_nametags", true },
+    { "game.use_player_marker_draw_radius", false },
+    { "game.use_player_ped_anims", false },
+    { "game.use_stunt_bonuses", true },
+    { "game.use_manual_engine_and_lights", false },
+    { "game.use_vehicle_friendly_fire", false },
+    { "game.use_zone_names", false },
+    { "game.vehicle_respawn_time", 10000 },
+    { "game.weather", 10 },
+    { "game.use_all_animations", false },
+    // logging
+    { "logging.enable", true },
+    { "logging.log_chat", true },
+    { "logging.log_cookies", false },
+    { "logging.log_deaths", true },
+    { "logging.log_queries", false },
+    { "logging.log_sqlite", false },
+    { "logging.log_sqlite_queries", false },
+    { "logging.timestamp_format", String("[%Y-%m-%dT%H:%M:%SZ]") },
+    { "logging.use_timestamp", true },
+    { "logging.use_prefix", true },
+    // network
+    { "network.acks_limit", 3000 },
+    { "network.aiming_sync_rate", 30 },
+    { "network.cookie_reseed_time", 300000 },
+    { "network.in_vehicle_sync_rate", 30 },
+    { "network.limits_ban_time", 60000 },
+    { "network.message_holes_limit", 3000 },
+    { "network.messages_limit", 500 },
+    { "network.minimum_connection_time", 0 },
+    { "network.mtu", 576 },
+    { "network.multiplier", 10 },
+    { "network.on_foot_sync_rate", 30 },
+    { "network.player_marker_sync_rate", 2500 },
+    { "network.player_timeout", 10000 },
+    { "network.stream_radius", 200.f },
+    { "network.stream_rate", 1000 },
+    { "network.time_sync_rate", 30000 },
+    { "game.use_lag_compensation", true },
+    { "network.use_lan_mode", false },
+    // rcon
+    { "rcon.allow_teleport", false },
+    { "rcon.enable", false },
+    { "rcon.password", String("") }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
 };
 
 // Provide automatic Defaults → JSON conversion in Config
@@ -214,7 +222,7 @@ private:
             if (v.is_number_integer()) {
                 processed[key].emplace<int>(v.get<int>());
             } else if (v.is_boolean()) {
-                processed[key].emplace<int>(v.get<bool>());
+                processed[key].emplace<bool>(v.get<bool>());
             } else if (v.is_number_float()) {
                 processed[key].emplace<float>(v.get<float>());
             } else if (v.is_string()) {
@@ -264,13 +272,6 @@ public:
                 } else {
                     processed = Defaults;
                 }
-
-                const SemanticVersion version = core.getVersion();
-                String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
-                if (version.prerel != 0) {
-                    versionStr += "." + std::to_string(version.prerel);
-                }
-                processed["version"].emplace<String>(versionStr);
             }
 
             loadBans();
@@ -301,6 +302,15 @@ public:
             return 0;
         }
         return &std::get<int>(*res);
+    }
+
+    bool* getBool(StringView key) override
+    {
+        ConfigStorage* res = nullptr;
+        if (!getFromKey(key, ConfigOptionType_Bool, res)) {
+            return 0;
+        }
+        return &std::get<bool>(*res);
     }
 
     float* getFloat(StringView key) override
@@ -364,6 +374,11 @@ public:
     }
 
     void setInt(StringView key, int value) override
+    {
+        processed[String(key)] = value;
+    }
+
+    void setBool(StringView key, bool value) override
     {
         processed[String(key)] = value;
     }
@@ -485,7 +500,39 @@ public:
 
         Config config(core, true /* defaultsOnly */);
         components.configure(core, config, true /* defaults */);
-        config.setString("rcon_password", "changeme");
+        config.setString("rcon.password", "changeme");
+
+        if (ofs.good()) {
+            for (const auto& kv : config.options()) {
+                nlohmann::ordered_json* sub = &json;
+                size_t cur = String::npos, prev = 0;
+                // Process hierarchy
+                while ((cur = kv.first.find('.', prev)) != String::npos) {
+                    String substr = kv.first.substr(prev, cur - prev);
+                    sub = &(*sub)[substr];
+                    prev = cur + sizeof('.');
+                }
+                // Set the leaf's value
+                (*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
+            }
+            ofs << json.dump(4) << std::endl;
+        }
+        return true;
+    }
+
+    static bool writeCurrent(ICore& core, Config& config)
+    {
+        core.printLn("Generating %s...", ConfigFileName);
+
+        // Creates default config.json file if it doesn't exist
+        // Returns true if a config file was written, false otherwise
+        std::ifstream ifs(ConfigFileName);
+        if (ifs.good()) {
+            return false;
+        }
+
+        std::ofstream ofs(ConfigFileName);
+        nlohmann::ordered_json json;
 
         if (ofs.good()) {
             for (const auto& kv : config.options()) {
@@ -716,34 +763,35 @@ private:
     TimePoint ticksPerSecondLastUpdate;
     std::set<HTTPAsyncIO*> httpFutures;
 
-    int* EnableZoneNames;
-    int* UsePlayerPedAnims;
-    int* AllowInteriorWeapons;
-    int* UseLimitGlobalChatRadius;
+    bool* EnableZoneNames;
+    bool* UsePlayerPedAnims;
+    bool* AllowInteriorWeapons;
+    bool* UseLimitGlobalChatRadius;
     float* LimitGlobalChatRadius;
-    int* EnableStuntBonus;
+    bool* EnableStuntBonus;
     float* SetNameTagDrawDistance;
-    int* DisableInteriorEnterExits;
-    int* DisableNameTagLOS;
-    int* ManualVehicleEngineAndLights;
-    int* ShowNameTags;
+    bool* EnableInteriorEnterExits;
+    bool* EnableNameTagLOS;
+    bool* ManualVehicleEngineAndLights;
+    bool* ShowNameTags;
     int* ShowPlayerMarkers;
     int* SetWorldTime;
     int* SetWeather;
     float* SetGravity;
-    int* LanMode;
+    bool* LanMode;
     int* SetDeathDropAmount;
-    int* Instagib;
+    bool* Instagib;
     int* OnFootRate;
     int* InCarRate;
     int* WeaponRate;
     int* Multiplier;
-    int* LagCompensation;
+    bool* LagCompensation;
     String ServerName;
-    int* EnableVehicleFriendlyFire;
+    bool* EnableVehicleFriendlyFire;
     bool reloading_ = false;
 
-    int EnableLogTimestamp;
+    bool EnableLogTimestamp;
+    bool EnableLogPrefix;
     String LogTimestampFormat;
 
     void addComponent(IComponent* component)
@@ -838,8 +886,8 @@ private:
         playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
         playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
         playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
-        playerInitRPC.DisableInteriorEnterExits = *DisableInteriorEnterExits;
-        playerInitRPC.DisableNameTagLOS = *DisableNameTagLOS;
+        playerInitRPC.DisableInteriorEnterExits = !*EnableInteriorEnterExits;
+        playerInitRPC.DisableNameTagLOS = !*EnableNameTagLOS;
         playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
         playerInitRPC.ShowNameTags = *ShowNameTags;
         playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
@@ -872,6 +920,77 @@ private:
         RPC.PlayerID = player.getID();
         RPC.Col = player.getColour();
         PacketHelper::send(RPC, player);
+    }
+
+    bool setConfigFromString(StringView conf)
+    {
+        size_t split = conf.find_first_of('=');
+        if (split == StringView::npos) {
+            // Invalid option.  No `=`.
+            return false;
+        }
+        // Get the type of this option from the existing options (defaults and files).
+        StringView key = trim(StringView(conf.data(), split));
+        StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
+        if (key.empty()) {
+            logLn(LogLevel::Warning, "No key supplied to `--config`");
+            return false;
+        }
+        if (value.empty()) {
+            logLn(LogLevel::Warning, "No value supplied to `--config`");
+            return false;
+        }
+        try {
+            // Try the code twice - once for the given config, once for it translated from legacy.
+            bool retry = false;
+            do {
+                switch (config.getType(key)) {
+                case ConfigOptionType_Int:
+                    *config.getInt(key) = std::stoi(value.data());
+                    return true;
+                case ConfigOptionType_String:
+                    // TODO: This is a problem.  Most uses hold references to the internal config data,
+                    // which we can modify.  Strings don't.  Thus setting a string here won't update all the
+                    // uses of that string.
+                    config.setString(key, value);
+                    return true;
+                case ConfigOptionType_Float:
+                    *config.getFloat(key) = std::stod(value.data());
+                    return true;
+                case ConfigOptionType_Strings:
+                    // Unfortunately we're still setting up the config options so this may display
+                    // oddly (wrong place/prefix etc).
+                    logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+                    return false;
+                case ConfigOptionType_Bool:
+                    *config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+                    return true;
+                default:
+                    // Try the loop again with a new key.
+                    auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
+                    if (retry) {
+                        // Check for the second time getting to here.  Shouldn't happen as that
+                        // means a legacy option resolved to an unknown config, but handle it.
+                        retry = false;
+                    } else if (legacyLookup) {
+                        // Did they type a legacy key?
+                        StringView nu = legacyLookup->getConfig(key);
+                        if (!nu.empty()) {
+                            logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
+                            key = nu;
+                            retry = true;
+                        }
+                    }
+                    break;
+                }
+            } while (retry);
+        } catch (std::invalid_argument const& e) {
+            // The value was wrong.
+            logLn(LogLevel::Warning, "Value `%.*s` could not be parsed", value.length(), value.data());
+            return false;
+        }
+        logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
+        return false;
     }
 
 public:
@@ -964,7 +1083,7 @@ public:
 
         loadComponents("components");
 
-        if (cmd.count("write-config")) {
+        if (cmd.count("default-config")) {
             // Generate config
             Config::writeDefault(*this, components);
             stop();
@@ -972,7 +1091,16 @@ public:
         }
 
         components.configure(*this, config, false);
+
         config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
+
+        if (cmd.count("config")) {
+            auto configs = cmd["config"].as<std::vector<std::string>>();
+            // Loop through all the config options, get the key/value pair, and store it.
+            for (auto const& conf : configs) {
+                setConfigFromString(conf);
+            }
+        }
 
         if (cmd.count("script")) {
             // Add the launch parameter to the start of the scripts list.
@@ -991,41 +1119,54 @@ public:
             }
             config.setStrings("pawn.main_scripts", view);
         }
-
         // Don't use config before this point
+        if (cmd.count("dump-config")) {
+            // Generate config
+            Config::writeCurrent(*this, config);
+            stop();
+            return;
+        }
 
-        if (*config.getInt("logging")) {
+        const SemanticVersion version = getVersion();
+        String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
+        if (version.prerel != 0) {
+            versionStr += "." + std::to_string(version.prerel);
+        }
+        config.setString("version", versionStr);
+
+        if (*config.getBool("logging.enable")) {
             logFile = ::fopen(LogFileName, "a");
         }
 
-        EnableZoneNames = config.getInt("enable_zone_names");
-        UsePlayerPedAnims = config.getInt("use_player_ped_anims");
-        AllowInteriorWeapons = config.getInt("allow_interior_weapons");
-        UseLimitGlobalChatRadius = config.getInt("use_limit_global_chat_radius");
-        LimitGlobalChatRadius = config.getFloat("limit_global_chat_radius");
-        EnableStuntBonus = config.getInt("enable_stunt_bonus");
-        SetNameTagDrawDistance = config.getFloat("name_tag_draw_distance");
-        DisableInteriorEnterExits = config.getInt("disable_interior_enter_exits");
-        DisableNameTagLOS = config.getInt("disable_name_tag_los");
-        ManualVehicleEngineAndLights = config.getInt("manual_vehicle_engine_and_lights");
-        ShowNameTags = config.getInt("show_name_tags");
-        ShowPlayerMarkers = config.getInt("show_player_markers");
-        SetWorldTime = config.getInt("world_time");
-        SetWeather = config.getInt("weather");
-        SetGravity = config.getFloat("gravity");
-        LanMode = config.getInt("lan_mode");
-        SetDeathDropAmount = config.getInt("death_drop_amount");
-        Instagib = config.getInt("instagib");
-        OnFootRate = config.getInt("on_foot_rate");
-        InCarRate = config.getInt("in_car_rate");
-        WeaponRate = config.getInt("weapon_rate");
-        Multiplier = config.getInt("multiplier");
-        LagCompensation = config.getInt("lag_compensation");
-        ServerName = String(config.getString("server_name"));
-        EnableVehicleFriendlyFire = config.getInt("vehicle_friendly_fire");
+        EnableZoneNames = config.getBool("game.use_zone_names");
+        UsePlayerPedAnims = config.getBool("game.use_player_ped_anims");
+        AllowInteriorWeapons = config.getBool("game.allow_interior_weapons");
+        UseLimitGlobalChatRadius = config.getBool("game.use_chat_radius");
+        LimitGlobalChatRadius = config.getFloat("game.chat_radius");
+        EnableStuntBonus = config.getBool("game.use_stunt_bonuses");
+        SetNameTagDrawDistance = config.getFloat("game.nametag_draw_radius");
+        EnableInteriorEnterExits = config.getBool("game.use_entry_exit_markers");
+        EnableNameTagLOS = config.getBool("game.use_nametag_los");
+        ManualVehicleEngineAndLights = config.getBool("game.use_manual_engine_and_lights");
+        ShowNameTags = config.getBool("game.use_nametags");
+        ShowPlayerMarkers = config.getInt("game.player_marker_mode");
+        SetWorldTime = config.getInt("game.time");
+        SetWeather = config.getInt("game.weather");
+        SetGravity = config.getFloat("game.gravity");
+        LanMode = config.getBool("network.use_lan_mode");
+        SetDeathDropAmount = config.getInt("game.death_drop_amount");
+        Instagib = config.getBool("game.use_instagib");
+        OnFootRate = config.getInt("network.on_foot_sync_rate");
+        InCarRate = config.getInt("network.in_vehicle_sync_rate");
+        WeaponRate = config.getInt("network.aiming_sync_rate");
+        Multiplier = config.getInt("network.multiplier");
+        LagCompensation = config.getBool("game.use_lag_compensation");
+        ServerName = String(config.getString("name"));
+        EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
-        EnableLogTimestamp = *config.getInt("logging_timestamp");
-        LogTimestampFormat = String(config.getString("logging_timestamp_format"));
+        EnableLogTimestamp = *config.getBool("logging.use_timestamp");
+        EnableLogPrefix = *config.getBool("logging.use_prefix");
+        LogTimestampFormat = String(config.getString("logging.timestamp_format"));
 
         config.optimiseBans();
         config.writeBans();
@@ -1106,7 +1247,9 @@ public:
             fputs(iso8601, stream);
             fputs(" ", stream);
         }
-        fputs(prefix, stream);
+        if (prefix) {
+            fputs(prefix, stream);
+        }
         fputs(message, stream);
         fputs("\n", stream);
         fflush(stream);
@@ -1128,18 +1271,20 @@ public:
         }
 #endif
         const char* prefix = nullptr;
-        switch (level) {
-        case LogLevel::Debug:
-            prefix = "[Debug] ";
-            break;
-        case LogLevel::Message:
-            prefix = "[Info] ";
-            break;
-        case LogLevel::Warning:
-            prefix = "[Warning] ";
-            break;
-        case LogLevel::Error:
-            prefix = "[Error] ";
+        if (EnableLogPrefix) {
+            switch (level) {
+            case LogLevel::Debug:
+                prefix = "[Debug] ";
+                break;
+            case LogLevel::Message:
+                prefix = "[Info] ";
+                break;
+            case LogLevel::Warning:
+                prefix = "[Warning] ";
+                break;
+            case LogLevel::Error:
+                prefix = "[Error] ";
+            }
         }
 
         char iso8601[32] = { 0 };
@@ -1248,14 +1393,14 @@ public:
     {
         switch (type) {
         case SettableCoreDataType::ServerName:
-            config.setString("server_name", data);
+            config.setString("name", data);
             ServerName = String(data);
             break;
         case SettableCoreDataType::ModeText:
-            config.setString("mode_name", data);
+            config.setString("game.mode", data);
             break;
         case SettableCoreDataType::MapName:
-            config.setString("map_name", data);
+            config.setString("game.map", data);
             break;
         case SettableCoreDataType::Language:
             config.setString("language", data);
@@ -1264,7 +1409,7 @@ public:
             config.setString("password", data);
             break;
         case SettableCoreDataType::AdminPassword:
-            config.setString("rcon_password", data);
+            config.setString("rcon.password", data);
             break;
         case SettableCoreDataType::URL:
             config.setString("website", data);
@@ -1344,6 +1489,14 @@ public:
         } else if (command == "reloadlog") {
             if (reloadLogFile()) {
                 console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
+            }
+            return true;
+        } else if (command == "config") {
+            if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"') {
+                setConfigFromString(parameters);
+            } else {
+                // Remove `"`s.
+                setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
             }
             return true;
         }

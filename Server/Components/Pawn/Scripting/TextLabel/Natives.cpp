@@ -177,7 +177,18 @@ SCRIPT_API(SetPlayer3DTextLabelDrawDist, bool(IPlayer& player, IPlayerTextLabel&
     return true;
 }
 
+SCRIPT_API(SetPlayer3DTextLabelDrawDistance, bool(IPlayer& player, IPlayerTextLabel& textLabel, float distance))
+{
+    textLabel.setDrawDistance(distance);
+    return true;
+}
+
 SCRIPT_API(GetPlayer3DTextLabelDrawDist, float(IPlayer& player, IPlayerTextLabel& textLabel))
+{
+    return textLabel.getDrawDistance();
+}
+
+SCRIPT_API(GetPlayer3DTextLabelDrawDistance, float(IPlayer& player, IPlayerTextLabel& textLabel))
 {
     return textLabel.getDrawDistance();
 }
@@ -199,7 +210,28 @@ SCRIPT_API(GetPlayer3DTextLabelVirtualW, int(IPlayer& player, IPlayerTextLabel& 
     return player.getVirtualWorld();
 }
 
+SCRIPT_API(GetPlayer3DTextLabelVirtualWorld, int(IPlayer& player, IPlayerTextLabel& textLabel))
+{
+    // No virtual world support, returning player virtual world.
+    return player.getVirtualWorld();
+}
+
+//  SCRIPT_API(SetPlayer3DTextLabelVirtualWorld, int(IPlayer& player, IPlayerTextLabel& textLabel))
+//  {
+//      Why is there no virtual world support?
+//      return player.setVirtualWorld();
+//  }
+
 SCRIPT_API(GetPlayer3DTextLabelAttached, int(IPlayer& player, IPlayerTextLabel& textLabel, int& attached_player, int& attached_vehicle))
+{
+    const TextLabelAttachmentData& data = textLabel.getAttachmentData();
+
+    attached_player = data.playerID;
+    attached_vehicle = data.vehicleID;
+
+    return true;
+}
+SCRIPT_API(GetPlayer3DTextLabelAttachedData, int(IPlayer& player, IPlayerTextLabel& textLabel, int& attached_player, int& attached_vehicle))
 {
     const TextLabelAttachmentData& data = textLabel.getAttachmentData();
 
