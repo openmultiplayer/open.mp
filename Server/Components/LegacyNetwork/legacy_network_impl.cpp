@@ -583,7 +583,11 @@ NetworkStats RakNetLegacyNetwork::getStatistics(IPlayer* player)
     stats.messagesOnResendQueue = raknetStats->messagesOnResendQueue;
     stats.messageResends = raknetStats->messageResends;
     stats.messagesTotalBytesResent = BITS_TO_BYTES(raknetStats->messagesTotalBitsResent);
-    stats.packetloss = 100.0f * static_cast<float>(raknetStats->messagesTotalBitsResent) / static_cast<float>(raknetStats->totalBitsSent);
+
+    if (raknetStats->totalBitsSent)
+        stats.packetloss = 100.0f * raknetStats->messagesTotalBitsResent / raknetStats->totalBitsSent;
+    else
+        stats.packetloss = 0.0f;
 
     stats.messagesReceived
         = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
