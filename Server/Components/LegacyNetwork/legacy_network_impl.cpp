@@ -640,7 +640,7 @@ void RakNetLegacyNetwork::update()
         query.setServerName(hostName);
     }
 
-    query.setRuleValue("lagcomp", *config.getBool("network.use_lag_compensation") ? "On" : "Off");
+    query.setRuleValue("lagcomp", *config.getBool("game.use_lag_compensation") ? "On" : "Off");
 
     StringView language = config.getString("language");
     if (!language.empty()) {
