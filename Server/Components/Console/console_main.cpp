@@ -160,7 +160,7 @@ public:
     {
         // Server without a config file has rcon.password empty so we disable rcon manually too.
         if (core->getConfig().getString("rcon.password") == "") {
-            static_cast<IEarlyConfig&>(core->getConfig()).setInt("rcon.enable", 0);
+            static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", false);
         }
 
         // Server exit server if rcon_password is set to changeme
