@@ -540,26 +540,22 @@ void RakNetLegacyNetwork::unban(const BanEntry& entry)
     rakNetServer.RemoveFromBanList(entry.address.data());
 }
 
-NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex)
+NetworkStats RakNetLegacyNetwork::getStatistics(IPlayer* player)
 {
     NetworkStats stats = { 0 };
-
     RakNet::PlayerID playerID;
-    IPlayer* player;
 
-    if (playerIndex == -1) {
+    if (player == nullptr) {
         playerID = RakNet::UNASSIGNED_PLAYER_ID;
     } else {
-        playerID = rakNetServer.GetPlayerIDFromIndex(playerIndex);
-        // Return empty statistics structure if passed index does not exist
-        if (playerID == RakNet::UNASSIGNED_PLAYER_ID) {
-            return stats;
-        }
+        const PeerNetworkData& netData = player->getNetworkData();
 
-        player = core->getPlayers().get(playerIndex);
-        // Return empty statistics structure if player is not found
-        if (player == nullptr) {
+        // Return empty statistics structure if player is not connected to this network
+        if (netData.network != this) {
             return stats;
+        } else {
+            const PeerNetworkData::NetworkID& nid = netData.networkID;
+            playerID = { unsigned(nid.address.v4), nid.port };
         }
     }
 

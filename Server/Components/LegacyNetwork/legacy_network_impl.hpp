@@ -316,7 +316,7 @@ public:
         return false;
     }
 
-    NetworkStats getStatistics(int playerIndex = -1) override;
+    NetworkStats getStatistics(IPlayer* player = nullptr) override;
 
     unsigned getPing(const IPlayer& peer) override
     {
