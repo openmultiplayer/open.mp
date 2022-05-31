@@ -1038,6 +1038,11 @@ public:
         }
     }
 
+    void setThreadSleep(Milliseconds value) override
+    {
+        sleepTimer = value;
+    }
+
     void resetAll() override
     {
         reloading_ = true;
