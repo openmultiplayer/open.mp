@@ -197,6 +197,9 @@ struct ICore : public IExtensible, public ILogger {
     /// Set string data during runtime
     virtual void setData(SettableCoreDataType type, StringView data) = 0;
 
+    /// Set sleep value for each main thread update cycle
+    virtual void setThreadSleep(Milliseconds value) = 0;
+
     /// Clear all entites that vanish on GM exit.
     virtual void resetAll() = 0;
 

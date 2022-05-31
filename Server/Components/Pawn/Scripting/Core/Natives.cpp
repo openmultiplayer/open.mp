@@ -292,6 +292,7 @@ SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
     }
 
     stream
+        << "Server Ticks:" << PawnManager::Get()->core->tickRate() << std::endl
         << "Messages in Send buffer: " << stats.messageSendBuffer << std::endl
         << "Messages sent: " << stats.messagesSent << std::endl
         << "Bytes sent: " << stats.totalBytesSent << std::endl
@@ -303,10 +304,10 @@ SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
         << "Packetloss: " << std::setprecision(1) << std::fixed << stats.packetloss << "%" << std::endl
         << "Messages received: " << stats.messagesReceived << std::endl
         << "Bytes received: " << stats.bytesReceived << std::endl
-        << "Acks received:" << stats.acknowlegementsReceived << std::endl
+        << "Acks received: " << stats.acknowlegementsReceived << std::endl
         << "Duplicate acks received: " << stats.duplicateAcknowlegementsReceived << std::endl
         << "Inst. KBits per second:" << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
-        << "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
+        << "KBits per second sent: " << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
         << "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
     // Scope-allocated string, copy it
@@ -317,7 +318,7 @@ SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
 SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, OutputOnlyString& output))
 {
     std::stringstream stream;
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
 
     stream
         << "Network Active: " << int(stats.isActive) << std::endl
@@ -391,25 +392,25 @@ SCRIPT_API(LimitPlayerMarkerRadius, bool(float markerRadius))
 
 SCRIPT_API(NetStats_BytesReceived, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.bytesReceived;
 }
 
 SCRIPT_API(NetStats_BytesSent, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.totalBytesSent;
 }
 
 SCRIPT_API(NetStats_ConnectionStatus, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.connectMode;
 }
 
 SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.connectionStartTime;
 }
 
@@ -430,25 +431,25 @@ SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
 
 SCRIPT_API(NetStats_MessagesReceived, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.messagesReceived;
 }
 
 SCRIPT_API(NetStats_MessagesRecvPerSecond, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.messagesReceivedPerSecond;
 }
 
 SCRIPT_API(NetStats_MessagesSent, int(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.messagesSent;
 }
 
 SCRIPT_API(NetStats_PacketLossPercent, float(IPlayer& player))
 {
-    NetworkStats stats = player.getNetworkData().network->getStatistics(player.getID());
+    NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.packetloss;
 }
 

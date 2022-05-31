@@ -78,6 +78,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.vehicle_respawn_time", 10000 },
     { "game.weather", 10 },
     { "game.use_all_animations", false },
+    { "game.use_lag_compensation", true },
     // logging
     { "logging.enable", true },
     { "logging.log_chat", true },
@@ -106,7 +107,6 @@ static const std::map<String, ConfigStorage> Defaults {
     { "network.stream_radius", 200.f },
     { "network.stream_rate", 1000 },
     { "network.time_sync_rate", 30000 },
-    { "game.use_lag_compensation", true },
     { "network.use_lan_mode", false },
     // rcon
     { "rcon.allow_teleport", false },
@@ -1036,6 +1036,11 @@ public:
 
             std::this_thread::sleep_until(now + sleepTimer);
         }
+    }
+
+    void setThreadSleep(Milliseconds value) override
+    {
+        sleepTimer = value;
     }
 
     void resetAll() override

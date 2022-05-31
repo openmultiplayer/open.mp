@@ -540,26 +540,22 @@ void RakNetLegacyNetwork::unban(const BanEntry& entry)
     rakNetServer.RemoveFromBanList(entry.address.data());
 }
 
-NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex)
+NetworkStats RakNetLegacyNetwork::getStatistics(IPlayer* player)
 {
     NetworkStats stats = { 0 };
-
     RakNet::PlayerID playerID;
-    IPlayer* player;
 
-    if (playerIndex == -1) {
+    if (player == nullptr) {
         playerID = RakNet::UNASSIGNED_PLAYER_ID;
     } else {
-        playerID = rakNetServer.GetPlayerIDFromIndex(playerIndex);
-        // Return empty statistics structure if passed index does not exist
-        if (playerID == RakNet::UNASSIGNED_PLAYER_ID) {
-            return stats;
-        }
+        const PeerNetworkData& netData = player->getNetworkData();
 
-        player = core->getPlayers().get(playerIndex);
-        // Return empty statistics structure if player is not found
-        if (player == nullptr) {
+        // Return empty statistics structure if player is not connected to this network
+        if (netData.network != this) {
             return stats;
+        } else {
+            const PeerNetworkData::NetworkID& nid = netData.networkID;
+            playerID = { unsigned(nid.address.v4), nid.port };
         }
     }
 
@@ -587,7 +583,11 @@ NetworkStats RakNetLegacyNetwork::getStatistics(int playerIndex)
     stats.messagesOnResendQueue = raknetStats->messagesOnResendQueue;
     stats.messageResends = raknetStats->messageResends;
     stats.messagesTotalBytesResent = BITS_TO_BYTES(raknetStats->messagesTotalBitsResent);
-    stats.packetloss = 100.0f * static_cast<float>(raknetStats->messagesTotalBitsResent) / static_cast<float>(raknetStats->totalBitsSent);
+
+    if (raknetStats->totalBitsSent)
+        stats.packetloss = 100.0f * raknetStats->messagesTotalBitsResent / raknetStats->totalBitsSent;
+    else
+        stats.packetloss = 0.0f;
 
     stats.messagesReceived
         = raknetStats->duplicateMessagesReceived + raknetStats->invalidMessagesReceived + raknetStats->messagesReceived;
