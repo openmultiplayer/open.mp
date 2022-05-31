@@ -317,3 +317,13 @@ ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& s
         console.sendMessage(sender, "Unknown parameter. Use rcon 0 to disable remote console or rcon 1 to enable it.");
     }
 });
+
+ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+    int value = 0;
+    if (sscanf(params.data(), "%i", &value) == EOF) {
+        console.sendMessage(sender, String("sleep = \"") + std::to_string(*core->getConfig().getInt("sleep")) + "\"");
+        return;
+    }
+    static_cast<IEarlyConfig&>(core->getConfig()).setInt("sleep", value);
+    core->setThreadSleep(Milliseconds(value));
+});
