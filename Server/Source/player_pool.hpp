@@ -722,6 +722,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                         return false;
                     }
 
+                    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+                    if (data) {
+                        if (data->getVehicle() == targetedVehicle) {
+                            return false;
+                        }
+                    }
+
                 } else {
                     return false;
                 }
