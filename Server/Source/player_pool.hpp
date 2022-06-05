@@ -1014,6 +1014,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            // Avoid processing if received seat id is for driver's
+            if (passengerSync.SeatID == 0) {
+                return false;
+            }
+
             IVehicle* vehiclePtr = self.vehiclesComponent->get(passengerSync.VehicleID);
             if (!vehiclePtr) {
                 return false;
