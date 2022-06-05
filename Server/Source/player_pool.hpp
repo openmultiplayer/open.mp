@@ -712,6 +712,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     }
                 }
 
+            } else if (bulletSync.HitType == PlayerBulletHitType_Vehicle) {
+                if (self.vehiclesComponent) {
+                    IVehicle* targetedVehicle = self.vehiclesComponent->get(bulletSync.HitID);
+                    if (!targetedVehicle) {
+                        return false;
+                    }
+                    if (!targetedVehicle->isStreamedInForPlayer(player)) {
+                        return false;
+                    }
+
+                } else {
+                    return false;
+                }
             }
 
             // Check if hitid is valid for vehicles/objects
