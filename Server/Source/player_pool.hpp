@@ -680,7 +680,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerBulletSync bulletSync;
-            bool *isLagCompEnabled = self.core.getConfig().getBool("game.use_lag_compensation");
+            bool* isLagCompEnabled = self.core.getConfig().getBool("game.use_lag_compensation");
             if ((isLagCompEnabled && *isLagCompEnabled == false) || !bulletSync.read(bs)) {
                 return false;
             }
@@ -701,6 +701,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 if (!targetedplayer->isStreamedInForPlayer(player)) {
                     return false;
                 }
+
+                IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+                IPlayerVehicleData* otherData = queryExtension<IPlayerVehicleData>(*targetedplayer);
+                if (data && otherData) {
+                    IVehicle* playerVehicle = data->getVehicle();
+                    IVehicle* otherVehicle = otherData->getVehicle();
+                    if (playerVehicle && otherVehicle && playerVehicle == otherVehicle) {
+                        return false;
+                    }
+                }
+
             }
 
             // Check if hitid is valid for vehicles/objects
