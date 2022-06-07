@@ -41,6 +41,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
             Player& player = static_cast<Player&>(peer);
 
+            PlayerState state = peer.getState();
+            if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)) {
+                return false;
+            }
+
             player.toSpawn_ = self.eventDispatcher.stopAtFalse(
                 [&peer](PlayerEventHandler* handler) {
                     return handler->onPlayerRequestSpawn(peer);
