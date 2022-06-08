@@ -40,7 +40,7 @@ private:
             IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->selectingObject()) {
                 IObject* obj = self.get(onPlayerSelectObjectRPC.ObjectID);
-                if (obj) {
+                if (obj && obj->getModel() == onPlayerSelectObjectRPC.Model) {
                     ScopedPoolReleaseLock lock(self, *obj);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectSelected,
@@ -50,7 +50,7 @@ private:
                         onPlayerSelectObjectRPC.Position);
                 } else {
                     IPlayerObject* playerObj = data->get(onPlayerSelectObjectRPC.ObjectID);
-                    if (playerObj) {
+                    if (playerObj && playerObj->getModel() == onPlayerSelectObjectRPC.Model) {
                         ScopedPoolReleaseLock lock(*data, *playerObj);
                         self.eventDispatcher.dispatch(
                             &ObjectEventHandler::onPlayerObjectSelected,
