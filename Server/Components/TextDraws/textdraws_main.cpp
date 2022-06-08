@@ -157,12 +157,12 @@ public:
                 } else {
                     if (RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(*data, RPC.TextDrawID);
-                        if (lock.entry) {
+                        if (lock.entry && lock.entry->isSelectable() && lock.entry->isShown()) {
                             self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerClickPlayerTextDraw, peer, *lock.entry);
                         }
                     } else if (!RPC.PlayerTextDraw) {
                         ScopedPoolReleaseLock lock(self, RPC.TextDrawID);
-                        if (lock.entry) {
+                        if (lock.entry && lock.entry->isSelectable() && lock.entry->isShownForPlayer(peer)) {
                             self.dispatcher.dispatch(&TextDrawEventHandler::onPlayerClickTextDraw, peer, *lock.entry);
                         }
                     }
