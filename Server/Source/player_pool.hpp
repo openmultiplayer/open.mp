@@ -204,9 +204,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
-            uint32_t oldInterior = player.interior_;
 
+            uint32_t oldInterior = player.interior_;
             player.interior_ = onPlayerInteriorChangeRPC.Interior;
+
+            if (oldInterior == player.interior_) {
+                return false;
+            }
+
             self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerInteriorChange, peer, player.interior_, oldInterior);
 
             return true;
