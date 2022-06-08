@@ -30,6 +30,14 @@ private:
                 return false;
             }
 
+            if (onPlayerDamageActorRPC.Damage <= 0.0f) {
+                return false;
+            }
+
+            if (onPlayerDamageActorRPC.Bodypart < BodyPart_Torso || onPlayerDamageActorRPC.Bodypart > BodyPart_Head) {
+                return false;
+            }
+
             Actor* actorPtr = self.storage.get(onPlayerDamageActorRPC.ActorID);
             if (actorPtr) {
                 Actor& actor = *actorPtr;
