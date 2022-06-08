@@ -138,6 +138,14 @@ private:
 
             IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->editingObject() && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index)) {
+                auto attachedObjectData = data->getAttachedObject(onPlayerEditAttachedObjectRPC.Index);
+
+                // Avoid calling events if reported bone id and model id is different form stored ones
+                if (attachedObjectData.model != onPlayerEditAttachedObjectRPC.AttachmentData.model || attachedObjectData.bone != onPlayerEditAttachedObjectRPC.AttachmentData.bone) {
+                    data->endEditing();
+                    return false;
+                }
+
                 self.eventDispatcher.dispatch(
                     &ObjectEventHandler::onPlayerAttachedObjectEdited,
                     peer,
