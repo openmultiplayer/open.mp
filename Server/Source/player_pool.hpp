@@ -234,6 +234,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (peer.getState() == PlayerState_Wasted) {
+                return false;
+            }
+
             Player& player = static_cast<Player&>(peer);
             player.setState(PlayerState_Wasted);
 
