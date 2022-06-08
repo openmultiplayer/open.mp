@@ -44,6 +44,10 @@ private:
                 return false;
             }
 
+            if (!lock.entry->isStreamedInForPlayer(peer) || peer.getState() != PlayerState_OnFoot) {
+                return false;
+            }
+
             self.eventDispatcher.dispatch(
                 &VehicleEventHandler::onPlayerEnterVehicle,
                 peer,
