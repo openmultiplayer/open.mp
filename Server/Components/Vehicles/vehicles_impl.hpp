@@ -82,6 +82,11 @@ private:
                 return false;
             }
 
+            IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
+            if (!lock.entry->isStreamedInForPlayer(peer) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry) {
+                return false;
+            }
+
             self.eventDispatcher.dispatch(
                 &VehicleEventHandler::onPlayerExitVehicle,
                 peer,
