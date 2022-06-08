@@ -124,7 +124,7 @@ private:
 
             // If the dialog id doesn't match what the server is expecting, ignore it
             PlayerDialogData* data = queryExtension<PlayerDialogData>(peer);
-            if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID) {
+            if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID || sendDialogResponse.ListItem < 0) {
                 return false;
             }
 
