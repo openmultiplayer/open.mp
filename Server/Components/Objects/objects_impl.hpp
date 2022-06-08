@@ -87,6 +87,12 @@ private:
                     data->endEditing();
                 }
 
+                ObjectEditResponse response = ObjectEditResponse(onPlayerEditObjectRPC.Response);
+                // Avoid processing any further if response is invalid
+                if (response < ObjectEditResponse_Cancel || response > ObjectEditResponse_Update) {
+                    return false;
+                }
+
                 if (onPlayerEditObjectRPC.PlayerObject) {
                     ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
                     if (lock.entry) {
@@ -94,7 +100,7 @@ private:
                             &ObjectEventHandler::onPlayerObjectEdited,
                             peer,
                             *lock.entry,
-                            ObjectEditResponse(onPlayerEditObjectRPC.Response),
+                            response,
                             onPlayerEditObjectRPC.Offset,
                             onPlayerEditObjectRPC.Rotation);
                     }
@@ -105,7 +111,7 @@ private:
                             &ObjectEventHandler::onObjectEdited,
                             peer,
                             *lock.entry,
-                            ObjectEditResponse(onPlayerEditObjectRPC.Response),
+                            response,
                             onPlayerEditObjectRPC.Offset,
                             onPlayerEditObjectRPC.Rotation);
                     }
