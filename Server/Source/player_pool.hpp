@@ -158,6 +158,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     if (!from->isStreamedInForPlayer(peer)) {
                         return false;
                     }
+                } else {
+                    // Avoid processing any further if other player is invalid and their ID is not INVALID_PLAYER_ID
+                    if (onPlayerGiveTakeDamageRPC.PlayerID != INVALID_PLAYER_ID) {
+                        return false;
+                    }
                 }
                 self.eventDispatcher.dispatch(
                     &PlayerEventHandler::onPlayerTakeDamage,
