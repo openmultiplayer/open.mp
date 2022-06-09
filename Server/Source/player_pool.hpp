@@ -699,7 +699,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerBulletSync bulletSync;
-            bool* isLagCompEnabled = self.core.getConfig().getBool("game.use_lag_compensation");
+            static bool* isLagCompEnabled = self.core.getConfig().getBool("game.use_lag_compensation");
             if ((isLagCompEnabled && *isLagCompEnabled == false) || !bulletSync.read(bs)) {
                 return false;
             }
