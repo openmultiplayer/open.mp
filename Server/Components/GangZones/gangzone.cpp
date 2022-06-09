@@ -145,6 +145,8 @@ public:
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
         const Vector3& playerPos = player.getPosition();
+        DynamicArray<IGangZone*> enteredList;
+        DynamicArray<IGangZone*> exitedList;
 
         // only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
         for (auto gangzone : checkingList.entries()) {
@@ -159,17 +161,29 @@ public:
             bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x < pos.max.x && playerPos.y >= pos.min.y && playerPos.y < pos.max.y;
 
             if (isPlayerInZoneArea && !isPlayerInInsideList) {
-                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
-                static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
-                eventDispatcher.dispatch(
-                    &GangZoneEventHandler::onPlayerEnterGangZone,
-                    player,
-                    *lock.entry);
+                enteredList.push_back(gangzone);
             } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
+                exitedList.push_back(gangzone);
+            }
+        }
+
+        if (exitedList.size()) {
+            for (auto gangzone : exitedList) {
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
                 eventDispatcher.dispatch(
                     &GangZoneEventHandler::onPlayerLeaveGangZone,
+                    player,
+                    *lock.entry);
+            }
+        }
+
+        if (enteredList.size()) {
+            for (auto gangzone : enteredList) {
+                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
+                eventDispatcher.dispatch(
+                    &GangZoneEventHandler::onPlayerEnterGangZone,
                     player,
                     *lock.entry);
             }
