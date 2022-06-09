@@ -1162,9 +1162,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle))) {
                 return false;
-            } 
+            }
+
             // Check if received seat id is not the same as stored seat id
-            else if (unoccupiedSync.SeatID && player.state_ == PlayerState_Passenger && playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat()) {
+            if (unoccupiedSync.SeatID && player.state_ == PlayerState_Passenger && playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat()) {
                 return false;
             }
 
