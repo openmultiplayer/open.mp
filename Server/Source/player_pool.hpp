@@ -1151,14 +1151,20 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (!vehiclePtr) {
                 return false;
             }
-            IVehicle& vehicle = *vehiclePtr;
 
+            IVehicle& vehicle = *vehiclePtr;
             Player& player = static_cast<Player&>(peer);
+            IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
+
             if (vehicle.getDriver()) {
                 return false;
             } else if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || queryExtension<IPlayerVehicleData>(peer)->getVehicle() != &vehicle)) {
+            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle))) {
+                return false;
+            } 
+            // Check if received seat id is not the same as stored seat id
+            else if (unoccupiedSync.SeatID && player.state_ == PlayerState_Passenger && playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat()) {
                 return false;
             }
 
