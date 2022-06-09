@@ -1160,12 +1160,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             } else if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle))) {
-                return false;
-            }
-
-            // Check if received seat id is not the same as stored seat id
-            if (unoccupiedSync.SeatID && player.state_ == PlayerState_Passenger && playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat()) {
+            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle) || (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat()))) {
                 return false;
             }
 
