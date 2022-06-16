@@ -128,6 +128,11 @@ private:
                 return false;
             }
 
+            // If dialog type is one of the lists and list item is invalid, ignore it
+            if (sendDialogResponse.ListItem < 0 && (data->style_ == DialogStyle_LIST || data->style_ == DialogStyle_TABLIST || data->style_ == DialogStyle_TABLIST_HEADERS)) {
+                return false;
+            }
+
             data->activeId = INVALID_DIALOG_ID;
 
             self.eventDispatcher.dispatch(

@@ -41,6 +41,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
             Player& player = static_cast<Player&>(peer);
 
+            PlayerState state = peer.getState();
+            if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)) {
+                return false;
+            }
+
             player.toSpawn_ = self.eventDispatcher.stopAtFalse(
                 [&peer](PlayerEventHandler* handler) {
                     return handler->onPlayerRequestSpawn(peer);
@@ -153,6 +158,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     if (!from->isStreamedInForPlayer(peer)) {
                         return false;
                     }
+                } else {
+                    // Avoid processing any further if other player is invalid and their ID is not INVALID_PLAYER_ID
+                    if (onPlayerGiveTakeDamageRPC.PlayerID != INVALID_PLAYER_ID) {
+                        return false;
+                    }
                 }
                 self.eventDispatcher.dispatch(
                     &PlayerEventHandler::onPlayerTakeDamage,
@@ -199,9 +209,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
-            uint32_t oldInterior = player.interior_;
 
+            uint32_t oldInterior = player.interior_;
             player.interior_ = onPlayerInteriorChangeRPC.Interior;
+
+            if (oldInterior == player.interior_) {
+                return false;
+            }
+
             self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerInteriorChange, peer, player.interior_, oldInterior);
 
             return true;
@@ -226,6 +241,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         {
             NetCode::RPC::OnPlayerDeath onPlayerDeathRPC;
             if (!onPlayerDeathRPC.read(bs)) {
+                return false;
+            }
+
+            if (peer.getState() == PlayerState_Wasted) {
                 return false;
             }
 
@@ -680,7 +699,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
             NetCode::Packet::PlayerBulletSync bulletSync;
-            if (!bulletSync.read(bs)) {
+            static bool* isLagCompEnabled = self.core.getConfig().getBool("game.use_lag_compensation");
+            if ((isLagCompEnabled && *isLagCompEnabled == false) || !bulletSync.read(bs)) {
                 return false;
             }
 
@@ -698,6 +718,37 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     return false;
                 }
                 if (!targetedplayer->isStreamedInForPlayer(player)) {
+                    return false;
+                }
+
+                IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+                IPlayerVehicleData* otherData = queryExtension<IPlayerVehicleData>(*targetedplayer);
+                if (data && otherData) {
+                    IVehicle* playerVehicle = data->getVehicle();
+                    IVehicle* otherVehicle = otherData->getVehicle();
+                    if (playerVehicle && otherVehicle && playerVehicle == otherVehicle) {
+                        return false;
+                    }
+                }
+
+            } else if (bulletSync.HitType == PlayerBulletHitType_Vehicle) {
+                if (self.vehiclesComponent) {
+                    IVehicle* targetedVehicle = self.vehiclesComponent->get(bulletSync.HitID);
+                    if (!targetedVehicle) {
+                        return false;
+                    }
+                    if (!targetedVehicle->isStreamedInForPlayer(player)) {
+                        return false;
+                    }
+
+                    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+                    if (data) {
+                        if (data->getVehicle() == targetedVehicle) {
+                            return false;
+                        }
+                    }
+
+                } else {
                     return false;
                 }
             }
@@ -1014,6 +1065,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            // Avoid processing if received seat id is for driver's
+            if (passengerSync.SeatID == 0) {
+                return false;
+            }
+
             IVehicle* vehiclePtr = self.vehiclesComponent->get(passengerSync.VehicleID);
             if (!vehiclePtr) {
                 return false;
@@ -1095,14 +1151,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (!vehiclePtr) {
                 return false;
             }
-            IVehicle& vehicle = *vehiclePtr;
 
+            IVehicle& vehicle = *vehiclePtr;
             Player& player = static_cast<Player&>(peer);
+            IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
+
             if (vehicle.getDriver()) {
                 return false;
             } else if (!vehicle.isStreamedInForPlayer(peer)) {
                 return false;
-            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || queryExtension<IPlayerVehicleData>(peer)->getVehicle() != &vehicle)) {
+            } else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle) || (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat()))) {
                 return false;
             }
 

@@ -144,32 +144,42 @@ public:
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
-        const Vector3& playerPos = player.getPosition();
-
         // only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
-        for (auto gangzone : checkingList.entries()) {
+        if (checkingList.entries().size()) {
+            const Vector3& playerPos = player.getPosition();
+            DynamicArray<IGangZone*> enteredList;
 
-            // only check visible gangzones
-            if (!gangzone->isShownForPlayer(player)) {
-                continue;
+            for (auto gangzone : checkingList.entries()) {
+
+                // only check visible gangzones
+                if (!gangzone->isShownForPlayer(player)) {
+                    continue;
+                }
+
+                const GangZonePos& pos = gangzone->getPosition();
+                bool isPlayerInInsideList = gangzone->isPlayerInside(player);
+                bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x < pos.max.x && playerPos.y >= pos.min.y && playerPos.y < pos.max.y;
+
+                if (isPlayerInZoneArea && !isPlayerInInsideList) {
+                    // Collect entered gangzones to call events with them later after exit events
+                    enteredList.push_back(gangzone);
+                } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
+                    // Call leave gangzone events
+                    ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
+                    static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
+                    eventDispatcher.dispatch(
+                        &GangZoneEventHandler::onPlayerLeaveGangZone,
+                        player,
+                        *lock.entry);
+                }
             }
 
-            const GangZonePos& pos = gangzone->getPosition();
-            bool isPlayerInInsideList = gangzone->isPlayerInside(player);
-            bool isPlayerInZoneArea = playerPos.x >= pos.min.x && playerPos.x < pos.max.x && playerPos.y >= pos.min.y && playerPos.y < pos.max.y;
-
-            if (isPlayerInZoneArea && !isPlayerInInsideList) {
+            // Call enter gangzone events for all the gangzones in entered gangzone list
+            for (auto gangzone : enteredList) {
                 ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
                 static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
                 eventDispatcher.dispatch(
                     &GangZoneEventHandler::onPlayerEnterGangZone,
-                    player,
-                    *lock.entry);
-            } else if (!isPlayerInZoneArea && isPlayerInInsideList) {
-                ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
-                static_cast<GangZone*>(gangzone)->setPlayerInside(player, false);
-                eventDispatcher.dispatch(
-                    &GangZoneEventHandler::onPlayerLeaveGangZone,
                     player,
                     *lock.entry);
             }

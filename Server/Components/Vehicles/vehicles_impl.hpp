@@ -44,6 +44,10 @@ private:
                 return false;
             }
 
+            if (!lock.entry->isStreamedInForPlayer(peer) || peer.getState() != PlayerState_OnFoot) {
+                return false;
+            }
+
             self.eventDispatcher.dispatch(
                 &VehicleEventHandler::onPlayerEnterVehicle,
                 peer,
@@ -75,6 +79,11 @@ private:
 
             ScopedPoolReleaseLock lock(self, onPlayerExitVehicleRPC.VehicleID);
             if (!lock.entry) {
+                return false;
+            }
+
+            IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
+            if (!lock.entry->isStreamedInForPlayer(peer) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry) {
                 return false;
             }
 
