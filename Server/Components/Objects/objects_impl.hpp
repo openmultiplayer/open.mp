@@ -40,7 +40,7 @@ private:
             IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->selectingObject()) {
                 IObject* obj = self.get(onPlayerSelectObjectRPC.ObjectID);
-                if (obj) {
+                if (obj && obj->getModel() == onPlayerSelectObjectRPC.Model) {
                     ScopedPoolReleaseLock lock(self, *obj);
                     self.eventDispatcher.dispatch(
                         &ObjectEventHandler::onObjectSelected,
@@ -50,7 +50,7 @@ private:
                         onPlayerSelectObjectRPC.Position);
                 } else {
                     IPlayerObject* playerObj = data->get(onPlayerSelectObjectRPC.ObjectID);
-                    if (playerObj) {
+                    if (playerObj && playerObj->getModel() == onPlayerSelectObjectRPC.Model) {
                         ScopedPoolReleaseLock lock(*data, *playerObj);
                         self.eventDispatcher.dispatch(
                             &ObjectEventHandler::onPlayerObjectSelected,
@@ -87,6 +87,12 @@ private:
                     data->endEditing();
                 }
 
+                ObjectEditResponse response = ObjectEditResponse(onPlayerEditObjectRPC.Response);
+                // Avoid processing any further if response is invalid
+                if (response < ObjectEditResponse_Cancel || response > ObjectEditResponse_Update) {
+                    return false;
+                }
+
                 if (onPlayerEditObjectRPC.PlayerObject) {
                     ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
                     if (lock.entry) {
@@ -94,7 +100,7 @@ private:
                             &ObjectEventHandler::onPlayerObjectEdited,
                             peer,
                             *lock.entry,
-                            ObjectEditResponse(onPlayerEditObjectRPC.Response),
+                            response,
                             onPlayerEditObjectRPC.Offset,
                             onPlayerEditObjectRPC.Rotation);
                     }
@@ -105,7 +111,7 @@ private:
                             &ObjectEventHandler::onObjectEdited,
                             peer,
                             *lock.entry,
-                            ObjectEditResponse(onPlayerEditObjectRPC.Response),
+                            response,
                             onPlayerEditObjectRPC.Offset,
                             onPlayerEditObjectRPC.Rotation);
                     }
@@ -132,6 +138,14 @@ private:
 
             IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
             if (data && data->editingObject() && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index)) {
+                auto attachedObjectData = data->getAttachedObject(onPlayerEditAttachedObjectRPC.Index);
+
+                // Avoid calling events if reported bone id and model id is different form stored ones
+                if (attachedObjectData.model != onPlayerEditAttachedObjectRPC.AttachmentData.model || attachedObjectData.bone != onPlayerEditAttachedObjectRPC.AttachmentData.bone) {
+                    data->endEditing();
+                    return false;
+                }
+
                 self.eventDispatcher.dispatch(
                     &ObjectEventHandler::onPlayerAttachedObjectEdited,
                     peer,
