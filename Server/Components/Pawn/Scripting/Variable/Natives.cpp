@@ -40,8 +40,8 @@ SCRIPT_API(SetSVarString, bool(const std::string& varname, cell const* format))
     }
 
     GET_VAR_COMP(component, false);
-	auto value = svprintf(format, GetAMX(), GetParams(), 2);
-	component->setString(varname, value);
+    auto value = svprintf(format, GetAMX(), GetParams(), 2);
+    component->setString(varname, value);
     return true;
 }
 

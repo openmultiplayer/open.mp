@@ -16,8 +16,8 @@ SCRIPT_API(CreatePlayerTextDraw, int(IPlayer& player, Vector2 position, cell con
 {
     IPlayerTextDrawData* playerTextDraws = queryExtension<IPlayerTextDrawData>(player);
     if (playerTextDraws) {
-		auto text = svprintf(format, GetAMX(), GetParams(), 4); // Not 3
-		IPlayerTextDraw* textdraw = playerTextDraws->create(position, text);
+        auto text = svprintf(format, GetAMX(), GetParams(), 4); // Not 3
+        IPlayerTextDraw* textdraw = playerTextDraws->create(position, text);
         if (textdraw) {
             return textdraw->getID();
         }
@@ -131,8 +131,8 @@ SCRIPT_API(PlayerTextDrawHide, bool(IPlayer& player, IPlayerTextDraw& textdraw))
 
 SCRIPT_API(PlayerTextDrawSetString, bool(IPlayer& player, IPlayerTextDraw& textdraw, cell const* format))
 {
-	auto text = svprintf(format, GetAMX(), GetParams(), 3);
-	textdraw.setText(text);
+    auto text = svprintf(format, GetAMX(), GetParams(), 3);
+    textdraw.setText(text);
     return true;
 }
 
