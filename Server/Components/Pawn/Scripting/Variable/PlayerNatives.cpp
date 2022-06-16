@@ -32,8 +32,8 @@ SCRIPT_API(GetPVarInt, int(IPlayer& player, const std::string& varname))
 SCRIPT_API(SetPVarString, bool(IPlayer& player, const std::string& varname, cell const* format))
 {
     GET_PLAYER_VAR_COMP(component, false);
-	auto value = svprintf(format, GetAMX(), GetParams(), 3);
-	component->setString(varname, value);
+    auto value = svprintf(format, GetAMX(), GetParams(), 3);
+    component->setString(varname, value);
     return true;
 }
 

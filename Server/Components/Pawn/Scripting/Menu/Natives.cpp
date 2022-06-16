@@ -15,7 +15,7 @@ SCRIPT_API(CreateMenu, int(cell const* format, uint32_t columns, Vector2 positio
 {
     IMenusComponent* component = PawnManager::Get()->menus;
     if (component) {
-		auto title = svprintf(format, GetAMX(), GetParams(), 6); // Not 5
+        auto title = svprintf(format, GetAMX(), GetParams(), 6); // Not 5
         IMenu* menu = component->create(title, position, columns, column1Width, column2Width);
         if (menu) {
             return menu->getID();
@@ -32,14 +32,14 @@ SCRIPT_API(DestroyMenu, bool(IMenu& menu))
 
 SCRIPT_API(AddMenuItem, int(IMenu& menu, uint8_t column, cell const* format))
 {
-	auto text = svprintf(format, GetAMX(), GetParams(), 3);
-	return menu.addCell(text, column);
+    auto text = svprintf(format, GetAMX(), GetParams(), 3);
+    return menu.addCell(text, column);
 }
 
 SCRIPT_API(SetMenuColumnHeader, bool(IMenu& menu, uint8_t column, cell const* format))
 {
-	auto headerTitle = svprintf(format, GetAMX(), GetParams(), 3);
-	menu.setColumnHeader(headerTitle, column);
+    auto headerTitle = svprintf(format, GetAMX(), GetParams(), 3);
+    menu.setColumnHeader(headerTitle, column);
     return true;
 }
 

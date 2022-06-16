@@ -25,7 +25,7 @@ SCRIPT_API(db_close, bool(IDatabaseConnection& db))
 
 SCRIPT_API(db_query, int(IDatabaseConnection& db, cell const* format))
 {
-	auto query = svprintf(format, GetAMX(), GetParams(), 2);
+    auto query = svprintf(format, GetAMX(), GetParams(), 2);
     IDatabaseResultSet* database_result_set(db.executeQuery(query));
     return database_result_set ? database_result_set->getID() : 0;
 }
@@ -132,7 +132,7 @@ SCRIPT_API(DB_Close, bool(IDatabaseConnection& db))
 
 SCRIPT_API(DB_ExecuteQuery, int(IDatabaseConnection& db, cell const* format))
 {
-	auto query = svprintf(format, GetAMX(), GetParams(), 2);
+    auto query = svprintf(format, GetAMX(), GetParams(), 2);
     IDatabaseResultSet* database_result_set(db.executeQuery(query));
     return database_result_set ? database_result_set->getID() : 0;
 }
