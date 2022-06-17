@@ -567,10 +567,12 @@ NetworkStats RakNetLegacyNetwork::getStatistics(IPlayer* player)
     }
 
     RakNet::RakNetTime time = RakNet::GetTime();
-    double elapsedTime;
-    elapsedTime = (time - raknetStats->connectionStartTime) / 1000.0f;
 
     stats.connectionStartTime = raknetStats->connectionStartTime;
+    stats.connectionElapsedTime = time - raknetStats->connectionStartTime;
+
+    double elapsedTime = stats.connectionElapsedTime / 1000.0f;
+
     stats.messageSendBuffer
         = raknetStats->messageSendBuffer[RakNet::SYSTEM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::HIGH_PRIORITY] + raknetStats->messageSendBuffer[RakNet::MEDIUM_PRIORITY] + raknetStats->messageSendBuffer[RakNet::LOW_PRIORITY];
 
