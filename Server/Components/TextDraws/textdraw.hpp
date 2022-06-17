@@ -31,7 +31,7 @@ private:
     Colour backgroundColour = Colour::Black();
     TextDrawStyle style;
     int previewModel;
-    GTAQuat previewRotation = GTAQuat(Vector3(0.f));
+    Vector3 previewRotation = Vector3(0.f);
     Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
     float previewZoom = 1.f;
 
@@ -215,13 +215,13 @@ public:
         return previewModel;
     }
 
-    T& setPreviewRotation(GTAQuat rotation) override
+    T& setPreviewRotation(Vector3 rotation) override
     {
         previewRotation = rotation;
         return *this;
     }
 
-    GTAQuat getPreviewRotation() const override
+    Vector3 getPreviewRotation() const override
     {
         return previewRotation;
     }
@@ -282,7 +282,7 @@ protected:
         playerShowTextDrawRPC.Selectable = selectable;
         playerShowTextDrawRPC.Position = pos;
         playerShowTextDrawRPC.Model = previewModel;
-        playerShowTextDrawRPC.Rotation = previewRotation.ToEuler();
+        playerShowTextDrawRPC.Rotation = previewRotation;
         playerShowTextDrawRPC.Zoom = previewZoom;
         playerShowTextDrawRPC.Color1 = previewVehicleColours.first;
         playerShowTextDrawRPC.Color2 = previewVehicleColours.second;

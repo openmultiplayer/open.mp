@@ -161,7 +161,7 @@ SCRIPT_API(TextDrawSetPreviewModel, bool(ITextDraw& textdraw, int model))
 
 SCRIPT_API(TextDrawSetPreviewRot, bool(ITextDraw& textdraw, Vector3 rotation, float zoom))
 {
-    textdraw.setPreviewRotation(GTAQuat(rotation));
+    textdraw.setPreviewRotation(rotation);
     textdraw.setPreviewZoom(zoom);
     return true;
 }
@@ -259,7 +259,7 @@ SCRIPT_API(TextDrawGetPreviewModel, int(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawGetPreviewRot, bool(ITextDraw& textdraw, Vector3& rotation, float& zoom))
 {
-    rotation = textdraw.getPreviewRotation().ToEuler();
+    rotation = textdraw.getPreviewRotation();
     zoom = textdraw.getPreviewZoom();
     return true;
 }

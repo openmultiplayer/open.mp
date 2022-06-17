@@ -141,7 +141,7 @@ SCRIPT_API(PlayerTextDrawSetPreviewModel, bool(IPlayer& player, IPlayerTextDraw&
 
 SCRIPT_API(PlayerTextDrawSetPreviewRot, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector3 rotation, float zoom))
 {
-    textdraw.setPreviewRotation(GTAQuat(rotation));
+    textdraw.setPreviewRotation(rotation);
     textdraw.setPreviewZoom(zoom);
     return true;
 }
@@ -239,7 +239,7 @@ SCRIPT_API(PlayerTextDrawGetPreviewModel, int(IPlayer& player, IPlayerTextDraw& 
 
 SCRIPT_API(PlayerTextDrawGetPreviewRot, bool(IPlayer& player, IPlayerTextDraw& textdraw, Vector3& rotation, float& zoom))
 {
-    rotation = textdraw.getPreviewRotation().ToEuler();
+    rotation = textdraw.getPreviewRotation();
     zoom = textdraw.getPreviewZoom();
     return true;
 }
