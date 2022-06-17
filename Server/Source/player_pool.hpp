@@ -140,7 +140,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            if (onPlayerGiveTakeDamageRPC.Damage <= 0.0f) {
+            if (onPlayerGiveTakeDamageRPC.Damage < 0.0f) {
                 return false;
             }
 
