@@ -13,6 +13,7 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
 #include <events.hpp>
 #include <glm/glm.hpp>
 #include <netcode.hpp>
@@ -199,6 +200,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void spawn() override
     {
+		IPlayerFixesData * data = queryExtension<IPlayerFixesData>(*this);
+		data->setLastCash(getMoney());
 
         // Remove from vehicle.
         if (state_ == PlayerState_Driver || state_ == PlayerState_Passenger) {
@@ -512,6 +515,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setSpectating(bool spectating) override
     {
+        setState(PlayerState_Spectating);
+
         if (!spectating) {
             toSpawn_ = true;
             spectateData_.type = PlayerSpectateData::ESpectateType::None;
@@ -594,12 +599,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return lastPlayedAudio_;
     }
 
-    void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
+private:
+    void applyAnimationImpl(const AnimationData& animation, PlayerAnimationSyncType syncType)
     {
-        if (!animationLibraryValid(animation.lib, *allAnimationLibraries_)) {
-            return;
-        }
-
         // Set from sync
         NetCode::RPC::ApplyPlayerAnimation applyPlayerAnimationRPC(animation);
         applyPlayerAnimationRPC.PlayerID = poolID;
@@ -611,7 +613,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         }
     }
 
-    void clearAnimations(PlayerAnimationSyncType syncType) override
+    void clearAnimationsImpl(PlayerAnimationSyncType syncType)
     {
         NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
         clearPlayerAnimationsRPC.PlayerID = poolID;
@@ -622,6 +624,63 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             PacketHelper::broadcastToStreamed(clearPlayerAnimationsRPC, *this, false /* skipFrom */);
         }
     }
+
+public:
+    void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
+    {
+        if (!animationLibraryValid(animation.lib, *allAnimationLibraries_)) {
+            return;
+        }
+		applyAnimationImpl(animation, syncType);
+    }
+
+    void clearAnimations(PlayerAnimationSyncType syncType) override
+    {
+		IPlayerVehicleData * data = queryExtension<IPlayerVehicleData>(*this);
+		AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
+
+		if (data && data->getVehicle())
+		{
+			/*
+			 *     <problem>
+			 *         Use ClearAnimation while you are in a vehicle cause the player exit
+			 *         from it.
+			 *     </problem>
+			 *     <solution>
+			 *         Apply an animation instead of clear animation.
+			 *     </solution>
+			 *     <see>FIXES_ClearAnimations</see>
+			 *     <author    href="https://github.com/simonepri/" >simonepri</author>
+			 */
+			animationData.lib = "PED";
+			animationData.name = "CAR_SIT";
+			applyAnimationImpl(animationData, syncType);
+		}
+		else
+		{
+			/*
+			 *     <problem>
+			 *         ClearAnimations doesn't do anything when the animation ends if we
+			 *         pass 1 for the freeze parameter in ApplyAnimation.
+			 *     </problem>
+			 *     <solution>
+			 *         Apply an idle animation for stop and then use ClearAnimation.
+			 *     </solution>
+			 *     <see>FIXES_ClearAnimations</see>
+			 *     <author    href="https://github.com/simonepri/" >simonepri</author>
+			 */
+			clearAnimationsImpl(syncType);
+			animationData.lib = "PED";
+			animationData.name = "IDLE_STANCE";
+			applyAnimationImpl(animationData, syncType);
+			animationData.lib = "PED";
+			animationData.name = "IDLE_CHAT";
+			applyAnimationImpl(animationData, syncType);
+			animationData.lib = "PED";
+			animationData.name = "WALK_PLAYER";
+			applyAnimationImpl(animationData, syncType);
+		}
+	}
 
     PlayerSurfingData getSurfingData() const override
     {
@@ -875,8 +934,27 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return pos_;
     }
 
+private:
+	void removeParachute()
+	{
+		switch (getAnimationData().ID)
+		{
+		case 958:
+		case 959:
+		case 960:
+		case 961:
+		case 962:
+		case 1134:
+			// Remove their parachute.
+			removeWeapon(46);
+			break;
+		}
+	}
+
+public:
     void setPosition(Vector3 position) override
     {
+		removeParachute();
         // Set from sync
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -955,6 +1033,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setPositionFindZ(Vector3 position) override
     {
+		removeParachute();
         // Set from sync
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -1023,6 +1102,31 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         givePlayerWeaponRPC.Ammo = weapon.ammo;
         PacketHelper::send(givePlayerWeaponRPC, *this);
     }
+	
+    void removeWeapon(uint8_t weaponid) override
+    {
+		for (auto & weapon : weapons_)
+		{
+			if (weapon.id == weaponid)
+			{
+				weapon.id = 0;
+				weapon.ammo = 0;
+				// Yes.
+				goto removeWeapon_has_weapon;
+			}
+		}
+		// Doesn't have the weapon.
+		return;
+removeWeapon_has_weapon:
+		resetWeapons();
+		for (auto & weapon : weapons_)
+		{
+			if (weapon.id)
+			{
+				giveWeapon(weapon);
+			}
+		}
+    }
 
     void setWeaponAmmo(WeaponSlotData data) override
     {
@@ -1036,6 +1140,21 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     WeaponSlots getWeapons() override
     {
         return weapons_;
+    }
+	
+	WeaponSlotData getWeaponSlot(int slot) override
+    {
+		if (slot < 0 || slot >= MAX_WEAPON_SLOTS)
+		{
+			WeaponSlotData ret { 0, 0 };
+			return ret;
+		}
+		WeaponSlotData ret = weapons_[slot];
+		if (ret.ammo == 0)
+		{
+			ret.id = 0;
+		}
+		return ret;
     }
 
     void resetWeapons() override
@@ -1168,10 +1287,19 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return enableCameraTargeting_;
     }
 
-    void removeFromVehicle() override
+    void removeFromVehicle(bool force) override
     {
-        NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
-        PacketHelper::send(removePlayerFromVehicleRPC, *this);
+		if (force)
+		{
+			// This is a replacement for the old (buggy) `ClearAnimations` exploit that people used
+			// to both remove players from vehicles and cancel vehicle entry.
+			clearAnimationsImpl(PlayerAnimationSyncType_NoSync);
+		}
+		else
+		{
+			NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
+			PacketHelper::send(removePlayerFromVehicleRPC, *this);
+		}
     }
 
     IPlayer* getCameraTargetPlayer() override;

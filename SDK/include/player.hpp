@@ -464,11 +464,17 @@ struct IPlayer : public IExtensible, public IEntity {
     /// Give a weapon to the player
     virtual void giveWeapon(WeaponSlotData weapon) = 0;
 
+    /// Give a weapon to the player
+    virtual void removeWeapon(uint8_t weapon) = 0;
+
     /// Set the player's ammo for a weapon
     virtual void setWeaponAmmo(WeaponSlotData data) = 0;
 
     /// Get player's weapons
     virtual WeaponSlots getWeapons() = 0;
+
+    /// Get single weapon
+    virtual WeaponSlotData getWeaponSlot(int slot) = 0;
 
     /// Reset the player's weapons
     virtual void resetWeapons() = 0;
@@ -758,7 +764,7 @@ struct IPlayer : public IExtensible, public IEntity {
     virtual bool hasCameraTargeting() const = 0;
 
     /// Remove the player from their vehicle
-    virtual void removeFromVehicle() = 0;
+    virtual void removeFromVehicle(bool force) = 0;
 
     /// Get the player the player is looking at or nullptr if none
     virtual IPlayer* getCameraTargetPlayer() = 0;

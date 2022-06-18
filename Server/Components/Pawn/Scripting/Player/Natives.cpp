@@ -225,6 +225,12 @@ SCRIPT_API(GivePlayerWeapon, bool(IPlayer& player, uint8_t weaponid, uint32_t am
     return true;
 }
 
+SCRIPT_API(RemovePlayerWeapon, bool(IPlayer& player, uint8_t weaponid))
+{
+    player.removeWeapon(weaponid);
+    return true;
+}
+
 SCRIPT_API(GetPlayerMoney, int(IPlayer& player))
 {
     return player.getMoney();
@@ -659,8 +665,11 @@ SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
 {
-    WeaponSlots weapons = player.getWeapons();
-    WeaponSlotData weapon = weapons[slot];
+	if (slot < 0 || slot >= MAX_WEAPON_SLOTS)
+	{
+		return false;
+	}
+    WeaponSlotData weapon = player.getWeaponSlot(slot);
     weaponid = weapon.id;
     ammo = weapon.ammo;
     return true;
