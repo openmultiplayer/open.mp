@@ -427,3 +427,16 @@ struct IPlayerVehicleData : public IExtension {
     /// Checks if player is in a mod shop
     virtual bool isInModShop() const = 0;
 };
+
+namespace Impl
+{
+	inline bool isValidVehicleModel(int model)
+	{
+		if (model < 400 || model > 612)
+		{
+			return false;
+		}
+		return true;
+	}
+}
+

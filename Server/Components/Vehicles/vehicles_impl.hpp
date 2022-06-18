@@ -161,7 +161,7 @@ private:
             }
 
             case VehicleSCMEvent_AddComponent: {
-                if (getVehicleComponentSlot(scmEvent.Arg1) == VehicleComponent_None) {
+                if (!isValidComponentForVehicleModel(vehicle.getModel(), scmEvent.Arg1)) {
                     break;
                 }
 
