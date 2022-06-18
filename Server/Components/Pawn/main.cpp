@@ -122,6 +122,7 @@ public:
         mgr->console = components->queryComponent<IConsoleComponent>();
         mgr->databases = components->queryComponent<IDatabasesComponent>();
         mgr->dialogs = components->queryComponent<IDialogsComponent>();
+        mgr->fixes = components->queryComponent<IFixesComponent>();
         mgr->gangzones = components->queryComponent<IGangZonesComponent>();
         mgr->menus = components->queryComponent<IMenusComponent>();
         mgr->objects = components->queryComponent<IObjectsComponent>();
@@ -196,6 +197,7 @@ public:
         COMPONENT_UNLOADED(mgr->classes)
         COMPONENT_UNLOADED(mgr->databases)
         COMPONENT_UNLOADED(mgr->dialogs)
+        COMPONENT_UNLOADED(mgr->fixes)
         COMPONENT_UNLOADED(mgr->gangzones)
         COMPONENT_UNLOADED(mgr->menus)
         COMPONENT_UNLOADED(mgr->objects)
