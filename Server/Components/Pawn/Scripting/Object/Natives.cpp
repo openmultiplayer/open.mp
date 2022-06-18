@@ -9,6 +9,7 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
 SCRIPT_API(CreateObject, int(int modelid, Vector3 position, Vector3 rotation, float drawDistance))
 {
@@ -182,8 +183,9 @@ SCRIPT_API(SetObjectMaterial, bool(IObject& object, int materialIndex, int model
     return true;
 }
 
-SCRIPT_API(SetObjectMaterialText, bool(IObject& object, const std::string& text, int materialIndex, int materialSize, const std::string& fontface, int fontsize, bool bold, uint32_t fontColour, uint32_t backgroundColour, int textalignment))
+SCRIPT_API(SetObjectMaterialText, bool(IObject& object, cell const* format, int materialIndex, int materialSize, const std::string& fontface, int fontsize, bool bold, uint32_t fontColour, uint32_t backgroundColour, int textalignment))
 {
+    auto text = svprintf(format, GetAMX(), GetParams(), 10);
     object.setMaterialText(materialIndex, text, ObjectMaterialSize(materialSize), fontface, fontsize, bold, Colour::FromARGB(fontColour), Colour::FromARGB(backgroundColour), ObjectMaterialTextAlign(textalignment));
     return true;
 }

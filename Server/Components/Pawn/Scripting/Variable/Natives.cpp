@@ -9,6 +9,7 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
 #define GET_VAR_COMP(comp, ret)                           \
     IVariablesComponent* comp = PawnManager::Get()->vars; \
@@ -32,13 +33,14 @@ SCRIPT_API(GetSVarInt, int(const std::string& varname))
     return component->getInt(varname);
 }
 
-SCRIPT_API(SetSVarString, bool(const std::string& varname, const std::string& value))
+SCRIPT_API(SetSVarString, bool(const std::string& varname, cell const* format))
 {
     if (varname.empty()) {
         return false;
     }
 
     GET_VAR_COMP(component, false);
+    auto value = svprintf(format, GetAMX(), GetParams(), 2);
     component->setString(varname, value);
     return true;
 }

@@ -9,11 +9,13 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
-SCRIPT_API_FAILRET(Create3DTextLabel, INVALID_TEXT_LABEL_ID, int(const std::string& text, uint32_t colour, Vector3 position, float drawDistance, int virtualWorld, bool los))
+SCRIPT_API_FAILRET(Create3DTextLabel, INVALID_TEXT_LABEL_ID, int(cell const* format, uint32_t colour, Vector3 position, float drawDistance, int virtualWorld, bool los))
 {
     ITextLabelsComponent* component = PawnManager::Get()->textlabels;
     if (component) {
+        auto text = svprintf(format, GetAMX(), GetParams(), 8); // Not 6
         ITextLabel* textlabel = component->create(text, Colour::FromRGBA(colour), position, drawDistance, virtualWorld, los);
         if (textlabel) {
             return textlabel->getID();
@@ -40,8 +42,9 @@ SCRIPT_API(Attach3DTextLabelToVehicle, bool(ITextLabel& textlabel, IVehicle& veh
     return true;
 }
 
-SCRIPT_API(Update3DTextLabelText, bool(ITextLabel& textlabel, uint32_t colour, const std::string& text))
+SCRIPT_API(Update3DTextLabelText, bool(ITextLabel& textlabel, uint32_t colour, cell const* format))
 {
+    auto text = svprintf(format, GetAMX(), GetParams(), 3);
     textlabel.setColourAndText(Colour::FromRGBA(colour), text);
     return true;
 }
@@ -116,12 +119,13 @@ SCRIPT_API(Get3DTextLabelAttachedData, int(ITextLabel& textLabel, int& attached_
     return true;
 }
 
-SCRIPT_API_FAILRET(CreatePlayer3DTextLabel, INVALID_TEXT_LABEL_ID, int(IPlayer& player, const std::string& text, uint32_t colour, Vector3 position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
+SCRIPT_API_FAILRET(CreatePlayer3DTextLabel, INVALID_TEXT_LABEL_ID, int(IPlayer& player, cell const* format, uint32_t colour, Vector3 position, float drawDistance, IPlayer* attachedPlayer, IVehicle* attachedVehicle, bool los))
 {
     IPlayerTextLabelData* labelData = queryExtension<IPlayerTextLabelData>(player);
     if (labelData) {
         IPlayerTextLabel* textlabel = nullptr;
 
+        auto text = svprintf(format, GetAMX(), GetParams(), 10); // Not 8
         if (attachedPlayer) {
             textlabel = labelData->create(text, Colour::FromRGBA(colour), position, drawDistance, los, *attachedPlayer);
         } else if (attachedVehicle) {
@@ -143,8 +147,9 @@ SCRIPT_API(DeletePlayer3DTextLabel, bool(IPlayer& player, IPlayerTextLabel& text
     return true;
 }
 
-SCRIPT_API(UpdatePlayer3DTextLabelText, bool(IPlayer& player, IPlayerTextLabel& textlabel, uint32_t colour, const std::string& text))
+SCRIPT_API(UpdatePlayer3DTextLabelText, bool(IPlayer& player, IPlayerTextLabel& textlabel, uint32_t colour, cell const* format))
 {
+    auto text = svprintf(format, GetAMX(), GetParams(), 4);
     textlabel.setColourAndText(Colour::FromRGBA(colour), text);
     return true;
 }

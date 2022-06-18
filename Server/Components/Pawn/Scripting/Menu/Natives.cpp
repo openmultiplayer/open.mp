@@ -9,11 +9,13 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#include "../../format.hpp"
 
-SCRIPT_API(CreateMenu, int(const std::string& title, uint32_t columns, Vector2 position, float column1Width, float column2Width))
+SCRIPT_API(CreateMenu, int(cell const* format, uint32_t columns, Vector2 position, float column1Width, float column2Width))
 {
     IMenusComponent* component = PawnManager::Get()->menus;
     if (component) {
+        auto title = svprintf(format, GetAMX(), GetParams(), 6); // Not 5
         IMenu* menu = component->create(title, position, columns, column1Width, column2Width);
         if (menu) {
             return menu->getID();
@@ -28,13 +30,15 @@ SCRIPT_API(DestroyMenu, bool(IMenu& menu))
     return true;
 }
 
-SCRIPT_API(AddMenuItem, int(IMenu& menu, uint8_t column, const std::string& text))
+SCRIPT_API(AddMenuItem, int(IMenu& menu, uint8_t column, cell const* format))
 {
+    auto text = svprintf(format, GetAMX(), GetParams(), 3);
     return menu.addCell(text, column);
 }
 
-SCRIPT_API(SetMenuColumnHeader, bool(IMenu& menu, uint8_t column, const std::string& headerTitle))
+SCRIPT_API(SetMenuColumnHeader, bool(IMenu& menu, uint8_t column, cell const* format))
 {
+    auto headerTitle = svprintf(format, GetAMX(), GetParams(), 3);
     menu.setColumnHeader(headerTitle, column);
     return true;
 }
