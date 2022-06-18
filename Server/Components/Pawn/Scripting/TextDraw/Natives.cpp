@@ -13,10 +13,11 @@
 #include <amx/amx.h>
 #include "../../format.hpp"
 
-SCRIPT_API(TextDrawCreate, int(Vector2 position, const std::string& text))
+SCRIPT_API(TextDrawCreate, int(Vector2 position, cell const* format))
 {
     ITextDrawsComponent* component = PawnManager::Get()->textdraws;
     if (component) {
+        auto text = svprintf(format, GetAMX(), GetParams(), 3); // Not 2
         ITextDraw* textdraw = component->create(position, text);
         if (textdraw) {
             return textdraw->getID();
@@ -147,8 +148,9 @@ SCRIPT_API(TextDrawHideForAll, bool(ITextDraw& textdraw))
     return true;
 }
 
-SCRIPT_API(TextDrawSetString, bool(ITextDraw& textdraw, const std::string& text))
+SCRIPT_API(TextDrawSetString, bool(ITextDraw& textdraw, cell const* format))
 {
+    auto text = svprintf(format, GetAMX(), GetParams(), 2);
     textdraw.setText(text);
     return true;
 }
@@ -272,37 +274,9 @@ SCRIPT_API(TextDrawGetPreviewVehCol, bool(ITextDraw& textdraw, int& colour1, int
     return true;
 }
 
-SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player))
+SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player, cell const* format))
 {
-    AMX*
-        amx
-        = GetAMX();
-    cell*
-        params
-        = GetParams();
-    int
-        num
-        = params[0] / sizeof(cell);
-
-    if (num < 3) {
-        PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `TextDrawSetStringForPlayer`: %u < %u", num, 3);
-        return false;
-    }
-
-    int param = 4;
-    cell* cinput = amx_Address(amx, params[3]);
-
-    char staticOutput[MAX_TEXTDRAW_STR_LENGTH];
-
-    size_t len = atcprintf(staticOutput, MAX_TEXTDRAW_STR_LENGTH - 1, cinput, amx, params, &param);
-
-    if (param - 1 < num && len < MAX_TEXTDRAW_STR_LENGTH - 1) {
-        char* fmt;
-        amx_StrParamChar(amx, params[3], fmt);
-        PawnManager::Get()->core->logLn(LogLevel::Warning, "TextDrawSetStringForPlayer: not enough arguments given. fmt: \"%s\"", fmt);
-    } else {
-        textdraw.setTextForPlayer(player, staticOutput);
-    }
-
+    auto text = svprintf(format, GetAMX(), GetParams(), 3);
+    textdraw.setTextForPlayer(player, text);
     return true;
 }

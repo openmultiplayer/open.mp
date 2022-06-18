@@ -19,9 +19,13 @@
 #define _INCLUDE_FORMATTING_H
 
 #include <amx/amx.h>
+#include <types.hpp>
 
 // Amx Templatized Cell Printf
 template <typename D, typename S>
-size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param);
+size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, cell const* params, int* param);
+
+// StringView returning shared buffer format.
+StringView svprintf(cell const* format, AMX* amx, cell const* params, int offset);
 
 #endif //_INCLUDE_FORMATTING_H
