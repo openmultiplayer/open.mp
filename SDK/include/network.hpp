@@ -97,6 +97,7 @@ struct NetworkStats {
     double bpsReceived;
     bool isActive; // only for player network statistics
     int connectMode; // only for player network statistics
+    unsigned connectionElapsedTime;
 };
 
 /// An event handler for network events

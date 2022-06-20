@@ -122,10 +122,10 @@ struct ITextDrawBase : public IExtensible, public IIDProvider {
     virtual int getPreviewModel() const = 0;
 
     /// Set the textdraw's preview rotation
-    virtual ITextDrawBase& setPreviewRotation(GTAQuat rotation) = 0;
+    virtual ITextDrawBase& setPreviewRotation(Vector3 rotation) = 0;
 
     /// Get the textdraw's preview rotation
-    virtual GTAQuat getPreviewRotation() const = 0;
+    virtual Vector3 getPreviewRotation() const = 0;
 
     /// Set the textdraw's preview vehicle colours
     virtual ITextDrawBase& setPreviewVehicleColour(int colour1, int colour2) = 0;

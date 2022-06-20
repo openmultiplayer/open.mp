@@ -144,7 +144,7 @@ private:
             }
 
             Vehicle& vehicle = *vehiclePtr;
-            if (!vehicle.isStreamedInForPlayer(peer)) {
+            if (!vehicle.isStreamedInForPlayer(peer) || vehicle.getDriver() != &peer) {
                 return false;
             }
 
