@@ -140,7 +140,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            if (onPlayerGiveTakeDamageRPC.Damage <= 0.0f) {
+            if (onPlayerGiveTakeDamageRPC.Damage < 0.0f) {
                 return false;
             }
 
@@ -362,7 +362,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     struct PlayerTextRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
-        int* limitGlobalChatRadius;
+        bool* limitGlobalChatRadius;
         float* globalChatRadiusLimit;
         bool* logChat;
         bool* filterText;
@@ -374,7 +374,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         void init(IConfig& config)
         {
-            limitGlobalChatRadius = config.getInt("game.use_chat_radius");
+            limitGlobalChatRadius = config.getBool("game.use_chat_radius");
             globalChatRadiusLimit = config.getFloat("game.chat_radius");
             logChat = config.getBool("logging.log_chat");
             filterText = config.getBool("chat_input_filter");

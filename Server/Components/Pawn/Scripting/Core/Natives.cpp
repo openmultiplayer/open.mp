@@ -423,7 +423,7 @@ SCRIPT_API(NetStats_ConnectionStatus, int(IPlayer& player))
 SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 {
     NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
-    return stats.connectionStartTime;
+    return stats.connectionElapsedTime;
 }
 
 SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
