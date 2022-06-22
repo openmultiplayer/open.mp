@@ -9,7 +9,6 @@ class PlayerFixesData final : public IPlayerFixesData {
 private:
 	int lastCash_ = 0;
 
-	int actorID_ = ACTOR_POOL_SIZE;
 	IPlayer & player_;
 
 public:
@@ -157,7 +156,7 @@ public:
 		}
 	}
 
-	void onPlayerConnect(IPlayer & player) override
+	void onPlayerConnect(IPlayer& player) override
 	{
 		player.addExtension(new PlayerFixesData(player), true);
 		//PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
@@ -171,7 +170,7 @@ public:
 		 * <see>OnPlayerConnect</see>
 		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
 		 */
-		IPlayerClassData * classData = queryExtension<IPlayerClassData>(player);
+		IPlayerClassData* classData = queryExtension<IPlayerClassData>(player);
 		if (classData)
 		{
 			WeaponSlots slots = {
@@ -182,7 +181,8 @@ public:
 
 			classData->setSpawnInfo(PlayerClass(0, 255, { 0.0f, 0.0f, 0.0f }, 0.0f, slots));
 		}
-	
+	}
+
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
 	}
