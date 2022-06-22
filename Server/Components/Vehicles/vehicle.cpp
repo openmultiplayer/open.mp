@@ -9,6 +9,7 @@
 #include "vehicle.hpp"
 #include "vehicles_impl.hpp"
 #include <Server/Components/Vehicles/vehicle_components.hpp>
+#include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 void Vehicle::streamInForPlayer(IPlayer& player)
 {
