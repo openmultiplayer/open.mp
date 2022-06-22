@@ -24,6 +24,7 @@ public:
 
 	void reset() override
 	{
+		lastCash_ = 0;
 	}
 
 	int getLastCash() const override
