@@ -134,26 +134,14 @@ public:
 		 * <author    >h02</author>
 		 * <post      href="https://sampforum.blast.hk/showthread.php?tid=312862&amp;pid=1641144#pid1641144" />
 		 */
-		auto anim = player.getAnimationData().name();
-		if (anim.first.compare("PED"))
+		auto anim = player.getAnimationData();
+		if (anim.ID != 0 && anim.name().first.compare("PED"))
 		{
 			// Not in a "PED" library.  May get stuck.  Bypass the `ClearAnimations` fix.
 			NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
 			clearPlayerAnimationsRPC.PlayerID = player.getID();
 			PacketHelper::send(clearPlayerAnimationsRPC, player);
 		}
-
-		/*
-		 * <problem>
-		 *     San Andreas deducts $100 from players.
-		 * </problem>
-		 * <solution>
-		 *     Reset the player's money to what it was before they died.
-		 * </solution>
-		 * <see>OnPlayerSpawn</see>
-		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
-		 */
-		// Set the player as respawning.
 	}
 
 	void onPlayerConnect(IPlayer& player) override
