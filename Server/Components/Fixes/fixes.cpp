@@ -8,6 +8,23 @@ using namespace Impl;
 class PlayerFixesData final : public IPlayerFixesData {
 private:
 	IPlayer & player_;
+	ITimer* money_ = nullptr;
+	ITimersComponent& timers_;
+
+	void MoneyTimer()
+	{
+		printf("MoneyTimer\n");
+		if (player_.getState() == PlayerState_Wasted)
+		{
+			player_.setMoney(player_.getMoney());
+			// And do it again soon.
+			money_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(50), false);
+		}
+		else
+		{
+			money_ = nullptr;
+		}
+	}
 
 public:
 	void freeExtension() override
@@ -15,21 +32,35 @@ public:
 		delete this;
 	}
 
-	PlayerFixesData(IPlayer & player)
+	PlayerFixesData(IPlayer & player, ITimersComponent & timers)
 		: player_(player)
+		, timers_(timers)
 	{
+	}
+
+	void preserveMoney()
+	{
+		if (money_)
+		{
+			money_->kill();
+		}
+		money_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(1000), false);
 	}
 
 	void reset() override
 	{
+		if (money_)
+		{
+			money_->kill();
+		}
 	}
 };
 
-class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public CoreEventHandler, public ClassEventHandler {
+class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler {
 private:
-    ICore* core_ = nullptr;
 	IClassesComponent * classes_ = nullptr;
 	IPlayerPool * players_ = nullptr;
+	ITimersComponent* timers_ = nullptr;
 	Microseconds resetMoney_ = Microseconds(0);
 
 public:
@@ -49,10 +80,12 @@ public:
 
 	~FixesComponent()
 	{
-		if (core_)
+		if (players_)
 		{
-			core_->getEventDispatcher().removeEventHandler(this);
 			players_->getEventDispatcher().removeEventHandler(this);
+		}
+		if (classes_)
+		{
 			classes_->getEventDispatcher().removeEventHandler(this);
 		}
 	}
@@ -69,9 +102,7 @@ public:
     void onLoad(ICore* c) override
     {
 		constexpr event_order_t EventPriority_Fixes = -100;
-		core_ = c;
-		core_->getEventDispatcher().addEventHandler(this);
-		players_ = &core_->getPlayers();
+		players_ = &c->getPlayers();
 		players_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
 	}
 
@@ -80,6 +111,7 @@ public:
 		constexpr event_order_t EventPriority_Fixes = -100;
 		classes_ = components->queryComponent<IClassesComponent>();
 		classes_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
+		timers_ = components->queryComponent<ITimersComponent>();
 	}
 
 	void onPlayerSpawn(IPlayer & player) override
@@ -98,7 +130,7 @@ public:
 		// However this code will cause the money to flicker slightly while it goes down and up a
 		// little bit due to lag.  So instead we pre-empt it with a timer constantly resetting the
 		// cash until they spawn.
-		player.setMoney(player.getMoney());
+		//player.setMoney(player.getMoney());
 	}
 	
 	bool onPlayerRequestClass(IPlayer & player, unsigned int classId) override
@@ -122,6 +154,9 @@ public:
 
 	void onPlayerDeath(IPlayer & player, IPlayer * killer, int reason) override
 	{
+		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
+		data->preserveMoney();
+
 		/*
 		 * <problem>
 		 *     Clients get stuck when they die with an animation applied.
@@ -146,28 +181,7 @@ public:
 
 	void onPlayerConnect(IPlayer& player) override
 	{
-		player.addExtension(new PlayerFixesData(player), true);
-	}
-
-	void onTick(Microseconds elapsed, TimePoint now) override
-	{
-		// Do this check every 100ms.
-		static const Microseconds
-			frequency = Microseconds(100000);
-		resetMoney_ += elapsed;
-		if (resetMoney_ < frequency)
-		{
-			return;
-		}
-		resetMoney_ -= frequency;
-		for (auto& i : players_->entries())
-		{
-			if (i->getState() == PlayerState_Wasted)
-			{
-				// Respawning, reset their money.
-				i->setMoney(i->getMoney());
-			}
-		}
+		player.addExtension(new PlayerFixesData(player, *timers_), true);
 	}
 };
 
