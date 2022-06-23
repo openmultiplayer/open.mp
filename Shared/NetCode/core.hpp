@@ -1060,7 +1060,7 @@ namespace RPC {
 
     struct CreateExplosion : NetworkPacketBase<79, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         Vector3 vec;
-        uint16_t type;
+        uint32_t type;
         float radius;
 
         bool read(NetworkBitStream& bs)
@@ -1071,7 +1071,7 @@ namespace RPC {
         void write(NetworkBitStream& bs) const
         {
             bs.writeVEC3(vec);
-            bs.writeUINT16(type);
+            bs.writeUINT32(type);
             bs.writeFLOAT(radius);
         }
     };
