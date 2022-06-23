@@ -491,20 +491,20 @@ bool PawnManager::Unload(std::string const& name)
     // Call `OnPlayerDisconnect`.
 	AMX* amx = script.GetAMX();
 	int idx;
-	bool once;
+	bool once = true;
     // Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
 	if (amx_FindPublic(amx, "OnPlayerDisconnect", &idx) == AMX_ERR_NONE)
 	{
 		for (auto const p : players->entries()) {
 			cell ret = 1;
-			int err = script.CallChecked(ret, idx, p->getID(), PeerDisconnectReason_ModeEnd);
+			int err = script.CallChecked(idx, ret, p->getID(), PeerDisconnectReason_ModeEnd);
 			switch (err)
 			{
 			case AMX_ERR_NONE:
 				break;
 			case AMX_ERR_BOUNDS:
 				// Test the `OP_BOUNDS` parameter and the current index.
-				if (once && (*(cell*)((uintptr_t)amx->base + (((AMX_HEADER*)amx->base)->cod + amx->cip - sizeof(cell)))) == 2 && amx->pri == 4)
+				if (once && (*(cell*)((uintptr_t)amx->base + (((AMX_HEADER*)amx->base)->cod + amx->cip - sizeof(cell)))) == 2) // && amx->pri == 4)
 				{
 					core->printLn(R"(
 					Array out-of-bounds encountered during `OnPlayerDisconnect` with reason `4`
