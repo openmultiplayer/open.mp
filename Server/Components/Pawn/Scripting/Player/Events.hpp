@@ -47,62 +47,8 @@ public:
 
     void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
     {
-		auto pawn = PawnManager::Get();
-		if (reason == 4)
-		{
-			cell ret = 1;
-			int arg0 = player.getID();
-			int arg1 = int(reason);
-			auto cur = pawn->scripts_.begin();
-			auto end = pawn->scripts_.end();
-			bool cont = true;
-			while (cont)
-			{
-				PawnScript* script;
-				if (cur == end)
-				{
-					script = pawn->mainScript_.get();
-					cont = false;
-				}
-				else
-				{
-					script = cur->second.get();
-					++cur;
-				}
-				int idx;
-				AMX* amx = script->GetAMX();
-				if (amx_FindPublic(amx, "OnPlayerDisconnect", &idx) == AMX_ERR_NONE)
-				{
-					int err = script->CallChecked(ret, idx, arg0, arg1);
-					switch (err)
-					{
-					case AMX_ERR_NONE:
-						break;
-					case AMX_ERR_BOUNDS:
-						//cell code = *(cell *)((uintptr_t)amx->base + (((AMX_HEADER*)amx->base)->cod + amx->cip - sizeof(cell)));
-						//if (code < 4)
-						if (amx->pri == 4)
-						{
-							pawn->core->printLn(R"(
-					Array out-of-bounds encountered during `OnPlayerDisconnect` with
-					reason `4` (script exit).  This may be due to old code assuming the
-					highest possible reason is `2`.
-				)");
-							break;
-						}
-						// Fallthrough
-					default:
-						pawn->core->logLn(LogLevel::Error, "%s", aux_StrError(err));
-						break;
-					}
-				}
-			}
-		}
-		else
-		{
-			pawn->CallInSidesWhile1("OnPlayerDisconnect", player.getID(), int(reason));
-			pawn->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
-		}
+        PawnManager::Get()->CallInSidesWhile1("OnPlayerDisconnect", player.getID(), int(reason));
+        PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, player.getID(), int(reason));
     }
 
     bool onPlayerRequestSpawn(IPlayer& player) override
