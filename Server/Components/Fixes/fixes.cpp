@@ -10,29 +10,11 @@ private:
 	IPlayer & player_;
 	ITimer* moneyTimer_ = nullptr;
 	ITimersComponent& timers_;
-	int timerCalls_ = 0;
 	int money_ = 0;
 
 	void MoneyTimer()
 	{
-		if (timerCalls_++ == 0)
-		{
-			// Get their money, after they died.
-			money_ = player_.getMoney();
-		}
-		// Reset the money for the first second after death.
-		//if (player_.getState() == PlayerState_Wasted)
-		{
-			player_.setMoney(money_);
-			// And do it again soon.
-			//moneyTimer_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(50), false);
-		}
-		//else
-		//{
-		//	printf("Calls: %d\n", timerCalls_);
-		//	//moneyTimer_->kill();
-		//	moneyTimer_ = nullptr;
-		//}
+		player_.setMoney(money_);
 	}
 
 public:
@@ -55,7 +37,7 @@ public:
 		}
 		// 50 gives very good results in terms of not flickering.  100 gives OK results.  80 is
 		// between them to try and balance effect and bandwidth.
-		timerCalls_ = 0;
+		money_ = player_.getMoney();
 		moneyTimer_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(80), true);
 	}
 	
@@ -123,7 +105,7 @@ public:
 
     void onLoad(ICore* c) override
     {
-		constexpr event_order_t EventPriority_Fixes = -100;
+		constexpr event_order_t EventPriority_Fixes = 100;
 		players_ = &c->getPlayers();
 		players_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
 	}
