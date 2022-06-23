@@ -255,8 +255,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         spectateData_.spectateID = INVALID_PLAYER_ID;
 
         toSpawn_ = true;
-        NetCode::RPC::ImmediatelySpawnPlayer RPC;
-        PacketHelper::send(RPC, *this);
+		IPlayerClassData* classData = queryExtension<IPlayerClassData>(*this);
+		if (classData) {
+			classData->spawnPlayer();
+		}
     }
 
     uint32_t getClientVersion() const override

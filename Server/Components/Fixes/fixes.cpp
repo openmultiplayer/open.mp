@@ -147,28 +147,6 @@ public:
 	void onPlayerConnect(IPlayer& player) override
 	{
 		player.addExtension(new PlayerFixesData(player), true);
-		//PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
-		/*
-		 * <problem>
-		 *     Kicks the player if "SpawnPlayer" is called before "SetSpawnInfo".
-		 * </problem>
-		 * <solution>
-		 *     Call "SetSpawnInfo" at least once.
-		 * </solution>
-		 * <see>OnPlayerConnect</see>
-		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
-		 */
-		IPlayerClassData* classData = queryExtension<IPlayerClassData>(player);
-		if (classData)
-		{
-			WeaponSlots slots = {
-				WeaponSlotData { 0, 0 },
-				WeaponSlotData { 0, 0 },
-				WeaponSlotData { 0, 0 }
-			};
-
-			classData->setSpawnInfo(PlayerClass(0, 255, { 0.0f, 0.0f, 0.0f }, 0.0f, slots));
-		}
 	}
 
 	void onTick(Microseconds elapsed, TimePoint now) override

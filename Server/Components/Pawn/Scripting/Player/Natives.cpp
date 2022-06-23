@@ -924,7 +924,7 @@ SCRIPT_API(SendClientCheck, bool(IPlayer& player, int actionType, int address, i
 
 SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
 {
-    player.spawn();
+	player.spawn();
     return true;
 }
 
