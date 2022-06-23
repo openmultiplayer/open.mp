@@ -1981,7 +1981,7 @@ static struct AnimationLibraryLookup {
 
 inline Pair<StringView, StringView> splitAnimationNames(int ID)
 {
-    if (ID < 0 || ID >= GLM_COUNTOF(AnimationNames)) {
+    if (ID <= 0 || ID >= GLM_COUNTOF(AnimationNames)) {
         return { "", "" };
     }
 
