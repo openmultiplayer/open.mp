@@ -137,7 +137,7 @@ public:
 		auto anim = player.getAnimationData();
 		if (anim.ID != 0 && anim.name().first.compare("PED"))
 		{
-			// Not in a "PED" library.  May get stuck.  Bypass the `ClearAnimations` fix.
+			// Not in a "PED" library so may get stuck.
 			NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
 			clearPlayerAnimationsRPC.PlayerID = player.getID();
 			PacketHelper::send(clearPlayerAnimationsRPC, player);
