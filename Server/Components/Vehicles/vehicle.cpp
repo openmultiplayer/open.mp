@@ -430,11 +430,6 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     if (vehicleData) {
         auto vehicle = static_cast<Vehicle*>(vehicleData->getVehicle());
 
-        // Player is already in this vehicle and in this seat.
-        if (vehicle == this && SeatID == vehicleData->getSeat()) {
-            return;
-        }
-
         if (vehicle != nullptr) {
             vehicle->unoccupy(player);
             player.setPosition(pos);
