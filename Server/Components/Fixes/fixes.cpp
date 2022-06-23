@@ -8,21 +8,31 @@ using namespace Impl;
 class PlayerFixesData final : public IPlayerFixesData {
 private:
 	IPlayer & player_;
-	ITimer* money_ = nullptr;
+	ITimer* moneyTimer_ = nullptr;
 	ITimersComponent& timers_;
+	int timerCalls_ = 0;
+	int money_ = 0;
 
 	void MoneyTimer()
 	{
-		if (player_.getState() == PlayerState_Wasted)
+		if (timerCalls_++ == 0)
 		{
-			player_.setMoney(player_.getMoney());
+			// Get their money, after they died.
+			money_ = player_.getMoney();
+		}
+		// Reset the money for the first second after death.
+		//if (player_.getState() == PlayerState_Wasted)
+		{
+			player_.setMoney(money_);
 			// And do it again soon.
-			money_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(50), false);
+			//moneyTimer_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(50), false);
 		}
-		else
-		{
-			money_ = nullptr;
-		}
+		//else
+		//{
+		//	printf("Calls: %d\n", timerCalls_);
+		//	//moneyTimer_->kill();
+		//	moneyTimer_ = nullptr;
+		//}
 	}
 
 public:
@@ -37,27 +47,39 @@ public:
 	{
 	}
 
-	void preserveMoney()
+	void startMoneyTimer()
 	{
-		if (money_)
+		if (moneyTimer_)
 		{
-			money_->kill();
+			moneyTimer_->kill();
 		}
-		money_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(1000), false);
+		// 50 gives very good results in terms of not flickering.  100 gives OK results.  80 is
+		// between them to try and balance effect and bandwidth.
+		timerCalls_ = 0;
+		moneyTimer_ = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::MoneyTimer, this)), Milliseconds(80), true);
+	}
+	
+	void stopMoneyTimer()
+	{
+		if (moneyTimer_)
+		{
+			moneyTimer_->kill();
+			player_.setMoney(player_.getMoney());
+		}
+		moneyTimer_ = nullptr;
 	}
 
 	void reset() override
 	{
-		if (money_)
+		if (moneyTimer_)
 		{
-			money_->kill();
+			moneyTimer_->kill();
 		}
 	}
 };
 
-class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public CoreEventHandler, public ClassEventHandler {
+class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler {
 private:
-    ICore* core_ = nullptr;
 	IClassesComponent * classes_ = nullptr;
 	IPlayerPool * players_ = nullptr;
 	ITimersComponent* timers_ = nullptr;
@@ -80,10 +102,12 @@ public:
 
 	~FixesComponent()
 	{
-		if (core_)
+		if (players_)
 		{
-			core_->getEventDispatcher().removeEventHandler(this);
 			players_->getEventDispatcher().removeEventHandler(this);
+		}
+		if (classes_)
+		{
 			classes_->getEventDispatcher().removeEventHandler(this);
 		}
 	}
@@ -100,9 +124,7 @@ public:
     void onLoad(ICore* c) override
     {
 		constexpr event_order_t EventPriority_Fixes = -100;
-		core_ = c;
-		core_->getEventDispatcher().addEventHandler(this);
-		players_ = &core_->getPlayers();
+		players_ = &c->getPlayers();
 		players_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
 	}
 
@@ -130,7 +152,8 @@ public:
 		// However this code will cause the money to flicker slightly while it goes down and up a
 		// little bit due to lag.  So instead we pre-empt it with a timer constantly resetting the
 		// cash until they spawn.
-		player.setMoney(player.getMoney());
+		PlayerFixesData* data = queryExtension<PlayerFixesData>(player);
+		data->stopMoneyTimer();
 	}
 	
 	bool onPlayerRequestClass(IPlayer & player, unsigned int classId) override
@@ -155,7 +178,7 @@ public:
 	void onPlayerDeath(IPlayer & player, IPlayer * killer, int reason) override
 	{
 		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
-		//data->preserveMoney();
+		data->startMoneyTimer();
 
 		/*
 		 * <problem>
@@ -182,27 +205,6 @@ public:
 	void onPlayerConnect(IPlayer& player) override
 	{
 		player.addExtension(new PlayerFixesData(player, *timers_), true);
-	}
-
-	void onTick(Microseconds elapsed, TimePoint now) override
-	{
-		// Do this check every 100ms.
-		static const Microseconds
-			frequency = Microseconds(100000);
-		resetMoney_ += elapsed;
-		if (resetMoney_ < frequency)
-		{
-			return;
-		}
-		resetMoney_ -= frequency;
-		for (auto& i : players_->entries())
-		{
-			if (i->getState() == PlayerState_Wasted)
-			{
-				// Respawning, reset their money.
-				i->setMoney(i->getMoney());
-			}
-		}
 	}
 };
 
