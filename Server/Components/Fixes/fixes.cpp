@@ -7,8 +7,6 @@ using namespace Impl;
 
 class PlayerFixesData final : public IPlayerFixesData {
 private:
-	int lastCash_ = 0;
-
 	IPlayer & player_;
 
 public:
@@ -24,17 +22,6 @@ public:
 
 	void reset() override
 	{
-		lastCash_ = 0;
-	}
-
-	int getLastCash() const override
-	{
-		return lastCash_;
-	}
-
-	void setLastCash(int cash) override
-	{
-		lastCash_ = cash;
 	}
 };
 
@@ -43,6 +30,7 @@ private:
     ICore* core_ = nullptr;
 	IClassesComponent * classes_ = nullptr;
 	IPlayerPool * players_ = nullptr;
+	Microseconds resetMoney_ = Microseconds(0);
 
 public:
     StringView componentName() const override
@@ -106,9 +94,11 @@ public:
 		 * <see>OnPlayerSpawn</see>
 		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
 		 */
-		IPlayerFixesData * data = queryExtension<IPlayerFixesData>(player);
-		player.setMoney(data->getLastCash());
-		data->setLastCash(0);
+		// This is a minimal implementation on its own as the death money isn't synced properly.
+		// However this code will cause the money to flicker slightly while it goes down and up a
+		// little bit due to lag.  So instead we pre-empt it with a timer constantly resetting the
+		// cash until they spawn.
+		player.setMoney(player.getMoney());
 	}
 	
 	bool onPlayerRequestClass(IPlayer & player, unsigned int classId) override
@@ -132,9 +122,6 @@ public:
 
 	void onPlayerDeath(IPlayer & player, IPlayer * killer, int reason) override
 	{
-		PlayerFixesData * data = queryExtension<PlayerFixesData>(player);
-		data->setLastCash(player.getMoney());
-
 		/*
 		 * <problem>
 		 *     Clients get stuck when they die with an animation applied.
@@ -155,6 +142,18 @@ public:
 			clearPlayerAnimationsRPC.PlayerID = player.getID();
 			PacketHelper::send(clearPlayerAnimationsRPC, player);
 		}
+
+		/*
+		 * <problem>
+		 *     San Andreas deducts $100 from players.
+		 * </problem>
+		 * <solution>
+		 *     Reset the player's money to what it was before they died.
+		 * </solution>
+		 * <see>OnPlayerSpawn</see>
+		 * <author    href="https://github.com/Y-Less/" >Y_Less</author>
+		 */
+		// Set the player as respawning.
 	}
 
 	void onPlayerConnect(IPlayer& player) override
@@ -186,6 +185,23 @@ public:
 
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
+		// Do this check every 100ms.
+		static const Microseconds
+			frequency = Microseconds(100000);
+		resetMoney_ += elapsed;
+		if (resetMoney_ < frequency)
+		{
+			return;
+		}
+		resetMoney_ -= frequency;
+		for (auto& i : players_->entries())
+		{
+			if (i->getState() == PlayerState_Wasted)
+			{
+				// Respawning, reset their money.
+				i->setMoney(i->getMoney());
+			}
+		}
 	}
 };
 
