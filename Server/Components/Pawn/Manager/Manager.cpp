@@ -206,16 +206,18 @@ bool PawnManager::Changemode(std::string const& name)
     if ((fp = fopen(canon.c_str(), "rb")) == NULL) {
         core->printLn("Could not find:\n\n\t %s %s", name.c_str(),
             R"(
-                While attempting to load a PAWN gamemode, a file-not-found error was
-                encountered.  This could be caused by many things:
+While attempting to load a PAWN gamemode, a file-not-found error was
+encountered.  This could be caused by many things:
                 
-                * The wrong filename was given.
-                * The wrong gamemodes path was given.
-                * The server was launched from a different directory, making relative paths relative to the wrong place (and thus wrong).
-                * You didn't copy the file to the correct directory or server.
-                * The compilation failed, leading to no output file.
-                * `-l` or `-a` were used to compile, which output intermediate steps for inspecting, rather than a full script.
-                * Anything else, really just check the file is at the path given.
+ * The wrong filename was given.
+ * The wrong gamemodes path was given.
+ * The server was launched from a different directory, making relative paths
+   relative to the wrong place (and thus wrong).
+ * You didn't copy the file to the correct directory or server.
+ * The compilation failed, leading to no output file.
+ * `-l` or `-a` were used to compile, which output intermediate steps for
+   inspecting, rather than a full script.
+ * Anything else, really just check the file is at the path given.
             )");
         return false;
     }
@@ -489,9 +491,36 @@ bool PawnManager::Unload(std::string const& name)
     auto& script = isEntryScript ? *mainScript_ : *pos->second;
 
     // Call `OnPlayerDisconnect`.
-    for (auto const p : players->entries()) {
-        // Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
-        script.Call("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_ModeEnd);
+    AMX* amx = script.GetAMX();
+    int idx;
+    bool once = true;
+    // Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
+    if (amx_FindPublic(amx, "OnPlayerDisconnect", &idx) == AMX_ERR_NONE) {
+        for (auto const p : players->entries()) {
+            cell ret = 1;
+            int err = script.CallChecked(idx, ret, p->getID(), PeerDisconnectReason_ModeEnd);
+            switch (err) {
+            case AMX_ERR_NONE:
+                break;
+            case AMX_ERR_BOUNDS:
+                // Test the `OP_BOUNDS` parameter and the current index.
+                if (once && (*(cell*)((uintptr_t)amx->base + (((AMX_HEADER*)amx->base)->cod + amx->cip - sizeof(cell)))) == 2) // && amx->pri == 4)
+                {
+                    core->printLn(R"(
+Array out-of-bounds encountered during `OnPlayerDisconnect` with reason `4`
+(script exit).  This may be due to old code assuming the highest possible reason
+is `2`.
+				)");
+                    // Only show the error once, don't spam it.
+                    once = false;
+                    break;
+                }
+                // Fallthrough
+            default:
+                core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+                break;
+            }
+        }
     }
     if (isEntryScript) {
         CallInSides("OnGameModeExit", DefaultReturnValue_False);

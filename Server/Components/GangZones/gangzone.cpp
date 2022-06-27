@@ -190,6 +190,18 @@ public:
 
     IGangZone* create(GangZonePos pos) override
     {
+        if (pos.max.x < pos.min.x) {
+            core->logLn(LogLevel::Warning, "Gangzone X co-ordinates %.2f and %.2f out of order, inverting.", pos.min.x, pos.max.x);
+            auto tmp = pos.max.x;
+            pos.max.x = pos.min.x;
+            pos.min.x = tmp;
+        }
+        if (pos.max.y < pos.min.y) {
+            core->logLn(LogLevel::Warning, "Gangzone Y co-ordinates %.2f and %.2f out of order, inverting.", pos.min.y, pos.max.y);
+            auto tmp = pos.max.y;
+            pos.max.y = pos.min.y;
+            pos.min.y = tmp;
+        }
         return storage.emplace(pos);
     }
 
