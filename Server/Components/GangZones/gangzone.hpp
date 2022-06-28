@@ -96,11 +96,8 @@ public:
 
     void showForPlayer(IPlayer& player, const Colour& colour) override
     {
-		col = colour;
+        col = colour;
         const int playerId = player.getID();
-		if (shownFor_.valid(playerId)) {
-            shownFor_.remove(playerId, player);
-        }
         shownFor_.add(playerId, player);
 
         flashingFor_.reset(playerId);
