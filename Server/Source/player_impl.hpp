@@ -533,35 +533,14 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             IVehicle* vehicle = data->getVehicle();
             if (vehicle)
 			{
-				// TODO: Abstract vehicle category data and provide it globally.  This is just
-				// checking if the vehicle is a bike.
-				int model = vehicle->getModel();
-				if (model == 448
-					|| model == 461
-					|| model == 462
-					|| model == 463
-					|| model == 468
-					|| model == 471
-					|| model == 481
-					|| model == 509
-					|| model == 510
-					|| model == 521
-					|| model == 522
-					|| model == 523
-					|| model == 539
-					|| model == 581
-					|| model == 586
-					|| model == 586)
-				{
-					// `SetPlayerSkin` fails on bikes, so remove them, set the skin, and put them
-					// back on again in quick succession.
-					int seat = data->getSeat();
-					removeFromVehicle(true);
-					PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
-					vehicle->putPlayer(*this, seat);
-					// End early.
-					return;
-				}
+				// `SetPlayerSkin` fails in vehicles, so remove them, set the skin, and put them back in again
+				// in quick succession.
+				int seat = data->getSeat();
+				removeFromVehicle(true);
+				PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
+				vehicle->putPlayer(*this, seat);
+				// End early.
+				return;
             }
         }
 		// Not on a bike, the normal set works.
