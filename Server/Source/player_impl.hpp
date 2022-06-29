@@ -520,12 +520,52 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     void setSkin(int skin, bool send = true) override
     {
         skin_ = skin;
-        if (send) {
-            NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
-            setPlayerSkinRPC.PlayerID = poolID;
-            setPlayerSkinRPC.Skin = skin;
-            PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
+		if (!send)
+		{
+			return;
+		}
+		NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
+		setPlayerSkinRPC.PlayerID = poolID;
+		setPlayerSkinRPC.Skin = skin;
+        IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
+        if (data)
+		{
+            IVehicle* vehicle = data->getVehicle();
+            if (vehicle)
+			{
+				// TODO: Abstract vehicle category data and provide it globally.  This is just
+				// checking if the vehicle is a bike.
+				int model = vehicle->getModel();
+				if (model == 448
+					|| model == 461
+					|| model == 462
+					|| model == 463
+					|| model == 468
+					|| model == 471
+					|| model == 481
+					|| model == 509
+					|| model == 510
+					|| model == 521
+					|| model == 522
+					|| model == 523
+					|| model == 539
+					|| model == 581
+					|| model == 586
+					|| model == 586)
+				{
+					// `SetPlayerSkin` fails on bikes, so remove them, set the skin, and put them
+					// back on again in quick succession.
+					int seat = data->getSeat();
+					removeFromVehicle(true);
+					PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
+					vehicle->putPlayer(*this, seat);
+					// End early.
+					return;
+				}
+            }
         }
+		// Not on a bike, the normal set works.
+        PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
     }
 
     int getSkin() const override
