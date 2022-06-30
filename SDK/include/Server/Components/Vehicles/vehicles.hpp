@@ -428,15 +428,12 @@ struct IPlayerVehicleData : public IExtension {
     virtual bool isInModShop() const = 0;
 };
 
-namespace Impl
+namespace Impl {
+inline bool isValidVehicleModel(int model)
 {
-	inline bool isValidVehicleModel(int model)
-	{
-		if (model < 400 || model > 612)
-		{
-			return false;
-		}
-		return true;
-	}
+    if (model < 400 || model > 612) {
+        return false;
+    }
+    return true;
 }
-
+}
