@@ -5,14 +5,6 @@
 
 namespace Impl {
 
-inline bool isValidVehicleModel(int model)
-{
-    if (model < 400 || model > 612) {
-        return false;
-    }
-    return true;
-}
-
 inline bool getVehicleModelInfo(int model, VehicleModelInfoType type, Vector3& out)
 {
     if (!isValidVehicleModel(model)) {
