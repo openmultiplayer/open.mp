@@ -758,24 +758,23 @@ void RakNetLegacyNetwork::start()
 
 void RakNetLegacyNetwork::handlePreConnectPacketData(int playerIndex)
 {
+    IPlayer* player = playerFromRakIndex[playerIndex];
+
     for (RakNet::Packet* customPkt : preConnectPackets[playerIndex]) {
         NetworkBitStream bs(customPkt->data, customPkt->length, false);
         uint8_t type;
 
-        IPlayer* player = playerFromRakIndex[customPkt->playerIndex];
-        if (player) {
-            if (bs.readUINT8(type)) {
-                const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
-                    bs.SetReadOffset(8); // Ignore packet ID
-                    return handler->onReceivePacket(*player, type, bs);
-                });
+        if (bs.readUINT8(type)) {
+            const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler) {
+                bs.SetReadOffset(8); // Ignore packet ID
+                return handler->onReceivePacket(*player, type, bs);
+            });
 
-                if (res) {
-                    packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
-                        bs.SetReadOffset(8); // Ignore packet ID
-                        return handler->onReceive(*player, bs);
-                    });
-                }
+            if (res) {
+                packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler) {
+                    bs.SetReadOffset(8); // Ignore packet ID
+                    return handler->onReceive(*player, bs);
+                });
             }
         }
 
