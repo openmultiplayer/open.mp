@@ -659,8 +659,8 @@ SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
 {
-    WeaponSlots weapons = player.getWeapons();
-    WeaponSlotData weapon = weapons[slot];
+    const WeaponSlots& weapons = player.getWeapons();
+    const WeaponSlotData& weapon = weapons[slot];
     weaponid = weapon.id;
     ammo = weapon.ammo;
     return true;
