@@ -53,6 +53,7 @@ public:
         setSpawnInfoRPC.Ammos = weaponAmmoArray;
 
         cls = info;
+        player.setTeam(info.team);
         PacketHelper::send(setSpawnInfoRPC, player);
     }
 
@@ -140,6 +141,7 @@ private:
             }
 
             peer.setSkin(used_class->skin, false);
+            peer.setTeam(used_class->team);
 
             if (self.eventDispatcher.stopAtFalse(
                     [&peer, &playerRequestClassPacket](ClassEventHandler* handler) {
