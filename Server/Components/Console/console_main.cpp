@@ -84,7 +84,7 @@ private:
                                 peer.sendClientMessage(Colour::White(), "SERVER: You are logged in as admin.");
                                 success = true;
                             } else {
-                                self.core->logLn(LogLevel::Error, "RCON (In-Game): Player #%d (%.*s) failed login.", peer.getID(), PRINT_VIEW(peer.getName()));
+                                self.core->logLn(LogLevel::Warning, "RCON (In-Game): Player #%d (%.*s) failed login.", peer.getID(), PRINT_VIEW(peer.getName()));
                                 peer.sendClientMessage(Colour::White(), "SERVER: Bad admin password. Repeated attempts will get you banned.");
                                 success = false;
                             }
