@@ -96,6 +96,11 @@ public:
         // Nothing to reset here.  Although some timers are reset on GMX it isn't all of them, and
         // that's handled at a lower level by pawn itself.
     }
+
+    const size_t count() const override
+    {
+        return timers.size();
+    }
 };
 
 COMPONENT_ENTRY_POINT()
