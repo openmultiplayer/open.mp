@@ -120,7 +120,7 @@ public:
         if (it == data_.end()) {
             return false;
         }
-        data_.erase(upperKey);
+        data_.erase(it);
         return true;
     }
 
