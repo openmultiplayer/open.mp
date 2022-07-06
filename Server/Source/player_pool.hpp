@@ -330,7 +330,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     const PlayerClass& cls = classData->getClass();
                     player.pos_ = cls.spawn;
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
-                    player.setTeam(cls.team);
                     player.skin_ = cls.skin;
 
                     const WeaponSlots& weapons = cls.weapons;
