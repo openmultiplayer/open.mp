@@ -321,6 +321,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             if (player.toSpawn_ || player.isBot_) {
                 player.setState(PlayerState_Spawned);
+                player.controllable_ = true;
 
                 self.eventDispatcher.dispatch(&PlayerEventHandler::onBeforePlayerSpawn, peer);
 
