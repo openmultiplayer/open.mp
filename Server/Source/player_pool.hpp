@@ -932,7 +932,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
             player.targetActor_ = weaponsUpdatePacket.TargetActor;
-            for (auto& data : weaponsUpdatePacket.WeaponData) {
+
+            for (auto i = 0u; i != weaponsUpdatePacket.WeaponDataCount; ++i) {
+                const auto& data = weaponsUpdatePacket.WeaponData[i];
                 player.weapons_[data.first] = data.second;
             }
 

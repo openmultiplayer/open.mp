@@ -1033,7 +1033,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(setPlayerAmmoRPC, *this);
     }
 
-    WeaponSlots getWeapons() override
+    const WeaponSlots& getWeapons() const override
     {
         return weapons_;
     }
