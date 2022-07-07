@@ -658,74 +658,80 @@ private:
         }
     }
 
-    void clearAnimationsImpl(PlayerAnimationSyncType syncType)
-    {
-        NetCode::RPC::ClearPlayerAnimations clearPlayerAnimationsRPC;
-        clearPlayerAnimationsRPC.PlayerID = poolID;
-
-        if (syncType == PlayerAnimationSyncType_NoSync) {
-            PacketHelper::send(clearPlayerAnimationsRPC, *this);
-        } else {
-            PacketHelper::broadcastToStreamed(clearPlayerAnimationsRPC, *this, false /* skipFrom */);
-        }
-    }
-
 public:
     void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
     {
         if (!animationLibraryValid(animation.lib, *allAnimationLibraries_)) {
             return;
         }
-		applyAnimationImpl(animation, syncType);
+        applyAnimationImpl(animation, syncType);
+    }
+
+    void clearTasks(PlayerAnimationSyncType syncType) override
+    {
+        NetCode::RPC::ClearPlayerTasks clearPlayerTasksRPC;
+        clearPlayerTasksRPC.PlayerID = poolID;
+
+        if (syncType == PlayerAnimationSyncType_NoSync) {
+            PacketHelper::send(clearPlayerTasksRPC, *this);
+        } else {
+            PacketHelper::broadcastToStreamed(clearPlayerTasksRPC, *this, false /* skipFrom */);
+        }
+
+        IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
+        if (!data || !data->getVehicle()) {
+
+            // TODO: This must be fixed on client side
+            // *
+            // *     <problem>
+            // *         ClearAnimations doesn't do anything when the animation ends if we
+            // *         pass 1 for the freeze parameter in ApplyAnimation.
+            // *     </problem>
+            // *     <solution>
+            // *         Apply an idle animation for stop and then use ClearAnimation.
+            // *     </solution>
+            // *     <see>FIXES_ClearAnimations</see>
+            // *     <author    href="https://github.com/simonepri/" >simonepri</author>
+            // *
+            AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
+
+            animationData.lib = "PED";
+            animationData.name = "IDLE_STANCE";
+            applyAnimationImpl(animationData, syncType);
+            animationData.lib = "PED";
+            animationData.name = "IDLE_CHAT";
+            applyAnimationImpl(animationData, syncType);
+            animationData.lib = "PED";
+            animationData.name = "WALK_PLAYER";
+            applyAnimationImpl(animationData, syncType);
+        }
     }
 
     void clearAnimations(PlayerAnimationSyncType syncType) override
     {
-		IPlayerVehicleData * data = queryExtension<IPlayerVehicleData>(*this);
-		AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
+        IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
+        AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
 
-		if (data && data->getVehicle())
-		{
-			/*
-			 *     <problem>
-			 *         Use ClearAnimation while you are in a vehicle cause the player exit
-			 *         from it.
-			 *     </problem>
-			 *     <solution>
-			 *         Apply an animation instead of clear animation.
-			 *     </solution>
-			 *     <see>FIXES_ClearAnimations</see>
-			 *     <author    href="https://github.com/simonepri/" >simonepri</author>
-			 */
-			animationData.lib = "PED";
-			animationData.name = "CAR_SIT";
-			applyAnimationImpl(animationData, syncType);
-		}
-		else
-		{
-			/*
-			 *     <problem>
-			 *         ClearAnimations doesn't do anything when the animation ends if we
-			 *         pass 1 for the freeze parameter in ApplyAnimation.
-			 *     </problem>
-			 *     <solution>
-			 *         Apply an idle animation for stop and then use ClearAnimation.
-			 *     </solution>
-			 *     <see>FIXES_ClearAnimations</see>
-			 *     <author    href="https://github.com/simonepri/" >simonepri</author>
-			 */
-			clearAnimationsImpl(syncType);
-			animationData.lib = "PED";
-			animationData.name = "IDLE_STANCE";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "IDLE_CHAT";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "WALK_PLAYER";
-			applyAnimationImpl(animationData, syncType);
-		}
-	}
+        if (data && data->getVehicle()) {
+            // TODO: This must be fixed on client side
+            // *
+            // *     <problem>
+            // *         Use ClearAnimation while you are in a vehicle cause the player exit
+            // *         from it.
+            // *     </problem>
+            // *     <solution>
+            // *         Apply an animation instead of clear animation.
+            // *     </solution>
+            // *     <see>FIXES_ClearAnimations</see>
+            // *     <author    href="https://github.com/simonepri/" >simonepri</author>
+            // *
+            animationData.lib = "PED";
+            animationData.name = "CAR_SIT";
+            applyAnimationImpl(animationData, syncType);
+        } else {
+            clearTasks(syncType);
+        }
+    }
 
     PlayerSurfingData getSurfingData() const override
     {
@@ -1334,17 +1340,15 @@ removeWeapon_has_weapon:
 
     void removeFromVehicle(bool force) override
     {
-		if (force)
-		{
-			// This is a replacement for the old (buggy) `ClearAnimations` exploit that people used
-			// to both remove players from vehicles and cancel vehicle entry.
-			clearAnimationsImpl(PlayerAnimationSyncType_NoSync);
-		}
-		else
-		{
-			NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
-			PacketHelper::send(removePlayerFromVehicleRPC, *this);
-		}
+        if (force) {
+            // TODO: This must be fixed on client side
+            // This is a replacement for the old (buggy) `ClearAnimations` exploit that people used
+            // to both remove players from vehicles and cancel vehicle entry.
+            clearTasks(PlayerAnimationSyncType_NoSync);
+        } else {
+            NetCode::RPC::RemovePlayerFromVehicle removePlayerFromVehicleRPC;
+            PacketHelper::send(removePlayerFromVehicleRPC, *this);
+        }
     }
 
     IPlayer* getCameraTargetPlayer() override;

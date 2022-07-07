@@ -744,7 +744,7 @@ namespace RPC {
         }
     };
 
-    struct ClearPlayerAnimations : NetworkPacketBase<87, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+    struct ClearPlayerTasks : NetworkPacketBase<87, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
 
         bool read(NetworkBitStream& bs)

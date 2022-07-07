@@ -810,6 +810,9 @@ struct IPlayer : public IExtensible, public IEntity {
 
     /// Get if player is kicked or not (about to be disconnected)
     virtual bool getKickStatus() const = 0;
+
+    /// Clear player tasks
+    virtual void clearTasks(PlayerAnimationSyncType syncType) = 0;
 };
 
 /// A player event handler
