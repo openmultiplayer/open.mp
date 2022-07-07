@@ -4,14 +4,11 @@
 #include <Server/Components/Timers/timers.hpp>
 
 static const UID FixesData_UID = UID(0x672d5d6fbb094ef7);
-struct IPlayerFixesData : public IExtension
-{
+struct IPlayerFixesData : public IExtension {
     PROVIDE_EXT_UID(FixesData_UID);
 };
 
 static const UID FixesComponent_UID = UID(0xb5c615eff0329ff7);
-struct IFixesComponent : public IComponent
-{
+struct IFixesComponent : public IComponent {
     PROVIDE_UID(FixesComponent_UID);
 };
-
