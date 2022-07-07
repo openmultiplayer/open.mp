@@ -131,56 +131,56 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         miscExtensions.clear();
     }
 
-	void reset()
-	{
-		pos_ = Vector3(0.0f, 0.0f, 0.0f);
-		state_ = PlayerState_None;
-		state_ = PlayerState_None;
-		pos_ = Vector3(0.0f, 0.0f, 0.0f);
-		cameraPos_ = Vector3(0.0f, 0.0f, 0.0f);
-		cameraLookAt_ = Vector3(0.0f, 0.0f, 0.0f);
-		virtualWorld_ = 0;
-		score_ = 0;
-		fightingStyle_ = PlayerFightingStyle_Normal;
-		state_ = PlayerState_None;
-		controllable_ = true;
-		clockToggled_ = false;
-		keys_ = { 0u, 0, 0 };
-		velocity_ = Vector3(0.0f, 0.0f, 0.0f);
-		surfing_ = { PlayerSurfingData::Type::None };
-		armedWeapon_ = 0;
-		rotTransform_ = Vector3(0.0f, 0.0f, 0.0f);
-		lastPlayedSound_ = 0;
-		money_ = 0;
-		time_ = Minutes(0);
-		shopName_ = "";
-		drunkLevel_ = 0;
-		lastPlayedAudio_ = "";
-		interior_ = 0;
-		wantedLevel_ = 0;
-		weather_ = 0;
-		worldBounds_ = Vector4(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS);
-		enableCameraTargeting_ = false;
-		widescreen_ = 0;
-		numStreamed_ = 0;
-		lastMarkerUpdate_ = TimePoint();
-		cameraTargetPlayer_ = INVALID_PLAYER_ID;
-		cameraTargetVehicle_ = INVALID_VEHICLE_ID;
-		cameraTargetObject_ = INVALID_OBJECT_ID;
-		cameraTargetActor_ = INVALID_ACTOR_ID;
-		targetPlayer_ = INVALID_PLAYER_ID;
-		targetActor_ = INVALID_ACTOR_ID;
-		chatBubbleExpiration_ = Time::now();
-		toSpawn_ = false;
-		lastGameTimeUpdate_ = TimePoint();
-		spectateData_ = { INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
-		gravity_ = 0;
-		ghostMode_ = false;
-		defaultObjectsRemoved_ = 0;
-		primarySyncUpdateType_ = PrimarySyncUpdateType::None;
-		secondarySyncUpdateType_ = 0;
-		lastScoresAndPings_ = Time::now();
-		IExtensible::resetExtensions();
+    void reset()
+    {
+        pos_ = Vector3(0.0f, 0.0f, 0.0f);
+        state_ = PlayerState_None;
+        state_ = PlayerState_None;
+        pos_ = Vector3(0.0f, 0.0f, 0.0f);
+        cameraPos_ = Vector3(0.0f, 0.0f, 0.0f);
+        cameraLookAt_ = Vector3(0.0f, 0.0f, 0.0f);
+        virtualWorld_ = 0;
+        score_ = 0;
+        fightingStyle_ = PlayerFightingStyle_Normal;
+        state_ = PlayerState_None;
+        controllable_ = true;
+        clockToggled_ = false;
+        keys_ = { 0u, 0, 0 };
+        velocity_ = Vector3(0.0f, 0.0f, 0.0f);
+        surfing_ = { PlayerSurfingData::Type::None };
+        armedWeapon_ = 0;
+        rotTransform_ = Vector3(0.0f, 0.0f, 0.0f);
+        lastPlayedSound_ = 0;
+        money_ = 0;
+        time_ = Minutes(0);
+        shopName_ = "";
+        drunkLevel_ = 0;
+        lastPlayedAudio_ = "";
+        interior_ = 0;
+        wantedLevel_ = 0;
+        weather_ = 0;
+        worldBounds_ = Vector4(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS);
+        enableCameraTargeting_ = false;
+        widescreen_ = 0;
+        numStreamed_ = 0;
+        lastMarkerUpdate_ = TimePoint();
+        cameraTargetPlayer_ = INVALID_PLAYER_ID;
+        cameraTargetVehicle_ = INVALID_VEHICLE_ID;
+        cameraTargetObject_ = INVALID_OBJECT_ID;
+        cameraTargetActor_ = INVALID_ACTOR_ID;
+        targetPlayer_ = INVALID_PLAYER_ID;
+        targetActor_ = INVALID_ACTOR_ID;
+        chatBubbleExpiration_ = Time::now();
+        toSpawn_ = false;
+        lastGameTimeUpdate_ = TimePoint();
+        spectateData_ = { INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
+        gravity_ = 0;
+        ghostMode_ = false;
+        defaultObjectsRemoved_ = 0;
+        primarySyncUpdateType_ = PrimarySyncUpdateType::None;
+        secondarySyncUpdateType_ = 0;
+        lastScoresAndPings_ = Time::now();
+        IExtensible::resetExtensions();
     }
 
     Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries)
@@ -255,10 +255,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         spectateData_.spectateID = INVALID_PLAYER_ID;
 
         toSpawn_ = true;
-		IPlayerClassData* classData = queryExtension<IPlayerClassData>(*this);
-		if (classData) {
-			classData->spawnPlayer();
-		}
+        IPlayerClassData* classData = queryExtension<IPlayerClassData>(*this);
+        if (classData) {
+            classData->spawnPlayer();
+        }
     }
 
     uint32_t getClientVersion() const override
@@ -986,26 +986,25 @@ public:
     }
 
 private:
-	void removeParachute()
-	{
-		switch (getAnimationData().ID)
-		{
-		case 958:
-		case 959:
-		case 960:
-		case 961:
-		case 962:
-		case 1134:
-			// Remove their parachute.
-			removeWeapon(46);
-			break;
-		}
-	}
+    void removeParachute()
+    {
+        switch (getAnimationData().ID) {
+        case 958:
+        case 959:
+        case 960:
+        case 961:
+        case 962:
+        case 1134:
+            // Remove their parachute.
+            removeWeapon(46);
+            break;
+        }
+    }
 
 public:
     void setPosition(Vector3 position) override
     {
-		removeParachute();
+        removeParachute();
         // Set from sync
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -1084,7 +1083,7 @@ public:
 
     void setPositionFindZ(Vector3 position) override
     {
-		removeParachute();
+        removeParachute();
         // Set from sync
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -1153,30 +1152,26 @@ public:
         givePlayerWeaponRPC.Ammo = weapon.ammo;
         PacketHelper::send(givePlayerWeaponRPC, *this);
     }
-	
+
     void removeWeapon(uint8_t weaponid) override
     {
-		for (auto & weapon : weapons_)
-		{
-			if (weapon.id == weaponid)
-			{
-				weapon.id = 0;
-				weapon.ammo = 0;
-				// Yes.
-				goto removeWeapon_has_weapon;
-			}
-		}
-		// Doesn't have the weapon.
-		return;
-removeWeapon_has_weapon:
-		resetWeapons();
-		for (auto & weapon : weapons_)
-		{
-			if (weapon.id)
-			{
-				giveWeapon(weapon);
-			}
-		}
+        for (auto& weapon : weapons_) {
+            if (weapon.id == weaponid) {
+                weapon.id = 0;
+                weapon.ammo = 0;
+                // Yes.
+                goto removeWeapon_has_weapon;
+            }
+        }
+        // Doesn't have the weapon.
+        return;
+    removeWeapon_has_weapon:
+        resetWeapons();
+        for (auto& weapon : weapons_) {
+            if (weapon.id) {
+                giveWeapon(weapon);
+            }
+        }
     }
 
     void setWeaponAmmo(WeaponSlotData data) override
@@ -1192,20 +1187,18 @@ removeWeapon_has_weapon:
     {
         return weapons_;
     }
-	
-	WeaponSlotData getWeaponSlot(int slot) override
+
+    WeaponSlotData getWeaponSlot(int slot) override
     {
-		if (slot < 0 || slot >= MAX_WEAPON_SLOTS)
-		{
-			WeaponSlotData ret { 0, 0 };
-			return ret;
-		}
-		WeaponSlotData ret = weapons_[slot];
-		if (ret.ammo == 0)
-		{
-			ret.id = 0;
-		}
-		return ret;
+        if (slot < 0 || slot >= MAX_WEAPON_SLOTS) {
+            WeaponSlotData ret { 0, 0 };
+            return ret;
+        }
+        WeaponSlotData ret = weapons_[slot];
+        if (ret.ammo == 0) {
+            ret.id = 0;
+        }
+        return ret;
     }
 
     void resetWeapons() override

@@ -24,7 +24,7 @@ class PlayerClassData final : public IPlayerClassData {
 private:
     IPlayer& player;
     PlayerClass cls;
-	bool default_;
+    bool default_;
 
     friend class ClassesComponent;
 
@@ -40,15 +40,15 @@ public:
     {
         return cls;
     }
-	
+
     void spawnPlayer() override
     {
-		if (default_) {
-			setSpawnInfo(defClass);
-		}
-		NetCode::RPC::ImmediatelySpawnPlayer RPC;
-		PacketHelper::send(RPC, player);
-	}
+        if (default_) {
+            setSpawnInfo(defClass);
+        }
+        NetCode::RPC::ImmediatelySpawnPlayer RPC;
+        PacketHelper::send(RPC, player);
+    }
 
     void setSpawnInfo(const PlayerClass& info) override
     {
@@ -64,7 +64,7 @@ public:
         setSpawnInfoRPC.Ammos = weaponAmmoArray;
 
         cls = info;
-		default_ = false;
+        default_ = false;
         PacketHelper::send(setSpawnInfoRPC, player);
     }
 
@@ -76,7 +76,7 @@ public:
     void reset() override
     {
         cls = defClass;
-		default_ = true;
+        default_ = true;
     }
 };
 

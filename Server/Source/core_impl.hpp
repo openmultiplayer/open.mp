@@ -1052,7 +1052,7 @@ public:
         for (auto p : players.entries()) {
             Player* player = static_cast<Player*>(p);
             player->reset();
-		}
+        }
     }
 
     void reloadAll() override
