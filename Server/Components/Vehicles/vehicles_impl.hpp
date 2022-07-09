@@ -144,7 +144,7 @@ private:
             }
 
             Vehicle& vehicle = *vehiclePtr;
-            if (!vehicle.isStreamedInForPlayer(peer)) {
+            if (!vehicle.isStreamedInForPlayer(peer) || vehicle.getDriver() != &peer) {
                 return false;
             }
 
@@ -161,7 +161,7 @@ private:
             }
 
             case VehicleSCMEvent_AddComponent: {
-                if (getVehicleComponentSlot(scmEvent.Arg1) == VehicleComponent_None) {
+                if (!isValidComponentForVehicleModel(vehicle.getModel(), scmEvent.Arg1)) {
                     break;
                 }
 
@@ -257,17 +257,6 @@ public:
     IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override
     {
         return eventDispatcher;
-    }
-
-    void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
-    {
-        if (oldState == PlayerState_Driver || oldState == PlayerState_Passenger) {
-            PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
-            if (data->getVehicle()) {
-                static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
-            }
-            data->setVehicle(nullptr, SEAT_NONE);
-        }
     }
 
     void onPoolEntryDestroyed(IPlayer& player) override
@@ -478,15 +467,22 @@ public:
 
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
+
+        PlayerVehicleData* playerVehicleData = queryExtension<PlayerVehicleData>(player);
+        IVehicle* playerVehicle = nullptr;
+        if (playerVehicleData) {
+            playerVehicle = playerVehicleData->getVehicle();
+        }
+
+        const auto state = player.getState();
+        if (playerVehicle != nullptr && state != PlayerState_Driver && state != PlayerState_Passenger) {
+            static_cast<Vehicle*>(playerVehicle)->unoccupy(player);
+            playerVehicleData->setVehicle(nullptr, SEAT_NONE);
+            playerVehicle = nullptr;
+        }
+
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
-
-            IPlayerVehicleData* veh_data = queryExtension<IPlayerVehicleData>(player);
-            IVehicle* playerVehicle = nullptr;
-            if (veh_data) {
-                playerVehicle = veh_data->getVehicle();
-            }
-
             for (IVehicle* v : storage) {
                 Vehicle* vehicle = static_cast<Vehicle*>(v);
 
@@ -508,7 +504,6 @@ public:
                 }
             }
         }
-
         return true;
     }
 };

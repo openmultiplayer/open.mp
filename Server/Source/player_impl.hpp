@@ -1183,7 +1183,7 @@ public:
         PacketHelper::send(setPlayerAmmoRPC, *this);
     }
 
-    WeaponSlots getWeapons() override
+    const WeaponSlots& getWeapons() const override
     {
         return weapons_;
     }
@@ -1370,6 +1370,7 @@ public:
         setVirtualWorld(target.getVirtualWorld());
         setInterior(target.getInterior());
 
+        setState(PlayerState_Spectating);
         pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 
@@ -1389,6 +1390,7 @@ public:
         setVirtualWorld(target.getVirtualWorld());
         setInterior(target.getInterior());
 
+        setState(PlayerState_Spectating);
         pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 

@@ -55,6 +55,9 @@ struct ITimersComponent : public IComponent {
     /// @param interval The time after which the timer will time out.
     /// @param count The number of times to call the timer, 0 = infinite.
     virtual ITimer* create(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count) = 0;
+
+    /// Returns running timers count.
+    virtual const size_t count() const = 0;
 };
 
 // Only a pointer to this is passed across binary boundaries, so using `std::function` should be ABI stable.

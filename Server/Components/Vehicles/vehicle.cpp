@@ -9,6 +9,7 @@
 #include "vehicle.hpp"
 #include "vehicles_impl.hpp"
 #include <Server/Components/Vehicles/vehicle_components.hpp>
+#include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 void Vehicle::streamInForPlayer(IPlayer& player)
 {
@@ -271,7 +272,14 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 {
     PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
     // Only do heavy processing if switching vehicle or switching between driver and passenger
-    if ((data->getVehicle() != this || driver == &player) && passengers.insert(&player).second) {
+    int passengerSeats = Impl::getVehiclePassengerSeats(getModel());
+    // TODO: Deal with two players in the same seat.
+    // TODO: Detect fast switching cheats.
+    if (passengerSeats == 0xFF || passengerSync.SeatID < 1 || passengerSync.SeatID > passengerSeats) {
+        // Can't be a passenger there.  NOT an OBOE.
+
+        // Just ignore the packet for now.
+    } else if ((data->getVehicle() != this || driver == &player) && passengers.insert(&player).second) {
         if (data->getVehicle()) {
             static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
         }
@@ -429,11 +437,6 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
     auto vehicleData = queryExtension<PlayerVehicleData>(player);
     if (vehicleData) {
         auto vehicle = static_cast<Vehicle*>(vehicleData->getVehicle());
-
-        // Player is already in this vehicle and in this seat.
-        if (vehicle == this && SeatID == vehicleData->getSeat()) {
-            return;
-        }
 
         if (vehicle != nullptr) {
             vehicle->unoccupy(player);
