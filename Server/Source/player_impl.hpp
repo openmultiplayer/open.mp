@@ -1033,7 +1033,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         PacketHelper::send(setPlayerAmmoRPC, *this);
     }
 
-    WeaponSlots getWeapons() override
+    const WeaponSlots& getWeapons() const override
     {
         return weapons_;
     }
@@ -1200,6 +1200,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setVirtualWorld(target.getVirtualWorld());
         setInterior(target.getInterior());
 
+        setState(PlayerState_Spectating);
         pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 
@@ -1219,6 +1220,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         setVirtualWorld(target.getVirtualWorld());
         setInterior(target.getInterior());
 
+        setState(PlayerState_Spectating);
         pos_ = target.getPosition();
         target.streamInForPlayer(*this);
 

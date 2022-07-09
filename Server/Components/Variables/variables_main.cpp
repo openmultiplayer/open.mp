@@ -120,7 +120,7 @@ public:
         if (it == data_.end()) {
             return false;
         }
-        it->second = std::variant<int, String, float>();
+        data_.erase(it);
         return true;
     }
 

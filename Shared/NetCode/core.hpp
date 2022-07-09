@@ -1609,9 +1609,8 @@ namespace Packet {
 
             uint8_t slot;
             WeaponSlotData data;
-            while (WeaponDataCount < WeaponData.size() && bs.readUINT8(slot)) {
-                if (
-                    slot < MAX_WEAPON_SLOTS && bs.readUINT8(data.id) && bs.readUINT16(data.ammo)) {
+            while (WeaponDataCount < MAX_WEAPON_SLOTS && bs.readUINT8(slot)) {
+                if (slot < MAX_WEAPON_SLOTS && bs.readUINT8(data.id) && bs.readUINT16(data.ammo)) {
                     WeaponData[WeaponDataCount++] = std::make_pair(slot, data);
                 } else { // Malformed packet
                     return false;
