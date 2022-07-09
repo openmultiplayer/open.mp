@@ -225,6 +225,12 @@ SCRIPT_API(GivePlayerWeapon, bool(IPlayer& player, uint8_t weaponid, uint32_t am
     return true;
 }
 
+SCRIPT_API(RemovePlayerWeapon, bool(IPlayer& player, uint8_t weaponid))
+{
+    player.removeWeapon(weaponid);
+    return true;
+}
+
 SCRIPT_API(GetPlayerMoney, int(IPlayer& player))
 {
     return player.getMoney();
@@ -406,7 +412,12 @@ SCRIPT_API(GetPlayerWorldBounds, bool(IPlayer& player, Vector4& bounds))
 
 SCRIPT_API(ClearAnimations, bool(IPlayer& player, int syncType))
 {
-    player.clearAnimations(PlayerAnimationSyncType(syncType));
+    // TODO: This must be fixed on client side
+    // At the moment ClearAnimations flushes all tasks applied to player
+    // Including driving, siting in vehicle, shooting, jumping, or any sort of a task
+    // And it doesn't just clear applied animations, in order to keep it compatible with
+    // Current samp scripts without requiring a change, we call IPlayer::clearTasks temporarily.
+    player.clearTasks(PlayerAnimationSyncType(syncType));
     return true;
 }
 
@@ -478,7 +489,8 @@ SCRIPT_API(GetPlayerBuildingsRemoved, int(IPlayer& player))
 
 SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
-    player.removeFromVehicle();
+    cell* args = GetParams();
+    player.removeFromVehicle(args[0] == 8 && args[2]);
     return true;
 }
 
@@ -659,8 +671,10 @@ SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
 {
-    const WeaponSlots& weapons = player.getWeapons();
-    const WeaponSlotData& weapon = weapons[slot];
+    if (slot < 0 || slot >= MAX_WEAPON_SLOTS) {
+        return false;
+    }
+    const WeaponSlotData& weapon = player.getWeaponSlot(slot);
     weaponid = weapon.id;
     ammo = weapon.ammo;
     return true;

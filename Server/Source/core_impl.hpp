@@ -1051,8 +1051,7 @@ public:
         components.reset();
         for (auto p : players.entries()) {
             Player* player = static_cast<Player*>(p);
-            player->resetExtensions();
-            player->pos_ = Vector3(0.0f, 0.0f, 0.0f);
+            player->reset();
         }
     }
 
