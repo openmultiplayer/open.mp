@@ -415,11 +415,12 @@ SCRIPT_API(GetPlayerWorldBounds, bool(IPlayer& player, Vector4& bounds))
 
 SCRIPT_API(ClearAnimations, bool(IPlayer& player, int syncType))
 {
-	// TODO: This must be fixed on client side
-	// At the moment ClearAnimations flushes all tasks applied to player
-	// Including driving, siting in vehicle, shooting, jumping, or any sort of a task
-	// And it doesn't just clear applied animations, in order to keep it compatible with
-	// Current samp scripts without requiring a change, we call IPlayer::clearTasks temporarily.
+	player.clearAnimations(PlayerAnimationSyncType(syncType));
+	return true;
+}
+
+SCRIPT_API(ClearPlayerTasks, bool(IPlayer& player, int syncType))
+{
 	player.clearTasks(PlayerAnimationSyncType(syncType));
 	return true;
 }
