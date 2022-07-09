@@ -716,3 +716,9 @@ SCRIPT_API(RemoveServerRule, bool(const std::string& name))
     }
     return false;
 }
+
+SCRIPT_API(GetRunningTimers, int())
+{
+    ITimersComponent* timers = PawnManager::Get()->timers;
+    return timers == nullptr ? 0 : timers->count();
+}
