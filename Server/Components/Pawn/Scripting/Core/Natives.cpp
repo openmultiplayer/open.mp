@@ -423,7 +423,7 @@ SCRIPT_API(NetStats_ConnectionStatus, int(IPlayer& player))
 SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 {
     NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
-    return stats.connectionStartTime;
+    return stats.connectionElapsedTime;
 }
 
 SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
@@ -715,4 +715,10 @@ SCRIPT_API(RemoveServerRule, bool(const std::string& name))
         }
     }
     return false;
+}
+
+SCRIPT_API(GetRunningTimers, int())
+{
+    ITimersComponent* timers = PawnManager::Get()->timers;
+    return timers == nullptr ? 0 : timers->count();
 }

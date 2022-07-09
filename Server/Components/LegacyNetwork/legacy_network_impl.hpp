@@ -38,6 +38,8 @@ private:
     RakNet::RakServerInterface& rakNetServer;
     std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
     std::array<bool, PLAYER_POOL_SIZE> playerKickState;
+    std::array<bool, PLAYER_POOL_SIZE> hasUnprocessedPreConnectPackets;
+    FlatHashMap<int, DynamicArray<RakNet::Packet*>> preConnectPackets;
     Milliseconds cookieSeedTime;
     TimePoint lastCookieSeed;
 
@@ -315,6 +317,8 @@ public:
         }
         return false;
     }
+
+    void handlePreConnectPacketData(int playerIndex);
 
     NetworkStats getStatistics(IPlayer* player = nullptr) override;
 

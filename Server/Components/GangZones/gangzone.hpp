@@ -47,7 +47,10 @@ private:
     void showForClient(IPlayer& player, const Colour& colour) const
     {
         auto data = queryExtension<IPlayerGangZoneData>(player);
-        int id = data->reserveClientID();
+        int id = data->toClientID(poolID);
+        if (id == INVALID_GANG_ZONE_ID) {
+            id = data->reserveClientID();
+        }
         if (id != INVALID_GANG_ZONE_ID) {
             data->setClientID(id, poolID);
             NetCode::RPC::ShowGangZone showGangZoneRPC;

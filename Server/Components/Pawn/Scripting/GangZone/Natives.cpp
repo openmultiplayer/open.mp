@@ -29,8 +29,10 @@ SCRIPT_API(GangZoneCreate, int(Vector2 min, Vector2 max))
         }
 
         GangZonePos pos;
-        pos.min = min;
-        pos.max = max;
+        pos.min.x = truncf(min.x);
+        pos.min.y = truncf(min.y);
+        pos.max.x = truncf(max.x);
+        pos.max.y = truncf(max.y);
 
         IGangZone* gz = component->create(pos);
         if (gz) {

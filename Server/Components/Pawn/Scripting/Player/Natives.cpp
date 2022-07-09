@@ -674,7 +674,7 @@ SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, i
     if (slot < 0 || slot >= MAX_WEAPON_SLOTS) {
         return false;
     }
-    WeaponSlotData weapon = player.getWeaponSlot(slot);
+    const WeaponSlotData& weapon = player.getWeaponSlot(slot);
     weaponid = weapon.id;
     ammo = weapon.ammo;
     return true;

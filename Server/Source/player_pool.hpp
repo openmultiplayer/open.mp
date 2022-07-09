@@ -140,7 +140,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            if (onPlayerGiveTakeDamageRPC.Damage <= 0.0f) {
+            if (onPlayerGiveTakeDamageRPC.Damage < 0.0f) {
                 return false;
             }
 
@@ -321,6 +321,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             if (player.toSpawn_ || player.isBot_) {
                 player.setState(PlayerState_Spawned);
+                player.controllable_ = true;
 
                 self.eventDispatcher.dispatch(&PlayerEventHandler::onBeforePlayerSpawn, peer);
 
@@ -329,7 +330,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     const PlayerClass& cls = classData->getClass();
                     player.pos_ = cls.spawn;
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
-                    player.setTeam(cls.team);
                     player.skin_ = cls.skin;
 
                     const WeaponSlots& weapons = cls.weapons;
@@ -932,7 +932,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
             player.targetActor_ = weaponsUpdatePacket.TargetActor;
-            for (auto& data : weaponsUpdatePacket.WeaponData) {
+
+            for (auto i = 0u; i != weaponsUpdatePacket.WeaponDataCount; ++i) {
+                const auto& data = weaponsUpdatePacket.WeaponData[i];
                 player.weapons_[data.first] = data.second;
             }
 

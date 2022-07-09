@@ -471,7 +471,7 @@ struct IPlayer : public IExtensible, public IEntity {
     virtual void setWeaponAmmo(WeaponSlotData data) = 0;
 
     /// Get player's weapons
-    virtual WeaponSlots getWeapons() = 0;
+    virtual const WeaponSlots& getWeapons() const = 0;
 
     /// Get single weapon
     virtual WeaponSlotData getWeaponSlot(int slot) = 0;
