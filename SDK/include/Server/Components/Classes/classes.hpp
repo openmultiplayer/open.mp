@@ -35,6 +35,7 @@ struct IPlayerClassData : public IExtension {
 
     virtual const PlayerClass& getClass() = 0;
     virtual void setSpawnInfo(const PlayerClass& info) = 0;
+    virtual void spawnPlayer() = 0;
 };
 
 /// The player class event handler
