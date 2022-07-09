@@ -109,7 +109,9 @@ public:
     {
         constexpr event_order_t EventPriority_Fixes = -100;
         classes_ = components->queryComponent<IClassesComponent>();
-        classes_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
+        if (classes_) {
+            classes_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
+        }
         timers_ = components->queryComponent<ITimersComponent>();
     }
 
@@ -131,7 +133,9 @@ public:
         // little bit due to lag.  So instead we pre-empt it with a timer constantly resetting the
         // cash until they spawn.
         PlayerFixesData* data = queryExtension<PlayerFixesData>(player);
-        data->stopMoneyTimer();
+        if (data) {
+            data->stopMoneyTimer();
+        }
     }
 
     bool onPlayerRequestClass(IPlayer& player, unsigned int classId) override
@@ -157,7 +161,9 @@ public:
     void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) override
     {
         PlayerFixesData* data = queryExtension<PlayerFixesData>(player);
-        data->startMoneyTimer();
+        if (data) {
+            data->startMoneyTimer();
+        }
 
         // TODO: This must be fixed on client side
         // *
@@ -183,7 +189,9 @@ public:
 
     void onPlayerConnect(IPlayer& player) override
     {
-        player.addExtension(new PlayerFixesData(player, *timers_), true);
+        if (timers_) {
+            player.addExtension(new PlayerFixesData(player, *timers_), true);
+        }
     }
 };
 
