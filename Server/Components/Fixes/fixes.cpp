@@ -34,6 +34,7 @@ public:
         if (moneyTimer_) {
             moneyTimer_->kill();
         }
+        // TODO: This must be fixed on client side
         // 50 gives very good results in terms of not flickering.  100 gives OK results.  80 is
         // between them to try and balance effect and bandwidth.
         money_ = player_.getMoney();
