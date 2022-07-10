@@ -327,3 +327,12 @@ ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& 
     static_cast<IEarlyConfig&>(core->getConfig()).setInt("sleep", value);
     core->setThreadSleep(Milliseconds(value));
 });
+
+ADD_CONSOLE_CMD(worldtime, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+    int time;
+    if (sscanf(params.data(), "%i", &time) == EOF) {
+        console.sendMessage(sender, String("worldtime = \"") + std::to_string(*core->getConfig().getInt("game.time")) + "\"");
+        return;
+    }
+    core->setWorldTime(Hours(time));
+});
