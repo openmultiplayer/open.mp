@@ -54,6 +54,15 @@ public:
     {
         if (moneyTimer_) {
             moneyTimer_->kill();
+            moneyTimer_ = nullptr;
+        }
+    }
+
+    ~PlayerFixesData()
+    {
+        if (moneyTimer_) {
+            moneyTimer_->kill();
+            moneyTimer_ = nullptr;
         }
     }
 };
