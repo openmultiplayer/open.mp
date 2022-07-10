@@ -195,7 +195,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
 bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupiedSync, IPlayer& player)
 {
-    if (respawning || (isTrailer() && tower->getDriver() != &player) || isOccupied()) {
+    if (respawning || (isTrailer() && tower->getDriver() != &player)) {
         return false;
     } else if (!unoccupiedSync.SeatID) {
         const Vector3 playerDist3D = player.getPosition() - pos;
