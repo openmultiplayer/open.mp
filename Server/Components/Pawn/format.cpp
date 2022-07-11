@@ -484,12 +484,12 @@ void AddOctal(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
 //#define ATCPRINTF_ADVANCE(fmt, ispacked) atcadvance(fmt, ispacked)
 
 template <typename S>
-static inline char atcadvance(char const** fmt, bool ispacked)
+static inline unsigned char atcadvance(unsigned char const** fmt, bool ispacked)
 {
     // This code assumes cell alignment.
     char ret = **fmt;
     if (ispacked)
-        *fmt = (const char*)((((uintptr_t)*fmt ^ (sizeof(S) - 1)) + 1) ^ (sizeof(S) - 1));
+        *fmt = (unsigned char const*)((((uintptr_t)*fmt ^ (sizeof(S) - 1)) + 1) ^ (sizeof(S) - 1));
     else
         (*fmt) += sizeof(S);
     return ret;
@@ -507,14 +507,14 @@ size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell
     int prec;
     int n;
     // char sign;
-    const char* fmt;
+    const unsigned char* fmt;
     size_t llen = maxlen;
     bool ispacked = sizeof(S) == sizeof(ucell) && (ucell)*format > UNPACKEDMAX;
 
     buf_p = buffer;
     arg = *param;
     // Invert the byte order.
-    fmt = ispacked ? (char*)((intptr_t)format + sizeof(S) - 1) : (char*)format;
+    fmt = ispacked ? (unsigned char*)((intptr_t)format + sizeof(S) - 1) : (unsigned char*)format;
 
     while (true) {
         // run through the format string until we hit a '%' or '\0'
