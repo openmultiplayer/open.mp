@@ -560,12 +560,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setSpectating(bool spectating) override
     {
-        setState(PlayerState_Spectating);
-
         if (!spectating) {
             toSpawn_ = true;
             spectateData_.type = PlayerSpectateData::ESpectateType::None;
             spectateData_.spectateID = INVALID_PLAYER_ID;
+        } else {
+            setState(PlayerState_Spectating);
         }
 
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
