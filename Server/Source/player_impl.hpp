@@ -538,7 +538,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 				int seat = data->getSeat();
 				removeFromVehicle(true);
 				PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
-				vehicle->putPlayer(*this, seat);
+				// Put them back in the vehicle, but don't involve the vehicle subsystem (it does a
+				// load of other checks we know aren't required here).
+				NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
+				putPlayerInVehicleRPC.VehicleID = vehicle->getID();
+				putPlayerInVehicleRPC.SeatID = seat;
+				PacketHelper::send(putPlayerInVehicleRPC, *this);
 				// End early.
 				return;
             }
