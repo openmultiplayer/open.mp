@@ -1652,7 +1652,7 @@ namespace Packet {
 
                 // get other player's color; first check if it has a custom one set with IPlayer::setOtherColour or not, if not, use their global colour
                 Colour colour;
-                bool hasPlayerSpecificColour = other->getOtherColour(FromPlayer, colour);
+                bool hasPlayerSpecificColour = FromPlayer.getOtherColour(*other, colour);
                 if (!hasPlayerSpecificColour) {
                     colour = other->getColour();
                 }
