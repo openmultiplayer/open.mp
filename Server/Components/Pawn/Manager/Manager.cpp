@@ -56,8 +56,8 @@ PawnManager::PawnManager()
 PawnManager::~PawnManager()
 {
     if (mainScript_) {
-        CallInSides("OnGameModeExit", DefaultReturnValue_False);
         mainScript_->Call("OnGameModeExit", DefaultReturnValue_False);
+        CallInSides("OnGameModeExit", DefaultReturnValue_False);
         PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
         pluginManager.AmxUnload(mainScript_->GetAMX());
         eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_->GetAMX());
@@ -523,8 +523,8 @@ is `2`.
         }
     }
     if (isEntryScript) {
-        CallInSides("OnGameModeExit", DefaultReturnValue_False);
         script.Call("OnGameModeExit", DefaultReturnValue_False);
+        CallInSides("OnGameModeExit", DefaultReturnValue_False);
     } else {
         script.Call("OnFilterScriptExit", DefaultReturnValue_False);
     }
