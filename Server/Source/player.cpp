@@ -179,12 +179,14 @@ IActor* Player::getTargetActor()
     return target;
 }
 
-void Player::setState(PlayerState state)
+void Player::setState(PlayerState state, bool dispatchEvents)
 {
     if (state_ != state) {
         PlayerState oldstate = state_;
         state_ = state;
-        pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStateChange, *this, state, oldstate);
+        if (dispatchEvents) {
+            pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStateChange, *this, state, oldstate);
+        }
     }
 }
 
