@@ -276,7 +276,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return isBot_;
     }
 
-    void setState(PlayerState state);
+    void setState(PlayerState state, bool dispatchEvents = true);
 
     PlayerState getState() const override
     {
