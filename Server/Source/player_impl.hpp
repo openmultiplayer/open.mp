@@ -276,7 +276,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return isBot_;
     }
 
-    void setState(PlayerState state);
+    void setState(PlayerState state, bool dispatchEvents = true);
 
     PlayerState getState() const override
     {
@@ -586,7 +586,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             spectateData_.type = PlayerSpectateData::ESpectateType::None;
             spectateData_.spectateID = INVALID_PLAYER_ID;
         } else {
-            setState(PlayerState_Spectating);
+            // Do not set player's state to PlayerState_Spectating here, let the player
+            // Spectate a player or vehicle then change the state.
+            // This is due code conflicts and issues brough into samp script when state change event
+            // Is called in here, which it shouldn't according to samp structure.
         }
 
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
