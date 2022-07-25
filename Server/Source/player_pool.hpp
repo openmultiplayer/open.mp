@@ -887,7 +887,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
             IVehicle& vehicle = *vehiclePtr;
 
-            
             const bool inBounds = vehicleSync.Position.x < 20000.0f && vehicleSync.Position.x > -20000.0f && vehicleSync.Position.y < 20000.0f && vehicleSync.Position.y > -20000.0f && vehicleSync.Position.z < 200000.0f && vehicleSync.Position.z > -1000.0f;
 
             if (!inBounds) {

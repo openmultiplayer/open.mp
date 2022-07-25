@@ -487,6 +487,13 @@ public:
         }
 
         const auto state = player.getState();
+
+        if (playerVehicle != nullptr && state != PlayerState_Driver && state != PlayerState_Passenger) {
+            static_cast<Vehicle*>(playerVehicle)->unoccupy(player);
+            playerVehicleData->setVehicle(nullptr, SEAT_NONE);
+            playerVehicle = nullptr;
+        }
+
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (IVehicle* v : storage) {
