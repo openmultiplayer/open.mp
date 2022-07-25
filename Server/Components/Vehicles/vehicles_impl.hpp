@@ -465,6 +465,18 @@ public:
         storage.clear();
     }
 
+    void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
+    {
+        if (newState != PlayerState_Driver && newState != PlayerState_Passenger) {
+            PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
+            auto vehicle = static_cast<Vehicle*>(data->getVehicle());
+            if (vehicle) {
+                vehicle->unoccupy(player);
+            }
+            data->setVehicle(nullptr, SEAT_NONE);
+        }
+    }
+
     bool onUpdate(IPlayer& player, TimePoint now) override
     {
 
@@ -475,12 +487,6 @@ public:
         }
 
         const auto state = player.getState();
-        if (playerVehicle != nullptr && state != PlayerState_Driver && state != PlayerState_Passenger) {
-            static_cast<Vehicle*>(playerVehicle)->unoccupy(player);
-            playerVehicleData->setVehicle(nullptr, SEAT_NONE);
-            playerVehicle = nullptr;
-        }
-
         const float maxDist = streamConfigHelper.getDistanceSqr();
         if (streamConfigHelper.shouldStream(player.getID(), now)) {
             for (IVehicle* v : storage) {
