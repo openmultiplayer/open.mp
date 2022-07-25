@@ -519,6 +519,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (glm::dot(footSync.Velocity, footSync.Velocity) > 100.0f * 100.0f) {
+                return false;
+            }
+
             footSync.PlayerID = player.poolID;
             footSync.Rotation *= player.rotTransform_;
 
@@ -893,6 +897,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            
+            if (glm::dot(vehicleSync.Velocity, vehicleSync.Velocity) > 100.0f * 100.0f) {
+                return false;
+            }
+
             Player& player = static_cast<Player&>(peer);
             player.pos_ = vehicleSync.Position;
             player.health_ = vehicleSync.PlayerHealthArmour.x;
@@ -1208,8 +1217,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (glm::dot(unoccupiedSync.Velocity, unoccupiedSync.Velocity) > 100.0f * 100.0f) {
+                return false;
+            }
+
             IVehicle& vehicle = *vehiclePtr;
             Player& player = static_cast<Player&>(peer);
+
+            if (player.state_ == PlayerState_None || player.state_ == PlayerState_Spectating) {
+                return false;
+            }
+
             IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
 
             if (vehicle.getDriver()) {
@@ -1260,6 +1278,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             const bool inBounds = trailerSync.Position.x < 20000.0f && trailerSync.Position.x > -20000.0f && trailerSync.Position.y < 20000.0f && trailerSync.Position.y > -20000.0f && trailerSync.Position.z < 200000.0f && trailerSync.Position.z > -1000.0f;
 
             if (!inBounds) {
+                return false;
+            }
+
+            if (glm::dot(trailerSync.Velocity, trailerSync.Velocity) > 100.0f * 100.0f) {
                 return false;
             }
 
