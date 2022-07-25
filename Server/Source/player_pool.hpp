@@ -897,7 +897,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            
             if (glm::dot(vehicleSync.Velocity, vehicleSync.Velocity) > 100.0f * 100.0f) {
                 return false;
             }
