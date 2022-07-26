@@ -324,7 +324,9 @@ namespace RPC {
             bs.readBIT(PlayerObject);
             bs.readUINT16(ObjectID);
             bs.readUINT32(Response);
-            bs.readVEC3(Offset);
+            if (!bs.readVEC3(Offset)) {
+                return false;
+            }
             return bs.readVEC3(Rotation);
         }
 
@@ -358,9 +360,15 @@ namespace RPC {
             bs.readUINT32(Index);
             bs.readUINT32(AttachmentData.model);
             bs.readUINT32(AttachmentData.bone);
-            bs.readVEC3(AttachmentData.offset);
-            bs.readVEC3(AttachmentData.rotation);
-            bs.readVEC3(AttachmentData.scale);
+            if (!bs.readVEC3(AttachmentData.offset)) {
+                return false;
+            }
+            if (!bs.readVEC3(AttachmentData.rotation)) {
+                return false;
+            }
+            if (!bs.readVEC3(AttachmentData.scale)) {
+                return false;
+            }
             uint32_t argb;
             bs.readUINT32(argb);
             AttachmentData.colour1 = Colour::FromARGB(argb);

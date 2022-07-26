@@ -149,9 +149,13 @@ namespace RPC {
             bs.readBIT(UsePlayerPedAnims);
             bs.readBIT(AllowInteriorWeapons);
             bs.readBIT(UseLimitGlobalChatRadius);
-            bs.readFLOAT(LimitGlobalChatRadius);
+            if (!bs.readFLOAT(LimitGlobalChatRadius)) {
+                return false;
+            }
             bs.readBIT(EnableStuntBonus);
-            bs.readFLOAT(SetNameTagDrawDistance);
+            if (!bs.readFLOAT(SetNameTagDrawDistance)) {
+                return false;
+            }
             bs.readBIT(DisableInteriorEnterExits);
             bs.readBIT(DisableNameTagLOS);
             bs.readBIT(ManualVehicleEngineAndLights);
@@ -161,7 +165,9 @@ namespace RPC {
             bs.readUINT32(ShowPlayerMarkers);
             bs.readUINT8(SetWorldTime);
             bs.readUINT8(SetWeather);
-            bs.readFLOAT(SetGravity);
+            if (!bs.readFLOAT(SetGravity)) {
+                return false;
+            }
             bs.readBIT(LanMode);
             bs.readUINT32(SetDeathDropAmount);
             bs.readBIT(Instagib);
@@ -1129,7 +1135,9 @@ namespace RPC {
         {
             bs.readBIT(Taking);
             bs.readUINT16(PlayerID);
-            bs.readFLOAT(Damage);
+            if (!bs.readFLOAT(Damage)) {
+                return false;
+            }
             bs.readUINT32(WeaponID);
             return bs.readUINT32(Bodypart);
         }
@@ -1267,7 +1275,7 @@ namespace RPC {
 
         bool read(NetworkBitStream& bs)
         {
-            return bs.readVEC3(Pos);
+            return bs.readWorldVEC3(Pos);
         }
     };
 
@@ -1435,13 +1443,21 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            bs.readVEC3(Position);
-            bs.readGTAQuat(Rotation);
+            if (!bs.readWorldVEC3(Position)) {
+                return false;
+            }
+            if (!bs.readGTAQuat(Rotation)) {
+                return false;
+            }
             bs.readCompressedPercentPair(HealthArmour);
             bs.readUINT8(WeaponAdditionalKey);
             bs.readUINT8(SpecialAction);
-            bs.readVEC3(Velocity);
-            bs.readVEC3(SurfingData.offset);
+            if (!bs.readVelocityVEC3(Velocity)) {
+                return false;
+            }
+            if (!bs.readVEC3(SurfingData.offset)) {
+                return false;
+            }
             uint16_t surfingID;
             bs.readUINT16(surfingID);
             SurfingData.ID = surfingID;
@@ -1525,9 +1541,15 @@ namespace Packet {
         bool read(NetworkBitStream& bs)
         {
             bs.readUINT8(CamMode);
-            bs.readVEC3(CamFrontVector);
-            bs.readVEC3(CamPos);
-            bs.readFLOAT(AimZ);
+            if (!bs.readVEC3(CamFrontVector)) {
+                return false;
+            }
+            if (!bs.readWorldVEC3(CamPos)) {
+                return false;
+            }
+            if (!bs.readFLOAT(AimZ)) {
+                return false;
+            }
             bs.readUINT8(ZoomWepState);
             return bs.readUINT8(AspectRatio);
         }
@@ -1559,9 +1581,15 @@ namespace Packet {
         {
             bs.readUINT8(HitType);
             bs.readUINT16(HitID);
-            bs.readVEC3(Origin);
-            bs.readVEC3(HitPos);
-            bs.readVEC3(Offset);
+            if (!bs.readVEC3(Origin)) {
+                return false;
+            }
+            if (!bs.readVEC3(HitPos)) {
+                return false;
+            }
+            if (!bs.readVEC3(Offset)) {
+                return false;
+            }
             return bs.readUINT8(WeaponID);
         }
 
@@ -1684,7 +1712,7 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            return bs.readVEC3(Position);
+            return bs.readWorldVEC3(Position);
         }
 
         void write(NetworkBitStream& bs) const

@@ -47,7 +47,7 @@ class NetworkBitStream {
 
 public:
     /// The version of the NetworkBitStream class; increased when breaking changes are introduced
-    constexpr static const int Version = 1;
+    constexpr static const int Version = 2;
 
     /// Default Constructor
     NetworkBitStream();
@@ -277,29 +277,46 @@ public:
         return res;
     }
 
-    inline bool readDOUBLE(double& data)
+    [[nodiscard]] inline bool readDOUBLE(double& data)
     {
-        return Read(data);
+        const bool res = Read(data);
+        return res && !std::isnan(data);
     }
 
-    inline bool readFLOAT(float& data)
+    [[nodiscard]] inline bool readFLOAT(float& data)
     {
-        return Read(data);
+        const bool res = Read(data);
+        return res && !std::isnan(data);
     }
 
-    inline bool readVEC2(Vector2& data)
+    [[nodiscard]] inline bool readVEC2(Vector2& data)
     {
-        return Read(data);
+        const bool res = Read(data);
+        return res && !std::isnan(data.x) && !std::isnan(data.y);
     }
 
-    inline bool readVEC3(Vector3& data)
+    [[nodiscard]] inline bool readVEC3(Vector3& data)
     {
-        return Read(data);
+        const bool res = Read(data);
+        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z);
     }
 
-    inline bool readVEC4(Vector4& data)
+    [[nodiscard]] inline bool readWorldVEC3(Vector3& data)
     {
-        return Read(data);
+        const bool res = Read(data);
+        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && data.x < 20000.0f && data.x > -20000.0f && data.y < 20000.0f && data.y > -20000.0f && data.z < 200000.0f && data.z > -1000.0f;
+    }
+
+    [[nodiscard]] inline bool readVelocityVEC3(Vector3& data)
+    {
+        const bool res = Read(data);
+        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && glm::dot(data, data) <= 100.0f * 100.0f;
+    }
+
+    [[nodiscard]] inline bool readVEC4(Vector4& data)
+    {
+        const bool res = Read(data);
+        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && !std::isnan(data.w);
     }
 
     template <size_t Size>
@@ -345,9 +362,10 @@ public:
         return true;
     }
 
-    inline bool readGTAQuat(GTAQuat& data)
+    [[nodiscard]] inline bool readGTAQuat(GTAQuat& data)
     {
-        return Read(data.q);
+        auto res = Read(data.q);
+        return res && !std::isnan(data.q.x) && !std::isnan(data.q.y) && !std::isnan(data.q.z) && !std::isnan(data.q.w);
     }
 
     template <typename LenType, size_t Size>

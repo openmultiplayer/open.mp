@@ -56,8 +56,12 @@ namespace RPC {
             bs.readUINT8(TeamID);
             bs.readUINT32(ModelID);
             bs.readUINT8(Unknown1);
-            bs.readVEC3(Spawn);
-            bs.readFLOAT(ZAngle);
+            if (!bs.readVEC3(Spawn)) {
+                return false;
+            }
+            if (!bs.readFLOAT(ZAngle)) {
+                return false;
+            }
             bs.readArray(Span<uint32_t>(Weapons));
             return bs.readArray(Span<uint32_t>(Ammos));
         }
