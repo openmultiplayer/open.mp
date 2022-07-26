@@ -1275,7 +1275,7 @@ namespace RPC {
 
         bool read(NetworkBitStream& bs)
         {
-            return bs.readWorldVEC3(Pos);
+            return bs.readPosVEC3(Pos);
         }
     };
 
@@ -1443,7 +1443,7 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            if (!bs.readWorldVEC3(Position)) {
+            if (!bs.readPosVEC3(Position)) {
                 return false;
             }
             if (!bs.readGTAQuat(Rotation)) {
@@ -1452,7 +1452,7 @@ namespace Packet {
             bs.readCompressedPercentPair(HealthArmour);
             bs.readUINT8(WeaponAdditionalKey);
             bs.readUINT8(SpecialAction);
-            if (!bs.readVelocityVEC3(Velocity)) {
+            if (!bs.readVelVEC3(Velocity)) {
                 return false;
             }
             if (!bs.readVEC3(SurfingData.offset)) {
@@ -1544,7 +1544,7 @@ namespace Packet {
             if (!bs.readVEC3(CamFrontVector)) {
                 return false;
             }
-            if (!bs.readWorldVEC3(CamPos)) {
+            if (!bs.readPosVEC3(CamPos)) {
                 return false;
             }
             if (!bs.readFLOAT(AimZ)) {
@@ -1712,7 +1712,7 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            return bs.readWorldVEC3(Position);
+            return bs.readPosVEC3(Position);
         }
 
         void write(NetworkBitStream& bs) const

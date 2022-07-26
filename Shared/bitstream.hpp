@@ -301,13 +301,13 @@ public:
         return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z);
     }
 
-    [[nodiscard]] inline bool readWorldVEC3(Vector3& data)
+    [[nodiscard]] inline bool readPosVEC3(Vector3& data)
     {
         const bool res = Read(data);
         return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && data.x < 20000.0f && data.x > -20000.0f && data.y < 20000.0f && data.y > -20000.0f && data.z < 200000.0f && data.z > -1000.0f;
     }
 
-    [[nodiscard]] inline bool readVelocityVEC3(Vector3& data)
+    [[nodiscard]] inline bool readVelVEC3(Vector3& data)
     {
         const bool res = Read(data);
         return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && glm::dot(data, data) <= 100.0f * 100.0f;
