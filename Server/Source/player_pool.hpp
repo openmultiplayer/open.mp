@@ -513,16 +513,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             Player& player = static_cast<Player&>(peer);
 
-            const bool inBounds = footSync.Position.x < 20000.0f && footSync.Position.x > -20000.0f && footSync.Position.y < 20000.0f && footSync.Position.y > -20000.0f && footSync.Position.z < 200000.0f && footSync.Position.z > -1000.0f;
-
-            if (!inBounds) {
-                return false;
-            }
-
-            if (glm::dot(footSync.Velocity, footSync.Velocity) > 100.0f * 100.0f) {
-                return false;
-            }
-
             footSync.PlayerID = player.poolID;
             footSync.Rotation *= player.rotTransform_;
 
@@ -552,8 +542,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 }
 
                 // Fix for old 'Invisible' cheat.
-                const auto surf_offsets = glm::dot(footSync.SurfingData.offset, footSync.SurfingData.offset);
-                if ((std::isnan(surf_offsets) || surf_offsets >= 50.0f * 50.0f)) {
+                if (glm::dot(footSync.SurfingData.offset, footSync.SurfingData.offset) >= 50.0f * 50.0f) {
                     footSync.SurfingData.type = PlayerSurfingData::Type::None;
                 }
             }
@@ -671,18 +660,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
             if (frontvec > 0.0 && frontvec < 1.5) {
 
-                const bool inBounds = aimSync.CamPos.x < 20000.0f && aimSync.CamPos.x > -20000.0f && aimSync.CamPos.y < 20000.0f && aimSync.CamPos.y > -20000.0f && aimSync.CamPos.z < 200000.0f && aimSync.CamPos.z > -1000.0f;
-
-                if (!inBounds) {
-                    return false;
-                }
-
                 Player& player = static_cast<Player&>(peer);
                 player.aimingData_.aimZ = aimSync.AimZ;
-
-                if (std::isnan(player.aimingData_.aimZ)) {
-                    player.aimingData_.aimZ = 0.0f;
-                }
 
                 player.aimingData_.camFrontVector = aimSync.CamFrontVector;
                 player.aimingData_.camMode = aimSync.CamMode;
@@ -891,17 +870,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
             IVehicle& vehicle = *vehiclePtr;
-
-            const bool inBounds = vehicleSync.Position.x < 20000.0f && vehicleSync.Position.x > -20000.0f && vehicleSync.Position.y < 20000.0f && vehicleSync.Position.y > -20000.0f && vehicleSync.Position.z < 200000.0f && vehicleSync.Position.z > -1000.0f;
-
-            if (!inBounds) {
-                return false;
-            }
-
-            if (glm::dot(vehicleSync.Velocity, vehicleSync.Velocity) > 100.0f * 100.0f) {
-                return false;
-            }
-
             Player& player = static_cast<Player&>(peer);
             player.pos_ = vehicleSync.Position;
             player.health_ = vehicleSync.PlayerHealthArmour.x;
@@ -1128,12 +1096,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (vehicle.isRespawning())
                 return false;
 
-            const bool inBounds = passengerSync.Position.x < 20000.0f && passengerSync.Position.x > -20000.0f && passengerSync.Position.y < 20000.0f && passengerSync.Position.y > -20000.0f && passengerSync.Position.z < 200000.0f && passengerSync.Position.z > -1000.0f;
-
-            if (!inBounds) {
-                return false;
-            }
-
             const bool vehicleOk = vehicle.updateFromPassengerSync(passengerSync, peer);
 
             if (!vehicleOk) {
@@ -1211,16 +1173,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
-            const bool inBounds = unoccupiedSync.Position.x < 20000.0f && unoccupiedSync.Position.x > -20000.0f && unoccupiedSync.Position.y < 20000.0f && unoccupiedSync.Position.y > -20000.0f && unoccupiedSync.Position.z < 200000.0f && unoccupiedSync.Position.z > -1000.0f;
-
-            if (!inBounds) {
-                return false;
-            }
-
-            if (glm::dot(unoccupiedSync.Velocity, unoccupiedSync.Velocity) > 100.0f * 100.0f) {
-                return false;
-            }
-
             IVehicle& vehicle = *vehiclePtr;
             Player& player = static_cast<Player&>(peer);
 
@@ -1272,16 +1224,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             PlayerState state = player.getState();
             IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
             if (state != PlayerState_Driver || vehData->getVehicle() == nullptr) {
-                return false;
-            }
-
-            const bool inBounds = trailerSync.Position.x < 20000.0f && trailerSync.Position.x > -20000.0f && trailerSync.Position.y < 20000.0f && trailerSync.Position.y > -20000.0f && trailerSync.Position.z < 200000.0f && trailerSync.Position.z > -1000.0f;
-
-            if (!inBounds) {
-                return false;
-            }
-
-            if (glm::dot(trailerSync.Velocity, trailerSync.Velocity) > 100.0f * 100.0f) {
                 return false;
             }
 
