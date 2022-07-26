@@ -1168,6 +1168,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f || unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f || unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f) {
+                return false;
+            }
+
             IVehicle* vehiclePtr = self.vehiclesComponent->get(unoccupiedSync.VehicleID);
             if (!vehiclePtr) {
                 return false;
