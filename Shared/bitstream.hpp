@@ -280,43 +280,43 @@ public:
     [[nodiscard]] inline bool readDOUBLE(double& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data);
+        return res && std::isfinite(data);
     }
 
     [[nodiscard]] inline bool readFLOAT(float& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data);
+        return res && std::isfinite(data);
     }
 
     [[nodiscard]] inline bool readVEC2(Vector2& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data.x) && !std::isnan(data.y);
+        return res && std::isfinite(data.x) && std::isfinite(data.y);
     }
 
     [[nodiscard]] inline bool readVEC3(Vector3& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z);
+        return res && std::isfinite(data.x) && std::isfinite(data.y) && std::isfinite(data.z);
     }
 
     [[nodiscard]] inline bool readPosVEC3(Vector3& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && data.x < 20000.0f && data.x > -20000.0f && data.y < 20000.0f && data.y > -20000.0f && data.z < 200000.0f && data.z > -1000.0f;
+        return res && std::isfinite(data.x) && std::isfinite(data.y) && std::isfinite(data.z) && data.x < 20000.0f && data.x > -20000.0f && data.y < 20000.0f && data.y > -20000.0f && data.z < 200000.0f && data.z > -1000.0f;
     }
 
     [[nodiscard]] inline bool readVelVEC3(Vector3& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && glm::dot(data, data) <= 100.0f * 100.0f;
+        return res && std::isfinite(data.x) && std::isfinite(data.y) && std::isfinite(data.z) && glm::dot(data, data) <= 100.0f * 100.0f;
     }
 
     [[nodiscard]] inline bool readVEC4(Vector4& data)
     {
         const bool res = Read(data);
-        return res && !std::isnan(data.x) && !std::isnan(data.y) && !std::isnan(data.z) && !std::isnan(data.w);
+        return res && std::isfinite(data.x) && std::isfinite(data.y) && std::isfinite(data.z) && std::isfinite(data.w);
     }
 
     template <size_t Size>
@@ -365,7 +365,7 @@ public:
     [[nodiscard]] inline bool readGTAQuat(GTAQuat& data)
     {
         auto res = Read(data.q);
-        return res && !std::isnan(data.q.x) && !std::isnan(data.q.y) && !std::isnan(data.q.z) && !std::isnan(data.q.w);
+        return res && std::isfinite(data.q.x) && std::isfinite(data.q.y) && std::isfinite(data.q.z) && std::isfinite(data.q.w);
     }
 
     template <typename LenType, size_t Size>
