@@ -546,15 +546,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 } else {
                     footSync.SurfingData.type = PlayerSurfingData::Type::None;
                 }
-            } else if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle
-                && self.vehiclesComponent != nullptr
-                && self.vehiclesComponent->get(footSync.SurfingData.ID) == nullptr) {
-                footSync.SurfingData.type = PlayerSurfingData::Type::None;
-            }
+            } else if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle) {
+                if (self.vehiclesComponent != nullptr && self.vehiclesComponent->get(footSync.SurfingData.ID) == nullptr) {
+                    footSync.SurfingData.type = PlayerSurfingData::Type::None;
+                }
 
-            // Fix for old 'Invisible' cheat.
-            if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle && glm::dot(footSync.SurfingData.offset, footSync.SurfingData.offset) >= 50.0f * 50.0f) {
-                footSync.SurfingData.type = PlayerSurfingData::Type::None;
+                // Fix for old 'Invisible' cheat.
+                const auto surf_offsets = glm::dot(footSync.SurfingData.offset, footSync.SurfingData.offset);
+                if ((std::isnan(surf_offsets) || surf_offsets >= 50.0f * 50.0f)) {
+                    footSync.SurfingData.type = PlayerSurfingData::Type::None;
+                }
             }
 
             player.surfing_ = footSync.SurfingData;
