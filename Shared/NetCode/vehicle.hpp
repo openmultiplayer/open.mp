@@ -411,10 +411,10 @@ namespace Packet {
             if (!bs.readGTAQuat(Rotation)) {
                 return false;
             }
-            if (!bs.readWorldVEC3(Position)) {
+            if (!bs.readPosVEC3(Position)) {
                 return false;
             }
-            if (!bs.readVelocityVEC3(Velocity)) {
+            if (!bs.readVelVEC3(Velocity)) {
                 return false;
             }
             if (!bs.readFLOAT(Health)) {
@@ -467,7 +467,7 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            return bs.readWorldVEC3(Position);
+            return bs.readPosVEC3(Position);
         }
 
         void write(NetworkBitStream& bs) const
@@ -497,10 +497,10 @@ namespace Packet {
             if (!bs.readVEC3(Rotation)) {
                 return false;
             }
-            if (!bs.readWorldVEC3(Position)) {
+            if (!bs.readPosVEC3(Position)) {
                 return false;
             }
-            if (!bs.readVelocityVEC3(Velocity)) {
+            if (!bs.readVelVEC3(Velocity)) {
                 return false;
             }
             if (!bs.readVEC3(AngularVelocity)) {
@@ -529,13 +529,13 @@ namespace Packet {
         bool read(NetworkBitStream& bs)
         {
             bs.readUINT16(VehicleID);
-            if (!bs.readWorldVEC3(Position)) {
+            if (!bs.readPosVEC3(Position)) {
                 return false;
             }
             if (!bs.readVEC4(Quat)) {
                 return false;
             }
-            if (!bs.readVelocityVEC3(Velocity)) {
+            if (!bs.readVelVEC3(Velocity)) {
                 return false;
             }
             return bs.readVEC3(TurnVelocity);
