@@ -353,6 +353,7 @@ struct PlayerSpectateData {
         Player
     };
 
+    bool spectating;
     int spectateID;
     ESpectateType type;
 };

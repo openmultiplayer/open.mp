@@ -120,7 +120,9 @@ namespace RPC {
         {
             bs.readBIT(Unknown);
             bs.readUINT16(ActorID);
-            bs.readFLOAT(Damage);
+            if (!bs.readFLOAT(Damage)) {
+                return false;
+            }
             bs.readUINT32(WeaponID);
             return bs.readUINT32(Bodypart);
         }
