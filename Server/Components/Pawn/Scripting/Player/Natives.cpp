@@ -973,7 +973,7 @@ SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, cell const* format, int time
     return true;
 }
 
-SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, cell const* format, int time, int style))
+SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, int time, int style, cell const* format))
 {
     auto string = svprintf(format, GetAMX(), GetParams(), 4);
     if (string.empty()) {
