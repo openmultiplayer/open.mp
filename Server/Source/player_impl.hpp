@@ -254,7 +254,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         // Reset player's vehicle related data
         IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
         if (vehicleData && vehicleData->getVehicle()) {
-            vehicleData->reset();
+            vehicleData->resetVehicle();
         }
 
         spectateData_.type = PlayerSpectateData::ESpectateType::None;
@@ -1039,7 +1039,7 @@ public:
         // Reset player's vehicle related data
         IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
         if (vehicleData && vehicleData->getVehicle()) {
-            vehicleData->reset();
+            vehicleData->resetVehicle();
         }
 
         // Set from sync
@@ -1125,7 +1125,7 @@ public:
         // Reset player's vehicle related data
         IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
         if (vehicleData && vehicleData->getVehicle()) {
-            vehicleData->reset();
+            vehicleData->resetVehicle();
         }
 
         // Set from sync
