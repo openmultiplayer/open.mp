@@ -1035,6 +1035,13 @@ public:
     void setPosition(Vector3 position) override
     {
         removeParachute();
+
+        // Reset player's vehicle related data
+        IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
+        if (vehicleData && vehicleData->getVehicle()) {
+            vehicleData->reset();
+        }
+
         // Set from sync
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -1114,6 +1121,13 @@ public:
     void setPositionFindZ(Vector3 position) override
     {
         removeParachute();
+
+        // Reset player's vehicle related data
+        IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
+        if (vehicleData && vehicleData->getVehicle()) {
+            vehicleData->reset();
+        }
+
         // Set from sync
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
