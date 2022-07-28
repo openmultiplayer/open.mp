@@ -251,6 +251,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPosition(pos_);
         }
 
+        // Reset player's vehicle related data
+        IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
+        if (vehicleData && vehicleData->getVehicle()) {
+            vehicleData->reset();
+        }
+
         spectateData_.type = PlayerSpectateData::ESpectateType::None;
         spectateData_.spectateID = INVALID_PLAYER_ID;
 
