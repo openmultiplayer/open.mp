@@ -217,19 +217,6 @@ SCRIPT_API(GameTextForAllf, bool(cell const* format, int time, int style))
     return true;
 }
 
-static bool getConfigOptionAsIntOrBool(IConfig* config, StringView cvar, bool ** v0, int ** v1)
-{
-	if ((*v0 = config->getBool(cvar)))
-	{
-		return true;
-	}
-	if ((*v1 = config->getInt(cvar)))
-	{
-		return true;
-	}
-	return false;
-}
-
 int getConfigOptionAsInt(std::string const& cvar)
 {
 	IConfig* config = PawnManager::Get()->config;
@@ -242,11 +229,17 @@ int getConfigOptionAsInt(std::string const& cvar)
 		{
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
 		}
-		getConfigOptionAsIntOrBool(config, res.second, &v0, &v1);
+		if (!(v1 = config->getInt(res.second)))
+		{
+			v0 = config->getBool(res.second);
+		}
 	}
 	else
 	{
-		getConfigOptionAsIntOrBool(config, cvar, &v0, &v1);
+		if (!(v1 = config->getInt(cvar)))
+		{
+			v0 = config->getBool(cvar);
+		}
 	}
 	if (v1)
 	{
@@ -275,11 +268,17 @@ bool getConfigOptionAsBool(std::string const& cvar)
 		{
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
 		}
-		getConfigOptionAsIntOrBool(config, res.second, &v0, &v1);
+		if (!(v0 = config->getBool(res.second)))
+		{
+			v1 = config->getInt(res.second);
+		}
 	}
 	else
 	{
-		getConfigOptionAsIntOrBool(config, cvar, &v0, &v1);
+		if (!(v0 = config->getBool(cvar)))
+		{
+			v1 = config->getInt(cvar);
+		}
 	}
 	if (v0)
 	{
