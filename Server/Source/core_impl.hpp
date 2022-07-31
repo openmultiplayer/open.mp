@@ -28,6 +28,12 @@
 #include <variant>
 #include <utils.hpp>
 
+#ifdef OMP_VERSION_HASH
+#define OMP_VERSION_HASH_STR STRINGIFY(OMP_VERSION_HASH)
+#else
+#define OMP_VERSION_HASH_STR "0000000000000000000000000000000000000000"
+#endif
+
 using namespace Impl;
 
 #pragma clang diagnostic push
@@ -1082,7 +1088,7 @@ public:
         , ticksThisSecond(0u)
         , EnableLogTimestamp(false)
     {
-        printLn("Starting open.mp server (%u.%u.%u.%u)", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel);
+        printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
 
         // Initialize start time
         getTickCount();
@@ -1220,7 +1226,12 @@ public:
 
     SemanticVersion getVersion() const override
     {
-        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+        return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
+    }
+
+    StringView getVersionHash() const override
+    {
+        return OMP_VERSION_HASH_STR;
     }
 
     int getNetworkBitStreamVersion() const override

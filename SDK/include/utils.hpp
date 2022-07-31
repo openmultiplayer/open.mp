@@ -1,5 +1,8 @@
 #pragma once
 
+#define STRINGIFY(s) _STRINGIFY(s)
+#define _STRINGIFY(s) #s
+
 StringView trim(StringView view)
 {
     char const* const whitespace = " \t\n\r\f\v";
