@@ -251,6 +251,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             setPosition(pos_);
         }
 
+        // Reset player's vehicle related data
+        IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
+        if (vehicleData && vehicleData->getVehicle()) {
+            vehicleData->resetVehicle();
+        }
+
         spectateData_.spectating = false;
         spectateData_.type = PlayerSpectateData::ESpectateType::None;
         spectateData_.spectateID = INVALID_PLAYER_ID;
@@ -1031,6 +1037,13 @@ public:
     void setPosition(Vector3 position) override
     {
         removeParachute();
+
+        // Reset player's vehicle related data
+        IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
+        if (vehicleData && vehicleData->getVehicle()) {
+            vehicleData->resetVehicle();
+        }
+
         // Set from sync
         NetCode::RPC::SetPlayerPosition setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
@@ -1110,6 +1123,13 @@ public:
     void setPositionFindZ(Vector3 position) override
     {
         removeParachute();
+
+        // Reset player's vehicle related data
+        IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(*this);
+        if (vehicleData && vehicleData->getVehicle()) {
+            vehicleData->resetVehicle();
+        }
+
         // Set from sync
         NetCode::RPC::SetPlayerPositionFindZ setPlayerPosRPC;
         setPlayerPosRPC.Pos = position;
