@@ -512,6 +512,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
+
             footSync.PlayerID = player.poolID;
             footSync.Rotation *= player.rotTransform_;
 
@@ -535,10 +536,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 } else {
                     footSync.SurfingData.type = PlayerSurfingData::Type::None;
                 }
-            } else if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle
-                && self.vehiclesComponent != nullptr
-                && self.vehiclesComponent->get(footSync.SurfingData.ID) == nullptr) {
-                footSync.SurfingData.type = PlayerSurfingData::Type::None;
+            } else if (footSync.SurfingData.type == PlayerSurfingData::Type::Vehicle) {
+                if (self.vehiclesComponent != nullptr && self.vehiclesComponent->get(footSync.SurfingData.ID) == nullptr) {
+                    footSync.SurfingData.type = PlayerSurfingData::Type::None;
+                }
+
+                // Fix for old 'Invisible' cheat.
+                if (glm::dot(footSync.SurfingData.offset, footSync.SurfingData.offset) >= 50.0f * 50.0f) {
+                    footSync.SurfingData.type = PlayerSurfingData::Type::None;
+                }
             }
 
             player.surfing_ = footSync.SurfingData;
@@ -605,6 +611,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             }
 
             Player& player = static_cast<Player&>(peer);
+
+            // Player is not in spectator mode. Ignore the packet.
+            // This can be abused by cheats to make player invisible to others.
+            if (!player.spectateData_.spectating) {
+                return false;
+            }
+
             uint32_t newKeys = spectatorSync.Keys;
 
             player.pos_ = spectatorSync.Position;
@@ -646,8 +659,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             const float frontvec = glm::dot(aimSync.CamFrontVector, aimSync.CamFrontVector);
             if (frontvec > 0.0 && frontvec < 1.5) {
+
                 Player& player = static_cast<Player&>(peer);
                 player.aimingData_.aimZ = aimSync.AimZ;
+
                 player.aimingData_.camFrontVector = aimSync.CamFrontVector;
                 player.aimingData_.camMode = aimSync.CamMode;
                 player.aimingData_.camPos = aimSync.CamPos;
@@ -855,7 +870,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
             IVehicle& vehicle = *vehiclePtr;
-
             Player& player = static_cast<Player&>(peer);
             player.pos_ = vehicleSync.Position;
             player.health_ = vehicleSync.PlayerHealthArmour.x;
@@ -1081,7 +1095,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             Player& player = static_cast<Player&>(peer);
             if (vehicle.isRespawning())
                 return false;
+
             const bool vehicleOk = vehicle.updateFromPassengerSync(passengerSync, peer);
+
+            if (!vehicleOk) {
+                return false;
+            }
 
             player.health_ = passengerSync.HealthArmour.x;
             player.armour_ = passengerSync.HealthArmour.y;
@@ -1149,6 +1168,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f || unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f || unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f) {
+                return false;
+            }
+
             IVehicle* vehiclePtr = self.vehiclesComponent->get(unoccupiedSync.VehicleID);
             if (!vehiclePtr) {
                 return false;
@@ -1156,6 +1179,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
             IVehicle& vehicle = *vehiclePtr;
             Player& player = static_cast<Player&>(peer);
+
+            if (player.state_ == PlayerState_None || player.state_ == PlayerState_Spectating) {
+                return false;
+            }
+
             IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
 
             if (vehicle.getDriver()) {

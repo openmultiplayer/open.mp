@@ -277,8 +277,8 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
     // TODO: Detect fast switching cheats.
     if (passengerSeats == 0xFF || passengerSync.SeatID < 1 || passengerSync.SeatID > passengerSeats) {
         // Can't be a passenger there.  NOT an OBOE.
-
         // Just ignore the packet for now.
+        return false;
     } else if ((data->getVehicle() != this || driver == &player) && passengers.insert(&player).second) {
         if (data->getVehicle()) {
             static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);

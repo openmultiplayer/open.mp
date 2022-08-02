@@ -57,7 +57,7 @@ jobs:
           cmake --build . --config Debug
 
   build-linux:
-    runs-on: [self-hosted, Linux]
+    runs-on: [self-hosted, Linux, X64]
 
     steps:
       - uses: actions/checkout@v3

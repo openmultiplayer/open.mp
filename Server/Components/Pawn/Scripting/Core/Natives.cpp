@@ -596,13 +596,13 @@ SCRIPT_API(GetWorldTime, int())
 
 SCRIPT_API(ToggleChatTextReplacement, bool(bool enable))
 {
-    *PawnManager::Get()->config->getInt("chat_input_filter") = enable;
+    *PawnManager::Get()->config->getBool("chat_input_filter") = enable;
     return true;
 }
 
 SCRIPT_API(ChatTextReplacementToggled, bool())
 {
-    return *PawnManager::Get()->config->getInt("chat_input_filter");
+    return *PawnManager::Get()->config->getBool("chat_input_filter");
 }
 
 SCRIPT_API(IsValidNickName, bool(const std::string& name))
