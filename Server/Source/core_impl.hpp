@@ -260,12 +260,16 @@ public:
                         const auto& root = props.get<nlohmann::json::object_t>();
                         processNode(root);
 
-                        // Fill any values missing in config with defaults
+                        // Fill any values missing in config with defaults.
+                        // Fill default value if invalid type is provided.
                         for (const auto& kv : Defaults) {
-                            if (processed.find(kv.first) != processed.end()) {
+                            auto itr = processed.find(kv.first);
+                            if (itr != processed.end()) {
+                                if (itr->second.index() != kv.second.index()) {
+                                    itr->second = kv.second;
+                                }
                                 continue;
                             }
-
                             processed.emplace(kv.first, kv.second);
                         }
                     }

@@ -408,10 +408,18 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            bs.readGTAQuat(Rotation);
-            bs.readVEC3(Position);
-            bs.readVEC3(Velocity);
-            bs.readFLOAT(Health);
+            if (!bs.readGTAQuat(Rotation)) {
+                return false;
+            }
+            if (!bs.readPosVEC3(Position)) {
+                return false;
+            }
+            if (!bs.readVelVEC3(Velocity)) {
+                return false;
+            }
+            if (!bs.readFLOAT(Health)) {
+                return false;
+            }
             bs.readCompressedPercentPair(PlayerHealthArmour);
             bs.readUINT8(AdditionalKeyWeapon);
             bs.readUINT8(Siren);
@@ -459,7 +467,7 @@ namespace Packet {
             bs.readUINT16(LeftRight);
             bs.readUINT16(UpDown);
             bs.readUINT16(Keys);
-            return bs.readVEC3(Position);
+            return bs.readPosVEC3(Position);
         }
 
         void write(NetworkBitStream& bs) const
@@ -483,11 +491,21 @@ namespace Packet {
         {
             bs.readUINT16(VehicleID);
             bs.readUINT8(SeatID);
-            bs.readVEC3(Roll);
-            bs.readVEC3(Rotation);
-            bs.readVEC3(Position);
-            bs.readVEC3(Velocity);
-            bs.readVEC3(AngularVelocity);
+            if (!bs.readVEC3(Roll)) {
+                return false;
+            }
+            if (!bs.readVEC3(Rotation)) {
+                return false;
+            }
+            if (!bs.readPosVEC3(Position)) {
+                return false;
+            }
+            if (!bs.readVelVEC3(Velocity)) {
+                return false;
+            }
+            if (!bs.readVEC3(AngularVelocity)) {
+                return false;
+            }
             return bs.readFLOAT(Health);
         }
 
@@ -511,9 +529,15 @@ namespace Packet {
         bool read(NetworkBitStream& bs)
         {
             bs.readUINT16(VehicleID);
-            bs.readVEC3(Position);
-            bs.readVEC4(Quat);
-            bs.readVEC3(Velocity);
+            if (!bs.readPosVEC3(Position)) {
+                return false;
+            }
+            if (!bs.readVEC4(Quat)) {
+                return false;
+            }
+            if (!bs.readVelVEC3(Velocity)) {
+                return false;
+            }
             return bs.readVEC3(TurnVelocity);
         }
 

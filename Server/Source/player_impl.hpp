@@ -173,7 +173,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         chatBubbleExpiration_ = Time::now();
         toSpawn_ = false;
         lastGameTimeUpdate_ = TimePoint();
-        spectateData_ = { INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
+        spectateData_ = { false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
         gravity_ = 0;
         ghostMode_ = false;
         defaultObjectsRemoved_ = 0;
@@ -228,7 +228,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         , isBot_(params.bot)
         , toSpawn_(false)
         , lastGameTimeUpdate_()
-        , spectateData_({ INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
+        , spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
         , gravity_(0)
         , ghostMode_(false)
         , defaultObjectsRemoved_(0)
@@ -257,6 +257,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             vehicleData->resetVehicle();
         }
 
+        spectateData_.spectating = false;
         spectateData_.type = PlayerSpectateData::ESpectateType::None;
         spectateData_.spectateID = INVALID_PLAYER_ID;
 
@@ -598,6 +599,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             // Is called in here, which it shouldn't according to samp structure.
         }
 
+        spectateData_.spectating = spectating;
         NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
         togglePlayerSpectatingRPC.Enable = spectating;
         PacketHelper::send(togglePlayerSpectatingRPC, *this);
@@ -1409,6 +1411,12 @@ public:
 
     void spectatePlayer(IPlayer& target, PlayerSpectateMode mode) override
     {
+        // If player is not in spectator mode, set it.
+        // In SA:MP you have to call it manually, consider this a bug fix.
+        if (!spectateData_.spectating) {
+            setSpectating(true);
+        }
+
         // Set virtual world and interior to target's, consider this as a samp bug fix,
         // since in samp you have to do this manually yourself then call spectate functions
         setVirtualWorld(target.getVirtualWorld());
@@ -1429,6 +1437,12 @@ public:
 
     void spectateVehicle(IVehicle& target, PlayerSpectateMode mode) override
     {
+        // If player is not in spectator mode, set it.
+        // In SA:MP you have to call it manually, consider this a bug fix.
+        if (!spectateData_.spectating) {
+            setSpectating(true);
+        }
+
         // Set virtual world and interior to target's, consider this as a samp bug fix,
         // since in samp you have to do this manually yourself then call spectate functions
         setVirtualWorld(target.getVirtualWorld());
