@@ -19,22 +19,22 @@
 #define OMP_UNIX 1
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-    #define OMP_BUILD_PLATFORM OMP_WINDOWS
+#define OMP_BUILD_PLATFORM OMP_WINDOWS
 #else
-    #define OMP_BUILD_PLATFORM OMP_UNIX
+#define OMP_BUILD_PLATFORM OMP_UNIX
 #endif
 
 #ifdef __arm__
-    #define __ATTRIBUTE__(x) __attribute__(x)
-    #define __CDECL
+#define __ATTRIBUTE__(x) __attribute__(x)
+#define __CDECL
 #else
-    #if defined(_MSC_VER) && !defined(__clang__)
-        #define __ATTRIBUTE__(x)
-        #define __CDECL __cdecl
-    #else
-        #define __ATTRIBUTE__(x) __attribute__(x)
-        #define __CDECL __attribute__((__cdecl__))
-    #endif
+#if defined(_MSC_VER) && !defined(__clang__)
+#define __ATTRIBUTE__(x)
+#define __CDECL __cdecl
+#else
+#define __ATTRIBUTE__(x) __attribute__(x)
+#define __CDECL __attribute__((__cdecl__))
+#endif
 #endif
 
 /* Fix Ubuntu 18.04 build - possibly remove when EOL depending on which
