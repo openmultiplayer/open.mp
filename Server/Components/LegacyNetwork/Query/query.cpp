@@ -9,6 +9,10 @@
 #include "query.hpp"
 #include <cstring>
 
+const size_t MAX_ACCEPTABLE_HOSTNAME_SIZE = 63;
+const size_t MAX_ACCEPTABLE_LANGUAGE_SIZE = 39;
+const size_t MAX_ACCEPTABLE_GMTEXT_SIZE = 39;
+
 template <typename T>
 void writeToBuffer(char* output, size_t& offset, T value)
 {
@@ -84,9 +88,9 @@ void Query::buildServerInfoBuffer()
         return;
     }
 
-    uint32_t serverNameLength = serverName.length();
-    uint32_t gameModeNameLength = gameModeName.length();
-    uint32_t languageLength = language.length();
+    uint32_t serverNameLength = std::min(serverName.length(), MAX_ACCEPTABLE_HOSTNAME_SIZE);
+    uint32_t gameModeNameLength = std::min(gameModeName.length(), MAX_ACCEPTABLE_GMTEXT_SIZE);
+    uint32_t languageLength = std::min(language.length(), MAX_ACCEPTABLE_LANGUAGE_SIZE);
 
     serverInfoBufferLength = BASE_QUERY_SIZE + sizeof(uint8_t) + sizeof(uint16_t) + sizeof(uint16_t) + sizeof(serverNameLength) + serverNameLength + sizeof(gameModeNameLength) + gameModeNameLength + sizeof(languageLength) + languageLength;
     serverInfoBuffer.reset(new char[serverInfoBufferLength]);

@@ -436,6 +436,12 @@ public:
         return vehicle;
     }
 
+    void resetVehicle() override
+    {
+        vehicle = nullptr;
+        seat = SEAT_NONE;
+    }
+
     /// Get the player's seat
     /// Returns SEAT_NONE if they aren't in a vehicle.
     int getSeat() const override

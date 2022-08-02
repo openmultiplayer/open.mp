@@ -207,7 +207,7 @@ SCRIPT_API(GameTextForAll, bool(cell const* format, int time, int style))
     return true;
 }
 
-SCRIPT_API(GameTextForAllf, bool(cell const* format, int time, int style))
+SCRIPT_API(GameTextForAllf, bool(int time, int style, cell const* format))
 {
     auto msg = svprintf(format, GetAMX(), GetParams(), 3);
     if (msg.empty()) {

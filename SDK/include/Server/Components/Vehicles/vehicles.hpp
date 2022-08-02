@@ -420,6 +420,11 @@ struct IPlayerVehicleData : public IExtension {
     /// Returns nullptr if they aren't in a vehicle
     virtual IVehicle* getVehicle() = 0;
 
+    /// Reset player's vehicle value interally
+    /// *** DO NOT USE THIS IF YOU HAVE NO IDEA WHAT IT DOES
+    /// IT IS NOT FOR VEHICLE DESTRUCTION OR REMOVE PLAYER FROM ONE ***
+    virtual void resetVehicle() = 0;
+
     /// Get the player's seat
     /// Returns -1 if they aren't in a vehicle.
     virtual int getSeat() const = 0;

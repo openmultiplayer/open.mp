@@ -42,7 +42,7 @@ SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& obj
 
 SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& object, IPlayer& playerAttachedTo, Vector3 offset, Vector3 rotation))
 {
-    PawnManager::Get()->core->logLn(LogLevel::Warning, "This native was removed from sa-mp, we do not support it either (yet)");
+    PawnManager::Get()->core->logLn(LogLevel::Warning, "AttachPlayerObjectToPlayer was removed from sa-mp, we do not support it either (yet)");
     return false;
 }
 
