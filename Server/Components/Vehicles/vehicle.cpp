@@ -445,6 +445,11 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
         vehicleData->setVehicle(this, SeatID);
     }
 
+    if (SeatID == 0) {
+        driver = &player;
+        updateOccupied();
+    }
+
     putPlayerInVehicleRPC.VehicleID = poolID;
     putPlayerInVehicleRPC.SeatID = SeatID;
     PacketHelper::send(putPlayerInVehicleRPC, player);

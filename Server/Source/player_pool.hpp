@@ -671,7 +671,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 player.aimingData_.aspectRatio = (aimSync.AspectRatio * 1.f / 255) + 1.f;
 
                 // Fix for camera shaking hack, i think there are more bugged ids
-                if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u)
+                if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u || aimSync.CamMode == 49u)
                     aimSync.CamMode = 4u;
 
                 aimSync.PlayerID = player.poolID;
@@ -1614,16 +1614,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::OnPlayerClickPlayer::addEventHandler(core, &onPlayerClickPlayerRPCHandler);
         NetCode::RPC::ClientCheck::addEventHandler(core, &clientCheckResponseRPCHandler);
 
-        NetCode::Packet::PlayerFootSync::addEventHandler(core, &playerFootSyncHandler);
-        NetCode::Packet::PlayerSpectatorSync::addEventHandler(core, &playerSpectatorHandler);
-        NetCode::Packet::PlayerAimSync::addEventHandler(core, &playerAimSyncHandler);
-        NetCode::Packet::PlayerBulletSync::addEventHandler(core, &playerBulletSyncHandler);
-        NetCode::Packet::PlayerStatsSync::addEventHandler(core, &playerStatsSyncHandler);
-        NetCode::Packet::PlayerVehicleSync::addEventHandler(core, &playerVehicleSyncHandler);
-        NetCode::Packet::PlayerPassengerSync::addEventHandler(core, &playerPassengerSyncHandler);
-        NetCode::Packet::PlayerUnoccupiedSync::addEventHandler(core, &playerUnoccupiedSyncHandler);
-        NetCode::Packet::PlayerTrailerSync::addEventHandler(core, &playerTrailerSyncHandler);
-        NetCode::Packet::PlayerWeaponsUpdate::addEventHandler(core, &playerWeaponsUpdateHandler);
+        addSyncPacketsHandlers();
 
         vehiclesComponent = components.queryComponent<IVehiclesComponent>();
         objectsComponent = components.queryComponent<IObjectsComponent>();
@@ -1752,6 +1743,33 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         // TODO: sync time?
     }
 
+    void addSyncPacketsHandlers()
+    {
+        NetCode::Packet::PlayerFootSync::addEventHandler(core, &playerFootSyncHandler);
+        NetCode::Packet::PlayerSpectatorSync::addEventHandler(core, &playerSpectatorHandler);
+        NetCode::Packet::PlayerAimSync::addEventHandler(core, &playerAimSyncHandler);
+        NetCode::Packet::PlayerBulletSync::addEventHandler(core, &playerBulletSyncHandler);
+        NetCode::Packet::PlayerStatsSync::addEventHandler(core, &playerStatsSyncHandler);
+        NetCode::Packet::PlayerVehicleSync::addEventHandler(core, &playerVehicleSyncHandler);
+        NetCode::Packet::PlayerPassengerSync::addEventHandler(core, &playerPassengerSyncHandler);
+        NetCode::Packet::PlayerUnoccupiedSync::addEventHandler(core, &playerUnoccupiedSyncHandler);
+        NetCode::Packet::PlayerTrailerSync::addEventHandler(core, &playerTrailerSyncHandler);
+        NetCode::Packet::PlayerWeaponsUpdate::addEventHandler(core, &playerWeaponsUpdateHandler);
+    }
+
+    void removeSyncPacketsHandlers()
+    {
+        NetCode::Packet::PlayerFootSync::removeEventHandler(core, &playerFootSyncHandler);
+        NetCode::Packet::PlayerAimSync::removeEventHandler(core, &playerAimSyncHandler);
+        NetCode::Packet::PlayerBulletSync::removeEventHandler(core, &playerBulletSyncHandler);
+        NetCode::Packet::PlayerStatsSync::removeEventHandler(core, &playerStatsSyncHandler);
+        NetCode::Packet::PlayerVehicleSync::removeEventHandler(core, &playerVehicleSyncHandler);
+        NetCode::Packet::PlayerPassengerSync::removeEventHandler(core, &playerPassengerSyncHandler);
+        NetCode::Packet::PlayerUnoccupiedSync::removeEventHandler(core, &playerUnoccupiedSyncHandler);
+        NetCode::Packet::PlayerWeaponsUpdate::removeEventHandler(core, &playerWeaponsUpdateHandler);
+        NetCode::Packet::PlayerTrailerSync::removeEventHandler(core, &playerTrailerSyncHandler);
+    }
+
     ~PlayerPool()
     {
         playerUpdateDispatcher.removeEventHandler(this);
@@ -1769,15 +1787,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::RPC::OnPlayerClickPlayer::removeEventHandler(core, &onPlayerClickPlayerRPCHandler);
         NetCode::RPC::ClientCheck::removeEventHandler(core, &clientCheckResponseRPCHandler);
 
-        NetCode::Packet::PlayerFootSync::removeEventHandler(core, &playerFootSyncHandler);
-        NetCode::Packet::PlayerAimSync::removeEventHandler(core, &playerAimSyncHandler);
-        NetCode::Packet::PlayerBulletSync::removeEventHandler(core, &playerBulletSyncHandler);
-        NetCode::Packet::PlayerStatsSync::removeEventHandler(core, &playerStatsSyncHandler);
-        NetCode::Packet::PlayerVehicleSync::removeEventHandler(core, &playerVehicleSyncHandler);
-        NetCode::Packet::PlayerPassengerSync::removeEventHandler(core, &playerPassengerSyncHandler);
-        NetCode::Packet::PlayerUnoccupiedSync::removeEventHandler(core, &playerUnoccupiedSyncHandler);
-        NetCode::Packet::PlayerWeaponsUpdate::removeEventHandler(core, &playerWeaponsUpdateHandler);
-        NetCode::Packet::PlayerTrailerSync::removeEventHandler(core, &playerTrailerSyncHandler);
+        removeSyncPacketsHandlers();
+
         core.removeNetworkEventHandler(this);
         core.getEventDispatcher().removeEventHandler(this);
     }
