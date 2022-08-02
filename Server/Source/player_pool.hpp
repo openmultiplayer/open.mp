@@ -1743,7 +1743,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         // TODO: sync time?
     }
 
-    void addSyncPacketsHandlers() 
+    void addSyncPacketsHandlers()
     {
         NetCode::Packet::PlayerFootSync::addEventHandler(core, &playerFootSyncHandler);
         NetCode::Packet::PlayerSpectatorSync::addEventHandler(core, &playerSpectatorHandler);
@@ -1757,7 +1757,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         NetCode::Packet::PlayerWeaponsUpdate::addEventHandler(core, &playerWeaponsUpdateHandler);
     }
 
-    void removeSyncPacketsHandlers() 
+    void removeSyncPacketsHandlers()
     {
         NetCode::Packet::PlayerFootSync::removeEventHandler(core, &playerFootSyncHandler);
         NetCode::Packet::PlayerAimSync::removeEventHandler(core, &playerAimSyncHandler);

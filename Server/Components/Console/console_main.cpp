@@ -230,7 +230,7 @@ public:
                 // Split parameters.
                 StringView trimmedCommandName = trim(trimmedCommand.substr(0, split));
                 StringView trimmedCommandParams = trim(trimmedCommand.substr(split + 1));
-                
+
                 auto success = eventDispatcher.stopAtTrue(
                     [trimmedCommandName, trimmedCommandParams, sender](ConsoleEventHandler* handler) {
                         return handler->onConsoleText(trimmedCommandName, trimmedCommandParams, sender);
