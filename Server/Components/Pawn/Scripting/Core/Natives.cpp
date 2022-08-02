@@ -598,7 +598,7 @@ SCRIPT_API(SHA256_PassHash, int(std::string const& password, std::string const& 
         output = String(hash.data());
         return hash.size();
     }
-    output = "";
+    output = String("");
     return 0;
 }
 
