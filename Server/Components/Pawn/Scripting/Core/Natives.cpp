@@ -221,19 +221,55 @@ int getConfigOptionAsInt(std::string const& cvar)
 {
     IConfig* config = PawnManager::Get()->config;
     auto res = config->getNameFromAlias(cvar);
-    int* var = nullptr;
+    bool* v0 = nullptr;
+    int* v1 = nullptr;
     if (!res.second.empty()) {
         if (res.first) {
             PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
         }
-        var = config->getInt(res.second);
+        if (!(v1 = config->getInt(res.second))) {
+            v0 = config->getBool(res.second);
+        }
     } else {
-        var = config->getInt(cvar);
+        if (!(v1 = config->getInt(cvar))) {
+            v0 = config->getBool(cvar);
+        }
     }
-    if (var) {
-        return *var;
+    if (v1) {
+        return *v1;
+    } else if (v0) {
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "Boolean console variable \"%s\" retreived as integer.", cvar.c_str());
+        return *v0;
     } else {
         return 0;
+    }
+}
+
+bool getConfigOptionAsBool(std::string const& cvar)
+{
+    IConfig* config = PawnManager::Get()->config;
+    auto res = config->getNameFromAlias(cvar);
+    bool* v0 = nullptr;
+    int* v1 = nullptr;
+    if (!res.second.empty()) {
+        if (res.first) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
+        }
+        if (!(v0 = config->getBool(res.second))) {
+            v1 = config->getInt(res.second);
+        }
+    } else {
+        if (!(v0 = config->getBool(cvar))) {
+            v1 = config->getInt(cvar);
+        }
+    }
+    if (v0) {
+        return *v0;
+    } else if (v1) {
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "Integer console variable \"%s\" retreived as boolean.", cvar.c_str());
+        return *v1 != 0;
+    } else {
+        return false;
     }
 }
 
@@ -274,7 +310,7 @@ int getConfigOptionAsString(std::string const& cvar, OutputOnlyString& buffer)
 
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
 {
-    return getConfigOptionAsInt(cvar);
+    return getConfigOptionAsBool(cvar);
 }
 
 SCRIPT_API(GetConsoleVarAsInt, int(std::string const& cvar))
@@ -364,7 +400,7 @@ SCRIPT_API(GetServerTickRate, int())
 
 SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
 {
-    return getConfigOptionAsInt(cvar);
+    return getConfigOptionAsBool(cvar);
 }
 
 SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
