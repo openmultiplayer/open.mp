@@ -130,6 +130,10 @@ private:
                 return false;
             }
 
+            if (playerRequestClassPacket.Classid < 0 || playerRequestClassPacket.Classid > CLASS_POOL_SIZE - 1) {
+                return false;
+            }
+
             PlayerState state = peer.getState();
             if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)) {
                 return false;
