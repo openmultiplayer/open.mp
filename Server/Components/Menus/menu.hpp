@@ -186,7 +186,7 @@ public:
     {
         NetCode::RPC::PlayerInitMenu playerInitMenu;
         playerInitMenu.MenuID = poolID;
-        playerInitMenu.HasTwoColumns = columnCount >= 1;
+        playerInitMenu.HasTwoColumns = columnCount > 1;
         playerInitMenu.Title = title;
         playerInitMenu.Position = pos;
         playerInitMenu.Col1Width = column1Width;

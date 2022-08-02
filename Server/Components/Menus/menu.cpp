@@ -132,6 +132,10 @@ public:
 
     IMenu* create(StringView title, Vector2 position, uint8_t columns, float col1Width, float col2Width) override
     {
+        if (columns > 2) {
+            core->logLn(LogLevel::Error, "Invalid columns count %d used. Only menus with 2 columns can be created.", columns);
+            return nullptr;
+        }
         return storage.emplace(title, position, columns, col1Width, col2Width);
     }
 
