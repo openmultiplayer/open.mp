@@ -135,14 +135,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     {
         pos_ = Vector3(0.0f, 0.0f, 0.0f);
         state_ = PlayerState_None;
-        state_ = PlayerState_None;
         pos_ = Vector3(0.0f, 0.0f, 0.0f);
         cameraPos_ = Vector3(0.0f, 0.0f, 0.0f);
         cameraLookAt_ = Vector3(0.0f, 0.0f, 0.0f);
         virtualWorld_ = 0;
         score_ = 0;
         fightingStyle_ = PlayerFightingStyle_Normal;
-        state_ = PlayerState_None;
         controllable_ = true;
         clockToggled_ = false;
         keys_ = { 0u, 0, 0 };
@@ -163,6 +161,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         enableCameraTargeting_ = false;
         widescreen_ = 0;
         numStreamed_ = 0;
+        streamedFor_.clear();
+        othersColours_.clear();
         lastMarkerUpdate_ = TimePoint();
         cameraTargetPlayer_ = INVALID_PLAYER_ID;
         cameraTargetVehicle_ = INVALID_VEHICLE_ID;

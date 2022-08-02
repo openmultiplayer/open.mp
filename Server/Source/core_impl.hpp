@@ -1053,6 +1053,8 @@ public:
         NetCode::RPC::PlayerClose RPC;
         PacketHelper::broadcast(RPC, players);
         components.reset();
+        players.removeSyncPacketsHandlers();
+
         for (auto p : players.entries()) {
             Player* player = static_cast<Player*>(p);
             player->reset();
@@ -1061,6 +1063,7 @@ public:
 
     void reloadAll() override
     {
+        players.addSyncPacketsHandlers();
         reloading_ = false;
         for (auto p : players.entries()) {
             playerInit(*p);
