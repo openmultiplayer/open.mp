@@ -218,18 +218,27 @@ public:
             size_t split = trimmedCommand.find_first_of(' ');
             if (split == StringView::npos) {
                 // No parameters.
-                eventDispatcher.stopAtTrue(
+                auto success = eventDispatcher.stopAtTrue(
                     [trimmedCommand, sender](ConsoleEventHandler* handler) {
                         return handler->onConsoleText(trimmedCommand, "", sender);
                     });
+
+                if (!success) {
+                    sendMessage(sender, "Unknown command or variable: " + String(command));
+                }
             } else {
                 // Split parameters.
                 StringView trimmedCommandName = trim(trimmedCommand.substr(0, split));
                 StringView trimmedCommandParams = trim(trimmedCommand.substr(split + 1));
-                eventDispatcher.stopAtTrue(
+                
+                auto success = eventDispatcher.stopAtTrue(
                     [trimmedCommandName, trimmedCommandParams, sender](ConsoleEventHandler* handler) {
                         return handler->onConsoleText(trimmedCommandName, trimmedCommandParams, sender);
                     });
+
+                if (!success) {
+                    sendMessage(sender, "Unknown command or variable: " + String(command));
+                }
             }
         }
     }
