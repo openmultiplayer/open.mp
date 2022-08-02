@@ -24,12 +24,17 @@
 #define OMP_BUILD_PLATFORM OMP_UNIX
 #endif
 
+#ifdef __arm__
+#define __ATTRIBUTE__(x) __attribute__(x)
+#define __CDECL
+#else
 #if defined(_MSC_VER) && !defined(__clang__)
 #define __ATTRIBUTE__(x)
 #define __CDECL __cdecl
 #else
 #define __ATTRIBUTE__(x) __attribute__(x)
 #define __CDECL __attribute__((__cdecl__))
+#endif
 #endif
 
 /* Fix Ubuntu 18.04 build - possibly remove when EOL depending on which

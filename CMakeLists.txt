@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(open-mp LANGUAGES C CXX VERSION 0.0.1)
+project(open-mp LANGUAGES C CXX VERSION 0.0.8)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -60,8 +60,10 @@ elseif(UNIX)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=${CMAKE_CXX_STDLIB} -fvisibility=hidden -Wno-switch -Wno-unused-command-line-argument")
 	endif()
 
-	# Use strict intermediate floating-point precision
-	add_compile_options(-msse2 -mfpmath=sse)
+	if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
+		# Use strict intermediate floating-point precision
+		add_compile_options(-msse2 -mfpmath=sse)
+	endif()
 
 endif()
 

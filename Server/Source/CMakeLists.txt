@@ -41,6 +41,23 @@ else()
 	)
 endif()
 
+
+target_compile_definitions(Server PRIVATE
+	OMP_VERSION_MAJOR=${CMAKE_PROJECT_VERSION_MAJOR}
+	OMP_VERSION_MINOR=${CMAKE_PROJECT_VERSION_MINOR}
+	OMP_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
+)
+
+if(DEFINED ENV{OMP_BUILD_VERSION})
+	message("open.mp server build version: $ENV{OMP_BUILD_VERSION}")
+	target_compile_definitions(Server PUBLIC BUILD_NUMBER=$ENV{OMP_BUILD_VERSION})
+endif()
+
+if(DEFINED ENV{OMP_BUILD_COMMIT})
+	message("open.mp server build commit: $ENV{OMP_BUILD_COMMIT}")
+	target_compile_definitions(Server PUBLIC OMP_VERSION_HASH=$ENV{OMP_BUILD_COMMIT})
+endif()
+
 set_property(TARGET Server PROPERTY OUTPUT_NAME omp-server)
 set_property(TARGET Server PROPERTY FOLDER "Server")
 set_property(TARGET Server PROPERTY ENABLE_EXPORTS ON)

@@ -129,7 +129,7 @@ public:
 
     SemanticVersion componentVersion() const override
     {
-        return SemanticVersion(0, 0, 0, BUILD_NUMBER);
+        return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
     }
 
     struct PlayerSelectTextDrawEventHandler : public SingleNetworkInEventHandler {

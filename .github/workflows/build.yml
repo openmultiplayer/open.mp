@@ -36,6 +36,7 @@ jobs:
           clean: true
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -49,7 +50,10 @@ jobs:
           pip install conan
 
       - name: Generate build files
-        run: mkdir build && cd build && cmake .. -G "Visual Studio 16 2019" -A Win32 -T "ClangCL"
+        run: |
+          $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
+          $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
+          mkdir build && cd build && cmake .. -G "Visual Studio 16 2019" -A Win32 -T "ClangCL"
 
       - name: Build
         run: |
@@ -65,6 +69,7 @@ jobs:
           clean: true
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
 
       - name: Create Docker build image
         run: docker build -t open.mp/build:ubuntu-18.04 docker/build_ubuntu-18.04
@@ -76,6 +81,8 @@ jobs:
             -v $PWD/conan:/root/.conan \
             -w /code \
             -e CONFIG=RelWithDebInfo \
+            -e OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l) \
+            -e OMP_BUILD_COMMIT=$(git rev-parse HEAD) \
             open.mp/build:ubuntu-18.04
 
       - name: Create a snapshot
@@ -85,6 +92,46 @@ jobs:
           version=$(git describe --always --tags)
           folder_name="open.mp-${version}"
           archive_name="open.mp-linux-snapshot-${version}.tar.xz"
+          cd build/Output/*
+          mv Server "${folder_name}"
+          tar -cJvf "${archive_name}" "${folder_name}"
+          eval $(ssh-agent -s)
+          echo "${CI_PRIVATE_KEY}" | ssh-add -
+          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+
+  build-arm:
+    runs-on: [self-hosted, Linux, ARM]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+
+      - name: Generate build files
+        run: |
+          export CC=clang
+          export CXX=clang++
+          export OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l)
+          export OMP_BUILD_COMMIT=$(git rev-parse HEAD)
+          mkdir build && cd build && cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCROSS_BUILD=1 -DCROSS_BUILD_ARCH=armv7 ..
+
+      - name: Build
+        run: |
+          export CC=clang
+          export CXX=clang++
+          cd build
+          ninja
+
+      - name: Create a snapshot
+        env:
+          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+        run: |
+          version=$(git describe --always --tags)
+          folder_name="open.mp-${version}"
+          archive_name="open.mp-linux-snapshot-${version}-arm.tar.xz"
           cd build/Output/*
           mv Server "${folder_name}"
           tar -cJvf "${archive_name}" "${folder_name}"
