@@ -4,9 +4,6 @@
 [submodule "lib/pawn-natives"]
 	path = lib/pawn-natives
 	url = git@github.com:openmultiplayer/pawn-natives.git
-[submodule "lib/cmake-conan"]
-	path = lib/cmake-conan
-	url = git@github.com:openmultiplayer/cmake-conan.git
 [submodule "lib/RakNet"]
 	path = lib/RakNet
 	url = git@github.com:openmultiplayer/RakNet.git
