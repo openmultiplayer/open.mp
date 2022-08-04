@@ -102,8 +102,8 @@ GroupSourcesByFolder(ttmath)
 set_property(TARGET ttmath PROPERTY FOLDER "lib")
 
 # Conan third-party libraries
-include(cmake-conan/conan.cmake)
-include(cmake-conan/conan-omp.cmake)
+include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan.cmake)
+include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan-omp.cmake)
 
 # JSON
 # ----
