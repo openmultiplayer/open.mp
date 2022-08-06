@@ -35,7 +35,7 @@ static LARGE_INTEGER yo;
 static timeval initialTime;
 #endif
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#ifdef BUILD_WINDOWS
 #define LIBRARY_EXT ".dll"
 #define EXECUTABLE_EXT ".exe"
 #elif __APPLE__
@@ -49,7 +49,7 @@ static timeval initialTime;
 namespace utils {
 static bool initialized = false;
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#ifdef BUILD_WINDOWS
 // Returns the last Win32 error, in string format. Returns an empty string if there is no error.
 std::string GetLastErrorAsString()
 {
@@ -94,7 +94,7 @@ void RunProcess(StringView exe, StringView args, bool runInBackground = false)
         exePath.replace_extension(EXECUTABLE_EXT);
     }
 
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+#ifdef BUILD_WINDOWS
     ShellExecute(nullptr, "open", exePath.string().c_str(), args.data(), nullptr, FALSE);
 #else
     system(("./" + exePath.string() + " " + args.data() + (runInBackground ? " &" : "")).c_str());
@@ -105,7 +105,7 @@ void RunProcess(StringView exe, StringView args, bool runInBackground = false)
 unsigned GetTickCount()
 {
     if (initialized == false) {
-#ifdef _WIN32
+#ifdef BUILD_WINDOWS
         QueryPerformanceFrequency(&yo);
 #else
         gettimeofday(&initialTime, 0);
@@ -113,7 +113,7 @@ unsigned GetTickCount()
         initialized = true;
     }
 
-#ifdef _WIN32
+#ifdef BUILD_WINDOWS
     LARGE_INTEGER PerfVal;
 
     QueryPerformanceCounter(&PerfVal);
@@ -123,6 +123,20 @@ unsigned GetTickCount()
     struct timeval tp;
     gettimeofday(&tp, 0);
     return (tp.tv_sec - initialTime.tv_sec) * 1000 + (tp.tv_usec - initialTime.tv_usec) / 1000;
+#endif
+}
+
+std::filesystem::path GetExecutablePath()
+{
+#ifdef BUILD_WINDOWS
+    char path[4096] = { 0 };
+    if (GetModuleFileNameA(nullptr, path, sizeof(path))) {
+        return std::filesystem::canonical(path);
+    } else {
+        return std::filesystem::path();
+    }
+#else
+    return std::filesystem::canonical("/proc/self/exe");
 #endif
 }
 
