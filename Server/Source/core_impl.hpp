@@ -883,7 +883,8 @@ private:
             }
         }
 
-        printLn("Loaded %i component(s)", components.size());
+        std::string absPath = std::filesystem::canonical(path).string();
+        printLn("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
     }
 
     void playerInit(IPlayer& player)
