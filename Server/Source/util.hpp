@@ -126,7 +126,8 @@ unsigned GetTickCount()
 #endif
 }
 
-std::filesystem::path GetExecutablePath() {
+std::filesystem::path GetExecutablePath()
+{
 #ifdef BUILD_WINDOWS
     char path[4096] = { 0 };
     if (GetModuleFileNameA(nullptr, path, sizeof(path))) {
