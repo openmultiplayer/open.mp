@@ -128,8 +128,8 @@ unsigned GetTickCount()
 
 std::filesystem::path GetExecutablePath() {
 #ifdef BUILD_WINDOWS
-    char path[MAX_PATH] = { 0 };
-    if (GetModuleFileNameA(nullptr, path, MAX_PATH)) {
+    char path[4096] = { 0 };
+    if (GetModuleFileNameA(nullptr, path, sizeof(path))) {
         return std::filesystem::canonical(path);
     } else {
         return std::filesystem::path();
