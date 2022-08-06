@@ -1098,7 +1098,15 @@ public:
 
         players.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow);
 
+        // Try to load components from the current directory
         loadComponents("components");
+
+        // No components found in the current directory, try the executable path
+        if (components.size() == 0) {
+            auto componentsDir = utils::GetExecutablePath().remove_filename();
+            componentsDir /= std::filesystem::path("components");
+            loadComponents(componentsDir);
+        }
 
         if (cmd.count("default-config")) {
             // Generate config
