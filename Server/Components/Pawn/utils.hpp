@@ -70,6 +70,13 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
     }
     int maxlen = params[2];
 
+    if (maxlen < 0) {
+        char* fmt;
+        amx_StrParamChar(amx, params[3], fmt);
+        PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid output length (%d) given to `format`. fmt: \"%s\"", maxlen, fmt);
+        return 0;
+    }
+
     int param = 4;
     cell* cinput = amx_Address(amx, params[3]);
 
