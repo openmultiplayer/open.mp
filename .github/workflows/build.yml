@@ -55,12 +55,27 @@ jobs:
           $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
           mkdir build
           cd build
-          cmake .. -A Win32 -T "ClangCL"
+          cmake .. -G "Visual Studio 17 2022" -A Win32 -T "ClangCL"
 
       - name: Build
         run: |
           cd build
           cmake --build . --config RelWithDebInfo
+
+      - name: Create a snapshot
+        shell: bash
+        env:
+          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+        run: |
+          version=$(git describe --always --tags)
+          folder_name="open.mp-${version}"
+          archive_name="open.mp-win-snapshot-${version}.tar.xz"
+          cd build/Output/*
+          mv Server "${folder_name}"
+          tar -cJvf "${archive_name}" "${folder_name}"
+          eval $(ssh-agent -s)
+          echo "${CI_PRIVATE_KEY}" | ssh-add -
+          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
   build-linux:
     runs-on: [self-hosted, Linux, X64]
