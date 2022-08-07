@@ -53,12 +53,14 @@ jobs:
         run: |
           $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
           $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
-          mkdir build && cd build && cmake .. -G "Visual Studio 16 2019" -A Win32 -T "ClangCL"
+          mkdir build
+          cd build
+          cmake .. -A Win32 -T "ClangCL"
 
       - name: Build
         run: |
           cd build
-          cmake --build . --config Debug
+          cmake --build . --config RelWithDebInfo
 
   build-linux:
     runs-on: [self-hosted, Linux, X64]
