@@ -585,8 +585,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (allowedupdate) {
 
                 // Fix Night Vision & Thermal Goggles visual effect show for all streamed players.
-                if ((player.armedWeapon_ == PlayerWeapon_Night_Vis_Goggles || player.armedWeapon_ == PlayerWeapon_Thermal_Goggles) && (footSync.Keys & 4)) {
+                if ((player.armedWeapon_ == PlayerWeapon_Night_Vis_Goggles || player.armedWeapon_ == PlayerWeapon_Thermal_Goggles)) {
                     footSync.Keys &= ~4;
+                }
+
+                // Fix detonator crasher.
+                if (player.armedWeapon_ == PlayerWeapon_Bomb) {
+                    footSync.Keys &= ~128;
                 }
 
                 player.footSync_ = footSync;
