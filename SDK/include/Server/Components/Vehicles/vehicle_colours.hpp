@@ -664,7 +664,10 @@ inline void getRandomVehicleColour(int modelid, int& colour1, int& colour2, int&
         uint16_t start = vehicleIndexes[modelid - 400];
         uint16_t end = vehicleIndexes[modelid - 399];
 
-        uint16_t index = rand() % ((end - start) + 1) + start;
+        // Choosing a random index in [start, end) interval
+        // Ternary operator is used because rand() % 0 is an invalid operation.
+        uint16_t index = end == start ? start : (rand() % (end - start) + start);
+
         colour1 = vehiclePrimaryColours[index];
         colour2 = vehicleSecondaryColours[index];
         switch (modelid) {

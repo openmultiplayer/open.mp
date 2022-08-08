@@ -553,13 +553,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             uint32_t newKeys = footSync.Keys;
             switch (footSync.AdditionalKey) {
             case 1:
-                newKeys |= 65536; // KEY_YES
+                newKeys |= Key::YES;
                 break;
             case 2:
-                newKeys |= 131072; // KEY_NO
+                newKeys |= Key::NO;
                 break;
             case 3:
-                newKeys |= 262144; // KEY_CTRL_BACK
+                newKeys |= Key::CTRL_BACK;
                 break;
             }
 
@@ -585,8 +585,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             if (allowedupdate) {
 
                 // Fix Night Vision & Thermal Goggles visual effect show for all streamed players.
-                if ((player.armedWeapon_ == PlayerWeapon_Night_Vis_Goggles || player.armedWeapon_ == PlayerWeapon_Thermal_Goggles) && (footSync.Keys & 4)) {
-                    footSync.Keys &= ~4;
+                if ((player.armedWeapon_ == PlayerWeapon_Night_Vis_Goggles || player.armedWeapon_ == PlayerWeapon_Thermal_Goggles)) {
+                    footSync.Keys &= ~Key::FIRE;
+                }
+
+                // Fix detonator crasher.
+                if (player.armedWeapon_ == PlayerWeapon_Bomb) {
+                    footSync.Keys &= ~Key::AIM;
                 }
 
                 player.footSync_ = footSync;
@@ -880,13 +885,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             uint32_t newKeys = vehicleSync.Keys;
             switch (vehicleSync.AdditionalKey) {
             case 1:
-                newKeys |= 65536; // KEY_YES
+                newKeys |= Key::YES;
                 break;
             case 2:
-                newKeys |= 131072; // KEY_NO
+                newKeys |= Key::NO;
                 break;
             case 3:
-                newKeys |= 262144; // KEY_CTRL_BACK
+                newKeys |= Key::CTRL_BACK;
                 break;
             }
 
@@ -1107,19 +1112,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
             player.armedWeapon_ = passengerSync.WeaponID;
             player.pos_ = passengerSync.Position;
 
-            uint32_t newKeys;
+            uint32_t newKeys = passengerSync.Keys;
             switch (passengerSync.AdditionalKey) {
             case 1:
-                newKeys = passengerSync.Keys | 65536; // KEY_YES
+                newKeys |= Key::YES;
                 break;
             case 2:
-                newKeys = passengerSync.Keys | 131072; // KEY_NO
+                newKeys |= Key::NO;
                 break;
             case 3:
-                newKeys = passengerSync.Keys | 262144; // KEY_CTRL_BACK
-                break;
-            default:
-                newKeys = passengerSync.Keys;
+                newKeys |= Key::CTRL_BACK;
                 break;
             }
 
