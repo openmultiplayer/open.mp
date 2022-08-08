@@ -419,6 +419,8 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
         script.Call("OnGameModeInit", DefaultReturnValue_False);
         CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
+        // We're calling reloadAll after mode initialisation because we want to send
+        // updated settings to clients in PlayerInit RPC (such as available classes count)
         if (reloading_) {
             core->reloadAll();
             reloading_ = false;
