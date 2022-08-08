@@ -143,15 +143,14 @@ private:
             self.skipDefaultClassRequest = false;
 
             const PlayerClass* used_class = &defClass;
+            PlayerClassData* player_data = queryExtension<PlayerClassData>(peer);
 
             if (self.skipDefaultClassRequest) {
-                IPlayerClassData* player_data = queryExtension<IPlayerClassData>(peer);
                 if (player_data) {
-                    used_class = &player_data->getClass();
+                    used_class = &player_data->cls;
                 }
             } else if (Class* class_ptr = self.storage.get(playerRequestClassPacket.Classid)) {
                 used_class = &class_ptr->getClass();
-                PlayerClassData* player_data = queryExtension<PlayerClassData>(peer);
                 if (player_data) {
                     player_data->cls = *used_class;
                     player_data->default_ = false;
@@ -173,6 +172,11 @@ private:
 
                 // Same as notes above
                 int team = peer.getTeam();
+
+                // Same as notes above. SetSpawnInfo can be used in onPlayerRequestClass event.
+                if (player_data) {
+                    used_class = &player_data->getClass();
+                }
 
                 const WeaponSlots& weapons = used_class->weapons;
                 StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
