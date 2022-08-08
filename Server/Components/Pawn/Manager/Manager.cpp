@@ -416,13 +416,16 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     CheckNatives(script);
 
     if (isEntryScript) {
+        script.Call("OnGameModeInit", DefaultReturnValue_False);
+        CallInSides("OnGameModeInit", DefaultReturnValue_False);
+
+        // We're calling reloadAll after mode initialisation because we want to send
+        // updated settings to clients in PlayerInit RPC (such as available classes count)
         if (reloading_) {
             core->reloadAll();
             reloading_ = false;
             setRestartMS(12000);
         }
-        script.Call("OnGameModeInit", DefaultReturnValue_False);
-        CallInSides("OnGameModeInit", DefaultReturnValue_False);
 
         nextSleep_ = TimePoint::min();
         cell retval;
