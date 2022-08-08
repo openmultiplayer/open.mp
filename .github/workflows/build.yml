@@ -28,7 +28,7 @@ on:
 
 jobs:
   build-windows:
-    runs-on: [self-hosted, Windows]
+    runs-on: [self-hosted, new-runner]
 
     steps:
       - uses: actions/checkout@v3
@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Install CMake
-        uses: lukka/get-cmake@v3.19.0
+        uses: lukka/get-cmake@v.3.23.2
 
       - name: Install latest conan
         run: |
@@ -53,12 +53,29 @@ jobs:
         run: |
           $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
           $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
-          mkdir build && cd build && cmake .. -G "Visual Studio 16 2019" -A Win32 -T "ClangCL"
+          mkdir build
+          cd build
+          cmake .. -A Win32 -T "ClangCL"
 
       - name: Build
         run: |
           cd build
-          cmake --build . --config Debug
+          cmake --build . --config RelWithDebInfo
+
+      - name: Create a snapshot
+        shell: bash
+        env:
+          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+        run: |
+          version=$(git describe --always --tags)
+          folder_name="open.mp-${version}"
+          archive_name="open.mp-win-snapshot-${version}.tar.xz"
+          cd build/Output/*
+          mv Server "${folder_name}"
+          tar -cJvf "${archive_name}" "${folder_name}"
+          eval $(ssh-agent -s)
+          echo "${CI_PRIVATE_KEY}" | ssh-add -
+          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
   build-linux:
     runs-on: [self-hosted, Linux, X64]
