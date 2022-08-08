@@ -592,6 +592,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
             toSpawn_ = true;
             spectateData_.type = PlayerSpectateData::ESpectateType::None;
             spectateData_.spectateID = INVALID_PLAYER_ID;
+            setState(PlayerState_None, false);
         } else {
             // Do not set player's state to PlayerState_Spectating here, let the player
             // Spectate a player or vehicle then change the state.
