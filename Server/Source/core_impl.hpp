@@ -58,6 +58,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "password", String("") },
     { "port", 7777 },
     { "sleep", 5 },
+    { "use_dyn_ticks", true },
     { "website", String("open.mp") },
     // game
     { "game.allow_interior_weapons", true },
@@ -762,6 +763,7 @@ private:
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
+    bool useDynTicks;
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
@@ -1019,13 +1021,18 @@ public:
     void run()
     {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
+        useDynTicks = *config.getBool("use_dyn_ticks");
         TimePoint prev = Time::now();
         Microseconds sleepDuration = sleepTimer;
 
         while (run_) {
             const TimePoint now = Time::now();
             const Microseconds us = duration_cast<Microseconds>(now - prev);
-            sleepDuration += sleepTimer - us;
+
+            if (useDynTicks) {
+                sleepDuration += sleepTimer - us;
+            }
+
             prev = now;
 
             if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
