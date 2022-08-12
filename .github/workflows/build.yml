@@ -88,6 +88,11 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
+      - name: Set ownership
+        run: |
+          # this is to fix GIT not liking owner of the checkout dir
+          chown -R $(id -u):$(id -g) $PWD
+
       - name: Create Docker build image
         run: docker build -t open.mp/build:ubuntu-18.04 docker/build_ubuntu-18.04
 
