@@ -1019,11 +1019,13 @@ public:
     void run()
     {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
-
         TimePoint prev = Time::now();
+        Microseconds sleepDuration = sleepTimer;
+
         while (run_) {
             const TimePoint now = Time::now();
-            Microseconds us = duration_cast<Microseconds>(now - prev);
+            const Microseconds us = duration_cast<Microseconds>(now - prev);
+            sleepDuration += sleepTimer - us;
             prev = now;
 
             if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
@@ -1045,7 +1047,7 @@ public:
                 }
             }
 
-            std::this_thread::sleep_until(now + sleepTimer);
+            std::this_thread::sleep_until(now + sleepDuration);
         }
     }
 
