@@ -55,7 +55,7 @@ PawnScript::PawnScript(int id, std::string const& path, ICore* core)
             R"(
 While attempting to load a PAWN gamemode, a file-not-found error was
 encountered.  This could be caused by many things:
-                
+
  * The wrong filename was given.
  * The wrong gamemodes path was given.
  * The server was launched from a different directory, making relative paths
@@ -65,7 +65,7 @@ encountered.  This could be caused by many things:
  * `-l` or `-a` were used to compile, which output intermediate steps for
    inspecting, rather than a full script.
  * Anything else, really just check the file is at the path given.
-			)");
+)");
         break;
     case AMX_ERR_NONE:
         loaded_ = true;

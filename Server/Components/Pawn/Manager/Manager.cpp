@@ -208,7 +208,7 @@ bool PawnManager::Changemode(std::string const& name)
             R"(
 While attempting to load a PAWN gamemode, a file-not-found error was
 encountered.  This could be caused by many things:
-                
+
  * The wrong filename was given.
  * The wrong gamemodes path was given.
  * The server was launched from a different directory, making relative paths
@@ -513,7 +513,7 @@ bool PawnManager::Unload(std::string const& name)
 Array out-of-bounds encountered during `OnPlayerDisconnect` with reason `4`
 (script exit).  This may be due to old code assuming the highest possible reason
 is `2`.
-				)");
+)");
                     // Only show the error once, don't spam it.
                     once = false;
                     break;

@@ -80,7 +80,7 @@ private:
     Milliseconds restartDelay_;
     bool reloading_ = false;
     TimePoint nextSleep_;
-    bool unloadNextTick_ = true;
+    bool unloadNextTick_ = false;
     String nextScriptName_ = "";
 
     // To preserve main script `sleep` information between callbacks.
