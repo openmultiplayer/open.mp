@@ -30,6 +30,7 @@
 #include <Server/Components/Timers/timers.hpp>
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
 #include <sdk.hpp>
 
 #include <algorithm>
@@ -68,6 +69,7 @@ public:
     ITimersComponent* timers = nullptr;
     IVariablesComponent* vars = nullptr;
     IVehiclesComponent* vehicles = nullptr;
+    ICustomModelsComponent* models = nullptr;
     DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
     PawnPluginManager pluginManager;
 

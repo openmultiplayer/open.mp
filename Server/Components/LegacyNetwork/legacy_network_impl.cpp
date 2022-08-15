@@ -326,12 +326,14 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
     Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
-    // Allow only 0.3.7 client for now
-    if (version != LegacyClientVersion_037 || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_037)) {
+    static bool* allowDL = core->getConfig().getBool("network.allow_03DL_clients");
+    const bool is037 = version == LegacyClientVersion_037 && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_037));
+
+    if (!is037 && (!*allowDL || *allowDL && (version != LegacyClientVersion_03DL || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_03DL)))) {
         newConnectionResult.first = NewConnectionResult_VersionMismatch;
     } else {
         PeerRequestParams params;
-        params.version = version;
+        params.version = version == LegacyClientVersion_037 ? ClientVersion::ClientVersion_SAMP_037 : ClientVersion::ClientVersion_SAMP_03DL;
         params.versionName = versionName;
         params.name = name;
         params.bot = isNPC;
@@ -721,8 +723,11 @@ void RakNetLegacyNetwork::start()
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
 
+    const auto version = *config.getBool("network.allow_03DL_clients") ? "0.3DL R1" : "0.3.7-R2";
+     
     query.setCore(core);
-    query.setRuleValue("version", "0.3.7-R2");
+    query.setRuleValue("version", version);
+    query.setRuleValue("artwork", *config.getBool("artwork.enabled") ? "Yes" : "No");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 

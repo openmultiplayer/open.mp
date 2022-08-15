@@ -105,17 +105,32 @@ SCRIPT_API(print, bool(const std::string& text))
 
 SCRIPT_API(AddCharModel, bool(int baseid, int newid, std::string const& dff, std::string const& textureLibrary))
 {
-    throw pawn_natives::NotImplemented();
+    auto models = PawnManager::Get()->models;
+
+    if (!models)
+        return false;
+
+    return models->addCustomModel(ModelType::Skin, newid, baseid, dff, textureLibrary);
 }
 
 SCRIPT_API(AddSimpleModel, bool(int virtualWorld, int baseid, int newid, std::string const& dff, std::string const& textureLibrary))
 {
-    throw pawn_natives::NotImplemented();
+    auto models = PawnManager::Get()->models;
+
+    if (!models)
+        return false;
+
+    return models->addCustomModel(ModelType::Object, newid, baseid, dff, textureLibrary, virtualWorld);
 }
 
 SCRIPT_API(AddSimpleModelTimed, bool(int virtualWorld, int baseid, int newid, std::string const& dff, std::string const& textureLibrary, int timeOn, int timeOff))
 {
-    throw pawn_natives::NotImplemented();
+    auto models = PawnManager::Get()->models;
+
+    if (!models)
+        return false;
+
+    return models->addCustomModel(ModelType::Object, newid, baseid, dff, textureLibrary, virtualWorld, timeOn, timeOff);
 }
 
 SCRIPT_API(AllowAdminTeleport, bool(bool allow))

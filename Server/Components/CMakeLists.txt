@@ -40,3 +40,5 @@ if(BUILD_TEST_COMPONENTS)
 	add_subdirectory(DatabasesTest)
 	add_subdirectory(TestComponent)
 endif()
+
+add_subdirectory(CustomModels)
