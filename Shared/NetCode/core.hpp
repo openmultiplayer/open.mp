@@ -1413,6 +1413,20 @@ namespace RPC {
         {
         }
     };
+
+    struct SetPlayerVirtualWorld : NetworkPacketBase<48, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+        int32_t worldId;
+
+        bool read(NetworkBitStream& bs)
+        {
+            return false;
+        }
+
+        void write(NetworkBitStream& bs) const
+        {
+            bs.writeINT32(worldId);
+        }
+    };
 }
 
 namespace Packet {

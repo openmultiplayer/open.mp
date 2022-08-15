@@ -50,7 +50,7 @@ enum SecondarySyncUpdateType {
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     PlayerPool& pool_;
     PeerNetworkData netData_;
-    uint32_t version_;
+    ClientVersion version_;
     HybridString<16> versionName_;
     Vector3 pos_;
     Vector3 cameraPos_;
@@ -268,7 +268,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         }
     }
 
-    uint32_t getClientVersion() const override
+    ClientVersion getClientVersion() const override
     {
         return version_;
     }
@@ -530,9 +530,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         if (!send) {
             return;
         }
+
         NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
         setPlayerSkinRPC.PlayerID = poolID;
         setPlayerSkinRPC.Skin = skin;
+
         IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
         if (data) {
             IVehicle* vehicle = data->getVehicle();
@@ -1345,7 +1347,18 @@ public:
 
     void setVirtualWorld(int vw) override
     {
+        if (vw == virtualWorld_) {
+            return;
+        }
+
         virtualWorld_ = vw;
+
+        if (version_ == ClientVersion::ClientVersion_SAMP_037)
+            return;
+
+        NetCode::RPC::SetPlayerVirtualWorld setWorld;
+        setWorld.worldId = vw;
+        PacketHelper::send(setWorld, *this);
     }
 
     void setTransform(GTAQuat tm) override

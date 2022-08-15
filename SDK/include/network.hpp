@@ -39,7 +39,8 @@ enum OrderingChannel {
     OrderingChannel_SyncPacket,
     OrderingChannel_SyncRPC,
     OrderingChannel_Unordered,
-    OrderingChannel_Reliable
+    OrderingChannel_Reliable,
+    OrderingChannel_DownloadRequest
 };
 
 /// The network types
@@ -69,7 +70,7 @@ enum NewConnectionResult {
 };
 
 struct PeerRequestParams {
-    uint32_t version;
+    ClientVersion version;
     StringView versionName;
     bool bot;
     StringView name;
