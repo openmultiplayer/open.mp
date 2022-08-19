@@ -412,7 +412,6 @@ private:
     bool inModShop = false;
 
 public:
-
     PlayerVehicleData(IPlayer& player)
         : player(player)
     {

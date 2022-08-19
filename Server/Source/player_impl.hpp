@@ -164,7 +164,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
         streamedFor_.clear();
         streamedFor_.add(poolID, *this);
-        
+
         othersColours_.clear();
         lastMarkerUpdate_ = TimePoint();
         cameraTargetPlayer_ = INVALID_PLAYER_ID;
