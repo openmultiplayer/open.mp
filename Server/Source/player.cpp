@@ -37,7 +37,7 @@ EPlayerNameStatus Player::setName(StringView name)
         return EPlayerNameStatus::Taken;
     }
 
-    const auto& oldName = name_;
+    const auto oldName = name_;
     name_ = name;
     pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerNameChange, *this, oldName);
 
