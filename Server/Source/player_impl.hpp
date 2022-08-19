@@ -161,7 +161,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         enableCameraTargeting_ = false;
         widescreen_ = 0;
         numStreamed_ = 0;
+
         streamedFor_.clear();
+        streamedFor_.add(poolID, *this);
+        
         othersColours_.clear();
         lastMarkerUpdate_ = TimePoint();
         cameraTargetPlayer_ = INVALID_PLAYER_ID;
