@@ -5,10 +5,10 @@ project(OMP-SDK LANGUAGES C CXX VERSION 0.0.1)
 include(lib/cmake-conan/conan.cmake)
 include(lib/cmake-conan/conan-omp.cmake)
 
-conan_omp_add_lib(glm 0.9.9.8)
-conan_omp_add_lib(robin-hood-hashing 3.11.5)
-conan_omp_add_lib(span-lite 0.10.3)
-conan_omp_add_lib(string-view-lite 1.6.0)
+conan_omp_add_lib(glm 0.9.9.8 "")
+conan_omp_add_lib(robin-hood-hashing 3.11.5 "")
+conan_omp_add_lib(span-lite 0.10.3 "")
+conan_omp_add_lib(string-view-lite 1.6.0 "")
 
 add_library(OMP-SDK INTERFACE)
 

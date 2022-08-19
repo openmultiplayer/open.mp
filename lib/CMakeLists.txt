@@ -107,30 +107,30 @@ include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan-omp.cmake)
 
 # JSON
 # ----
-conan_omp_add_lib(nlohmann_json 3.9.1)
+conan_omp_add_lib(nlohmann_json 3.9.1 "")
 
 # cpp-httplib
 # ---
-conan_omp_add_lib(cpp-httplib 0.9.0)
+conan_omp_add_lib(cpp-httplib 0.9.0 "")
 
 # OpenSSL
 # -------
-conan_omp_add_lib(openssl 1.1.1k)
+conan_omp_add_lib(openssl 1.1.1k "")
 
 # cxxopts
 # ----
-conan_omp_add_lib(cxxopts 2.2.1)
+conan_omp_add_lib(cxxopts 2.2.1 "")
 
 if(BUILD_SQLITE_COMPONENT)
 	# SQLite 3
 	# --------
-	conan_omp_add_lib(sqlite3 3.36.0)
+	conan_omp_add_lib(sqlite3 3.36.0 "")
 endif()
 
 if(BUILD_UNICODE_COMPONENT)
 	# ICU
 	# ---
-	conan_omp_add_lib(icu 70.1)
+	conan_omp_add_lib(icu 70.1 "")
 
 	if(WIN32)
 		target_link_options(CONAN_PKG::icu INTERFACE "/SAFESEH:NO")
