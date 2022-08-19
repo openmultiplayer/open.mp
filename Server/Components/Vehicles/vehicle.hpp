@@ -405,12 +405,19 @@ public:
 
 class PlayerVehicleData final : public IPlayerVehicleData {
 private:
+    IPlayer& player;
     Vehicle* vehicle = nullptr;
     int seat = SEAT_NONE;
     int numStreamed = 0;
     bool inModShop = false;
 
 public:
+
+    PlayerVehicleData(IPlayer& player)
+        : player(player)
+    {
+    }
+
     void setNumStreamed(int num)
     {
         numStreamed = num;
@@ -438,6 +445,10 @@ public:
 
     void resetVehicle() override
     {
+        // Remove player from vehicle occupants lists.
+        if (vehicle) {
+            vehicle->unoccupy(player);
+        }
         vehicle = nullptr;
         seat = SEAT_NONE;
     }
