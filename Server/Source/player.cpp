@@ -36,9 +36,10 @@ EPlayerNameStatus Player::setName(StringView name)
     if (pool_.isNameTaken(name, this)) {
         return EPlayerNameStatus::Taken;
     }
-    pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerNameChange, *this, name_);
 
+    const auto& oldName = name_;
     name_ = name;
+    pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerNameChange, *this, oldName);
 
     NetCode::RPC::SetPlayerName setPlayerNameRPC;
     setPlayerNameRPC.PlayerID = poolID;
