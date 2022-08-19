@@ -314,7 +314,7 @@ public:
 
     void onPlayerConnect(IPlayer& player) override
     {
-        player.addExtension(new PlayerVehicleData(), true);
+        player.addExtension(new PlayerVehicleData(player), true);
     }
 
     StringView componentName() const override
