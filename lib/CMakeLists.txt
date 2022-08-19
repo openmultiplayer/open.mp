@@ -124,7 +124,7 @@ conan_omp_add_lib(cxxopts 2.2.1 "")
 if(BUILD_SQLITE_COMPONENT)
 	# SQLite 3
 	# --------
-	conan_omp_add_lib(sqlite3 3.36.0 "")
+	conan_omp_add_lib(sqlite3 3.36.0 sqlite3:enable_math_functions=False)
 endif()
 
 if(BUILD_UNICODE_COMPONENT)
