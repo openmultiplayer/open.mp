@@ -454,6 +454,7 @@ private:
     MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, 1, OBJECT_POOL_SIZE> storage;
     bool inObjectSelection_;
     bool inObjectEdit_;
+    bool streamedGlobalObjects_;
 
 public:
     // TODO: const.
@@ -471,6 +472,7 @@ public:
     PlayerObjectData(ObjectComponent& component, IPlayer& player)
         : component_(component)
         , player_(player)
+        , streamedGlobalObjects_(false)
     {
     }
 
@@ -580,6 +582,7 @@ public:
     {
         inObjectEdit_ = false;
         inObjectSelection_ = false;
+        streamedGlobalObjects_ = false;
         slotsOccupied_.reset();
         storage.clear();
     }
@@ -685,5 +688,10 @@ public:
         NetCode::RPC::PlayerBeginAttachedObjectEdit playerBeginAttachedObjectEditRPC;
         playerBeginAttachedObjectEditRPC.Index = index;
         PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
+    }
+
+    inline bool& streamedGlobalObjects() 
+    {
+        return streamedGlobalObjects_;
     }
 };

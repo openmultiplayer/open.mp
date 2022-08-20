@@ -29,13 +29,15 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
-    player.addExtension(new PlayerObjectData(*this, player), true);
+    auto player_data = new PlayerObjectData(*this, player);
+    player.addExtension(player_data, true);
 
     static bool artwork = *core->getConfig().getBool("artwork.enabled");
 
     if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
         return;
 
+    player_data->streamedGlobalObjects() = true;
     for (IObject* o : storage) {
         Object* obj = static_cast<Object*>(o);
         obj->createForPlayer(player);
@@ -44,7 +46,18 @@ void ObjectComponent::onPlayerConnect(IPlayer& player)
 
 void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
 {
-    // Restream objects with custom models.
+    auto player_data = queryExtension<PlayerObjectData>(player);
+
+    if (!player_data) {
+        return;
+    }
+
+    auto& streamed = player_data->streamedGlobalObjects();
+    if (streamed) {
+        return;
+    }
+
+    streamed = true;
     for (IObject* o : storage) {
         Object* obj = static_cast<Object*>(o);
         obj->createForPlayer(player);
