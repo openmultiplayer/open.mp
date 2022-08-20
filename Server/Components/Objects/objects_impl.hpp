@@ -213,14 +213,14 @@ public:
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
-        
-        compatModeEnabled = (!*core->getConfig().getBool("artwork.enabled") || (*core->getConfig().getBool("artwork.enabled") && *core->getConfig().getBool("network.allow_037_clients")));
+
+        compatModeEnabled = (!*core->getConfig().getBool("artwork.enable") || (*core->getConfig().getBool("artwork.enable") && *core->getConfig().getBool("network.allow_037_clients")));
     }
 
     void onInit(IComponentList* components) override
     {
         models = components->queryComponent<ICustomModelsComponent>();
-        
+
         if (models) {
             models->getEventDispatcher().addEventHandler(this);
         }
@@ -690,7 +690,7 @@ public:
         PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
     }
 
-    inline bool& streamedGlobalObjects() 
+    inline bool& streamedGlobalObjects()
     {
         return streamedGlobalObjects_;
     }
