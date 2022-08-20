@@ -270,7 +270,7 @@ public:
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
     {
         if (defaults) {
-            config.setBool("artwork.enabled", enabled);
+            config.setBool("artwork.enable", enabled);
             config.setString("artwork.cdn", cdn);
             config.setString("artwork.models_path", modelsPath);
         }
@@ -282,7 +282,7 @@ public:
         players = &core->getPlayers();
         players->getEventDispatcher().addEventHandler(this);
 
-        enabled = *core->getConfig().getBool("artwork.enabled");
+        enabled = *core->getConfig().getBool("artwork.enable");
         modelsPath = String(core->getConfig().getString("artwork.models_path"));
         cdn = String(core->getConfig().getString("artwork.cdn"));
 
@@ -290,11 +290,11 @@ public:
         core->addPerRPCInEventHandler<RPC_RequestDFF>(&requestDownloadLinkHandler);
         core->addPerRPCInEventHandler<RPC_FinishedDownload>(&finishDownloadHandler);
 
-         if (!enabled)
+        if (!enabled)
             return;
 
-        if (!std::filesystem::exists(modelsPath.c_str()) || !std::filesystem::is_directory(modelsPath.c_str())) {
-            std::filesystem::create_directory(modelsPath.c_str());
+        if (!std::filesystem::exists(modelsPath) || !std::filesystem::is_directory(modelsPath)) {
+            std::filesystem::create_directory(modelsPath);
         }
 
         std::ifstream artconfig { modelsPath + "/artconfig.txt" };

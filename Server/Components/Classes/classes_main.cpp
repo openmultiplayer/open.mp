@@ -206,6 +206,16 @@ private:
                 playerRequestClassResponse.Weapons = weaponIDsArray;
                 playerRequestClassResponse.Ammos = weaponAmmoArray;
                 PacketHelper::send(playerRequestClassResponse, peer);
+
+                // Fix custom skin not being displayed in class selection first time.
+                if (peer.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL) {
+                    NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
+                    setPlayerSkinRPC.isDL = true;
+                    setPlayerSkinRPC.PlayerID = peer.getID();
+                    setPlayerSkinRPC.Skin = skin;
+                    setPlayerSkinRPC.CustomSkin = custom_skin;
+                    PacketHelper::send(setPlayerSkinRPC, peer);
+                }
             } else {
                 StaticArray<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };

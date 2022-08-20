@@ -121,8 +121,8 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "stream_distance", "network.stream_radius" },
     { "stream_rate", "network.stream_rate" },
     { "maxnpc", "max_bots" },
-    { "lagcompmode", "game.use_lag_compensation" }, 
-    { "useartwork", "artwork.enabled" },
+    { "lagcompmode", "game.use_lag_compensation" },
+    { "useartwork", "artwork.enable" },
     { "artpath", "artwork.models_path" }
 };
 

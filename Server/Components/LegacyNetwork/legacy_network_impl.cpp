@@ -327,7 +327,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
     Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
     const bool isDL = version == LegacyClientVersion_03DL && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_03DL));
-    static bool* artwork = core->getConfig().getBool("artwork.enabled");
+    static bool* artwork = core->getConfig().getBool("artwork.enable");
     static bool* allow037 = core->getConfig().getBool("network.allow_037_clients");
 
     if (isDL || ((!*artwork || (*artwork && *allow037)) && (version == LegacyClientVersion_037 && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_037))))) {
@@ -723,7 +723,7 @@ void RakNetLegacyNetwork::start()
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
-    bool artwork = *config.getBool("artwork.enabled");
+    bool artwork = *config.getBool("artwork.enable");
     bool allow037 = *config.getBool("network.allow_037_clients");
 
     query.setCore(core);

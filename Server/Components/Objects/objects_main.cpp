@@ -32,7 +32,7 @@ void ObjectComponent::onPlayerConnect(IPlayer& player)
     auto player_data = new PlayerObjectData(*this, player);
     player.addExtension(player_data, true);
 
-    static bool artwork = *core->getConfig().getBool("artwork.enabled");
+    static bool artwork = *core->getConfig().getBool("artwork.enable");
 
     if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
         return;
