@@ -10,9 +10,10 @@
 
 #include "object.hpp"
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler, public PoolEventHandler<IPlayer> {
+class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler, public PoolEventHandler<IPlayer>, public PlayerModelsEventHandler {
 private:
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;
@@ -22,6 +23,9 @@ private:
     FlatPtrHashSet<PlayerObject> processedPlayerObjects;
     FlatPtrHashSet<Object> processedObjects;
     bool defCameraCollision = true;
+
+    ICustomModelsComponent* models = nullptr;
+    bool compatModeEnabled = false;
 
     struct PlayerSelectObjectEventHandler : public SingleNetworkInEventHandler {
         ObjectComponent& self;
@@ -209,6 +213,25 @@ public:
         NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
+        
+        compatModeEnabled = (!*core->getConfig().getBool("artwork.enabled") || (*core->getConfig().getBool("artwork.enabled") && *core->getConfig().getBool("network.allow_037_clients")));
+    }
+
+    void onInit(IComponentList* components) override
+    {
+        models = components->queryComponent<ICustomModelsComponent>();
+        
+        if (models) {
+            models->getEventDispatcher().addEventHandler(this);
+        }
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (component == models) {
+            models->getEventDispatcher().removeEventHandler(this);
+            models = nullptr;
+        }
     }
 
     ~ObjectComponent()
@@ -216,6 +239,11 @@ public:
         processedPlayerObjects.clear();
         processedObjects.clear();
         storage.clear();
+
+        if (models) {
+            models->getEventDispatcher().removeEventHandler(this);
+            models = nullptr;
+        }
 
         if (core) {
             core->getEventDispatcher().removeEventHandler(this);
@@ -258,6 +286,12 @@ public:
             }
 
             freeIdx = storage.findFreeIndex(freeIdx + 1);
+        }
+
+        // The server accepts connections from 0.3.7 clients.
+        // We can't create more than 1000 objects.
+        if (compatModeEnabled && freeIdx >= OBJECT_POOL_SIZE_037) {
+            return nullptr;
         }
 
         if (freeIdx < storage.Lower) {
@@ -406,6 +440,9 @@ public:
         isPlayerObject.fill(0);
         defCameraCollision = true;
     }
+
+    bool is037CompatModeEnabled() const { return compatModeEnabled; }
+    void onPlayerFinishedDownloading(IPlayer& player) override;
 };
 
 class PlayerObjectData final : public IPlayerObjectData {
@@ -458,6 +495,12 @@ public:
 
         if (freeIdx < storage.Lower) {
             // No free index
+            return nullptr;
+        }
+
+        // The server accepts connections from 0.3.7 clients.
+        // We can't create more than 1000 objects.
+        if (component_.is037CompatModeEnabled() && freeIdx >= OBJECT_POOL_SIZE_037) {
             return nullptr;
         }
 

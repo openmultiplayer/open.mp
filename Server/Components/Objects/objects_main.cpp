@@ -31,6 +31,20 @@ void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
     player.addExtension(new PlayerObjectData(*this, player), true);
 
+    static bool artwork = *core->getConfig().getBool("artwork.enabled");
+
+    if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
+        return;
+
+    for (IObject* o : storage) {
+        Object* obj = static_cast<Object*>(o);
+        obj->createForPlayer(player);
+    }
+}
+
+void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
+{
+    // Restream objects with custom models.
     for (IObject* o : storage) {
         Object* obj = static_cast<Object*>(o);
         obj->createForPlayer(player);

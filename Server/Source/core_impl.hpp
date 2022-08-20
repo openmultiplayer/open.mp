@@ -115,7 +115,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "network.stream_rate", 1000 },
     { "network.time_sync_rate", 30000 },
     { "network.use_lan_mode", false },
-    { "network.allow_03DL_clients", true },
+    { "network.allow_037_clients", true },
     // rcon
     { "rcon.allow_teleport", false },
     { "rcon.enable", false },
@@ -892,10 +892,7 @@ private:
 
     void playerInit(IPlayer& player)
     {
-
-        if (models != nullptr) {
-            models->sendModels(player);
-        }
+        players.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClientInit, player);
 
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = *EnableZoneNames;

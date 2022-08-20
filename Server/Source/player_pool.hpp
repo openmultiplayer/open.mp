@@ -21,6 +21,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     IVehiclesComponent* vehiclesComponent = nullptr;
     IObjectsComponent* objectsComponent = nullptr;
     IActorsComponent* actorsComponent = nullptr;
+    ICustomModelsComponent* modelsComponent = nullptr;
     StreamConfigHelper streamConfigHelper;
     int* markersShow;
     int* markersUpdateRate;
@@ -330,7 +331,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                     const PlayerClass& cls = classData->getClass();
                     player.pos_ = cls.spawn;
                     player.rot_ = GTAQuat(0.f, 0.f, cls.angle) * player.rotTransform_;
-                    player.skin_ = cls.skin;
+                    player.setSkin(cls.skin, false);
 
                     const WeaponSlots& weapons = cls.weapons;
                     const size_t weapons_size = weapons.size();
@@ -1621,6 +1622,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         vehiclesComponent = components.queryComponent<IVehiclesComponent>();
         objectsComponent = components.queryComponent<IObjectsComponent>();
         actorsComponent = components.queryComponent<IActorsComponent>();
+        modelsComponent = components.queryComponent<ICustomModelsComponent>();
     }
 
     bool onUpdate(IPlayer& p, TimePoint now) override

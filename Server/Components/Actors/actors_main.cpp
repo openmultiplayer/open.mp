@@ -15,6 +15,7 @@ private:
     DefaultEventDispatcher<ActorEventHandler> eventDispatcher;
     IPlayerPool* players;
     StreamConfigHelper streamConfigHelper;
+    ICustomModelsComponent* modelsComponent = nullptr;
 
     struct PlayerDamageActorEventHandler : public SingleNetworkInEventHandler {
         ActorsComponent& self;
@@ -84,6 +85,18 @@ public:
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
+    void onInit(IComponentList* components) override 
+    {
+        modelsComponent = components->queryComponent<ICustomModelsComponent>();
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (component == modelsComponent) {
+            modelsComponent = nullptr;
+        }
+    }
+
     ~ActorsComponent()
     {
         if (core) {
@@ -109,7 +122,7 @@ public:
 
     IActor* create(int skin, Vector3 pos, float angle) override
     {
-        return storage.emplace(skin, pos, angle, core->getConfig().getBool("game.use_all_animations"));
+        return storage.emplace(skin, pos, angle, core->getConfig().getBool("game.use_all_animations"), modelsComponent);
     }
 
     void free() override

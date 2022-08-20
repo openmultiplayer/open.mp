@@ -6,7 +6,8 @@ constexpr int MAX_SEATS = 4;
 constexpr int PLAYER_POOL_SIZE = 1000;
 constexpr int VEHICLE_POOL_SIZE = 2000;
 constexpr int CLASS_POOL_SIZE = 320;
-constexpr int OBJECT_POOL_SIZE = 1000;
+constexpr int OBJECT_POOL_SIZE = 2000;
+constexpr int OBJECT_POOL_SIZE_037 = 1000;
 constexpr int MAX_WEAPON_SLOTS = 13;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
@@ -93,5 +94,4 @@ enum class ClientVersion: uint8_t {
     ClientVersion_openmp
 };
 
-constexpr uint16_t MAX_CUSTOM_MODELS = 29000u + 10000u;  /* 29000 objects + 10000 skins */
 constexpr uint16_t INVALID_MODEL_ID = 65535u;

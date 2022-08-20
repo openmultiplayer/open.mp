@@ -11,7 +11,7 @@
 #include <sdk.hpp>
 #include <netcode.hpp>
 #include <httplib/httplib.h>
-
+#include <filesystem>
 #include "crc32.hpp"
 
 using namespace Impl;
@@ -19,6 +19,11 @@ using namespace Impl;
 constexpr uint8_t RPC_FinishedDownload = 184u;
 constexpr uint8_t RPC_RequestTXD = 182u;
 constexpr uint8_t RPC_RequestDFF = 181u;
+
+enum class ModelDownloadType : uint8_t {
+    DFF = 1,
+    TXD = 2
+};
 
 struct ModelFile {
     String name;
@@ -32,7 +37,7 @@ struct ModelFile {
     }
 };
 
-class ModelInfo final : public PoolIDProvider, public NoCopy {
+class ModelInfo final {
 private:
     ModelType type_;
     int32_t baseId_;
@@ -56,14 +61,11 @@ public:
     {
     }
 
-    const uint32_t getID() { return poolID; }
-
     const ModelFile& getTXD() { return txd_; }
     const ModelFile& getDFF() { return dff_; }
 
     void write(NetCode::RPC::ModelRequest& modelInfo) const
     {
-        modelInfo.poolID = poolID;
         modelInfo.type = static_cast<uint8_t>(type_);
         modelInfo.virtualWorld = worldId_;
         modelInfo.baseId = baseId_;
@@ -93,6 +95,15 @@ public:
         , port_(port)
         , url("http://" + address_ + ':' + std::to_string(port) + '/')
     {
+
+        svr.set_pre_routing_handler([&](const auto& req, auto& res) {
+            if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3") {
+                res.status = 401;
+                return httplib::Server::HandlerResponse::Handled;
+            }
+            return httplib::Server::HandlerResponse::Unhandled;
+        });
+
         if (svr.set_mount_point("/", modelsPath.data())) {
             thread = std::thread(&WebServer::run, this);
             thread.detach();
@@ -131,21 +142,48 @@ public:
     }
 };
 
+class PlayerCustomModelsData final : public IPlayerCustomModelsData {
+private:
+    uint32_t skin_ = 0;
+
+public:
+    uint32_t getCustomSkin() const
+    {
+        return skin_;
+    }
+
+    void setCustomSkin(const uint32_t skinModel)
+    {
+        skin_ = skinModel;
+    }
+
+    void reset()
+    {
+        skin_ = 0;
+    }
+
+    void freeExtension()
+    {
+        delete this;
+    }
+};
+
 class CustomModelsComponent final : public ICustomModelsComponent, public PlayerEventHandler {
 private:
-
     ICore* core = nullptr;
     IPlayerPool* players = nullptr;
 
     WebServer* webServer = nullptr;
 
-    DynamicPoolStorage<ModelInfo, ModelInfo, 0, MAX_CUSTOM_MODELS> storage;
+    std::vector<ModelInfo*> storage;
     FlatHashMap<uint32_t, uint16_t> baseModels;
     FlatHashMap<uint32_t, std::pair<ModelDownloadType, ModelInfo*>> checksums;
 
     bool enabled = true;
     String modelsPath = "models";
     String cdn = "";
+
+    DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
     struct RequestDownloadLinkEventHandler : public SingleNetworkInEventHandler {
         CustomModelsComponent& self;
@@ -167,8 +205,8 @@ private:
             if (itr == self.checksums.end())
                 return true;
 
-            auto& [type, model] = itr->second;
-            const auto file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
+            const auto& [type, model] = itr->second;
+            const auto& file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
 
             NetCode::RPC::ModelUrl urlRPC(self.getWebUrl().data() + file.name, static_cast<uint8_t>(type), file.checksum);
             PacketHelper::send(urlRPC, peer);
@@ -178,9 +216,18 @@ private:
     } requestDownloadLinkHandler;
 
     struct FinishDownloadHandler : public SingleNetworkInEventHandler {
+        CustomModelsComponent& self;
+
+        FinishDownloadHandler(CustomModelsComponent& component)
+            : self(component)
+        {
+        }
+
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
-            // TODO: dispatch event
+            self.eventDispatcher.dispatch(
+                &PlayerModelsEventHandler::onPlayerFinishedDownloading,
+                peer);
 
             NetCode::RPC::DownloadCompleted dlcompleted;
             PacketHelper::send(dlcompleted, peer);
@@ -201,6 +248,7 @@ public:
 
     CustomModelsComponent()
         : requestDownloadLinkHandler(*this)
+        , finishDownloadHandler(*this)
     {
     }
 
@@ -209,6 +257,7 @@ public:
         core->removePerRPCInEventHandler<RPC_RequestTXD>(&requestDownloadLinkHandler);
         core->removePerRPCInEventHandler<RPC_RequestDFF>(&requestDownloadLinkHandler);
         core->removePerRPCInEventHandler<RPC_FinishedDownload>(&finishDownloadHandler);
+        players->getEventDispatcher().removeEventHandler(this);
 
         if (webServer)
             delete webServer;
@@ -227,19 +276,20 @@ public:
     {
         this->core = core;
         players = &core->getPlayers();
+        players->getEventDispatcher().addEventHandler(this);
 
         enabled = *core->getConfig().getBool("artwork.enabled");
         modelsPath = String(core->getConfig().getString("artwork.models_path"));
         cdn = String(core->getConfig().getString("artwork.cdn"));
-        
+
         core->addPerRPCInEventHandler<RPC_RequestTXD>(&requestDownloadLinkHandler);
         core->addPerRPCInEventHandler<RPC_RequestDFF>(&requestDownloadLinkHandler);
         core->addPerRPCInEventHandler<RPC_FinishedDownload>(&finishDownloadHandler);
 
         if (!cdn.empty()) {
-            if (cdn.back() != '/')
+            if (cdn.back() != '/') {
                 cdn.push_back('/');
-
+            }
             core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
             return;
         }
@@ -247,12 +297,16 @@ public:
         if (!enabled)
             return;
 
+        if (!std::filesystem::exists(modelsPath.c_str()) || !std::filesystem::is_directory(modelsPath.c_str())) {
+            std::filesystem::create_directory(modelsPath.c_str());
+        }
+
         webServer = new WebServer(core, modelsPath, core->getConfig().getString("bind"), *core->getConfig().getInt("port"));
     }
 
     void onReady() override
     {
-        if (!enabled)
+        if (!enabled || !webServer)
             return;
 
         if (webServer->is_running()) {
@@ -269,11 +323,12 @@ public:
 
     void reset() override
     {
+        for (auto ptr : storage) {
+            delete ptr;
+        }
         storage.clear();
         checksums.clear();
         baseModels.clear();
-
-        // TODO: Check if we need to send stop download RPC to connected players.
     }
 
     StringView getWebUrl()
@@ -313,19 +368,20 @@ public:
         }
 
         if (!txd.size) {
-            core->logLn(LogLevel::Error, "[artwork:error] Bad file: %.*s", PRINT_VIEW(txdName));
+            core->logLn(LogLevel::Error, "[artwork:error] Cannot add custom model. %.*s doesn't exist", PRINT_VIEW(txdName));
             return false;
         }
 
         core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
         core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
 
-        auto model = storage.emplace(type, id, baseId, dff, txd, virtualWorld, timeOn, timeOff);
+        auto model = storage.emplace_back(new ModelInfo(type, id, baseId, dff, txd, virtualWorld, timeOn, timeOff));
 
         if (!model)
             return false;
 
-        NetCode::RPC::ModelRequest modelInfo(storage.entries().size());
+        auto size = storage.size() - 1;
+        NetCode::RPC::ModelRequest modelInfo(size - 1, size);
         model->write(modelInfo);
 
         for (IPlayer* player : players->entries()) {
@@ -335,6 +391,7 @@ public:
             PacketHelper::send(modelInfo, *player);
         }
 
+        storage.emplace_back(model);
         baseModels.emplace(id, baseId);
         checksums.emplace(dff.checksum, std::make_pair(ModelDownloadType::DFF, model));
         checksums.emplace(txd.checksum, std::make_pair(ModelDownloadType::TXD, model));
@@ -355,17 +412,49 @@ public:
         return itr->second;
     }
 
-    void sendModels(IPlayer& player) override
+    StringView getModelNameFromChecksum(uint32_t checksum) const override
+    {
+        const auto& itr = checksums.find(checksum);
+
+        if (itr == checksums.end())
+            return StringView();
+
+        const auto& [type, model] = itr->second;
+        const auto& file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
+        return file.name;
+    }
+
+    void onPlayerClientInit(IPlayer& player) override
     {
         if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL)
             return;
 
-        const auto modelsCount = storage.entries().size();
-        for (ModelInfo* model : storage.entries()) {
-            NetCode::RPC::ModelRequest modelInfo(modelsCount);
-            model->write(modelInfo);
+        const auto modelsCount = storage.size();
+        for (auto i = 0; i != modelsCount; ++i) {
+            NetCode::RPC::ModelRequest modelInfo(i, modelsCount);
+            storage[i]->write(modelInfo);
             PacketHelper::send(modelInfo, player);
         }
+
+        // If client reconnected (lost connection to the server) let's force it to download files if there are any.
+        NetCode::RPC::SetPlayerVirtualWorld setWorld;
+        setWorld.worldId = player.getVirtualWorld() + 1;
+        PacketHelper::send(setWorld, player);
+        setWorld.worldId--;
+        PacketHelper::send(setWorld, player);
+    }
+
+    IEventDispatcher<PlayerModelsEventHandler>& getEventDispatcher() override
+    {
+        return eventDispatcher;
+    }
+
+    void onPlayerConnect(IPlayer& player) override
+    {
+        player.addExtension(new PlayerCustomModelsData(), true);
+
+        if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL)
+            return;
     }
 };
 
