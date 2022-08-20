@@ -273,6 +273,18 @@ public:
             config.setBool("artwork.enable", enabled);
             config.setString("artwork.cdn", cdn);
             config.setString("artwork.models_path", modelsPath);
+        } else {
+            // Set default values if options are not set.
+            // We don't want to crash.
+            if (config.getType("artwork.enable") == ConfigOptionType_None) {
+                config.setBool("artwork.enable", enabled);
+            }
+            if (config.getType("artwork.cdn") == ConfigOptionType_None) {
+                config.setString("artwork.cdn", cdn);
+            }
+            if (config.getType("artwork.models_path") == ConfigOptionType_None) {
+                config.setString("artwork.models_path", modelsPath);
+            }
         }
     }
 
