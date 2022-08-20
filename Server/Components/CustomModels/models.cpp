@@ -391,7 +391,6 @@ public:
             PacketHelper::send(modelInfo, *player);
         }
 
-        storage.emplace_back(model);
         baseModels.emplace(id, baseId);
         checksums.emplace(dff.checksum, std::make_pair(ModelDownloadType::DFF, model));
         checksums.emplace(txd.checksum, std::make_pair(ModelDownloadType::TXD, model));
