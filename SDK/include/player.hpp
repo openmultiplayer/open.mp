@@ -844,6 +844,7 @@ struct PlayerEventHandler {
     virtual void onPlayerClickMap(IPlayer& player, Vector3 pos) { }
     virtual void onPlayerClickPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
     virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) { }
+    virtual void onPlayerClientInit(IPlayer& player) { }
 };
 
 struct PlayerUpdateEventHandler {

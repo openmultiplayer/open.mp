@@ -13,6 +13,7 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
 #include <events.hpp>
 #include <glm/glm.hpp>
 #include <netcode.hpp>
@@ -524,39 +525,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
         return score_;
     }
 
-    void setSkin(int skin, bool send = true) override
-    {
-        skin_ = skin;
-        if (!send) {
-            return;
-        }
-
-        NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
-        setPlayerSkinRPC.PlayerID = poolID;
-        setPlayerSkinRPC.Skin = skin;
-
-        IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
-        if (data) {
-            IVehicle* vehicle = data->getVehicle();
-            if (vehicle) {
-                // `SetPlayerSkin` fails in vehicles, so remove them, set the skin, and put them back in again
-                // in quick succession.
-                int seat = data->getSeat();
-                removeFromVehicle(true);
-                PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
-                // Put them back in the vehicle, but don't involve the vehicle subsystem (it does a
-                // load of other checks we know aren't required here).
-                NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
-                putPlayerInVehicleRPC.VehicleID = vehicle->getID();
-                putPlayerInVehicleRPC.SeatID = seat;
-                PacketHelper::send(putPlayerInVehicleRPC, *this);
-                // End early.
-                return;
-            }
-        }
-        // Not on a bike, the normal set works.
-        PacketHelper::broadcastToStreamed(setPlayerSkinRPC, *this, false /* skipFrom */);
-    }
+    void setSkin(int skin, bool send) override;
 
     int getSkin() const override
     {

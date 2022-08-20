@@ -326,12 +326,11 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
     Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
-    static bool* allowDL = core->getConfig().getBool("network.allow_03DL_clients");
-    const bool is037 = version == LegacyClientVersion_037 && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_037));
+    const bool isDL = version == LegacyClientVersion_03DL && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_03DL));
+    static bool* artwork = core->getConfig().getBool("artwork.enabled");
+    static bool* allow037 = core->getConfig().getBool("network.allow_037_clients");
 
-    if (!is037 && (!*allowDL || *allowDL && (version != LegacyClientVersion_03DL || SAMPRakNet::GetToken() != (challenge ^ LegacyClientVersion_03DL)))) {
-        newConnectionResult.first = NewConnectionResult_VersionMismatch;
-    } else {
+    if (isDL || ((!*artwork || (*artwork && *allow037)) && (version == LegacyClientVersion_037 && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_037))))) {
         PeerRequestParams params;
         params.version = version == LegacyClientVersion_037 ? ClientVersion::ClientVersion_SAMP_037 : ClientVersion::ClientVersion_SAMP_03DL;
         params.versionName = versionName;
@@ -339,6 +338,8 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
         params.bot = isNPC;
         params.serial = serial;
         newConnectionResult = core->getPlayers().requestPlayer(netData, params);
+    } else {
+        newConnectionResult.first = NewConnectionResult_VersionMismatch;
     }
 
     if (newConnectionResult.first != NewConnectionResult_Success) {
@@ -722,12 +723,13 @@ void RakNetLegacyNetwork::start()
     int port = *config.getInt("port");
     int sleep = *config.getInt("sleep");
     StringView bind = config.getString("bind");
+    bool artwork = *config.getBool("artwork.enabled");
+    bool allow037 = *config.getBool("network.allow_037_clients");
 
-    const auto version = *config.getBool("network.allow_03DL_clients") ? "0.3DL R1" : "0.3.7-R2";
-     
     query.setCore(core);
-    query.setRuleValue("version", version);
-    query.setRuleValue("artwork", *config.getBool("artwork.enabled") ? "Yes" : "No");
+    query.setRuleValue("version", "0.3.DL-R1");
+    query.setRuleValue("artwork", artwork ? "Yes" : "No");
+    query.setRuleValue("0.3.7", (!artwork || (artwork && allow037)) ? "Yes" : "No");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 

@@ -8,6 +8,7 @@
 
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
 #include <netcode.hpp>
 
 using namespace Impl;
@@ -25,14 +26,16 @@ private:
     IPlayer& player;
     PlayerClass cls;
     bool default_;
+    ICustomModelsComponent*& models;
 
     friend class ClassesComponent;
 
 public:
-    PlayerClassData(IPlayer& player)
+    PlayerClassData(IPlayer& player, ICustomModelsComponent*& component)
         : player(player)
         , cls(defClass)
         , default_(true)
+        , models(component)
     {
     }
 
@@ -55,9 +58,18 @@ public:
         const WeaponSlots& weapons = info.weapons;
         StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
         StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-        NetCode::RPC::SetSpawnInfo setSpawnInfoRPC;
+        NetCode::RPC::SetSpawnInfo setSpawnInfoRPC(player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
         setSpawnInfoRPC.TeamID = info.team;
+
         setSpawnInfoRPC.ModelID = info.skin;
+        if (models) {
+            auto baseModel = models->getBaseModelId(info.skin);
+            if (baseModel != INVALID_MODEL_ID && baseModel != info.skin) {
+                setSpawnInfoRPC.ModelID = baseModel;
+                setSpawnInfoRPC.CustomModelID = info.skin;
+            }
+        }
+
         setSpawnInfoRPC.Spawn = info.spawn;
         setSpawnInfoRPC.ZAngle = info.angle;
         setSpawnInfoRPC.Weapons = weaponIDsArray;
@@ -116,6 +128,7 @@ private:
     bool inClassRequest;
     bool skipDefaultClassRequest;
     ICore* core = nullptr;
+    ICustomModelsComponent* models = nullptr;
 
     struct PlayerRequestClassHandler : public SingleNetworkInEventHandler {
         ClassesComponent& self;
@@ -152,8 +165,7 @@ private:
             } else if (Class* class_ptr = self.storage.get(playerRequestClassPacket.Classid)) {
                 used_class = &class_ptr->getClass();
                 if (player_data) {
-                    player_data->cls = *used_class;
-                    player_data->default_ = false;
+                    player_data->setSpawnInfo(*used_class);
                 }
             }
 
@@ -165,10 +177,28 @@ private:
                         return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
                     })) {
 
-                // Use the one stored in IPlayer, we have set it above with selected class
+                // Use the skin stored in IPlayer, we have set it above with selected class
                 // But it matters to get it from IPlayer::getSkin just in case when player's skin is
                 // Manually set in onPlayerRequestClass event using IPlayer::setSkin
-                int skin = peer.getSkin();
+
+                int currentSkin = peer.getSkin();
+
+                if (auto models_data = queryExtension<IPlayerCustomModelsData>(peer); models_data != nullptr) {
+                    if (auto customModel = models_data->getCustomSkin(); customModel != 0) {
+                        currentSkin = customModel;
+                    }
+                }
+
+                int classSkin = currentSkin;
+                int classCustomSkin = 0;
+
+                if (self.models) {
+                    auto baseModel = self.models->getBaseModelId(currentSkin);
+                    if (baseModel != INVALID_MODEL_ID && baseModel != currentSkin) {
+                        classCustomSkin = currentSkin;
+                        classSkin = baseModel;
+                    }
+                }
 
                 // Same as notes above
                 int team = peer.getTeam();
@@ -181,7 +211,8 @@ private:
                 const WeaponSlots& weapons = used_class->weapons;
                 StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(team, skin, used_class->spawn, used_class->angle);
+                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(team, classSkin, classCustomSkin, used_class->spawn, used_class->angle);
+                playerRequestClassResponse.IsDL = peer.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
                 playerRequestClassResponse.Selectable = true;
                 playerRequestClassResponse.Unknown1 = 0;
                 playerRequestClassResponse.Weapons = weaponIDsArray;
@@ -191,6 +222,7 @@ private:
                 StaticArray<uint32_t, 3> weaponIDsArray = { 0, 0, 0 };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { 0, 0, 0 };
                 NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponseNotAllowed;
+                playerRequestClassResponseNotAllowed.IsDL = peer.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
                 playerRequestClassResponseNotAllowed.Selectable = false;
                 playerRequestClassResponseNotAllowed.Weapons = weaponIDsArray;
                 playerRequestClassResponseNotAllowed.Ammos = weaponAmmoArray;
@@ -221,6 +253,18 @@ public:
         core = c;
         NetCode::RPC::PlayerRequestClass::addEventHandler(*core, &onPlayerRequestClassHandler);
         core->getPlayers().getEventDispatcher().addEventHandler(this);
+    }
+
+    void onInit(IComponentList* components) override
+    {
+        models = components->queryComponent<ICustomModelsComponent>();
+    }
+
+    void onFree(IComponent* component) override
+    {
+        if (component == models) {
+            models = nullptr;
+        }
     }
 
     IEventDispatcher<ClassEventHandler>& getEventDispatcher() override
@@ -263,7 +307,7 @@ public:
     void onPlayerConnect(IPlayer& player) override
     {
         auto first = storage.begin();
-        if (player.addExtension(new PlayerClassData(player), true) && first != storage.end()) {
+        if (player.addExtension(new PlayerClassData(player, models), true) && first != storage.end()) {
             // Initialise the player's current spawn data to the first defined class.
             queryExtension<IPlayerClassData>(player)->setSpawnInfo((*first)->getClass());
         }

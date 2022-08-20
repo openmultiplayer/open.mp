@@ -17,7 +17,7 @@ namespace NetCode {
 namespace RPC {
     struct ModelRequest : NetworkPacketBase<179, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
 
-        int32_t poolID;
+        uint32_t poolID;
         uint8_t type;
         int32_t virtualWorld;
         int32_t baseId;
@@ -30,14 +30,15 @@ namespace RPC {
         uint8_t timeOff;
         uint32_t Count;
 
-        ModelRequest(uint32_t count)
-            : Count(count)
+        ModelRequest(int32_t id, uint32_t count)
+            : poolID(id)
+            , Count(count)
         {
         }
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeINT32(poolID);
+            bs.writeUINT32(poolID);
             bs.writeINT32(Count);
             bs.writeUINT8(type);
             bs.writeINT32(virtualWorld);

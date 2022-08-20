@@ -186,7 +186,7 @@ protected:
 
     void createObjectForClient(IPlayer& player)
     {
-        NetCode::RPC::CreateObject createObjectRPC(materials_, materialsCount_);
+        NetCode::RPC::CreateObject createObjectRPC(materials_, materialsCount_, player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
         createObjectRPC.ObjectID = poolID;
         createObjectRPC.ModelID = model_;
         createObjectRPC.Position = pos_;

@@ -206,9 +206,14 @@ void Player::streamInForPlayer(IPlayer& other)
         if (numStreamed <= MAX_STREAMED_PLAYERS) {
             ++numStreamed;
             streamedFor_.add(pid, other);
-            NetCode::RPC::PlayerStreamIn playerStreamInRPC;
+            NetCode::RPC::PlayerStreamIn playerStreamInRPC(other.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
             playerStreamInRPC.PlayerID = poolID;
+
             playerStreamInRPC.Skin = skin_;
+            if (auto models_data = queryExtension<IPlayerCustomModelsData>(this); models_data != nullptr) {
+                playerStreamInRPC.CustomSkin = models_data->getCustomSkin();
+            }
+            
             playerStreamInRPC.Team = team_;
             playerStreamInRPC.Col = colour_;
             playerStreamInRPC.Pos = pos_;
@@ -230,6 +235,72 @@ void Player::streamInForPlayer(IPlayer& other)
 
             pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStreamIn, *this, other);
         }
+    }
+}
+
+void Player::setSkin(int skin, bool send = true)
+{
+    int customSkin = 0;
+
+    skin_ = skin;
+    if (pool_.modelsComponent) {
+        auto baseModel = pool_.modelsComponent->getBaseModelId(skin);
+        if (baseModel != INVALID_MODEL_ID && baseModel != skin) {
+            skin_ = baseModel;
+            customSkin = skin;
+        }
+    }
+
+    if (auto models_data = queryExtension<IPlayerCustomModelsData>(*this); models_data != nullptr) {
+        models_data->setCustomSkin(customSkin);
+    }
+
+    if (!send) {
+        return;
+    }
+
+    NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
+    setPlayerSkinRPC.PlayerID = poolID;
+    setPlayerSkinRPC.Skin = skin_;
+    setPlayerSkinRPC.CustomSkin = customSkin;
+
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
+    if (data) {
+        IVehicle* vehicle = data->getVehicle();
+        if (vehicle) {
+            // `SetPlayerSkin` fails in vehicles, so remove them, set the skin, and put them back in again
+            // in quick succession.
+            int seat = data->getSeat();
+            removeFromVehicle(true);
+
+            // Manually broadcast to streamed players.
+            // Maybe find a better way to do this.
+            for (IPlayer* streamed : streamedFor_.entries()) {
+                NetworkBitStream bs;
+                setPlayerSkinRPC.isDL = streamed->getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
+                setPlayerSkinRPC.write(bs);
+                streamed->sendRPC(NetCode::RPC::SetPlayerSkin::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), NetCode::RPC::SetPlayerSkin::PacketChannel);
+            }
+
+            // Put them back in the vehicle, but don't involve the vehicle subsystem (it does a
+            // load of other checks we know aren't required here).
+            NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
+            putPlayerInVehicleRPC.VehicleID = vehicle->getID();
+            putPlayerInVehicleRPC.SeatID = seat;
+            PacketHelper::send(putPlayerInVehicleRPC, *this);
+            // End early.
+            return;
+        }
+    }
+    // Not on a bike, the normal set works.
+    
+    // Manually broadcast to streamed players.
+    // Maybe find a better way to do this.
+    for (IPlayer* streamed : streamedFor_.entries()) {
+        NetworkBitStream bs;
+        setPlayerSkinRPC.isDL = streamed->getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
+        setPlayerSkinRPC.write(bs);
+        streamed->sendRPC(NetCode::RPC::SetPlayerSkin::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), NetCode::RPC::SetPlayerSkin::PacketChannel);
     }
 }
 
