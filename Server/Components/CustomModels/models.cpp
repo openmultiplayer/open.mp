@@ -15,8 +15,8 @@
 #include "crc32.hpp"
 #include <regex>
 
-static auto rAddCharModel = std::regex(R"(AddCharModel\(\s*(\d*)\s*,\s*(\d*)\s*,\s*\d*\s*\"(.*)\"\s*,\s*\"(.*)\"\s*\);)");
-static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-{0,1}\d*)\s*,\s*(\d*)\s*,\s*(-{0,1}\d*)\s*,\s*\"(.*)\"\s*,\s*\"(.*)\"\s*\);)");
+static auto rAddCharModel = std::regex(R"(AddCharModel\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\);)");
+static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\);)");
 
 using namespace Impl;
 
