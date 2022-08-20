@@ -372,16 +372,6 @@ public:
         ModelFile dff(modelsPath, dffName);
         ModelFile txd(modelsPath, txdName);
 
-        if (checksums.find(dff.checksum) != checksums.end()) {
-            core->logLn(LogLevel::Error, "[artwork:error] There's already another custom model loaded with the same checksum as: %.*s", PRINT_VIEW(dffName));
-            return false;
-        }
-
-        if (checksums.find(txd.checksum) != checksums.end()) {
-            core->logLn(LogLevel::Error, "[artwork:error] There's already another custom model loaded with the same checksum as: %.*s", PRINT_VIEW(txdName));
-            return false;
-        }
-
         if (!dff.size) {
             core->logLn(LogLevel::Error, "[artwork:error] Cannot add custom model. %.*s doesn't exist", PRINT_VIEW(dffName));
             return false;
