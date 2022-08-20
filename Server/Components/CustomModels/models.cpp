@@ -13,6 +13,10 @@
 #include <httplib/httplib.h>
 #include <filesystem>
 #include "crc32.hpp"
+#include <regex>
+
+static auto rAddCharModel = std::regex(R"(AddCharModel\(\s*(\d*)\s*,\s*(\d*)\s*,\s*\d*\s*\"(.*)\"\s*,\s*\"(.*)\"\s*\);)");
+static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-{0,1}\d*)\s*,\s*(\d*)\s*,\s*(-{0,1}\d*)\s*,\s*\"(.*)\"\s*,\s*\"(.*)\"\s*\);)");
 
 using namespace Impl;
 
@@ -286,19 +290,34 @@ public:
         core->addPerRPCInEventHandler<RPC_RequestDFF>(&requestDownloadLinkHandler);
         core->addPerRPCInEventHandler<RPC_FinishedDownload>(&finishDownloadHandler);
 
+         if (!enabled)
+            return;
+
+        if (!std::filesystem::exists(modelsPath.c_str()) || !std::filesystem::is_directory(modelsPath.c_str())) {
+            std::filesystem::create_directory(modelsPath.c_str());
+        }
+
+        std::ifstream artconfig { modelsPath + "/artconfig.txt" };
+
+        if (artconfig.is_open()) {
+            core->logLn(LogLevel::Message, "[artwork:info] Loading artconfig.txt");
+            std::string line;
+            std::smatch match;
+            while (std::getline(artconfig, line)) {
+                if (std::regex_match(line, match, rAddCharModel)) {
+                    addCustomModel(ModelType::Skin, std::atoi(match[2].str().c_str()), std::atoi(match[1].str().c_str()), match[3].str(), match[4].str());
+                } else if (std::regex_match(line, match, rAddSimpleModel)) {
+                    addCustomModel(ModelType::Object, std::atoi(match[3].str().c_str()), std::atoi(match[2].str().c_str()), match[4].str(), match[5].str(), std::atoi(match[1].str().c_str()));
+                }
+            }
+        }
+
         if (!cdn.empty()) {
             if (cdn.back() != '/') {
                 cdn.push_back('/');
             }
             core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
             return;
-        }
-
-        if (!enabled)
-            return;
-
-        if (!std::filesystem::exists(modelsPath.c_str()) || !std::filesystem::is_directory(modelsPath.c_str())) {
-            std::filesystem::create_directory(modelsPath.c_str());
         }
 
         webServer = new WebServer(core, modelsPath, core->getConfig().getString("bind"), *core->getConfig().getInt("port"));
@@ -346,8 +365,9 @@ public:
             return false;
         else if (type == ModelType::Object && !(id >= -30000 && id <= -1000))
             return false;
-        else if (baseModels.find(id) != baseModels.end())
-            return false;
+        else if (baseModels.find(id) != baseModels.end()) {
+            core->logLn(LogLevel::Error, "[artwork:error] Model %d is already in use", id);
+        }
 
         ModelFile dff(modelsPath, dffName);
         ModelFile txd(modelsPath, txdName);
@@ -363,7 +383,7 @@ public:
         }
 
         if (!dff.size) {
-            core->logLn(LogLevel::Error, "[artwork:error] Bad file: %.*s", PRINT_VIEW(dffName));
+            core->logLn(LogLevel::Error, "[artwork:error] Cannot add custom model. %.*s doesn't exist", PRINT_VIEW(dffName));
             return false;
         }
 
