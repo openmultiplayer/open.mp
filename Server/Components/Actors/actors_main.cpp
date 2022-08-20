@@ -85,7 +85,7 @@ public:
         streamConfigHelper = StreamConfigHelper(core->getConfig());
     }
 
-    void onInit(IComponentList* components) override 
+    void onInit(IComponentList* components) override
     {
         modelsComponent = components->queryComponent<ICustomModelsComponent>();
     }

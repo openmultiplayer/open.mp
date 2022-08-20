@@ -213,7 +213,7 @@ void Player::streamInForPlayer(IPlayer& other)
             if (auto models_data = queryExtension<IPlayerCustomModelsData>(this); models_data != nullptr) {
                 playerStreamInRPC.CustomSkin = models_data->getCustomSkin();
             }
-            
+
             playerStreamInRPC.Team = team_;
             playerStreamInRPC.Col = colour_;
             playerStreamInRPC.Pos = pos_;
@@ -292,8 +292,8 @@ void Player::setSkin(int skin, bool send = true)
             return;
         }
     }
+
     // Not on a bike, the normal set works.
-    
     // Manually broadcast to streamed players.
     // Maybe find a better way to do this.
     for (IPlayer* streamed : streamedFor_.entries()) {
