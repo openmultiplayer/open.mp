@@ -212,7 +212,7 @@ private:
             const auto& [type, model] = itr->second;
             const auto& file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
 
-            NetCode::RPC::ModelUrl urlRPC(self.getWebUrl().data() + file.name, static_cast<uint8_t>(type), file.checksum);
+            NetCode::RPC::ModelUrl urlRPC(httplib::detail::encode_url(self.getWebUrl().data() + file.name), static_cast<uint8_t>(type), file.checksum);
             PacketHelper::send(urlRPC, peer);
 
             return true;
