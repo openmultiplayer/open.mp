@@ -15,7 +15,7 @@ struct BrokenPluginMessageData {
     StringView message;
 };
 
-static const StaticArray<BrokenPluginMessageData, 14> BrokenPlugins = {
+static const StaticArray<BrokenPluginMessageData, 15> BrokenPlugins = {
     {
         { "YSF", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
         { "YSF_DL", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
