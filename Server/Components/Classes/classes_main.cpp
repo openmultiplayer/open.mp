@@ -177,27 +177,15 @@ private:
                         return handler->onPlayerRequestClass(peer, playerRequestClassPacket.Classid);
                     })) {
 
-                // Use the skin stored in IPlayer, we have set it above with selected class
+                // Use the skins stored in IPlayer, we have set it above with selected class
                 // But it matters to get it from IPlayer::getSkin just in case when player's skin is
                 // Manually set in onPlayerRequestClass event using IPlayer::setSkin
 
-                int currentSkin = peer.getSkin();
+                int skin = peer.getSkin();
+                int custom_skin = 0;
 
                 if (auto models_data = queryExtension<IPlayerCustomModelsData>(peer); models_data != nullptr) {
-                    if (auto customModel = models_data->getCustomSkin(); customModel != 0) {
-                        currentSkin = customModel;
-                    }
-                }
-
-                int classSkin = currentSkin;
-                int classCustomSkin = 0;
-
-                if (self.models) {
-                    auto baseModel = self.models->getBaseModelId(currentSkin);
-                    if (baseModel != INVALID_MODEL_ID && baseModel != currentSkin) {
-                        classCustomSkin = currentSkin;
-                        classSkin = baseModel;
-                    }
+                    custom_skin = models_data->getCustomSkin();
                 }
 
                 // Same as notes above
@@ -211,7 +199,7 @@ private:
                 const WeaponSlots& weapons = used_class->weapons;
                 StaticArray<uint32_t, 3> weaponIDsArray = { weapons[0].id, weapons[1].id, weapons[2].id };
                 StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
-                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(team, classSkin, classCustomSkin, used_class->spawn, used_class->angle);
+                NetCode::RPC::PlayerRequestClassResponse playerRequestClassResponse(team, skin, custom_skin, used_class->spawn, used_class->angle);
                 playerRequestClassResponse.IsDL = peer.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
                 playerRequestClassResponse.Selectable = true;
                 playerRequestClassResponse.Unknown1 = 0;
