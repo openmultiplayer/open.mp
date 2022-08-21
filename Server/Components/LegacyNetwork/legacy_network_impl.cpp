@@ -718,7 +718,7 @@ void RakNetLegacyNetwork::start()
     int maxPlayers = *config.getInt("max_players");
 
     int port = *config.getInt("port");
-    int sleep = *config.getInt("sleep");
+    int sleep = static_cast<int>(*config.getFloat("sleep"));
     StringView bind = config.getString("bind");
 
     query.setCore(core);
