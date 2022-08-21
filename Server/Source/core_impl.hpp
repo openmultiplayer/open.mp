@@ -763,7 +763,8 @@ private:
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
-    bool useDynTicks;
+    Microseconds sleepDuration;
+    bool _useDynTicks;
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
@@ -1021,15 +1022,15 @@ public:
     void run()
     {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
-        useDynTicks = *config.getBool("use_dyn_ticks");
+        _useDynTicks = *config.getBool("use_dyn_ticks");
         TimePoint prev = Time::now();
-        Microseconds sleepDuration = sleepTimer;
+        sleepDuration = sleepTimer;
 
         while (run_) {
             const TimePoint now = Time::now();
             const Microseconds us = duration_cast<Microseconds>(now - prev);
 
-            if (useDynTicks) {
+            if (_useDynTicks) {
                 sleepDuration += sleepTimer - us;
             }
 
@@ -1061,6 +1062,15 @@ public:
     void setThreadSleep(Milliseconds value) override
     {
         sleepTimer = value;
+    }
+
+    void useDynTicks(const bool enable) override
+    {
+        _useDynTicks = enable;
+
+        if (!enable) {
+            sleepDuration = sleepTimer;
+        }
     }
 
     void resetAll() override
