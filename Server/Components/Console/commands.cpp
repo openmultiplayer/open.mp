@@ -328,6 +328,16 @@ ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& 
     core->setThreadSleep(Milliseconds(value));
 });
 
+ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+    int value = 0;
+    if (sscanf(params.data(), "%i", &value) == EOF) {
+        console.sendMessage(sender, String("dynticks = \"") + std::to_string(*core->getConfig().getBool("use_dyn_ticks")) + "\"");
+        return;
+    }
+    static_cast<IEarlyConfig&>(core->getConfig()).setBool("use_dyn_ticks", value);
+    core->useDynTicks(bool(value));
+});
+
 ADD_CONSOLE_CMD(worldtime, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int time;
     if (sscanf(params.data(), "%i", &time) == EOF) {
