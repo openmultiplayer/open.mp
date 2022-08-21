@@ -198,7 +198,7 @@ struct ICore : public IExtensible, public ILogger {
     virtual void setData(SettableCoreDataType type, StringView data) = 0;
 
     /// Set sleep value for each main thread update cycle
-    virtual void setThreadSleep(Milliseconds value) = 0;
+    virtual void setThreadSleep(Microseconds value) = 0;
 
     /// Toggle dynamic ticks instead of static duration sleep
     virtual void useDynTicks(const bool enable) = 0;

@@ -57,7 +57,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "name", String("open.mp server") },
     { "password", String("") },
     { "port", 7777 },
-    { "sleep", 5 },
+    { "sleep", 5.0f },
     { "use_dyn_ticks", true },
     { "website", String("open.mp") },
     // game
@@ -762,7 +762,7 @@ private:
 
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
-    Milliseconds sleepTimer;
+    Microseconds sleepTimer;
     Microseconds sleepDuration;
     bool _useDynTicks;
     FlatPtrHashSet<INetwork> networks;
@@ -1021,7 +1021,7 @@ public:
 
     void run()
     {
-        sleepTimer = Milliseconds(*config.getInt("sleep"));
+        sleepTimer = Microseconds(static_cast<long long>(*config.getFloat("sleep") * 1000.0f));
         _useDynTicks = *config.getBool("use_dyn_ticks");
         TimePoint prev = Time::now();
         sleepDuration = sleepTimer;
@@ -1059,7 +1059,7 @@ public:
         }
     }
 
-    void setThreadSleep(Milliseconds value) override
+    void setThreadSleep(Microseconds value) override
     {
         sleepTimer = value;
     }
