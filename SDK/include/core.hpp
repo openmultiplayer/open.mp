@@ -200,6 +200,9 @@ struct ICore : public IExtensible, public ILogger {
     /// Set sleep value for each main thread update cycle
     virtual void setThreadSleep(Milliseconds value) = 0;
 
+    /// Toggle dynamic ticks instead of static duration sleep
+    virtual void useDynTicks(const bool enable) = 0;
+
     /// Clear all entites that vanish on GM exit.
     virtual void resetAll() = 0;
 
