@@ -58,6 +58,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "password", String("") },
     { "port", 7777 },
     { "sleep", 5 },
+    { "use_dyn_ticks", true },
     { "website", String("open.mp") },
     // game
     { "game.allow_interior_weapons", true },
@@ -762,6 +763,8 @@ private:
     DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
     PlayerPool players;
     Milliseconds sleepTimer;
+    Microseconds sleepDuration;
+    bool _useDynTicks;
     FlatPtrHashSet<INetwork> networks;
     ComponentList components;
     Config config;
@@ -1019,11 +1022,18 @@ public:
     void run()
     {
         sleepTimer = Milliseconds(*config.getInt("sleep"));
-
+        _useDynTicks = *config.getBool("use_dyn_ticks");
         TimePoint prev = Time::now();
+        sleepDuration = sleepTimer;
+
         while (run_) {
             const TimePoint now = Time::now();
-            Microseconds us = duration_cast<Microseconds>(now - prev);
+            const Microseconds us = duration_cast<Microseconds>(now - prev);
+
+            if (_useDynTicks) {
+                sleepDuration += sleepTimer - us;
+            }
+
             prev = now;
 
             if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
@@ -1045,13 +1055,22 @@ public:
                 }
             }
 
-            std::this_thread::sleep_until(now + sleepTimer);
+            std::this_thread::sleep_until(now + sleepDuration);
         }
     }
 
     void setThreadSleep(Milliseconds value) override
     {
         sleepTimer = value;
+    }
+
+    void useDynTicks(const bool enable) override
+    {
+        _useDynTicks = enable;
+
+        if (!enable) {
+            sleepDuration = sleepTimer;
+        }
     }
 
     void resetAll() override
