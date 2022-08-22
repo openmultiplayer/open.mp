@@ -9,8 +9,14 @@ enum class ModelType : uint8_t {
     Object
 };
 
+enum class ModelDownloadType : uint8_t {
+    DFF = 1,
+    TXD = 2
+};
+
 struct PlayerModelsEventHandler {
     virtual void onPlayerFinishedDownloading(IPlayer& player) { }
+    virtual bool onPlayerRequestDownload(IPlayer& player, ModelDownloadType type, uint32_t checksum) { return true; }
 };
 
 /// Player models data
@@ -23,6 +29,9 @@ struct IPlayerCustomModelsData : public IExtension {
 
     // Set the player's custom skin
     virtual void setCustomSkin(const uint32_t skinModel) = 0;
+    
+    // Send download url of current requested file.
+    virtual void sendDownloadUrl(StringView url) const = 0;
 };
 
 static const UID ModelsComponent_UID = UID(0x15E3CB1E7C77FFFF);

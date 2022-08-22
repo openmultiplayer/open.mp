@@ -20,11 +20,6 @@ static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-?\d+)\s*,\s*(\d
 
 using namespace Impl;
 
-enum class ModelDownloadType : uint8_t {
-    DFF = 1,
-    TXD = 2
-};
-
 struct ModelFile {
     String name;
     uint32_t checksum;
@@ -144,25 +139,44 @@ public:
 
 class PlayerCustomModelsData final : public IPlayerCustomModelsData {
 private:
+    IPlayer& player;
     uint32_t skin_ = 0;
+    std::pair<uint8_t, uint32_t> requestedFile_;
 
 public:
-    uint32_t getCustomSkin() const
+    PlayerCustomModelsData(IPlayer& player)
+        : player(player)
+    {
+    }
+
+    uint32_t getCustomSkin() const override
     {
         return skin_;
     }
 
-    void setCustomSkin(const uint32_t skinModel)
+    void setCustomSkin(const uint32_t skinModel) override
     {
         skin_ = skinModel;
     }
 
-    void reset()
+    void setRequestedFile(ModelDownloadType type, uint32_t checksum)
     {
-        skin_ = 0;
+        requestedFile_ = { static_cast<uint8_t>(type), checksum };
     }
 
-    void freeExtension()
+    virtual void sendDownloadUrl(StringView url) const override
+    {
+        NetCode::RPC::ModelUrl downloadLink(url, requestedFile_.first, requestedFile_.second);
+        PacketHelper::send(downloadLink, player);
+    }
+
+    void reset() override
+    {
+        skin_ = 0;
+        requestedFile_ = { 0, 0 };
+    }
+
+    void freeExtension() override
     {
         delete this;
     }
@@ -205,11 +219,20 @@ private:
             if (itr == self.checksums.end())
                 return true;
 
-            const auto& [type, model] = itr->second;
-            const auto& file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
+            const auto& type = itr->second.first;
 
-            NetCode::RPC::ModelUrl urlRPC(httplib::detail::encode_url(self.getWebUrl().data() + file.name), static_cast<uint8_t>(type), file.checksum);
-            PacketHelper::send(urlRPC, peer);
+            if (PlayerCustomModelsData* data = queryExtension<PlayerCustomModelsData>(peer); data != nullptr) {
+                data->setRequestedFile(type, checksum);
+            }
+            if (self.eventDispatcher.stopAtFalse(
+                    [&peer, &type, &checksum](PlayerModelsEventHandler* handler) {
+                        return handler->onPlayerRequestDownload(peer, type, checksum);
+                    })) {
+                const auto& model = itr->second.second;
+                const auto& file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
+                NetCode::RPC::ModelUrl urlRPC(httplib::detail::encode_url(self.getWebUrl().data() + file.name), static_cast<uint8_t>(type), file.checksum);
+                PacketHelper::send(urlRPC, peer);
+            }
 
             return true;
         }
@@ -475,10 +498,7 @@ public:
 
     void onPlayerConnect(IPlayer& player) override
     {
-        player.addExtension(new PlayerCustomModelsData(), true);
-
-        if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL)
-            return;
+        player.addExtension(new PlayerCustomModelsData(player), true);
     }
 };
 

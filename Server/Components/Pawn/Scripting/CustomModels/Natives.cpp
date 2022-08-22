@@ -50,7 +50,12 @@ SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
 
 SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
 {
-    throw pawn_natives::NotImplemented();
+    IPlayerCustomModelsData* data = queryExtension<IPlayerCustomModelsData>(player);
+    if (!data) {
+        return 0;
+    }
+    data->sendDownloadUrl(url);
+    return true;
 }
 
 SCRIPT_API(FindModelFileNameFromCRC, bool(int crc, OutputOnlyString& output))
