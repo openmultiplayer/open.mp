@@ -29,7 +29,7 @@ struct IPlayerCustomModelsData : public IExtension {
 
     // Set the player's custom skin
     virtual void setCustomSkin(const uint32_t skinModel) = 0;
-    
+
     // Send download url of current requested file.
     virtual void sendDownloadUrl(StringView url) const = 0;
 };
