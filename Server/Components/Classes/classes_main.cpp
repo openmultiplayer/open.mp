@@ -161,7 +161,8 @@ private:
             } else if (Class* class_ptr = self.storage.get(playerRequestClassPacket.Classid)) {
                 used_class = &class_ptr->getClass();
                 if (player_data) {
-                    player_data->setSpawnInfo(*used_class);
+                    player_data->cls = *used_class;
+                    player_data->default_ = false;
                 }
             }
 
