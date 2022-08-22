@@ -63,11 +63,7 @@ private:
         showActorForPlayerRPC.SkinID = skin_;
 
         if (modelsComponent_) {
-            auto baseModel = modelsComponent_->getBaseModelId(skin_);
-            if (baseModel != INVALID_MODEL_ID && baseModel != skin_) {
-                showActorForPlayerRPC.CustomSkin = skin_;
-                showActorForPlayerRPC.SkinID = baseModel;
-            }
+            modelsComponent_->getBaseModel(showActorForPlayerRPC.SkinID, showActorForPlayerRPC.CustomSkin);
         }
 
         PacketHelper::send(showActorForPlayerRPC, player);

@@ -60,14 +60,10 @@ public:
         StaticArray<uint32_t, 3> weaponAmmoArray = { weapons[0].ammo, weapons[1].ammo, weapons[2].ammo };
         NetCode::RPC::SetSpawnInfo setSpawnInfoRPC(player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
         setSpawnInfoRPC.TeamID = info.team;
-
         setSpawnInfoRPC.ModelID = info.skin;
+
         if (models) {
-            auto baseModel = models->getBaseModelId(info.skin);
-            if (baseModel != INVALID_MODEL_ID && baseModel != info.skin) {
-                setSpawnInfoRPC.ModelID = baseModel;
-                setSpawnInfoRPC.CustomModelID = info.skin;
-            }
+            models->getBaseModel(setSpawnInfoRPC.ModelID, setSpawnInfoRPC.CustomModelID);
         }
 
         setSpawnInfoRPC.Spawn = info.spawn;

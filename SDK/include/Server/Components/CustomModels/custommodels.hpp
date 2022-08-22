@@ -30,7 +30,7 @@ struct ICustomModelsComponent : public IComponent {
     PROVIDE_UID(ModelsComponent_UID);
 
     virtual bool addCustomModel(ModelType type, int32_t id, int32_t baseId, StringView dffName, StringView txdName, int32_t virtualWorld = -1, uint8_t timeOn = 0, uint8_t timeOff = 0) = 0;
-    virtual uint16_t getBaseModelId(int32_t modelId) const = 0;
+    virtual bool getBaseModel(uint32_t& baseModelIdOrInput, uint32_t& customModel) = 0;
     virtual IEventDispatcher<PlayerModelsEventHandler>& getEventDispatcher() = 0;
     virtual StringView getModelNameFromChecksum(uint32_t checksum) const = 0;
 };

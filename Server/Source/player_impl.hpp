@@ -65,7 +65,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
     UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
     int virtualWorld_;
     int team_;
-    int skin_;
+    uint32_t skin_;
     int score_;
     PlayerFightingStyle fightingStyle_;
     PlayerState state_;
