@@ -89,3 +89,4 @@ enum Key {
 };
 
 constexpr uint16_t INVALID_MODEL_ID = 65535u;
+constexpr int32_t QUESTION_MARK_MODEL_ID = 18631;
