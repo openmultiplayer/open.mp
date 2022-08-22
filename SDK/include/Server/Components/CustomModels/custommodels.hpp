@@ -10,6 +10,7 @@ enum class ModelType : uint8_t {
 };
 
 enum class ModelDownloadType : uint8_t {
+    NONE = 0,
     DFF = 1,
     TXD = 2
 };
@@ -31,7 +32,7 @@ struct IPlayerCustomModelsData : public IExtension {
     virtual void setCustomSkin(const uint32_t skinModel) = 0;
 
     // Send download url of current requested file.
-    virtual void sendDownloadUrl(StringView url) const = 0;
+    virtual bool sendDownloadUrl(StringView url) const = 0;
 };
 
 static const UID ModelsComponent_UID = UID(0x15E3CB1E7C77FFFF);

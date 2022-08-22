@@ -604,4 +604,5 @@ static const FlatHashMap<String, String> DeprecatedNatives {
     { "GetPlayerPoolSize", "MAX_PLAYERS" },
     { "GetVehiclePoolSize", "MAX_VEHICLES" },
     { "GetActorPoolSize", "MAX_ACTORS" },
+    { "RedirectDownload", "artwork cdn config option" }
 };
