@@ -18,8 +18,8 @@ namespace NetCode {
 namespace RPC {
     struct ShowActorForPlayer : NetworkPacketBase<171, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
-        int SkinID;
-        int CustomSkin;
+        uint32_t SkinID;
+        uint32_t CustomSkin;
         Vector3 Position;
         float Angle;
         float Health;

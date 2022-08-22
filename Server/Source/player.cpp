@@ -240,15 +240,11 @@ void Player::streamInForPlayer(IPlayer& other)
 
 void Player::setSkin(int skin, bool send = true)
 {
-    int customSkin = 0;
+    uint32_t customSkin = 0;
 
     skin_ = skin;
     if (pool_.modelsComponent) {
-        auto baseModel = pool_.modelsComponent->getBaseModelId(skin);
-        if (baseModel != INVALID_MODEL_ID && baseModel != skin) {
-            skin_ = baseModel;
-            customSkin = skin;
-        }
+        pool_.modelsComponent->getBaseModel(skin_, customSkin);
     }
 
     if (auto models_data = queryExtension<IPlayerCustomModelsData>(*this); models_data != nullptr) {

@@ -420,17 +420,24 @@ public:
         return true;
     }
 
-    uint16_t getBaseModelId(int32_t modelId) const override
+    bool getBaseModel(uint32_t& baseModelIdOrInput, uint32_t& customModel) override
     {
-        if (modelId >= 0 && modelId <= 20000)
-            return modelId;
+        // Check if model is default one (base).
+        // If so, there's no custom model to be returned.
+        if (baseModelIdOrInput >= 0 && baseModelIdOrInput <= 20000)
+            return false;
+        
+        // Check if input is valid custom model.
+        // If not treat is as base model.
+        auto itr = baseModels.find(baseModelIdOrInput);
+        if (itr == baseModels.end()) {
+            return false;
+        }
 
-        auto itr = baseModels.find(modelId);
-
-        if (itr == baseModels.end())
-            return INVALID_MODEL_ID;
-
-        return itr->second;
+        // Input is a custom model.
+        customModel = baseModelIdOrInput;
+        baseModelIdOrInput = itr->second;
+        return true;
     }
 
     StringView getModelNameFromChecksum(uint32_t checksum) const override
