@@ -86,7 +86,7 @@ namespace RPC {
         {
             bs.writeUINT16(ObjectID);
             if (!isDL) {
-                bs.writeINT32(ModelID < 0 ? 18631 : ModelID);
+                bs.writeINT32(ModelID < 0 ? QUESTION_MARK_MODEL_ID : ModelID);
             } else {
                 bs.writeINT32(ModelID);            
             }
