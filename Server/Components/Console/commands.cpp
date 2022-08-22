@@ -319,13 +319,13 @@ ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& s
 });
 
 ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
-    int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
-        console.sendMessage(sender, String("sleep = \"") + std::to_string(*core->getConfig().getInt("sleep")) + "\"");
+    float value = 0.0f;
+    if (sscanf(params.data(), "%f", &value) == EOF) {
+        console.sendMessage(sender, String("sleep = \"") + std::to_string(*core->getConfig().getFloat("sleep")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setInt("sleep", value);
-    core->setThreadSleep(Milliseconds(value));
+    static_cast<IEarlyConfig&>(core->getConfig()).setFloat("sleep", value);
+    core->setThreadSleep(Microseconds(static_cast<long long>(value * 1000.0f)));
 });
 
 ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
@@ -336,6 +336,17 @@ ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderDat
     }
     static_cast<IEarlyConfig&>(core->getConfig()).setBool("use_dyn_ticks", value);
     core->useDynTicks(bool(value));
+});
+
+ADD_CONSOLE_CMD(tickrate, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+    int value = 0;
+    if (sscanf(params.data(), "%i", &value) == EOF) {
+        console.sendMessage(sender, String("tickrate = \"") + std::to_string(static_cast<int>(1000.0f / *core->getConfig().getFloat("sleep"))) + "\"");
+        return;
+    }
+    float sleep = 1000.0f / value;
+    static_cast<IEarlyConfig&>(core->getConfig()).setFloat("sleep", sleep);
+    core->setThreadSleep(Microseconds(static_cast<long long>(sleep * 1000.0f)));
 });
 
 ADD_CONSOLE_CMD(worldtime, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {

@@ -49,7 +49,7 @@ const FlatHashMap<StringView, ParamType> types = {
     { "weburl", ParamType::String },
     { "maxplayers", ParamType::Int },
     { "password", ParamType::Custom },
-    { "sleep", ParamType::Int },
+    { "sleep", ParamType::Float },
     { "lanmode", ParamType::Bool },
     { "bind", ParamType::String },
     { "port", ParamType::Int },
