@@ -16,4 +16,12 @@ struct CustomModelsEvents : public PlayerModelsEventHandler, public Singleton<Cu
     {
         PawnManager::Get()->CallAllInSidesFirst("OnPlayerFinishedDownloading", DefaultReturnValue_True, player.getID(), player.getVirtualWorld());
     }
+    virtual bool onPlayerRequestDownload(IPlayer& player, ModelDownloadType type, uint32_t checksum) override 
+    {
+        cell ret = PawnManager::Get()->CallInSidesWhile1("OnPlayerRequestDownload", player.getID(), static_cast<uint8_t>(type), checksum);
+        if (ret) {
+            ret = PawnManager::Get()->CallInEntry("OnPlayerRequestDownload", DefaultReturnValue_True, player.getID(), static_cast<uint8_t>(type), checksum);
+        }
+        return !!ret;
+    }
 };
