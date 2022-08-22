@@ -20,10 +20,6 @@ static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-?\d+)\s*,\s*(\d
 
 using namespace Impl;
 
-constexpr uint8_t RPC_FinishedDownload = 184u;
-constexpr uint8_t RPC_RequestTXD = 182u;
-constexpr uint8_t RPC_RequestDFF = 181u;
-
 enum class ModelDownloadType : uint8_t {
     DFF = 1,
     TXD = 2
@@ -258,9 +254,9 @@ public:
 
     ~CustomModelsComponent()
     {
-        core->removePerRPCInEventHandler<RPC_RequestTXD>(&requestDownloadLinkHandler);
-        core->removePerRPCInEventHandler<RPC_RequestDFF>(&requestDownloadLinkHandler);
-        core->removePerRPCInEventHandler<RPC_FinishedDownload>(&finishDownloadHandler);
+        NetCode::RPC::RequestTXD::removeEventHandler(*core, &requestDownloadLinkHandler);
+        NetCode::RPC::RequestDFF::removeEventHandler(*core, &requestDownloadLinkHandler);
+        NetCode::RPC::FinishDownload::removeEventHandler(*core, &finishDownloadHandler);
         players->getEventDispatcher().removeEventHandler(this);
 
         if (webServer)
@@ -298,9 +294,9 @@ public:
         modelsPath = String(core->getConfig().getString("artwork.models_path"));
         cdn = String(core->getConfig().getString("artwork.cdn"));
 
-        core->addPerRPCInEventHandler<RPC_RequestTXD>(&requestDownloadLinkHandler);
-        core->addPerRPCInEventHandler<RPC_RequestDFF>(&requestDownloadLinkHandler);
-        core->addPerRPCInEventHandler<RPC_FinishedDownload>(&finishDownloadHandler);
+        NetCode::RPC::RequestTXD::addEventHandler(*core, &requestDownloadLinkHandler);
+        NetCode::RPC::RequestDFF::addEventHandler(*core, &requestDownloadLinkHandler);
+        NetCode::RPC::FinishDownload::addEventHandler(*core, &finishDownloadHandler);
 
         if (!enabled)
             return;
@@ -426,7 +422,7 @@ public:
         // If so, there's no custom model to be returned.
         if (baseModelIdOrInput >= 0 && baseModelIdOrInput <= 20000)
             return false;
-        
+
         // Check if input is valid custom model.
         // If not treat is as base model.
         auto itr = baseModels.find(baseModelIdOrInput);

@@ -75,7 +75,33 @@ namespace RPC {
     };
 
     struct DownloadCompleted : NetworkPacketBase<185, NetworkPacketType::RPC, OrderingChannel_DownloadRequest> {
-        void write(NetworkBitStream& bs) const {}
+        void write(NetworkBitStream& bs) const { }
     };
+
+    struct FinishDownload : NetworkPacketBase<184, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+        bool read(NetworkBitStream& bs)
+        {
+            return true;
+        }
+    };
+
+    struct RequestTXD : NetworkPacketBase<182, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+        uint32_t checksum;
+        bool read(NetworkBitStream& bs)
+        {
+            return bs.readUINT32(checksum);
+        }
+    };
+
+    struct RequestDFF : NetworkPacketBase<181, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+        uint32_t checksum;
+        bool read(NetworkBitStream& bs)
+        {
+            return bs.readUINT32(checksum);
+        }
+    };
+
+
+
 }
 }
