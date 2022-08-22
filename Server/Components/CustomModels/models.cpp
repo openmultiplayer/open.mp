@@ -182,12 +182,12 @@ class PlayerCustomModelsData final : public IPlayerCustomModelsData {
 private:
     IPlayer& player;
     uint32_t skin_ = 0;
-    std::pair<uint8_t, uint32_t> requestedFile_;
+    std::pair<ModelDownloadType, uint32_t> requestedFile_;
 
 public:
     PlayerCustomModelsData(IPlayer& player)
         : player(player)
-        , requestedFile_ { 0, 0 }
+        , requestedFile_ { ModelDownloadType::NONE, 0 }
     {
     }
 
@@ -203,19 +203,23 @@ public:
 
     void setRequestedFile(ModelDownloadType type, uint32_t checksum)
     {
-        requestedFile_ = { static_cast<uint8_t>(type), checksum };
+        requestedFile_ = { type, checksum };
     }
 
-    virtual void sendDownloadUrl(StringView url) const override
+    virtual bool sendDownloadUrl(StringView url) const override
     {
-        NetCode::RPC::ModelUrl downloadLink(url, requestedFile_.first, requestedFile_.second);
+        if (requestedFile_.first == ModelDownloadType::NONE) {
+            return false;
+        }
+        NetCode::RPC::ModelUrl downloadLink(url, static_cast<uint8_t>(requestedFile_.first), requestedFile_.second);
         PacketHelper::send(downloadLink, player);
+        return true;
     }
 
     void reset() override
     {
         skin_ = 0;
-        requestedFile_ = { 0, 0 };
+        requestedFile_ = { ModelDownloadType::NONE, 0 };
     }
 
     void freeExtension() override
@@ -263,7 +267,8 @@ private:
 
             const auto& type = itr->second.first;
 
-            if (PlayerCustomModelsData* data = queryExtension<PlayerCustomModelsData>(peer); data != nullptr) {
+            PlayerCustomModelsData* data = queryExtension<PlayerCustomModelsData>(peer);
+            if (data != nullptr) {
                 data->setRequestedFile(type, checksum);
             }
             if (self.eventDispatcher.stopAtFalse(
@@ -275,7 +280,9 @@ private:
                 NetCode::RPC::ModelUrl urlRPC(httplib::detail::encode_url(self.getWebUrl().data() + file.name), static_cast<uint8_t>(type), file.checksum);
                 PacketHelper::send(urlRPC, peer);
             }
-
+            if (data != nullptr) {
+                data->setRequestedFile(ModelDownloadType::NONE, 0);
+            }
             return true;
         }
     } requestDownloadLinkHandler;

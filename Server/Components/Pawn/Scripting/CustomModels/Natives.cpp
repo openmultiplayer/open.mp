@@ -52,9 +52,12 @@ SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
 {
     IPlayerCustomModelsData* data = queryExtension<IPlayerCustomModelsData>(player);
     if (!data) {
-        return 0;
+        return false;
     }
-    data->sendDownloadUrl(url);
+    if (!data->sendDownloadUrl(url)) {
+        PawnManager::Get()->core->logLn(LogLevel::Warning, "This native can be used only within OnPlayerRequestDownload callback.");
+        return false;
+    }
     return true;
 }
 
