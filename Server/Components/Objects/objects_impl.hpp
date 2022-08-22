@@ -229,7 +229,6 @@ public:
     void onFree(IComponent* component) override
     {
         if (component == models) {
-            models->getEventDispatcher().removeEventHandler(this);
             models = nullptr;
         }
     }
@@ -690,8 +689,13 @@ public:
         PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
     }
 
-    inline bool& streamedGlobalObjects()
+    bool getStreamedGlobalObjects() const
     {
         return streamedGlobalObjects_;
+    }
+
+    void setStreamedGlobalObjects(bool value)
+    {
+        streamedGlobalObjects_ = value;
     }
 };
