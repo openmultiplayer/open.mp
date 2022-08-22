@@ -14,6 +14,7 @@
 #include <filesystem>
 #include "crc32.hpp"
 #include <regex>
+#include <shared_mutex>
 
 static auto rAddCharModel = std::regex(R"(AddCharModel\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\);)");
 static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\);)");
@@ -84,6 +85,9 @@ private:
 
     String url = "";
 
+    FlatHashMap<uint32_t, uint16_t> allowedIPs_;
+    std::shared_mutex mutex_;
+
 public:
     WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port)
         : address_(String(!bind.empty() ? bind.data() : "127.0.0.1"))
@@ -96,6 +100,14 @@ public:
                 res.status = 401;
                 return httplib::Server::HandlerResponse::Handled;
             }
+
+            uint32_t addressAsInt = inet_addr(req.remote_addr.c_str());
+            std::shared_lock<std::shared_mutex> lock(mutex_);
+            if (allowedIPs_.find(addressAsInt) == allowedIPs_.end()) {
+                res.status = 401;
+                return httplib::Server::HandlerResponse::Handled;
+            }
+
             return httplib::Server::HandlerResponse::Unhandled;
         });
 
@@ -135,6 +147,35 @@ public:
     {
         return url;
     }
+
+    void allowIPAddress(uint32_t ipAddress)
+    {
+        auto itr = allowedIPs_.find(ipAddress);
+
+        std::unique_lock lock(mutex_);
+
+        if (itr == allowedIPs_.end()) {
+            allowedIPs_.insert({ ipAddress, 1 });
+        } else {
+            ++itr->second;
+        }
+    }
+
+    void removeIPAddres(uint32_t ipAddress)
+    {
+        auto itr = allowedIPs_.find(ipAddress);
+        if (itr == allowedIPs_.end()) {
+            return;
+        }
+
+        std::unique_lock lock(mutex_);
+
+        if (itr->second > 1) {
+            --itr->second;
+        } else {
+            allowedIPs_.erase(itr);
+        }
+    }
 };
 
 class PlayerCustomModelsData final : public IPlayerCustomModelsData {
@@ -146,6 +187,7 @@ private:
 public:
     PlayerCustomModelsData(IPlayer& player)
         : player(player)
+        , requestedFile_ { 0, 0 }
     {
     }
 
@@ -499,6 +541,21 @@ public:
     void onPlayerConnect(IPlayer& player) override
     {
         player.addExtension(new PlayerCustomModelsData(player), true);
+
+        if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL || !webServer) {
+            return;
+        }
+
+        webServer->allowIPAddress(player.getNetworkData().networkID.address.v4);
+    }
+
+    void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
+    {
+        if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL || !webServer) {
+            return;
+        }
+
+        webServer->removeIPAddres(player.getNetworkData().networkID.address.v4);
     }
 };
 
