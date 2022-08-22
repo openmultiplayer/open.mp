@@ -88,10 +88,4 @@ enum Key {
     RIGHT = 128,
 };
 
-enum class ClientVersion : uint8_t {
-    ClientVersion_SAMP_037,
-    ClientVersion_SAMP_03DL,
-    ClientVersion_openmp
-};
-
 constexpr uint16_t INVALID_MODEL_ID = 65535u;
