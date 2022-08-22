@@ -69,6 +69,12 @@ enum NewConnectionResult {
     NewConnectionResult_Success
 };
 
+enum class ClientVersion : uint8_t {
+    ClientVersion_SAMP_037,
+    ClientVersion_SAMP_03DL,
+    ClientVersion_openmp
+};
+
 struct PeerRequestParams {
     ClientVersion version;
     StringView versionName;
