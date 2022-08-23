@@ -10,7 +10,7 @@
 #include <Server/Components/CustomModels/custommodels.hpp>
 #include <sdk.hpp>
 #include <netcode.hpp>
-#include <httplib/httplib.h>
+#include <httplib.h>
 #include <filesystem>
 #include "crc32.hpp"
 #include <regex>
@@ -101,11 +101,16 @@ public:
                 return httplib::Server::HandlerResponse::Handled;
             }
 
-            uint32_t addressAsInt = inet_addr(req.remote_addr.c_str());
-            std::shared_lock<std::shared_mutex> lock(mutex_);
-            if (allowedIPs_.find(addressAsInt) == allowedIPs_.end()) {
-                res.status = 401;
-                return httplib::Server::HandlerResponse::Handled;
+            struct sockaddr_storage addr;
+            socklen_t addr_len = sizeof(addr);
+
+            if (!getpeername(req.socket, reinterpret_cast<struct sockaddr*>(&addr), &addr_len)) {
+                uint32_t ip = reinterpret_cast<const struct sockaddr_in*>(&addr)->sin_addr.s_addr;
+                std::shared_lock<std::shared_mutex> lock(mutex_);
+                if (allowedIPs_.find(ip) == allowedIPs_.end()) {
+                    res.status = 401;
+                    return httplib::Server::HandlerResponse::Handled;
+                }
             }
 
             return httplib::Server::HandlerResponse::Unhandled;
