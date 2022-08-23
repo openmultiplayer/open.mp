@@ -13,3 +13,6 @@
 [submodule "SDK/lib/cmake-conan"]
 	path = SDK/lib/cmake-conan
 	url = git@github.com:openmultiplayer/cmake-conan.git
+[submodule "lib/cpp-httplib"]
+	path = lib/cpp-httplib
+	url = git@github.com:ksenonadv/cpp-httplib.git

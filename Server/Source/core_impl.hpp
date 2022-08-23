@@ -40,7 +40,7 @@ using namespace Impl;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
 #define CPPHTTPLIB_OPENSSL_SUPPORT
-#include <httplib/httplib.h>
+#include <httplib.h>
 #pragma clang diagnostic pop
 
 #include <openssl/sha.h>
