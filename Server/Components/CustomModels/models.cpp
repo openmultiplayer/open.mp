@@ -331,13 +331,18 @@ public:
 
     ~CustomModelsComponent()
     {
+        if (!core) {
+            return;
+        }
+
         NetCode::RPC::RequestTXD::removeEventHandler(*core, &requestDownloadLinkHandler);
         NetCode::RPC::RequestDFF::removeEventHandler(*core, &requestDownloadLinkHandler);
         NetCode::RPC::FinishDownload::removeEventHandler(*core, &finishDownloadHandler);
         players->getEventDispatcher().removeEventHandler(this);
 
-        if (webServer)
+        if (webServer) {
             delete webServer;
+        }
     }
 
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
