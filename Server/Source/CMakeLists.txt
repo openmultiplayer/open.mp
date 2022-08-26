@@ -36,7 +36,6 @@ if(MSVC)
 else()
 	target_link_libraries(Server PRIVATE
 		dl
-		stdc++fs
 	)
 endif()
 
