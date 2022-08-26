@@ -28,6 +28,9 @@ elseif(UNIX)
 		set(CMAKE_CXX_STDLIB "libstdc++" CACHE STRING "The standard library to use.")
 		set(CROSS_BUILD FALSE CACHE BOOL "Whether to cross-build.")
 		set(CROSS_BUILD_ARCH "armv6" CACHE STRING "The architecture to cross-build for.")
+		set(STATIC_OPENSSL FALSE CACHE BOOL "Whether to statically link against openssl.")
+		set(STATIC_STDCXX FALSE CACHE BOOL "Whether to statically link against libc++.")
+		set(SHARED_STDCXXFS FALSE CACHE BOOL "Whether to dynamically link against stdc++fs.")
 	# Apple Clang
 	else()
 		set(CMAKE_CXX_STDLIB "libc++" CACHE STRING "The standard library to use.")
@@ -44,6 +47,10 @@ elseif(UNIX)
 
 	set(CMAKE_C_FLAGS "-pthread -Werror=format -fno-builtin-getentropy")
 	set(CMAKE_CXX_FLAGS "-fno-sized-deallocation -std=gnu++17 -Wno-register -pthread -Werror=format -fno-builtin-getentropy")
+
+	if(STATIC_STDCXX)
+		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libstdc++")
+	endif()
 
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)
