@@ -32,9 +32,9 @@ void ObjectComponent::onPlayerConnect(IPlayer& player)
     auto player_data = new PlayerObjectData(*this, player);
     player.addExtension(player_data, true);
 
-    // If client is using 0.3.7 or artwork isn't enabled we can create object right on connect.
+    // If client is using 0.3.7 or artwork isn't enabled we can create objects right on connect.
     // If not we need to wait for client to download custom models before creating objects.
-    static bool artwork = *core->getConfig().getBool("artwork.enable");
+    static bool artwork = (core->getConfig().getBool("artwork.enable")) ? (*core->getConfig().getBool("artwork.enable")) : false;
     if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
         return;
 

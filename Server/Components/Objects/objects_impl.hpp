@@ -214,7 +214,8 @@ public:
         NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
         NetCode::RPC::OnPlayerEditAttachedObject::addEventHandler(*core, &playerEditAttachedObjectEventHandler);
 
-        compatModeEnabled = (!*core->getConfig().getBool("artwork.enable") || (*core->getConfig().getBool("artwork.enable") && *core->getConfig().getBool("network.allow_037_clients")));
+        bool* artwork = core->getConfig().getBool("artwork.enable");
+        compatModeEnabled = (!artwork || !*artwork || (*artwork && *core->getConfig().getBool("network.allow_037_clients")));
     }
 
     void onInit(IComponentList* components) override

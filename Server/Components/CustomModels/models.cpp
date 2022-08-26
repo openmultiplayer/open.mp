@@ -109,7 +109,7 @@ public:
                     return httplib::Server::HandlerResponse::Handled;
                 }
             } else if (req.sockaddr.ss_family == AF_INET6) {
-                //TODO: Add IPV6 support.
+                // TODO: Add IPV6 support.
             }
 
             return httplib::Server::HandlerResponse::Unhandled;
