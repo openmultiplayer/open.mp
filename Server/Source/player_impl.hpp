@@ -562,6 +562,10 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy {
 
     void setSpectating(bool spectating) override
     {
+        if (spectating == spectateData_.spectating) {
+            return;
+        }
+
         if (!spectating) {
             toSpawn_ = true;
             spectateData_.type = PlayerSpectateData::ESpectateType::None;
