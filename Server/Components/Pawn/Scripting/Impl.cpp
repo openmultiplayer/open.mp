@@ -20,6 +20,7 @@
 #include "TextDraw/Events.hpp"
 #include "Vehicle/Events.hpp"
 #include "GangZone/Events.hpp"
+#include "CustomModels/Events.hpp"
 
 Scripting::~Scripting()
 {
@@ -62,6 +63,9 @@ Scripting::~Scripting()
     }
     if (mgr->gangzones) {
         mgr->gangzones->getEventDispatcher().removeEventHandler(GangZoneEvents::Get());
+    }
+    if (mgr->models) {
+        mgr->models->getEventDispatcher().removeEventHandler(CustomModelsEvents::Get());
     }
 }
 
@@ -106,5 +110,8 @@ void Scripting::addEvents() const
     }
     if (mgr->gangzones) {
         mgr->gangzones->getEventDispatcher().addEventHandler(GangZoneEvents::Get());
+    }
+    if (mgr->models) {
+        mgr->models->getEventDispatcher().addEventHandler(CustomModelsEvents::Get());
     }
 }

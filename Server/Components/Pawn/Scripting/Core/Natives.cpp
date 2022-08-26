@@ -103,21 +103,6 @@ SCRIPT_API(print, bool(const std::string& text))
     return false;
 }
 
-SCRIPT_API(AddCharModel, bool(int baseid, int newid, std::string const& dff, std::string const& textureLibrary))
-{
-    throw pawn_natives::NotImplemented();
-}
-
-SCRIPT_API(AddSimpleModel, bool(int virtualWorld, int baseid, int newid, std::string const& dff, std::string const& textureLibrary))
-{
-    throw pawn_natives::NotImplemented();
-}
-
-SCRIPT_API(AddSimpleModelTimed, bool(int virtualWorld, int baseid, int newid, std::string const& dff, std::string const& textureLibrary, int timeOn, int timeOff))
-{
-    throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 {
     *PawnManager::Get()->config->getBool("rcon.allow_teleport") = allow;
@@ -179,16 +164,6 @@ SCRIPT_API(EnableZoneNames, bool(bool enable))
 {
     *PawnManager::Get()->config->getBool("game.use_zone_names") = enable;
     return true;
-}
-
-SCRIPT_API(FindModelFileNameFromCRC, bool(int crc, std::string& output))
-{
-    throw pawn_natives::NotImplemented();
-}
-
-SCRIPT_API(FindTextureFileNameFromCRC, bool(int crc, std::string& output))
-{
-    throw pawn_natives::NotImplemented();
 }
 
 SCRIPT_API(GameModeExit, bool())
@@ -499,11 +474,6 @@ SCRIPT_API(NetStats_PacketLossPercent, float(IPlayer& player))
 {
     NetworkStats stats = player.getNetworkData().network->getStatistics(&player);
     return stats.packetloss;
-}
-
-SCRIPT_API(RedirectDownload, bool(IPlayer& player, std::string const& url))
-{
-    throw pawn_natives::NotImplemented();
 }
 
 SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, cell const* format))

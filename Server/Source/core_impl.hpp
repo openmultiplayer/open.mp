@@ -16,6 +16,7 @@
 #include <Server/Components/Unicode/unicode.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/LegacyConfig/legacyconfig.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -39,7 +40,7 @@ using namespace Impl;
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wlogical-op-parentheses"
 #define CPPHTTPLIB_OPENSSL_SUPPORT
-#include <httplib/httplib.h>
+#include <httplib.h>
 #pragma clang diagnostic pop
 
 #include <openssl/sha.h>
@@ -115,6 +116,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "network.stream_rate", 1000 },
     { "network.time_sync_rate", 30000 },
     { "network.use_lan_mode", false },
+    { "network.allow_037_clients", true },
     // rcon
     { "rcon.allow_teleport", false },
     { "rcon.enable", false },
@@ -769,6 +771,7 @@ private:
     ComponentList components;
     Config config;
     IConsoleComponent* console;
+    ICustomModelsComponent* models;
     FILE* logFile;
     std::atomic_bool run_;
     unsigned ticksPerSecond;
@@ -892,6 +895,8 @@ private:
 
     void playerInit(IPlayer& player)
     {
+        players.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClientInit, player);
+
         NetCode::RPC::PlayerInit playerInitRPC;
         playerInitRPC.EnableZoneNames = *EnableZoneNames;
         playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
@@ -1105,6 +1110,7 @@ public:
         : players(*this)
         , config(*this)
         , console(nullptr)
+        , models(nullptr)
         , logFile(nullptr)
         , run_(true)
         , ticksPerSecond(0u)
@@ -1224,6 +1230,8 @@ public:
         if (console) {
             console->getEventDispatcher().addEventHandler(this);
         }
+
+        models = components.queryComponent<ICustomModelsComponent>();
         components.ready();
     }
 

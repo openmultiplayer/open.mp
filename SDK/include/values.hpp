@@ -6,7 +6,8 @@ constexpr int MAX_SEATS = 4;
 constexpr int PLAYER_POOL_SIZE = 1000;
 constexpr int VEHICLE_POOL_SIZE = 2000;
 constexpr int CLASS_POOL_SIZE = 320;
-constexpr int OBJECT_POOL_SIZE = 1000;
+constexpr int OBJECT_POOL_SIZE = 2000;
+constexpr int OBJECT_POOL_SIZE_037 = 1000;
 constexpr int MAX_WEAPON_SLOTS = 13;
 constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
 constexpr int MAX_WEAPON_ID = 46;
@@ -86,3 +87,6 @@ enum Key {
     LEFT = -128,
     RIGHT = 128,
 };
+
+constexpr uint16_t INVALID_MODEL_ID = 65535u;
+constexpr int32_t QUESTION_MARK_MODEL_ID = 18631;

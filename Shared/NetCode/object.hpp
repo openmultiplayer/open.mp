@@ -66,12 +66,14 @@ namespace RPC {
         ObjectAttachmentData AttachmentData;
         StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS> Materials;
         uint8_t MaterialsCount;
+        bool isDL;
 
         CreateObject(
             StaticArray<ObjectMaterialData, MAX_OBJECT_MATERIAL_SLOTS>& materials,
-            uint8_t materialsCount)
+            uint8_t materialsCount, bool isDL)
             : Materials(materials)
             , MaterialsCount(materialsCount)
+            , isDL(isDL)
         {
         }
 
@@ -83,7 +85,11 @@ namespace RPC {
         void write(NetworkBitStream& bs) const
         {
             bs.writeUINT16(ObjectID);
-            bs.writeINT32(ModelID);
+            if (!isDL) {
+                bs.writeINT32(ModelID < 0 ? QUESTION_MARK_MODEL_ID : ModelID);
+            } else {
+                bs.writeINT32(ModelID);            
+            }
             bs.writeVEC3(Position);
             bs.writeVEC3(Rotation);
             bs.writeFLOAT(DrawDistance);

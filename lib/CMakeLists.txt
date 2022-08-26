@@ -109,10 +109,6 @@ include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan-omp.cmake)
 # ----
 conan_omp_add_lib(nlohmann_json 3.9.1)
 
-# cpp-httplib
-# ---
-conan_omp_add_lib(cpp-httplib 0.9.0)
-
 # OpenSSL
 # -------
 conan_omp_add_lib(openssl 1.1.1k)

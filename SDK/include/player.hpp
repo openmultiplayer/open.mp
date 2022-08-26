@@ -417,7 +417,7 @@ struct IPlayer : public IExtensible, public IEntity {
     virtual void spawn() = 0;
 
     /// Get the player's client version
-    virtual uint32_t getClientVersion() const = 0;
+    virtual ClientVersion getClientVersion() const = 0;
 
     /// Get player's client verison name
     virtual StringView getClientVersionName() const = 0;
@@ -844,6 +844,7 @@ struct PlayerEventHandler {
     virtual void onPlayerClickMap(IPlayer& player, Vector3 pos) { }
     virtual void onPlayerClickPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
     virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) { }
+    virtual void onPlayerClientInit(IPlayer& player) { }
 };
 
 struct PlayerUpdateEventHandler {

@@ -39,7 +39,8 @@ enum OrderingChannel {
     OrderingChannel_SyncPacket,
     OrderingChannel_SyncRPC,
     OrderingChannel_Unordered,
-    OrderingChannel_Reliable
+    OrderingChannel_Reliable,
+    OrderingChannel_DownloadRequest
 };
 
 /// The network types
@@ -68,8 +69,14 @@ enum NewConnectionResult {
     NewConnectionResult_Success
 };
 
+enum class ClientVersion : uint8_t {
+    ClientVersion_SAMP_037,
+    ClientVersion_SAMP_03DL,
+    ClientVersion_openmp
+};
+
 struct PeerRequestParams {
-    uint32_t version;
+    ClientVersion version;
     StringView versionName;
     bool bot;
     StringView name;
