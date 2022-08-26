@@ -96,7 +96,7 @@ jobs:
       - name: Build
         run: |
           cd docker
-          ./build.sh
+          CONFIG=RelWithDebInfo ./build.sh
 
       - name: Create a snapshot
         env:
