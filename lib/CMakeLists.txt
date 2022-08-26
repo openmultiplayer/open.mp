@@ -111,7 +111,7 @@ conan_omp_add_lib(nlohmann_json 3.9.1)
 
 # OpenSSL
 # -------
-conan_omp_add_lib(openssl 1.1.1k)
+conan_omp_add_lib_opt(openssl 1.1.1k "openssl:shared=True")
 
 # cxxopts
 # ----
