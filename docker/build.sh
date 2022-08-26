@@ -1,7 +1,9 @@
 #!/bin/bash
 
 # Available configs: Debug, [RelWithDebInfo], Release
-config=RelWithDebInfo
+[[ -z "$CONFIG" ]] \
+&& config=RelWithDebInfo \
+|| config="$CONFIG"
 # Available versions: 18.04, [22.04]
 ubuntu_version=22.04
 
@@ -18,7 +20,7 @@ fi
 
 docker run \
     --rm \
-    -ti \
+    -t \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/conan:/home/user/.conan \
