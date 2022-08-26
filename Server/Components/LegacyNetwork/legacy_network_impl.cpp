@@ -731,7 +731,7 @@ void RakNetLegacyNetwork::start()
     query.setCore(core);
     query.setRuleValue("version", "0.3.DL-R1");
     query.setRuleValue("artwork", artwork ? "Yes" : "No");
-    query.setRuleValue("0.3.7", (!artwork || (artwork && allow037)) ? "Yes" : "No");
+    query.setRuleValue("allow_037", (!artwork || (artwork && allow037)) ? "Yes" : "No");
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 
