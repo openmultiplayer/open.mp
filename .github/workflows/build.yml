@@ -93,19 +93,10 @@ jobs:
           # this is to fix GIT not liking owner of the checkout dir
           chown -R $(id -u):$(id -g) $PWD
 
-      - name: Create Docker build image
-        run: docker build -t open.mp/build:ubuntu-18.04 docker/build_ubuntu-18.04
-
       - name: Build
         run: |
-          docker run --rm -i \
-            -v $PWD:/code \
-            -v $PWD/conan:/root/.conan \
-            -w /code \
-            -e CONFIG=RelWithDebInfo \
-            -e OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l) \
-            -e OMP_BUILD_COMMIT=$(git rev-parse HEAD) \
-            open.mp/build:ubuntu-18.04
+          cd docker
+          ./build.sh
 
       - name: Create a snapshot
         env:
