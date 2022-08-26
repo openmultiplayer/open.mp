@@ -20,7 +20,14 @@ RUN \
         gcc-9-multilib \
         g++-9-multilib \
     && \
-    pip3 install conan
+    useradd -m user && \
+    su user -c 'pip3 install --user conan'
 
-ADD build.sh /
-CMD /build.sh
+USER user
+
+ENV CC=/usr/bin/clang-10 \
+    CXX=/usr/bin/clang++-10 \
+    PATH=~/.local/bin:${PATH}
+
+ADD docker-entrypoint.sh /
+CMD /docker-entrypoint.sh
