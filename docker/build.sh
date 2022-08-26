@@ -13,7 +13,8 @@ docker build \
     build_ubuntu-${ubuntu_version}/ \
 || exit 1
 
-for folder in ('build' 'conan'); do
+folders=('build' 'conan')
+for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
         mkdir ${folder} &&
         chown 1000:1000 ${folder} || exit 1
