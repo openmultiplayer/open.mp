@@ -66,9 +66,9 @@ jobs:
         shell: bash
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.sha }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          version=$(git describe --always --tags "${HEAD_REF}")
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
           archive_name="open.mp-win-snapshot-${version}.tar.xz"
           cd build/Output/*
@@ -102,9 +102,9 @@ jobs:
       - name: Create a snapshot
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.sha }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          version=$(git describe --always --tags "${HEAD_REF}")
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
           archive_name="open.mp-linux-snapshot-${version}.tar.xz"
           cd docker/build/Output/*
@@ -143,9 +143,9 @@ jobs:
       - name: Create a snapshot
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.sha }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          version=$(git describe --always --tags "${HEAD_REF}")
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
           archive_name="open.mp-linux-snapshot-${version}-arm.tar.xz"
           cd build/Output/*
