@@ -13,16 +13,19 @@ docker build \
     build_ubuntu-${ubuntu_version}/ \
 || exit 1
 
-if [[ ! -d './conan' ]]; then
-    mkdir conan &&
-    chown 1000:1000 conan || exit 1
-fi
+for folder in ('build' 'conan'); do
+    if [[ ! -d "./${folder}" ]]; then
+        mkdir ${folder} &&
+        chown 1000:1000 ${folder} || exit 1
+    fi
+done
 
 docker run \
     --rm \
     -t \
     -w /code \
     -v $PWD/..:/code \
+    -v $PWD/build:/code/build \
     -v $PWD/conan:/home/user/.conan \
     -e CONFIG=${config} \
     -e OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l) \

@@ -105,7 +105,7 @@ jobs:
           version=$(git describe --always --tags)
           folder_name="open.mp-${version}"
           archive_name="open.mp-linux-snapshot-${version}.tar.xz"
-          cd build/Output/*
+          cd docker/build/Output/*
           mv Server "${folder_name}"
           tar -cJvf "${archive_name}" "${folder_name}"
           eval $(ssh-agent -s)
