@@ -277,11 +277,18 @@ namespace RPC {
         int PlayerID;
         uint8_t Team;
         uint32_t Skin;
+        uint32_t CustomSkin;
         Vector3 Pos;
         float Angle;
         Colour Col;
         uint8_t FightingStyle;
         StaticArray<uint16_t, NUM_SKILL_LEVELS> SkillLevel;
+        bool isDL;
+
+        PlayerStreamIn(bool isDL)
+            : isDL(isDL)
+        {
+        }
 
         bool read(NetworkBitStream& bs)
         {
@@ -293,6 +300,9 @@ namespace RPC {
             bs.writeUINT16(PlayerID);
             bs.writeUINT8(Team);
             bs.writeUINT32(Skin);
+            if (isDL) {
+                bs.writeUINT32(CustomSkin);
+            }
             bs.writeVEC3(Pos);
             bs.writeFLOAT(Angle);
             bs.writeUINT32(Col.RGBA());
@@ -653,6 +663,8 @@ namespace RPC {
     struct SetPlayerSkin : NetworkPacketBase<153, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int PlayerID;
         uint32_t Skin;
+        uint32_t CustomSkin;
+        bool isDL;
 
         bool read(NetworkBitStream& bs)
         {
@@ -661,8 +673,15 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
-            bs.writeUINT32(PlayerID);
+            if (!isDL) {
+                bs.writeUINT32(PlayerID);
+                bs.writeUINT32(Skin);
+                return;
+            }
+
+            bs.writeUINT16(PlayerID);
             bs.writeUINT32(Skin);
+            bs.writeUINT32(CustomSkin);
         }
     };
 
@@ -1411,6 +1430,20 @@ namespace RPC {
 
         void write(NetworkBitStream& bs) const
         {
+        }
+    };
+
+    struct SetPlayerVirtualWorld : NetworkPacketBase<48, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
+        int32_t worldId;
+
+        bool read(NetworkBitStream& bs)
+        {
+            return false;
+        }
+
+        void write(NetworkBitStream& bs) const
+        {
+            bs.writeINT32(worldId);
         }
     };
 }

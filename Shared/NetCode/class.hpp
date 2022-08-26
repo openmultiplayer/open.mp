@@ -32,20 +32,23 @@ namespace RPC {
         uint8_t Selectable;
         uint8_t TeamID;
         uint32_t ModelID;
+        uint32_t CustomModelID;
         uint8_t Unknown1;
         Vector3 Spawn;
         float ZAngle;
         StaticArray<uint32_t, 3> Weapons;
         StaticArray<uint32_t, 3> Ammos;
+        bool IsDL;
 
         /// Default constructor
         PlayerRequestClassResponse() { }
 
         /// Construction from a IClass
-        PlayerRequestClassResponse(int team, int model, Vector3 spawn, float angle)
+        PlayerRequestClassResponse(int team, int model, int customModel, Vector3 spawn, float angle)
         {
             TeamID = team;
             ModelID = model;
+            CustomModelID = customModel;
             Spawn = spawn;
             ZAngle = angle;
         }
@@ -71,6 +74,9 @@ namespace RPC {
             bs.writeUINT8(Selectable);
             bs.writeUINT8(TeamID);
             bs.writeUINT32(ModelID);
+            if (IsDL) {
+                bs.writeUINT32(CustomModelID);
+            }
             bs.writeUINT8(Unknown1);
             bs.writeVEC3(Spawn);
             bs.writeFLOAT(ZAngle);
@@ -82,11 +88,18 @@ namespace RPC {
     struct SetSpawnInfo : NetworkPacketBase<68, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         uint8_t TeamID;
         uint32_t ModelID;
+        uint32_t CustomModelID;
         uint8_t Unknown1;
         Vector3 Spawn;
         float ZAngle;
         StaticArray<uint32_t, 3> Weapons;
         StaticArray<uint32_t, 3> Ammos;
+        bool isDL;
+
+        SetSpawnInfo(bool isDL)
+            : isDL(isDL)
+        {
+        }
 
         bool read(NetworkBitStream& bs)
         {
@@ -97,6 +110,9 @@ namespace RPC {
         {
             bs.writeUINT8(TeamID);
             bs.writeUINT32(ModelID);
+            if (isDL) {
+                bs.writeUINT32(CustomModelID);
+            }
             bs.writeUINT8(Unknown1);
             bs.writeVEC3(Spawn);
             bs.writeFLOAT(ZAngle);

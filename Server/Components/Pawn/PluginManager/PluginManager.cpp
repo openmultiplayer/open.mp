@@ -31,7 +31,7 @@ static const StaticArray<BrokenPluginMessageData, 15> BrokenPlugins = {
         { "rustext", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
         { "ASAN", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
         { "nativechecker", "It is not needed anymore since open.mp has built in native checking mechanism when a script is being loaded" },
-        { "samp-compat", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+        { "samp-compat", "It is not needed anymore since open.mp has built in compat mechanism between 0.3.7 and 0.3DL versions" },
     }
 };
 

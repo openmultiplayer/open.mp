@@ -8,6 +8,7 @@
 
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
 
@@ -41,6 +42,7 @@ private:
     AnimationData animation_;
     ActorSpawnData spawnData_;
     bool* allAnimationLibraries_;
+    ICustomModelsComponent*& modelsComponent_;
 
     void restream()
     {
@@ -52,13 +54,18 @@ private:
 
     void streamInForClient(IPlayer& player)
     {
-        NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC;
+        NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC(player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
         showActorForPlayerRPC.ActorID = poolID;
         showActorForPlayerRPC.Angle = angle_;
         showActorForPlayerRPC.Health = health_;
         showActorForPlayerRPC.Invulnerable = invulnerable_;
         showActorForPlayerRPC.Position = pos_;
         showActorForPlayerRPC.SkinID = skin_;
+
+        if (modelsComponent_) {
+            modelsComponent_->getBaseModel(showActorForPlayerRPC.SkinID, showActorForPlayerRPC.CustomSkin);
+        }
+
         PacketHelper::send(showActorForPlayerRPC, player);
 
         if (animationLoop_) {
@@ -83,7 +90,7 @@ public:
         }
     }
 
-    Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries)
+    Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, ICustomModelsComponent*& modelsComponent)
         : virtualWorld_(0)
         , skin_(skin)
         , invulnerable_(true)
@@ -93,6 +100,7 @@ public:
         , health_(100.f)
         , spawnData_ { pos, angle, skin }
         , allAnimationLibraries_(allAnimationLibraries)
+        , modelsComponent_(modelsComponent)
     {
     }
 

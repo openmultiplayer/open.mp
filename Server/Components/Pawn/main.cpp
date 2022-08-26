@@ -132,6 +132,7 @@ public:
         mgr->timers = components->queryComponent<ITimersComponent>();
         mgr->vars = components->queryComponent<IVariablesComponent>();
         mgr->vehicles = components->queryComponent<IVehiclesComponent>();
+        mgr->models = components->queryComponent<ICustomModelsComponent>();
 
         scriptingInstance.addEvents();
 
@@ -207,6 +208,7 @@ public:
         COMPONENT_UNLOADED(mgr->timers)
         COMPONENT_UNLOADED(mgr->vars)
         COMPONENT_UNLOADED(mgr->vehicles)
+        COMPONENT_UNLOADED(mgr->models)
     }
 
     void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override

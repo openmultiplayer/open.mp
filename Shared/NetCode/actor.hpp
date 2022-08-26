@@ -18,16 +18,26 @@ namespace NetCode {
 namespace RPC {
     struct ShowActorForPlayer : NetworkPacketBase<171, NetworkPacketType::RPC, OrderingChannel_SyncRPC> {
         int ActorID;
-        int SkinID;
+        uint32_t SkinID;
+        uint32_t CustomSkin;
         Vector3 Position;
         float Angle;
         float Health;
         bool Invulnerable;
+        bool isDL;
+
+        ShowActorForPlayer(bool isDL)
+            : isDL(isDL)
+        {
+        }
 
         void write(NetworkBitStream& bs) const
         {
             bs.writeUINT16(ActorID);
             bs.writeUINT32(SkinID);
+            if (isDL) {
+                bs.writeUINT32(CustomSkin);
+            }
             bs.writeVEC3(Position);
             bs.writeFLOAT(Angle);
             bs.writeFLOAT(Health);

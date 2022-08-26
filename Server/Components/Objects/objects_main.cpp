@@ -29,8 +29,35 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
-    player.addExtension(new PlayerObjectData(*this, player), true);
+    auto player_data = new PlayerObjectData(*this, player);
+    player.addExtension(player_data, true);
 
+    // If client is using 0.3.7 or artwork isn't enabled we can create object right on connect.
+    // If not we need to wait for client to download custom models before creating objects.
+    static bool artwork = *core->getConfig().getBool("artwork.enable");
+    if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
+        return;
+
+    player_data->setStreamedGlobalObjects(true);
+    for (IObject* o : storage) {
+        Object* obj = static_cast<Object*>(o);
+        obj->createForPlayer(player);
+    }
+}
+
+void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
+{
+    auto player_data = queryExtension<PlayerObjectData>(player);
+
+    if (!player_data) {
+        return;
+    }
+
+    if (player_data->getStreamedGlobalObjects()) {
+        return;
+    }
+
+    player_data->setStreamedGlobalObjects(true);
     for (IObject* o : storage) {
         Object* obj = static_cast<Object*>(o);
         obj->createForPlayer(player);

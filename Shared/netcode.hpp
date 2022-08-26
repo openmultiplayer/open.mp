@@ -13,3 +13,4 @@
 #include "NetCode/textdraw.hpp"
 #include "NetCode/textlabel.hpp"
 #include "NetCode/vehicle.hpp"
+#include "NetCode/custommodels.hpp"

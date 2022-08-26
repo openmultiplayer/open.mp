@@ -23,7 +23,6 @@ target_link_libraries(Server PUBLIC
 
 target_link_libraries(Server PRIVATE
 	CONAN_PKG::nlohmann_json
-	CONAN_PKG::cpp-httplib
 	CONAN_PKG::openssl
 	CONAN_PKG::cxxopts
 )
@@ -64,3 +63,5 @@ set_property(TARGET Server PROPERTY ENABLE_EXPORTS ON)
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Server)
 set_property(TARGET Server PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}")
+
+include_directories(${CMAKE_SOURCE_DIR}/lib/cpp-httplib)

@@ -895,11 +895,6 @@ SCRIPT_API(GetPlayerCameraZoom, float(IPlayer& player))
     return player.getAimData().camZoom;
 }
 
-SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
-{
-    throw pawn_natives::NotImplemented();
-}
-
 SCRIPT_API(SelectTextDraw, bool(IPlayer& player, uint32_t hoverColour))
 {
     IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
