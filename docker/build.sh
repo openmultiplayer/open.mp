@@ -5,7 +5,9 @@
 && config=RelWithDebInfo \
 || config="$CONFIG"
 # Available versions: 18.04, [22.04]
-ubuntu_version=22.04
+[[ -z "$UBUNTU_VERSION" ]] \
+&& ubuntu_version=22.04 \
+|| ubuntu_version="$UBUNTU_VERSION"
 
 
 docker build \
