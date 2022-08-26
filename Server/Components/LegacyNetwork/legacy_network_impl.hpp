@@ -25,8 +25,8 @@ using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
 
-static const StaticArray<StringView, 1> ProtectedRules = {
-    { "version" },
+static const StaticArray<StringView, 2> ProtectedRules = {
+    "version", "allow_037"
 };
 
 class Core;
