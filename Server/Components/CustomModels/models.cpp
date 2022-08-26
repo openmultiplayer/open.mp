@@ -101,16 +101,15 @@ public:
                 return httplib::Server::HandlerResponse::Handled;
             }
 
-            struct sockaddr_storage addr;
-            socklen_t addr_len = sizeof(addr);
-
-            if (!getpeername(req.socket, reinterpret_cast<struct sockaddr*>(&addr), &addr_len)) {
-                uint32_t ip = reinterpret_cast<const struct sockaddr_in*>(&addr)->sin_addr.s_addr;
+            if (req.sockaddr.ss_family == AF_INET) {
+                auto ip = reinterpret_cast<const struct sockaddr_in*>(&req.sockaddr)->sin_addr.s_addr;
                 std::shared_lock<std::shared_mutex> lock(mutex_);
                 if (allowedIPs_.find(ip) == allowedIPs_.end()) {
                     res.status = 401;
                     return httplib::Server::HandlerResponse::Handled;
                 }
+            } else if (req.sockaddr.ss_family == AF_INET6) {
+                //TODO: Add IPV6 support.
             }
 
             return httplib::Server::HandlerResponse::Unhandled;
