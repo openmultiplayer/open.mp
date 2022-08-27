@@ -1097,6 +1097,11 @@ public:
         players.addSyncPacketsHandlers();
         reloading_ = false;
         for (auto p : players.entries()) {
+            Player* player = static_cast<Player*>(p);
+            // Set weather & time back to server's ones.
+            // https://github.com/openmultiplayer/server-beta/issues/167
+            player->weather_ = *SetWeather;
+            player->time_ = duration_cast<Minutes>(Hours(*SetWorldTime));
             playerInit(*p);
         }
     }
