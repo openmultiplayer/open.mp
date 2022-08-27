@@ -66,11 +66,48 @@ jobs:
         shell: bash
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          version=$(git describe --always --tags)
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
           archive_name="open.mp-win-snapshot-${version}.tar.xz"
           cd build/Output/*
+          mv Server "${folder_name}"
+          tar -cJvf "${archive_name}" "${folder_name}"
+          eval $(ssh-agent -s)
+          echo "${CI_PRIVATE_KEY}" | ssh-add -
+          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+
+  build-linux-static:
+    runs-on: [self-hosted, Linux, X64]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+
+      - name: Set ownership
+        run: |
+          # this is to fix GIT not liking owner of the checkout dir
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build
+        run: |
+          cd docker
+          CONFIG=RelWithDebInfo UBUNTU_VERSION=18.04 ./build.sh
+
+      - name: Create a snapshot
+        env:
+          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
+          folder_name="open.mp-${version}"
+          archive_name="open.mp-linux-static-snapshot-${version}.tar.xz"
+          cd docker/build/Output/*
           mv Server "${folder_name}"
           tar -cJvf "${archive_name}" "${folder_name}"
           eval $(ssh-agent -s)
@@ -93,28 +130,20 @@ jobs:
           # this is to fix GIT not liking owner of the checkout dir
           chown -R $(id -u):$(id -g) $PWD
 
-      - name: Create Docker build image
-        run: docker build -t open.mp/build:ubuntu-18.04 docker/build_ubuntu-18.04
-
       - name: Build
         run: |
-          docker run --rm -i \
-            -v $PWD:/code \
-            -v $PWD/conan:/root/.conan \
-            -w /code \
-            -e CONFIG=RelWithDebInfo \
-            -e OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l) \
-            -e OMP_BUILD_COMMIT=$(git rev-parse HEAD) \
-            open.mp/build:ubuntu-18.04
+          cd docker
+          CONFIG=RelWithDebInfo UBUNTU_VERSION=22.04 ./build.sh
 
       - name: Create a snapshot
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          version=$(git describe --always --tags)
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
           archive_name="open.mp-linux-snapshot-${version}.tar.xz"
-          cd build/Output/*
+          cd docker/build/Output/*
           mv Server "${folder_name}"
           tar -cJvf "${archive_name}" "${folder_name}"
           eval $(ssh-agent -s)
@@ -150,8 +179,9 @@ jobs:
       - name: Create a snapshot
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+          HEAD_REF: ${{ github.head_ref }}
         run: |
-          version=$(git describe --always --tags)
+          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
           archive_name="open.mp-linux-snapshot-${version}-arm.tar.xz"
           cd build/Output/*
