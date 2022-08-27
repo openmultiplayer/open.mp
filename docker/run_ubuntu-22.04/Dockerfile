@@ -1,10 +1,12 @@
 FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
 RUN \
     dpkg --add-architecture i386 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
         wget \
         libstdc++6:i386 \
+        tzdata \
     && \
     wget \
         http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.16_i386.deb \
