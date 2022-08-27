@@ -66,7 +66,7 @@ jobs:
         shell: bash
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ github.ref_name }}
         run: |
           version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
@@ -138,7 +138,7 @@ jobs:
       - name: Create a snapshot
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ github.ref_name }}
         run: |
           version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
@@ -179,7 +179,7 @@ jobs:
       - name: Create a snapshot
         env:
           CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.head_ref }}
+          HEAD_REF: ${{ github.ref_name }}
         run: |
           version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
           folder_name="open.mp-${version}"
