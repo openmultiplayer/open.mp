@@ -62,8 +62,9 @@ SCRIPT_API(SetSpawnInfo, bool(IPlayer& player, int team, int skin, Vector3 spawn
         };
 
         classData->setSpawnInfo(PlayerClass(skin, team, spawnPosition, angle, slots));
+        return true;
     }
-    return true;
+    return false;
 }
 
 SCRIPT_API(GetSpawnInfo, bool(IPlayer& player, uint8_t& team, int& skin, Vector3& spawnPosition, float& angle, int& weapon1, int& ammo1, int& weapon2, int& ammo2, int& weapon3, int& ammo3))
