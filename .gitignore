@@ -292,4 +292,5 @@ __pycache__/
 *.amx
 *.i
 .vscode/
-/docker/conan
+/docker/conan/
+/docker/data/

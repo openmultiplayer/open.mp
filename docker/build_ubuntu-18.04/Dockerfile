@@ -28,5 +28,5 @@ ENV CC=/usr/bin/clang-10 \
     CXX=/usr/bin/clang++-10 \
     PATH=~/.local/bin:${PATH}
 
-ADD docker-entrypoint.sh /
+COPY docker-entrypoint.sh /
 CMD /docker-entrypoint.sh
