@@ -164,7 +164,7 @@ ADD_CONSOLE_CMD(players, [](const String& params, const ConsoleCommandSenderData
 
 ADD_CONSOLE_CMD(kick, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int playerId;
-    if (sscanf(params.data(), "%i", &playerId) == EOF) {
+    if (sscanf(params.data(), "%d", &playerId) == EOF) {
         return;
     } else if (!core->getPlayers().get(playerId)) {
         return;
@@ -184,7 +184,7 @@ ADD_CONSOLE_CMD(kick, [](const String& params, const ConsoleCommandSenderData& s
 
 ADD_CONSOLE_CMD(ban, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int playerId;
-    if (sscanf(params.data(), "%i", &playerId) == EOF) {
+    if (sscanf(params.data(), "%d", &playerId) == EOF) {
         return;
     } else if (!core->getPlayers().get(playerId)) {
         return;
@@ -245,7 +245,7 @@ ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData
 
 ADD_CONSOLE_CMD(weather, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int weather = 0;
-    if (sscanf(params.data(), "%i", &weather) == EOF) {
+    if (sscanf(params.data(), "%d", &weather) == EOF) {
         console.sendMessage(sender, String("game.weather = " + std::to_string(*core->getConfig().getInt("game.weather"))));
         return;
     }
@@ -266,52 +266,52 @@ ADD_CONSOLE_CMD(echo, [](const String& params, const ConsoleCommandSenderData& s
 
 ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
+    if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.messages_limit = \"") + std::to_string(*core->getConfig().getInt("network.messages_limit")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.messages_limit", value);
+    *core->getConfig().getInt("network.messages_limit") = value;
     core->updateNetworks();
 });
 
 ADD_CONSOLE_CMD(messageholelimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
+    if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.message_hole_limit = \"") + std::to_string(*core->getConfig().getInt("network.message_hole_limit")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.message_hole_limit", value);
+    *core->getConfig().getInt("network.message_hole_limit") = value;
     core->updateNetworks();
 });
 
 ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
+    if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.acks_limit = \"") + std::to_string(*core->getConfig().getInt("network.acks_limit")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.acks_limit", value);
+    *core->getConfig().getInt("network.acks_limit") = value;
     core->updateNetworks();
 });
 
 ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
+    if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.player_timeout = \"") + std::to_string(*core->getConfig().getInt("network.player_timeout")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setInt("network.player_timeout", value);
+    *core->getConfig().getInt("network.player_timeout") = value;
     core->updateNetworks();
 });
 
 ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     if (params == "1") {
         console.sendMessage(sender, "Remote console enabled.");
-        static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", true);
+        *core->getConfig().getBool("rcon.enable") = true;
         core->updateNetworks();
     } else if (params == "0") {
         console.sendMessage(sender, "Remote console disabled.");
-        static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", false);
+        *core->getConfig().getBool("rcon.enable") = false;
         core->updateNetworks();
     } else {
         console.sendMessage(sender, "Unknown parameter. Use rcon 0 to disable remote console or rcon 1 to enable it.");
@@ -324,34 +324,35 @@ ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& 
         console.sendMessage(sender, String("sleep = \"") + std::to_string(*core->getConfig().getFloat("sleep")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setFloat("sleep", value);
+    *core->getConfig().getFloat("sleep") = value;
     core->setThreadSleep(Microseconds(static_cast<long long>(value * 1000.0f)));
 });
 
 ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
+    if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("dynticks = \"") + std::to_string(*core->getConfig().getBool("use_dyn_ticks")) + "\"");
         return;
     }
-    static_cast<IEarlyConfig&>(core->getConfig()).setBool("use_dyn_ticks", value);
+    *core->getConfig().getBool("use_dyn_ticks") = value;
     core->useDynTicks(bool(value));
 });
 
 ADD_CONSOLE_CMD(tickrate, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int value = 0;
-    if (sscanf(params.data(), "%i", &value) == EOF) {
+    if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("tickrate = \"") + std::to_string(static_cast<int>(1000.0f / *core->getConfig().getFloat("sleep"))) + "\"");
         return;
     }
     float sleep = 1000.0f / value;
-    static_cast<IEarlyConfig&>(core->getConfig()).setFloat("sleep", sleep);
+    
+    *core->getConfig().getFloat("sleep") = sleep;
     core->setThreadSleep(Microseconds(static_cast<long long>(sleep * 1000.0f)));
 });
 
 ADD_CONSOLE_CMD(worldtime, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
     int time;
-    if (sscanf(params.data(), "%i", &time) == EOF) {
+    if (sscanf(params.data(), "%d", &time) == EOF) {
         console.sendMessage(sender, String("worldtime = \"") + std::to_string(*core->getConfig().getInt("game.time")) + "\"");
         return;
     }
