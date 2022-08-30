@@ -469,6 +469,10 @@ public:
     {
         if (newState != PlayerState_Driver && newState != PlayerState_Passenger) {
             PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
+            if (!data) {
+                return;
+            }
+
             auto vehicle = static_cast<Vehicle*>(data->getVehicle());
             if (vehicle) {
                 vehicle->unoccupy(player);
