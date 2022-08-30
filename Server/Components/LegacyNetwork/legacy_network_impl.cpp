@@ -729,9 +729,13 @@ void RakNetLegacyNetwork::start()
     bool allow037 = *config.getBool("network.allow_037_clients");
 
     query.setCore(core);
-    query.setRuleValue("version", "0.3.DL-R1");
+    query.setRuleValue("version", !allow037 ? "0.3.DL-R1" : "0.3.7-R2");
     query.setRuleValue("artwork", artwork ? "Yes" : "No");
-    query.setRuleValue("allow_037", (!artwork || (artwork && allow037)) ? "Yes" : "No");
+
+    if (allow037) {
+        query.setRuleValue("allow_DL", "Yes");
+    }
+    
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 
