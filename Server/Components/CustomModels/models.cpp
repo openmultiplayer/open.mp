@@ -96,7 +96,7 @@ public:
     {
 
         svr.set_pre_routing_handler([&](const auto& req, auto& res) {
-            if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3") {
+            if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3" || ((req.path.rfind(".txd") == std::string::npos) && (req.path.rfind(".dff") == std::string::npos))) {
                 res.status = 401;
                 return httplib::Server::HandlerResponse::Handled;
             }
