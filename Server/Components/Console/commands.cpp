@@ -345,7 +345,7 @@ ADD_CONSOLE_CMD(tickrate, [](const String& params, const ConsoleCommandSenderDat
         return;
     }
     float sleep = 1000.0f / value;
-    
+
     *core->getConfig().getFloat("sleep") = sleep;
     core->setThreadSleep(Microseconds(static_cast<long long>(sleep * 1000.0f)));
 });

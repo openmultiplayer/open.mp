@@ -735,7 +735,7 @@ void RakNetLegacyNetwork::start()
     if (allow037) {
         query.setRuleValue("allow_DL", "Yes");
     }
-    
+
     query.setMaxPlayers(maxPlayers);
     query.buildPlayerDependentBuffers();
 
