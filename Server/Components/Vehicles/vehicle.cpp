@@ -173,6 +173,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
                 static_cast<Vehicle*>(player_vehicle)->unoccupy(player);
             }
             driver = &player;
+            lastDriverPoolID = player.getID();
             data->setVehicle(this, 0);
         }
         updateOccupied();
@@ -447,6 +448,7 @@ void Vehicle::putPlayer(IPlayer& player, int SeatID)
 
     if (SeatID == 0) {
         driver = &player;
+        lastDriverPoolID = player.getID();
         updateOccupied();
     }
 
