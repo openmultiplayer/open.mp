@@ -96,7 +96,7 @@ public:
     {
 
         svr.set_pre_routing_handler([&](const auto& req, auto& res) {
-            if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3") {
+            if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3" || ((req.path.rfind(".txd") == std::string::npos) && (req.path.rfind(".dff") == std::string::npos))) {
                 res.status = 401;
                 return httplib::Server::HandlerResponse::Handled;
             }
@@ -246,6 +246,7 @@ private:
     bool enabled = true;
     String modelsPath = "models";
     String cdn = "";
+    bool usingCdn = false;
 
     DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
@@ -406,16 +407,18 @@ public:
                 cdn.push_back('/');
             }
             core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
+            usingCdn = true;
+            return;
+        }
+    }
+
+    void startWebServer()
+    {
+        if (usingCdn || webServer) {
             return;
         }
 
         webServer = new WebServer(core, modelsPath, core->getConfig().getString("bind"), *core->getConfig().getInt("port"));
-    }
-
-    void onReady() override
-    {
-        if (!enabled || !webServer)
-            return;
 
         if (webServer->is_running()) {
             core->logLn(LogLevel::Message, "[artwork:info] Web server is running on %.*s", PRINT_VIEW(webServer->getUrl()));
@@ -494,6 +497,8 @@ public:
         checksums.emplace(dff.checksum, std::make_pair(ModelDownloadType::DFF, model));
         checksums.emplace(txd.checksum, std::make_pair(ModelDownloadType::TXD, model));
 
+        // Start web server if needed.
+        startWebServer();
         return true;
     }
 
