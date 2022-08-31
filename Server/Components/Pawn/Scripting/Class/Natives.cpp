@@ -102,6 +102,7 @@ SCRIPT_API(GetPlayerClass, bool(IClass& class_, int& teamid, int& skin, Vector3&
     teamid = data.team;
     skin = data.skin;
     spawnPos = data.spawn;
+    angle = data.angle;
     weapon1 = data.weapons[0].id;
     weapon1_ammo = data.weapons[0].ammo;
     weapon2 = data.weapons[1].id;

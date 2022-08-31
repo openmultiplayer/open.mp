@@ -73,6 +73,7 @@ public:
 
         cls = info;
         player.setTeam(info.team);
+        player.setSkin(info.skin, false);
         default_ = false;
         PacketHelper::send(setSpawnInfoRPC, player);
     }
