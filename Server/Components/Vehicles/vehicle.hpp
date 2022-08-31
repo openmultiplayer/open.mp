@@ -62,6 +62,7 @@ private:
     uint8_t sirenState = 0;
     uint32_t hydraThrustAngle = 0;
     float trainSpeed = 0.0f;
+    int lastDriverPoolID = INVALID_PLAYER_ID;
 
     /// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
     void updateOccupied()
@@ -77,6 +78,10 @@ private:
     }
 
 public:
+    int getLastDriverPoolID() const override
+    {
+        return lastDriverPoolID;
+    }
     bool hasBeenOccupied() override
     {
         return beenOccupied;
