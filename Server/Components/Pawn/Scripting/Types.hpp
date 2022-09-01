@@ -777,6 +777,139 @@ private:
         *z_;
 };
 
+template <typename T>
+class ParamCast<DynamicArray<T> const&> {
+public:
+    ParamCast(AMX* amx, cell* params, int idx)
+        : data_(nullptr)
+        , len_((int)params[idx + 1])
+        , value_()
+    {
+        value_.resize(len_);
+        amx_GetAddr(amx, params[idx + 0], &data_);
+        cell* input = data_;
+        // Copy the data out.
+        for (size_t idx = 0; idx != len_; ++idx) {
+            value_[idx] = static_cast<T>(input[idx]);
+        }
+    }
+
+    ~ParamCast()
+    {
+        // No writing back for constants.
+    }
+
+    ParamCast(ParamCast<DynamicArray<T> const&> const&) = delete;
+    ParamCast(ParamCast<DynamicArray<T> const&>&&) = delete;
+
+    operator DynamicArray<T> const &()
+    {
+        return value_;
+    }
+
+    static constexpr int Size = 2;
+
+private:
+    cell*
+        data_;
+
+    int
+        len_;
+
+    DynamicArray<T>
+        value_;
+};
+
+template <typename T>
+class ParamCast<DynamicArray<T>> {
+public:
+    ParamCast(AMX* amx, cell* params, int idx)
+        : data_(nullptr)
+        , len_((int)params[idx + 1])
+        , value_()
+    {
+        value_.resize(len_);
+        amx_GetAddr(amx, params[idx + 0], &data_);
+        cell* input = data_;
+        // Copy the data out.
+        for (size_t idx = 0; idx != len_; ++idx) {
+            value_[idx] = static_cast<T>(input[idx]);
+        }
+    }
+
+    ~ParamCast()
+    {
+    }
+
+    ParamCast(ParamCast<DynamicArray<T>> const&) = delete;
+    ParamCast(ParamCast<DynamicArray<T>>&&) = delete;
+
+    operator DynamicArray<T>()
+    {
+        return value_;
+    }
+
+    static constexpr int Size = 2;
+
+private:
+    cell*
+        data_;
+
+    int
+        len_;
+
+    DynamicArray<T>
+        value_;
+};
+
+template <typename T>
+class ParamCast<DynamicArray<T>&> {
+public:
+    ParamCast(AMX* amx, cell* params, int idx)
+        : data_(nullptr)
+        , len_((int)params[idx + 1])
+        , value_()
+    {
+        value_.resize(len_);
+        amx_GetAddr(amx, params[idx + 0], &data_);
+        cell* input = data_;
+        // Copy the data out.
+        for (size_t idx = 0; idx != len_; ++idx) {
+            value_[idx] = static_cast<T>(input[idx]);
+        }
+    }
+
+    ~ParamCast()
+    {
+        // Write the data back
+        cell* input = data_;
+        // Copy the data out.
+        for (size_t idx = 0; idx != len_; ++idx) {
+            input[idx] = static_cast<cell>(value_[idx]);
+        }
+    }
+
+    ParamCast(ParamCast<DynamicArray<T>&> const&) = delete;
+    ParamCast(ParamCast<DynamicArray<T>&>&&) = delete;
+
+    operator DynamicArray<T>&()
+    {
+        return value_;
+    }
+
+    static constexpr int Size = 2;
+
+private:
+    cell*
+        data_;
+
+    int
+        len_;
+
+    DynamicArray<T>
+        value_;
+};
+
 class NotImplemented : public std::logic_error {
 public:
     NotImplemented()
