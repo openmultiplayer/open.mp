@@ -114,6 +114,26 @@ SCRIPT_API(GetPlayers, int(DynamicArray<int>& outputPlayers))
     return index + 1;
 }
 
+SCRIPT_API(GetActors, int(DynamicArray<int>& outputActors))
+{
+    int index = -1;
+    IActorsComponent* actors = PawnManager::Get()->actors;
+    if (actors) {
+        if (outputActors.size() < actors->count()) {
+            PawnManager::Get()->core->printLn(
+                "There are %i actors in your server but array size used in `GetActors` is %i; Use a bigger size in your script.",
+                actors->count(),
+                outputActors.size());
+        }
+
+        for (IActor* actor : *actors) {
+            index++;
+            outputActors[index] = actor->getID();
+        }
+    }
+    return index + 1;
+}
+
 SCRIPT_API(print, bool(const std::string& text))
 {
     PawnManager::Get()->core->printLn("%s", text.c_str());
