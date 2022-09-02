@@ -148,7 +148,7 @@ SCRIPT_API(GetVehicles, int(DynamicArray<int>& outputVehicles))
     if (vehicles) {
         if (outputVehicles.size() < vehicles->count()) {
             PawnManager::Get()->core->printLn(
-                "There are %i actors in your server but array size used in `GetActors` is %i; Use a bigger size in your script.",
+                "There are %i vehicles in your server but array size used in `GetVehicles` is %i; Use a bigger size in your script.",
                 vehicles->count(),
                 outputVehicles.size());
         }
