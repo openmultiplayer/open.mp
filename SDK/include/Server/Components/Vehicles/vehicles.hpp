@@ -377,6 +377,9 @@ struct IVehicle : public IExtensible, public IEntity {
 
     /// Get train speed
     virtual float getTrainSpeed() const = 0;
+
+    /// Get last driver's pool id
+    virtual int getLastDriverPoolID() const = 0;
 };
 
 /// A vehicle event handler

@@ -289,24 +289,12 @@ public:
             return lastClass;
         }
 
-        IClass* ret = storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
-        if (count == 0) {
-            // First class.  Initialise all the players with this.
-            for (auto i : core->getPlayers().entries()) {
-                queryExtension<IPlayerClassData>(i)->setSpawnInfo(ret->getClass());
-            }
-        }
-
-        return ret;
+        return storage.emplace(PlayerClass(skin, team, spawn, angle, weapons));
     }
 
     void onPlayerConnect(IPlayer& player) override
     {
-        auto first = storage.begin();
-        if (player.addExtension(new PlayerClassData(player, models), true) && first != storage.end()) {
-            // Initialise the player's current spawn data to the first defined class.
-            queryExtension<IPlayerClassData>(player)->setSpawnInfo((*first)->getClass());
-        }
+        player.addExtension(new PlayerClassData(player, models), true);
     }
 
     void free() override

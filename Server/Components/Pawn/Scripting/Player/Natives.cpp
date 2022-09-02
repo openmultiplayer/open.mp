@@ -1048,10 +1048,15 @@ SCRIPT_API(GetPlayerSurfingOffsets, bool(IPlayer& player, Vector3& offset))
 SCRIPT_API(GetPlayerRotationQuat, bool(IPlayer& player, Vector4& quat))
 {
     glm::quat rotQuat = player.getRotation().q;
-    quat.w = rotQuat.w;
-    quat.x = rotQuat.y;
-    quat.y = rotQuat.y;
-    quat.z = rotQuat.z;
+
+    // In samp or YSF, GetPlayerRotationQuat declaration is like this:
+    // GetPlayerRotationQuat(playerid, &Float:w, &Float:x = 0.0, &Float:y = 0.0, &Float:z = 0.0);
+    // Meaning first output arg is W and not X; Vector4's first member is X and it is used in many other places,
+    // We can't just simply change ParamCast for Vector4 just because one function doesn't follow it.
+    quat.x = rotQuat.w;
+    quat.y = rotQuat.x;
+    quat.z = rotQuat.y;
+    quat.w = rotQuat.z;
     return true;
 }
 
