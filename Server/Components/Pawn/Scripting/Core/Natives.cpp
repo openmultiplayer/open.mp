@@ -97,6 +97,73 @@ SCRIPT_API(GetActorPoolSize, int())
     return -1;
 }
 
+SCRIPT_API(GetPlayers, int(DynamicArray<int>& outputPlayers))
+{
+    int index = -1;
+    IPlayerPool* players = PawnManager::Get()->players;
+    if (outputPlayers.size() < players->entries().size()) {
+        PawnManager::Get()->core->printLn(
+            "There are %i players in your server but array size used in `GetPlayers` is %i; Use a bigger size in your script.",
+            players->entries().size(),
+            outputPlayers.size());
+    }
+
+    for (IPlayer* player : players->entries()) {
+        index++;
+        if (index >= outputPlayers.size()) {
+            break;
+        }
+        outputPlayers[index] = player->getID();
+    }
+    return index + 1;
+}
+
+SCRIPT_API(GetActors, int(DynamicArray<int>& outputActors))
+{
+    int index = -1;
+    IActorsComponent* actors = PawnManager::Get()->actors;
+    if (actors) {
+        if (outputActors.size() < actors->count()) {
+            PawnManager::Get()->core->printLn(
+                "There are %i actors in your server but array size used in `GetActors` is %i; Use a bigger size in your script.",
+                actors->count(),
+                outputActors.size());
+        }
+
+        for (IActor* actor : *actors) {
+            index++;
+            if (index >= outputActors.size()) {
+                break;
+            }
+            outputActors[index] = actor->getID();
+        }
+    }
+    return index + 1;
+}
+
+SCRIPT_API(GetVehicles, int(DynamicArray<int>& outputVehicles))
+{
+    int index = -1;
+    IVehiclesComponent* vehicles = PawnManager::Get()->vehicles;
+    if (vehicles) {
+        if (outputVehicles.size() < vehicles->count()) {
+            PawnManager::Get()->core->printLn(
+                "There are %i vehicles in your server but array size used in `GetVehicles` is %i; Use a bigger size in your script.",
+                vehicles->count(),
+                outputVehicles.size());
+        }
+
+        for (IVehicle* vehicle : *vehicles) {
+            index++;
+            if (index >= outputVehicles.size()) {
+                break;
+            }
+            outputVehicles[index] = vehicle->getID();
+        }
+    }
+    return index + 1;
+}
+
 SCRIPT_API(print, bool(const std::string& text))
 {
     PawnManager::Get()->core->printLn("%s", text.c_str());
