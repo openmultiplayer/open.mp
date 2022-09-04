@@ -641,7 +641,7 @@ void RakNetLegacyNetwork::update()
     SAMPRakNet::SetTimeout(*config.getInt("network.player_timeout"));
     SAMPRakNet::SetMinConnectionTime(*config.getInt("network.minimum_connection_time"));
     SAMPRakNet::SetMessagesLimit(*config.getInt("network.messages_limit"));
-    SAMPRakNet::SetMessageHoleLimit(*config.getInt("network.message_holes_limit"));
+    SAMPRakNet::SetMessageHoleLimit(*config.getInt("network.message_hole_limit"));
     SAMPRakNet::SetAcksLimit(*config.getInt("network.acks_limit"));
     SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network.limits_ban_time"));
 
@@ -657,7 +657,7 @@ void RakNetLegacyNetwork::update()
         query.setServerName(hostName);
     }
 
-    query.setRuleValue("lagcomp", *config.getBool("game.use_lag_compensation") ? "On" : "Off");
+    query.setRuleValue("lagcomp", (*config.getInt("game.lag_compensation_mode") != LagCompMode_Disabled) ? "On" : "Off");
 
     StringView language = config.getString("language");
     if (!language.empty()) {
