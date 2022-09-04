@@ -126,6 +126,12 @@ enum PlayerMarkerMode {
     PlayerMarkerMode_Streamed
 };
 
+enum LagCompMode {
+    LagCompMode_Disabled = 0,
+    LagCompMode_PositionOnly = 2,
+    LagCompMode_Enabled = 1
+};
+
 enum PlayerWeapon {
     PlayerWeapon_Fist,
     PlayerWeapon_BrassKnuckle,
