@@ -75,7 +75,7 @@ const FlatHashMap<StringView, ParamType> types = {
     { "stream_distance", ParamType::Float },
     { "stream_rate", ParamType::Int },
     { "maxnpc", ParamType::Int },
-    { "lagcompmode", ParamType::Bool },
+    { "lagcompmode", ParamType::Int },
     { "useartwork", ParamType::Bool },
     { "artpath", ParamType::String }
 };
