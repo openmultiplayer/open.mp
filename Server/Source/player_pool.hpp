@@ -1234,6 +1234,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            if (player.vehicleSync_.TrailerID != trailerSync.VehicleID) {
+                return false;
+            }
+
             if (vehicle.updateFromTrailerSync(trailerSync, peer)) {
                 trailerSync.PlayerID = player.poolID;
                 player.trailerSync_ = trailerSync;
