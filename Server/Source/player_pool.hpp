@@ -1234,6 +1234,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
                 return false;
             }
 
+            // Check if trailer is matching the one sent in latest driver sync packet.
+            // Seems to fix some issues with trailer sync. SA-MP also does this.
+            if (player.vehicleSync_.TrailerID != trailerSync.VehicleID) {
+                return false;
+            }
+
             if (vehicle.updateFromTrailerSync(trailerSync, peer)) {
                 trailerSync.PlayerID = player.poolID;
                 player.trailerSync_ = trailerSync;
