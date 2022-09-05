@@ -75,7 +75,7 @@ const FlatHashMap<StringView, ParamType> types = {
     { "stream_distance", ParamType::Float },
     { "stream_rate", ParamType::Int },
     { "maxnpc", ParamType::Int },
-    { "lagcompmode", ParamType::Bool },
+    { "lagcompmode", ParamType::Int },
     { "useartwork", ParamType::Bool },
     { "artpath", ParamType::String }
 };
@@ -121,7 +121,7 @@ const FlatHashMap<StringView, StringView> dictionary = {
     { "stream_distance", "network.stream_radius" },
     { "stream_rate", "network.stream_rate" },
     { "maxnpc", "max_bots" },
-    { "lagcompmode", "game.use_lag_compensation" },
+    { "lagcompmode", "game.lag_compensation_mode" },
     { "useartwork", "artwork.enable" },
     { "artpath", "artwork.models_path" }
 };

@@ -86,7 +86,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.vehicle_respawn_time", 10000 },
     { "game.weather", 10 },
     { "game.use_all_animations", false },
-    { "game.use_lag_compensation", true },
+    { "game.lag_compensation_mode", LagCompMode_Enabled },
     // logging
     { "logging.enable", true },
     { "logging.log_chat", true },
@@ -104,7 +104,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "network.cookie_reseed_time", 300000 },
     { "network.in_vehicle_sync_rate", 30 },
     { "network.limits_ban_time", 60000 },
-    { "network.message_holes_limit", 3000 },
+    { "network.message_hole_limit", 3000 },
     { "network.messages_limit", 500 },
     { "network.minimum_connection_time", 0 },
     { "network.mtu", 576 },
@@ -801,7 +801,7 @@ private:
     int* InCarRate;
     int* WeaponRate;
     int* Multiplier;
-    bool* LagCompensation;
+    int* LagCompensation;
     String ServerName;
     bool* EnableVehicleFriendlyFire;
     bool reloading_ = false;
@@ -1216,7 +1216,7 @@ public:
         InCarRate = config.getInt("network.in_vehicle_sync_rate");
         WeaponRate = config.getInt("network.aiming_sync_rate");
         Multiplier = config.getInt("network.multiplier");
-        LagCompensation = config.getBool("game.use_lag_compensation");
+        LagCompensation = config.getInt("game.lag_compensation_mode");
         ServerName = String(config.getString("name"));
         EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
