@@ -53,7 +53,7 @@ PawnScript::PawnScript(int id, std::string const& path, ICore* core)
     case AMX_ERR_NOTFOUND:
         serverCore->printLn("Could not find:\n\n\t %s %s", path.c_str(),
             R"(
-While attempting to load a PAWN gamemode, a file-not-found error was
+While attempting to load a PAWN script, a file-not-found error was
 encountered.  This could be caused by many things:
 
  * The wrong filename was given.
