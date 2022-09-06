@@ -89,11 +89,25 @@ private:
     std::shared_mutex mutex_;
 
 public:
-    WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port)
-        : address_(String(!bind.empty() ? bind.data() : "127.0.0.1"))
-        , port_(port)
-        , url("http://" + address_ + ':' + std::to_string(port) + '/')
+    WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port, StringView publicAddr)
+        : port_(port)
     {
+
+        if (!bind.empty()) {
+            address_ = String(bind.data());
+            url = "http://" + (publicAddr.empty() ? address_ : String(publicAddr.data())) + ':' + std::to_string(port) + '/';
+
+            if (!publicAddr.empty()) {
+                core->logLn(LogLevel::Message, "Using public address %.*s:%d (local: %.*s:%d)", PRINT_VIEW(publicAddr), port, PRINT_VIEW(address_), port);
+            } else {
+                core->logLn(LogLevel::Warning, "No public address provided. If your public address differs from bind one please provide it in server config.");
+            }
+        } else {
+            address_ = "127.0.0.1";
+            url = "http://127.0.0.1:" + std::to_string(port) + '/';
+
+            core->logLn(LogLevel::Warning, "No bind address provided. Attempting to start webserver on 127.0.0.1:%d", port);
+        }
 
         svr.set_pre_routing_handler([&](const auto& req, auto& res) {
             if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3" || ((req.path.rfind(".txd") == std::string::npos) && (req.path.rfind(".dff") == std::string::npos))) {
@@ -122,7 +136,7 @@ public:
             // Wait some time.
             std::this_thread::sleep_for(Milliseconds(500));
         } else {
-            core->logLn(LogLevel::Error, "Unable to mount models path (%.*s).", PRINT_VIEW(modelsPath));
+            core->logLn(LogLevel::Error, "Failed to start webserver: Unable to mount models path (%.*s).", PRINT_VIEW(modelsPath));
         }
     }
 
@@ -418,12 +432,12 @@ public:
             return;
         }
 
-        webServer = new WebServer(core, modelsPath, core->getConfig().getString("bind"), *core->getConfig().getInt("port"));
+        webServer = new WebServer(core, modelsPath, core->getConfig().getString("network.bind"), *core->getConfig().getInt("network.port"), core->getConfig().getString("network.public_addr"));
 
         if (webServer->is_running()) {
-            core->logLn(LogLevel::Message, "[artwork:info] Web server is running on %.*s", PRINT_VIEW(webServer->getUrl()));
+            core->logLn(LogLevel::Message, "Web server is running on %.*s", PRINT_VIEW(webServer->getUrl()));
         } else {
-            core->logLn(LogLevel::Error, "[artwork:error] Failed to start web server");
+            core->logLn(LogLevel::Error, "Failed to start web server");
         }
     }
 
@@ -474,8 +488,8 @@ public:
             return false;
         }
 
-        core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
-        core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
+        // core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
+        // core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
 
         auto model = storage.emplace_back(new ModelInfo(type, id, baseId, dff, txd, virtualWorld, timeOn, timeOff));
 
