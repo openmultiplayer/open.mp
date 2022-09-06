@@ -49,7 +49,6 @@ typedef std::variant<int, String, float, DynamicArray<String>, bool> ConfigStora
 
 static const std::map<String, ConfigStorage> Defaults {
     { "announce", true },
-    { "bind", String("") },
     { "chat_input_filter", true },
     { "enable_query", true },
     { "language", String("") },
@@ -57,7 +56,6 @@ static const std::map<String, ConfigStorage> Defaults {
     { "max_players", 50 },
     { "name", String("open.mp server") },
     { "password", String("") },
-    { "port", 7777 },
     { "sleep", 5.0f },
     { "use_dyn_ticks", true },
     { "website", String("open.mp") },
@@ -99,6 +97,9 @@ static const std::map<String, ConfigStorage> Defaults {
     { "logging.use_timestamp", true },
     { "logging.use_prefix", true },
     // network
+    { "network.bind", String("") },
+    { "network.public_addr", String("") }, // Used by webserver
+    { "network.port", 7777 },
     { "network.acks_limit", 3000 },
     { "network.aiming_sync_rate", 30 },
     { "network.cookie_reseed_time", 300000 },
@@ -1506,8 +1507,8 @@ public:
 
     void connectBot(StringView name, StringView script) override
     {
-        StringView bind = config.getString("bind");
-        int port = *config.getInt("port");
+        StringView bind = config.getString("network.bind");
+        int port = *config.getInt("network.port");
         StringView password = config.getString("password");
         std::string args = "-h " + (bind.empty() ? "127.0.0.1" : std::string(bind)) + " -p " + std::to_string(port) + " -n " + std::string(name) + " -m " + std::string(script);
         if (!password.empty()) {
