@@ -720,9 +720,9 @@ void RakNetLegacyNetwork::start()
     IConfig& config = core->getConfig();
     int maxPlayers = *config.getInt("max_players");
 
-    int port = *config.getInt("port");
+    int port = *config.getInt("network.port");
     int sleep = static_cast<int>(*config.getFloat("sleep"));
-    StringView bind = config.getString("bind");
+    StringView bind = config.getString("network.bind");
 
     bool* artwork_config = config.getBool("artwork.enable");
     bool artwork = !artwork_config ? false : *artwork_config;
