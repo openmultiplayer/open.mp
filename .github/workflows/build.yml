@@ -73,7 +73,7 @@ jobs:
           archive_name="open.mp-win-snapshot-${version}.zip"
           cd build/Output/*
           mv Server "${folder_name}"
-          zip -r "${archive_name}" "${folder_name}"
+          tar -cavf "${archive_name}" "${folder_name}"
           eval $(ssh-agent -s)
           echo "${CI_PRIVATE_KEY}" | ssh-add -
           echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
