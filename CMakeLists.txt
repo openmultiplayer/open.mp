@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(open-mp LANGUAGES C CXX VERSION 0.0.8)
+project(open-mp LANGUAGES C CXX VERSION 0.0.9)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
