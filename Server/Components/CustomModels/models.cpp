@@ -16,8 +16,9 @@
 #include <regex>
 #include <shared_mutex>
 
-static auto rAddCharModel = std::regex(R"(AddCharModel\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\);)");
-static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\);)");
+static auto rAddCharModel = std::regex(R"(AddCharModel\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
+static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
+static auto rAddSimpleModelTimed = std::regex(R"(AddSimpleModelTimed\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*;*)");
 
 using namespace Impl;
 
@@ -412,6 +413,8 @@ public:
                     addCustomModel(ModelType::Skin, std::atoi(match[2].str().c_str()), std::atoi(match[1].str().c_str()), match[3].str(), match[4].str());
                 } else if (std::regex_match(line, match, rAddSimpleModel)) {
                     addCustomModel(ModelType::Object, std::atoi(match[3].str().c_str()), std::atoi(match[2].str().c_str()), match[4].str(), match[5].str(), std::atoi(match[1].str().c_str()));
+                } else if (std::regex_match(line, match, rAddSimpleModelTimed)) {
+                    addCustomModel(ModelType::Object, std::atoi(match[3].str().c_str()), std::atoi(match[2].str().c_str()), match[4].str(), match[5].str(), std::atoi(match[1].str().c_str()), std::atoi(match[6].str().c_str()), std::atoi(match[7].str().c_str()));
                 }
             }
         }
