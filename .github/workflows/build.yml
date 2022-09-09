@@ -129,7 +129,7 @@ jobs:
       - name: Build
         run: |
           cd docker
-          CONFIG=RelWithDebInfo UBUNTU_VERSION=22.04 ./build.sh
+          CONFIG=RelWithDebInfo UBUNTU_VERSION=20.04 ./build.sh
 
       - name: Create a snapshot
         env:

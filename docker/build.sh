@@ -4,9 +4,9 @@
 [[ -z "$CONFIG" ]] \
 && config=RelWithDebInfo \
 || config="$CONFIG"
-# Available versions: 18.04, [22.04]
+# Available versions: 18.04, [20.04], 22.04
 [[ -z "$UBUNTU_VERSION" ]] \
-&& ubuntu_version=22.04 \
+&& ubuntu_version=20.04 \
 || ubuntu_version="$UBUNTU_VERSION"
 
 
