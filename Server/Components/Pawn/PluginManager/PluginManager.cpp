@@ -8,7 +8,7 @@
 
 #include "PluginManager.hpp"
 #include "../utils.hpp"
-#include <filesystem>
+#include <ghc/filesystem.hpp>
 
 struct BrokenPluginMessageData {
     StringView name;
@@ -54,7 +54,7 @@ void PawnPluginManager::Load(std::string const& name)
         return;
     }
 
-    String pluginName = std::filesystem::path(name).stem().string();
+    String pluginName = ghc::filesystem::path(name).stem().string();
     for (BrokenPluginMessageData brokenPlugin : BrokenPlugins) {
         if (pluginName == brokenPlugin.name) {
             core->logLn(LogLevel::Error,

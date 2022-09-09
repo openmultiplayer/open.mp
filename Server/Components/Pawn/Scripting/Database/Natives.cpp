@@ -8,12 +8,12 @@
 
 #include "../Types.hpp"
 #include "sdk.hpp"
-#include <filesystem>
+#include <ghc/filesystem.hpp>
 #include "../../format.hpp"
 
 SCRIPT_API(db_open, int(const std::string& name))
 {
-    std::filesystem::path dbFilePath = std::filesystem::absolute("scriptfiles/" + name);
+    ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
     IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
     return database_connection ? database_connection->getID() : 0;
 }
@@ -120,7 +120,7 @@ SCRIPT_API(db_debug_openresults, int())
 
 SCRIPT_API(DB_Open, int(const std::string& name))
 {
-    std::filesystem::path dbFilePath = std::filesystem::absolute("scriptfiles/" + name);
+    ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
     IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
     return database_connection ? database_connection->getID() : 0;
 }
