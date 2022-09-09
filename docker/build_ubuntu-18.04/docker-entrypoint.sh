@@ -1,6 +1,6 @@
 #!/bin/sh
 [ -z $CONFIG ] && config=Release || config="$CONFIG"
-[ -z $BUILD_SHARED ] && build_shared=0 || build_shared="$BUILD_SHARED"
+[ -z $BUILD_SHARED ] && build_shared=1 || build_shared="$BUILD_SHARED"
 
 cmake \
     -S . \
