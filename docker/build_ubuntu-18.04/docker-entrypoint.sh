@@ -1,5 +1,6 @@
 #!/bin/sh
 [ -z $CONFIG ] && config=Release || config="$CONFIG"
+[ -z $BUILD_SHARED ] && build_shared=Release || build_shared="$BUILD_SHARED"
 
 cmake \
     -S . \
@@ -8,9 +9,8 @@ cmake \
     -DCMAKE_C_FLAGS=-m32 \
     -DCMAKE_CXX_FLAGS=-m32 \
     -DCMAKE_BUILD_TYPE=$config \
-    -DSTATIC_OPENSSL=true \
+    -DSHARED_OPENSSL=$build_shared \
     -DSTATIC_STDCXX=true \
-    -DSHARED_STDCXXFS=true \
 &&
 cmake \
     --build build \

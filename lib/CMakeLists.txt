@@ -111,9 +111,11 @@ conan_omp_add_lib(nlohmann_json 3.9.1)
 
 # OpenSSL
 # -------
-if(UNIX AND NOT APPLE AND NOT STATIC_OPENSSL)
+if(SHARED_OPENSSL)
+	message("Using shared OpenSSL")
 	conan_omp_add_lib_opt(openssl 1.1.1q "openssl:shared=True")
 else()
+	message("Using static OpenSSL")
 	conan_omp_add_lib(openssl 1.1.1q)
 endif()
 
