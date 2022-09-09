@@ -128,6 +128,11 @@ set(BUILD_LEGACY_COMPONENTS TRUE CACHE BOOL "Whether to build the legacy compone
 set(BUILD_TEST_COMPONENTS FALSE CACHE BOOL "Whether to build the test component")
 set(BUILD_SQLITE_COMPONENT TRUE CACHE BOOL "Whether to build the SQLite component")
 
+# Only show this option for Linux
+if(UNIX AND NOT APPLE)
+	set(SHARED_OPENSSL TRUE CACHE BOOL "Whether to dynamically link the OpenSSL library")
+endif()
+
 add_subdirectory(lib)
 add_subdirectory(SDK)
 add_subdirectory(Shared)
