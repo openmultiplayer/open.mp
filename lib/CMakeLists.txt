@@ -123,7 +123,7 @@ conan_omp_add_lib(cxxopts 2.2.1)
 
 # ghc-filesystem
 # ----
-conan_omp_add_lib(ghc-filesystem 1.5.8)
+conan_omp_add_lib(ghc-filesystem 1.5.12)
 
 if(BUILD_SQLITE_COMPONENT)
 	# SQLite 3
