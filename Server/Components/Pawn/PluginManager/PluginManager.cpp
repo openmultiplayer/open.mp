@@ -5,10 +5,10 @@
  *
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
-
+ 
+#include <ghc/filesystem.hpp>
 #include "PluginManager.hpp"
 #include "../utils.hpp"
-#include <ghc/filesystem.hpp>
 
 struct BrokenPluginMessageData {
     StringView name;
