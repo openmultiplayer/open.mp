@@ -20,7 +20,7 @@
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
-#include <filesystem>
+#include <ghc/filesystem.hpp>
 #include <fstream>
 #include <nlohmann/json.hpp>
 #include <pool.hpp>
@@ -822,7 +822,7 @@ private:
         }
     }
 
-    IComponent* loadComponent(const std::filesystem::path& path)
+    IComponent* loadComponent(const ghc::filesystem::path& path)
     {
         printLn("Loading component %s", path.filename().u8string().c_str());
         auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
@@ -860,13 +860,13 @@ private:
         }
     }
 
-    void loadComponents(const std::filesystem::path& path)
+    void loadComponents(const ghc::filesystem::path& path)
     {
-        std::filesystem::create_directory(path);
+        ghc::filesystem::create_directory(path);
 
         auto componentsCfg = config.getStrings("components");
         if (!componentsCfg || componentsCfg->empty()) {
-            for (auto& p : std::filesystem::directory_iterator(path)) {
+            for (auto& p : ghc::filesystem::directory_iterator(path)) {
                 if (p.path().extension() == LIBRARY_EXT) {
                     IComponent* component = loadComponent(p);
                     if (component) {
@@ -876,12 +876,12 @@ private:
             }
         } else {
             for (const StringView component : *componentsCfg) {
-                auto file = std::filesystem::path(path) / component.data();
+                auto file = ghc::filesystem::path(path) / component.data();
                 if (!file.has_extension()) {
                     file.replace_extension(LIBRARY_EXT);
                 }
 
-                if (std::filesystem::exists(file)) {
+                if (ghc::filesystem::exists(file)) {
                     IComponent* component = loadComponent(file);
                     if (component) {
                         addComponent(component);
@@ -890,7 +890,7 @@ private:
             }
         }
 
-        std::string absPath = std::filesystem::canonical(path).string();
+        std::string absPath = ghc::filesystem::canonical(path).string();
         printLn("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
     }
 
@@ -1136,7 +1136,7 @@ public:
         // No components found in the current directory, try the executable path
         if (components.size() == 0) {
             auto componentsDir = utils::GetExecutablePath().remove_filename();
-            componentsDir /= std::filesystem::path("components");
+            componentsDir /= ghc::filesystem::path("components");
             loadComponents(componentsDir);
         }
 

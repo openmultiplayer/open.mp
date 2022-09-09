@@ -8,7 +8,6 @@
 
 #include "core_impl.hpp"
 #include "util.hpp"
-#include <filesystem>
 #include <iostream>
 #include <nlohmann/json.hpp>
 #include <sdk.hpp>
