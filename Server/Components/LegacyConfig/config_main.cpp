@@ -10,7 +10,6 @@
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <atomic>
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <mutex>
