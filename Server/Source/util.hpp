@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <filesystem>
+#include <ghc/filesystem.hpp>
 #include <types.hpp>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
@@ -89,7 +89,7 @@ std::string GetLastErrorAsString()
 
 void RunProcess(StringView exe, StringView args, bool runInBackground = false)
 {
-    auto exePath = std::filesystem::path(exe.data());
+    auto exePath = ghc::filesystem::path(exe.data());
     if (!exePath.has_extension()) {
         exePath.replace_extension(EXECUTABLE_EXT);
     }
@@ -126,17 +126,17 @@ unsigned GetTickCount()
 #endif
 }
 
-std::filesystem::path GetExecutablePath()
+ghc::filesystem::path GetExecutablePath()
 {
 #ifdef BUILD_WINDOWS
     char path[4096] = { 0 };
     if (GetModuleFileNameA(nullptr, path, sizeof(path))) {
-        return std::filesystem::canonical(path);
+        return ghc::filesystem::canonical(path);
     } else {
-        return std::filesystem::path();
+        return ghc::filesystem::path();
     }
 #else
-    return std::filesystem::canonical("/proc/self/exe");
+    return ghc::filesystem::canonical("/proc/self/exe");
 #endif
 }
 

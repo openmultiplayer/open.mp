@@ -11,7 +11,7 @@
 #include <sdk.hpp>
 #include <netcode.hpp>
 #include <httplib.h>
-#include <filesystem>
+#include <ghc/filesystem.hpp>
 #include "crc32.hpp"
 #include <regex>
 #include <shared_mutex>
@@ -398,8 +398,8 @@ public:
         if (!enabled)
             return;
 
-        if (!std::filesystem::exists(modelsPath) || !std::filesystem::is_directory(modelsPath)) {
-            std::filesystem::create_directory(modelsPath);
+        if (!ghc::filesystem::exists(modelsPath) || !ghc::filesystem::is_directory(modelsPath)) {
+            ghc::filesystem::create_directory(modelsPath);
         }
 
         std::ifstream artconfig { modelsPath + "/artconfig.txt" };
