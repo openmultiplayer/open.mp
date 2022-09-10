@@ -57,6 +57,8 @@ if(BUILD_SERVER)
 					-DFLOATPOINT
 					-DAMX_STRING_LIB
 					-DsNAMEMAX=63
+					-DPAWN_CELL_SIZE=32
+					-DAMX_FILENO_CHECKS
 
 					# Disable default amx_FindPublic implementation because we want our own more performant one
 					AMX_ALIGN AMX_ALLOT AMX_CLEANUP AMX_CLONE AMX_DEFCALLBACK AMX_EXEC AMX_FLAGS AMX_GETADDR

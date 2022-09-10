@@ -342,7 +342,7 @@ int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number
 		{
 			/* this function is not yet located */
 			if (funcptr != NULL)
-				((AMX_FUNCWIDE*)func)->address = funcptr;
+				((AMX_FUNCWIDE*)func)->address = (uintptr_t)funcptr;
 			else
 				err = AMX_ERR_NOTFOUND;
 		}
