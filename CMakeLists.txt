@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(open-mp LANGUAGES C CXX VERSION 0.0.9)
+project(open-mp LANGUAGES C CXX VERSION 0.0.10)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -28,9 +28,8 @@ elseif(UNIX)
 		set(CMAKE_CXX_STDLIB "libstdc++" CACHE STRING "The standard library to use.")
 		set(CROSS_BUILD FALSE CACHE BOOL "Whether to cross-build.")
 		set(CROSS_BUILD_ARCH "armv6" CACHE STRING "The architecture to cross-build for.")
-		set(STATIC_OPENSSL FALSE CACHE BOOL "Whether to statically link against openssl.")
+		set(SHARED_OPENSSL TRUE CACHE BOOL "Whether to dynamically link the OpenSSL library")
 		set(STATIC_STDCXX FALSE CACHE BOOL "Whether to statically link against libc++.")
-		set(SHARED_STDCXXFS FALSE CACHE BOOL "Whether to dynamically link against stdc++fs.")
 	# Apple Clang
 	else()
 		set(CMAKE_CXX_STDLIB "libc++" CACHE STRING "The standard library to use.")

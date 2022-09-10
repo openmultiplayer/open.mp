@@ -8,6 +8,10 @@
 [[ -z "$UBUNTU_VERSION" ]] \
 && ubuntu_version=20.04 \
 || ubuntu_version="$UBUNTU_VERSION"
+# Available options: 18.04, [20.04], 22.04
+[[ -z "$BUILD_SHARED" ]] \
+&& build_shared=1 \
+|| build_shared="$BUILD_SHARED"
 
 
 docker build \
@@ -31,6 +35,7 @@ docker run \
     -v $PWD/build:/code/build \
     -v $PWD/conan:/home/user/.conan \
     -e CONFIG=${config} \
+    -e BUILD_SHARED=${build_shared} \
     -e OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l) \
     -e OMP_BUILD_COMMIT=$(git rev-parse HEAD) \
     open.mp/build:ubuntu-${ubuntu_version}
