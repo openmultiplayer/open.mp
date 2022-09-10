@@ -390,15 +390,31 @@ float getConfigOptionAsFloat(std::string const& cvar)
 
 int getConfigOptionAsString(std::string const& cvar, OutputOnlyString& buffer)
 {
+	// Special case, converting `gamemode0` to `pawn.main_scripts[0]`.  It is the only string to
+	// array change.
 	IConfig* config = PawnManager::Get()->config;
-	auto res = config->getNameFromAlias(cvar);
+	bool gm = cvar.substr(0, 8) == "gamemode";
+	auto res = config->getNameFromAlias(gm ? "gamemode" : cvar);
 	if (!res.second.empty())
 	{
 		if (res.first)
 		{
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
 		}
-		buffer = config->getString(res.second);
+		if (gm)
+		{
+			size_t i = std::stoi("0" + cvar.substr(8));
+			DynamicArray<StringView> mainScripts(i + 1);
+			size_t n = config->getStrings(res.second, Span<StringView>(mainScripts.data(), mainScripts.size()));
+			if (i < n)
+			{
+				buffer = mainScripts[i];
+			}
+		}
+		else
+		{
+			buffer = config->getString(res.second);
+		}
 	}
 	else
 	{
