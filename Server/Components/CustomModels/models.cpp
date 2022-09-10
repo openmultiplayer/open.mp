@@ -451,12 +451,8 @@ public:
 
     void reset() override
     {
-        for (auto ptr : storage) {
-            delete ptr;
-        }
-        storage.clear();
-        checksums.clear();
-        baseModels.clear();
+        // Don't reset pool here - SAMP client can't handle it and will crash.
+        // Why can't we have nice things? :(
     }
 
     StringView getWebUrl()
@@ -476,6 +472,7 @@ public:
             return false;
         else if (baseModels.find(id) != baseModels.end()) {
             core->logLn(LogLevel::Error, "[artwork:error] Model %d is already in use", id);
+            return false;
         }
 
         ModelFile dff(modelsPath, dffName);
