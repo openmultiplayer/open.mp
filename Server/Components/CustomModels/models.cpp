@@ -180,7 +180,7 @@ public:
         }
     }
 
-    void removeIPAddres(uint32_t ipAddress)
+    void removeIPAddress(uint32_t ipAddress)
     {
         auto itr = allowedIPs_.find(ipAddress);
         if (itr == allowedIPs_.end()) {
@@ -599,7 +599,7 @@ public:
             return;
         }
 
-        webServer->removeIPAddres(player.getNetworkData().networkID.address.v4);
+        webServer->removeIPAddress(player.getNetworkData().networkID.address.v4);
     }
 };
 
