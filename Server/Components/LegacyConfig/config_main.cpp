@@ -211,6 +211,100 @@ private:
 		return false;
 	}
 
+	bool processFallback(ILogger& logger, IEarlyConfig& config, ParamType type, String name, String right)
+	{
+		// Try all variants from most specific to least specific.
+		Impl::String lower(right);
+		std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (lower == "true")
+		{
+			config.setBool(name, true);
+			return true;
+		}
+		if (lower == "false")
+		{
+			config.setBool(name, false);
+			return true;
+		}
+		int state = 0;
+		auto it = lower.begin(), end = lower.end();
+		while (it != end)
+		{
+			switch (*it++)
+			{
+			case '+':
+			case '-':
+				// Won't detect `0.4e-5` which is valid, but uncommon in `server.cfg`. So don't
+				// bother with the extra complexity of validating that (even detecting `e` in the
+				// first place is probably overkill tbh).
+				if (state & 1)
+				{
+					state = 0;
+				}
+				else
+				{
+					state |= 1;
+				}
+				break;
+			case '.':
+				if (state & 6)
+				{
+					state = 0;
+				}
+				else
+				{
+					state |= 3;
+				}
+				break;
+			case 'e':
+				if (state & 4)
+				{
+					state = 0;
+				}
+				else
+				{
+					state |= 5;
+				}
+				break;
+			case '0':
+			case '1':
+			case '2':
+			case '3':
+			case '4':
+			case '5':
+			case '6':
+			case '7':
+			case '8':
+			case '9':
+				state |= 1;
+				break;
+			default:
+				state = 0;
+				break;
+			}
+			if (state == 0)
+			{
+				break;
+			}
+		}
+		switch (state)
+		{
+		case 0:
+			// Unknown.
+			config.setString(name, right);
+			break;
+		case 1:
+			// Integer.
+			config.setInt(name, std::stoi(lower));
+			break;
+		default:
+			// Float.
+			config.setFloat(name, std::stof(lower));
+			break;
+		}
+		return true;
+	}
+
 	bool processDefault(ILogger& logger, IEarlyConfig& config, ParamType type, String name, String right)
 	{
 		auto dictIt = dictionary.find(name);
@@ -378,11 +472,13 @@ private:
 					else if (!processDefault(logger, config, typeIt->second, name, line.substr(idx + 1)))
 					{
 						logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
+						processFallback(logger, config, typeIt->second, name, line.substr(idx + 1));
 					}
 				}
 				else if (!processCustom(logger, config, name, line.substr(idx + 1)))
 				{
 					logger.logLn(LogLevel::Warning, "Parsing unknown legacy option %s", name.c_str());
+					processFallback(logger, config, typeIt->second, name, line.substr(idx + 1));
 				}
 			}
 			size_t gmcount = 0;
