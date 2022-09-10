@@ -180,7 +180,7 @@ public:
         }
     }
 
-    void removeIPAddres(uint32_t ipAddress)
+    void removeIPAddress(uint32_t ipAddress)
     {
         auto itr = allowedIPs_.find(ipAddress);
         if (itr == allowedIPs_.end()) {
@@ -402,6 +402,20 @@ public:
             ghc::filesystem::create_directory(modelsPath);
         }
 
+        loadArtConfig();
+
+        if (!cdn.empty()) {
+            if (cdn.back() != '/') {
+                cdn.push_back('/');
+            }
+            core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
+            usingCdn = true;
+            return;
+        }
+    }
+
+    void loadArtConfig()
+    {
         std::ifstream artconfig { modelsPath + "/artconfig.txt" };
 
         if (artconfig.is_open()) {
@@ -417,15 +431,6 @@ public:
                     addCustomModel(ModelType::Object, std::atoi(match[3].str().c_str()), std::atoi(match[2].str().c_str()), match[4].str(), match[5].str(), std::atoi(match[1].str().c_str()), std::atoi(match[6].str().c_str()), std::atoi(match[7].str().c_str()));
                 }
             }
-        }
-
-        if (!cdn.empty()) {
-            if (cdn.back() != '/') {
-                cdn.push_back('/');
-            }
-            core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
-            usingCdn = true;
-            return;
         }
     }
 
@@ -451,12 +456,11 @@ public:
 
     void reset() override
     {
-        for (auto ptr : storage) {
-            delete ptr;
-        }
-        storage.clear();
-        checksums.clear();
-        baseModels.clear();
+        // Don't reset pool here - SAMP client can't handle it and will crash.
+        // Why can't we have nice things? :(
+
+        // Someone complained about this. Let's parse artconfig again.
+        loadArtConfig();
     }
 
     StringView getWebUrl()
@@ -475,7 +479,9 @@ public:
         else if (type == ModelType::Object && !(id >= -30000 && id <= -1000))
             return false;
         else if (baseModels.find(id) != baseModels.end()) {
+            // Sadly this error will be displayed on gmx. Dunno what do about it.
             core->logLn(LogLevel::Error, "[artwork:error] Model %d is already in use", id);
+            return false;
         }
 
         ModelFile dff(modelsPath, dffName);
@@ -593,7 +599,7 @@ public:
             return;
         }
 
-        webServer->removeIPAddres(player.getNetworkData().networkID.address.v4);
+        webServer->removeIPAddress(player.getNetworkData().networkID.address.v4);
     }
 };
 
