@@ -53,6 +53,7 @@ SCRIPT_API(GangZoneDestroy, bool(int legacyid))
         if (realid) {
             pool->release(realid);
             pool->releaseLegacyID(legacyid);
+			return true;
         }
     }
 
