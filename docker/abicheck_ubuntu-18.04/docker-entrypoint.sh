@@ -52,7 +52,7 @@ for file in $files; do
         res=$(diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names))
         if [ $? -ne 0 ]; then
             # This is done to skip additions only by making sure lines in master differ
-            echo "$res" | grep -G -m 1 '^<'
+            echo "$res" | grep -G -m 1 '^<' > /dev/null
             if [ $? -eq 0 ]; then
                 sdiff -s --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
                 ret=1
