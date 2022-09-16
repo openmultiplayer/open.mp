@@ -59,35 +59,3 @@ struct ITimersComponent : public IComponent {
     /// Returns running timers count.
     virtual const size_t count() const = 0;
 };
-
-// Only a pointer to this is passed across binary boundaries, so using `std::function` should be ABI stable.
-class SimpleTimerHandler final : public TimerTimeOutHandler {
-private:
-    std::function<void()> handler_;
-
-    // Ensure only `free` can delete this.
-    ~SimpleTimerHandler()
-    {
-    }
-
-public:
-    SimpleTimerHandler(std::function<void()> const& handler)
-        : handler_(handler)
-    {
-    }
-
-    SimpleTimerHandler(std::function<void()>&& handler)
-        : handler_(std::move(handler))
-    {
-    }
-
-    void timeout(ITimer& timer) override
-    {
-        handler_();
-    }
-
-    void free(ITimer& timer) override
-    {
-        delete this;
-    }
-};

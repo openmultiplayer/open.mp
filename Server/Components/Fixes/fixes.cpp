@@ -1,4 +1,5 @@
 #include <Impl/events_impl.hpp>
+#include <Server/Components/Timers/Impl/timers_impl.hpp>
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <netcode.hpp>
