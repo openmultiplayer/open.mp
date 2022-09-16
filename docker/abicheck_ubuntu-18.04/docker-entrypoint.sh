@@ -51,9 +51,9 @@ for file in $files; do
         echo "Possible ABI break in $file; trying with no names"
         res=$(diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names))
         if [ $? -ne 0 ]; then
-            diff --side-by-side <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
             echo "$res" | grep -G -m 1 '^<'
             if [ $? -eq 0 ]; then
+                diff --side-by-side <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
                 ret=1
                 echo "ABI break in $file; setting ret to $ret"
             fi
