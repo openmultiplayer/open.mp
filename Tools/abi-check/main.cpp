@@ -150,26 +150,15 @@ const TypeInfo& process_union(const Settings& settings, const die& node)
     }
     ti.output += "\n";
 
-    uint64_t totalSize = 0;
     for (auto it=node.begin(); it!=node.end(); ++it) {
         if (it->tag == DW_TAG::member && (!it->has(DW_AT::declaration) || !it->resolve(DW_AT::declaration).as_flag()) && (!it->has(DW_AT::artificial) || !it->resolve(DW_AT::artificial).as_flag())) {
             die subtype = it->resolve(DW_AT::type).as_reference();
-            TypeInfo res = process_type(settings, subtype);
-            totalSize = std::max(totalSize, res.size);
+            process_type(settings, subtype);
             ti.isEmpty = false;
-
-            /*
-            ti.output += string_format("info=\"member\" size=%llu", res.size);
-            if (settings.names) {
-                ti.output += string_format(" name=\"%s\"", res.name.c_str());
-            }
-            ti.output += "\n";
-            ti.isEmpty = false;
-            */
         }
     }
 
-    ti.output += string_format("info=\"endunion\" approxsize=%llu\n", totalSize);
+    ti.output += string_format("info=\"endunion\"\n");
 
     return ti;
 }
