@@ -15,9 +15,7 @@ on:
       - ".github/workflows/build.yml"
   pull_request:
     branches:
-      - "*"
-      - "*/*"
-      - "**"
+      - "master"
     paths:
       - "**.hpp"
       - "**.cpp"
@@ -188,6 +186,7 @@ jobs:
           echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
   abi-check:
+    if: github.event_name == "pull_request"
     name: SDK ABI check
     needs: build-linux
     runs-on: [self-hosted, Linux, X64]
