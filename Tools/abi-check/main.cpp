@@ -102,10 +102,11 @@ const TypeInfo PtrTypeInfo{ "pointer", "", sizeof(void*) };
 const TypeInfo FnPtrTypeInfo{ "fnpointer", "", sizeof(void*)*2 };
 const TypeInfo VoidTypeInfo {"void", "", 0 };
 
-void process_virtual(const Settings& settings, uint64_t index, const die& node, TypeInfo &ti)
+void process_virtual(const Settings& settings, const die& node, TypeInfo &ti)
 {
     const TypeInfo& retType = node.has(DW_AT::type) ? process_type(settings, node.resolve(DW_AT::type).as_reference()) : VoidTypeInfo;
 
+    uint64_t index = node.resolve(DW_AT::vtable_elem_location).as_exprloc().evaluate(&no_expr_context, 0).value;
     ti.output += string_format("info=\"virtual\" index=%llu retsize=%llu", index, retType.size);
     if (settings.names) {
         ti.output += string_format(" returns=\"%s\" name=\"%s\"", retType.name.c_str(), node.resolve(DW_AT::name).as_cstr());
@@ -249,9 +250,7 @@ const TypeInfo& process_type(const Settings& settings, const die& node)
 
     TypeInfo& ti = newCacheEntry(node);
     ti.name = node.has(DW_AT::name) ? node.resolve(DW_AT::name).as_string() : string_format("anonymous struct %llu", cacheOrder);
-    auto cstr = ti.name.c_str();
-    const bool hasSize = node.has(DW_AT::byte_size);
-    if (hasSize) {
+    if (node.has(DW_AT::byte_size)) {
         ti.size = node.resolve(DW_AT::byte_size).as_uconstant();
     }
 
@@ -274,7 +273,7 @@ const TypeInfo& process_type(const Settings& settings, const die& node)
             virtuals.push_back(*it);
         }
         // Members
-        if (it->tag == DW_TAG::member && (!it->has(DW_AT::declaration) || !it->resolve(DW_AT::declaration).as_flag()) && (!it->has(DW_AT::artificial) || !it->resolve(DW_AT::artificial).as_flag())) {
+        if (it->tag == DW_TAG::member && (!it->has(DW_AT::declaration) || !it->resolve(DW_AT::declaration).as_flag()) /*&& (!it->has(DW_AT::artificial) || !it->resolve(DW_AT::artificial).as_flag())*/) {
             members.push_back(*it);
         }
         // Inheritance
@@ -287,22 +286,15 @@ const TypeInfo& process_type(const Settings& settings, const die& node)
         ti.isEmpty = false;
     }
 
-    uint64_t totalSize=0;
-
     for (auto it=inheritance.begin(); it!=inheritance.end(); ++it) {
         die subtype = it->resolve(DW_AT::type).as_reference();
         TypeInfo res = process_type(settings, subtype);
 
-        ti.output += string_format("info=\"inherits\" offset=%llu size=%llu", totalSize, res.size);
+        ti.output += string_format("info=\"inherits\" offset=%llu size=%llu", it->resolve(DW_AT::data_member_location).as_uconstant(), res.size);
         if (settings.names) {
             ti.output += string_format(" type=\"%s\"", res.name.c_str());
         }
         ti.output += "\n";
-
-        //if (it->has(DW_AT::data_member_location)) {
-        //    assert(totalSize == it->resolve(DW_AT::data_member_location).as_uconstant());
-        //}
-        totalSize += res.size;
     }
 
     for (auto it=members.begin(); it!=members.end(); ++it) {
@@ -310,28 +302,18 @@ const TypeInfo& process_type(const Settings& settings, const die& node)
         const char* subname = it->has(DW_AT::name) ? it->resolve(DW_AT::name).as_cstr() : "";
         TypeInfo res = process_type(settings, subtype);
 
-        ti.output += string_format("info=\"member\" offset=%llu size=%llu", totalSize, res.size);
+        ti.output += string_format("info=\"member\" offset=%llu size=%llu", it->resolve(DW_AT::data_member_location).as_uconstant(), res.size);
         if (settings.names) {
             ti.output += string_format(" type=\"%s\" name=\"%s\"", res.name.c_str(), subname);
         }
         ti.output += "\n";
-
-        //if (it->has(DW_AT::data_member_location)) {
-            //assert(totalSize == it->resolve(DW_AT::data_member_location).as_uconstant());
-        //}
-        totalSize += res.size;
     }
 
-    if (!hasSize) {
-        ti.size = totalSize;
-    }
-
-    uint64_t vtblIndex = 0;
     for (auto it=virtuals.begin(); it!=virtuals.end(); ++it) {
-        process_virtual(settings, vtblIndex++, *it, ti);
+        process_virtual(settings, *it, ti);
     }
 
-    ti.output += string_format("info=\"endstruct\" approxsize=%llu virtuals=%llu\n", totalSize, vtblIndex);
+    ti.output += string_format("info=\"endstruct\" virtuals=%u\n", virtuals.size());
 
     return ti;
 }
