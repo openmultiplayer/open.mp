@@ -47,14 +47,14 @@ for file in $files; do
     echo "Processing $file"
     diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") > /dev/null
     if [ $? -ne 0 ]; then
-        sdiff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*")
+        sdiff -s --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*")
         echo "Possible ABI break in $file; trying with no names"
         res=$(diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names))
         if [ $? -ne 0 ]; then
             # This is done to skip additions only by making sure lines in master differ
             echo "$res" | grep -G -m 1 '^<'
             if [ $? -eq 0 ]; then
-                sdiff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
+                sdiff -s --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
                 ret=1
                 echo "ABI break in $file; setting ret to $ret"
             fi
