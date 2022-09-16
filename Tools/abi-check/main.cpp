@@ -151,7 +151,7 @@ const TypeInfo& process_union(const Settings& settings, const die& node)
     ti.output += "\n";
 
     for (auto it=node.begin(); it!=node.end(); ++it) {
-        if (it->tag == DW_TAG::member && (!it->has(DW_AT::declaration) || !it->resolve(DW_AT::declaration).as_flag()) && (!it->has(DW_AT::artificial) || !it->resolve(DW_AT::artificial).as_flag())) {
+        if (it->tag == DW_TAG::member && (!it->has(DW_AT::declaration) || !it->resolve(DW_AT::declaration).as_flag())) {
             die subtype = it->resolve(DW_AT::type).as_reference();
             process_type(settings, subtype);
             ti.isEmpty = false;
@@ -262,7 +262,7 @@ const TypeInfo& process_type(const Settings& settings, const die& node)
             virtuals.push_back(*it);
         }
         // Members
-        if (it->tag == DW_TAG::member && (!it->has(DW_AT::declaration) || !it->resolve(DW_AT::declaration).as_flag()) /*&& (!it->has(DW_AT::artificial) || !it->resolve(DW_AT::artificial).as_flag())*/) {
+        if (it->tag == DW_TAG::member && it->has(DW_AT::data_member_location)) {
             members.push_back(*it);
         }
         // Inheritance
