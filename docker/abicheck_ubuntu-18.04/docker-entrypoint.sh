@@ -45,12 +45,13 @@ ret=0
 
 for file in $files; do
     echo "Processing $file"
-    diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*")
+    diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") > dev/null
     if [ $? -ne 0 ]; then
+        diff --side-by-side <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*")
         echo "Possible ABI break in $file; trying with no names"
         res=$(diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names))
         if [ $? -ne 0 ]; then
-            echo "$res"
+            diff --side-by-side <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
             echo "$res" | grep -G -m 1 '^<'
             if [ $? -eq 0 ]; then
                 ret=1
