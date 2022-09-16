@@ -1,7 +1,6 @@
 #pragma once
 
 #include <sdk.hpp>
-#include <Server/Components/Timers/timers.hpp>
 
 static const UID FixesData_UID = UID(0x672d5d6fbb094ef7);
 struct IPlayerFixesData : public IExtension {
