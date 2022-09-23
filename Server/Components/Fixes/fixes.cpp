@@ -1,7 +1,16 @@
+/*
+ *  This Source Code Form is subject to the terms of the Mozilla Public License,
+ *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ *  obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ *  The original code is copyright (c) 2022, open.mp team and contributors.
+ */
+
 #include <Impl/events_impl.hpp>
 #include <Server/Components/Timers/Impl/timers_impl.hpp>
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/TextDraws/textdraws.hpp>
 #include <netcode.hpp>
 
 using namespace Impl;
@@ -11,6 +20,7 @@ private:
     IPlayer& player_;
     ITimer* moneyTimer_ = nullptr;
     ITimersComponent& timers_;
+	IPlayerTextDrawData* const tds_;
     int money_ = 0;
 
     void MoneyTimer()
@@ -27,6 +37,7 @@ public:
     PlayerFixesData(IPlayer& player, ITimersComponent& timers)
         : player_(player)
         , timers_(timers)
+		, tds_(queryExtension<IPlayerTextDrawData>(player))
     {
     }
 
@@ -51,6 +62,51 @@ public:
         moneyTimer_ = nullptr;
     }
 
+	bool sendGameText(StringView message, Milliseconds time, int style)
+	{
+		if (time <= Milliseconds::zero())
+		{
+			// Not shown for any real time.
+			return false;
+		}
+		// Trim the message.
+		size_t len = message.length();
+		char const* const data = message.data();
+		while (len)
+		{
+			// rtrim, since TDs don't like trailing spaces.
+			if (data[len - 1] > ' ')
+			{
+				break;
+			}
+			--len;
+		}
+		if (len == 0)
+		{
+			// No visible text.
+			return false;
+		}
+		else
+		{
+			message = StringView(data, len);
+		}
+		// ALL styles are recreated here, since even native ones are broken.
+		// First get the position because we need that to determine if the
+		// creation was successful.
+		Vector2 pos;
+		switch (style)
+		{
+		default:
+			// Not a valid style, return a failure.
+			return false;
+		}
+		if (pos.x == -1.0 || pos.y == -1.0)
+		{
+			// 
+		}
+		IPlayerTextDraw* td;
+	}
+
     void reset() override
     {
         if (moneyTimer_) {
@@ -74,6 +130,8 @@ private:
     IPlayerPool* players_ = nullptr;
     ITimersComponent* timers_ = nullptr;
     Microseconds resetMoney_ = Microseconds(0);
+
+	
 
 public:
     StringView componentName() const override
