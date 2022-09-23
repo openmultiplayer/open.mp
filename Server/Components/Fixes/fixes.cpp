@@ -67,9 +67,83 @@ public:
 
 	bool sendGameText(StringView message, Milliseconds time, int style)
 	{
+		// ALL styles are recreated here, since even native ones are broken.
 		if (time <= Milliseconds::zero())
 		{
 			// Not shown for any real time.
+			return false;
+		}
+		// First get the position because we need that to determine if the
+		// creation was successful.
+		Vector2 pos;
+		switch (style)
+		{
+		case 0:
+			// Global style 0.
+			pos = { 320.0, 214.0 };
+			break;
+		case 1:
+			// Global style 1.
+			pos = { 620.0, 310.0 };
+			break;
+		case 2:
+			// Global style 2.
+			pos = { 320.0, 156.0 };
+			break;
+		case 3:
+			// Global style 3.
+			pos = { 320.0, 154.5 };
+			break;
+		case 4:
+			// Global style 4.
+			pos = { 320.0, 115.5 };
+			break;
+		case 5:
+			// Global style 5.
+			pos = { 320.0, 217.0 };
+			break;
+		case 6:
+			// Global style 6.
+			pos = { 320.0, 60.0 };
+			break;
+		case 7:
+			// Global style 7 (vehicle name).
+			pos = { 608.0, 344.0 };
+			break;
+		case 8:
+			// Global style 8 (location name).
+			pos = { 608.0, 385.8 };
+			break;
+		case 9:
+			// Global style 9 (radio name).
+			pos = { 320.0, 22.0 };
+			break;
+		case 10:
+			// Global style 10 (radio switch).
+			pos = { 320.0, 22.0 };
+			break;
+		case 11:
+			// Global style 11 (positive money).
+			pos = { 608.0, 77.0 };
+			break;
+		case 12:
+			// Global style 12 (negative money).
+			pos = { 608.0, 77.0 };
+			break;
+		case 13:
+			// Global style 13 (stunt).
+			pos = { 380.0, 341.15 };
+			break;
+		case 14:
+			// Global style 14 (clock).
+			pos = { 608.0, 22.0 };
+			break;
+		case 15:
+			// Global style 15 (popup).
+			pos = { 34.0, 28.0 };
+			break;
+		default:
+			// Not a valid style, return a failure.
 			return false;
 		}
 		// Trim the message.
@@ -77,7 +151,9 @@ public:
 		char const* const data = message.data();
 		while (len)
 		{
-			// rtrim, since TDs don't like trailing spaces.
+			// rtrim, since TDs don't like trailing spaces.  They do trim the
+			// strings themselves, but don't return a failure in that case, so
+			// this code won't know about it.
 			if (data[len - 1] > ' ')
 			{
 				break;
@@ -91,23 +167,245 @@ public:
 		}
 		else
 		{
+			// Constrained.
 			message = StringView(data, len);
 		}
-		// ALL styles are recreated here, since even native ones are broken.
-		// First get the position because we need that to determine if the
-		// creation was successful.
-		Vector2 pos;
-		switch (style)
+		IPlayerTextDraw* td = tds_->create(pos, message);
+		if (td == nullptr)
 		{
-		default:
-			// Not a valid style, return a failure.
 			return false;
 		}
-		if (pos.x == -1.0 || pos.y == -1.0)
+		// And do the rest of the style.
+		switch (style)
 		{
-			// 
+		case 0:
+			// Global style 0.
+			td->setLetterSize({ 1.3, 3.6 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 1:
+			// Global style 1.
+			td->setLetterSize({ 1.0, 2.6 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 2:
+			// Global style 2.
+			td->setLetterSize({ 2.1, 4.2 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(3);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_0);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 3:
+			// Global style 3.
+			td->setLetterSize({ 0.6, 2.75 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 4:
+			// Global style 4.
+			td->setLetterSize({ 0.6, 2.75 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 5:
+			// Global style 5.
+			td->setLetterSize({ 0.6, 2.75 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 6:
+			// Global style 6.
+			td->setLetterSize({ 1.0, 3.6 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 7:
+			// Global style 7 (vehicle name).
+			td->setLetterSize({ 1.0, 3.0 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 8:
+			// Global style 8 (location name).
+			td->setLetterSize({ 1.2, 3.8 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_0);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 9:
+			// Global style 9 (radio name).
+			td->setLetterSize({ 0.6, 1.8 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(1);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 10:
+			// Global style 10 (radio switch).
+			td->setLetterSize({ 0.6, 1.8 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x96, 0x96, 0x96, 0xFF));
+			td->setShadow(0);
+			td->setOutline(1);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 11:
+			// Global style 11 (positive money).
+			td->setLetterSize({ 0.55, 2.2 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(false);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 12:
+			// Global style 12 (negative money).
+			td->setLetterSize({ 0.55, 2.2 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0xB4, 0x19, 0x1D, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(false);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 13:
+			// Global style 13 (stunt).
+			td->setLetterSize({ 0.58, 2.42 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
+			td->setShadow(2);
+			td->setOutline(0);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_1);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 40.0, 460.0 });
+			break;
+		case 14:
+			// Global style 14 (clock).
+			td->setLetterSize({ 0.55, 2.2 });
+			td->setAlignment(TextDrawAlignment_Right);
+			// There's some debate over this colour.  It seems some versions
+			// somehow end up with `0xE1E1E1FF` instead.
+			td->setColour(Colour(0xC3, 0xC3, 0xC3, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(false);
+			td->useBox(false);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 400.0, 20.0 });
+			break;
+		case 15:
+			// Global style 15 (popup).
+			td->setLetterSize({ 0.52, 2.2 });
+			td->setAlignment(TextDrawAlignment_Left);
+			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
+			td->setShadow(0);
+			td->setOutline(0);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_1);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x80));
+			td->setTextSize({ 230.5, 200.0 });
+			break;
 		}
-		IPlayerTextDraw* td;
+		return true;
 	}
 
 	void reset() override
