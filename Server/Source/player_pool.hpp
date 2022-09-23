@@ -21,6 +21,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     IVehiclesComponent* vehiclesComponent = nullptr;
     IObjectsComponent* objectsComponent = nullptr;
     IActorsComponent* actorsComponent = nullptr;
+	IFixesComponent* fixesComponent = nullptr;
     ICustomModelsComponent* modelsComponent = nullptr;
     StreamConfigHelper streamConfigHelper;
     int* markersShow;
@@ -1555,12 +1556,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
     void sendGameTextToAll(StringView message, Milliseconds time, int style) override
     {
-        NetCode::RPC::SendGameText RPC;
-        RPC.Text = message;
-        RPC.Time = time.count();
-        RPC.Style = style;
-        PacketHelper::broadcast(RPC, *this);
-    }
+		if (fixesComponent)
+		{
+			fixesComponent->sendGameText(message, time, style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = message;
+			gameText.Time = time.count();
+			gameText.Style = style;
+			PacketHelper::broadcast(gameText, *this);
+		}
+	}
 
     void sendDeathMessageToAll(IPlayer* killer, IPlayer& killee, int weapon) override
     {
@@ -1629,6 +1637,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
         objectsComponent = components.queryComponent<IObjectsComponent>();
         actorsComponent = components.queryComponent<IActorsComponent>();
         modelsComponent = components.queryComponent<ICustomModelsComponent>();
+		fixesComponent = components.queryComponent<IFixesComponent>();
     }
 
     bool onUpdate(IPlayer& p, TimePoint now) override
