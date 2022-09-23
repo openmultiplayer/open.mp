@@ -13,6 +13,7 @@
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
 #include <events.hpp>
 #include <glm/glm.hpp>
@@ -1378,11 +1379,18 @@ removeWeapon_has_weapon:
 
 	void sendGameText(StringView message, Milliseconds time, int style) override
 	{
-		NetCode::RPC::SendGameText gameText;
-		gameText.Time = time.count();
-		gameText.Style = style;
-		gameText.Text = message;
-		PacketHelper::send(gameText, *this);
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->sendGameText(message, time, style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = message;
+			gameText.Time = time.count();
+			gameText.Style = style;
+			PacketHelper::send(gameText, *this);
+		}
 	}
 
 	int getVirtualWorld() const override
