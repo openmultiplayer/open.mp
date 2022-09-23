@@ -22,11 +22,24 @@ private:
     ITimersComponent& timers_;
 	IPlayerTextDrawData* const tds_;
     int money_ = 0;
+	IPlayerTextDraw* gts_[16];
+	ITimer* gtTimers_[16];
 
     void MoneyTimer()
     {
         player_.setMoney(money_);
     }
+
+	void GameTextTimer(int style)
+	{
+		// Hide and destroy the TD.
+		if (gts_[style])
+		{
+			tds_->release(gts_[style]->getID());
+			gts_[style] = nullptr;
+		}
+		gtTimers_[style] = nullptr;
+	}
 
 public:
     void freeExtension() override
@@ -39,6 +52,22 @@ public:
         , timers_(timers)
 		, tds_(queryExtension<IPlayerTextDrawData>(player))
     {
+		gts_[0] = nullptr;	gtTimers_[0] = nullptr;
+		gts_[1] = nullptr;	gtTimers_[1] = nullptr;
+		gts_[2] = nullptr;	gtTimers_[2] = nullptr;
+		gts_[3] = nullptr;	gtTimers_[3] = nullptr;
+		gts_[4] = nullptr;	gtTimers_[4] = nullptr;
+		gts_[5] = nullptr;	gtTimers_[5] = nullptr;
+		gts_[6] = nullptr;	gtTimers_[6] = nullptr;
+		gts_[7] = nullptr;	gtTimers_[7] = nullptr;
+		gts_[8] = nullptr;	gtTimers_[8] = nullptr;
+		gts_[9] = nullptr;	gtTimers_[9] = nullptr;
+		gts_[10] = nullptr;	gtTimers_[10] = nullptr;
+		gts_[11] = nullptr;	gtTimers_[11] = nullptr;
+		gts_[12] = nullptr;	gtTimers_[12] = nullptr;
+		gts_[13] = nullptr;	gtTimers_[13] = nullptr;
+		gts_[14] = nullptr;	gtTimers_[14] = nullptr;
+		gts_[15] = nullptr;	gtTimers_[15] = nullptr;
     }
 
     void startMoneyTimer()
@@ -64,83 +93,384 @@ public:
 
 	bool sendGameText(StringView message, Milliseconds time, int style)
 	{
+		if (!tds_)
+		{
+			// Don't have a reference to the player's TD component.
+			return false;
+		}
+		// The parameters are validated before this function is called to avoid
+		// repetition when showing to all players.
+		Vector2 pos;
+		// First get the position because we need that to determine if the
+		// creation was successful.
+		switch (style)
+		{
+		case 0:
+			// Gametext style 0.
+			pos = { 320.0, 214.0 };
+			break;
+		case 1:
+			// Gametext style 1.
+			pos = { 620.0, 310.0 };
+			break;
+		case 2:
+			// Gametext style 2.
+			pos = { 320.0, 156.0 };
+			break;
+		case 3:
+			// Gametext style 3.
+			pos = { 320.0, 154.5 };
+			break;
+		case 4:
+			// Gametext style 4.
+			pos = { 320.0, 115.5 };
+			break;
+		case 5:
+			// Gametext style 5.
+			pos = { 320.0, 217.0 };
+			break;
+		case 6:
+			// Gametext style 6.
+			pos = { 320.0, 60.0 };
+			break;
+		case 7:
+			// Gametext style 7 (vehicle name).
+			pos = { 608.0, 344.0 };
+			break;
+		case 8:
+			// Gametext style 8 (location name).
+			pos = { 608.0, 385.8 };
+			break;
+		case 9:
+			// Gametext style 9 (radio name).
+			pos = { 320.0, 22.0 };
+			break;
+		case 10:
+			// Gametext style 10 (radio switch).
+			pos = { 320.0, 22.0 };
+			break;
+		case 11:
+			// Gametext style 11 (positive money).
+			pos = { 608.0, 77.0 };
+			break;
+		case 12:
+			// Gametext style 12 (negative money).
+			pos = { 608.0, 77.0 };
+			break;
+		case 13:
+			// Gametext style 13 (stunt).
+			pos = { 380.0, 341.15 };
+			break;
+		case 14:
+			// Gametext style 14 (clock).
+			pos = { 608.0, 22.0 };
+			break;
+		case 15:
+			// Gametext style 15 (popup).
+			pos = { 34.0, 28.0 };
+			break;
+		default:
+			// Not a valid style, return a failure.
+			return false;
+		}
+		// If this style is already shown hide it first (also handily frees up a
+		// TD we might need to create this new GT).  Also stop the timer.
+		if (gts_[style])
+		{
+			tds_->release(gts_[style]->getID());
+			gtTimers_[style]->kill();
+			}
+		IPlayerTextDraw* td = tds_->create(pos, message);
+		if (td == nullptr)
+		{
+			gts_[style] = nullptr;
+			gtTimers_[style] = nullptr;
+			return false;
+		}
+		// And do the rest of the style.
+		switch (style)
+		{
+		case 0:
+			// Gametext style 0.
+			td->setLetterSize({ 1.3, 3.6 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 1:
+			// Gametext style 1.
+			td->setLetterSize({ 1.0, 2.6 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 2:
+			// Gametext style 2.
+			td->setLetterSize({ 2.1, 4.2 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(3);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_0);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 3:
+			// Gametext style 3.
+			td->setLetterSize({ 0.6, 2.75 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 4:
+			// Gametext style 4.
+			td->setLetterSize({ 0.6, 2.75 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 5:
+			// Gametext style 5.
+			td->setLetterSize({ 0.6, 2.75 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 6:
+			// Gametext style 6.
+			td->setLetterSize({ 1.0, 3.6 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 7:
+			// Gametext style 7 (vehicle name).
+			td->setLetterSize({ 1.0, 3.0 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 8:
+			// Gametext style 8 (location name).
+			td->setLetterSize({ 1.2, 3.8 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_0);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 9:
+			// Gametext style 9 (radio name).
+			td->setLetterSize({ 0.6, 1.8 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
+			td->setShadow(0);
+			td->setOutline(1);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 10:
+			// Gametext style 10 (radio switch).
+			td->setLetterSize({ 0.6, 1.8 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0x96, 0x96, 0x96, 0xFF));
+			td->setShadow(0);
+			td->setOutline(1);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_2);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 200.0, 620.0 });
+			break;
+		case 11:
+			// Gametext style 11 (positive money).
+			td->setLetterSize({ 0.55, 2.2 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(false);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 12:
+			// Gametext style 12 (negative money).
+			td->setLetterSize({ 0.55, 2.2 });
+			td->setAlignment(TextDrawAlignment_Right);
+			td->setColour(Colour(0xB4, 0x19, 0x1D, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(false);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 10.0, 200.0 });
+			break;
+		case 13:
+			// Gametext style 13 (stunt).
+			td->setLetterSize({ 0.58, 2.42 });
+			td->setAlignment(TextDrawAlignment_Center);
+			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
+			td->setShadow(2);
+			td->setOutline(0);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_1);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 40.0, 460.0 });
+			break;
+		case 14:
+			// Gametext style 14 (clock).
+			td->setLetterSize({ 0.55, 2.2 });
+			td->setAlignment(TextDrawAlignment_Right);
+			// There's some debate over this colour.  It seems some versions
+			// somehow end up with `0xE1E1E1FF` instead.
+			td->setColour(Colour(0xC3, 0xC3, 0xC3, 0xFF));
+			td->setShadow(0);
+			td->setOutline(2);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_3);
+			td->setProportional(false);
+			td->useBox(false);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
+			td->setTextSize({ 400.0, 20.0 });
+			break;
+		case 15:
+			// Gametext style 15 (popup).
+			td->setLetterSize({ 0.52, 2.2 });
+			td->setAlignment(TextDrawAlignment_Left);
+			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
+			td->setShadow(0);
+			td->setOutline(0);
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setStyle(TextDrawStyle_1);
+			td->setProportional(true);
+			td->useBox(true);
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x80));
+			td->setTextSize({ 230.5, 200.0 });
+			break;
+		}
+		// Show the TD to the player and start a timer to hide it again.
+		td->show();
+		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::GameTextTimer, this, style)), time, false);
+		gts_[style] = td;
+
+		return true;
+	}
+
+    void reset() override
+    {
+        if (moneyTimer_) {
+            moneyTimer_->kill();
+            moneyTimer_ = nullptr;
+        }
+		// Hide all gametexts.
+		for (int style = 0; style != 16; ++style)
+		{
+			if (gts_[style])
+			{
+				gtTimers_[style]->kill();
+				tds_->release(gts_[style]->getID());
+				gts_[style] = nullptr;
+				gtTimers_[style] = nullptr;
+			}
+		}
+	}
+
+    ~PlayerFixesData()
+    {
+        if (moneyTimer_) {
+            moneyTimer_->kill();
+            moneyTimer_ = nullptr;
+        }
+    }
+};
+
+class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler {
+private:
+    IClassesComponent* classes_ = nullptr;
+    IPlayerPool* players_ = nullptr;
+    ITimersComponent* timers_ = nullptr;
+    Microseconds resetMoney_ = Microseconds(0);
+
+	bool validateGameText(StringView& message, Milliseconds time, int style)
+	{
 		// ALL styles are recreated here, since even native ones are broken.
 		if (time <= Milliseconds::zero())
 		{
 			// Not shown for any real time.
 			return false;
 		}
-		// First get the position because we need that to determine if the
-		// creation was successful.
-		Vector2 pos;
-		switch (style)
+		if (style < 0 || style > 15)
 		{
-		case 0:
-			// Global style 0.
-			pos = { 320.0, 214.0 };
-			break;
-		case 1:
-			// Global style 1.
-			pos = { 620.0, 310.0 };
-			break;
-		case 2:
-			// Global style 2.
-			pos = { 320.0, 156.0 };
-			break;
-		case 3:
-			// Global style 3.
-			pos = { 320.0, 154.5 };
-			break;
-		case 4:
-			// Global style 4.
-			pos = { 320.0, 115.5 };
-			break;
-		case 5:
-			// Global style 5.
-			pos = { 320.0, 217.0 };
-			break;
-		case 6:
-			// Global style 6.
-			pos = { 320.0, 60.0 };
-			break;
-		case 7:
-			// Global style 7 (vehicle name).
-			pos = { 608.0, 344.0 };
-			break;
-		case 8:
-			// Global style 8 (location name).
-			pos = { 608.0, 385.8 };
-			break;
-		case 9:
-			// Global style 9 (radio name).
-			pos = { 320.0, 22.0 };
-			break;
-		case 10:
-			// Global style 10 (radio switch).
-			pos = { 320.0, 22.0 };
-			break;
-		case 11:
-			// Global style 11 (positive money).
-			pos = { 608.0, 77.0 };
-			break;
-		case 12:
-			// Global style 12 (negative money).
-			pos = { 608.0, 77.0 };
-			break;
-		case 13:
-			// Global style 13 (stunt).
-			pos = { 380.0, 341.15 };
-			break;
-		case 14:
-			// Global style 14 (clock).
-			pos = { 608.0, 22.0 };
-			break;
-		case 15:
-			// Global style 15 (popup).
-			pos = { 34.0, 28.0 };
-			break;
-		default:
-			// Not a valid style, return a failure.
+			// Not a style that exists.
 			return false;
 		}
 		// Trim the message.
@@ -164,273 +494,12 @@ public:
 		}
 		else
 		{
-			// Constrained.
+			// Constrain the string bounds.
 			message = StringView(data, len);
-		}
-		IPlayerTextDraw* td = tds_->create(pos, message);
-		if (td == nullptr)
-		{
-			return false;
-		}
-		// And do the rest of the style.
-		switch (style)
-		{
-		case 0:
-			// Global style 0.
-			td->setLetterSize({ 1.3, 3.6 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_3);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 1:
-			// Global style 1.
-			td->setLetterSize({ 1.0, 2.6 });
-			td->setAlignment(TextDrawAlignment_Right);
-			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_3);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 10.0, 200.0 });
-			break;
-		case 2:
-			// Global style 2.
-			td->setLetterSize({ 2.1, 4.2 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
-			td->setShadow(0);
-			td->setOutline(3);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_0);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 3:
-			// Global style 3.
-			td->setLetterSize({ 0.6, 2.75 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_2);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 4:
-			// Global style 4.
-			td->setLetterSize({ 0.6, 2.75 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_2);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 5:
-			// Global style 5.
-			td->setLetterSize({ 0.6, 2.75 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_2);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 6:
-			// Global style 6.
-			td->setLetterSize({ 1.0, 3.6 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_3);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 7:
-			// Global style 7 (vehicle name).
-			td->setLetterSize({ 1.0, 3.0 });
-			td->setAlignment(TextDrawAlignment_Right);
-			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_2);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 10.0, 200.0 });
-			break;
-		case 8:
-			// Global style 8 (location name).
-			td->setLetterSize({ 1.2, 3.8 });
-			td->setAlignment(TextDrawAlignment_Right);
-			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_0);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 10.0, 200.0 });
-			break;
-		case 9:
-			// Global style 9 (radio name).
-			td->setLetterSize({ 0.6, 1.8 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
-			td->setShadow(0);
-			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_2);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 10:
-			// Global style 10 (radio switch).
-			td->setLetterSize({ 0.6, 1.8 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0x96, 0x96, 0x96, 0xFF));
-			td->setShadow(0);
-			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_2);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 200.0, 620.0 });
-			break;
-		case 11:
-			// Global style 11 (positive money).
-			td->setLetterSize({ 0.55, 2.2 });
-			td->setAlignment(TextDrawAlignment_Right);
-			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_3);
-			td->setProportional(false);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 10.0, 200.0 });
-			break;
-		case 12:
-			// Global style 12 (negative money).
-			td->setLetterSize({ 0.55, 2.2 });
-			td->setAlignment(TextDrawAlignment_Right);
-			td->setColour(Colour(0xB4, 0x19, 0x1D, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_3);
-			td->setProportional(false);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 10.0, 200.0 });
-			break;
-		case 13:
-			// Global style 13 (stunt).
-			td->setLetterSize({ 0.58, 2.42 });
-			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
-			td->setShadow(2);
-			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_1);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 40.0, 460.0 });
-			break;
-		case 14:
-			// Global style 14 (clock).
-			td->setLetterSize({ 0.55, 2.2 });
-			td->setAlignment(TextDrawAlignment_Right);
-			// There's some debate over this colour.  It seems some versions
-			// somehow end up with `0xE1E1E1FF` instead.
-			td->setColour(Colour(0xC3, 0xC3, 0xC3, 0xFF));
-			td->setShadow(0);
-			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_3);
-			td->setProportional(false);
-			td->useBox(false);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
-			td->setTextSize({ 400.0, 20.0 });
-			break;
-		case 15:
-			// Global style 15 (popup).
-			td->setLetterSize({ 0.52, 2.2 });
-			td->setAlignment(TextDrawAlignment_Left);
-			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
-			td->setShadow(0);
-			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
-			td->setStyle(TextDrawStyle_1);
-			td->setProportional(true);
-			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x80));
-			td->setTextSize({ 230.5, 200.0 });
-			break;
 		}
 		return true;
 	}
-
-    void reset() override
-    {
-        if (moneyTimer_) {
-            moneyTimer_->kill();
-            moneyTimer_ = nullptr;
-        }
-    }
-
-    ~PlayerFixesData()
-    {
-        if (moneyTimer_) {
-            moneyTimer_->kill();
-            moneyTimer_ = nullptr;
-        }
-    }
-};
-
-class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler {
-private:
-    IClassesComponent* classes_ = nullptr;
-    IPlayerPool* players_ = nullptr;
-    ITimersComponent* timers_ = nullptr;
-    Microseconds resetMoney_ = Microseconds(0);
-
 	
-
 public:
     StringView componentName() const override
     {
@@ -560,9 +629,43 @@ public:
             player.addExtension(new PlayerFixesData(player, *timers_), true);
         }
     }
+
+	bool sendGameTextToAll(StringView message, Milliseconds time, int style) override
+	{
+		// Check the parameters.
+		if (!validateGameText(message, time, style))
+		{
+			return false;
+		}
+		for (auto player : players_->entries())
+		{
+			if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
+			{
+				data->sendGameText(message, time, style);
+			}
+		}
+		// Always just return `true`.  What else should we return if half the
+		// shows succeeded and half don't?
+		return true;
+	}
+
+	bool sendGameTextToPlayer(IPlayer& player, StringView message, Milliseconds time, int style) override
+	{
+		// Check the parameters.
+		if (!validateGameText(message, time, style))
+		{
+			return false;
+		}
+		if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
+		{
+			return data->sendGameText(message, time, style);
+		}
+		return false;
+	}
 };
 
 COMPONENT_ENTRY_POINT()
 {
     return new FixesComponent();
 }
+
