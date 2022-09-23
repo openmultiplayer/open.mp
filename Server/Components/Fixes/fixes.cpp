@@ -15,6 +15,46 @@
 
 using namespace Impl;
 
+static bool validateGameText(StringView& message, Milliseconds time, int style)
+{
+	// ALL styles are recreated here, since even native ones are broken.
+	if (time <= Milliseconds::zero())
+	{
+		// Not shown for any real time.
+		return false;
+	}
+	if (style < 0 || style > 15)
+	{
+		// Not a style that exists.
+		return false;
+	}
+	// Trim the message.
+	size_t len = message.length();
+	char const* const data = message.data();
+	while (len)
+	{
+		// rtrim, since TDs don't like trailing spaces.  They do trim the
+		// strings themselves, but don't return a failure in that case, so
+		// this code won't know about it.
+		if (data[len - 1] > ' ')
+		{
+			break;
+		}
+		--len;
+	}
+	if (len == 0)
+	{
+		// No visible text.
+		return false;
+	}
+	else
+	{
+		// Constrain the string bounds.
+		message = StringView(data, len);
+	}
+	return true;
+}
+
 class PlayerFixesData final : public IPlayerFixesData
 {
 private:
@@ -94,7 +134,7 @@ public:
 		moneyTimer_ = nullptr;
 	}
 
-	bool sendGameText(StringView message, Milliseconds time, int style)
+	bool doSendGameText(StringView message, Milliseconds time, int style)
 	{
 		if (!tds_)
 		{
@@ -428,6 +468,16 @@ public:
 		return true;
 	}
 
+	bool sendGameText(StringView message, Milliseconds time, int style) override
+	{
+		// Check the parameters.
+		if (!validateGameText(message, time, style))
+		{
+			return false;
+		}
+		return doSendGameText(message, time, style);
+	}
+
 	void reset() override
 	{
 		if (moneyTimer_)
@@ -465,46 +515,6 @@ private:
 	IPlayerPool* players_ = nullptr;
 	ITimersComponent* timers_ = nullptr;
 	Microseconds resetMoney_ = Microseconds(0);
-
-	bool validateGameText(StringView& message, Milliseconds time, int style)
-	{
-		// ALL styles are recreated here, since even native ones are broken.
-		if (time <= Milliseconds::zero())
-		{
-			// Not shown for any real time.
-			return false;
-		}
-		if (style < 0 || style > 15)
-		{
-			// Not a style that exists.
-			return false;
-		}
-		// Trim the message.
-		size_t len = message.length();
-		char const* const data = message.data();
-		while (len)
-		{
-			// rtrim, since TDs don't like trailing spaces.  They do trim the
-			// strings themselves, but don't return a failure in that case, so
-			// this code won't know about it.
-			if (data[len - 1] > ' ')
-			{
-				break;
-			}
-			--len;
-		}
-		if (len == 0)
-		{
-			// No visible text.
-			return false;
-		}
-		else
-		{
-			// Constrain the string bounds.
-			message = StringView(data, len);
-		}
-		return true;
-	}
 
 public:
 	StringView componentName() const override
@@ -643,7 +653,7 @@ public:
 		}
 	}
 
-	bool sendGameTextToAll(StringView message, Milliseconds time, int style) override
+	bool sendGameText(StringView message, Milliseconds time, int style) override
 	{
 		// Check the parameters.
 		if (!validateGameText(message, time, style))
@@ -654,26 +664,12 @@ public:
 		{
 			if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
 			{
-				data->sendGameText(message, time, style);
+				data->doSendGameText(message, time, style);
 			}
 		}
 		// Always just return `true`.  What else should we return if half the
 		// shows succeeded and half don't?
 		return true;
-	}
-
-	bool sendGameTextToPlayer(IPlayer& player, StringView message, Milliseconds time, int style) override
-	{
-		// Check the parameters.
-		if (!validateGameText(message, time, style))
-		{
-			return false;
-		}
-		if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
-		{
-			return data->sendGameText(message, time, style);
-		}
-		return false;
 	}
 };
 
