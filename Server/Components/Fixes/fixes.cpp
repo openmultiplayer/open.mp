@@ -219,7 +219,7 @@ public:
 		{
 			tds_->release(gts_[style]->getID());
 			gtTimers_[style]->kill();
-			}
+		}
 		IPlayerTextDraw* td = tds_->create(pos, message);
 		if (td == nullptr)
 		{
