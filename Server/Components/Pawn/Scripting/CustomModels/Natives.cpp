@@ -65,8 +65,9 @@ SCRIPT_API(FindModelFileNameFromCRC, bool(int crc, OutputOnlyString& output))
 {
     auto models = PawnManager::Get()->models;
 
-    if (!models)
+    if (!models) {
         return false;
+    }
 
     output = models->getModelNameFromChecksum(crc);
     return std::get<StringView>(output).length();
@@ -75,4 +76,34 @@ SCRIPT_API(FindModelFileNameFromCRC, bool(int crc, OutputOnlyString& output))
 SCRIPT_API(FindTextureFileNameFromCRC, bool(int crc, OutputOnlyString& output))
 {
     return openmp_scripting::FindModelFileNameFromCRC(crc, output);
+}
+
+SCRIPT_API(IsValidCustomModel, bool(int modelId))
+{
+    auto models = PawnManager::Get()->models;
+
+    if (!models) {
+        return false;
+    }
+
+    return models->isValidCustomModel(modelId);
+}
+
+SCRIPT_API(GetCustomModelPath, bool(int modelId, OutputOnlyString& dffPath, OutputOnlyString& txdPath))
+{
+    auto models = PawnManager::Get()->models;
+
+    if (!models) {
+        return false;
+    }
+
+    StringView dffPathSV {};
+    StringView txdPathSV {};
+
+    auto status = models->getCustomModelPath(modelId, dffPathSV, txdPathSV);
+
+    dffPath = dffPathSV;
+    txdPath = txdPathSV;
+
+    return status;
 }

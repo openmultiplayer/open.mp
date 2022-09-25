@@ -382,7 +382,7 @@ SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
     }
 
     stream
-        << "Server Ticks:" << PawnManager::Get()->core->tickRate() << std::endl
+        << "Server Ticks: " << PawnManager::Get()->core->tickRate() << std::endl
         << "Messages in Send buffer: " << stats.messageSendBuffer << std::endl
         << "Messages sent: " << stats.messagesSent << std::endl
         << "Bytes sent: " << stats.totalBytesSent << std::endl

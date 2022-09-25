@@ -43,4 +43,6 @@ struct ICustomModelsComponent : public IComponent {
     virtual bool getBaseModel(uint32_t& baseModelIdOrInput, uint32_t& customModel) = 0;
     virtual IEventDispatcher<PlayerModelsEventHandler>& getEventDispatcher() = 0;
     virtual StringView getModelNameFromChecksum(uint32_t checksum) const = 0;
+    virtual bool isValidCustomModel(int32_t modelId) const = 0;
+    virtual bool getCustomModelPath(int32_t modelId, StringView& dffPath, StringView& txdPath) const = 0;
 };
