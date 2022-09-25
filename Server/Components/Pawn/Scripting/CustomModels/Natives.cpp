@@ -101,7 +101,7 @@ SCRIPT_API(GetCustomModelPath, bool(int modelId, OutputOnlyString& dffPath, Outp
     StringView txdPathSV {};
 
     auto status = models->getCustomModelPath(modelId, dffPathSV, txdPathSV);
-        
+
     dffPath = dffPathSV;
     txdPath = txdPathSV;
 
