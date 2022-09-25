@@ -74,6 +74,8 @@ public:
         modelInfo.timeOn = timeOn_;
         modelInfo.timeOff = timeOff_;
     }
+
+    const int32_t getId() { return newId_; }
 };
 
 class WebServer {
@@ -398,8 +400,14 @@ public:
         if (!enabled)
             return;
 
-        if (!ghc::filesystem::exists(modelsPath) || !ghc::filesystem::is_directory(modelsPath)) {
+        // Attempt to create models folder.
+        try {
             ghc::filesystem::create_directory(modelsPath);
+        } catch (ghc::filesystem::filesystem_error exception) {
+            enabled = false;
+            core->logLn(LogLevel::Error, "[artwork:error] Unable to create models path (%.*s).", PRINT_VIEW(modelsPath));
+            core->logLn(LogLevel::Error, "%s", exception.what());
+            return;
         }
 
         loadArtConfig();
@@ -410,7 +418,6 @@ public:
             }
             core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
             usingCdn = true;
-            return;
         }
     }
 
@@ -600,6 +607,25 @@ public:
         }
 
         webServer->removeIPAddress(player.getNetworkData().networkID.address.v4);
+    }
+
+    bool isValidCustomModel(int32_t modelId) const override
+    {
+        return baseModels.find(modelId) != baseModels.end();
+    }
+
+    bool getCustomModelPath(int32_t modelId, StringView& dffPath, StringView& txdPath) const override
+    {
+        auto model = std::find_if(storage.begin(), storage.end(), [&](const auto& model) {
+            return model->getId() == modelId;
+        });
+
+        if (model != storage.end()) {
+            dffPath = (*model)->getDFF().name;
+            txdPath = (*model)->getTXD().name;
+            return true;
+        }
+        return false;
     }
 };
 
