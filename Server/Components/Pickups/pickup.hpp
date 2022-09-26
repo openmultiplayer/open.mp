@@ -38,12 +38,13 @@ private:
 	{
 		auto data = queryExtension<IPlayerPickupData>(player);
 		int id = data->toClientID(poolID);
-		if (id == INVALID_GANG_ZONE_ID)
+		if (id == INVALID_PICKUP_ID)
 		{
 			id = data->reserveClientID();
 		}
 		if (id != INVALID_PICKUP_ID)
 		{
+			data->setClientID(id, poolID);
 			NetCode::RPC::PlayerCreatePickup createPickupRPC;
 			createPickupRPC.PickupID = id;
 			createPickupRPC.Model = modelId;
