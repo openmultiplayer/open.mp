@@ -16,31 +16,35 @@ using namespace Impl;
 
 using CommandHandlerFuncType = void (*)(const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core);
 
-class ConsoleCmdHandler {
+class ConsoleCmdHandler
+{
 public:
-    static FlatHashMap<String, CommandHandlerFuncType> Commands;
+	static FlatHashMap<String, CommandHandlerFuncType> Commands;
 
-    ConsoleCmdHandler(const String& command, CommandHandlerFuncType handler)
-    {
-        auto it = Commands.find(command);
-        if (it != Commands.end()) {
-            it->second = handler;
-        } else {
-            Commands.insert({ command, handler });
-        }
-        command_ = command;
-        handler_ = handler;
-    }
+	ConsoleCmdHandler(const String& command, CommandHandlerFuncType handler)
+	{
+		auto it = Commands.find(command);
+		if (it != Commands.end())
+		{
+			it->second = handler;
+		}
+		else
+		{
+			Commands.insert({ command, handler });
+		}
+		command_ = command;
+		handler_ = handler;
+	}
 
-    ~ConsoleCmdHandler()
-    {
-        Commands.erase(command_);
-    }
+	~ConsoleCmdHandler()
+	{
+		Commands.erase(command_);
+	}
 
 private:
-    String command_;
-    CommandHandlerFuncType handler_;
+	String command_;
+	CommandHandlerFuncType handler_;
 };
 
 #define ADD_CONSOLE_CMD(cmd, handler) \
-    ConsoleCmdHandler console_command_##cmd(#cmd, handler)
+	ConsoleCmdHandler console_command_##cmd(#cmd, handler)

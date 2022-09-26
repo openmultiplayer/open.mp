@@ -13,1121 +13,1162 @@
 
 SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, cell const* format))
 {
-    auto msg = svprintf(format, GetAMX(), GetParams(), 3);
-    player.sendClientMessage(Colour::FromRGBA(colour), msg);
-    return true;
+	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	player.sendClientMessage(Colour::FromRGBA(colour), msg);
+	return true;
 }
 
 SCRIPT_API(SendClientMessagef, bool(IPlayer& player, uint32_t colour, cell const* format))
 {
-    auto msg = svprintf(format, GetAMX(), GetParams(), 3);
-    player.sendClientMessage(Colour::FromRGBA(colour), msg);
-    return true;
+	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	player.sendClientMessage(Colour::FromRGBA(colour), msg);
+	return true;
 }
 
 SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, cell const* format))
 {
-    auto msg = svprintf(format, GetAMX(), GetParams(), 2);
-    PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
-    return true;
+	auto msg = svprintf(format, GetAMX(), GetParams(), 2);
+	PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
+	return true;
 }
 
 SCRIPT_API(SendClientMessageToAllf, bool(uint32_t colour, cell const* format))
 {
-    auto msg = svprintf(format, GetAMX(), GetParams(), 2);
-    PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
-    return true;
+	auto msg = svprintf(format, GetAMX(), GetParams(), 2);
+	PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
+	return true;
 }
 
 SCRIPT_API(SetPlayerCameraPos, bool(IPlayer& player, Vector3 vec))
 {
-    player.setCameraPosition(vec);
-    return true;
+	player.setCameraPosition(vec);
+	return true;
 }
 
 SCRIPT_API(SetPlayerDrunkLevel, bool(IPlayer& player, int level))
 {
-    player.setDrunkLevel(level);
-    return true;
+	player.setDrunkLevel(level);
+	return true;
 }
 
 SCRIPT_API(SetPlayerInterior, bool(IPlayer& player, int interiorid))
 {
-    player.setInterior(interiorid);
-    return true;
+	player.setInterior(interiorid);
+	return true;
 }
 
 SCRIPT_API(SetPlayerWantedLevel, bool(IPlayer& player, int level))
 {
-    player.setWantedLevel(level);
-    return true;
+	player.setWantedLevel(level);
+	return true;
 }
 
 SCRIPT_API(SetPlayerWeather, bool(IPlayer& player, int weatherid))
 {
-    player.setWeather(weatherid);
-    return true;
+	player.setWeather(weatherid);
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerWeather, -1, int(IPlayer& player))
 {
-    return player.getWeather();
+	return player.getWeather();
 }
 
 SCRIPT_API(SetPlayerSkin, bool(IPlayer& player, int skinid))
 {
-    player.setSkin(skinid);
-    return true;
+	player.setSkin(skinid);
+	return true;
 }
 
 SCRIPT_API(SetPlayerShopName, bool(IPlayer& player, std::string const& name))
 {
-    player.setShopName(name);
-    return true;
+	player.setShopName(name);
+	return true;
 }
 
 SCRIPT_API(GivePlayerMoney, bool(IPlayer& player, int amount))
 {
-    player.giveMoney(amount);
-    return true;
+	player.giveMoney(amount);
+	return true;
 }
 
 SCRIPT_API(SetPlayerCameraLookAt, bool(IPlayer& player, Vector3 vec, int cutType))
 {
-    player.setCameraLookAt(vec, cutType);
-    return true;
+	player.setCameraLookAt(vec, cutType);
+	return true;
 }
 
 SCRIPT_API(SetCameraBehindPlayer, bool(IPlayer& player))
 {
-    player.setCameraBehind();
-    return true;
+	player.setCameraBehind();
+	return true;
 }
 
 SCRIPT_API(CreateExplosionForPlayer, bool(IPlayer& player, Vector3 vec, int type, float radius))
 {
-    player.createExplosion(vec, type, radius);
-    return true;
+	player.createExplosion(vec, type, radius);
+	return true;
 }
 
 SCRIPT_API(CreateExplosion, bool(Vector3 vec, int type, float radius))
 {
-    PawnManager::Get()->players->createExplosionForAll(vec, type, radius);
-    return true;
+	PawnManager::Get()->players->createExplosionForAll(vec, type, radius);
+	return true;
 }
 
 SCRIPT_API(PlayAudioStreamForPlayer, bool(IPlayer& player, std::string const& url, Vector3 pos, float distance, bool usePos))
 {
-    player.playAudio(url, usePos, pos, distance);
-    return true;
+	player.playAudio(url, usePos, pos, distance);
+	return true;
 }
 
 SCRIPT_API(StopAudioStreamForPlayer, bool(IPlayer& player))
 {
-    player.stopAudio();
-    return true;
+	player.stopAudio();
+	return true;
 }
 
 SCRIPT_API(SendDeathMessage, bool(IPlayer* killer, IPlayer* killee, int weapon))
 {
-    if (killee) {
-        PawnManager::Get()->players->sendDeathMessageToAll(killer, *killee, weapon);
-    } else {
-        PawnManager::Get()->players->sendEmptyDeathMessageToAll();
-    }
-    return true;
+	if (killee)
+	{
+		PawnManager::Get()->players->sendDeathMessageToAll(killer, *killee, weapon);
+	}
+	else
+	{
+		PawnManager::Get()->players->sendEmptyDeathMessageToAll();
+	}
+	return true;
 }
 
 SCRIPT_API(TogglePlayerWidescreen, bool(IPlayer& player, bool enable))
 {
-    player.useWidescreen(enable);
-    return true;
+	player.useWidescreen(enable);
+	return true;
 }
 
 SCRIPT_API(IsPlayerWidescreenToggled, bool(IPlayer& player))
 {
-    return player.hasWidescreen();
+	return player.hasWidescreen();
 }
 
 SCRIPT_API(SetPlayerHealth, bool(IPlayer& player, float health))
 {
-    player.setHealth(health);
-    return true;
+	player.setHealth(health);
+	return true;
 }
 
 SCRIPT_API(GetPlayerHealth, bool(IPlayer& player, float& health))
 {
-    health = player.getHealth();
-    return true;
+	health = player.getHealth();
+	return true;
 }
 
 SCRIPT_API(SetPlayerArmour, bool(IPlayer& player, float armour))
 {
-    player.setArmour(armour);
-    return true;
+	player.setArmour(armour);
+	return true;
 }
 
 SCRIPT_API(GetPlayerArmour, bool(IPlayer& player, float& armour))
 {
-    armour = player.getArmour();
-    return true;
+	armour = player.getArmour();
+	return true;
 }
 
 SCRIPT_API(SetPlayerTeam, bool(IPlayer& player, int teamid))
 {
-    player.setTeam(teamid);
-    return true;
+	player.setTeam(teamid);
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerTeam, -1, int(IPlayer& player))
 {
-    return player.getTeam();
+	return player.getTeam();
 }
 
 SCRIPT_API(SetPlayerScore, bool(IPlayer& player, int score))
 {
-    player.setScore(score);
-    return true;
+	player.setScore(score);
+	return true;
 }
 
 SCRIPT_API(GetPlayerScore, int(IPlayer& player))
 {
-    return player.getScore();
+	return player.getScore();
 }
 
 SCRIPT_API(GetPlayerSkin, int(IPlayer& player))
 {
-    return player.getSkin();
+	return player.getSkin();
 }
 
 SCRIPT_API(SetPlayerColor, bool(IPlayer& player, uint32_t colour))
 {
-    player.setColour(Colour::FromRGBA(colour));
-    return true;
+	player.setColour(Colour::FromRGBA(colour));
+	return true;
 }
 
 SCRIPT_API(GetPlayerColor, int(IPlayer& player))
 {
-    return player.getColour().RGBA();
+	return player.getColour().RGBA();
 }
 
 SCRIPT_API(GetPlayerDrunkLevel, int(IPlayer& player))
 {
-    return player.getDrunkLevel();
+	return player.getDrunkLevel();
 }
 
 SCRIPT_API(GivePlayerWeapon, bool(IPlayer& player, uint8_t weaponid, uint32_t ammo))
 {
-    WeaponSlotData data;
-    data.id = weaponid;
-    data.ammo = ammo;
-    player.giveWeapon(data);
-    return true;
+	WeaponSlotData data;
+	data.id = weaponid;
+	data.ammo = ammo;
+	player.giveWeapon(data);
+	return true;
 }
 
 SCRIPT_API(RemovePlayerWeapon, bool(IPlayer& player, uint8_t weaponid))
 {
-    player.removeWeapon(weaponid);
-    return true;
+	player.removeWeapon(weaponid);
+	return true;
 }
 
 SCRIPT_API(GetPlayerMoney, int(IPlayer& player))
 {
-    return player.getMoney();
+	return player.getMoney();
 }
 
 SCRIPT_API(ResetPlayerMoney, bool(IPlayer& player))
 {
-    player.resetMoney();
-    return true;
+	player.resetMoney();
+	return true;
 }
 
 SCRIPT_API(SetPlayerName, int(IPlayer& player, const std::string& name))
 {
-    EPlayerNameStatus status = player.setName(name);
-    return status == EPlayerNameStatus::Updated ? 1 : (status == EPlayerNameStatus::Invalid ? -1 : 0);
+	EPlayerNameStatus status = player.setName(name);
+	return status == EPlayerNameStatus::Updated ? 1 : (status == EPlayerNameStatus::Invalid ? -1 : 0);
 }
 
 SCRIPT_API(GetPlayerName, int(IPlayer& player, OutputOnlyString& name))
 {
-    name = player.getName();
-    return std::get<StringView>(name).length();
+	name = player.getName();
+	return std::get<StringView>(name).length();
 }
 
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
 {
-    return player.getState();
+	return player.getState();
 }
 
 SCRIPT_API_FAILRET(GetPlayerPing, -1, int(IPlayer& player))
 {
-    return player.getPing();
+	return player.getPing();
 }
 
 SCRIPT_API_FAILRET(GetPlayerWeapon, -1, int(IPlayer& player))
 {
-    return player.getArmedWeapon();
+	return player.getArmedWeapon();
 }
 
 SCRIPT_API(SetPlayerTime, bool(IPlayer& player, int hour, int minute))
 {
-    player.setTime(std::chrono::hours(hour), std::chrono::minutes(minute));
-    return true;
+	player.setTime(std::chrono::hours(hour), std::chrono::minutes(minute));
+	return true;
 }
 
 SCRIPT_API(GetPlayerTime, bool(IPlayer& player, int& hour, int& minute))
 {
-    std::pair<std::chrono::hours, std::chrono::minutes> data = player.getTime();
-    hour = data.first.count();
-    minute = data.second.count();
-    return true;
+	std::pair<std::chrono::hours, std::chrono::minutes> data = player.getTime();
+	hour = data.first.count();
+	minute = data.second.count();
+	return true;
 }
 
 SCRIPT_API(TogglePlayerClock, bool(IPlayer& player, bool enable))
 {
-    player.useClock(enable);
-    return true;
+	player.useClock(enable);
+	return true;
 }
 
 SCRIPT_API(ForceClassSelection, bool(IPlayer& player))
 {
-    player.forceClassSelection();
-    return true;
+	player.forceClassSelection();
+	return true;
 }
 
 SCRIPT_API(GetPlayerWantedLevel, int(IPlayer& player))
 {
-    return player.getWantedLevel();
+	return player.getWantedLevel();
 }
 
 SCRIPT_API(SetPlayerFightingStyle, bool(IPlayer& player, int style))
 {
-    player.setFightingStyle(PlayerFightingStyle(style));
-    return true;
+	player.setFightingStyle(PlayerFightingStyle(style));
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerFightingStyle, PlayerFightingStyle_Normal, int(IPlayer& player))
 {
-    return player.getFightingStyle();
+	return player.getFightingStyle();
 }
 
 SCRIPT_API(SetPlayerVelocity, bool(IPlayer& player, Vector3 velocity))
 {
-    player.setVelocity(velocity);
-    return true;
+	player.setVelocity(velocity);
+	return true;
 }
 
 SCRIPT_API(GetPlayerVelocity, bool(IPlayer& player, Vector3& velocity))
 {
-    velocity = player.getVelocity();
-    return true;
+	velocity = player.getVelocity();
+	return true;
 }
 
 SCRIPT_API(GetPlayerCameraPos, bool(IPlayer& player, Vector3& pos))
 {
-    pos = player.getAimData().camPos;
-    return true;
+	pos = player.getAimData().camPos;
+	return true;
 }
 
 SCRIPT_API(GetPlayerDistanceFromPoint, float(IPlayer& player, Vector3 pos))
 {
-    Vector3 playerCoords = player.getPosition();
-    return glm::distance(playerCoords, pos);
+	Vector3 playerCoords = player.getPosition();
+	return glm::distance(playerCoords, pos);
 }
 
 SCRIPT_API(GetPlayerInterior, int(IPlayer& player))
 {
-    return player.getInterior();
+	return player.getInterior();
 }
 
 SCRIPT_API(SetPlayerPos, bool(IPlayer& player, Vector3 vec))
 {
-    player.setPosition(vec);
-    return true;
+	player.setPosition(vec);
+	return true;
 }
 
 SCRIPT_API(GetPlayerPos, bool(IPlayer& player, Vector3& pos))
 {
-    pos = player.getPosition();
-    return true;
+	pos = player.getPosition();
+	return true;
 }
 
 SCRIPT_API(GetPlayerVirtualWorld, int(IPlayer& player))
 {
-    return player.getVirtualWorld();
+	return player.getVirtualWorld();
 }
 
 SCRIPT_API(IsPlayerNPC, bool(IPlayer* player))
 {
-    return player != nullptr && player->isBot();
+	return player != nullptr && player->isBot();
 }
 
 SCRIPT_API(IsPlayerStreamedIn, bool(IPlayer& player, IPlayer& other))
 {
-    return player.isStreamedInForPlayer(other);
+	return player.isStreamedInForPlayer(other);
 }
 
 SCRIPT_API(PlayerPlaySound, bool(IPlayer& player, uint32_t sound, Vector3 pos))
 {
-    player.playSound(sound, pos);
-    return true;
+	player.playSound(sound, pos);
+	return true;
 }
 
 SCRIPT_API(PlayerSpectatePlayer, bool(IPlayer& player, IPlayer& target, int mode))
 {
-    player.spectatePlayer(target, PlayerSpectateMode(mode));
-    return true;
+	player.spectatePlayer(target, PlayerSpectateMode(mode));
+	return true;
 }
 
 SCRIPT_API(PlayerSpectateVehicle, bool(IPlayer& player, IVehicle& target, int mode))
 {
-    player.spectateVehicle(target, PlayerSpectateMode(mode));
-    return true;
+	player.spectateVehicle(target, PlayerSpectateMode(mode));
+	return true;
 }
 
 SCRIPT_API(SetPlayerVirtualWorld, bool(IPlayer& player, int vw))
 {
-    player.setVirtualWorld(vw);
-    return true;
+	player.setVirtualWorld(vw);
+	return true;
 }
 
 SCRIPT_API(SetPlayerWorldBounds, bool(IPlayer& player, float xMax, float xMin, float yMax, float yMin))
 {
-    Vector4 coords = { xMax, xMin, yMax, yMin };
-    player.setWorldBounds(coords);
-    return true;
+	Vector4 coords = { xMax, xMin, yMax, yMin };
+	player.setWorldBounds(coords);
+	return true;
 }
 
 SCRIPT_API(ClearPlayerWorldBounds, bool(IPlayer& player))
 {
-    player.setWorldBounds(Vector4(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS));
-    return true;
+	player.setWorldBounds(Vector4(MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS, MAX_WORLD_BOUNDS, MIN_WORLD_BOUNDS));
+	return true;
 }
 
 SCRIPT_API(GetPlayerWorldBounds, bool(IPlayer& player, Vector4& bounds))
 {
-    bounds = player.getWorldBounds();
-    return true;
+	bounds = player.getWorldBounds();
+	return true;
 }
 
 SCRIPT_API(ClearAnimations, bool(IPlayer& player, int syncType))
 {
-    // TODO: This must be fixed on client side
-    // At the moment ClearAnimations flushes all tasks applied to player
-    // Including driving, siting in vehicle, shooting, jumping, or any sort of a task
-    // And it doesn't just clear applied animations, in order to keep it compatible with
-    // Current samp scripts without requiring a change, we call IPlayer::clearTasks temporarily.
-    player.clearTasks(PlayerAnimationSyncType(syncType));
-    return true;
+	// TODO: This must be fixed on client side
+	// At the moment ClearAnimations flushes all tasks applied to player
+	// Including driving, siting in vehicle, shooting, jumping, or any sort of a task
+	// And it doesn't just clear applied animations, in order to keep it compatible with
+	// Current samp scripts without requiring a change, we call IPlayer::clearTasks temporarily.
+	player.clearTasks(PlayerAnimationSyncType(syncType));
+	return true;
 }
 
 SCRIPT_API(GetPlayerLastShotVectors, bool(IPlayer& player, Vector3& origin, Vector3& hitPos))
 {
-    PlayerBulletData data = player.getBulletData();
-    origin = data.origin;
-    hitPos = data.hitPos;
-    return true;
+	PlayerBulletData data = player.getBulletData();
+	origin = data.origin;
+	hitPos = data.hitPos;
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
 {
-    IPlayer* target = player.getCameraTargetPlayer();
-    if (target) {
-        return target->getID();
-    }
-    return FailRet;
+	IPlayer* target = player.getCameraTargetPlayer();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetActor, INVALID_ACTOR_ID, int(IPlayer& player))
 {
-    IActor* target = player.getCameraTargetActor();
-    if (target) {
-        return target->getID();
-    }
-    return FailRet;
+	IActor* target = player.getCameraTargetActor();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetObject, INVALID_OBJECT_ID, int(IPlayer& player))
 {
-    IObject* target = player.getCameraTargetObject();
-    if (target) {
-        return target->getID();
-    }
-    return FailRet;
+	IObject* target = player.getCameraTargetObject();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetVehicle, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
-    IVehicle* target = player.getCameraTargetVehicle();
-    if (target) {
-        return target->getID();
-    }
-    return FailRet;
+	IVehicle* target = player.getCameraTargetVehicle();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
 }
 
 SCRIPT_API(IsPlayerConnected, bool(IPlayer* player))
 {
-    return player != nullptr;
+	return player != nullptr;
 }
 
 SCRIPT_API(PutPlayerInVehicle, bool(IPlayer& player, IVehicle& vehicle, int seatID))
 {
-    vehicle.putPlayer(player, seatID);
-    return true;
+	vehicle.putPlayer(player, seatID);
+	return true;
 }
 
 SCRIPT_API(RemoveBuildingForPlayer, bool(IPlayer& player, uint32_t model, Vector3 pos, float radius))
 {
-    player.removeDefaultObjects(model, pos, radius);
-    return true;
+	player.removeDefaultObjects(model, pos, radius);
+	return true;
 }
 
 SCRIPT_API(GetPlayerBuildingsRemoved, int(IPlayer& player))
 {
-    return player.getDefaultObjectsRemoved();
+	return player.getDefaultObjectsRemoved();
 }
 
 SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
-    cell* args = GetParams();
-    player.removeFromVehicle(args[0] == 8 && args[2]);
-    return true;
+	cell* args = GetParams();
+	player.removeFromVehicle(args[0] == 8 && args[2]);
+	return true;
 }
 
 SCRIPT_API(RemovePlayerMapIcon, bool(IPlayer& player, int iconID))
 {
-    player.unsetMapIcon(iconID);
-    return true;
+	player.unsetMapIcon(iconID);
+	return true;
 }
 
 SCRIPT_API(SetPlayerMapIcon, bool(IPlayer& player, int iconID, Vector3 pos, int type, uint32_t colour, int style))
 {
-    player.setMapIcon(iconID, pos, type, Colour::FromRGBA(colour), MapIconStyle(style));
-    return true;
+	player.setMapIcon(iconID, pos, type, Colour::FromRGBA(colour), MapIconStyle(style));
+	return true;
 }
 
 SCRIPT_API(ResetPlayerWeapons, bool(IPlayer& player))
 {
-    player.resetWeapons();
-    return true;
+	player.resetWeapons();
+	return true;
 }
 
 SCRIPT_API(SetPlayerAmmo, bool(IPlayer& player, uint8_t id, uint32_t ammo))
 {
-    WeaponSlotData data;
-    data.id = id;
-    data.ammo = ammo;
-    player.setWeaponAmmo(data);
-    return true;
+	WeaponSlotData data;
+	data.id = id;
+	data.ammo = ammo;
+	player.setWeaponAmmo(data);
+	return true;
 }
 
 SCRIPT_API(SetPlayerArmedWeapon, bool(IPlayer& player, uint8_t weapon))
 {
-    player.setArmedWeapon(weapon);
-    return true;
+	player.setArmedWeapon(weapon);
+	return true;
 }
 
 SCRIPT_API(SetPlayerChatBubble, bool(IPlayer& player, cell const* format, uint32_t colour, float drawdistance, int expiretime))
 {
-    auto text = svprintf(format, GetAMX(), GetParams(), 5);
-    player.setChatBubble(text, Colour::FromRGBA(colour), drawdistance, std::chrono::milliseconds(expiretime));
-    return true;
+	auto text = svprintf(format, GetAMX(), GetParams(), 5);
+	player.setChatBubble(text, Colour::FromRGBA(colour), drawdistance, std::chrono::milliseconds(expiretime));
+	return true;
 }
 
 SCRIPT_API(SetPlayerPosFindZ, bool(IPlayer& player, Vector3 pos))
 {
-    player.setPositionFindZ(pos);
-    return true;
+	player.setPositionFindZ(pos);
+	return true;
 }
 
 SCRIPT_API(SetPlayerSkillLevel, bool(IPlayer& player, uint8_t weapon, int level))
 {
-    player.setSkillLevel(PlayerWeaponSkill(weapon), level);
-    return true;
+	player.setSkillLevel(PlayerWeaponSkill(weapon), level);
+	return true;
 }
 
 SCRIPT_API(SetPlayerSpecialAction, bool(IPlayer& player, uint32_t action))
 {
-    player.setAction(PlayerSpecialAction(action));
-    return true;
+	player.setAction(PlayerSpecialAction(action));
+	return true;
 }
 
 SCRIPT_API(ShowPlayerNameTagForPlayer, bool(IPlayer& player, IPlayer& other, bool enable))
 {
-    player.toggleOtherNameTag(other, enable);
-    return true;
+	player.toggleOtherNameTag(other, enable);
+	return true;
 }
 
 SCRIPT_API(TogglePlayerControllable, bool(IPlayer& player, bool enable))
 {
-    player.setControllable(enable);
-    return true;
+	player.setControllable(enable);
+	return true;
 }
 
 SCRIPT_API(TogglePlayerSpectating, bool(IPlayer& player, bool enable))
 {
-    player.setSpectating(enable);
-    return true;
+	player.setSpectating(enable);
+	return true;
 }
 
 SCRIPT_API(ApplyAnimation, bool(IPlayer& player, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
 {
-    const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
-    player.applyAnimation(animationData, PlayerAnimationSyncType(sync));
-    return true;
+	const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
+	player.applyAnimation(animationData, PlayerAnimationSyncType(sync));
+	return true;
 }
 
 SCRIPT_API(GetAnimationName, bool(int index, OutputOnlyString& lib, OutputOnlyString& name))
 {
-    Pair<StringView, StringView> anim = splitAnimationNames(index);
-    lib = anim.first;
-    name = anim.second;
-    return true;
+	Pair<StringView, StringView> anim = splitAnimationNames(index);
+	lib = anim.first;
+	name = anim.second;
+	return true;
 }
 
 SCRIPT_API(EditAttachedObject, bool(IPlayer& player, int index))
 {
-    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-    if (data) {
-        data->editAttachedObject(index);
-    }
-    return true;
+	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		data->editAttachedObject(index);
+	}
+	return true;
 }
 
 SCRIPT_API(EnablePlayerCameraTarget, bool(IPlayer& player, bool enable))
 {
-    player.useCameraTargeting(enable);
-    return true;
+	player.useCameraTargeting(enable);
+	return true;
 }
 
 SCRIPT_API(EnableStuntBonusForPlayer, bool(IPlayer& player, bool enable))
 {
-    player.useStuntBonuses(enable);
-    return true;
+	player.useStuntBonuses(enable);
+	return true;
 }
 
 SCRIPT_API(EnableStuntBonusForAll, bool(bool enable))
 {
-    PawnManager::Get()->core->useStuntBonuses(enable);
-    return true;
+	PawnManager::Get()->core->useStuntBonuses(enable);
+	return true;
 }
 
 SCRIPT_API(GetPlayerAmmo, int(IPlayer& player))
 {
-    return player.getArmedWeaponAmmo();
+	return player.getArmedWeaponAmmo();
 }
 
 SCRIPT_API(GetPlayerAnimationIndex, int(IPlayer& player))
 {
-    return player.getAnimationData().ID;
+	return player.getAnimationData().ID;
 }
 
 SCRIPT_API(GetPlayerFacingAngle, bool(IPlayer& player, float& angle))
 {
-    GTAQuat quat = player.getRotation();
-    angle = quat.ToEuler().z;
-    return true;
+	GTAQuat quat = player.getRotation();
+	angle = quat.ToEuler().z;
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerIp, -1, int(IPlayer& player, OutputOnlyString& ip))
 {
-    PeerNetworkData data = player.getNetworkData();
-    if (!data.networkID.address.ipv6) {
-        PeerAddress::AddressString addressString;
-        if (PeerAddress::ToString(data.networkID.address, addressString)) {
-            // Scope-allocated string, copy it
-            ip = String(StringView(addressString));
-            return std::get<String>(ip).length();
-        }
-    }
-    return FailRet;
+	PeerNetworkData data = player.getNetworkData();
+	if (!data.networkID.address.ipv6)
+	{
+		PeerAddress::AddressString addressString;
+		if (PeerAddress::ToString(data.networkID.address, addressString))
+		{
+			// Scope-allocated string, copy it
+			ip = String(StringView(addressString));
+			return std::get<String>(ip).length();
+		}
+	}
+	return FailRet;
 }
 
 SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
 {
-    return player.getAction();
+	return player.getAction();
 }
 
 SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
 {
-    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-    if (data) {
-        IVehicle* vehicle = data->getVehicle();
-        if (vehicle) {
-            return vehicle->getID();
-        }
-    }
-    return 0;
+	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+	if (data)
+	{
+		IVehicle* vehicle = data->getVehicle();
+		if (vehicle)
+		{
+			return vehicle->getID();
+		}
+	}
+	return 0;
 }
 
 SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
 {
-    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-    if (data) {
-        return data->getSeat();
-    }
-    return FailRet;
+	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+	if (data)
+	{
+		return data->getSeat();
+	}
+	return FailRet;
 }
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
 {
-    if (slot < 0 || slot >= MAX_WEAPON_SLOTS) {
-        return false;
-    }
-    const WeaponSlotData& weapon = player.getWeaponSlot(slot);
-    weaponid = weapon.id;
-    ammo = weapon.ammo;
-    return true;
+	if (slot < 0 || slot >= MAX_WEAPON_SLOTS)
+	{
+		return false;
+	}
+	const WeaponSlotData& weapon = player.getWeaponSlot(slot);
+	weaponid = weapon.id;
+	ammo = weapon.ammo;
+	return true;
 }
 
 SCRIPT_API(GetPlayerWeaponState, int(IPlayer& player))
 {
-    return player.getAimData().weaponState;
+	return player.getAimData().weaponState;
 }
 
 SCRIPT_API(InterpolateCameraPos, bool(IPlayer& player, Vector3 from, Vector3 to, int time, int cut))
 {
-    player.interpolateCameraPosition(from, to, time, PlayerCameraCutType(cut));
-    return true;
+	player.interpolateCameraPosition(from, to, time, PlayerCameraCutType(cut));
+	return true;
 }
 
 SCRIPT_API(InterpolateCameraLookAt, bool(IPlayer& player, Vector3 from, Vector3 to, int time, int cut))
 {
-    player.interpolateCameraLookAt(from, to, time, PlayerCameraCutType(cut));
-    return true;
+	player.interpolateCameraLookAt(from, to, time, PlayerCameraCutType(cut));
+	return true;
 }
 
 SCRIPT_API(IsPlayerAttachedObjectSlotUsed, bool(IPlayer& player, int index))
 {
-    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-    if (data) {
-        return data->hasAttachedObject(index);
-    }
-    return false;
+	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		return data->hasAttachedObject(index);
+	}
+	return false;
 }
 
 SCRIPT_API(AttachCameraToObject, bool(IPlayer& player, IObject& object))
 {
-    player.attachCameraToObject(object);
-    return true;
+	player.attachCameraToObject(object);
+	return true;
 }
 
 SCRIPT_API(AttachCameraToPlayerObject, bool(IPlayer& player, IPlayerObject& object))
 {
-    player.attachCameraToObject(object);
-    return true;
+	player.attachCameraToObject(object);
+	return true;
 }
 
 SCRIPT_API(GetPlayerCameraAspectRatio, float(IPlayer& player))
 {
-    return player.getAimData().aspectRatio;
+	return player.getAimData().aspectRatio;
 }
 
 SCRIPT_API(GetPlayerCameraFrontVector, bool(IPlayer& player, Vector3& vector))
 {
-    vector = player.getAimData().camFrontVector;
-    return true;
+	vector = player.getAimData().camFrontVector;
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerCameraMode, -1, int(IPlayer& player))
 {
-    return player.getAimData().camMode;
+	return player.getAimData().camMode;
 }
 
 SCRIPT_API(GetPlayerKeys, bool(IPlayer& player, int& keys, int& updown, int& leftright))
 {
-    const PlayerKeyData& keyData = player.getKeyData();
-    keys = keyData.keys;
-    updown = keyData.upDown;
-    leftright = keyData.leftRight;
-    return true;
+	const PlayerKeyData& keyData = player.getKeyData();
+	keys = keyData.keys;
+	updown = keyData.upDown;
+	leftright = keyData.leftRight;
+	return true;
 }
 
 SCRIPT_API_FAILRET(GetPlayerSurfingVehicleID, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
-    PlayerSurfingData data = player.getSurfingData();
-    if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Vehicle) {
-        IVehiclesComponent* vehicles = PawnManager::Get()->vehicles;
-        if (vehicles && vehicles->get(data.ID)) {
-            return data.ID;
-        }
-    }
-    return FailRet;
+	PlayerSurfingData data = player.getSurfingData();
+	if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Vehicle)
+	{
+		IVehiclesComponent* vehicles = PawnManager::Get()->vehicles;
+		if (vehicles && vehicles->get(data.ID))
+		{
+			return data.ID;
+		}
+	}
+	return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerSurfingObjectID, INVALID_OBJECT_ID, int(IPlayer& player))
 {
-    PlayerSurfingData data = player.getSurfingData();
-    if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Object) {
-        IObjectsComponent* objects = PawnManager::Get()->objects;
-        if (objects && objects->get(data.ID)) {
-            return data.ID;
-        }
-    }
-    return FailRet;
+	PlayerSurfingData data = player.getSurfingData();
+	if (player.getState() == PlayerState_OnFoot && data.type == PlayerSurfingData::Type::Object)
+	{
+		IObjectsComponent* objects = PawnManager::Get()->objects;
+		if (objects && objects->get(data.ID))
+		{
+			return data.ID;
+		}
+	}
+	return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerTargetPlayer, INVALID_PLAYER_ID, int(IPlayer& player))
 {
-    IPlayer* target = player.getTargetPlayer();
-    if (target) {
-        return target->getID();
-    }
-    return FailRet;
+	IPlayer* target = player.getTargetPlayer();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
 }
 
 SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player))
 {
-    IActor* target = player.getTargetActor();
-    if (target) {
-        return target->getID();
-    }
-    return FailRet;
+	IActor* target = player.getTargetActor();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
 }
 
 SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))
 {
-    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-    if (data) {
-        IVehicle* vehicle = data->getVehicle();
-        if (vehicle == &targetVehicle) {
-            return true;
-        }
-    }
-    return false;
+	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+	if (data)
+	{
+		IVehicle* vehicle = data->getVehicle();
+		if (vehicle == &targetVehicle)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 SCRIPT_API(IsPlayerInAnyVehicle, bool(IPlayer& player))
 {
-    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-    if (data) {
-        IVehicle* vehicle = data->getVehicle();
-        if (vehicle) {
-            return true;
-        }
-    }
-    return false;
+	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+	if (data)
+	{
+		IVehicle* vehicle = data->getVehicle();
+		if (vehicle)
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 SCRIPT_API(IsPlayerInRangeOfPoint, bool(IPlayer& player, float range, Vector3 position))
 {
-    return range >= glm::distance(player.getPosition(), position);
+	return range >= glm::distance(player.getPosition(), position);
 }
 
 SCRIPT_API(PlayCrimeReportForPlayer, bool(IPlayer& player, IPlayer& suspect, int crime))
 {
-    return player.playerCrimeReport(suspect, crime);
+	return player.playerCrimeReport(suspect, crime);
 }
 
 SCRIPT_API(RemovePlayerAttachedObject, bool(IPlayer& player, int index))
 {
-    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-    if (data) {
-        data->removeAttachedObject(index);
-        return true;
-    }
-    return false;
+	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		data->removeAttachedObject(index);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(SetPlayerAttachedObject, bool(IPlayer& player, int index, int modelid, int bone, Vector3 offset, Vector3 rotation, Vector3 scale, uint32_t materialcolor1, uint32_t materialcolor2))
 {
-    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-    if (data) {
-        ObjectAttachmentSlotData attachment;
-        attachment.model = modelid;
-        attachment.bone = bone;
-        attachment.offset = offset;
-        attachment.rotation = rotation;
-        attachment.scale = scale;
-        attachment.colour1 = Colour::FromARGB(materialcolor1);
-        attachment.colour2 = Colour::FromARGB(materialcolor2);
-        data->setAttachedObject(index, attachment);
-        return true;
-    }
-    return false;
+	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		ObjectAttachmentSlotData attachment;
+		attachment.model = modelid;
+		attachment.bone = bone;
+		attachment.offset = offset;
+		attachment.rotation = rotation;
+		attachment.scale = scale;
+		attachment.colour1 = Colour::FromARGB(materialcolor1);
+		attachment.colour2 = Colour::FromARGB(materialcolor2);
+		data->setAttachedObject(index, attachment);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(GetPlayerAttachedObject, bool(IPlayer& player, int index, int& modelid, int& bone, Vector3& offset, Vector3& rotation, Vector3& scale, uint32_t& materialcolor1, uint32_t& materialcolor2))
 {
-    IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-    if (data) {
-        ObjectAttachmentSlotData attachment = data->getAttachedObject(index);
-        modelid = attachment.model;
-        bone = attachment.bone;
-        offset = attachment.offset;
-        rotation = attachment.rotation;
-        scale = attachment.scale;
-        materialcolor1 = attachment.colour1.ARGB();
-        materialcolor2 = attachment.colour2.ARGB();
-        return true;
-    }
-    return false;
+	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		ObjectAttachmentSlotData attachment = data->getAttachedObject(index);
+		modelid = attachment.model;
+		bone = attachment.bone;
+		offset = attachment.offset;
+		rotation = attachment.rotation;
+		scale = attachment.scale;
+		materialcolor1 = attachment.colour1.ARGB();
+		materialcolor2 = attachment.colour2.ARGB();
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(SetPlayerFacingAngle, bool(IPlayer& player, float angle))
 {
-    Vector3 rotation = player.getRotation().ToEuler();
-    rotation.z = angle;
-    player.setRotation(rotation);
-    return true;
+	Vector3 rotation = player.getRotation().ToEuler();
+	rotation.z = angle;
+	player.setRotation(rotation);
+	return true;
 }
 
 SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint32_t colour))
 {
-    player.setOtherColour(other, Colour::FromRGBA(colour));
-    return true;
+	player.setOtherColour(other, Colour::FromRGBA(colour));
+	return true;
 }
 
 SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
 {
-    PawnManager::Get()->core->logLn(LogLevel::Warning, "AllowPlayerTeleport: This function is deprecated");
-    return true;
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "AllowPlayerTeleport: This function is deprecated");
+	return true;
 }
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
 {
-    player.setRemoteVehicleCollisions(!disable);
-    return true;
+	player.setRemoteVehicleCollisions(!disable);
+	return true;
 }
 
 SCRIPT_API(GetPlayerCameraZoom, float(IPlayer& player))
 {
-    return player.getAimData().camZoom;
+	return player.getAimData().camZoom;
 }
 
 SCRIPT_API(SelectTextDraw, bool(IPlayer& player, uint32_t hoverColour))
 {
-    IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
-    if (data) {
-        data->beginSelection(Colour::FromRGBA(hoverColour));
-        return true;
-    }
-    return false;
+	IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
+	if (data)
+	{
+		data->beginSelection(Colour::FromRGBA(hoverColour));
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
 {
-    IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
-    if (data) {
-        data->endSelection();
-        return true;
-    }
-    return false;
+	IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
+	if (data)
+	{
+		data->endSelection();
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(SendClientCheck, bool(IPlayer& player, int actionType, int address, int offset, int count))
 {
-    player.sendClientCheck(actionType, address, offset, count);
-    return true;
+	player.sendClientCheck(actionType, address, offset, count);
+	return true;
 }
 
 SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
 {
-    player.spawn();
-    return true;
+	player.spawn();
+	return true;
 }
 
 SCRIPT_API(StartRecordingPlayerData, bool(IPlayer& player, int recordType, std::string const& recordFile))
 {
-    throw pawn_natives::NotImplemented();
+	throw pawn_natives::NotImplemented();
 }
 
 SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
 {
-    throw pawn_natives::NotImplemented();
+	throw pawn_natives::NotImplemented();
 }
 
 SCRIPT_API(gpci, int(IPlayer& player, OutputOnlyString& output))
 {
-    output = player.getSerial();
-    return std::get<StringView>(output).length();
+	output = player.getSerial();
+	return std::get<StringView>(output).length();
 }
 
 SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
 {
-    IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
-    if (data) {
-        return data->hasConsoleAccess();
-    }
-    return false;
+	IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
+	if (data)
+	{
+		return data->hasConsoleAccess();
+	}
+	return false;
 }
 
 SCRIPT_API(Kick, bool(IPlayer& player))
 {
-    player.kick();
-    return true;
+	player.kick();
+	return true;
 }
 
 SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, cell const* format, int time, int style))
 {
-    auto string = svprintf(format, GetAMX(), GetParams(), 4);
-    if (string.empty()) {
-        return false;
-    }
-    player.sendGameText(string, Milliseconds(time), style);
-    return true;
+	auto string = svprintf(format, GetAMX(), GetParams(), 4);
+	if (string.empty())
+	{
+		return false;
+	}
+	player.sendGameText(string, Milliseconds(time), style);
+	return true;
 }
 
 SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, int time, int style, cell const* format))
 {
-    auto string = svprintf(format, GetAMX(), GetParams(), 4);
-    if (string.empty()) {
-        return false;
-    }
-    player.sendGameText(string, Milliseconds(time), style);
-    return true;
+	auto string = svprintf(format, GetAMX(), GetParams(), 4);
+	if (string.empty())
+	{
+		return false;
+	}
+	player.sendGameText(string, Milliseconds(time), style);
+	return true;
 }
 
 SCRIPT_API(Ban, bool(IPlayer& player))
 {
-    player.ban();
-    return true;
+	player.ban();
+	return true;
 }
 
 SCRIPT_API(BanEx, bool(IPlayer& player, cell const* format))
 {
-    auto reason = svprintf(format, GetAMX(), GetParams(), 2);
-    player.ban(reason);
-    return true;
+	auto reason = svprintf(format, GetAMX(), GetParams(), 2);
+	player.ban(reason);
+	return true;
 }
 
 SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPlayer* killee, int weapon))
 {
-    if (killee) {
-        player.sendDeathMessage(*killee, killer, weapon);
-    } else {
-        player.sendEmptyDeathMessage();
-    }
-    return true;
+	if (killee)
+	{
+		player.sendDeathMessage(*killee, killer, weapon);
+	}
+	else
+	{
+		player.sendEmptyDeathMessage();
+	}
+	return true;
 }
 
 SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, cell const* format))
 {
-    auto message = svprintf(format, GetAMX(), GetParams(), 3);
-    player.sendChatMessage(sender, message);
-    return true;
+	auto message = svprintf(format, GetAMX(), GetParams(), 3);
+	player.sendChatMessage(sender, message);
+	return true;
 }
 
 SCRIPT_API(SendPlayerMessageToPlayerf, bool(IPlayer& player, IPlayer& sender, cell const* format))
 {
-    auto message = svprintf(format, GetAMX(), GetParams(), 3);
-    player.sendChatMessage(sender, message);
-    return true;
+	auto message = svprintf(format, GetAMX(), GetParams(), 3);
+	player.sendChatMessage(sender, message);
+	return true;
 }
 
 SCRIPT_API(GetPlayerVersion, int(IPlayer& player, OutputOnlyString& version))
 {
-    version = player.getClientVersionName();
-    return std::get<StringView>(version).length();
+	version = player.getClientVersionName();
+	return std::get<StringView>(version).length();
 }
 
 SCRIPT_API(GetPlayerSkillLevel, int(IPlayer& player, int skill))
 {
-    auto skills = player.getSkillLevels();
-    if (skill >= 11 || skill < 0) {
-        return 0;
-    }
-    return skills[skill];
+	auto skills = player.getSkillLevels();
+	if (skill >= 11 || skill < 0)
+	{
+		return 0;
+	}
+	return skills[skill];
 }
 
 SCRIPT_API(GetPlayerZAim, float(IPlayer& player))
 {
-    return player.getAimData().aimZ;
+	return player.getAimData().aimZ;
 }
 
 SCRIPT_API(GetPlayerSurfingOffsets, bool(IPlayer& player, Vector3& offset))
 {
-    const PlayerSurfingData& data = player.getSurfingData();
+	const PlayerSurfingData& data = player.getSurfingData();
 
-    if (data.type != PlayerSurfingData::Type::None) {
-        offset = data.offset;
-    }
-    return true;
+	if (data.type != PlayerSurfingData::Type::None)
+	{
+		offset = data.offset;
+	}
+	return true;
 }
 
 SCRIPT_API(GetPlayerRotationQuat, bool(IPlayer& player, Vector4& quat))
 {
-    glm::quat rotQuat = player.getRotation().q;
+	glm::quat rotQuat = player.getRotation().q;
 
-    // In samp or YSF, GetPlayerRotationQuat declaration is like this:
-    // GetPlayerRotationQuat(playerid, &Float:w, &Float:x = 0.0, &Float:y = 0.0, &Float:z = 0.0);
-    // Meaning first output arg is W and not X; Vector4's first member is X and it is used in many other places,
-    // We can't just simply change ParamCast for Vector4 just because one function doesn't follow it.
-    quat.x = rotQuat.w;
-    quat.y = rotQuat.x;
-    quat.z = rotQuat.y;
-    quat.w = rotQuat.z;
-    return true;
+	// In samp or YSF, GetPlayerRotationQuat declaration is like this:
+	// GetPlayerRotationQuat(playerid, &Float:w, &Float:x = 0.0, &Float:y = 0.0, &Float:z = 0.0);
+	// Meaning first output arg is W and not X; Vector4's first member is X and it is used in many other places,
+	// We can't just simply change ParamCast for Vector4 just because one function doesn't follow it.
+	quat.x = rotQuat.w;
+	quat.y = rotQuat.x;
+	quat.z = rotQuat.y;
+	quat.w = rotQuat.z;
+	return true;
 }
 
 SCRIPT_API(GetPlayerSpectateID, int(IPlayer& player))
 {
-    return player.getSpectateData().spectateID;
+	return player.getSpectateData().spectateID;
 }
 
 SCRIPT_API(GetPlayerSpectateType, int(IPlayer& player))
 {
-    return int(player.getSpectateData().type);
+	return int(player.getSpectateData().type);
 }
 
 SCRIPT_API(GetPlayerRawIp, int(IPlayer& player))
 {
-    return player.getNetworkData().networkID.address.v4;
+	return player.getNetworkData().networkID.address.v4;
 }
 
 SCRIPT_API(SetPlayerGravity, bool(IPlayer& player, float gravity))
 {
-    player.setGravity(gravity);
-    return true;
+	player.setGravity(gravity);
+	return true;
 }
 
 SCRIPT_API(GetPlayerGravity, float(IPlayer& player))
 {
-    return player.getGravity();
+	return player.getGravity();
 }
 
 SCRIPT_API(SetPlayerAdmin, bool(IPlayer& player, bool set))
 {
-    IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
-    if (data) {
-        data->setConsoleAccessibility(set);
-        return true;
-    }
-    return false;
+	IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
+	if (data)
+	{
+		data->setConsoleAccessibility(set);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(IsPlayerSpawned, bool(IPlayer& player))
 {
-    PlayerState state = player.getState();
-    switch (state) {
-    case PlayerState_OnFoot:
-    case PlayerState_Driver:
-    case PlayerState_Passenger:
-    case PlayerState_Spawned: {
-        return true;
-    }
-    default:
-        return false;
-    }
+	PlayerState state = player.getState();
+	switch (state)
+	{
+	case PlayerState_OnFoot:
+	case PlayerState_Driver:
+	case PlayerState_Passenger:
+	case PlayerState_Spawned:
+	{
+		return true;
+	}
+	default:
+		return false;
+	}
 }
 
 SCRIPT_API(IsPlayerControllable, bool(IPlayer& player))
 {
-    return player.getControllable();
+	return player.getControllable();
 }
 
 SCRIPT_API(IsPlayerCameraTargetEnabled, bool(IPlayer& player))
 {
-    return player.hasCameraTargeting();
+	return player.hasCameraTargeting();
 }
 
 SCRIPT_API(TogglePlayerGhostMode, bool(IPlayer& player, bool toggle))
 {
-    player.toggleGhostMode(toggle);
-    return true;
+	player.toggleGhostMode(toggle);
+	return true;
 }
 
 SCRIPT_API(GetPlayerGhostMode, bool(IPlayer& player))
 {
-    return player.isGhostModeEnabled();
+	return player.isGhostModeEnabled();
 }

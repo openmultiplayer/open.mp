@@ -14,20 +14,21 @@
 /// @returns "true" if field has been successfully added, otherwise "false"
 bool DatabaseResultSetRow::addField(StringView fieldName, StringView value)
 {
-    bool ret(!fieldNameToFieldIndexLookup.count(String(fieldName)));
-    if (ret) {
-        std::size_t index(fields.size());
-        fields.push_back(std::make_pair(String(fieldName), String(value)));
-        fieldNameToFieldIndexLookup.emplace(String(fieldName), index);
-    }
-    return ret;
+	bool ret(!fieldNameToFieldIndexLookup.count(String(fieldName)));
+	if (ret)
+	{
+		std::size_t index(fields.size());
+		fields.push_back(std::make_pair(String(fieldName), String(value)));
+		fieldNameToFieldIndexLookup.emplace(String(fieldName), index);
+	}
+	return ret;
 }
 
 /// Gets the number of fields
 /// @returns Number of fields
 std::size_t DatabaseResultSetRow::getFieldCount() const
 {
-    return fields.size();
+	return fields.size();
 }
 
 /// Is field name available
@@ -35,7 +36,7 @@ std::size_t DatabaseResultSetRow::getFieldCount() const
 /// @returns "true" if field name is available, otherwise "false"
 bool DatabaseResultSetRow::isFieldNameAvailable(StringView fieldName) const
 {
-    return fieldNameToFieldIndexLookup.count(String(fieldName));
+	return fieldNameToFieldIndexLookup.count(String(fieldName));
 }
 
 /// Gets the name of the field by the specified field index
@@ -43,7 +44,7 @@ bool DatabaseResultSetRow::isFieldNameAvailable(StringView fieldName) const
 /// @returns Name of the field
 StringView DatabaseResultSetRow::getFieldName(std::size_t fieldIndex) const
 {
-    return (fieldIndex < fields.size()) ? fields[fieldIndex].first : StringView();
+	return (fieldIndex < fields.size()) ? fields[fieldIndex].first : StringView();
 }
 
 /// Gets the string of the field by the specified field index
@@ -51,7 +52,7 @@ StringView DatabaseResultSetRow::getFieldName(std::size_t fieldIndex) const
 /// @returns String
 StringView DatabaseResultSetRow::getFieldString(std::size_t fieldIndex) const
 {
-    return (fieldIndex < fields.size()) ? fields[fieldIndex].second : StringView();
+	return (fieldIndex < fields.size()) ? fields[fieldIndex].second : StringView();
 }
 
 /// Gets the integer of the field by the specified field index
@@ -59,7 +60,7 @@ StringView DatabaseResultSetRow::getFieldString(std::size_t fieldIndex) const
 /// @returns Integer
 long DatabaseResultSetRow::getFieldInt(std::size_t fieldIndex) const
 {
-    return (fieldIndex < fields.size()) ? std::atol(fields[fieldIndex].second.c_str()) : 0L;
+	return (fieldIndex < fields.size()) ? std::atol(fields[fieldIndex].second.c_str()) : 0L;
 }
 
 /// Gets the floating point number of the field by the specified field index
@@ -67,7 +68,7 @@ long DatabaseResultSetRow::getFieldInt(std::size_t fieldIndex) const
 /// @returns Floating point number
 double DatabaseResultSetRow::getFieldFloat(std::size_t fieldIndex) const
 {
-    return (fieldIndex < fields.size()) ? std::atof(fields[fieldIndex].second.c_str()) : 0.0;
+	return (fieldIndex < fields.size()) ? std::atof(fields[fieldIndex].second.c_str()) : 0.0;
 }
 
 /// Gets the string of the field by the specified field name
@@ -75,8 +76,8 @@ double DatabaseResultSetRow::getFieldFloat(std::size_t fieldIndex) const
 /// @returns String
 StringView DatabaseResultSetRow::getFieldStringByName(StringView fieldName) const
 {
-    const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
-    return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? StringView() : fields[field_name_to_field_index_iterator->second].second;
+	const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
+	return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? StringView() : fields[field_name_to_field_index_iterator->second].second;
 }
 
 /// Gets the integer of the field by the specified field name
@@ -84,8 +85,8 @@ StringView DatabaseResultSetRow::getFieldStringByName(StringView fieldName) cons
 /// @returns Integer
 long DatabaseResultSetRow::getFieldIntByName(StringView fieldName) const
 {
-    const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
-    return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0L : std::atol(fields[field_name_to_field_index_iterator->second].second.c_str());
+	const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
+	return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0L : std::atol(fields[field_name_to_field_index_iterator->second].second.c_str());
 }
 
 /// Gets the floating point number of the field by the specified field name
@@ -93,6 +94,6 @@ long DatabaseResultSetRow::getFieldIntByName(StringView fieldName) const
 /// @returns Floating point number
 double DatabaseResultSetRow::getFieldFloatByName(StringView fieldName) const
 {
-    const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
-    return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0.0 : std::atof(fields[field_name_to_field_index_iterator->second].second.c_str());
+	const FlatHashMap<String, std::size_t>::const_iterator& field_name_to_field_index_iterator(fieldNameToFieldIndexLookup.find(String(fieldName)));
+	return (field_name_to_field_index_iterator == fieldNameToFieldIndexLookup.end()) ? 0.0 : std::atof(fields[field_name_to_field_index_iterator->second].second.c_str());
 }

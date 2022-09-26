@@ -11,34 +11,44 @@
 #include "../../Singleton.hpp"
 #include "sdk.hpp"
 
-struct GangZoneEvents : public GangZoneEventHandler, public Singleton<GangZoneEvents> {
-    void onPlayerEnterGangZone(IPlayer& player, IGangZone& zone) override
-    {
-        auto pawn = PawnManager::Get();
-        if (zone.getLegacyPlayer() == nullptr) {
-            pawn->CallAllInEntryFirst("OnPlayerEnterGangZone", DefaultReturnValue_True, player.getID(), pawn->gangzones->toLegacyID(zone.getID()));
-        } else if (auto data = queryExtension<IPlayerGangZoneData>(player)) {
-            pawn->CallAllInEntryFirst("OnPlayerEnterPlayerGangZone", DefaultReturnValue_True, player.getID(), data->toLegacyID(zone.getID()));
-        }
-    }
+struct GangZoneEvents : public GangZoneEventHandler, public Singleton<GangZoneEvents>
+{
+	void onPlayerEnterGangZone(IPlayer& player, IGangZone& zone) override
+	{
+		auto pawn = PawnManager::Get();
+		if (zone.getLegacyPlayer() == nullptr)
+		{
+			pawn->CallAllInEntryFirst("OnPlayerEnterGangZone", DefaultReturnValue_True, player.getID(), pawn->gangzones->toLegacyID(zone.getID()));
+		}
+		else if (auto data = queryExtension<IPlayerGangZoneData>(player))
+		{
+			pawn->CallAllInEntryFirst("OnPlayerEnterPlayerGangZone", DefaultReturnValue_True, player.getID(), data->toLegacyID(zone.getID()));
+		}
+	}
 
-    void onPlayerLeaveGangZone(IPlayer& player, IGangZone& zone) override
-    {
-        auto pawn = PawnManager::Get();
-        if (zone.getLegacyPlayer() == nullptr) {
-            pawn->CallAllInEntryFirst("OnPlayerLeaveGangZone", DefaultReturnValue_True, player.getID(), pawn->gangzones->toLegacyID(zone.getID()));
-        } else if (auto data = queryExtension<IPlayerGangZoneData>(player)) {
-            pawn->CallAllInEntryFirst("OnPlayerLeavePlayerGangZone", DefaultReturnValue_True, player.getID(), data->toLegacyID(zone.getID()));
-        }
-    }
+	void onPlayerLeaveGangZone(IPlayer& player, IGangZone& zone) override
+	{
+		auto pawn = PawnManager::Get();
+		if (zone.getLegacyPlayer() == nullptr)
+		{
+			pawn->CallAllInEntryFirst("OnPlayerLeaveGangZone", DefaultReturnValue_True, player.getID(), pawn->gangzones->toLegacyID(zone.getID()));
+		}
+		else if (auto data = queryExtension<IPlayerGangZoneData>(player))
+		{
+			pawn->CallAllInEntryFirst("OnPlayerLeavePlayerGangZone", DefaultReturnValue_True, player.getID(), data->toLegacyID(zone.getID()));
+		}
+	}
 
-    void onPlayerClickGangZone(IPlayer& player, IGangZone& zone) override
-    {
-        auto pawn = PawnManager::Get();
-        if (zone.getLegacyPlayer() == nullptr) {
-            pawn->CallAllInEntryFirst("OnPlayerClickGangZone", DefaultReturnValue_True, player.getID(), pawn->gangzones->toLegacyID(zone.getID()));
-        } else if (auto data = queryExtension<IPlayerGangZoneData>(player)) {
-            pawn->CallAllInEntryFirst("OnPlayerClickPlayerGangZone", DefaultReturnValue_True, player.getID(), data->toLegacyID(zone.getID()));
-        }
-    }
+	void onPlayerClickGangZone(IPlayer& player, IGangZone& zone) override
+	{
+		auto pawn = PawnManager::Get();
+		if (zone.getLegacyPlayer() == nullptr)
+		{
+			pawn->CallAllInEntryFirst("OnPlayerClickGangZone", DefaultReturnValue_True, player.getID(), pawn->gangzones->toLegacyID(zone.getID()));
+		}
+		else if (auto data = queryExtension<IPlayerGangZoneData>(player))
+		{
+			pawn->CallAllInEntryFirst("OnPlayerClickPlayerGangZone", DefaultReturnValue_True, player.getID(), data->toLegacyID(zone.getID()));
+		}
+	}
 };

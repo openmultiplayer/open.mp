@@ -13,214 +13,220 @@
 
 SCRIPT_API(db_open, int(const std::string& name))
 {
-    ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
-    IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
-    return database_connection ? database_connection->getID() : 0;
+	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
+	return database_connection ? database_connection->getID() : 0;
 }
 
 SCRIPT_API(db_close, bool(IDatabaseConnection& db))
 {
-    return PawnManager::Get()->databases->close(db);
+	return PawnManager::Get()->databases->close(db);
 }
 
 SCRIPT_API(db_query, int(IDatabaseConnection& db, cell const* format))
 {
-    auto query = svprintf(format, GetAMX(), GetParams(), 2);
-    IDatabaseResultSet* database_result_set(db.executeQuery(query));
-    return database_result_set ? database_result_set->getID() : 0;
+	auto query = svprintf(format, GetAMX(), GetParams(), 2);
+	IDatabaseResultSet* database_result_set(db.executeQuery(query));
+	return database_result_set ? database_result_set->getID() : 0;
 }
 
 SCRIPT_API(db_free_result, bool(IDatabaseResultSet& result))
 {
-    return PawnManager::Get()->databases->freeResultSet(result);
+	return PawnManager::Get()->databases->freeResultSet(result);
 }
 
 SCRIPT_API(db_num_rows, int(IDatabaseResultSet& result))
 {
-    return static_cast<int>(result.getRowCount());
+	return static_cast<int>(result.getRowCount());
 }
 
 SCRIPT_API(db_next_row, bool(IDatabaseResultSet& result))
 {
-    return result.selectNextRow();
+	return result.selectNextRow();
 }
 
 SCRIPT_API(db_num_fields, int(IDatabaseResultSet& result))
 {
-    return static_cast<int>(result.getFieldCount());
+	return static_cast<int>(result.getFieldCount());
 }
 
 SCRIPT_API(db_field_name, bool(IDatabaseResultSet& result, int field, OutputOnlyString& output))
 {
-    if ((field >= 0) && (field < result.getFieldCount())) {
-        output = result.getFieldName(static_cast<std::size_t>(field));
-        return true;
-    }
-    return false;
+	if ((field >= 0) && (field < result.getFieldCount()))
+	{
+		output = result.getFieldName(static_cast<std::size_t>(field));
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(db_get_field, bool(IDatabaseResultSet& result, int field, OutputOnlyString& output))
 {
-    if ((field >= 0) && (field < result.getFieldCount())) {
-        output = result.getFieldString(static_cast<std::size_t>(field));
-        return true;
-    }
-    return false;
+	if ((field >= 0) && (field < result.getFieldCount()))
+	{
+		output = result.getFieldString(static_cast<std::size_t>(field));
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(db_get_field_assoc, bool(IDatabaseResultSet& result, const std::string& field, OutputOnlyString& output))
 {
-    if (result.isFieldNameAvailable(field)) {
-        output = result.getFieldStringByName(field);
-        return true;
-    }
-    return false;
+	if (result.isFieldNameAvailable(field))
+	{
+		output = result.getFieldStringByName(field);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(db_get_field_int, int(IDatabaseResultSet& result, int field))
 {
-    return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<int>(result.getFieldInt(static_cast<std::size_t>(field))) : 0;
+	return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<int>(result.getFieldInt(static_cast<std::size_t>(field))) : 0;
 }
 
 SCRIPT_API(db_get_field_assoc_int, int(IDatabaseResultSet& result, const std::string& field))
 {
-    return result.isFieldNameAvailable(field) ? static_cast<int>(result.getFieldIntByName(field)) : 0;
+	return result.isFieldNameAvailable(field) ? static_cast<int>(result.getFieldIntByName(field)) : 0;
 }
 
 SCRIPT_API(db_get_field_float, float(IDatabaseResultSet& result, int field))
 {
-    return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<float>(result.getFieldFloat(static_cast<std::size_t>(field))) : 0.0f;
+	return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<float>(result.getFieldFloat(static_cast<std::size_t>(field))) : 0.0f;
 }
 
 SCRIPT_API(db_get_field_assoc_float, float(IDatabaseResultSet& result, const std::string& field))
 {
-    return result.isFieldNameAvailable(field) ? static_cast<float>(result.getFieldFloatByName(field)) : 0.0f;
+	return result.isFieldNameAvailable(field) ? static_cast<float>(result.getFieldFloatByName(field)) : 0.0f;
 }
 
 SCRIPT_API(db_get_mem_handle, int(IDatabaseConnection& db))
 {
-    return reinterpret_cast<int>(&db);
+	return reinterpret_cast<int>(&db);
 }
 
 SCRIPT_API(db_get_result_mem_handle, int(IDatabaseResultSet& result))
 {
-    LegacyDBResult& legacyDbResult = result.getLegacyDBResult();
-    return reinterpret_cast<int>(&legacyDbResult);
+	LegacyDBResult& legacyDbResult = result.getLegacyDBResult();
+	return reinterpret_cast<int>(&legacyDbResult);
 }
 
 SCRIPT_API(db_debug_openfiles, int())
 {
-    return static_cast<int>(PawnManager::Get()->databases->getDatabaseConnectionCount());
+	return static_cast<int>(PawnManager::Get()->databases->getDatabaseConnectionCount());
 }
 
 SCRIPT_API(db_debug_openresults, int())
 {
-    return static_cast<int>(PawnManager::Get()->databases->getDatabaseResultSetCount());
+	return static_cast<int>(PawnManager::Get()->databases->getDatabaseResultSetCount());
 }
 
 SCRIPT_API(DB_Open, int(const std::string& name))
 {
-    ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
-    IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
-    return database_connection ? database_connection->getID() : 0;
+	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
+	return database_connection ? database_connection->getID() : 0;
 }
 
 SCRIPT_API(DB_Close, bool(IDatabaseConnection& db))
 {
-    return PawnManager::Get()->databases->close(db);
+	return PawnManager::Get()->databases->close(db);
 }
 
 SCRIPT_API(DB_ExecuteQuery, int(IDatabaseConnection& db, cell const* format))
 {
-    auto query = svprintf(format, GetAMX(), GetParams(), 2);
-    IDatabaseResultSet* database_result_set(db.executeQuery(query));
-    return database_result_set ? database_result_set->getID() : 0;
+	auto query = svprintf(format, GetAMX(), GetParams(), 2);
+	IDatabaseResultSet* database_result_set(db.executeQuery(query));
+	return database_result_set ? database_result_set->getID() : 0;
 }
 
 SCRIPT_API(DB_FreeResultSet, bool(IDatabaseResultSet& result))
 {
-    return PawnManager::Get()->databases->freeResultSet(result);
+	return PawnManager::Get()->databases->freeResultSet(result);
 }
 
 SCRIPT_API(DB_GetRowCount, int(IDatabaseResultSet& result))
 {
-    return static_cast<int>(result.getRowCount());
+	return static_cast<int>(result.getRowCount());
 }
 
 SCRIPT_API(DB_SelectNextRow, bool(IDatabaseResultSet& result))
 {
-    return result.selectNextRow();
+	return result.selectNextRow();
 }
 
 SCRIPT_API(DB_GetFieldCount, int(IDatabaseResultSet& result))
 {
-    return static_cast<int>(result.getFieldCount());
+	return static_cast<int>(result.getFieldCount());
 }
 
 SCRIPT_API(DB_GetFieldName, bool(IDatabaseResultSet& result, int field, OutputOnlyString& output))
 {
-    if ((field >= 0) && (field < result.getFieldCount())) {
-        output = result.getFieldName(static_cast<std::size_t>(field));
-        return true;
-    }
-    return false;
+	if ((field >= 0) && (field < result.getFieldCount()))
+	{
+		output = result.getFieldName(static_cast<std::size_t>(field));
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(DB_GetFieldString, bool(IDatabaseResultSet& result, int field, OutputOnlyString& output))
 {
-    if ((field >= 0) && (field < result.getFieldCount())) {
-        output = result.getFieldString(static_cast<std::size_t>(field));
-        return true;
-    }
-    return false;
+	if ((field >= 0) && (field < result.getFieldCount()))
+	{
+		output = result.getFieldString(static_cast<std::size_t>(field));
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(DB_GetFieldStringByName, bool(IDatabaseResultSet& result, const std::string& field, OutputOnlyString& output))
 {
-    if (result.isFieldNameAvailable(field)) {
-        output = result.getFieldStringByName(field);
-        return true;
-    }
-    return false;
+	if (result.isFieldNameAvailable(field))
+	{
+		output = result.getFieldStringByName(field);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(DB_GetFieldInt, int(IDatabaseResultSet& result, int field))
 {
-    return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<int>(result.getFieldInt(static_cast<std::size_t>(field))) : 0;
+	return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<int>(result.getFieldInt(static_cast<std::size_t>(field))) : 0;
 }
 
 SCRIPT_API(DB_GetFieldIntByName, int(IDatabaseResultSet& result, const std::string& field))
 {
-    return result.isFieldNameAvailable(field) ? static_cast<int>(result.getFieldIntByName(field)) : 0;
+	return result.isFieldNameAvailable(field) ? static_cast<int>(result.getFieldIntByName(field)) : 0;
 }
 
 SCRIPT_API(DB_GetFieldFloat, float(IDatabaseResultSet& result, int field))
 {
-    return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<float>(result.getFieldFloat(static_cast<std::size_t>(field))) : 0.0f;
+	return ((field >= 0) && (field < result.getFieldCount())) ? static_cast<float>(result.getFieldFloat(static_cast<std::size_t>(field))) : 0.0f;
 }
 
 SCRIPT_API(DB_GetFieldFloatByName, float(IDatabaseResultSet& result, const std::string& field))
 {
-    return result.isFieldNameAvailable(field) ? static_cast<float>(result.getFieldFloatByName(field)) : 0.0f;
+	return result.isFieldNameAvailable(field) ? static_cast<float>(result.getFieldFloatByName(field)) : 0.0f;
 }
 
 SCRIPT_API(DB_GetMemHandle, int(IDatabaseConnection& db))
 {
-    return reinterpret_cast<int>(&db);
+	return reinterpret_cast<int>(&db);
 }
 
 SCRIPT_API(DB_GetLegacyDBResult, int(IDatabaseResultSet& result))
 {
-    LegacyDBResult& legacyDbResult = result.getLegacyDBResult();
-    return reinterpret_cast<int>(&legacyDbResult);
+	LegacyDBResult& legacyDbResult = result.getLegacyDBResult();
+	return reinterpret_cast<int>(&legacyDbResult);
 }
 
 SCRIPT_API(DB_GetDatabaseConnectionCount, int())
 {
-    return static_cast<int>(PawnManager::Get()->databases->getDatabaseConnectionCount());
+	return static_cast<int>(PawnManager::Get()->databases->getDatabaseConnectionCount());
 }
 
 SCRIPT_API(DB_GetDatabaseResultSetCount, int())
 {
-    return static_cast<int>(PawnManager::Get()->databases->getDatabaseResultSetCount());
+	return static_cast<int>(PawnManager::Get()->databases->getDatabaseResultSetCount());
 }
