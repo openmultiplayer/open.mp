@@ -23,7 +23,7 @@ static bool validateGameText(StringView& message, Milliseconds time, int style)
 		// Not shown for any real time.
 		return false;
 	}
-	if (style < 0 || style > 15)
+	if (style < 0 || style >= MAX_GAMETEXT_STYLES)
 	{
 		// Not a style that exists.
 		return false;
@@ -63,8 +63,8 @@ private:
 	ITimersComponent& timers_;
 	IPlayerTextDrawData* const tds_;
 	int money_ = 0;
-	IPlayerTextDraw* gts_[16];
-	ITimer* gtTimers_[16];
+	StaticArray<IPlayerTextDraw*, MAX_GAMETEXT_STYLES> gts_;
+	StaticArray<ITimer*, MAX_GAMETEXT_STYLES> gtTimers_;
 
 	void MoneyTimer()
 	{
@@ -93,22 +93,8 @@ public:
 		, timers_(timers)
 		, tds_(queryExtension<IPlayerTextDrawData>(player))
 	{
-		gts_[0] = nullptr;	gtTimers_[0] = nullptr;
-		gts_[1] = nullptr;	gtTimers_[1] = nullptr;
-		gts_[2] = nullptr;	gtTimers_[2] = nullptr;
-		gts_[3] = nullptr;	gtTimers_[3] = nullptr;
-		gts_[4] = nullptr;	gtTimers_[4] = nullptr;
-		gts_[5] = nullptr;	gtTimers_[5] = nullptr;
-		gts_[6] = nullptr;	gtTimers_[6] = nullptr;
-		gts_[7] = nullptr;	gtTimers_[7] = nullptr;
-		gts_[8] = nullptr;	gtTimers_[8] = nullptr;
-		gts_[9] = nullptr;	gtTimers_[9] = nullptr;
-		gts_[10] = nullptr;	gtTimers_[10] = nullptr;
-		gts_[11] = nullptr;	gtTimers_[11] = nullptr;
-		gts_[12] = nullptr;	gtTimers_[12] = nullptr;
-		gts_[13] = nullptr;	gtTimers_[13] = nullptr;
-		gts_[14] = nullptr;	gtTimers_[14] = nullptr;
-		gts_[15] = nullptr;	gtTimers_[15] = nullptr;
+		gts_.fill(nullptr);
+		gtTimers_.fill(nullptr);
 	}
 
 	void startMoneyTimer()
@@ -486,7 +472,7 @@ public:
 			moneyTimer_ = nullptr;
 		}
 		// Hide all gametexts.
-		for (int style = 0; style != 16; ++style)
+		for (int style = 0; style != MAX_GAMETEXT_STYLES; ++style)
 		{
 			if (gts_[style])
 			{

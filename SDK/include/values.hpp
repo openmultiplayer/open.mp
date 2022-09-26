@@ -58,6 +58,7 @@ constexpr float MAX_WORLD_BOUNDS = 20000.0f;
 constexpr float MIN_WORLD_BOUNDS = -20000.0f;
 constexpr int MAX_TEXTDRAW_STR_LENGTH = 800;
 constexpr int MAX_VEHICLE_CARRIAGES = 3;
+constexpr int MAX_GAMETEXT_STYLES = 16;
 
 enum Key
 {
