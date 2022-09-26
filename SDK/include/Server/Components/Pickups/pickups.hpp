@@ -56,3 +56,40 @@ struct IPickupsComponent : public IPoolComponent<IPickup>
 	/// Create a pickup
 	virtual IPickup* create(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic) = 0;
 };
+
+static const UID PickupData_UID = UID(0x98376F4428D7B70B);
+struct IPlayerPickupData : public IExtension
+{
+	PROVIDE_EXT_UID(PickupData_UID);
+
+	/// Get the ID of this pickup as used in old pools (i.e. in pawn).
+	virtual int toLegacyID(int real) const = 0;
+
+	/// Get the ID of this pickup as used in the SDK.
+	virtual int fromLegacyID(int legacy) const = 0;
+
+	/// Release the ID used in limited pools.
+	virtual void releaseLegacyID(int legacy) = 0;
+
+	/// Return an ID not yet used in pawn (et al) to represent this pickup.
+	virtual int reserveLegacyID() = 0;
+
+	/// Assign a full ID to the legacy ID reserved earlier.
+	virtual void setLegacyID(int legacy, int real) = 0;
+
+	/// Get the ID of this pickup as used internally (i.e. sent to the client).
+	virtual int toClientID(int real) const = 0;
+
+	/// Get the ID of this pickup as used in the SDK.
+	virtual int fromClientID(int legacy) const = 0;
+
+	/// Release the ID used on the client.
+	virtual void releaseClientID(int legacy) = 0;
+
+	/// Return an ID not yet used on the client to represent this pickup.
+	virtual int reserveClientID() = 0;
+
+	/// Assign a full ID to the legacy ID reserved earlier.
+	virtual void setClientID(int legacy, int real) = 0;
+};
+
