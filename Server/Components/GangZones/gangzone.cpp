@@ -314,10 +314,9 @@ public:
 
 	void onPlayerClickMap(IPlayer& player, Vector3 clickPos) override
 	{
-		// only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+		// Only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
 		for (auto gangzone : checkingList.entries())
 		{
-
 			// only check visible gangzones
 			if (!gangzone->isShownForPlayer(player))
 			{

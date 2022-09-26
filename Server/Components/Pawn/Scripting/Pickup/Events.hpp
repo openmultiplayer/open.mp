@@ -15,12 +15,15 @@ struct PickupEvents : public PickupEventHandler, public Singleton<PickupEvents>
 {
 	void onPlayerPickUpPickup(IPlayer& player, IPickup& pickup) override
 	{
-		PawnManager::Get()->CallAllInEntryFirst("OnPlayerPickUpPickup", DefaultReturnValue_True, player.getID(), pickup.getID());
-	}
-
-	void onPlayerPickUpPlayerPickup(IPlayer& player, IPickup& pickup) override
-	{
-		PawnManager::Get()->CallAllInEntryFirst("OnPlayerPickUpPlayerPickup", DefaultReturnValue_True, player.getID(), pickup.getID());
+		auto pawn = PawnManager::Get();
+		if (pickup.getLegacyPlayer() == nullptr)
+		{
+			pawn->CallAllInEntryFirst("OnPlayerPickUpPickup", DefaultReturnValue_True, player.getID(), pawn->pickups->toLegacyID(pickup.getID()));
+		}
+		else if (auto data = queryExtension<IPlayerPickupData>(player))
+		{
+			pawn->CallAllInEntryFirst("OnPlayerPickUpPlayerPickup", DefaultReturnValue_True, player.getID(), data->toLegacyID(pickup.getID()));
+		}
 	}
 };
 
