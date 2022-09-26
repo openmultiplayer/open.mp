@@ -269,13 +269,18 @@ public:
 		const float maxDist = streamConfigHelper.getDistanceSqr();
 		if (streamConfigHelper.shouldStream(player.getID(), now))
 		{
+			const PlayerState state = player.getState();
+			if (state == PlayerState_None)
+			{
+				return true;
+			}
+			Vector3 pos = player.getPosition();
 			for (IPickup* p : storage)
 			{
 				Pickup* pickup = static_cast<Pickup*>(p);
 
-				const PlayerState state = player.getState();
-				const Vector3 dist3D = pickup->getPosition() - player.getPosition();
-				const bool shouldBeStreamedIn = !pickup->isPickupHiddenForPlayer(player) && state != PlayerState_None && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
+				const Vector3 dist3D = pickup->getPosition() - pos;
+				const bool shouldBeStreamedIn = !pickup->isPickupHiddenForPlayer(player) && (player.getVirtualWorld() == pickup->getVirtualWorld() || pickup->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
 				const bool isStreamedIn = pickup->isStreamedInForPlayer(player);
 				if (!isStreamedIn && shouldBeStreamedIn)
