@@ -40,10 +40,10 @@ struct IPickup : public IExtensible, public IEntity
 	/// Check if given pickup has hidden state for player (only process streaming if pickup is not hidden)
 	virtual bool isPickupHiddenForPlayer(IPlayer& player) const = 0;
 
-	/// Used by legacy per-player gangzones for ID mapping.
+	/// Used by legacy per-player pickups for ID mapping.
 	virtual void setLegacyPlayer(IPlayer* player) = 0;
 
-	/// Used by legacy per-player gangzones for ID mapping.
+	/// Used by legacy per-player pickups for ID mapping.
 	virtual IPlayer* getLegacyPlayer() const = 0;
 };
 
@@ -62,6 +62,21 @@ struct IPickupsComponent : public IPoolComponent<IPickup>
 
 	/// Create a pickup
 	virtual IPickup* create(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic) = 0;
+
+	/// Get the ID of this pickup as used in old pools (i.e. in pawn).
+	virtual int toLegacyID(int real) const = 0;
+
+	/// Get the ID of this pickup as used in the SDK.
+	virtual int fromLegacyID(int legacy) const = 0;
+
+	/// Release the ID used in limited pools.
+	virtual void releaseLegacyID(int legacy) = 0;
+
+	/// Return an ID not yet used in pawn (et al) to represent this pickup.
+	virtual int reserveLegacyID() = 0;
+
+	/// Assign a full ID to the legacy ID reserved earlier.
+	virtual void setLegacyID(int legacy, int real) = 0;
 };
 
 static const UID PickupData_UID = UID(0x98376F4428D7B70B);

@@ -48,17 +48,17 @@ SCRIPT_API(CreatePlayerPickup, int(IPlayer& player, int model, int type, Vector3
 	return INVALID_PICKUP_ID;
 }
 
-SCRIPT_API(DestroyPlayerPickup, bool(IPlayer& player, cell pickupid))
+SCRIPT_API(DestroyPlayerPickup, bool(IPlayer& player, cell legacyid))
 {
 	IPickupsComponent* component = PawnManager::Get()->pickups;
 	auto data = queryExtension<IPlayerPickupData>(player);
 	if (component && data)
 	{
-		int realid = data->fromLegacyID(pickupid);
+		int realid = data->fromLegacyID(legacyid);
 		if (realid)
 		{
 			component->release(realid);
-			data->releaseLegacyID(pickupid);
+			data->releaseLegacyID(legacyid);
 			return true;
 		}
 	}

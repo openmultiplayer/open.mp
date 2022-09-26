@@ -64,7 +64,6 @@ SCRIPT_API(GangZoneDestroy, bool(int legacyid))
 			return true;
 		}
 	}
-
 	return false;
 }
 
