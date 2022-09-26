@@ -8,8 +8,89 @@
 
 #include "pickup.hpp"
 #include <Impl/events_impl.hpp>
+#include <legacy_id_mapper.hpp>
 
 using namespace Impl;
+
+// TODO: This internal/external IDs mapping code should be extracted for other components to use.
+class PlayerPickupData final : public IPlayerPickupData
+{
+private:
+	FiniteLegacyIDMapper<PICKUP_POOL_SIZE>
+		legacyIDs_,
+		clientIDs_;
+
+public:
+	PlayerPickupData()
+	{
+		reset();
+	}
+
+	virtual void freeExtension() override
+	{
+		delete this;
+	}
+
+	virtual void reset() override
+	{
+		// Clear all the IDs.
+		for (int i = 0; i != PICKUP_POOL_SIZE; ++i)
+		{
+			legacyIDs_.release(i);
+			clientIDs_.release(i);
+		}
+	}
+
+	virtual int toLegacyID(int zoneid) const override
+	{
+		return legacyIDs_.toLegacy(zoneid);
+	}
+
+	virtual int fromLegacyID(int legacy) const override
+	{
+		return legacyIDs_.fromLegacy(legacy);
+	}
+
+	virtual int reserveLegacyID() override
+	{
+		return legacyIDs_.reserve();
+	}
+
+	virtual void releaseLegacyID(int legacy) override
+	{
+		legacyIDs_.release(legacy);
+	}
+
+	virtual void setLegacyID(int legacy, int zoneid) override
+	{
+		return legacyIDs_.set(legacy, zoneid);
+	}
+
+	virtual int toClientID(int zoneid) const override
+	{
+		return clientIDs_.toLegacy(zoneid);
+	}
+
+	virtual int fromClientID(int client) const override
+	{
+		return clientIDs_.fromLegacy(client);
+	}
+
+	virtual int reserveClientID() override
+	{
+		return clientIDs_.reserve();
+	}
+
+	virtual void releaseClientID(int client) override
+	{
+		clientIDs_.release(client);
+	}
+
+	virtual void setClientID(int client, int zoneid) override
+	{
+		return clientIDs_.set(client, zoneid);
+	}
+};
 
 class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
@@ -86,6 +167,11 @@ public:
 			players->getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerPickUpPickup::removeEventHandler(*core, &playerPickUpPickupEventHandler);
 		}
+	}
+
+	void onPlayerConnect(IPlayer& player) override
+	{
+		player.addExtension(new PlayerPickupData(), true);
 	}
 
 	IPickup* create(int modelId, PickupType type, Vector3 pos, uint32_t virtualWorld, bool isStatic) override
