@@ -93,12 +93,24 @@ public:
 
 	bool isPickupHiddenForPlayer(IPlayer& player) const override
 	{
-		return hiddenFor_.valid(player.getID());
+		if (legacyPerPlayer_ == nullptr)
+		{
+			return hiddenFor_.valid(player.getID());
+		}
+		else
+		{
+			// Hidden if this isn't the legacy player.
+			return legacyPerPlayer_ != &player;
+		}
 	}
 
 	void setPickupHiddenForPlayer(IPlayer& player, bool hidden) override
 	{
-		if (hidden)
+		if (legacyPerPlayer_ != nullptr)
+		{
+			// Doesn't matter if this is the right player or not.  Do nothing.
+		}
+		else if (hidden)
 		{
 			if (!isPickupHiddenForPlayer(player))
 			{
