@@ -109,6 +109,16 @@ private:
 	{
 		// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
 		// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
+		// We also remove these pointers if a second animation is applied to this target before the
+		// first one has been re-shown, to ensure that we don't get the following case:
+		//
+		//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
+		//    2) Loaded library is then applied to actor 1.  No timer set.
+		//    3) Timer expires and out-of-date animation is re-applied to actor 1.
+		//
+		// By blanking the pointers when new animations are applied we still ensure that the
+		// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
+		// ensure that the latest animation is never accidentally wiped out.
 		IActor* actor;
 		IPlayer* player;
 		AnimationData animation;
