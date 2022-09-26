@@ -96,10 +96,14 @@ class PickupsComponent final : public IPickupsComponent, public PlayerEventHandl
 {
 private:
 	ICore* core = nullptr;
-	MarkedPoolStorage<Pickup, IPickup, 0, PICKUP_POOL_SIZE> storage;
+	constexpr static const size_t Lower = 0;
+	constexpr static const size_t Upper = PICKUP_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + Lower;
+
+	MarkedPoolStorage<Pickup, IPickup, Lower, Upper> storage;
 	DefaultEventDispatcher<PickupEventHandler> eventDispatcher;
 	IPlayerPool* players = nullptr;
 	StreamConfigHelper streamConfigHelper;
+	FiniteLegacyIDMapper<PICKUP_POOL_SIZE> legacyIDs_;
 
 	struct PlayerPickUpPickupEventHandler : public SingleNetworkInEventHandler
 	{
@@ -184,8 +188,17 @@ public:
 		const int pid = player.getID();
 		for (IPickup* p : storage)
 		{
-			static_cast<Pickup*>(p)->removeFor(pid, player);
-			static_cast<Pickup*>(p)->setPickupHiddenForPlayer(player, false);
+			Pickup* pickup = static_cast<Pickup*>(p);
+			// Release all the per-player (legacy) pickups.
+			if (pickup->getLegacyPlayer() == &player)
+			{
+				release(pickup->getID());
+			}
+			else
+			{
+				pickup->removeFor(pid, player);
+				pickup->setPickupHiddenForPlayer(player, false);
+			}
 		}
 	}
 
@@ -198,6 +211,11 @@ public:
 	{
 		// Destroy all stored entity instances.
 		storage.clear();
+		// Clear all the IDs.
+		for (int i = 0; i != PICKUP_POOL_SIZE; ++i)
+		{
+			legacyIDs_.release(i);
+		}
 	}
 
 	Pair<size_t, size_t> bounds() const override
@@ -272,6 +290,31 @@ public:
 		}
 
 		return true;
+	}
+
+	virtual int toLegacyID(int zoneid) const override
+	{
+		return legacyIDs_.toLegacy(zoneid);
+	}
+
+	virtual int fromLegacyID(int legacy) const override
+	{
+		return legacyIDs_.fromLegacy(legacy);
+	}
+
+	virtual int reserveLegacyID() override
+	{
+		return legacyIDs_.reserve();
+	}
+
+	virtual void releaseLegacyID(int legacy) override
+	{
+		legacyIDs_.release(legacy);
+	}
+
+	virtual void setLegacyID(int legacy, int zoneid) override
+	{
+		return legacyIDs_.set(legacy, zoneid);
 	}
 };
 
