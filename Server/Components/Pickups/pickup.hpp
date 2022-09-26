@@ -189,12 +189,12 @@ public:
 		}
 	}
 
-	void setLegacyPlayer(IPlayer* player)
+	virtual void setLegacyPlayer(IPlayer* player) override
 	{
 		legacyPerPlayer_ = player;
 	}
 
-	IPlayer* getLegacyPlayer() const
+	virtual IPlayer* getLegacyPlayer() const override
 	{
 		return legacyPerPlayer_;
 	}
