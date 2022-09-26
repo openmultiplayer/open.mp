@@ -23,6 +23,7 @@ private:
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> hiddenFor_;
 	PickupType type;
 	bool isStatic_;
+	IPlayer* legacyPerPlayer_;
 
 	void restream()
 	{
@@ -187,4 +188,15 @@ public:
 			streamOutForClient(*player);
 		}
 	}
+
+	void setLegacyPlayer(IPlayer* player)
+	{
+		legacyPerPlayer_ = player;
+	}
+
+	IPlayer* getLegacyPlayer() const
+	{
+		return legacyPerPlayer_;
+	}
 };
+
