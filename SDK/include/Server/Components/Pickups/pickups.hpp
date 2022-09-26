@@ -50,7 +50,6 @@ struct IPickup : public IExtensible, public IEntity
 struct PickupEventHandler
 {
 	virtual void onPlayerPickUpPickup(IPlayer& player, IPickup& pickup) { }
-	virtual void onPlayerPickUpPlayerPickup(IPlayer& player, IPickup& pickup) { }
 };
 
 static const UID PickupsComponent_UID = UID(0xcf304faa363dd971);
