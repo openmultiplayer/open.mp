@@ -24,94 +24,120 @@
 
 Scripting::~Scripting()
 {
-    PawnManager* mgr = PawnManager::Get();
+	PawnManager* mgr = PawnManager::Get();
 
-    // remove event handlers
-    if (mgr->players) {
-        mgr->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
-        mgr->players->getPlayerUpdateDispatcher().removeEventHandler(PlayerEvents::Get());
-    }
-    if (mgr->actors) {
-        mgr->actors->getEventDispatcher().removeEventHandler(ActorEvents::Get());
-    }
-    if (mgr->checkpoints) {
-        mgr->checkpoints->getEventDispatcher().removeEventHandler(CheckpointEvents::Get());
-    }
-    if (mgr->classes) {
-        mgr->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
-    }
-    if (mgr->dialogs) {
-        mgr->dialogs->getEventDispatcher().removeEventHandler(DialogEvents::Get());
-    }
-    if (mgr->menus) {
-        mgr->menus->getEventDispatcher().removeEventHandler(MenuEvents::Get());
-    }
-    if (mgr->textdraws) {
-        mgr->textdraws->getEventDispatcher().removeEventHandler(TextDrawEvents::Get());
-    }
-    if (mgr->pickups) {
-        mgr->pickups->getEventDispatcher().removeEventHandler(PickupEvents::Get());
-    }
-    if (mgr->vehicles) {
-        mgr->vehicles->getEventDispatcher().removeEventHandler(VehicleEvents::Get());
-    }
-    if (mgr->objects) {
-        mgr->objects->getEventDispatcher().removeEventHandler(ObjectEvents::Get());
-    }
-    if (mgr->console) {
-        mgr->console->getEventDispatcher().removeEventHandler(CoreEvents::Get());
-    }
-    if (mgr->gangzones) {
-        mgr->gangzones->getEventDispatcher().removeEventHandler(GangZoneEvents::Get());
-    }
-    if (mgr->models) {
-        mgr->models->getEventDispatcher().removeEventHandler(CustomModelsEvents::Get());
-    }
+	// remove event handlers
+	if (mgr->players)
+	{
+		mgr->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerUpdateDispatcher().removeEventHandler(PlayerEvents::Get());
+	}
+	if (mgr->actors)
+	{
+		mgr->actors->getEventDispatcher().removeEventHandler(ActorEvents::Get());
+	}
+	if (mgr->checkpoints)
+	{
+		mgr->checkpoints->getEventDispatcher().removeEventHandler(CheckpointEvents::Get());
+	}
+	if (mgr->classes)
+	{
+		mgr->classes->getEventDispatcher().removeEventHandler(ClassEvents::Get());
+	}
+	if (mgr->dialogs)
+	{
+		mgr->dialogs->getEventDispatcher().removeEventHandler(DialogEvents::Get());
+	}
+	if (mgr->menus)
+	{
+		mgr->menus->getEventDispatcher().removeEventHandler(MenuEvents::Get());
+	}
+	if (mgr->textdraws)
+	{
+		mgr->textdraws->getEventDispatcher().removeEventHandler(TextDrawEvents::Get());
+	}
+	if (mgr->pickups)
+	{
+		mgr->pickups->getEventDispatcher().removeEventHandler(PickupEvents::Get());
+	}
+	if (mgr->vehicles)
+	{
+		mgr->vehicles->getEventDispatcher().removeEventHandler(VehicleEvents::Get());
+	}
+	if (mgr->objects)
+	{
+		mgr->objects->getEventDispatcher().removeEventHandler(ObjectEvents::Get());
+	}
+	if (mgr->console)
+	{
+		mgr->console->getEventDispatcher().removeEventHandler(CoreEvents::Get());
+	}
+	if (mgr->gangzones)
+	{
+		mgr->gangzones->getEventDispatcher().removeEventHandler(GangZoneEvents::Get());
+	}
+	if (mgr->models)
+	{
+		mgr->models->getEventDispatcher().removeEventHandler(CustomModelsEvents::Get());
+	}
 }
 
 void Scripting::addEvents() const
 {
-    PawnManager* mgr = PawnManager::Get();
+	PawnManager* mgr = PawnManager::Get();
 
-    // add event handlers
-    if (mgr->players) {
-        mgr->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
-        mgr->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
-    }
-    if (mgr->actors) {
-        mgr->actors->getEventDispatcher().addEventHandler(ActorEvents::Get());
-    }
-    if (mgr->checkpoints) {
-        mgr->checkpoints->getEventDispatcher().addEventHandler(CheckpointEvents::Get());
-    }
-    if (mgr->classes) {
-        mgr->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
-    }
-    if (mgr->dialogs) {
-        mgr->dialogs->getEventDispatcher().addEventHandler(DialogEvents::Get());
-    }
-    if (mgr->menus) {
-        mgr->menus->getEventDispatcher().addEventHandler(MenuEvents::Get());
-    }
-    if (mgr->textdraws) {
-        mgr->textdraws->getEventDispatcher().addEventHandler(TextDrawEvents::Get());
-    }
-    if (mgr->pickups) {
-        mgr->pickups->getEventDispatcher().addEventHandler(PickupEvents::Get());
-    }
-    if (mgr->vehicles) {
-        mgr->vehicles->getEventDispatcher().addEventHandler(VehicleEvents::Get());
-    }
-    if (mgr->objects) {
-        mgr->objects->getEventDispatcher().addEventHandler(ObjectEvents::Get());
-    }
-    if (mgr->console) {
-        mgr->console->getEventDispatcher().addEventHandler(CoreEvents::Get(), EventPriority_Lowest);
-    }
-    if (mgr->gangzones) {
-        mgr->gangzones->getEventDispatcher().addEventHandler(GangZoneEvents::Get());
-    }
-    if (mgr->models) {
-        mgr->models->getEventDispatcher().addEventHandler(CustomModelsEvents::Get());
-    }
+	// add event handlers
+	if (mgr->players)
+	{
+		mgr->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
+	}
+	if (mgr->actors)
+	{
+		mgr->actors->getEventDispatcher().addEventHandler(ActorEvents::Get());
+	}
+	if (mgr->checkpoints)
+	{
+		mgr->checkpoints->getEventDispatcher().addEventHandler(CheckpointEvents::Get());
+	}
+	if (mgr->classes)
+	{
+		mgr->classes->getEventDispatcher().addEventHandler(ClassEvents::Get());
+	}
+	if (mgr->dialogs)
+	{
+		mgr->dialogs->getEventDispatcher().addEventHandler(DialogEvents::Get());
+	}
+	if (mgr->menus)
+	{
+		mgr->menus->getEventDispatcher().addEventHandler(MenuEvents::Get());
+	}
+	if (mgr->textdraws)
+	{
+		mgr->textdraws->getEventDispatcher().addEventHandler(TextDrawEvents::Get());
+	}
+	if (mgr->pickups)
+	{
+		mgr->pickups->getEventDispatcher().addEventHandler(PickupEvents::Get());
+	}
+	if (mgr->vehicles)
+	{
+		mgr->vehicles->getEventDispatcher().addEventHandler(VehicleEvents::Get());
+	}
+	if (mgr->objects)
+	{
+		mgr->objects->getEventDispatcher().addEventHandler(ObjectEvents::Get());
+	}
+	if (mgr->console)
+	{
+		mgr->console->getEventDispatcher().addEventHandler(CoreEvents::Get(), EventPriority_Lowest);
+	}
+	if (mgr->gangzones)
+	{
+		mgr->gangzones->getEventDispatcher().addEventHandler(GangZoneEvents::Get());
+	}
+	if (mgr->models)
+	{
+		mgr->models->getEventDispatcher().addEventHandler(CustomModelsEvents::Get());
+	}
 }

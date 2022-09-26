@@ -11,249 +11,276 @@
 
 Object::~Object()
 {
-    eraseFromProcessed(true /* force */);
+	eraseFromProcessed(true /* force */);
 }
 
 void Object::destream()
 {
-    for (IPlayer* player : objects_.getPlayers().entries()) {
-        destroyForPlayer(*player);
-    }
+	for (IPlayer* player : objects_.getPlayers().entries())
+	{
+		destroyForPlayer(*player);
+	}
 }
 
 void Object::restream()
 {
-    for (IPlayer* player : objects_.getPlayers().entries()) {
-        createObjectForClient(*player);
-    }
+	for (IPlayer* player : objects_.getPlayers().entries())
+	{
+		createObjectForClient(*player);
+	}
 }
 
 void Object::move(const ObjectMoveData& data)
 {
-    if (isMoving()) {
-        stop();
-    }
+	if (isMoving())
+	{
+		stop();
+	}
 
-    addToProcessed();
-    PacketHelper::broadcast(moveRPC(data), objects_.getPlayers());
+	addToProcessed();
+	PacketHelper::broadcast(moveRPC(data), objects_.getPlayers());
 }
 
 void Object::addToProcessed()
 {
-    objects_.getProcessedObjects().insert(this);
+	objects_.getProcessedObjects().insert(this);
 }
 
 void Object::eraseFromProcessed(bool force)
 {
-    if (!force) {
-        if (isMoving()) {
-            return;
-        }
+	if (!force)
+	{
+		if (isMoving())
+		{
+			return;
+		}
 
-        if (getDelayedProcessing()) {
-            return;
-        }
-    }
+		if (getDelayedProcessing())
+		{
+			return;
+		}
+	}
 
-    objects_.getProcessedObjects().erase(this);
+	objects_.getProcessedObjects().erase(this);
 }
 
 void Object::stop()
 {
-    PacketHelper::broadcast(stopMove(), objects_.getPlayers());
-    eraseFromProcessed(false /* force */);
+	PacketHelper::broadcast(stopMove(), objects_.getPlayers());
+	eraseFromProcessed(false /* force */);
 }
 
 bool Object::advance(Microseconds elapsed, TimePoint now)
 {
-    if (getDelayedProcessing()) {
-        for (IPlayer* player : objects_.getPlayers().entries()) {
-            const int pid = player->getID();
-            if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid]) {
-                delayedProcessing_.reset(pid);
-                if (delayedProcessing_.any()) {
-                    enableDelayedProcessing();
-                } else {
-                    disableDelayedProcessing();
-                }
+	if (getDelayedProcessing())
+	{
+		for (IPlayer* player : objects_.getPlayers().entries())
+		{
+			const int pid = player->getID();
+			if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid])
+			{
+				delayedProcessing_.reset(pid);
+				if (delayedProcessing_.any())
+				{
+					enableDelayedProcessing();
+				}
+				else
+				{
+					disableDelayedProcessing();
+				}
 
-                eraseFromProcessed(false /* force */);
+				eraseFromProcessed(false /* force */);
 
-                if (isMoving()) {
-                    PacketHelper::send(makeMovePacket(), *player);
-                }
+				if (isMoving())
+				{
+					PacketHelper::send(makeMovePacket(), *player);
+				}
 
-                const ObjectAttachmentData& attachment = getAttachmentData();
-                if (
-                    attachment.type == ObjectAttachmentData::Type::Player) {
-                    IPlayer* other = objects_.getPlayers().get(attachment.ID);
-                    if (other && other->isStreamedInForPlayer(*player)) {
-                        NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-                        attachObjectToPlayerRPC.ObjectID = poolID;
-                        attachObjectToPlayerRPC.PlayerID = attachment.ID;
-                        attachObjectToPlayerRPC.Offset = attachment.offset;
-                        attachObjectToPlayerRPC.Rotation = attachment.rotation;
-                        PacketHelper::send(attachObjectToPlayerRPC, *player);
-                    }
-                }
-            }
-        }
-    }
+				const ObjectAttachmentData& attachment = getAttachmentData();
+				if (
+					attachment.type == ObjectAttachmentData::Type::Player)
+				{
+					IPlayer* other = objects_.getPlayers().get(attachment.ID);
+					if (other && other->isStreamedInForPlayer(*player))
+					{
+						NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+						attachObjectToPlayerRPC.ObjectID = poolID;
+						attachObjectToPlayerRPC.PlayerID = attachment.ID;
+						attachObjectToPlayerRPC.Offset = attachment.offset;
+						attachObjectToPlayerRPC.Rotation = attachment.rotation;
+						PacketHelper::send(attachObjectToPlayerRPC, *player);
+					}
+				}
+			}
+		}
+	}
 
-    bool res = advanceMove(elapsed);
-    if (res) {
-        eraseFromProcessed(false /* force */);
-    }
-    return res;
+	bool res = advanceMove(elapsed);
+	if (res)
+	{
+		eraseFromProcessed(false /* force */);
+	}
+	return res;
 }
 
 void Object::setPosition(Vector3 position)
 {
-    this->BaseObject<IObject>::setPosition(position);
+	this->BaseObject<IObject>::setPosition(position);
 
-    NetCode::RPC::SetObjectPosition setObjectPositionRPC;
-    setObjectPositionRPC.ObjectID = poolID;
-    setObjectPositionRPC.Position = position;
-    PacketHelper::broadcast(setObjectPositionRPC, objects_.getPlayers());
+	NetCode::RPC::SetObjectPosition setObjectPositionRPC;
+	setObjectPositionRPC.ObjectID = poolID;
+	setObjectPositionRPC.Position = position;
+	PacketHelper::broadcast(setObjectPositionRPC, objects_.getPlayers());
 }
 
 void Object::setRotation(GTAQuat rotation)
 {
-    this->BaseObject<IObject>::setRotation(rotation);
+	this->BaseObject<IObject>::setRotation(rotation);
 
-    NetCode::RPC::SetObjectRotation setObjectRotationRPC;
-    setObjectRotationRPC.ObjectID = poolID;
-    setObjectRotationRPC.Rotation = rotation.ToEuler();
-    PacketHelper::broadcast(setObjectRotationRPC, objects_.getPlayers());
+	NetCode::RPC::SetObjectRotation setObjectRotationRPC;
+	setObjectRotationRPC.ObjectID = poolID;
+	setObjectRotationRPC.Rotation = rotation.ToEuler();
+	PacketHelper::broadcast(setObjectRotationRPC, objects_.getPlayers());
 }
 
 void PlayerObject::restream()
 {
-    createObjectForClient(objects_.getPlayer());
+	createObjectForClient(objects_.getPlayer());
 }
 
 void PlayerObject::setMaterial(uint32_t index, int model, StringView textureLibrary, StringView textureName, Colour colour)
 {
-    const ObjectMaterialData* mtl = nullptr;
-    if (getMaterialData(index, mtl)) {
-        setMtl(index, model, textureLibrary, textureName, colour);
-        NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
-        setPlayerObjectMaterialRPC.ObjectID = poolID;
-        setPlayerObjectMaterialRPC.MaterialID = index;
-        PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
-    }
+	const ObjectMaterialData* mtl = nullptr;
+	if (getMaterialData(index, mtl))
+	{
+		setMtl(index, model, textureLibrary, textureName, colour);
+		NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
+		setPlayerObjectMaterialRPC.ObjectID = poolID;
+		setPlayerObjectMaterialRPC.MaterialID = index;
+		PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
+	}
 }
 
 void PlayerObject::setMaterialText(uint32_t materialIndex, StringView text, ObjectMaterialSize materialSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backgroundColour, ObjectMaterialTextAlign align)
 {
-    const ObjectMaterialData* mtl = nullptr;
-    if (getMaterialData(materialIndex, mtl)) {
-        setMtlText(materialIndex, text, materialSize, fontFace, fontSize, bold, fontColour, backgroundColour, align);
-        NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
-        setPlayerObjectMaterialRPC.ObjectID = poolID;
-        setPlayerObjectMaterialRPC.MaterialID = materialIndex;
-        PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
-    }
+	const ObjectMaterialData* mtl = nullptr;
+	if (getMaterialData(materialIndex, mtl))
+	{
+		setMtlText(materialIndex, text, materialSize, fontFace, fontSize, bold, fontColour, backgroundColour, align);
+		NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
+		setPlayerObjectMaterialRPC.ObjectID = poolID;
+		setPlayerObjectMaterialRPC.MaterialID = materialIndex;
+		PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
+	}
 }
 
 void PlayerObject::addToProcessed()
 {
-    objects_.getPlayerProcessedObjects().insert(this);
+	objects_.getPlayerProcessedObjects().insert(this);
 }
 
 void PlayerObject::eraseFromProcessed(bool force)
 {
-    if (!force) {
-        if (isMoving()) {
-            return;
-        }
+	if (!force)
+	{
+		if (isMoving())
+		{
+			return;
+		}
 
-        if (getDelayedProcessing()) {
-            return;
-        }
-    }
+		if (getDelayedProcessing())
+		{
+			return;
+		}
+	}
 
-    objects_.getPlayerProcessedObjects().erase(this);
+	objects_.getPlayerProcessedObjects().erase(this);
 }
 
 void PlayerObject::move(const ObjectMoveData& data)
 {
-    if (isMoving()) {
-        stop();
-    }
+	if (isMoving())
+	{
+		stop();
+	}
 
-    addToProcessed();
-    PacketHelper::send(moveRPC(data), objects_.getPlayer());
+	addToProcessed();
+	PacketHelper::send(moveRPC(data), objects_.getPlayer());
 }
 
 void PlayerObject::stop()
 {
-    PacketHelper::send(stopMove(), objects_.getPlayer());
-    eraseFromProcessed(false /* force */);
+	PacketHelper::send(stopMove(), objects_.getPlayer());
+	eraseFromProcessed(false /* force */);
 }
 
 bool PlayerObject::advance(Microseconds elapsed, TimePoint now)
 {
-    if (getDelayedProcessing()) {
-        if (now >= delayedProcessingTime_) {
-            disableDelayedProcessing();
+	if (getDelayedProcessing())
+	{
+		if (now >= delayedProcessingTime_)
+		{
+			disableDelayedProcessing();
 
-            if (isMoving()) {
-                PacketHelper::send(makeMovePacket(), objects_.getPlayer());
-            }
-        }
-    }
+			if (isMoving())
+			{
+				PacketHelper::send(makeMovePacket(), objects_.getPlayer());
+			}
+		}
+	}
 
-    const bool res = advanceMove(elapsed);
-    if (res) {
-        eraseFromProcessed(false /* force */);
-    }
-    return res;
+	const bool res = advanceMove(elapsed);
+	if (res)
+	{
+		eraseFromProcessed(false /* force */);
+	}
+	return res;
 }
 
 void PlayerObject::createForPlayer()
 {
-    createObjectForClient(objects_.getPlayer());
+	createObjectForClient(objects_.getPlayer());
 
-    if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player) {
-        delayedProcessingTime_ = Time::now() + Seconds(1);
-        enableDelayedProcessing();
-        addToProcessed();
-    }
+	if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player)
+	{
+		delayedProcessingTime_ = Time::now() + Seconds(1);
+		enableDelayedProcessing();
+		addToProcessed();
+	}
 }
 
 void PlayerObject::destroyForPlayer()
 {
-    disableDelayedProcessing();
-    destroyObjectForClient(objects_.getPlayer());
+	disableDelayedProcessing();
+	destroyObjectForClient(objects_.getPlayer());
 }
 
 void PlayerObject::setPosition(Vector3 position)
 {
-    this->BaseObject<IPlayerObject>::setPosition(position);
+	this->BaseObject<IPlayerObject>::setPosition(position);
 
-    NetCode::RPC::SetObjectPosition setObjectPositionRPC;
-    setObjectPositionRPC.ObjectID = poolID;
-    setObjectPositionRPC.Position = position;
-    PacketHelper::send(setObjectPositionRPC, objects_.getPlayer());
+	NetCode::RPC::SetObjectPosition setObjectPositionRPC;
+	setObjectPositionRPC.ObjectID = poolID;
+	setObjectPositionRPC.Position = position;
+	PacketHelper::send(setObjectPositionRPC, objects_.getPlayer());
 }
 
 void PlayerObject::setRotation(GTAQuat rotation)
 {
-    this->BaseObject<IPlayerObject>::setRotation(rotation);
+	this->BaseObject<IPlayerObject>::setRotation(rotation);
 
-    NetCode::RPC::SetObjectRotation setObjectRotationRPC;
-    setObjectRotationRPC.ObjectID = poolID;
-    setObjectRotationRPC.Rotation = rotation.ToEuler();
-    PacketHelper::send(setObjectRotationRPC, objects_.getPlayer());
+	NetCode::RPC::SetObjectRotation setObjectRotationRPC;
+	setObjectRotationRPC.ObjectID = poolID;
+	setObjectRotationRPC.Rotation = rotation.ToEuler();
+	PacketHelper::send(setObjectRotationRPC, objects_.getPlayer());
 }
 
 PlayerObject::~PlayerObject()
 {
-    eraseFromProcessed(true /* force*/);
+	eraseFromProcessed(true /* force*/);
 }
 
 void PlayerObject::destream()
 {
-    destroyForPlayer();
+	destroyForPlayer();
 }

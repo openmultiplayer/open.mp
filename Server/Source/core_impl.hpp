@@ -48,1525 +48,1693 @@ using namespace Impl;
 typedef std::variant<int, String, float, DynamicArray<String>, bool> ConfigStorage;
 
 static const std::map<String, ConfigStorage> Defaults {
-    { "announce", true },
-    { "chat_input_filter", true },
-    { "enable_query", true },
-    { "language", String("") },
-    { "max_bots", 0 },
-    { "max_players", 50 },
-    { "name", String("open.mp server") },
-    { "password", String("") },
-    { "sleep", 5.0f },
-    { "use_dyn_ticks", true },
-    { "website", String("open.mp") },
-    // game
-    { "game.allow_interior_weapons", true },
-    { "game.chat_radius", 200.0f },
-    { "game.death_drop_amount", 0 },
-    { "game.gravity", 0.008f },
-    { "game.map", String("") },
-    { "game.mode", String("") },
-    { "game.nametag_draw_radius", 70.0f },
-    { "game.player_marker_mode", PlayerMarkerMode_Global },
-    { "game.player_marker_draw_radius", 250.f },
-    { "game.time", 12 },
-    { "game.use_chat_radius", false },
-    { "game.use_entry_exit_markers", true },
-    { "game.use_instagib", false },
-    { "game.use_nametag_los", true },
-    { "game.use_nametags", true },
-    { "game.use_player_marker_draw_radius", false },
-    { "game.use_player_ped_anims", false },
-    { "game.use_stunt_bonuses", true },
-    { "game.use_manual_engine_and_lights", false },
-    { "game.use_vehicle_friendly_fire", false },
-    { "game.use_zone_names", false },
-    { "game.vehicle_respawn_time", 10000 },
-    { "game.weather", 10 },
-    { "game.use_all_animations", false },
-    { "game.lag_compensation_mode", LagCompMode_Enabled },
-    // logging
-    { "logging.enable", true },
-    { "logging.log_chat", true },
-    { "logging.log_cookies", false },
-    { "logging.log_deaths", true },
-    { "logging.log_queries", false },
-    { "logging.log_sqlite", false },
-    { "logging.log_sqlite_queries", false },
-    { "logging.timestamp_format", String("[%Y-%m-%dT%H:%M:%S%z]") },
-    { "logging.use_timestamp", true },
-    { "logging.use_prefix", true },
-    // network
-    { "network.bind", String("") },
-    { "network.public_addr", String("") }, // Used by webserver
-    { "network.port", 7777 },
-    { "network.acks_limit", 3000 },
-    { "network.aiming_sync_rate", 30 },
-    { "network.cookie_reseed_time", 300000 },
-    { "network.in_vehicle_sync_rate", 30 },
-    { "network.limits_ban_time", 60000 },
-    { "network.message_hole_limit", 3000 },
-    { "network.messages_limit", 500 },
-    { "network.minimum_connection_time", 0 },
-    { "network.mtu", 576 },
-    { "network.multiplier", 10 },
-    { "network.on_foot_sync_rate", 30 },
-    { "network.player_marker_sync_rate", 2500 },
-    { "network.player_timeout", 10000 },
-    { "network.stream_radius", 200.f },
-    { "network.stream_rate", 1000 },
-    { "network.time_sync_rate", 30000 },
-    { "network.use_lan_mode", false },
-    { "network.allow_037_clients", true },
-    // rcon
-    { "rcon.allow_teleport", false },
-    { "rcon.enable", false },
-    { "rcon.password", String("") }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
+	{ "announce", true },
+	{ "chat_input_filter", true },
+	{ "enable_query", true },
+	{ "language", String("") },
+	{ "max_bots", 0 },
+	{ "max_players", 50 },
+	{ "name", String("open.mp server") },
+	{ "password", String("") },
+	{ "sleep", 5.0f },
+	{ "use_dyn_ticks", true },
+	{ "website", String("open.mp") },
+	// game
+	{ "game.allow_interior_weapons", true },
+	{ "game.chat_radius", 200.0f },
+	{ "game.death_drop_amount", 0 },
+	{ "game.gravity", 0.008f },
+	{ "game.map", String("") },
+	{ "game.mode", String("") },
+	{ "game.nametag_draw_radius", 70.0f },
+	{ "game.player_marker_mode", PlayerMarkerMode_Global },
+	{ "game.player_marker_draw_radius", 250.f },
+	{ "game.time", 12 },
+	{ "game.use_chat_radius", false },
+	{ "game.use_entry_exit_markers", true },
+	{ "game.use_instagib", false },
+	{ "game.use_nametag_los", true },
+	{ "game.use_nametags", true },
+	{ "game.use_player_marker_draw_radius", false },
+	{ "game.use_player_ped_anims", false },
+	{ "game.use_stunt_bonuses", true },
+	{ "game.use_manual_engine_and_lights", false },
+	{ "game.use_vehicle_friendly_fire", false },
+	{ "game.use_zone_names", false },
+	{ "game.vehicle_respawn_time", 10000 },
+	{ "game.weather", 10 },
+	{ "game.use_all_animations", false },
+	{ "game.lag_compensation_mode", LagCompMode_Enabled },
+	// logging
+	{ "logging.enable", true },
+	{ "logging.log_chat", true },
+	{ "logging.log_cookies", false },
+	{ "logging.log_deaths", true },
+	{ "logging.log_queries", false },
+	{ "logging.log_sqlite", false },
+	{ "logging.log_sqlite_queries", false },
+	{ "logging.timestamp_format", String("[%Y-%m-%dT%H:%M:%S%z]") },
+	{ "logging.use_timestamp", true },
+	{ "logging.use_prefix", true },
+	// network
+	{ "network.bind", String("") },
+	{ "network.public_addr", String("") }, // Used by webserver
+	{ "network.port", 7777 },
+	{ "network.acks_limit", 3000 },
+	{ "network.aiming_sync_rate", 30 },
+	{ "network.cookie_reseed_time", 300000 },
+	{ "network.in_vehicle_sync_rate", 30 },
+	{ "network.limits_ban_time", 60000 },
+	{ "network.message_hole_limit", 3000 },
+	{ "network.messages_limit", 500 },
+	{ "network.minimum_connection_time", 0 },
+	{ "network.mtu", 576 },
+	{ "network.multiplier", 10 },
+	{ "network.on_foot_sync_rate", 30 },
+	{ "network.player_marker_sync_rate", 2500 },
+	{ "network.player_timeout", 10000 },
+	{ "network.stream_radius", 200.f },
+	{ "network.stream_rate", 1000 },
+	{ "network.time_sync_rate", 30000 },
+	{ "network.use_lan_mode", false },
+	{ "network.allow_037_clients", true },
+	// rcon
+	{ "rcon.allow_teleport", false },
+	{ "rcon.enable", false },
+	{ "rcon.password", String("") }, // Set default to empty instead of changeme, so server starts with disabled rcon without config file
 };
 
 // Provide automatic Defaults → JSON conversion in Config
-namespace nlohmann {
+namespace nlohmann
+{
 template <typename... Args>
-struct adl_serializer<std::variant<Args...>> {
-    static void to_json(ordered_json& j, std::variant<Args...> const& v)
-    {
-        std::visit([&](auto&& value) {
-            j = std::forward<decltype(value)>(value);
-        },
-            v);
-    }
+struct adl_serializer<std::variant<Args...>>
+{
+	static void to_json(ordered_json& j, std::variant<Args...> const& v)
+	{
+		std::visit([&](auto&& value)
+			{ j = std::forward<decltype(value)>(value); },
+			v);
+	}
 };
 }
 
-class ComponentList : public IComponentList {
+class ComponentList : public IComponentList
+{
 public:
-    using IComponentList::queryComponent;
+	using IComponentList::queryComponent;
 
-    IComponent* queryComponent(UID id) override
-    {
-        auto it = components.find(id);
-        return it == components.end() ? nullptr : it->second;
-    }
+	IComponent* queryComponent(UID id) override
+	{
+		auto it = components.find(id);
+		return it == components.end() ? nullptr : it->second;
+	}
 
-    void configure(ICore& core, IEarlyConfig& config, bool defaults)
-    {
-        std::for_each(components.begin(), components.end(),
-            [&core, &config, defaults](const robin_hood::pair<UID, IComponent*>& pair) {
-                pair.second->provideConfiguration(core, config, defaults);
-            });
-    }
+	void configure(ICore& core, IEarlyConfig& config, bool defaults)
+	{
+		std::for_each(components.begin(), components.end(),
+			[&core, &config, defaults](const robin_hood::pair<UID, IComponent*>& pair)
+			{
+				pair.second->provideConfiguration(core, config, defaults);
+			});
+	}
 
-    void load(ICore* core)
-    {
-        std::for_each(components.begin(), components.end(),
-            [core](const robin_hood::pair<UID, IComponent*>& pair) {
-                pair.second->onLoad(core);
-            });
-    }
+	void load(ICore* core)
+	{
+		std::for_each(components.begin(), components.end(),
+			[core](const robin_hood::pair<UID, IComponent*>& pair)
+			{
+				pair.second->onLoad(core);
+			});
+	}
 
-    void init()
-    {
-        std::for_each(components.begin(), components.end(),
-            [this](const robin_hood::pair<UID, IComponent*>& pair) {
-                pair.second->onInit(this);
-            });
-    }
+	void init()
+	{
+		std::for_each(components.begin(), components.end(),
+			[this](const robin_hood::pair<UID, IComponent*>& pair)
+			{
+				pair.second->onInit(this);
+			});
+	}
 
-    void reset()
-    {
-        std::for_each(components.begin(), components.end(),
-            [](const robin_hood::pair<UID, IComponent*>& pair) {
-                pair.second->reset();
-            });
-    }
+	void reset()
+	{
+		std::for_each(components.begin(), components.end(),
+			[](const robin_hood::pair<UID, IComponent*>& pair)
+			{
+				pair.second->reset();
+			});
+	}
 
-    void ready()
-    {
-        std::for_each(components.begin(), components.end(),
-            [](const robin_hood::pair<UID, IComponent*>& pair) {
-                pair.second->onReady();
-            });
-    }
+	void ready()
+	{
+		std::for_each(components.begin(), components.end(),
+			[](const robin_hood::pair<UID, IComponent*>& pair)
+			{
+				pair.second->onReady();
+			});
+	}
 
-    void free()
-    {
-        for (auto it = components.begin(); it != components.end();) {
-            std::for_each(components.begin(), components.end(),
-                [it](const robin_hood::pair<UID, IComponent*>& pair) {
-                    pair.second->onFree(it->second);
-                });
-            it->second->free();
-            it = components.erase(it);
-        }
-    }
+	void free()
+	{
+		for (auto it = components.begin(); it != components.end();)
+		{
+			std::for_each(components.begin(), components.end(),
+				[it](const robin_hood::pair<UID, IComponent*>& pair)
+				{
+					pair.second->onFree(it->second);
+				});
+			it->second->free();
+			it = components.erase(it);
+		}
+	}
 
-    auto add(IComponent* component)
-    {
-        return components.try_emplace(component->getUID(), component);
-    }
+	auto add(IComponent* component)
+	{
+		return components.try_emplace(component->getUID(), component);
+	}
 
-    size_t size() const
-    {
-        return components.size();
-    }
+	size_t size() const
+	{
+		return components.size();
+	}
 
 private:
-    FlatHashMap<UID, IComponent*> components;
+	FlatHashMap<UID, IComponent*> components;
 };
 
 static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%S%z";
 
-class Config final : public IEarlyConfig {
+class Config final : public IEarlyConfig
+{
 private:
-    static constexpr const char* ConfigFileName = "config.json";
-    static constexpr const char* BansFileName = "bans.json";
+	static constexpr const char* ConfigFileName = "config.json";
+	static constexpr const char* BansFileName = "bans.json";
 
-    IUnicodeComponent* unicode = nullptr;
-    ICore& core;
+	IUnicodeComponent* unicode = nullptr;
+	ICore& core;
 
-    void processNode(const nlohmann::json::object_t& node, String ns = "")
-    {
-        for (const auto& kv : node) {
-            String key = ns + kv.first;
-            const nlohmann::json& v = kv.second;
-            if (v.is_number_integer()) {
-                processed[key].emplace<int>(v.get<int>());
-            } else if (v.is_boolean()) {
-                processed[key].emplace<bool>(v.get<bool>());
-            } else if (v.is_number_float()) {
-                processed[key].emplace<float>(v.get<float>());
-            } else if (v.is_string()) {
-                processed[key].emplace<String>(v.get<String>());
-            } else if (v.is_array()) {
-                auto& vec = processed[key].emplace<DynamicArray<String>>();
-                const auto& arr = v.get<nlohmann::json::array_t>();
-                for (const auto& arrVal : arr) {
-                    if (arrVal.is_string()) {
-                        vec.emplace_back(arrVal.get<String>());
-                    }
-                }
-            } else if (v.is_object()) {
-                processNode(v.get<nlohmann::json::object_t>(), key + '.');
-            }
-        }
-    }
+	void processNode(const nlohmann::json::object_t& node, String ns = "")
+	{
+		for (const auto& kv : node)
+		{
+			String key = ns + kv.first;
+			const nlohmann::json& v = kv.second;
+			if (v.is_number_integer())
+			{
+				processed[key].emplace<int>(v.get<int>());
+			}
+			else if (v.is_boolean())
+			{
+				processed[key].emplace<bool>(v.get<bool>());
+			}
+			else if (v.is_number_float())
+			{
+				processed[key].emplace<float>(v.get<float>());
+			}
+			else if (v.is_string())
+			{
+				processed[key].emplace<String>(v.get<String>());
+			}
+			else if (v.is_array())
+			{
+				auto& vec = processed[key].emplace<DynamicArray<String>>();
+				const auto& arr = v.get<nlohmann::json::array_t>();
+				for (const auto& arrVal : arr)
+				{
+					if (arrVal.is_string())
+					{
+						vec.emplace_back(arrVal.get<String>());
+					}
+				}
+			}
+			else if (v.is_object())
+			{
+				processNode(v.get<nlohmann::json::object_t>(), key + '.');
+			}
+		}
+	}
 
 public:
-    Config(ICore& core, bool defaultsOnly = false)
-        : core(core)
-    {
-        if (!defaultsOnly) {
-            {
-                std::ifstream ifs(ConfigFileName);
-                if (ifs.good()) {
-                    nlohmann::json props;
-                    try {
-                        props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-                    } catch (std::ios_base::failure) {
-                    } // Is a directory?
-                    if (props.is_null() || props.is_discarded() || !props.is_object()) {
-                        processed = Defaults;
-                    } else {
-                        const auto& root = props.get<nlohmann::json::object_t>();
-                        processNode(root);
+	Config(ICore& core, bool defaultsOnly = false)
+		: core(core)
+	{
+		if (!defaultsOnly)
+		{
+			{
+				std::ifstream ifs(ConfigFileName);
+				if (ifs.good())
+				{
+					nlohmann::json props;
+					try
+					{
+						props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+					}
+					catch (std::ios_base::failure)
+					{
+					} // Is a directory?
+					if (props.is_null() || props.is_discarded() || !props.is_object())
+					{
+						processed = Defaults;
+					}
+					else
+					{
+						const auto& root = props.get<nlohmann::json::object_t>();
+						processNode(root);
 
-                        // Fill any values missing in config with defaults.
-                        // Fill default value if invalid type is provided.
-                        for (const auto& kv : Defaults) {
-                            auto itr = processed.find(kv.first);
-                            if (itr != processed.end()) {
-                                if (itr->second.index() != kv.second.index()) {
-                                    itr->second = kv.second;
-                                }
-                                continue;
-                            }
-                            processed.emplace(kv.first, kv.second);
-                        }
-                    }
-                } else {
-                    processed = Defaults;
-                }
-            }
+						// Fill any values missing in config with defaults.
+						// Fill default value if invalid type is provided.
+						for (const auto& kv : Defaults)
+						{
+							auto itr = processed.find(kv.first);
+							if (itr != processed.end())
+							{
+								if (itr->second.index() != kv.second.index())
+								{
+									itr->second = kv.second;
+								}
+								continue;
+							}
+							processed.emplace(kv.first, kv.second);
+						}
+					}
+				}
+				else
+				{
+					processed = Defaults;
+				}
+			}
 
-            loadBans();
+			loadBans();
+		}
+		else
+		{
+			processed = Defaults;
+		}
+	}
 
-        } else {
-            processed = Defaults;
-        }
-    }
+	void init(IComponentList& components)
+	{
+		unicode = components.queryComponent<IUnicodeComponent>();
+	}
 
-    void init(IComponentList& components)
-    {
-        unicode = components.queryComponent<IUnicodeComponent>();
-    }
+	const StringView getString(StringView key) const override
+	{
+		const ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_String, res))
+		{
+			return StringView();
+		}
+		return StringView(std::get<String>(*res));
+	}
 
-    const StringView getString(StringView key) const override
-    {
-        const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_String, res)) {
-            return StringView();
-        }
-        return StringView(std::get<String>(*res));
-    }
+	int* getInt(StringView key) override
+	{
+		ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_Int, res))
+		{
+			return 0;
+		}
+		return &std::get<int>(*res);
+	}
 
-    int* getInt(StringView key) override
-    {
-        ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_Int, res)) {
-            return 0;
-        }
-        return &std::get<int>(*res);
-    }
+	bool* getBool(StringView key) override
+	{
+		ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_Bool, res))
+		{
+			return 0;
+		}
+		return &std::get<bool>(*res);
+	}
 
-    bool* getBool(StringView key) override
-    {
-        ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_Bool, res)) {
-            return 0;
-        }
-        return &std::get<bool>(*res);
-    }
+	float* getFloat(StringView key) override
+	{
+		ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_Float, res))
+		{
+			return 0;
+		}
+		return &std::get<float>(*res);
+	}
 
-    float* getFloat(StringView key) override
-    {
-        ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_Float, res)) {
-            return 0;
-        }
-        return &std::get<float>(*res);
-    }
+	size_t getStringsCount(StringView key) const override
+	{
+		const ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_Strings, res))
+		{
+			return 0;
+		}
+		return std::get<DynamicArray<String>>(*res).size();
+	}
 
-    size_t getStringsCount(StringView key) const override
-    {
-        const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
-            return 0;
-        }
-        return std::get<DynamicArray<String>>(*res).size();
-    }
+	size_t getStrings(StringView key, Span<StringView> output) const override
+	{
+		if (!output.size())
+		{
+			return 0;
+		}
 
-    size_t getStrings(StringView key, Span<StringView> output) const override
-    {
-        if (!output.size()) {
-            return 0;
-        }
+		const ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_Strings, res))
+		{
+			return 0;
+		}
 
-        const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
-            return 0;
-        }
+		const auto& strings = std::get<DynamicArray<String>>(*res);
+		const size_t size = std::min(output.size(), strings.size());
+		for (size_t i = 0; i < size; ++i)
+		{
+			output[i] = strings[i];
+		}
+		return size;
+	}
 
-        const auto& strings = std::get<DynamicArray<String>>(*res);
-        const size_t size = std::min(output.size(), strings.size());
-        for (size_t i = 0; i < size; ++i) {
-            output[i] = strings[i];
-        }
-        return size;
-    }
+	const DynamicArray<String>* getStrings(StringView key) const
+	{
+		const ConfigStorage* res = nullptr;
+		if (!getFromKey(key, ConfigOptionType_Strings, res))
+		{
+			return nullptr;
+		}
+		return &std::get<DynamicArray<String>>(*res);
+	}
 
-    const DynamicArray<String>* getStrings(StringView key) const
-    {
-        const ConfigStorage* res = nullptr;
-        if (!getFromKey(key, ConfigOptionType_Strings, res)) {
-            return nullptr;
-        }
-        return &std::get<DynamicArray<String>>(*res);
-    }
+	ConfigOptionType getType(StringView key) const override
+	{
+		auto it = processed.find(String(key));
+		if (it == processed.end())
+		{
+			return ConfigOptionType_None;
+		}
+		return ConfigOptionType(it->second.index());
+	}
 
-    ConfigOptionType getType(StringView key) const override
-    {
-        auto it = processed.find(String(key));
-        if (it == processed.end()) {
-            return ConfigOptionType_None;
-        }
-        return ConfigOptionType(it->second.index());
-    }
+	void setString(StringView key, StringView value) override
+	{
+		processed[String(key)] = String(value);
+	}
 
-    void setString(StringView key, StringView value) override
-    {
-        processed[String(key)] = String(value);
-    }
+	void setInt(StringView key, int value) override
+	{
+		processed[String(key)] = value;
+	}
 
-    void setInt(StringView key, int value) override
-    {
-        processed[String(key)] = value;
-    }
+	void setBool(StringView key, bool value) override
+	{
+		processed[String(key)] = value;
+	}
 
-    void setBool(StringView key, bool value) override
-    {
-        processed[String(key)] = value;
-    }
+	void setFloat(StringView key, float value) override
+	{
+		processed[String(key)] = value;
+	}
 
-    void setFloat(StringView key, float value) override
-    {
-        processed[String(key)] = value;
-    }
+	void setStrings(StringView key, Span<const StringView> value) override
+	{
+		auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
+		for (const StringView v : value)
+		{
+			vec.emplace_back(String(v));
+		}
+	}
 
-    void setStrings(StringView key, Span<const StringView> value) override
-    {
-        auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
-        for (const StringView v : value) {
-            vec.emplace_back(String(v));
-        }
-    }
+	void addBan(const BanEntry& entry) override
+	{
+		bans.emplace_back(entry);
+	}
 
-    void addBan(const BanEntry& entry) override
-    {
-        bans.emplace_back(entry);
-    }
+	void removeBan(const BanEntry& entry) override
+	{
+		auto ban_itr = std::find_if(bans.begin(), bans.end(), [&](const BanEntry& ban)
+			{ return ban.address == entry.address; });
 
-    void removeBan(const BanEntry& entry) override
-    {
-        auto ban_itr = std::find_if(bans.begin(), bans.end(), [&](const BanEntry& ban) {
-            return ban.address == entry.address;
-        });
+		if (ban_itr != bans.end())
+		{
+			bans.erase(ban_itr);
+			writeBans();
+		}
+	}
 
-        if (ban_itr != bans.end()) {
-            bans.erase(ban_itr);
-            writeBans();
-        }
-    }
+	void removeBan(size_t index) override
+	{
+		bans.erase(bans.begin() + index);
+	}
 
-    void removeBan(size_t index) override
-    {
-        bans.erase(bans.begin() + index);
-    }
+	void reloadBans() override
+	{
+		for (INetwork* network : core.getNetworks())
+		{
+			for (BanEntry ban : bans)
+			{
+				network->unban(ban);
+			}
+		}
 
-    void reloadBans() override
-    {
-        for (INetwork* network : core.getNetworks()) {
-            for (BanEntry ban : bans) {
-                network->unban(ban);
-            }
-        }
+		bans.clear();
+		loadBans();
+	}
 
-        bans.clear();
-        loadBans();
-    }
+	void writeBans() override
+	{
+		optimiseBans();
 
-    void writeBans() override
-    {
-        optimiseBans();
+		nlohmann::json top = nlohmann::json::array();
+		for (const BanEntry& entry : bans)
+		{
+			nlohmann::json obj;
+			OptimisedString addressUTF8 = unicode ? unicode->toUTF8(entry.address) : OptimisedString(entry.address);
+			OptimisedString nameUTF8 = unicode ? unicode->toUTF8(entry.name) : OptimisedString(entry.name);
+			OptimisedString reasonUTF8 = unicode ? unicode->toUTF8(entry.reason) : OptimisedString(entry.reason);
+			obj["address"] = StringView(addressUTF8);
+			obj["player"] = StringView(nameUTF8);
+			obj["reason"] = StringView(reasonUTF8);
+			char iso8601[28] = { 0 };
+			std::time_t now = WorldTime::to_time_t(entry.time);
+			std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
+			obj["time"] = iso8601;
+			top.push_back(obj);
+		}
+		std::ofstream file(BansFileName);
+		if (file.good())
+		{
+			file << top.dump(4, ' ', false, nlohmann::detail::error_handler_t::ignore);
+		}
+	}
 
-        nlohmann::json top = nlohmann::json::array();
-        for (const BanEntry& entry : bans) {
-            nlohmann::json obj;
-            OptimisedString addressUTF8 = unicode ? unicode->toUTF8(entry.address) : OptimisedString(entry.address);
-            OptimisedString nameUTF8 = unicode ? unicode->toUTF8(entry.name) : OptimisedString(entry.name);
-            OptimisedString reasonUTF8 = unicode ? unicode->toUTF8(entry.reason) : OptimisedString(entry.reason);
-            obj["address"] = StringView(addressUTF8);
-            obj["player"] = StringView(nameUTF8);
-            obj["reason"] = StringView(reasonUTF8);
-            char iso8601[28] = { 0 };
-            std::time_t now = WorldTime::to_time_t(entry.time);
-            std::strftime(iso8601, sizeof(iso8601), TimeFormat, std::localtime(&now));
-            obj["time"] = iso8601;
-            top.push_back(obj);
-        }
-        std::ofstream file(BansFileName);
-        if (file.good()) {
-            file << top.dump(4, ' ', false, nlohmann::detail::error_handler_t::ignore);
-        }
-    }
+	void clearBans() override
+	{
+		bans.clear();
+		writeBans();
+	}
 
-    void clearBans() override
-    {
-        bans.clear();
-        writeBans();
-    }
+	bool isBanned(const BanEntry& entry) const override
+	{
+		return std::any_of(bans.begin(), bans.end(), [&](const BanEntry& ban)
+			{ return entry.address == ban.address; });
+	}
 
-    bool isBanned(const BanEntry& entry) const override
-    {
-        return std::any_of(bans.begin(), bans.end(), [&](const BanEntry& ban) {
-            return entry.address == ban.address;
-        });
-    }
+	size_t getBansCount() const override
+	{
+		return bans.size();
+	}
 
-    size_t getBansCount() const override
-    {
-        return bans.size();
-    }
+	const BanEntry& getBan(size_t index) const override
+	{
+		return bans[index];
+	}
 
-    const BanEntry& getBan(size_t index) const override
-    {
-        return bans[index];
-    }
+	void optimiseBans()
+	{
+		std::sort(bans.begin(), bans.end());
+		bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
+	}
 
-    void optimiseBans()
-    {
-        std::sort(bans.begin(), bans.end());
-        bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
-    }
+	static bool writeDefault(ICore& core, ComponentList& components)
+	{
+		core.printLn("Generating %s...", ConfigFileName);
 
-    static bool writeDefault(ICore& core, ComponentList& components)
-    {
-        core.printLn("Generating %s...", ConfigFileName);
+		// Creates default config.json file if it doesn't exist
+		// Returns true if a config file was written, false otherwise
+		std::ifstream ifs(ConfigFileName);
+		if (ifs.good())
+		{
+			return false;
+		}
 
-        // Creates default config.json file if it doesn't exist
-        // Returns true if a config file was written, false otherwise
-        std::ifstream ifs(ConfigFileName);
-        if (ifs.good()) {
-            return false;
-        }
+		std::ofstream ofs(ConfigFileName);
+		nlohmann::ordered_json json;
 
-        std::ofstream ofs(ConfigFileName);
-        nlohmann::ordered_json json;
+		Config config(core, true /* defaultsOnly */);
+		components.configure(core, config, true /* defaults */);
+		config.setString("rcon.password", "changeme");
 
-        Config config(core, true /* defaultsOnly */);
-        components.configure(core, config, true /* defaults */);
-        config.setString("rcon.password", "changeme");
+		if (ofs.good())
+		{
+			for (const auto& kv : config.options())
+			{
+				nlohmann::ordered_json* sub = &json;
+				size_t cur = String::npos, prev = 0;
+				// Process hierarchy
+				while ((cur = kv.first.find('.', prev)) != String::npos)
+				{
+					String substr = kv.first.substr(prev, cur - prev);
+					sub = &(*sub)[substr];
+					prev = cur + sizeof('.');
+				}
+				// Set the leaf's value
+				(*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
+			}
+			ofs << json.dump(4) << std::endl;
+		}
+		return true;
+	}
 
-        if (ofs.good()) {
-            for (const auto& kv : config.options()) {
-                nlohmann::ordered_json* sub = &json;
-                size_t cur = String::npos, prev = 0;
-                // Process hierarchy
-                while ((cur = kv.first.find('.', prev)) != String::npos) {
-                    String substr = kv.first.substr(prev, cur - prev);
-                    sub = &(*sub)[substr];
-                    prev = cur + sizeof('.');
-                }
-                // Set the leaf's value
-                (*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
-            }
-            ofs << json.dump(4) << std::endl;
-        }
-        return true;
-    }
+	static bool writeCurrent(ICore& core, Config& config)
+	{
+		core.printLn("Generating %s...", ConfigFileName);
 
-    static bool writeCurrent(ICore& core, Config& config)
-    {
-        core.printLn("Generating %s...", ConfigFileName);
+		// Creates default config.json file if it doesn't exist
+		// Returns true if a config file was written, false otherwise
+		std::ifstream ifs(ConfigFileName);
+		if (ifs.good())
+		{
+			return false;
+		}
 
-        // Creates default config.json file if it doesn't exist
-        // Returns true if a config file was written, false otherwise
-        std::ifstream ifs(ConfigFileName);
-        if (ifs.good()) {
-            return false;
-        }
+		std::ofstream ofs(ConfigFileName);
+		nlohmann::ordered_json json;
 
-        std::ofstream ofs(ConfigFileName);
-        nlohmann::ordered_json json;
+		if (ofs.good())
+		{
+			for (const auto& kv : config.options())
+			{
+				nlohmann::ordered_json* sub = &json;
+				size_t cur = String::npos, prev = 0;
+				// Process hierarchy
+				while ((cur = kv.first.find('.', prev)) != String::npos)
+				{
+					String substr = kv.first.substr(prev, cur - prev);
+					sub = &(*sub)[substr];
+					prev = cur + sizeof('.');
+				}
+				// Set the leaf's value
+				(*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
+			}
+			ofs << json.dump(4) << std::endl;
+		}
+		return true;
+	}
 
-        if (ofs.good()) {
-            for (const auto& kv : config.options()) {
-                nlohmann::ordered_json* sub = &json;
-                size_t cur = String::npos, prev = 0;
-                // Process hierarchy
-                while ((cur = kv.first.find('.', prev)) != String::npos) {
-                    String substr = kv.first.substr(prev, cur - prev);
-                    sub = &(*sub)[substr];
-                    prev = cur + sizeof('.');
-                }
-                // Set the leaf's value
-                (*sub)[kv.first.substr(prev, cur - prev)] = kv.second;
-            }
-            ofs << json.dump(4) << std::endl;
-        }
-        return true;
-    }
+	void addAlias(StringView alias, StringView key, bool deprecated = false) override
+	{
+		if (key != alias)
+		{
+			aliases[String(alias)] = std::make_pair(deprecated, String(key));
+		}
+	}
 
-    void addAlias(StringView alias, StringView key, bool deprecated = false) override
-    {
-        if (key != alias) {
-            aliases[String(alias)] = std::make_pair(deprecated, String(key));
-        }
-    }
+	Pair<bool, StringView> getNameFromAlias(StringView alias) const override
+	{
+		auto it = aliases.find(String(alias));
+		if (it == aliases.end())
+		{
+			return std::make_pair(false, StringView());
+		}
+		return std::make_pair(it->second.first, StringView(it->second.second));
+	}
 
-    Pair<bool, StringView> getNameFromAlias(StringView alias) const override
-    {
-        auto it = aliases.find(String(alias));
-        if (it == aliases.end()) {
-            return std::make_pair(false, StringView());
-        }
-        return std::make_pair(it->second.first, StringView(it->second.second));
-    }
-
-    void enumOptions(OptionEnumeratorCallback& callback) const override
-    {
-        for (auto& kv : processed) {
-            if (!callback.proc(StringView(kv.first), ConfigOptionType(kv.second.index()))) {
-                break;
-            }
-        }
-    }
+	void enumOptions(OptionEnumeratorCallback& callback) const override
+	{
+		for (auto& kv : processed)
+		{
+			if (!callback.proc(StringView(kv.first), ConfigOptionType(kv.second.index())))
+			{
+				break;
+			}
+		}
+	}
 
 private:
-    void loadBans()
-    {
-        std::ifstream ifs(BansFileName);
-        if (ifs.good()) {
-            nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
-            if (!props.is_null() && !props.is_discarded() && props.is_array()) {
-                const auto& arr = props.get<nlohmann::json::array_t>();
-                for (const auto& arrVal : arr) {
-                    std::tm time = {};
-                    std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
-                    time_t t =
+	void loadBans()
+	{
+		std::ifstream ifs(BansFileName);
+		if (ifs.good())
+		{
+			nlohmann::json props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+			if (!props.is_null() && !props.is_discarded() && props.is_array())
+			{
+				const auto& arr = props.get<nlohmann::json::array_t>();
+				for (const auto& arrVal : arr)
+				{
+					std::tm time = {};
+					std::istringstream(arrVal["time"].get<String>()) >> std::get_time(&time, TimeFormat);
+					time_t t =
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-                        _mkgmtime(&time);
+						_mkgmtime(&time);
 #else
-                        timegm(&time);
+						timegm(&time);
 #endif
 
-                    bans.emplace_back(BanEntry(arrVal["address"].get<String>(), arrVal["player"].get<String>(), arrVal["reason"].get<String>(), WorldTime::from_time_t(t)));
-                }
-            }
-        }
-    }
+					bans.emplace_back(BanEntry(arrVal["address"].get<String>(), arrVal["player"].get<String>(), arrVal["reason"].get<String>(), WorldTime::from_time_t(t)));
+				}
+			}
+		}
+	}
 
-    bool getFromKey(StringView input, int index, const ConfigStorage*& output) const
-    {
-        auto it = processed.find(String(input));
-        if (it == processed.end()) {
-            return false;
-        }
-        if (it->second.index() != index) {
-            return false;
-        }
+	bool getFromKey(StringView input, int index, const ConfigStorage*& output) const
+	{
+		auto it = processed.find(String(input));
+		if (it == processed.end())
+		{
+			return false;
+		}
+		if (it->second.index() != index)
+		{
+			return false;
+		}
 
-        output = &it->second;
-        return true;
-    }
+		output = &it->second;
+		return true;
+	}
 
-    bool getFromKey(StringView input, int index, ConfigStorage*& output)
-    {
-        auto it = processed.find(String(input));
-        if (it == processed.end()) {
-            return false;
-        }
-        if (it->second.index() != index) {
-            return false;
-        }
+	bool getFromKey(StringView input, int index, ConfigStorage*& output)
+	{
+		auto it = processed.find(String(input));
+		if (it == processed.end())
+		{
+			return false;
+		}
+		if (it->second.index() != index)
+		{
+			return false;
+		}
 
-        output = &it->second;
-        return true;
-    }
+		output = &it->second;
+		return true;
+	}
 
-    const std::map<String, ConfigStorage>& options() const
-    {
-        return processed;
-    }
+	const std::map<String, ConfigStorage>& options() const
+	{
+		return processed;
+	}
 
-    DynamicArray<BanEntry> bans;
-    std::map<String, ConfigStorage> processed;
-    FlatHashMap<String, Pair<bool, String>> aliases;
+	DynamicArray<BanEntry> bans;
+	std::map<String, ConfigStorage> processed;
+	FlatHashMap<String, Pair<bool, String>> aliases;
 };
 
-class HTTPAsyncIO {
+class HTTPAsyncIO
+{
 public:
-    HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data)
-        : handler(handler)
-        , type(type)
-        , url(url)
-        , data(data)
-        , finished(false)
-        , response(0)
-    {
-        thread = std::thread(&threadProc, this);
-    }
+	HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data)
+		: handler(handler)
+		, type(type)
+		, url(url)
+		, data(data)
+		, finished(false)
+		, response(0)
+	{
+		thread = std::thread(&threadProc, this);
+	}
 
-    ~HTTPAsyncIO()
-    {
-        if (thread.joinable()) {
-            thread.join();
-        }
-    }
+	~HTTPAsyncIO()
+	{
+		if (thread.joinable())
+		{
+			thread.join();
+		}
+	}
 
-    bool tryExec()
-    {
-        if (finished) {
-            handler->onHTTPResponse(response, body);
-            return true;
-        } else {
-            return false;
-        }
-    }
+	bool tryExec()
+	{
+		if (finished)
+		{
+			handler->onHTTPResponse(response, body);
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 private:
-    static void threadProc(HTTPAsyncIO* params)
-    {
-        constexpr StringView http = "http://";
-        constexpr StringView https = "https://";
+	static void threadProc(HTTPAsyncIO* params)
+	{
+		constexpr StringView http = "http://";
+		constexpr StringView https = "https://";
 
-        HTTPRequestType type = params->type;
-        StringView url = params->url;
-        StringView data = params->data;
+		HTTPRequestType type = params->type;
+		StringView url = params->url;
+		StringView data = params->data;
 
-        // Deconstruct because a certain someone decided it would be a good idea to have http:// be optional
-        StringView urlNoPrefix = url;
-        bool secure = false;
-        int idx;
-        if ((idx = url.find(http)) == 0) {
-            urlNoPrefix = url.substr(http.size());
-            secure = false;
-        } else if ((idx = url.find(https)) == 0) {
-            urlNoPrefix = url.substr(https.size());
-            secure = true;
-        }
+		// Deconstruct because a certain someone decided it would be a good idea to have http:// be optional
+		StringView urlNoPrefix = url;
+		bool secure = false;
+		int idx;
+		if ((idx = url.find(http)) == 0)
+		{
+			urlNoPrefix = url.substr(http.size());
+			secure = false;
+		}
+		else if ((idx = url.find(https)) == 0)
+		{
+			urlNoPrefix = url.substr(https.size());
+			secure = true;
+		}
 
-        // Deconstruct further
-        StringView domain = urlNoPrefix;
-        StringView path = "/";
-        if ((idx = urlNoPrefix.find_first_of('/')) != StringView::npos) {
-            domain = urlNoPrefix.substr(0, idx);
-            path = urlNoPrefix.substr(idx);
-        }
+		// Deconstruct further
+		StringView domain = urlNoPrefix;
+		StringView path = "/";
+		if ((idx = urlNoPrefix.find_first_of('/')) != StringView::npos)
+		{
+			domain = urlNoPrefix.substr(0, idx);
+			path = urlNoPrefix.substr(idx);
+		}
 
-        // Reconstruct
-        String domainStr = String(secure ? https : http) + String(domain);
+		// Reconstruct
+		String domainStr = String(secure ? https : http) + String(domain);
 
-        // Set up request
-        httplib::Client request(domainStr.c_str());
-        request.enable_server_certificate_verification(true);
-        request.set_follow_location(true);
-        request.set_connection_timeout(Seconds(5));
-        request.set_read_timeout(Seconds(5));
-        request.set_write_timeout(Seconds(5));
+		// Set up request
+		httplib::Client request(domainStr.c_str());
+		request.enable_server_certificate_verification(true);
+		request.set_follow_location(true);
+		request.set_connection_timeout(Seconds(5));
+		request.set_read_timeout(Seconds(5));
+		request.set_write_timeout(Seconds(5));
 
-        // Run request
-        httplib::Result res(nullptr, httplib::Error::Canceled);
-        switch (type) {
-        case HTTPRequestType_Get:
-            res = request.Get(path.data());
-            break;
-        case HTTPRequestType_Post:
-            res = request.Post(path.data(), String(data), "application/x-www-form-urlencoded");
-            break;
-        case HTTPRequestType_Head:
-            res = request.Head(path.data());
-            break;
-        }
+		// Run request
+		httplib::Result res(nullptr, httplib::Error::Canceled);
+		switch (type)
+		{
+		case HTTPRequestType_Get:
+			res = request.Get(path.data());
+			break;
+		case HTTPRequestType_Post:
+			res = request.Post(path.data(), String(data), "application/x-www-form-urlencoded");
+			break;
+		case HTTPRequestType_Head:
+			res = request.Head(path.data());
+			break;
+		}
 
-        if (res) {
-            params->body = res.value().body;
-            params->response = res.value().status;
-        } else {
-            params->response = int(res.error());
-        }
+		if (res)
+		{
+			params->body = res.value().body;
+			params->response = res.value().status;
+		}
+		else
+		{
+			params->response = int(res.error());
+		}
 
-        params->finished.store(true);
-    }
+		params->finished.store(true);
+	}
 
-    std::thread thread;
-    HTTPResponseHandler* handler;
-    HTTPRequestType type;
-    String url;
-    String data;
+	std::thread thread;
+	HTTPResponseHandler* handler;
+	HTTPRequestType type;
+	String url;
+	String data;
 
-    std::atomic_bool finished;
-    int response;
-    String body;
+	std::atomic_bool finished;
+	int response;
+	String body;
 };
 
-class Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler {
+class Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler
+{
 private:
-    static constexpr const char* LogFileName = "log.txt";
+	static constexpr const char* LogFileName = "log.txt";
 
-    DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
-    PlayerPool players;
-    Microseconds sleepTimer;
-    Microseconds sleepDuration;
-    bool _useDynTicks;
-    FlatPtrHashSet<INetwork> networks;
-    ComponentList components;
-    Config config;
-    IConsoleComponent* console;
-    ICustomModelsComponent* models;
-    FILE* logFile;
-    std::atomic_bool run_;
-    unsigned ticksPerSecond;
-    unsigned ticksThisSecond;
-    TimePoint ticksPerSecondLastUpdate;
-    std::set<HTTPAsyncIO*> httpFutures;
+	DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
+	PlayerPool players;
+	Microseconds sleepTimer;
+	Microseconds sleepDuration;
+	bool _useDynTicks;
+	FlatPtrHashSet<INetwork> networks;
+	ComponentList components;
+	Config config;
+	IConsoleComponent* console;
+	ICustomModelsComponent* models;
+	FILE* logFile;
+	std::atomic_bool run_;
+	unsigned ticksPerSecond;
+	unsigned ticksThisSecond;
+	TimePoint ticksPerSecondLastUpdate;
+	std::set<HTTPAsyncIO*> httpFutures;
 
-    bool* EnableZoneNames;
-    bool* UsePlayerPedAnims;
-    bool* AllowInteriorWeapons;
-    bool* UseLimitGlobalChatRadius;
-    float* LimitGlobalChatRadius;
-    bool* EnableStuntBonus;
-    float* SetNameTagDrawDistance;
-    bool* EnableInteriorEnterExits;
-    bool* EnableNameTagLOS;
-    bool* ManualVehicleEngineAndLights;
-    bool* ShowNameTags;
-    int* ShowPlayerMarkers;
-    int* SetWorldTime;
-    int* SetWeather;
-    float* SetGravity;
-    bool* LanMode;
-    int* SetDeathDropAmount;
-    bool* Instagib;
-    int* OnFootRate;
-    int* InCarRate;
-    int* WeaponRate;
-    int* Multiplier;
-    int* LagCompensation;
-    String ServerName;
-    bool* EnableVehicleFriendlyFire;
-    bool reloading_ = false;
+	bool* EnableZoneNames;
+	bool* UsePlayerPedAnims;
+	bool* AllowInteriorWeapons;
+	bool* UseLimitGlobalChatRadius;
+	float* LimitGlobalChatRadius;
+	bool* EnableStuntBonus;
+	float* SetNameTagDrawDistance;
+	bool* EnableInteriorEnterExits;
+	bool* EnableNameTagLOS;
+	bool* ManualVehicleEngineAndLights;
+	bool* ShowNameTags;
+	int* ShowPlayerMarkers;
+	int* SetWorldTime;
+	int* SetWeather;
+	float* SetGravity;
+	bool* LanMode;
+	int* SetDeathDropAmount;
+	bool* Instagib;
+	int* OnFootRate;
+	int* InCarRate;
+	int* WeaponRate;
+	int* Multiplier;
+	int* LagCompensation;
+	String ServerName;
+	bool* EnableVehicleFriendlyFire;
+	bool reloading_ = false;
 
-    bool EnableLogTimestamp;
-    bool EnableLogPrefix;
-    String LogTimestampFormat;
+	bool EnableLogTimestamp;
+	bool EnableLogPrefix;
+	String LogTimestampFormat;
 
-    void addComponent(IComponent* component)
-    {
-        auto res = components.add(component);
-        if (!res.second) {
-            printLn("Tried to add plug-ins %.*s and %.*s with conflicting UID %16llx", PRINT_VIEW(component->componentName()), PRINT_VIEW(res.first->second->componentName()), component->getUID());
-        }
-        if (component->componentType() == ComponentType::Network) {
-            networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
-        }
-    }
+	void addComponent(IComponent* component)
+	{
+		auto res = components.add(component);
+		if (!res.second)
+		{
+			printLn("Tried to add plug-ins %.*s and %.*s with conflicting UID %16llx", PRINT_VIEW(component->componentName()), PRINT_VIEW(res.first->second->componentName()), component->getUID());
+		}
+		if (component->componentType() == ComponentType::Network)
+		{
+			networks.insert(static_cast<INetworkComponent*>(component)->getNetwork());
+		}
+	}
 
-    IComponent* loadComponent(const ghc::filesystem::path& path)
-    {
-        printLn("Loading component %s", path.filename().u8string().c_str());
-        auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
-        if (componentLib == nullptr) {
-            printLn("\tFailed to load component: %s.", utils::GetLastErrorAsString().c_str());
-            return nullptr;
-        }
-        ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
-        if (OnComponentLoad == nullptr) {
-            void* isSAMPPlugin = reinterpret_cast<void*>(LIBRARY_GET_ADDR(componentLib, "Supports"));
-            printLn(
-                "\tFailed to load component: %s.",
-                isSAMPPlugin
-                    ? "it is a SA-MP plugin, put it in plugins/ folder"
-                    : "it is neither an open.mp component nor a SA-MP plugin");
-            LIBRARY_FREE(componentLib);
-            return nullptr;
-        }
-        IComponent* component = OnComponentLoad();
-        if (component != nullptr) {
-            SemanticVersion ver = component->componentVersion();
-            printLn(
-                "\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
-                PRINT_VIEW(component->componentName()),
-                ver.major,
-                ver.minor,
-                ver.patch,
-                ver.prerel,
-                component->getUID());
-            return component;
-        } else {
-            printLn("\tFailed to load component.");
-            LIBRARY_FREE(componentLib);
-            return nullptr;
-        }
-    }
+	IComponent* loadComponent(const ghc::filesystem::path& path)
+	{
+		printLn("Loading component %s", path.filename().u8string().c_str());
+		auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
+		if (componentLib == nullptr)
+		{
+			printLn("\tFailed to load component: %s.", utils::GetLastErrorAsString().c_str());
+			return nullptr;
+		}
+		ComponentEntryPoint_t OnComponentLoad = reinterpret_cast<ComponentEntryPoint_t>(LIBRARY_GET_ADDR(componentLib, "ComponentEntryPoint"));
+		if (OnComponentLoad == nullptr)
+		{
+			void* isSAMPPlugin = reinterpret_cast<void*>(LIBRARY_GET_ADDR(componentLib, "Supports"));
+			printLn(
+				"\tFailed to load component: %s.",
+				isSAMPPlugin
+					? "it is a SA-MP plugin, put it in plugins/ folder"
+					: "it is neither an open.mp component nor a SA-MP plugin");
+			LIBRARY_FREE(componentLib);
+			return nullptr;
+		}
+		IComponent* component = OnComponentLoad();
+		if (component != nullptr)
+		{
+			SemanticVersion ver = component->componentVersion();
+			printLn(
+				"\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
+				PRINT_VIEW(component->componentName()),
+				ver.major,
+				ver.minor,
+				ver.patch,
+				ver.prerel,
+				component->getUID());
+			return component;
+		}
+		else
+		{
+			printLn("\tFailed to load component.");
+			LIBRARY_FREE(componentLib);
+			return nullptr;
+		}
+	}
 
-    void loadComponents(const ghc::filesystem::path& path)
-    {
-        ghc::filesystem::create_directory(path);
+	void loadComponents(const ghc::filesystem::path& path)
+	{
+		ghc::filesystem::create_directory(path);
 
-        auto componentsCfg = config.getStrings("components");
-        if (!componentsCfg || componentsCfg->empty()) {
-            for (auto& p : ghc::filesystem::directory_iterator(path)) {
-                if (p.path().extension() == LIBRARY_EXT) {
-                    IComponent* component = loadComponent(p);
-                    if (component) {
-                        addComponent(component);
-                    }
-                }
-            }
-        } else {
-            for (const StringView component : *componentsCfg) {
-                auto file = ghc::filesystem::path(path) / component.data();
-                if (!file.has_extension()) {
-                    file.replace_extension(LIBRARY_EXT);
-                }
+		auto componentsCfg = config.getStrings("components");
+		if (!componentsCfg || componentsCfg->empty())
+		{
+			for (auto& p : ghc::filesystem::directory_iterator(path))
+			{
+				if (p.path().extension() == LIBRARY_EXT)
+				{
+					IComponent* component = loadComponent(p);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+			}
+		}
+		else
+		{
+			for (const StringView component : *componentsCfg)
+			{
+				auto file = ghc::filesystem::path(path) / component.data();
+				if (!file.has_extension())
+				{
+					file.replace_extension(LIBRARY_EXT);
+				}
 
-                if (ghc::filesystem::exists(file)) {
-                    IComponent* component = loadComponent(file);
-                    if (component) {
-                        addComponent(component);
-                    }
-                }
-            }
-        }
+				if (ghc::filesystem::exists(file))
+				{
+					IComponent* component = loadComponent(file);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+			}
+		}
 
-        std::string absPath = ghc::filesystem::canonical(path).string();
-        printLn("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
-    }
+		std::string absPath = ghc::filesystem::canonical(path).string();
+		printLn("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
+	}
 
-    void playerInit(IPlayer& player)
-    {
-        players.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClientInit, player);
+	void playerInit(IPlayer& player)
+	{
+		players.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClientInit, player);
 
-        NetCode::RPC::PlayerInit playerInitRPC;
-        playerInitRPC.EnableZoneNames = *EnableZoneNames;
-        playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
-        playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
-        playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
-        playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
-        playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
-        playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
-        playerInitRPC.DisableInteriorEnterExits = !*EnableInteriorEnterExits;
-        playerInitRPC.DisableNameTagLOS = !*EnableNameTagLOS;
-        playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
-        playerInitRPC.ShowNameTags = *ShowNameTags;
-        playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
+		NetCode::RPC::PlayerInit playerInitRPC;
+		playerInitRPC.EnableZoneNames = *EnableZoneNames;
+		playerInitRPC.UsePlayerPedAnims = *UsePlayerPedAnims;
+		playerInitRPC.AllowInteriorWeapons = *AllowInteriorWeapons;
+		playerInitRPC.UseLimitGlobalChatRadius = *UseLimitGlobalChatRadius;
+		playerInitRPC.LimitGlobalChatRadius = *LimitGlobalChatRadius;
+		playerInitRPC.EnableStuntBonus = *EnableStuntBonus;
+		playerInitRPC.SetNameTagDrawDistance = *SetNameTagDrawDistance;
+		playerInitRPC.DisableInteriorEnterExits = !*EnableInteriorEnterExits;
+		playerInitRPC.DisableNameTagLOS = !*EnableNameTagLOS;
+		playerInitRPC.ManualVehicleEngineAndLights = *ManualVehicleEngineAndLights;
+		playerInitRPC.ShowNameTags = *ShowNameTags;
+		playerInitRPC.ShowPlayerMarkers = *ShowPlayerMarkers;
 
-        // Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
-        playerInitRPC.SetWorldTime = player.getTime().first.count();
-        playerInitRPC.SetWeather = player.getWeather();
+		// Get player time & weather instead of global ones because they can be changed during OnPlayerConnect.
+		playerInitRPC.SetWorldTime = player.getTime().first.count();
+		playerInitRPC.SetWeather = player.getWeather();
 
-        playerInitRPC.SetGravity = *SetGravity;
-        playerInitRPC.LanMode = *LanMode;
-        playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
-        playerInitRPC.Instagib = *Instagib;
-        playerInitRPC.OnFootRate = *OnFootRate;
-        playerInitRPC.InCarRate = *InCarRate;
-        playerInitRPC.WeaponRate = *WeaponRate;
-        playerInitRPC.Multiplier = *Multiplier;
-        playerInitRPC.LagCompensation = *LagCompensation;
-        playerInitRPC.ServerName = StringView(ServerName);
-        IClassesComponent* classes = components.queryComponent<IClassesComponent>();
-        playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
-        playerInitRPC.PlayerID = player.getID();
-        IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
-        static const StaticArray<uint8_t, 212> emptyModels { 0 };
-        playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
-        playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
-        PacketHelper::send(playerInitRPC, player);
+		playerInitRPC.SetGravity = *SetGravity;
+		playerInitRPC.LanMode = *LanMode;
+		playerInitRPC.SetDeathDropAmount = *SetDeathDropAmount;
+		playerInitRPC.Instagib = *Instagib;
+		playerInitRPC.OnFootRate = *OnFootRate;
+		playerInitRPC.InCarRate = *InCarRate;
+		playerInitRPC.WeaponRate = *WeaponRate;
+		playerInitRPC.Multiplier = *Multiplier;
+		playerInitRPC.LagCompensation = *LagCompensation;
+		playerInitRPC.ServerName = StringView(ServerName);
+		IClassesComponent* classes = components.queryComponent<IClassesComponent>();
+		playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
+		playerInitRPC.PlayerID = player.getID();
+		IVehiclesComponent* vehicles = components.queryComponent<IVehiclesComponent>();
+		static const StaticArray<uint8_t, 212> emptyModels { 0 };
+		playerInitRPC.VehicleModels = vehicles ? vehicles->models() : emptyModels;
+		playerInitRPC.EnableVehicleFriendlyFire = *EnableVehicleFriendlyFire;
+		PacketHelper::send(playerInitRPC, player);
 
-        // Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
-        NetCode::RPC::SetPlayerColor RPC;
-        RPC.PlayerID = player.getID();
-        RPC.Col = player.getColour();
-        PacketHelper::send(RPC, player);
-    }
+		// Send player his color. Fixes SetPlayerColor called during OnPlayerConnect.
+		NetCode::RPC::SetPlayerColor RPC;
+		RPC.PlayerID = player.getID();
+		RPC.Col = player.getColour();
+		PacketHelper::send(RPC, player);
+	}
 
-    bool setConfigFromString(StringView conf)
-    {
-        size_t split = conf.find_first_of('=');
-        if (split == StringView::npos) {
-            // Invalid option.  No `=`.
-            return false;
-        }
-        // Get the type of this option from the existing options (defaults and files).
-        StringView key = trim(StringView(conf.data(), split));
-        StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
-        if (key.empty()) {
-            logLn(LogLevel::Warning, "No key supplied to `--config`");
-            return false;
-        }
-        if (value.empty()) {
-            logLn(LogLevel::Warning, "No value supplied to `--config`");
-            return false;
-        }
-        try {
-            // Try the code twice - once for the given config, once for it translated from legacy.
-            bool retry = false;
-            do {
-                switch (config.getType(key)) {
-                case ConfigOptionType_Int:
-                    *config.getInt(key) = std::stoi(value.data());
-                    return true;
-                case ConfigOptionType_String:
-                    // TODO: This is a problem.  Most uses hold references to the internal config data,
-                    // which we can modify.  Strings don't.  Thus setting a string here won't update all the
-                    // uses of that string.
-                    config.setString(key, value);
-                    return true;
-                case ConfigOptionType_Float:
-                    *config.getFloat(key) = std::stod(value.data());
-                    return true;
-                case ConfigOptionType_Strings:
-                    // Unfortunately we're still setting up the config options so this may display
-                    // oddly (wrong place/prefix etc).
-                    logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
-                    return false;
-                case ConfigOptionType_Bool:
-                    *config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
-                    return true;
-                default:
-                    // Try the loop again with a new key.
-                    auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
-                    if (retry) {
-                        // Check for the second time getting to here.  Shouldn't happen as that
-                        // means a legacy option resolved to an unknown config, but handle it.
-                        retry = false;
-                    } else if (legacyLookup) {
-                        // Did they type a legacy key?
-                        StringView nu = legacyLookup->getConfig(key);
-                        if (!nu.empty()) {
-                            logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
-                            key = nu;
-                            retry = true;
-                        }
-                    }
-                    break;
-                }
-            } while (retry);
-        } catch (std::invalid_argument const& e) {
-            // The value was wrong.
-            logLn(LogLevel::Warning, "Value `%.*s` could not be parsed", value.length(), value.data());
-            return false;
-        }
-        logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
-        return false;
-    }
+	bool setConfigFromString(StringView conf)
+	{
+		size_t split = conf.find_first_of('=');
+		if (split == StringView::npos)
+		{
+			// Invalid option.  No `=`.
+			return false;
+		}
+		// Get the type of this option from the existing options (defaults and files).
+		StringView key = trim(StringView(conf.data(), split));
+		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
+		if (key.empty())
+		{
+			logLn(LogLevel::Warning, "No key supplied to `--config`");
+			return false;
+		}
+		if (value.empty())
+		{
+			logLn(LogLevel::Warning, "No value supplied to `--config`");
+			return false;
+		}
+		try
+		{
+			// Try the code twice - once for the given config, once for it translated from legacy.
+			bool retry = false;
+			do
+			{
+				switch (config.getType(key))
+				{
+				case ConfigOptionType_Int:
+					*config.getInt(key) = std::stoi(value.data());
+					return true;
+				case ConfigOptionType_String:
+					// TODO: This is a problem.  Most uses hold references to the internal config data,
+					// which we can modify.  Strings don't.  Thus setting a string here won't update all the
+					// uses of that string.
+					config.setString(key, value);
+					return true;
+				case ConfigOptionType_Float:
+					*config.getFloat(key) = std::stod(value.data());
+					return true;
+				case ConfigOptionType_Strings:
+					// Unfortunately we're still setting up the config options so this may display
+					// oddly (wrong place/prefix etc).
+					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+					return false;
+				case ConfigOptionType_Bool:
+					*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
+					return true;
+				default:
+					// Try the loop again with a new key.
+					auto legacyLookup = components.queryComponent<ILegacyConfigComponent>();
+					if (retry)
+					{
+						// Check for the second time getting to here.  Shouldn't happen as that
+						// means a legacy option resolved to an unknown config, but handle it.
+						retry = false;
+					}
+					else if (legacyLookup)
+					{
+						// Did they type a legacy key?
+						StringView nu = legacyLookup->getConfig(key);
+						if (!nu.empty())
+						{
+							logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
+							key = nu;
+							retry = true;
+						}
+					}
+					break;
+				}
+			} while (retry);
+		}
+		catch (std::invalid_argument const& e)
+		{
+			// The value was wrong.
+			logLn(LogLevel::Warning, "Value `%.*s` could not be parsed", value.length(), value.data());
+			return false;
+		}
+		logLn(LogLevel::Warning, "Unknown config key `%.*s`", key.length(), key.data());
+		return false;
+	}
 
 public:
-    bool reloadLogFile()
-    {
-        if (!logFile) {
-            return false;
-        }
+	bool reloadLogFile()
+	{
+		if (!logFile)
+		{
+			return false;
+		}
 
-        fclose(logFile);
-        logFile = ::fopen(LogFileName, "a");
-        return true;
-    }
+		fclose(logFile);
+		logFile = ::fopen(LogFileName, "a");
+		return true;
+	}
 
-    void run()
-    {
-        sleepTimer = Microseconds(static_cast<long long>(*config.getFloat("sleep") * 1000.0f));
-        _useDynTicks = *config.getBool("use_dyn_ticks");
-        TimePoint prev = Time::now();
-        sleepDuration = sleepTimer;
+	void run()
+	{
+		sleepTimer = Microseconds(static_cast<long long>(*config.getFloat("sleep") * 1000.0f));
+		_useDynTicks = *config.getBool("use_dyn_ticks");
+		TimePoint prev = Time::now();
+		sleepDuration = sleepTimer;
 
-        while (run_) {
-            const TimePoint now = Time::now();
-            const Microseconds us = duration_cast<Microseconds>(now - prev);
+		while (run_)
+		{
+			const TimePoint now = Time::now();
+			const Microseconds us = duration_cast<Microseconds>(now - prev);
 
-            if (_useDynTicks) {
-                sleepDuration += sleepTimer - us;
-            }
+			if (_useDynTicks)
+			{
+				sleepDuration += sleepTimer - us;
+			}
 
-            prev = now;
+			prev = now;
 
-            if (now - ticksPerSecondLastUpdate >= Seconds(1)) {
-                ticksPerSecondLastUpdate = now;
-                ticksPerSecond = ticksThisSecond;
-                ticksThisSecond = 0u;
-            }
-            ++ticksThisSecond;
+			if (now - ticksPerSecondLastUpdate >= Seconds(1))
+			{
+				ticksPerSecondLastUpdate = now;
+				ticksPerSecond = ticksThisSecond;
+				ticksThisSecond = 0u;
+			}
+			++ticksThisSecond;
 
-            eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
+			eventDispatcher.dispatch(&CoreEventHandler::onTick, us, now);
 
-            for (auto it = httpFutures.begin(); it != httpFutures.end();) {
-                HTTPAsyncIO* httpIO = *it;
-                if (httpIO->tryExec()) {
-                    delete httpIO;
-                    it = httpFutures.erase(it);
-                } else {
-                    ++it;
-                }
-            }
+			for (auto it = httpFutures.begin(); it != httpFutures.end();)
+			{
+				HTTPAsyncIO* httpIO = *it;
+				if (httpIO->tryExec())
+				{
+					delete httpIO;
+					it = httpFutures.erase(it);
+				}
+				else
+				{
+					++it;
+				}
+			}
 
-            std::this_thread::sleep_until(now + sleepDuration);
-        }
-    }
+			std::this_thread::sleep_until(now + sleepDuration);
+		}
+	}
 
-    void setThreadSleep(Microseconds value) override
-    {
-        sleepTimer = value;
-    }
+	void setThreadSleep(Microseconds value) override
+	{
+		sleepTimer = value;
+	}
 
-    void useDynTicks(const bool enable) override
-    {
-        _useDynTicks = enable;
+	void useDynTicks(const bool enable) override
+	{
+		_useDynTicks = enable;
 
-        if (!enable) {
-            sleepDuration = sleepTimer;
-        }
-    }
+		if (!enable)
+		{
+			sleepDuration = sleepTimer;
+		}
+	}
 
-    void resetAll() override
-    {
-        reloading_ = true;
-        NetCode::RPC::PlayerClose RPC;
-        PacketHelper::broadcast(RPC, players);
-        components.reset();
-        players.removeSyncPacketsHandlers();
+	void resetAll() override
+	{
+		reloading_ = true;
+		NetCode::RPC::PlayerClose RPC;
+		PacketHelper::broadcast(RPC, players);
+		components.reset();
+		players.removeSyncPacketsHandlers();
 
-        for (auto p : players.entries()) {
-            Player* player = static_cast<Player*>(p);
-            player->reset();
-        }
-    }
+		for (auto p : players.entries())
+		{
+			Player* player = static_cast<Player*>(p);
+			player->reset();
+		}
+	}
 
-    void reloadAll() override
-    {
-        players.addSyncPacketsHandlers();
-        reloading_ = false;
-        for (auto p : players.entries()) {
-            Player* player = static_cast<Player*>(p);
-            // Set weather & time back to server's ones.
-            // https://github.com/openmultiplayer/server-beta/issues/167
-            player->weather_ = *SetWeather;
-            player->time_ = duration_cast<Minutes>(Hours(*SetWorldTime));
-            playerInit(*p);
-        }
-    }
+	void reloadAll() override
+	{
+		players.addSyncPacketsHandlers();
+		reloading_ = false;
+		for (auto p : players.entries())
+		{
+			Player* player = static_cast<Player*>(p);
+			// Set weather & time back to server's ones.
+			// https://github.com/openmultiplayer/server-beta/issues/167
+			player->weather_ = *SetWeather;
+			player->time_ = duration_cast<Minutes>(Hours(*SetWorldTime));
+			playerInit(*p);
+		}
+	}
 
-    void stop()
-    {
-        run_ = false;
-    }
+	void stop()
+	{
+		run_ = false;
+	}
 
-    Core(const cxxopts::ParseResult& cmd)
-        : players(*this)
-        , config(*this)
-        , console(nullptr)
-        , models(nullptr)
-        , logFile(nullptr)
-        , run_(true)
-        , ticksPerSecond(0u)
-        , ticksThisSecond(0u)
-        , EnableLogTimestamp(false)
-    {
-        printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
+	Core(const cxxopts::ParseResult& cmd)
+		: players(*this)
+		, config(*this)
+		, console(nullptr)
+		, models(nullptr)
+		, logFile(nullptr)
+		, run_(true)
+		, ticksPerSecond(0u)
+		, ticksThisSecond(0u)
+		, EnableLogTimestamp(false)
+	{
+		printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
 
-        // Initialize start time
-        getTickCount();
+		// Initialize start time
+		getTickCount();
 
-        players.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow);
+		players.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow);
 
-        // Try to load components from the current directory
-        loadComponents("components");
+		// Try to load components from the current directory
+		loadComponents("components");
 
-        // No components found in the current directory, try the executable path
-        if (components.size() == 0) {
-            auto componentsDir = utils::GetExecutablePath().remove_filename();
-            componentsDir /= ghc::filesystem::path("components");
-            loadComponents(componentsDir);
-        }
+		// No components found in the current directory, try the executable path
+		if (components.size() == 0)
+		{
+			auto componentsDir = utils::GetExecutablePath().remove_filename();
+			componentsDir /= ghc::filesystem::path("components");
+			loadComponents(componentsDir);
+		}
 
-        if (cmd.count("default-config")) {
-            // Generate config
-            Config::writeDefault(*this, components);
-            stop();
-            return;
-        }
+		if (cmd.count("default-config"))
+		{
+			// Generate config
+			Config::writeDefault(*this, components);
+			stop();
+			return;
+		}
 
-        components.configure(*this, config, false);
+		components.configure(*this, config, false);
 
-        config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
+		config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
 
-        if (cmd.count("config")) {
-            auto configs = cmd["config"].as<std::vector<std::string>>();
-            // Loop through all the config options, get the key/value pair, and store it.
-            for (auto const& conf : configs) {
-                setConfigFromString(conf);
-            }
-        }
+		if (cmd.count("config"))
+		{
+			auto configs = cmd["config"].as<std::vector<std::string>>();
+			// Loop through all the config options, get the key/value pair, and store it.
+			for (auto const& conf : configs)
+			{
+				setConfigFromString(conf);
+			}
+		}
 
-        if (cmd.count("script")) {
-            // Add the launch parameter to the start of the scripts list.
-            // Something here corrupts the strings between loading and inserting.  Hence doing this
-            // the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
-            // we got the old value, modified it, then passed it in for the new value.  But our
-            // modified value was only a pointer to the old value, which was now being overridden.
-            DynamicArray<String> const* mainScripts = config.getStrings("pawn.main_scripts");
-            DynamicArray<StringView> view {};
-            String entry_file = cmd["script"].as<String>();
-            view.push_back(entry_file);
-            if (mainScripts) {
-                for (String const& v : *mainScripts) {
-                    view.push_back(v);
-                }
-            }
-            config.setStrings("pawn.main_scripts", view);
-        }
-        // Don't use config before this point
-        if (cmd.count("dump-config")) {
-            // Generate config
-            Config::writeCurrent(*this, config);
-            stop();
-            return;
-        }
+		if (cmd.count("script"))
+		{
+			// Add the launch parameter to the start of the scripts list.
+			// Something here corrupts the strings between loading and inserting.  Hence doing this
+			// the hard way.  Yes, this is a copy.  On purpose, sadly.  The corruption was because
+			// we got the old value, modified it, then passed it in for the new value.  But our
+			// modified value was only a pointer to the old value, which was now being overridden.
+			DynamicArray<String> const* mainScripts = config.getStrings("pawn.main_scripts");
+			DynamicArray<StringView> view {};
+			String entry_file = cmd["script"].as<String>();
+			view.push_back(entry_file);
+			if (mainScripts)
+			{
+				for (String const& v : *mainScripts)
+				{
+					view.push_back(v);
+				}
+			}
+			config.setStrings("pawn.main_scripts", view);
+		}
+		// Don't use config before this point
+		if (cmd.count("dump-config"))
+		{
+			// Generate config
+			Config::writeCurrent(*this, config);
+			stop();
+			return;
+		}
 
-        const SemanticVersion version = getVersion();
-        String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
-        if (version.prerel != 0) {
-            versionStr += "." + std::to_string(version.prerel);
-        }
-        config.setString("version", versionStr);
+		const SemanticVersion version = getVersion();
+		String versionStr = "open.mp " + std::to_string(version.major) + "." + std::to_string(version.minor) + "." + std::to_string(version.patch);
+		if (version.prerel != 0)
+		{
+			versionStr += "." + std::to_string(version.prerel);
+		}
+		config.setString("version", versionStr);
 
-        if (*config.getBool("logging.enable")) {
-            logFile = ::fopen(LogFileName, "a");
-        }
+		if (*config.getBool("logging.enable"))
+		{
+			logFile = ::fopen(LogFileName, "a");
+		}
 
-        EnableZoneNames = config.getBool("game.use_zone_names");
-        UsePlayerPedAnims = config.getBool("game.use_player_ped_anims");
-        AllowInteriorWeapons = config.getBool("game.allow_interior_weapons");
-        UseLimitGlobalChatRadius = config.getBool("game.use_chat_radius");
-        LimitGlobalChatRadius = config.getFloat("game.chat_radius");
-        EnableStuntBonus = config.getBool("game.use_stunt_bonuses");
-        SetNameTagDrawDistance = config.getFloat("game.nametag_draw_radius");
-        EnableInteriorEnterExits = config.getBool("game.use_entry_exit_markers");
-        EnableNameTagLOS = config.getBool("game.use_nametag_los");
-        ManualVehicleEngineAndLights = config.getBool("game.use_manual_engine_and_lights");
-        ShowNameTags = config.getBool("game.use_nametags");
-        ShowPlayerMarkers = config.getInt("game.player_marker_mode");
-        SetWorldTime = config.getInt("game.time");
-        SetWeather = config.getInt("game.weather");
-        SetGravity = config.getFloat("game.gravity");
-        LanMode = config.getBool("network.use_lan_mode");
-        SetDeathDropAmount = config.getInt("game.death_drop_amount");
-        Instagib = config.getBool("game.use_instagib");
-        OnFootRate = config.getInt("network.on_foot_sync_rate");
-        InCarRate = config.getInt("network.in_vehicle_sync_rate");
-        WeaponRate = config.getInt("network.aiming_sync_rate");
-        Multiplier = config.getInt("network.multiplier");
-        LagCompensation = config.getInt("game.lag_compensation_mode");
-        ServerName = String(config.getString("name"));
-        EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
+		EnableZoneNames = config.getBool("game.use_zone_names");
+		UsePlayerPedAnims = config.getBool("game.use_player_ped_anims");
+		AllowInteriorWeapons = config.getBool("game.allow_interior_weapons");
+		UseLimitGlobalChatRadius = config.getBool("game.use_chat_radius");
+		LimitGlobalChatRadius = config.getFloat("game.chat_radius");
+		EnableStuntBonus = config.getBool("game.use_stunt_bonuses");
+		SetNameTagDrawDistance = config.getFloat("game.nametag_draw_radius");
+		EnableInteriorEnterExits = config.getBool("game.use_entry_exit_markers");
+		EnableNameTagLOS = config.getBool("game.use_nametag_los");
+		ManualVehicleEngineAndLights = config.getBool("game.use_manual_engine_and_lights");
+		ShowNameTags = config.getBool("game.use_nametags");
+		ShowPlayerMarkers = config.getInt("game.player_marker_mode");
+		SetWorldTime = config.getInt("game.time");
+		SetWeather = config.getInt("game.weather");
+		SetGravity = config.getFloat("game.gravity");
+		LanMode = config.getBool("network.use_lan_mode");
+		SetDeathDropAmount = config.getInt("game.death_drop_amount");
+		Instagib = config.getBool("game.use_instagib");
+		OnFootRate = config.getInt("network.on_foot_sync_rate");
+		InCarRate = config.getInt("network.in_vehicle_sync_rate");
+		WeaponRate = config.getInt("network.aiming_sync_rate");
+		Multiplier = config.getInt("network.multiplier");
+		LagCompensation = config.getInt("game.lag_compensation_mode");
+		ServerName = String(config.getString("name"));
+		EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
-        EnableLogTimestamp = *config.getBool("logging.use_timestamp");
-        EnableLogPrefix = *config.getBool("logging.use_prefix");
-        LogTimestampFormat = String(config.getString("logging.timestamp_format"));
+		EnableLogTimestamp = *config.getBool("logging.use_timestamp");
+		EnableLogPrefix = *config.getBool("logging.use_prefix");
+		LogTimestampFormat = String(config.getString("logging.timestamp_format"));
 
-        config.optimiseBans();
-        config.writeBans();
-        components.load(this);
-        config.init(components);
-        players.init(components); // Players must ALWAYS be initialised before components
-        components.init();
+		config.optimiseBans();
+		config.writeBans();
+		components.load(this);
+		config.init(components);
+		players.init(components); // Players must ALWAYS be initialised before components
+		components.init();
 
-        console = components.queryComponent<IConsoleComponent>();
-        if (console) {
-            console->getEventDispatcher().addEventHandler(this);
-        }
+		console = components.queryComponent<IConsoleComponent>();
+		if (console)
+		{
+			console->getEventDispatcher().addEventHandler(this);
+		}
 
-        models = components.queryComponent<ICustomModelsComponent>();
-        components.ready();
-    }
+		models = components.queryComponent<ICustomModelsComponent>();
+		components.ready();
+	}
 
-    ~Core()
-    {
-        if (console) {
-            console->getEventDispatcher().removeEventHandler(this);
-            console = nullptr;
-        }
+	~Core()
+	{
+		if (console)
+		{
+			console->getEventDispatcher().removeEventHandler(this);
+			console = nullptr;
+		}
 
-        players.getEventDispatcher().removeEventHandler(this);
+		players.getEventDispatcher().removeEventHandler(this);
 
-        players.free();
-        networks.clear();
-        components.free();
+		players.free();
+		networks.clear();
+		components.free();
 
-        if (logFile) {
-            fclose(logFile);
-        }
-    }
+		if (logFile)
+		{
+			fclose(logFile);
+		}
+	}
 
-    IConfig& getConfig() override
-    {
-        return config;
-    }
+	IConfig& getConfig() override
+	{
+		return config;
+	}
 
-    unsigned tickRate() const override
-    {
-        return ticksPerSecond;
-    }
+	unsigned tickRate() const override
+	{
+		return ticksPerSecond;
+	}
 
-    SemanticVersion getVersion() const override
-    {
-        return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
-    }
+	SemanticVersion getVersion() const override
+	{
+		return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
+	}
 
-    StringView getVersionHash() const override
-    {
-        return OMP_VERSION_HASH_STR;
-    }
+	StringView getVersionHash() const override
+	{
+		return OMP_VERSION_HASH_STR;
+	}
 
-    int getNetworkBitStreamVersion() const override
-    {
-        return NetworkBitStream::Version;
-    }
+	int getNetworkBitStreamVersion() const override
+	{
+		return NetworkBitStream::Version;
+	}
 
-    void printLn(const char* fmt, ...) override
-    {
-        va_list args;
-        va_start(args, fmt);
-        vprintLn(fmt, args);
-        va_end(args);
-    }
+	void printLn(const char* fmt, ...) override
+	{
+		va_list args;
+		va_start(args, fmt);
+		vprintLn(fmt, args);
+		va_end(args);
+	}
 
-    void vprintLn(const char* fmt, va_list args) override
-    {
-        vlogLn(LogLevel::Message, fmt, args);
-    }
+	void vprintLn(const char* fmt, va_list args) override
+	{
+		vlogLn(LogLevel::Message, fmt, args);
+	}
 
-    virtual void logLn(LogLevel level, const char* fmt, ...) override
-    {
-        va_list args;
-        va_start(args, fmt);
-        vlogLn(level, fmt, args);
-        va_end(args);
-    }
+	virtual void logLn(LogLevel level, const char* fmt, ...) override
+	{
+		va_list args;
+		va_start(args, fmt);
+		vlogLn(level, fmt, args);
+		va_end(args);
+	}
 
-    void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* message)
-    {
-        if (iso8601[0]) {
-            fputs(iso8601, stream);
-            fputs(" ", stream);
-        }
-        if (prefix) {
-            fputs(prefix, stream);
-        }
-        fputs(message, stream);
-        fputs("\n", stream);
-        fflush(stream);
-    }
+	void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* message)
+	{
+		if (iso8601[0])
+		{
+			fputs(iso8601, stream);
+			fputs(" ", stream);
+		}
+		if (prefix)
+		{
+			fputs(prefix, stream);
+		}
+		fputs(message, stream);
+		fputs("\n", stream);
+		fflush(stream);
+	}
 
-    virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override
-    {
+	virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override
+	{
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
-        if (level == LogLevel::Debug) {
-            char debugStr[4096] = { 0 };
-            const int written = vsnprintf(debugStr, sizeof(debugStr) - 1, fmt, args);
-            debugStr[written] = '\n';
-            OutputDebugString(debugStr);
-        }
+		if (level == LogLevel::Debug)
+		{
+			char debugStr[4096] = { 0 };
+			const int written = vsnprintf(debugStr, sizeof(debugStr) - 1, fmt, args);
+			debugStr[written] = '\n';
+			OutputDebugString(debugStr);
+		}
 #endif
 #ifndef _DEBUG
-        if (level == LogLevel::Debug) {
-            return;
-        }
+		if (level == LogLevel::Debug)
+		{
+			return;
+		}
 #endif
-        const char* prefix = nullptr;
-        if (EnableLogPrefix) {
-            switch (level) {
-            case LogLevel::Debug:
-                prefix = "[Debug] ";
-                break;
-            case LogLevel::Message:
-                prefix = "[Info] ";
-                break;
-            case LogLevel::Warning:
-                prefix = "[Warning] ";
-                break;
-            case LogLevel::Error:
-                prefix = "[Error] ";
-            }
-        }
+		const char* prefix = nullptr;
+		if (EnableLogPrefix)
+		{
+			switch (level)
+			{
+			case LogLevel::Debug:
+				prefix = "[Debug] ";
+				break;
+			case LogLevel::Message:
+				prefix = "[Info] ";
+				break;
+			case LogLevel::Warning:
+				prefix = "[Warning] ";
+				break;
+			case LogLevel::Error:
+				prefix = "[Error] ";
+			}
+		}
 
-        char iso8601[32] = { 0 };
-        if (EnableLogTimestamp && !LogTimestampFormat.empty()) {
-            std::time_t now = WorldTime::to_time_t(WorldTime::now());
-            std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::localtime(&now));
-        }
+		char iso8601[32] = { 0 };
+		if (EnableLogTimestamp && !LogTimestampFormat.empty())
+		{
+			std::time_t now = WorldTime::to_time_t(WorldTime::now());
+			std::strftime(iso8601, sizeof(iso8601), LogTimestampFormat.c_str(), std::localtime(&now));
+		}
 
-        char main[4096];
-        std::unique_ptr<char[]> fallback; // In case the string is larger than 4096
-        Span<char> buf(main, sizeof(main));
-        const int len = vsnprintf(nullptr, 0, fmt, args);
-        if (len > sizeof(main)) {
-            // Stack won't fit our string; allocate space for it
-            fallback.reset(new char[len]);
-            buf = Span<char>(fallback.get(), len);
-        }
-        buf[0] = 0;
-        vsnprintf(buf.data(), buf.size(), fmt, args);
+		char main[4096];
+		std::unique_ptr<char[]> fallback; // In case the string is larger than 4096
+		Span<char> buf(main, sizeof(main));
+		const int len = vsnprintf(nullptr, 0, fmt, args);
+		if (len > sizeof(main))
+		{
+			// Stack won't fit our string; allocate space for it
+			fallback.reset(new char[len]);
+			buf = Span<char>(fallback.get(), len);
+		}
+		buf[0] = 0;
+		vsnprintf(buf.data(), buf.size(), fmt, args);
 
-        FILE* stream
-            = stdout;
-        if (level == LogLevel::Error) {
-            stream = stderr;
-        }
-        logToStream(stream, iso8601, prefix, buf.data());
-        if (logFile) {
-            logToStream(logFile, iso8601, prefix, buf.data());
-        }
-    }
+		FILE* stream
+			= stdout;
+		if (level == LogLevel::Error)
+		{
+			stream = stderr;
+		}
+		logToStream(stream, iso8601, prefix, buf.data());
+		if (logFile)
+		{
+			logToStream(logFile, iso8601, prefix, buf.data());
+		}
+	}
 
-    IPlayerPool& getPlayers() override
-    {
-        return players;
-    }
+	IPlayerPool& getPlayers() override
+	{
+		return players;
+	}
 
-    const FlatPtrHashSet<INetwork>& getNetworks() override
-    {
-        return networks;
-    }
+	const FlatPtrHashSet<INetwork>& getNetworks() override
+	{
+		return networks;
+	}
 
-    unsigned getTickCount() const override
-    {
-        return utils::GetTickCount();
-    }
+	unsigned getTickCount() const override
+	{
+		return utils::GetTickCount();
+	}
 
-    IEventDispatcher<CoreEventHandler>& getEventDispatcher() override
-    {
-        return eventDispatcher;
-    }
+	IEventDispatcher<CoreEventHandler>& getEventDispatcher() override
+	{
+		return eventDispatcher;
+	}
 
-    void setGravity(float gravity) override
-    {
-        *SetGravity = gravity;
-        NetCode::RPC::SetPlayerGravity RPC;
-        RPC.Gravity = gravity;
-        PacketHelper::broadcast(RPC, players);
+	void setGravity(float gravity) override
+	{
+		*SetGravity = gravity;
+		NetCode::RPC::SetPlayerGravity RPC;
+		RPC.Gravity = gravity;
+		PacketHelper::broadcast(RPC, players);
 
-        for (IPlayer* player : players.entries()) {
-            static_cast<Player*>(player)->gravity_ = gravity;
-        }
+		for (IPlayer* player : players.entries())
+		{
+			static_cast<Player*>(player)->gravity_ = gravity;
+		}
 
-        updateNetworks();
-    }
+		updateNetworks();
+	}
 
-    float getGravity() const override
-    {
-        return *SetGravity;
-    }
+	float getGravity() const override
+	{
+		return *SetGravity;
+	}
 
-    void setWeather(int weather) override
-    {
-        *SetWeather = weather;
-        NetCode::RPC::SetPlayerWeather RPC;
-        RPC.WeatherID = weather;
-        PacketHelper::broadcast(RPC, players);
+	void setWeather(int weather) override
+	{
+		*SetWeather = weather;
+		NetCode::RPC::SetPlayerWeather RPC;
+		RPC.WeatherID = weather;
+		PacketHelper::broadcast(RPC, players);
 
-        for (IPlayer* player : players.entries()) {
-            static_cast<Player*>(player)->weather_ = weather;
-        }
+		for (IPlayer* player : players.entries())
+		{
+			static_cast<Player*>(player)->weather_ = weather;
+		}
 
-        updateNetworks();
-    }
+		updateNetworks();
+	}
 
-    void setWorldTime(Hours time) override
-    {
-        time %= 24;
-        *SetWorldTime = time.count();
-        NetCode::RPC::SetPlayerWorldTime RPC;
-        RPC.Time = time;
-        PacketHelper::broadcast(RPC, players);
+	void setWorldTime(Hours time) override
+	{
+		time %= 24;
+		*SetWorldTime = time.count();
+		NetCode::RPC::SetPlayerWorldTime RPC;
+		RPC.Time = time;
+		PacketHelper::broadcast(RPC, players);
 
-        for (IPlayer* player : players.entries()) {
-            static_cast<Player*>(player)->time_ = time;
-        }
+		for (IPlayer* player : players.entries())
+		{
+			static_cast<Player*>(player)->time_ = time;
+		}
 
-        updateNetworks();
-    }
+		updateNetworks();
+	}
 
-    void useStuntBonuses(bool enable) override
-    {
-        *EnableStuntBonus = enable;
-        NetCode::RPC::EnableStuntBonusForPlayer RPC;
-        RPC.Enable = enable;
-        PacketHelper::broadcast(RPC, players);
-    }
+	void useStuntBonuses(bool enable) override
+	{
+		*EnableStuntBonus = enable;
+		NetCode::RPC::EnableStuntBonusForPlayer RPC;
+		RPC.Enable = enable;
+		PacketHelper::broadcast(RPC, players);
+	}
 
-    void setData(SettableCoreDataType type, StringView data) override
-    {
-        switch (type) {
-        case SettableCoreDataType::ServerName:
-            config.setString("name", data);
-            ServerName = String(data);
-            break;
-        case SettableCoreDataType::ModeText:
-            config.setString("game.mode", data);
-            break;
-        case SettableCoreDataType::MapName:
-            config.setString("game.map", data);
-            break;
-        case SettableCoreDataType::Language:
-            config.setString("language", data);
-            break;
-        case SettableCoreDataType::Password:
-            config.setString("password", data);
-            break;
-        case SettableCoreDataType::AdminPassword:
-            config.setString("rcon.password", data);
-            break;
-        case SettableCoreDataType::URL:
-            config.setString("website", data);
-            break;
-        }
+	void setData(SettableCoreDataType type, StringView data) override
+	{
+		switch (type)
+		{
+		case SettableCoreDataType::ServerName:
+			config.setString("name", data);
+			ServerName = String(data);
+			break;
+		case SettableCoreDataType::ModeText:
+			config.setString("game.mode", data);
+			break;
+		case SettableCoreDataType::MapName:
+			config.setString("game.map", data);
+			break;
+		case SettableCoreDataType::Language:
+			config.setString("language", data);
+			break;
+		case SettableCoreDataType::Password:
+			config.setString("password", data);
+			break;
+		case SettableCoreDataType::AdminPassword:
+			config.setString("rcon.password", data);
+			break;
+		case SettableCoreDataType::URL:
+			config.setString("website", data);
+			break;
+		}
 
-        updateNetworks();
-    }
+		updateNetworks();
+	}
 
-    StringView getWeaponName(PlayerWeapon weapon) override
-    {
-        int index = int(weapon);
-        if (weapon < 0 || weapon > PlayerWeapon_End) {
-            return "Invalid";
-        }
-        return PlayerWeaponNames[index];
-    }
+	StringView getWeaponName(PlayerWeapon weapon) override
+	{
+		int index = int(weapon);
+		if (weapon < 0 || weapon > PlayerWeapon_End)
+		{
+			return "Invalid";
+		}
+		return PlayerWeaponNames[index];
+	}
 
-    void onPlayerConnect(IPlayer& player) override
-    {
-        playerInit(player);
-        if (reloading_) {
-            // Close the player again.
-            NetCode::RPC::PlayerClose RPC;
-            PacketHelper::broadcast(RPC, players);
-        }
-    }
+	void onPlayerConnect(IPlayer& player) override
+	{
+		playerInit(player);
+		if (reloading_)
+		{
+			// Close the player again.
+			NetCode::RPC::PlayerClose RPC;
+			PacketHelper::broadcast(RPC, players);
+		}
+	}
 
-    void connectBot(StringView name, StringView script) override
-    {
-        StringView bind = config.getString("network.bind");
-        int port = *config.getInt("network.port");
-        StringView password = config.getString("password");
-        std::string args = "-h " + (bind.empty() ? "127.0.0.1" : std::string(bind)) + " -p " + std::to_string(port) + " -n " + std::string(name) + " -m " + std::string(script);
-        if (!password.empty()) {
-            args += " -z " + std::string(password);
-        }
-        utils::RunProcess(config.getString("bot_exe"), args, true);
-    }
+	void connectBot(StringView name, StringView script) override
+	{
+		StringView bind = config.getString("network.bind");
+		int port = *config.getInt("network.port");
+		StringView password = config.getString("password");
+		std::string args = "-h " + (bind.empty() ? "127.0.0.1" : std::string(bind)) + " -p " + std::to_string(port) + " -n " + std::string(name) + " -m " + std::string(script);
+		if (!password.empty())
+		{
+			args += " -z " + std::string(password);
+		}
+		utils::RunProcess(config.getString("bot_exe"), args, true);
+	}
 
-    void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override
-    {
-        HTTPAsyncIO* httpIO = new HTTPAsyncIO(handler, type, url, data);
-        httpFutures.emplace(httpIO);
-    }
+	void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override
+	{
+		HTTPAsyncIO* httpIO = new HTTPAsyncIO(handler, type, url, data);
+		httpFutures.emplace(httpIO);
+	}
 
-    bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override
-    {
-        String input(String(password) + String(salt));
+	bool sha256(StringView password, StringView salt, StaticArray<char, 64 + 1>& output) const override
+	{
+		String input(String(password) + String(salt));
 
-        SHA256_CTX ctx {};
-        if (!SHA256_Init(&ctx)) {
-            return false;
-        }
-        if (!SHA256_Update(&ctx, input.data(), input.length())) {
-            return false;
-        }
-        unsigned char md[SHA256_DIGEST_LENGTH];
-        if (!SHA256_Final(md, &ctx)) {
-            return false;
-        }
+		SHA256_CTX ctx {};
+		if (!SHA256_Init(&ctx))
+		{
+			return false;
+		}
+		if (!SHA256_Update(&ctx, input.data(), input.length()))
+		{
+			return false;
+		}
+		unsigned char md[SHA256_DIGEST_LENGTH];
+		if (!SHA256_Final(md, &ctx))
+		{
+			return false;
+		}
 
-        char* data = output.data();
-        for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i) {
-            sprintf(data + 2 * i, "%02X", md[i]);
-        }
-        data[64] = '\0';
+		char* data = output.data();
+		for (int i = 0; i < SHA256_DIGEST_LENGTH; ++i)
+		{
+			sprintf(data + 2 * i, "%02X", md[i]);
+		}
+		data[64] = '\0';
 
-        return true;
-    }
+		return true;
+	}
 
-    bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
-    {
-        if (command == "exit") {
-            stop();
-            return true;
-        } else if (command == "reloadlog") {
-            if (reloadLogFile()) {
-                console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
-            }
-            return true;
-        } else if (command == "config") {
-            if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"') {
-                setConfigFromString(parameters);
-            } else {
-                // Remove `"`s.
-                setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
-            }
-            return true;
-        }
-        return false;
-    }
+	bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
+	{
+		if (command == "exit")
+		{
+			stop();
+			return true;
+		}
+		else if (command == "reloadlog")
+		{
+			if (reloadLogFile())
+			{
+				console->sendMessage(sender, "Reloaded log file \"" + String(LogFileName) + "\".");
+			}
+			return true;
+		}
+		else if (command == "config")
+		{
+			if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"')
+			{
+				setConfigFromString(parameters);
+			}
+			else
+			{
+				// Remove `"`s.
+				setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
+			}
+			return true;
+		}
+		return false;
+	}
 };
