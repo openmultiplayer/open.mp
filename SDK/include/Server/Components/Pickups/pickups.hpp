@@ -39,11 +39,18 @@ struct IPickup : public IExtensible, public IEntity
 
 	/// Check if given pickup has hidden state for player (only process streaming if pickup is not hidden)
 	virtual bool isPickupHiddenForPlayer(IPlayer& player) const = 0;
+
+	/// Used by legacy per-player gangzones for ID mapping.
+	virtual void setLegacyPlayer(IPlayer* player) = 0;
+
+	/// Used by legacy per-player gangzones for ID mapping.
+	virtual IPlayer* getLegacyPlayer() const = 0;
 };
 
 struct PickupEventHandler
 {
 	virtual void onPlayerPickUpPickup(IPlayer& player, IPickup& pickup) { }
+	virtual void onPlayerPickUpPlayerPickup(IPlayer& player, IPickup& pickup) { }
 };
 
 static const UID PickupsComponent_UID = UID(0xcf304faa363dd971);
