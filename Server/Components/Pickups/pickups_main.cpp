@@ -120,8 +120,14 @@ private:
 			{
 				return false;
 			}
+			auto data = queryExtension<IPlayerPickupData>(peer);
+			int id = data->fromClientID(onPlayerPickUpPickupRPC.PickupID);
+			if (!id)
+			{
+				return false;
+			}
 
-			ScopedPoolReleaseLock lock(self, onPlayerPickUpPickupRPC.PickupID);
+			ScopedPoolReleaseLock lock(self, id);
 			if (!lock.entry)
 			{
 				return false;
