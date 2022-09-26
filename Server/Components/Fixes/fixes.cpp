@@ -11,6 +11,7 @@
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
 
 using namespace Impl;
@@ -80,6 +81,66 @@ private:
 			gts_[style] = nullptr;
 		}
 		gtTimers_[style] = nullptr;
+	}
+
+	// TODO: There are so many ways to make this code smaller and faster.  Thus I've just abstracted
+	// recording which animation libraries are loaded to this inner class.  Feel free to replace it
+	// with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
+	class
+	{
+	private:
+		FlatHashSet<size_t> libraries_;
+
+	public:
+		void See(StringView const lib)
+		{
+			size_t hash = std::hash<StringView>{}(lib);
+			libraries_.insert(hash);
+		}
+		
+		bool Saw(StringView const lib) const
+		{
+			size_t hash = std::hash<StringView>{}(lib);
+			return libraries_.find(hash) != libraries_.end();
+		}
+	} libraries_;
+	
+	struct ReapplyAnimationData
+	{
+		// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
+		// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
+		IActor* actor;
+		IPlayer* player;
+		AnimationData animation;
+	};
+
+	void reapplyOneAnimation()
+	{
+		// Pop the next animation off the queue.
+		ReapplyAnimationData
+			next;
+		if (next.player)
+		{
+			// This could be ourselves, or another player, doesn't matter.  There's no need to
+			// check the stream type because if this needs fixing it was sent to this player earlier
+			// by whatever the sync type was back then.
+			NetCode::RPC::ApplyPlayerAnimation RPC(next.animation);
+			RPC.PlayerID = next.player->getID();
+			PacketHelper::send(RPC, player_);
+		}
+		else if (next.actor)
+		{
+			NetCode::RPC::ApplyActorAnimationForPlayer RPC(next.animation);
+			RPC.ActorID = next.actor->getID();
+			PacketHelper::send(RPC, player_);
+		}
+		/*else
+		{
+			// They can both be false if the target left during the delay timer.
+		}*/
+		// Always mark the library as now loaded, because it was shown at least one in the past,
+		// even if we didn't need to re-show it now.
+		libraries_.Saw(next.animation.lib);
 	}
 
 public:
@@ -480,7 +541,7 @@ public:
 				tds_->release(gts_[style]->getID());
 				gts_[style] = nullptr;
 				gtTimers_[style] = nullptr;
-			}
+	}
 		}
 	}
 
