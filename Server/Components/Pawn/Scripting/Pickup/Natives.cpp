@@ -25,10 +25,21 @@ SCRIPT_API(CreatePickup, int(int model, int type, Vector3 position, int virtualW
 	IPickupsComponent* component = PawnManager::Get()->pickups;
 	if (component)
 	{
+		int id = component->reserveLegacyID();
+		if (id == INVALID_PICKUP_ID)
+		{
+			return INVALID_PICKUP_ID;
+		}
+
 		IPickup* pickup = component->create(model, type, position, virtualWorld, false);
 		if (pickup)
 		{
-			return pickup->getID();
+			component->setLegacyID(id, pickup->getID());
+			return id;
+		}
+		else
+		{
+			component->releaseLegacyID(id);
 		}
 	}
 	return INVALID_PICKUP_ID;
@@ -39,34 +50,45 @@ SCRIPT_API(AddStaticPickup, bool(int model, int type, Vector3 position, int virt
 	IPickupsComponent* component = PawnManager::Get()->pickups;
 	if (component)
 	{
+		int id = component->reserveLegacyID();
+		if (id == INVALID_PICKUP_ID)
+		{
+			return INVALID_PICKUP_ID;
+		}
+
 		IPickup* pickup = component->create(model, type, position, virtualWorld, true);
 		if (pickup)
 		{
+			component->setLegacyID(id, pickup->getID());
+			return true;
+		}
+		else
+		{
+			component->releaseLegacyID(id);
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(DestroyPickup, bool(cell legacyid))
+{
+	IPickupsComponent* component = PawnManager::Get()->pickups;
+	if (component)
+	{
+		int realid = component->fromLegacyID(legacyid);
+		if (realid)
+		{
+			component->release(realid);
+			component->releaseLegacyID(legacyid);
 			return true;
 		}
 	}
 	return false;
 }
 
-SCRIPT_API(DestroyPickup, bool(cell pickupid))
-{
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	IPickupsComponent* component = PawnManager::Get()->pickups;
-	if (!component)
-	{
-		return false;
-	}
-	component->release(pickup.getID());
-	return true;
-}
-
 SCRIPT_API(IsValidPickup, bool(cell pickupid))
 {
-	return TryGetPickup(pickupid) != nullptr
+	return TryGetPickup(pickupid) != nullptr;
 }
 
 SCRIPT_API(IsPickupStreamedIn, bool(IPlayer& player, cell pickupid))
