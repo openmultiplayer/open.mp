@@ -96,7 +96,7 @@ class PickupsComponent final : public IPickupsComponent, public PlayerEventHandl
 {
 private:
 	ICore* core = nullptr;
-	constexpr static const size_t Lower = 0;
+	constexpr static const size_t Lower = 1;
 	constexpr static const size_t Upper = PICKUP_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + Lower;
 
 	MarkedPoolStorage<Pickup, IPickup, Lower, Upper> storage;
