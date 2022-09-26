@@ -23,7 +23,7 @@ private:
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> hiddenFor_;
 	PickupType type;
 	bool isStatic_;
-	IPlayer* legacyPerPlayer_;
+	IPlayer* legacyPerPlayer_ = nullptr;
 
 	void restream()
 	{
@@ -36,19 +36,34 @@ private:
 
 	void streamInForClient(IPlayer& player)
 	{
-		NetCode::RPC::PlayerCreatePickup createPickupRPC;
-		createPickupRPC.PickupID = poolID;
-		createPickupRPC.Model = modelId;
-		createPickupRPC.Type = type;
-		createPickupRPC.Position = pos;
-		PacketHelper::send(createPickupRPC, player);
+		auto data = queryExtension<IPlayerPickupData>(player);
+		int id = data->toClientID(poolID);
+		if (id == INVALID_GANG_ZONE_ID)
+		{
+			id = data->reserveClientID();
+		}
+		if (id != INVALID_PICKUP_ID)
+		{
+			NetCode::RPC::PlayerCreatePickup createPickupRPC;
+			createPickupRPC.PickupID = id;
+			createPickupRPC.Model = modelId;
+			createPickupRPC.Type = type;
+			createPickupRPC.Position = pos;
+			PacketHelper::send(createPickupRPC, player);
+		}
 	}
 
 	void streamOutForClient(IPlayer& player)
 	{
-		NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
-		destroyPickupRPC.PickupID = poolID;
-		PacketHelper::send(destroyPickupRPC, player);
+		auto data = queryExtension<IPlayerPickupData>(player);
+		int id = data->toClientID(poolID);
+		if (id != INVALID_PICKUP_ID)
+		{
+			data->releaseClientID(id);
+			NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
+			destroyPickupRPC.PickupID = id;
+			PacketHelper::send(destroyPickupRPC, player);
+		}
 	}
 
 public:

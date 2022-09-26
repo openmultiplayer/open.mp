@@ -23,7 +23,7 @@ private:
 	StaticArray<Colour, PLAYER_POOL_SIZE> flashColorForPlayer_;
 	StaticArray<Colour, PLAYER_POOL_SIZE> colorForPlayer_;
 	StaticBitset<PLAYER_POOL_SIZE> playersInside_;
-	IPlayer* legacyPerPlayer_;
+	IPlayer* legacyPerPlayer_ = nullptr;
 
 	void restream()
 	{
