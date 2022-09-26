@@ -13,6 +13,7 @@
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
+#include <queue>
 
 using namespace Impl;
 
@@ -67,10 +68,26 @@ private:
 	StaticArray<IPlayerTextDraw*, MAX_GAMETEXT_STYLES> gts_;
 	StaticArray<ITimer*, MAX_GAMETEXT_STYLES> gtTimers_;
 
-	void MoneyTimer()
+	struct ReapplyAnimationData
 	{
-		player_.setMoney(money_);
-	}
+		// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
+		// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
+		// We also remove these pointers if a second animation is applied to this target before the
+		// first one has been re-shown, to ensure that we don't get the following case:
+		//
+		//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
+		//    2) Loaded library is then applied to actor 1.  No timer set.
+		//    3) Timer expires and out-of-date animation is re-applied to actor 1.
+		//
+		// By blanking the pointers when new animations are applied we still ensure that the
+		// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
+		// ensure that the latest animation is never accidentally wiped out.
+		IPlayer* player;
+		IActor* actor;
+		AnimationData animation;
+	};
+	
+	std::deque<ReapplyAnimationData> animationToReapply_;
 
 	void GameTextTimer(int style)
 	{
@@ -105,30 +122,11 @@ private:
 		}
 	} libraries_;
 	
-	struct ReapplyAnimationData
-	{
-		// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
-		// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
-		// We also remove these pointers if a second animation is applied to this target before the
-		// first one has been re-shown, to ensure that we don't get the following case:
-		//
-		//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
-		//    2) Loaded library is then applied to actor 1.  No timer set.
-		//    3) Timer expires and out-of-date animation is re-applied to actor 1.
-		//
-		// By blanking the pointers when new animations are applied we still ensure that the
-		// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
-		// ensure that the latest animation is never accidentally wiped out.
-		IActor* actor;
-		IPlayer* player;
-		AnimationData animation;
-	};
-
-	void reapplyOneAnimation()
+	void AnimationTimer()
 	{
 		// Pop the next animation off the queue.
-		ReapplyAnimationData
-			next;
+		ReapplyAnimationData const&
+			next = animationToReapply_.front();
 		if (next.player)
 		{
 			// This could be ourselves, or another player, doesn't matter.  There's no need to
@@ -151,6 +149,12 @@ private:
 		// Always mark the library as now loaded, because it was shown at least one in the past,
 		// even if we didn't need to re-show it now.
 		libraries_.Saw(next.animation.lib);
+		animationToReapply_.pop_front();
+	}
+
+	void MoneyTimer()
+	{
+		player_.setMoney(money_);
 	}
 
 public:
@@ -552,6 +556,41 @@ public:
 				gts_[style] = nullptr;
 				gtTimers_[style] = nullptr;
 	}
+		}
+	}
+
+	void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData* animation) override
+	{
+		// Remove all old references to these targets.
+		if (player)
+		{
+			for (auto& anim : animationToReapply_)
+			{
+				if (anim.player == player)
+				{
+					anim.player = nullptr;
+				}
+			}
+		}
+		if (actor)
+		{
+			for (auto& anim : animationToReapply_)
+			{
+				if (anim.actor == actor)
+				{
+					anim.actor = nullptr;
+				}
+			}
+		}
+		// Otherwise was purely used to mark a target as now gone.
+		if (animation)
+		{
+			// Create a new reapplication.
+			if (!libraries_.Saw(animation->lib))
+			{
+				animationToReapply_.push_back({ player, actor, *animation });
+				timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::AnimationTimer, this)), Milliseconds(500), false);
+			}
 		}
 	}
 
