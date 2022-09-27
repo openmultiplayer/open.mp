@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(OMP-SDK LANGUAGES C CXX VERSION 0.0.1)
+project(OMP-SDK LANGUAGES CXX DESCRIPTION "Stable classes to write open.mp components with" VERSION 1)
 
 # Conan third-party libraries
 include(lib/cmake-conan/conan.cmake)
