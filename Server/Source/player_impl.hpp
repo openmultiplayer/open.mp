@@ -15,6 +15,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
 #include <events.hpp>
 #include <glm/glm.hpp>
 #include <netcode.hpp>
@@ -705,10 +706,27 @@ private:
 		if (syncType == PlayerAnimationSyncType_NoSync)
 		{
 			PacketHelper::send(applyPlayerAnimationRPC, *this);
+			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+			{
+				data->fixAnimationLibrary(this, nullptr, &animation);
+			}
 		}
 		else
 		{
-			PacketHelper::broadcastToStreamed(applyPlayerAnimationRPC, *this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
+			bool skipFrom = syncType == PlayerAnimationSyncType_SyncOthers;
+			// Inlined `broadcastToStreamed`, so we can apply fixes in the loop too.
+			for (IPlayer* player : streamedForPlayers())
+			{
+				if (skipFrom && player == this)
+				{
+					continue;
+				}
+				PacketHelper::send(applyPlayerAnimationRPC, *player);
+				if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*player))
+				{
+					data->fixAnimationLibrary(this, nullptr, &animation);
+				}
+			}
 		}
 	}
 
