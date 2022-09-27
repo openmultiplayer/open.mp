@@ -65,7 +65,7 @@ jobs:
         if: always()
         run: |
           rm -rf ./Network/*
-          mv -f ./Server/Shared/Network ./Network
+          mv -f ./Server/Shared/Network/* ./Network
           cd Network
           git config user.name open.mp
           git config user.email open.mp@github.com
