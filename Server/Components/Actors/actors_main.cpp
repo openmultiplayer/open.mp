@@ -7,6 +7,7 @@
  */
 
 #include "actor.hpp"
+#include <Server/Components/Fixes/fixes.hpp>
 
 class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
@@ -157,6 +158,14 @@ public:
 		{
 			static_cast<Actor*>(ptr)->destream();
 			storage.release(index, false);
+			for (auto const& p : players->entries())
+			{
+				if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*p))
+				{
+					// Remove any references to this actor from animation library loads.
+					data->fixAnimationLibrary(nullptr, ptr, nullptr);
+				}
+			}
 		}
 	}
 
