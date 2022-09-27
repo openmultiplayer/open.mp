@@ -708,7 +708,7 @@ private:
 			PacketHelper::send(applyPlayerAnimationRPC, *this);
 			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
 			{
-				data->fixAnimationLibrary(this, nullptr, &animation);
+				data->applyAnimation(this, nullptr, &animation);
 			}
 		}
 		else

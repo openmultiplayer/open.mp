@@ -57,6 +57,27 @@ static bool validateGameText(StringView& message, Milliseconds time, int style)
 	return true;
 }
 
+struct ReapplyAnimationData
+{
+	IPlayer* whom;
+	// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
+	// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
+	// We also remove these pointers if a second animation is applied to this target before the
+	// first one has been re-shown, to ensure that we don't get the following case:
+	//
+	//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
+	//    2) Loaded library is then applied to actor 1.  No timer set.
+	//    3) Timer expires and out-of-date animation is re-applied to actor 1.
+	//
+	// By blanking the pointers when new animations are applied we still ensure that the
+	// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
+	// ensure that the latest animation is never accidentally wiped out.
+	IPlayer* player;
+	IActor* actor;
+	AnimationData animation;
+	ITimer* timer;
+};
+
 class PlayerFixesData final : public IPlayerFixesData
 {
 private:
@@ -67,27 +88,7 @@ private:
 	int money_ = 0;
 	StaticArray<IPlayerTextDraw*, MAX_GAMETEXT_STYLES> gts_;
 	StaticArray<ITimer*, MAX_GAMETEXT_STYLES> gtTimers_;
-
-	struct ReapplyAnimationData
-	{
-		// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
-		// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
-		// We also remove these pointers if a second animation is applied to this target before the
-		// first one has been re-shown, to ensure that we don't get the following case:
-		//
-		//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
-		//    2) Loaded library is then applied to actor 1.  No timer set.
-		//    3) Timer expires and out-of-date animation is re-applied to actor 1.
-		//
-		// By blanking the pointers when new animations are applied we still ensure that the
-		// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
-		// ensure that the latest animation is never accidentally wiped out.
-		IPlayer* player;
-		IActor* actor;
-		AnimationData animation;
-	};
-	
-	std::deque<ReapplyAnimationData> animationToReapply_;
+	inline static std::deque<ReapplyAnimationData> animationToReapply_ {};
 
 	void GameTextTimer(int style)
 	{
@@ -103,25 +104,20 @@ private:
 	// TODO: There are so many ways to make this code smaller and faster.  Thus I've just abstracted
 	// recording which animation libraries are loaded to this inner class.  Feel free to replace it
 	// with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
-	class
-	{
-	private:
-		FlatHashSet<size_t> libraries_;
+	FlatHashSet<size_t> libraries_;
 
-	public:
-		void See(StringView const lib)
-		{
-			size_t hash = std::hash<StringView>{}(lib);
-			libraries_.insert(hash);
-		}
-		
-		bool Saw(StringView const lib) const
-		{
-			size_t hash = std::hash<StringView>{}(lib);
-			return libraries_.find(hash) != libraries_.end();
-		}
-	} libraries_;
-	
+	void See(StringView const lib)
+	{
+		size_t hash = std::hash<StringView>{}(lib);
+		libraries_.insert(hash);
+	}
+
+	bool Saw(StringView const lib) const
+	{
+		size_t hash = std::hash<StringView>{}(lib);
+		return libraries_.find(hash) != libraries_.end();
+	}
+
 	void AnimationTimer()
 	{
 		// Pop the next animation off the queue.
@@ -148,7 +144,7 @@ private:
 		}*/
 		// Always mark the library as now loaded, because it was shown at least one in the past,
 		// even if we didn't need to re-show it now.
-		libraries_.Saw(next.animation.lib);
+		See(next.animation.lib);
 		animationToReapply_.pop_front();
 	}
 
@@ -156,6 +152,8 @@ private:
 	{
 		player_.setMoney(money_);
 	}
+
+	friend class FixesComponent;
 
 public:
 	void freeExtension() override
@@ -555,52 +553,21 @@ public:
 				tds_->release(gts_[style]->getID());
 				gts_[style] = nullptr;
 				gtTimers_[style] = nullptr;
-	}
-		}
-	}
-
-	void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData const* animation) override
-	{
-		// Remove all old references to these targets.
-		if (player)
-		{
-			for (auto& anim : animationToReapply_)
-			{
-				if (anim.player == player)
-				{
-					anim.player = nullptr;
-				}
 			}
 		}
-		if (actor)
+		// Kill all animation timers for this player.
+		for (auto& anim : animationToReapply_)
 		{
-			for (auto& anim : animationToReapply_)
+			if (anim.whom == &player_)
 			{
-				if (anim.actor == actor)
-				{
-					anim.actor = nullptr;
-				}
-			}
-		}
-		// Otherwise was purely used to mark a target as now gone.
-		if (animation)
-		{
-			// Create a new reapplication.
-			if (!libraries_.Saw(animation->lib))
-			{
-				animationToReapply_.push_back({ player, actor, *animation });
-				timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::AnimationTimer, this)), Milliseconds(500), false);
+				anim.timer->kill();
 			}
 		}
 	}
 
 	~PlayerFixesData()
 	{
-		if (moneyTimer_)
-		{
-			moneyTimer_->kill();
-			moneyTimer_ = nullptr;
-		}
+		reset();
 	}
 };
 
@@ -766,6 +733,49 @@ public:
 		// Always just return `true`.  What else should we return if half the
 		// shows succeeded and half don't?
 		return true;
+	}
+
+	void applyAnimation(IPlayer& whom, IPlayer* player, IActor* actor, AnimationData const* animation) override
+	{
+		// Otherwise was purely used to mark a target as now gone.
+		if (PlayerFixesData* data = queryExtension<PlayerFixesData>(whom))
+		{
+			// Create a new reapplication.
+			if (!data->Saw(animation->lib))
+			{
+				PlayerFixesData::animationToReapply_.push_back({
+					&whom,
+					player,
+					actor,
+					*animation,
+					timers_->create(new SimpleTimerHandler(std::bind(&PlayerFixesData::AnimationTimer, data)), Milliseconds(500), false),
+				});
+			}
+		}
+	}
+
+	void clearAnimation(IPlayer* player, IActor* actor)
+	{
+		if (player)
+		{
+			for (auto& anim : PlayerFixesData::animationToReapply_)
+			{
+				if (anim.player == player)
+				{
+					anim.player = nullptr;
+				}
+			}
+		}
+		if (actor)
+		{
+			for (auto& anim : PlayerFixesData::animationToReapply_)
+			{
+				if (anim.actor == actor)
+				{
+					anim.actor = nullptr;
+				}
+			}
+		}
 	}
 };
 
