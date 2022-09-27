@@ -11,7 +11,7 @@ function(add_server_component name)
 
 	target_link_libraries(${PROJECT_NAME} PRIVATE
 		OMP-SDK
-		NetCode
+		OMP-NetCode
 	)
 
 	target_compile_definitions(${PROJECT_NAME} PRIVATE
