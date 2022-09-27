@@ -29,6 +29,7 @@ jobs:
 
       - name: Update SDK files from server repository
         if: always()
+        shell: bash
         run: |
           rm -rf ./SDK/include/*
           mv -f ./Server/SDK/include ./SDK
@@ -36,8 +37,8 @@ jobs:
           git config user.name open.mp
           git config user.email open.mp@github.com
           git add .
-          git commit -m "Update SDK" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}"
-          git push
+          git commit -m "Update SDK" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}" || true
+          git push || true
 
   update-network:
     runs-on: ubuntu-latest
@@ -62,6 +63,7 @@ jobs:
 
       - name: Update Network files from server repository
         if: always()
+        shell: bash
         run: |
           rm -rf ./Network/*
           mv -f ./Server/Shared/Network/* ./Network
@@ -69,5 +71,5 @@ jobs:
           git config user.name open.mp
           git config user.email open.mp@github.com
           git add .
-          git commit -m "Update Network" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}"
-          git push
+          git commit -m "Update Network" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}" || true
+          git push || true
