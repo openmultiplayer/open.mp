@@ -133,6 +133,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool kicked_;
 	bool* allAnimationLibraries_;
 
+	IFixesComponent* fixesComponent_;
+
 	void clearExtensions()
 	{
 		freeExtensions();
@@ -194,7 +196,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
-	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries)
+	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, IFixesComponent* fixesComponent)
 		: pool_(pool)
 		, netData_(netData)
 		, version_(params.version)
@@ -248,6 +250,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, lastScoresAndPings_(Time::now())
 		, kicked_(false)
 		, allAnimationLibraries_(allAnimationLibraries)
+		, fixesComponent_(fixesComponent)
 	{
 		weapons_.fill({ 0, 0 });
 		skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -724,7 +727,7 @@ private:
 				PacketHelper::send(applyPlayerAnimationRPC, *player);
 				if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*player))
 				{
-					data->fixAnimationLibrary(this, nullptr, &animation);
+					data->applyAnimation(this, nullptr, &animation);
 				}
 			}
 		}
@@ -737,11 +740,19 @@ public:
 		{
 			return;
 		}
+		if (fixesComponent_)
+		{
+			fixesComponent_->clearAnimation(this, nullptr);
+		}
 		applyAnimationImpl(animation, syncType);
 	}
 
 	void clearTasks(PlayerAnimationSyncType syncType) override
 	{
+		if (fixesComponent_)
+		{
+			fixesComponent_->clearAnimation(this, nullptr);
+		}
 		NetCode::RPC::ClearPlayerTasks clearPlayerTasksRPC;
 		clearPlayerTasksRPC.PlayerID = poolID;
 
@@ -757,7 +768,6 @@ public:
 		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
 		if (!data || !data->getVehicle())
 		{
-
 			// TODO: This must be fixed on client side
 			// *
 			// *     <problem>
@@ -791,6 +801,10 @@ public:
 
 		if (data && data->getVehicle())
 		{
+			if (fixesComponent_)
+			{
+				fixesComponent_->clearAnimation(this, nullptr);
+			}
 			// TODO: This must be fixed on client side
 			// *
 			// *     <problem>

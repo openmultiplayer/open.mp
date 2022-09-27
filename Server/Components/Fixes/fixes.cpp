@@ -17,6 +17,8 @@
 
 using namespace Impl;
 
+class PlayerFixesData;
+
 static bool validateGameText(StringView& message, Milliseconds time, int style)
 {
 	// ALL styles are recreated here, since even native ones are broken.
@@ -59,7 +61,7 @@ static bool validateGameText(StringView& message, Milliseconds time, int style)
 
 struct ReapplyAnimationData
 {
-	IPlayer* whom;
+	PlayerFixesData* data;
 	// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
 	// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
 	// We also remove these pointers if a second animation is applied to this target before the
@@ -102,8 +104,8 @@ private:
 	}
 
 	// TODO: There are so many ways to make this code smaller and faster.  Thus I've just abstracted
-	// recording which animation libraries are loaded to this inner class.  Feel free to replace it
-	// with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
+	// recording which animation libraries are loaded to these two functions.  Feel free to replace
+	// them with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
 	FlatHashSet<size_t> libraries_;
 
 	void See(StringView const lib)
@@ -118,33 +120,37 @@ private:
 		return libraries_.find(hash) != libraries_.end();
 	}
 
-	void AnimationTimer()
+	static void AnimationTimer()
 	{
 		// Pop the next animation off the queue.
 		ReapplyAnimationData const&
 			next = animationToReapply_.front();
-		if (next.player)
+		// Only timer for a disconnected player.
+		if (next.data)
 		{
-			// This could be ourselves, or another player, doesn't matter.  There's no need to
-			// check the stream type because if this needs fixing it was sent to this player earlier
-			// by whatever the sync type was back then.
-			NetCode::RPC::ApplyPlayerAnimation RPC(next.animation);
-			RPC.PlayerID = next.player->getID();
-			PacketHelper::send(RPC, player_);
+			if (next.player)
+			{
+				// This could be ourselves, or another player, doesn't matter.  There's no need to
+				// check the stream type because if this needs fixing it was sent to this player
+				// earlier by whatever the sync type was back then.
+				NetCode::RPC::ApplyPlayerAnimation RPC(next.animation);
+				RPC.PlayerID = next.player->getID();
+				PacketHelper::send(RPC, next.data->player_);
+			}
+			else if (next.actor)
+			{
+				NetCode::RPC::ApplyActorAnimationForPlayer RPC(next.animation);
+				RPC.ActorID = next.actor->getID();
+				PacketHelper::send(RPC, next.data->player_);
+			}
+			/*else
+			{
+				// They can both be false if the target left during the delay timer.
+			}*/
+			// Always mark the library as now loaded, because it was shown at least one in the past,
+			// even if we didn't need to re-show it now.
+			next.data->See(next.animation.lib);
 		}
-		else if (next.actor)
-		{
-			NetCode::RPC::ApplyActorAnimationForPlayer RPC(next.animation);
-			RPC.ActorID = next.actor->getID();
-			PacketHelper::send(RPC, player_);
-		}
-		/*else
-		{
-			// They can both be false if the target left during the delay timer.
-		}*/
-		// Always mark the library as now loaded, because it was shown at least one in the past,
-		// even if we didn't need to re-show it now.
-		See(next.animation.lib);
 		animationToReapply_.pop_front();
 	}
 
@@ -564,10 +570,29 @@ public:
 		// Kill all animation timers for this player.
 		for (auto& anim : animationToReapply_)
 		{
-			if (anim.whom == &player_)
+			if (anim.data == this)
 			{
-				anim.timer->kill();
+				anim.data = nullptr;
 			}
+			if (anim.player == &player_)
+			{
+				anim.player = nullptr;
+			}
+		}
+	}
+
+	void applyAnimation(IPlayer* player, IActor* actor, AnimationData const* animation) override
+	{
+		// Create a new reapplication.
+		if (!Saw(animation->lib))
+		{
+			PlayerFixesData::animationToReapply_.push_back({
+				this,
+				player,
+				actor,
+				*animation,
+				timers_.create(new SimpleTimerHandler(&PlayerFixesData::AnimationTimer), Milliseconds(500), false),
+			});
 		}
 	}
 
@@ -741,26 +766,7 @@ public:
 		return true;
 	}
 
-	void applyAnimation(IPlayer& whom, IPlayer* player, IActor* actor, AnimationData const* animation) override
-	{
-		// Otherwise was purely used to mark a target as now gone.
-		if (PlayerFixesData* data = queryExtension<PlayerFixesData>(whom))
-		{
-			// Create a new reapplication.
-			if (!data->Saw(animation->lib))
-			{
-				PlayerFixesData::animationToReapply_.push_back({
-					&whom,
-					player,
-					actor,
-					*animation,
-					timers_->create(new SimpleTimerHandler(std::bind(&PlayerFixesData::AnimationTimer, data)), Milliseconds(500), false),
-				});
-			}
-		}
-	}
-
-	void clearAnimation(IPlayer* player, IActor* actor)
+	void clearAnimation(IPlayer* player, IActor* actor) override
 	{
 		if (player)
 		{

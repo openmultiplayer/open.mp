@@ -24,6 +24,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	IActorsComponent* actorsComponent = nullptr;
 	IFixesComponent* fixesComponent = nullptr;
 	ICustomModelsComponent* modelsComponent = nullptr;
+	IFixesComponent* fixesComponent_ = nullptr;
 	StreamConfigHelper streamConfigHelper;
 	int* markersShow;
 	int* markersUpdateRate;
@@ -1489,7 +1490,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"));
+		Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"), fixesComponent_);
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
@@ -1596,11 +1597,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (it != other->othersColours_.end())
 			{
 				other->othersColours_.erase(it);
-			}
-			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*p))
-			{
-				// Remove any references to this player from animation library loads.
-				data->fixAnimationLibrary(&player, nullptr, nullptr);
 			}
 		}
 
