@@ -18,6 +18,7 @@ private:
 	IPlayerPool* players;
 	StreamConfigHelper streamConfigHelper;
 	ICustomModelsComponent* modelsComponent = nullptr;
+	IFixesComponent* fixesComponent_ = nullptr;
 
 	struct PlayerDamageActorEventHandler : public SingleNetworkInEventHandler
 	{
@@ -96,6 +97,7 @@ public:
 	void onInit(IComponentList* components) override
 	{
 		modelsComponent = components->queryComponent<ICustomModelsComponent>();
+		fixesComponent_ = components->queryComponent<IFixesComponent>();
 	}
 
 	void onFree(IComponent* component) override
@@ -103,6 +105,10 @@ public:
 		if (component == modelsComponent)
 		{
 			modelsComponent = nullptr;
+		}
+		if (component == fixesComponent_)
+		{
+			fixesComponent_ = nullptr;
 		}
 	}
 
@@ -133,7 +139,7 @@ public:
 
 	IActor* create(int skin, Vector3 pos, float angle) override
 	{
-		return storage.emplace(skin, pos, angle, core->getConfig().getBool("game.use_all_animations"), modelsComponent);
+		return storage.emplace(skin, pos, angle, core->getConfig().getBool("game.use_all_animations"), modelsComponent, fixesComponent_);
 	}
 
 	void free() override
@@ -158,13 +164,9 @@ public:
 		{
 			static_cast<Actor*>(ptr)->destream();
 			storage.release(index, false);
-			for (auto const& p : players->entries())
+			if (fixesComponent_)
 			{
-				if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*p))
-				{
-					// Remove any references to this actor from animation library loads.
-					data->fixAnimationLibrary(nullptr, ptr, nullptr);
-				}
+				fixesComponent_->clearAnimation(nullptr, ptr);
 			}
 		}
 	}
