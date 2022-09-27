@@ -1597,6 +1597,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				other->othersColours_.erase(it);
 			}
+			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*p))
+			{
+				// Remove any references to this player from animation library loads.
+				data->fixAnimationLibrary(&player, nullptr, nullptr);
+			}
 		}
 
 		eventDispatcher.dispatch(&PlayerEventHandler::onPlayerDisconnect, peer, reason);

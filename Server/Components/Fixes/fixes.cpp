@@ -559,7 +559,7 @@ public:
 		}
 	}
 
-	void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData* animation) override
+	void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData const* animation) override
 	{
 		// Remove all old references to these targets.
 		if (player)

@@ -13,7 +13,7 @@
 static const UID FixesData_UID = UID(0x672d5d6fbb094ef7);
 struct IPlayerFixesData : public IExtension
 {
-	virtual void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData* animation) = 0;
+	virtual void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData const* animation) = 0;
 	PROVIDE_EXT_UID(FixesData_UID);
 
 	virtual bool sendGameText(StringView message, Milliseconds time, int style) = 0;
