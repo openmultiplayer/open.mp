@@ -270,6 +270,8 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	velocity = trailerSync.Velocity;
 	angularVelocity = trailerSync.TurnVelocity;
 
+	updateOccupied();
+
 	PlayerVehicleData* playerData = queryExtension<PlayerVehicleData>(player);
 	Vehicle* vehicle = static_cast<Vehicle*>(playerData->getVehicle());
 
