@@ -31,6 +31,23 @@ struct PawnTimerImpl : public Singleton<PawnTimerImpl> {
         return false;
     }
 
+    bool isValidTimer(int id)
+    {
+        return pool.find(id) != pool.end();
+    }
+
+    bool getRemainingTime(int id, Milliseconds& time)
+    {
+        auto res = pool.find(id);
+        if (res == pool.end()) {
+            return false;
+        }
+
+        ITimer* timer = res->second;
+        time = timer->remaining();
+        return true;
+    }
+
     void killTimers(AMX* amx);
 
 private:

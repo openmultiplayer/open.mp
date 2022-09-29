@@ -396,6 +396,8 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
     script.Register("SetTimer", &utils::pawn_settimer);
     script.Register("SetTimerEx", &utils::pawn_settimerex);
     script.Register("KillTimer", &utils::pawn_killtimer);
+    script.Register("IsValidTimer", &utils::pawn_IsValidTimer);
+    script.Register("GetTimerRemainingTime", &utils::pawn_GetTimerRemainingTime);
     script.Register("SetModeRestartTime", &utils::pawn_SetModeRestartTime);
     script.Register("GetModeRestartTime", &utils::pawn_GetModeRestartTime);
 
