@@ -87,11 +87,21 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 		PacketHelper::send(plateRPC, player);
 	}
 
-	if (tower && !towing)
-	{
+	// Attempt to attach trailer to tower if both vehicles are streamed in.
+	// We are streaming in the trailer. Check if tower is streamed.
+	if (!towing && tower && tower->isStreamedInForPlayer(player)) {
 		NetCode::RPC::AttachTrailer trailerRPC;
 		trailerRPC.TrailerID = poolID;
 		trailerRPC.VehicleID = tower->poolID;
+		PacketHelper::send(trailerRPC, player);
+	}
+
+	// We are streaming in the tower. Check if trailer is streamed.
+	if (towing && trailer && trailer->isStreamedInForPlayer(player))
+	{
+		NetCode::RPC::AttachTrailer trailerRPC;
+		trailerRPC.TrailerID = trailer->poolID;
+		trailerRPC.VehicleID = poolID;
 		PacketHelper::send(trailerRPC, player);
 	}
 
