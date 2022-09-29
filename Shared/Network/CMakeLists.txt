@@ -10,5 +10,3 @@ file(GLOB_RECURSE network_source_list "*.cpp" "*.hpp")
 
 set_property(TARGET OMP-Network PROPERTY SOURCES ${network_source_list})
 set_property(TARGET OMP-Network PROPERTY POSITION_INDEPENDENT_CODE ON)
-
-GroupSourcesByFolder(OMP-Network)
