@@ -74,8 +74,8 @@ private:
                         StringView rconPassword = self.core->getConfig().getString("rcon.password");
                         bool success = false;
 
-                        if (rconPassword == "") {
-                            peer.sendClientMessage(Colour::White(), "SERVER: Server's rcon_password is empty.");
+                        if (rconPassword == "" || rconPassword == "changeme") {
+                            peer.sendClientMessage(Colour::White(), "SERVER: Server's rcon_password is empty or default one. Unable to login.");
                             success = false;
                         } else {
                             if (password == rconPassword) {
@@ -158,15 +158,14 @@ public:
 
     void onReady() override
     {
-        // Server without a config file has rcon.password empty so we disable rcon manually too.
-        if (core->getConfig().getString("rcon.password") == "") {
-            static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", false);
-        }
+        auto password = core->getConfig().getString("rcon.password");
+        auto enabled = core->getConfig().getBool("rcon.enable");
 
-        // Server exit server if rcon_password is set to changeme
-        if (core->getConfig().getString("rcon.password") == "changeme") {
-            core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password. Please change your rcon password.");
-            send("exit");
+        // Disable rcon if password is empty or default one.
+        if (password == "" || password == "changeme") {
+            *enabled = false;
+            core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password. RCON disabled.");
+            core->updateNetworks();
         }
     }
 
