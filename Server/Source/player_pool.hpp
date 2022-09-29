@@ -29,7 +29,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
     float* markersLimitRadius;
     int* gameTimeUpdateRate;
     int maxBots = 0;
-    std::array<bool, 256> allowNickCharacter;
+    StaticArray<bool, 256> allowNickCharacter;
 
     struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler {
         PlayerPool& self;
@@ -40,22 +40,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
-            Player& player = static_cast<Player&>(peer);
-
             PlayerState state = peer.getState();
             if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)) {
                 return false;
             }
 
-            player.toSpawn_ = self.eventDispatcher.stopAtFalse(
-                [&peer](PlayerEventHandler* handler) {
-                    return handler->onPlayerRequestSpawn(peer);
-                });
-
             NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
-            playerRequestSpawnResponse.Allow = player.toSpawn_;
-            PacketHelper::send(playerRequestSpawnResponse, peer);
+            playerRequestSpawnResponse.Allow = self.eventDispatcher.stopAtFalse([&peer](PlayerEventHandler* handler) {
+                return handler->onPlayerRequestSpawn(peer);
+            });
 
+            PacketHelper::send(playerRequestSpawnResponse, peer);
             return true;
         }
     } playerRequestSpawnRPCHandler;
