@@ -187,6 +187,23 @@ inline cell AMX_NATIVE_CALL pawn_killtimer(AMX* amx, cell const* params)
 	return PawnTimerImpl::Get()->killTimer(params[1]);
 }
 
+inline cell AMX_NATIVE_CALL pawn_IsValidTimer(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("IsValidTimer", params, 1);
+	return PawnTimerImpl::Get()->isValidTimer(params[1]);
+}
+
+inline cell AMX_NATIVE_CALL pawn_GetTimerRemainingTime(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("GetTimerRemainingTime", params, 1);
+	Milliseconds timeLeft;
+	if (!PawnTimerImpl::Get()->getRemainingTime(params[1], timeLeft))
+	{
+		return -1;
+	}
+	return timeLeft.count();
+}
+
 inline cell AMX_NATIVE_CALL pawn_SetModeRestartTime(AMX* amx, cell const* params)
 {
 	AMX_CHECK_PARAMETERS("SetModeRestartTime", params, 1);

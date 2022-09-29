@@ -888,3 +888,8 @@ SCRIPT_API(GetRunningTimers, int())
 	ITimersComponent* timers = PawnManager::Get()->timers;
 	return timers == nullptr ? 0 : timers->count();
 }
+
+SCRIPT_API(GetCountOfRunningTimers, int())
+{
+	return openmp_scripting::GetRunningTimers();
+}
