@@ -889,7 +889,7 @@ SCRIPT_API(GetRunningTimers, int())
 	return timers == nullptr ? 0 : timers->count();
 }
 
-SCRIPT_API(GetCountOfRunningTimers, int())
+SCRIPT_API(CountRunningTimers, int())
 {
 	return openmp_scripting::GetRunningTimers();
 }
