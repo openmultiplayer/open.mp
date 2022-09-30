@@ -1656,7 +1656,7 @@ public:
 		{
 			// Close the player again.
 			NetCode::RPC::PlayerClose RPC;
-			PacketHelper::broadcast(RPC, players);
+			PacketHelper::send(RPC, player);
 		}
 	}
 
