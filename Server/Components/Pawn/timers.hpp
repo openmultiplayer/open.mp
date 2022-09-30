@@ -20,32 +20,12 @@ struct PawnTimerImpl : public Singleton<PawnTimerImpl> {
     int setTimer(const char* callback, Milliseconds interval, bool repeating, AMX* amx);
     int setTimerEx(const char* callback, Milliseconds interval, bool repeating, const char* fmt, AMX* amx, const cell* params);
 
-    bool killTimer(int id)
+    ITimer* getTimer(int id) const
     {
-        auto res = pool.find(id);
-        if (res != pool.end()) {
-            ITimer* timer = res->second;
-            timer->kill();
-            return true;
+        if (const auto& res = pool.find(id); res != pool.end()) {
+            return res->second;
         }
-        return false;
-    }
-
-    bool isValidTimer(int id)
-    {
-        return pool.find(id) != pool.end();
-    }
-
-    bool getRemainingTime(int id, Milliseconds& time)
-    {
-        auto res = pool.find(id);
-        if (res == pool.end()) {
-            return false;
-        }
-
-        ITimer* timer = res->second;
-        time = timer->remaining();
-        return true;
+        return nullptr;
     }
 
     void killTimers(AMX* amx);

@@ -718,9 +718,7 @@ private:
 
         // Set up request
         httplib::Client request(domainStr.c_str());
-        request.set_default_headers({ 
-            { "User-Agent", "open.mp server" }
-        });
+        request.set_default_headers({ { "User-Agent", "open.mp server" } });
         request.enable_server_certificate_verification(true);
         request.set_follow_location(true);
         request.set_connection_timeout(Seconds(5));

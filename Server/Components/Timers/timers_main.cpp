@@ -99,7 +99,9 @@ public:
 
     const size_t count() const override
     {
-        return timers.size();
+        return std::count_if(timers.begin(), timers.end(), [](Timer* timer) {
+            return timer->running();
+        });
     }
 };
 
