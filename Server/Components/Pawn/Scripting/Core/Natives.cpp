@@ -198,6 +198,17 @@ SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 {
 	*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = allow;
+	if (!allow)
+	{
+		IPlayerPool* players = PawnManager::Get()->players;
+		for (IPlayer* player : players->entries())
+		{
+			if (player->getInterior())
+			{
+				player->resetWeapons();
+			}
+		}
+	}
 	return true;
 }
 
