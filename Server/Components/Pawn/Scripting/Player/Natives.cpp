@@ -1173,7 +1173,3 @@ SCRIPT_API(GetPlayerGhostMode, bool(IPlayer& player))
 	return player.isGhostModeEnabled();
 }
 
-SCRIPT_API(AllowPlayerInteriorWeapons, bool(IPlayer& player, bool allow))
-{
-	return player.isGhostModeEnabled();
-}
