@@ -189,6 +189,16 @@ SCRIPT_API(print, bool(const std::string& text))
 	return false;
 }
 
+SCRIPT_API(IsAdminTeleportAllowed, bool())
+{
+	return *PawnManager::Get()->config->getBool("rcon.allow_teleport");
+}
+
+SCRIPT_API(IsInteriorWeaponsAllowed, bool())
+{
+	return *PawnManager::Get()->config->getBool("game.allow_interior_weapons");
+}
+
 SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 {
 	*PawnManager::Get()->config->getBool("rcon.allow_teleport") = allow;
