@@ -26,4 +26,3 @@ struct PickupEvents : public PickupEventHandler, public Singleton<PickupEvents>
 		}
 	}
 };
-
