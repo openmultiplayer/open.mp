@@ -189,6 +189,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 						return false;
 					}
 				}
+				if (!from->hasEnabledWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
+				{
+					// They were shooting and shouldn't be.
+					return false;
+				}
 				self.eventDispatcher.dispatch(
 					&PlayerEventHandler::onPlayerTakeDamage,
 					peer,
@@ -207,6 +212,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				IPlayer& to = *other;
 				if (!to.isStreamedInForPlayer(peer))
 				{
+					return false;
+				}
+				if (!peer.hasEnabledWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
+				{
+					// They were shooting and shouldn't be.
 					return false;
 				}
 
@@ -247,6 +257,32 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (oldInterior == player.interior_)
 			{
 				return false;
+			}
+
+			if (!*self.core.getConfig().getBool("game.allow_interior_weapons"))
+			{
+				if (player.interior_)
+				{
+					// Moved inside.  Remove their weapons.
+					NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+					PacketHelper::send(resetWeaponsRPC, player);
+				}
+				else if (player.hasEnabledWeapons())
+				{
+					// Moved outside.  Give them their weapons back.
+					NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+					PacketHelper::send(resetWeaponsRPC, player);
+					for (auto& weapon : player.weapons_)
+					{
+						if (weapon.id)
+						{
+							NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+							givePlayerWeaponRPC.Weapon = weapon.id;
+							givePlayerWeaponRPC.Ammo = weapon.ammo;
+							PacketHelper::send(givePlayerWeaponRPC, player);
+						}
+					}
+				}
 			}
 
 			self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerInteriorChange, peer, player.interior_, oldInterior);
@@ -594,7 +630,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			player.rot_ = footSync.Rotation;
 			player.health_ = footSync.HealthArmour.x;
 			player.armour_ = footSync.HealthArmour.y;
-			player.armedWeapon_ = footSync.Weapon;
+			player.armedWeapon_ = player.hasEnabledWeapons() ? footSync.Weapon : 0;
 			player.velocity_ = footSync.Velocity;
 			player.animation_.ID = footSync.AnimationID;
 			player.animation_.flags = footSync.AnimationFlags;
@@ -833,6 +869,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false; // They're sending data for a weapon that doesn't shoot
 			}
+			else if (!player.hasEnabledWeapons())
+			{
+				// They're sending shot data when they should be unarmed.
+				return false;
+			}
 			else if (bulletSync.HitType == PlayerBulletHitType_Player)
 			{
 				if (player.poolID == bulletSync.HitID)
@@ -1021,7 +1062,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
 			player.armour_ = vehicleSync.PlayerHealthArmour.y;
-			player.armedWeapon_ = vehicleSync.WeaponID;
+			player.armedWeapon_ = player.hasEnabledWeapons() ? vehicleSync.WeaponID : 0;
 			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
 			uint32_t newKeys = vehicleSync.Keys;
@@ -1101,13 +1142,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
-			player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
-			player.targetActor_ = weaponsUpdatePacket.TargetActor;
-
-			for (auto i = 0u; i != weaponsUpdatePacket.WeaponDataCount; ++i)
+			if (player.hasEnabledWeapons())
 			{
-				const auto& data = weaponsUpdatePacket.WeaponData[i];
-				player.weapons_[data.first] = data.second;
+				// Only update their weapons if weapons are allowed.
+				player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
+				player.targetActor_ = weaponsUpdatePacket.TargetActor;
+
+				for (auto i = 0u; i != weaponsUpdatePacket.WeaponDataCount; ++i)
+				{
+					const auto& data = weaponsUpdatePacket.WeaponData[i];
+					player.weapons_[data.first] = data.second;
+				}
 			}
 
 			return true;
@@ -1267,7 +1312,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
-			player.armedWeapon_ = passengerSync.WeaponID;
+			player.armedWeapon_ = player.hasEnabledWeapons() ? passengerSync.WeaponID : 0;
 			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
@@ -1507,7 +1552,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"));
+		Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"), core.getConfig().getBool("game.allow_interior_weapons"));
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };

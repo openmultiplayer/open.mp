@@ -113,6 +113,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int gravity_;
 	bool ghostMode_;
 	int defaultObjectsRemoved_;
+	bool enableWeapons_ = true;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -131,6 +132,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	TimePoint lastScoresAndPings_;
 	bool kicked_;
 	bool* allAnimationLibraries_;
+	bool* allowInteriorWeapons_;
 
 	void clearExtensions()
 	{
@@ -193,7 +195,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
-	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries)
+	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, bool* allowInteriorWeapons)
 		: pool_(pool)
 		, netData_(netData)
 		, version_(params.version)
@@ -247,6 +249,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, lastScoresAndPings_(Time::now())
 		, kicked_(false)
 		, allAnimationLibraries_(allAnimationLibraries)
+		, allowInteriorWeapons_(allowInteriorWeapons)
 	{
 		weapons_.fill({ 0, 0 });
 		skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -1238,11 +1241,24 @@ public:
 
 	void giveWeapon(WeaponSlotData weapon) override
 	{
-		// Set from sync
-		NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
-		givePlayerWeaponRPC.Weapon = weapon.id;
-		givePlayerWeaponRPC.Ammo = weapon.ammo;
-		PacketHelper::send(givePlayerWeaponRPC, *this);
+		uint8_t slot = weapon.slot();
+		if (slot == INVALID_WEAPON_SLOT)
+		{
+			// Fail.
+		}
+		else if (hasEnabledWeapons())
+		{
+			// Set from sync
+			NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+			givePlayerWeaponRPC.Weapon = weapon.id;
+			givePlayerWeaponRPC.Ammo = weapon.ammo;
+			PacketHelper::send(givePlayerWeaponRPC, *this);
+		}
+		else
+		{
+			// We need to record this manually for later.
+			weapons_[slot] = weapon;
+		}
 	}
 
 	void removeWeapon(uint8_t weaponid) override
@@ -1254,29 +1270,51 @@ public:
 				weapon.id = 0;
 				weapon.ammo = 0;
 				// Yes.
-				goto removeWeapon_has_weapon;
+				if (hasEnabledWeapons())
+				{
+					goto removeWeapon_has_weapon;
+				}
+				return;
 			}
 		}
 		// Doesn't have the weapon.
 		return;
 removeWeapon_has_weapon:
-		resetWeapons();
+		NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+		PacketHelper::send(resetWeaponsRPC, *this);
 		for (auto& weapon : weapons_)
 		{
 			if (weapon.id)
 			{
-				giveWeapon(weapon);
+				NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+				givePlayerWeaponRPC.Weapon = weapon.id;
+				givePlayerWeaponRPC.Ammo = weapon.ammo;
+				PacketHelper::send(givePlayerWeaponRPC, *this);
 			}
 		}
 	}
 
-	void setWeaponAmmo(WeaponSlotData data) override
+	void setWeaponAmmo(WeaponSlotData weapon) override
 	{
 		// Set from sync
-		NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
-		setPlayerAmmoRPC.Weapon = data.id;
-		setPlayerAmmoRPC.Ammo = data.ammo;
-		PacketHelper::send(setPlayerAmmoRPC, *this);
+		uint8_t slot = weapon.slot();
+		if (slot == INVALID_WEAPON_SLOT)
+		{
+			// Fail.
+		}
+		else if (hasEnabledWeapons())
+		{
+			// Set from sync
+			NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
+			setPlayerAmmoRPC.Weapon = weapon.id;
+			setPlayerAmmoRPC.Ammo = weapon.ammo;
+			PacketHelper::send(setPlayerAmmoRPC, *this);
+		}
+		else
+		{
+			// We need to record this manually for later.
+			weapons_[slot] = weapon;
+		}
 	}
 
 	const WeaponSlots& getWeapons() const override
@@ -1309,18 +1347,29 @@ removeWeapon_has_weapon:
 	void setArmedWeapon(uint32_t weapon) override
 	{
 		// Set from sync
-		NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
-		setPlayerArmedWeaponRPC.Weapon = weapon;
-		PacketHelper::send(setPlayerArmedWeaponRPC, *this);
+		if (hasEnabledWeapons())
+		{
+			NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+			setPlayerArmedWeaponRPC.Weapon = weapon;
+			PacketHelper::send(setPlayerArmedWeaponRPC, *this);
+		}
 	}
 
 	uint32_t getArmedWeapon() const override
 	{
+		if (!hasEnabledWeapons())
+		{
+			return 0;
+		}
 		return armedWeapon_;
 	}
 
 	uint32_t getArmedWeaponAmmo() const override
 	{
+		if (!hasEnabledWeapons())
+		{
+			return 0;
+		}
 		WeaponSlotData weapon;
 		for (WeaponSlotData it : weapons_)
 		{
@@ -1563,5 +1612,46 @@ removeWeapon_has_weapon:
 	bool isGhostModeEnabled() const override
 	{
 		return ghostMode_;
+	}
+
+	void enableWeapons(bool enable) override
+	{
+		if (enable)
+		{
+			if (!enableWeapons_)
+			{
+				// Give the player all their weapons back.  Don't worry about the armed weapon.
+				enableWeapons_ = true;
+				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+				PacketHelper::send(resetWeaponsRPC, *this);
+				for (auto& weapon : weapons_)
+				{
+					if (weapon.id)
+					{
+						NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+						givePlayerWeaponRPC.Weapon = weapon.id;
+						givePlayerWeaponRPC.Ammo = weapon.ammo;
+						PacketHelper::send(givePlayerWeaponRPC, *this);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (enableWeapons_)
+			{
+				// If they are now not allowed weapons, remove all their weapons from them client-
+				// side.  We still track them server-side as if they had them (because they
+				// logically do), they are just banned from touching them.
+				enableWeapons_ = false;
+				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+				PacketHelper::send(resetWeaponsRPC, *this);
+			}
+		}
+	}
+
+	bool hasEnabledWeapons() const override
+	{
+		return enableWeapons_ && (*allowInteriorWeapons_ || interior_ == 0);
 	}
 };

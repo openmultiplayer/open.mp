@@ -847,6 +847,12 @@ struct IPlayer : public IExtensible, public IEntity
 
 	/// Clear player tasks
 	virtual void clearTasks(PlayerAnimationSyncType syncType) = 0;
+
+	/// Don't hide their weapons when in an interior
+	virtual void enableWeapons(bool allow) = 0;
+
+	/// Don't hide their weapons when in an interior
+	virtual bool hasEnabledWeapons() const = 0;
 };
 
 /// A player event handler
