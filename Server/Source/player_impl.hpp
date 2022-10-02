@@ -113,7 +113,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int gravity_;
 	bool ghostMode_;
 	int defaultObjectsRemoved_;
-	bool enableWeapons_ = true;
+	bool allowWeapons_ = true;
+	bool allowTeleport_ = true;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -1618,10 +1619,10 @@ removeWeapon_has_weapon:
 	{
 		if (enable)
 		{
-			if (!enableWeapons_)
+			if (!allowWeapons_)
 			{
 				// Give the player all their weapons back.  Don't worry about the armed weapon.
-				enableWeapons_ = true;
+				allowWeapons_ = true;
 				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 				PacketHelper::send(resetWeaponsRPC, *this);
 				for (auto& weapon : weapons_)
@@ -1638,12 +1639,12 @@ removeWeapon_has_weapon:
 		}
 		else
 		{
-			if (enableWeapons_)
+			if (allowWeapons_)
 			{
 				// If they are now not allowed weapons, remove all their weapons from them client-
 				// side.  We still track them server-side as if they had them (because they
 				// logically do), they are just banned from touching them.
-				enableWeapons_ = false;
+				allowWeapons_ = false;
 				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 				PacketHelper::send(resetWeaponsRPC, *this);
 			}
@@ -1652,6 +1653,18 @@ removeWeapon_has_weapon:
 
 	bool allowWeapons() const override
 	{
-		return enableWeapons_ && (*allowInteriorWeapons_ || interior_ == 0);
+		return allowWeapons_ && (*allowInteriorWeapons_ || interior_ == 0);
+	}
+
+	/// Teleport the player when they click the map?
+	void allowTeleport(bool allow) override
+	{
+		allowTeleport_ = allow;
+	}
+
+	/// Does the player teleport when they click the map?
+	bool allowTeleport() const override
+	{
+		return allowTeleport_;
 	}
 };
