@@ -193,6 +193,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					{
 						return false;
 					}
+					if (!from->allowWeapons() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+					{
+						// They were shooting and shouldn't be.
+						return false;
+					}
 				}
 				else
 				{
@@ -201,11 +206,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					{
 						return false;
 					}
-				}
-				if (!from->allowWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
-				{
-					// They were shooting and shouldn't be.
-					return false;
 				}
 				self.eventDispatcher.dispatch(
 					&PlayerEventHandler::onPlayerTakeDamage,
@@ -227,7 +227,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					return false;
 				}
-				if (!peer.allowWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
+				if (!peer.allowWeapons() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
 				{
 					// They were shooting and shouldn't be.
 					return false;
