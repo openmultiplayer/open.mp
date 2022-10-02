@@ -1372,9 +1372,20 @@ removeWeapon_has_weapon:
 
 	void resetWeapons() override
 	{
-		// Set from sync
-		NetCode::RPC::ResetPlayerWeapons RPC;
-		PacketHelper::send(RPC, *this);
+		if (allowWeapons())
+		{
+			// Set from sync
+			NetCode::RPC::ResetPlayerWeapons RPC;
+			PacketHelper::send(RPC, *this);
+		}
+		else
+		{
+			for (auto& weapon : weapons_)
+			{
+				weapon.id = 0;
+				weapon.ammo = 0;
+			}
+		}
 	}
 
 	void setArmedWeapon(uint32_t weapon) override

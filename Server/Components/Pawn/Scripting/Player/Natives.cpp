@@ -1188,4 +1188,3 @@ SCRIPT_API(IsPlayerWeaponsAllowed, bool(IPlayer& player))
 {
 	return player.allowWeapons();
 }
-
