@@ -908,13 +908,13 @@ SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint3
 
 SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
 {
-	player.allowTeleport(allow);
+	player->allowTeleport(allow);
 	return true;
 }
 
 SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer* player))
 {
-	return player.allowTeleport();
+	return player->allowTeleport();
 }
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))

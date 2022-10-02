@@ -102,6 +102,23 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			if (peer.allowTeleport())
+			{
+				// Teleport the player.
+				peer.setPosition(onPlayerClickMapRPC.Pos);
+			}
+			else if (*self.core.getConfig().getBool("rcon.allow_teleport"))
+			{
+				if (IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(peer))
+				{
+					if (data->hasConsoleAccess())
+					{
+						// Teleport the player.
+						peer.setPosition(onPlayerClickMapRPC.Pos);
+					}
+				}
+			}
+
 			self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClickMap, peer, onPlayerClickMapRPC.Pos);
 			return true;
 		}
