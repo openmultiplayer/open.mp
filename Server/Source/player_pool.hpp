@@ -9,6 +9,7 @@
 #pragma once
 
 #include "player_impl.hpp"
+#include <Server/Components/Console/console.hpp>
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
 {
