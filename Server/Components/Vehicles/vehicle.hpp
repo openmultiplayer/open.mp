@@ -57,7 +57,7 @@ private:
 	union
 	{
 		Vehicle* trailer = nullptr;
-		Vehicle* tower;
+		Vehicle* cab;
 	};
 	StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES> carriages;
 	VehicleParams params;
@@ -73,9 +73,9 @@ private:
 		lastOccupiedChange = Time::now();
 	}
 
-	void setTower(Vehicle* tower)
+	void setCab(Vehicle* cab)
 	{
-		this->tower = tower;
+		this->cab = cab;
 		towing = false;
 	}
 
@@ -341,7 +341,7 @@ public:
 	void detachTrailer() override;
 
 	/// Checks if the current vehicle is a trailer.
-	bool isTrailer() const override { return !towing && tower != nullptr; }
+	bool isTrailer() const override { return !towing && cab != nullptr; }
 
 	/// Get the current vehicle's attached trailer.
 	IVehicle* getTrailer() const override
@@ -353,14 +353,14 @@ public:
 		return trailer;
 	}
 
-	/// Get the current vehicle's tower.
-	IVehicle* getTower() const override
+	/// Get the current vehicle's cab.
+	IVehicle* getCab() const override
 	{
 		if (towing)
 		{
 			return nullptr;
 		}
-		return tower;
+		return cab;
 	}
 
 	/// Adds a train carriage to the vehicle (ONLY FOR TRAINS).
