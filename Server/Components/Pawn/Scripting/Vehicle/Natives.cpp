@@ -460,26 +460,26 @@ SCRIPT_API(GetVehicleRespawnDelay, int(IVehicle& vehicle))
 
 SCRIPT_API_FAILRET(GetVehicleCab, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
 {
-	IVehicle* tower = vehicle.getTower();
+	IVehicle* cab = vehicle.getCab();
 
-	if (tower == nullptr)
+	if (cab == nullptr)
 	{
 		return FailRet;
 	}
 
-	return tower->getID();
+	return cab->getID();
 }
 
 SCRIPT_API_FAILRET(GetVehicleTower, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
 {
-	IVehicle* tower = vehicle.getTower();
+	IVehicle* cab = vehicle.getCab();
 
-	if (tower == nullptr)
+	if (cab == nullptr)
 	{
 		return FailRet;
 	}
 
-	return tower->getID();
+	return cab->getID();
 }
 
 SCRIPT_API(GetVehicleOccupiedTick, int(IVehicle& vehicle))
