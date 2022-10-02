@@ -207,17 +207,24 @@ SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 
 SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 {
-	*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = allow;
-	if (!allow)
+	if (allow)
+	{
+		*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = true;
+	}
+	else
 	{
 		IPlayerPool* players = PawnManager::Get()->players;
 		for (IPlayer* player : players->entries())
 		{
-			if (player->getInterior())
+			if (player->getInterior() && player->allowWeapons())
 			{
+				// Because they are allowed weapons currently this will send a full client reset.
 				player->resetWeapons();
 			}
 		}
+		// By the time the player reports having no weapons, this is set and so we remember the old
+		// ones still.
+		*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = false;
 	}
 	return true;
 }
