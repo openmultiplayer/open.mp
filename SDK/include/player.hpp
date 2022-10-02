@@ -849,10 +849,16 @@ struct IPlayer : public IExtensible, public IEntity
 	virtual void clearTasks(PlayerAnimationSyncType syncType) = 0;
 
 	/// Don't hide their weapons when in an interior
-	virtual void enableWeapons(bool allow) = 0;
+	virtual void allowWeapons(bool allow) = 0;
 
 	/// Don't hide their weapons when in an interior
-	virtual bool hasEnabledWeapons() const = 0;
+	virtual bool allowWeapons() const = 0;
+
+	/// Teleport the player when they click the map?
+	virtual void allowTeleport(bool allow) = 0;
+
+	/// Does the player teleport when they click the map?
+	virtual bool allowTeleport() const = 0;
 };
 
 /// A player event handler

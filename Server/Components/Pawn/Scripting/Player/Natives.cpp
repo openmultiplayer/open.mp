@@ -908,8 +908,13 @@ SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint3
 
 SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
 {
-	PawnManager::Get()->core->logLn(LogLevel::Warning, "AllowPlayerTeleport: This function is deprecated");
+	player.allowTeleport(allow);
 	return true;
+}
+
+SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer* player))
+{
+	return player.allowTeleport();
 }
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
@@ -1175,12 +1180,12 @@ SCRIPT_API(GetPlayerGhostMode, bool(IPlayer& player))
 
 SCRIPT_API(AllowPlayerWeapons, bool(IPlayer& player, bool allow))
 {
-	player.enableWeapons(allow);
+	player.allowWeapons(allow);
 	return true;
 }
 
 SCRIPT_API(IsPlayerWeaponsEnabled, bool(IPlayer& player))
 {
-	return player.hasEnabledWeapons();
+	return player.allowWeapons();
 }
 

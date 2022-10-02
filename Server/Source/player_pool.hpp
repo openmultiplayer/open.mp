@@ -189,7 +189,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 						return false;
 					}
 				}
-				if (!from->hasEnabledWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
+				if (!from->allowWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
 				{
 					// They were shooting and shouldn't be.
 					return false;
@@ -214,7 +214,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					return false;
 				}
-				if (!peer.hasEnabledWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
+				if (!peer.allowWeapons() && onPlayerGiveTakeDamageRPC.WeaponID)
 				{
 					// They were shooting and shouldn't be.
 					return false;
@@ -267,7 +267,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 					PacketHelper::send(resetWeaponsRPC, player);
 				}
-				else if (player.hasEnabledWeapons())
+				else if (player.allowWeapons())
 				{
 					// Moved outside.  Give them their weapons back.
 					NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
@@ -630,7 +630,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			player.rot_ = footSync.Rotation;
 			player.health_ = footSync.HealthArmour.x;
 			player.armour_ = footSync.HealthArmour.y;
-			player.armedWeapon_ = player.hasEnabledWeapons() ? footSync.Weapon : 0;
+			player.armedWeapon_ = player.allowWeapons() ? footSync.Weapon : 0;
 			player.velocity_ = footSync.Velocity;
 			player.animation_.ID = footSync.AnimationID;
 			player.animation_.flags = footSync.AnimationFlags;
@@ -869,7 +869,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false; // They're sending data for a weapon that doesn't shoot
 			}
-			else if (!player.hasEnabledWeapons())
+			else if (!player.allowWeapons())
 			{
 				// They're sending shot data when they should be unarmed.
 				return false;
@@ -1062,7 +1062,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
 			player.armour_ = vehicleSync.PlayerHealthArmour.y;
-			player.armedWeapon_ = player.hasEnabledWeapons() ? vehicleSync.WeaponID : 0;
+			player.armedWeapon_ = player.allowWeapons() ? vehicleSync.WeaponID : 0;
 			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
 			uint32_t newKeys = vehicleSync.Keys;
@@ -1142,7 +1142,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
-			if (player.hasEnabledWeapons())
+			if (player.allowWeapons())
 			{
 				// Only update their weapons if weapons are allowed.
 				player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
@@ -1312,7 +1312,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
-			player.armedWeapon_ = player.hasEnabledWeapons() ? passengerSync.WeaponID : 0;
+			player.armedWeapon_ = player.allowWeapons() ? passengerSync.WeaponID : 0;
 			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
