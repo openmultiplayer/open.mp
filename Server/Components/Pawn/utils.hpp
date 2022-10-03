@@ -181,41 +181,42 @@ inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
 	return PawnTimerImpl::Get()->setTimerEx(callback, Milliseconds(params[2]), params[3], fmt, amx, &params[5]);
 }
 
-#define GET_TIMER(name, failRet)                               \
+#define GET_TIMER(timer, name, failRet)                        \
 	AMX_MIN_PARAMETERS(name, params, 1);                       \
 	ITimer* timer = PawnTimerImpl::Get()->getTimer(params[1]); \
-	if (timer == nullptr || !timer->running()) {               \
+	if (timer == nullptr || !timer->running())				   \
+	{                                                          \
 		return failRet;                                        \
 	}
 
 inline cell AMX_NATIVE_CALL pawn_killtimer(AMX* amx, cell const* params)
 {
-	GET_TIMER("KillTimer", false)
+	GET_TIMER(timer, "KillTimer", false)
 	timer->kill();
 	return true;
 }
 
 inline cell AMX_NATIVE_CALL pawn_IsValidTimer(AMX* amx, cell const* params)
 {
-	GET_TIMER("IsValidTimer", false)
+	GET_TIMER(timer, "IsValidTimer", false)
 	return true;
 }
 
 inline cell AMX_NATIVE_CALL pawn_GetTimerRemaining(AMX* amx, cell const* params)
 {
-	GET_TIMER("GetTimerRemaining", -1)
+	GET_TIMER(timer, "GetTimerRemaining", -1)
 	return timer->remaining().count();
 }
 
 inline cell AMX_NATIVE_CALL pawn_GetTimerInterval(AMX* amx, cell const* params)
 {
-	GET_TIMER("GetTimerInterval", -1)
+	GET_TIMER(timer, "GetTimerInterval", -1)
 	return timer->interval().count();
 }
 
 inline cell AMX_NATIVE_CALL pawn_IsRepeatingTimer(AMX* amx, cell const* params)
 {
-	GET_TIMER("IsRepeatingTimer", false)
+	GET_TIMER(timer, "IsRepeatingTimer", false)
 	return timer->calls() == 0;
 }
 

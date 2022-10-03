@@ -89,7 +89,8 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 
 	// Attempt to attach trailer to tower if both vehicles are streamed in.
 	// We are streaming in the trailer. Check if tower is streamed.
-	if (!towing && tower && tower->isStreamedInForPlayer(player)) {
+	if (!towing && tower && tower->isStreamedInForPlayer(player))
+	{
 		NetCode::RPC::AttachTrailer trailerRPC;
 		trailerRPC.TrailerID = poolID;
 		trailerRPC.VehicleID = tower->poolID;
@@ -309,18 +310,19 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	// Disabled for the moment - it breaks the sync because client resets position & rotation on attach.
 	// https://github.com/openmultiplayer/server-beta/issues/170
 	/*
-        const TimePoint now = Time::now();
-        if (now - trailerUpdateTime > Seconds(15)) {
-            // For some reason if the trailer gets disattached on the recievers side, and not on the driver's side
-            // SA:MP will fail to reattach it, so we have to call the attach RPC again.
-            NetCode::RPC::AttachTrailer trailerRPC;
-            trailerRPC.TrailerID = poolID;
-            trailerRPC.VehicleID = tower->poolID;
-            PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries(), &player);
-            trailerUpdateTime = now;
-            printf("rebroadcasted !!\n");
-        }
-    */
+		const TimePoint now = Time::now();
+		if (now - trailerUpdateTime > Seconds(15))
+		{
+			// For some reason if the trailer gets disattached on the recievers side, and not on the driver's side
+			// SA:MP will fail to reattach it, so we have to call the attach RPC again.
+			NetCode::RPC::AttachTrailer trailerRPC;
+			trailerRPC.TrailerID = poolID;
+			trailerRPC.VehicleID = tower->poolID;
+			PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries(), &player);
+			trailerUpdateTime = now;
+			printf("rebroadcasted !!\n");
+		}
+	*/
 
 	bool allowed = static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
 		{ return handler->onTrailerUpdate(player, *this); });
