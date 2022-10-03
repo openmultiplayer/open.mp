@@ -561,12 +561,6 @@ public:
 				gtTimers_[style] = nullptr;
 			}
 		}
-	}
-
-	void fixAnimationLibrary(IPlayer* player, IActor* actor, AnimationData const* animation) override
-	{
-		// Remove all old references to these targets.
-		if (player)
 		// Kill all animation timers for this player.
 		for (auto& anim : animationToReapply_)
 		{
