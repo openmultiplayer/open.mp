@@ -790,13 +790,13 @@ SCRIPT_API(RemoveServerRule, bool(const std::string& name))
     return false;
 }
 
-SCRIPT_API(GetRunningTimers, int())
+SCRIPT_API(CountRunningTimers, int())
 {
     ITimersComponent* timers = PawnManager::Get()->timers;
     return timers == nullptr ? 0 : timers->count();
 }
 
-SCRIPT_API(CountRunningTimers, int())
+SCRIPT_API(GetRunningTimers, int())
 {
-    return openmp_scripting::GetRunningTimers();
+    return openmp_scripting::CountRunningTimers();
 }
