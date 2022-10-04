@@ -701,5 +701,6 @@ static const FlatHashMap<String, String> DeprecatedNatives {
 	{ "GetVehiclePoolSize", "MAX_VEHICLES" },
 	{ "GetActorPoolSize", "MAX_ACTORS" },
 	{ "RedirectDownload", "artwork cdn config option" },
-	{ "GetRunningTimers", "CountRunningTimers" }
+	{ "GetRunningTimers", "CountRunningTimers" },
+	{ "GetVehicleTower", "GetVehicleCab" },
 };

@@ -343,8 +343,8 @@ struct IVehicle : public IExtensible, public IEntity
 	/// Get the current vehicle's attached trailer.
 	virtual IVehicle* getTrailer() const = 0;
 
-	/// Get the current vehicle's tower.
-	virtual IVehicle* getTower() const = 0;
+	/// Get the current vehicle's cab.
+	virtual IVehicle* getCab() const = 0;
 
 	/// Fully repair the vehicle.
 	virtual void repair() = 0;
