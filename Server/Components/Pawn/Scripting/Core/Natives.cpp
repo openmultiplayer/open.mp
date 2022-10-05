@@ -687,7 +687,7 @@ SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 
 SCRIPT_API(SetTeamCount, bool(int count))
 {
-	return false;
+	throw pawn_natives::NotImplemented();
 }
 
 SCRIPT_API(SetWeather, bool(int weatherid))
