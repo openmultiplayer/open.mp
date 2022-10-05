@@ -58,34 +58,36 @@ constexpr float MAX_WORLD_BOUNDS = 20000.0f;
 constexpr float MIN_WORLD_BOUNDS = -20000.0f;
 constexpr int MAX_TEXTDRAW_STR_LENGTH = 800;
 constexpr int MAX_VEHICLE_CARRIAGES = 3;
+constexpr int MAX_GAMETEXT_STYLES = 16;
 
-enum Key {
-    ACTION = 1,
-    CROUCH = 2,
-    FIRE = 4,
-    SPRINT = 8,
-    SECONDARY_ATTACK = 16,
-    JUMP = 32,
-    LOOK_RIGHT = 64,
-    HANDBRAKE = 128,
-    AIM = HANDBRAKE,
-    LOOK_LEFT = 256,
-    LOOK_BEHIND = 320,
-    SUBMISSION = 512,
-    WALK = 1024,
-    ANALOG_UP = 2048,
-    ANALOG_DOWN = 4096,
-    ANALOG_LEFT = 8192,
-    ANALOG_RIGHT = 16384,
+enum Key
+{
+	ACTION = 1,
+	CROUCH = 2,
+	FIRE = 4,
+	SPRINT = 8,
+	SECONDARY_ATTACK = 16,
+	JUMP = 32,
+	LOOK_RIGHT = 64,
+	HANDBRAKE = 128,
+	AIM = HANDBRAKE,
+	LOOK_LEFT = 256,
+	LOOK_BEHIND = 320,
+	SUBMISSION = 512,
+	WALK = 1024,
+	ANALOG_UP = 2048,
+	ANALOG_DOWN = 4096,
+	ANALOG_LEFT = 8192,
+	ANALOG_RIGHT = 16384,
 
-    YES = 65536,
-    NO = 131072,
-    CTRL_BACK = 262144,
+	YES = 65536,
+	NO = 131072,
+	CTRL_BACK = 262144,
 
-    UP = -128,
-    DOWN = 128,
-    LEFT = -128,
-    RIGHT = 128,
+	UP = -128,
+	DOWN = 128,
+	LEFT = -128,
+	RIGHT = 128,
 };
 
 constexpr uint16_t INVALID_MODEL_ID = 65535u;

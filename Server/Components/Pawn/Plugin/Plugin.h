@@ -31,38 +31,39 @@ typedef void* PLUGIN_MODULE;
 
 #include <amx/amx.h>
 
-class PawnPlugin {
+class PawnPlugin
+{
 public:
-    PawnPlugin(std::string const& path, ICore* core);
-    ~PawnPlugin();
+	PawnPlugin(std::string const& path, ICore* core);
+	~PawnPlugin();
 
-    void AmxLoad(AMX* amx);
-    void AmxUnload(AMX* amx);
-    void Unload();
-    void ProcessTick();
+	void AmxLoad(AMX* amx);
+	void AmxUnload(AMX* amx);
+	void Unload();
+	void ProcessTick();
 
-    bool IsLoaded() const
-    {
-        return loaded_;
-    }
+	bool IsLoaded() const
+	{
+		return loaded_;
+	}
 
 private:
-    typedef void(PLUGIN_STD_CALL* process_tick_f)();
-    typedef int(PLUGIN_STD_CALL* amx_load_f)(AMX*);
-    typedef int(PLUGIN_STD_CALL* amx_unload_f)(AMX*);
-    typedef unsigned int(PLUGIN_STD_CALL* supports_f)();
-    typedef int(PLUGIN_STD_CALL* load_f)(void const* const*);
-    typedef int(PLUGIN_STD_CALL* unload_f)();
+	typedef void(PLUGIN_STD_CALL* process_tick_f)();
+	typedef int(PLUGIN_STD_CALL* amx_load_f)(AMX*);
+	typedef int(PLUGIN_STD_CALL* amx_unload_f)(AMX*);
+	typedef unsigned int(PLUGIN_STD_CALL* supports_f)();
+	typedef int(PLUGIN_STD_CALL* load_f)(void const* const*);
+	typedef int(PLUGIN_STD_CALL* unload_f)();
 
-    ICore* serverCore;
-    bool loaded_ = false;
+	ICore* serverCore;
+	bool loaded_ = false;
 
-    PLUGIN_MODULE pluginHandle_ = nullptr;
+	PLUGIN_MODULE pluginHandle_ = nullptr;
 
-    process_tick_f ProcessTick_ = nullptr;
-    amx_load_f AmxLoad_ = nullptr;
-    amx_unload_f AmxUnload_ = nullptr;
-    unload_f Unload_ = nullptr;
+	process_tick_f ProcessTick_ = nullptr;
+	amx_load_f AmxLoad_ = nullptr;
+	amx_unload_f AmxUnload_ = nullptr;
+	unload_f Unload_ = nullptr;
 };
 
 #undef PLUGIN_STD_CALL

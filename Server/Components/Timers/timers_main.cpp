@@ -10,100 +10,118 @@
 #include <sdk.hpp>
 #include <list>
 
-class TimersComponent final : public ITimersComponent, public CoreEventHandler {
+class TimersComponent final : public ITimersComponent, public CoreEventHandler
+{
 private:
-    ICore* core = nullptr;
-    std::list<Timer*> timers;
+	ICore* core = nullptr;
+	std::list<Timer*> timers;
 
 public:
-    StringView componentName() const override
-    {
-        return "Timers";
-    }
+	StringView componentName() const override
+	{
+		return "Timers";
+	}
 
-    SemanticVersion componentVersion() const override
-    {
-        return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
-    }
+	SemanticVersion componentVersion() const override
+	{
+		return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
+	}
 
-    void onLoad(ICore* core) override
-    {
-        this->core = core;
-        core->getEventDispatcher().addEventHandler(this);
-    }
+	void onLoad(ICore* core) override
+	{
+		this->core = core;
+		core->getEventDispatcher().addEventHandler(this);
+	}
 
-    ~TimersComponent()
-    {
-        if (core) {
-            core->getEventDispatcher().removeEventHandler(this);
-        }
+	~TimersComponent()
+	{
+		if (core)
+		{
+			core->getEventDispatcher().removeEventHandler(this);
+		}
 
-        for (auto timer : timers) {
-            delete timer;
-        }
-        timers.clear();
-    }
+		for (auto timer : timers)
+		{
+			delete timer;
+		}
+		timers.clear();
+	}
 
-    ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) override
-    {
-        Timer* timer = new Timer(handler, interval, interval, repeating ? 0 : 1);
-        timers.push_back(timer);
-        return timer;
-    }
+	ITimer* create(TimerTimeOutHandler* handler, Milliseconds interval, bool repeating) override
+	{
+		Timer* timer = new Timer(handler, interval, interval, repeating ? 0 : 1);
+		timers.push_back(timer);
+		return timer;
+	}
 
-    ITimer* create(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count) override
-    {
-        Timer* timer = new Timer(handler, initial, interval, count);
-        timers.push_back(timer);
-        return timer;
-    }
+	ITimer* create(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count) override
+	{
+		Timer* timer = new Timer(handler, initial, interval, count);
+		timers.push_back(timer);
+		return timer;
+	}
 
-    void onTick(Microseconds elapsed, TimePoint now) override
-    {
-        for (auto it = timers.begin(); it != timers.end();) {
-            Timer* timer = *it;
-            bool deleteTimer = false;
-            if (!timer->running()) {
-                deleteTimer = true;
-            } else {
-                const TimePoint now = Time::now();
-                const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
-                if (diff.count() >= 0) {
-                    timer->handler()->timeout(*timer);
-                    if (timer->trigger()) {
-                        timer->setTimeout(now + timer->interval() - diff);
-                    } else {
-                        deleteTimer = true;
-                    }
-                }
-            }
-            if (deleteTimer) {
-                delete timer;
-                it = timers.erase(it);
-            } else {
-                ++it;
-            }
-        }
-    }
+	void onTick(Microseconds elapsed, TimePoint now) override
+	{
+		for (auto it = timers.begin(); it != timers.end();)
+		{
+			Timer* timer = *it;
+			bool deleteTimer = false;
+			if (!timer->running())
+			{
+				deleteTimer = true;
+			}
+			else
+			{
+				const TimePoint now = Time::now();
+				const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
+				if (diff.count() >= 0)
+				{
+					timer->handler()->timeout(*timer);
+					if (timer->trigger())
+					{
+						timer->setTimeout(now + timer->interval() - diff);
+					}
+					else
+					{
+						deleteTimer = true;
+					}
+				}
+			}
+			if (deleteTimer)
+			{
+				delete timer;
+				it = timers.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
 
-    void free() override
-    {
-        delete this;
-    }
+	void free() override
+	{
+		delete this;
+	}
 
-    void reset() override
-    {
-        // Nothing to reset here.  Although some timers are reset on GMX it isn't all of them, and
-        // that's handled at a lower level by pawn itself.
-    }
+	void reset() override
+	{
+		// Nothing to reset here.  Although some timers are reset on GMX it isn't all of them, and
+		// that's handled at a lower level by pawn itself.
+	}
 
-    const size_t count() const override
-    {
-        return timers.size();
-    }
+	const size_t count() const override
+	{
+		return std::count_if(timers.begin(), timers.end(),
+			[](Timer* timer)
+			{
+				return timer->running();
+			});
+	}
 };
 
 COMPONENT_ENTRY_POINT()
 {
-    return new TimersComponent();
+	return new TimersComponent();
 }

@@ -44,305 +44,330 @@
 
 using namespace Impl;
 
-class PawnManager : public Singleton<PawnManager> {
+class PawnManager : public Singleton<PawnManager>
+{
 public:
-    DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
-    std::string mainName_ = "";
-    std::unique_ptr<PawnScript> mainScript_;
-    FlatHashMap<AMX*, PawnScript*> amxToScript_;
-    ICore* core = nullptr;
-    IConfig* config = nullptr;
-    IPlayerPool* players = nullptr;
-    IActorsComponent* actors = nullptr;
-    ICheckpointsComponent* checkpoints = nullptr;
-    IClassesComponent* classes = nullptr;
-    IConsoleComponent* console = nullptr;
-    IDatabasesComponent* databases = nullptr;
-    IDialogsComponent* dialogs = nullptr;
-    IGangZonesComponent* gangzones = nullptr;
-    IFixesComponent* fixes = nullptr;
-    IMenusComponent* menus = nullptr;
-    IObjectsComponent* objects = nullptr;
-    IPickupsComponent* pickups = nullptr;
-    ITextDrawsComponent* textdraws = nullptr;
-    ITextLabelsComponent* textlabels = nullptr;
-    ITimersComponent* timers = nullptr;
-    IVariablesComponent* vars = nullptr;
-    IVehiclesComponent* vehicles = nullptr;
-    ICustomModelsComponent* models = nullptr;
-    DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
-    PawnPluginManager pluginManager;
+	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
+	std::string mainName_ = "";
+	std::unique_ptr<PawnScript> mainScript_;
+	FlatHashMap<AMX*, PawnScript*> amxToScript_;
+	ICore* core = nullptr;
+	IConfig* config = nullptr;
+	IPlayerPool* players = nullptr;
+	IActorsComponent* actors = nullptr;
+	ICheckpointsComponent* checkpoints = nullptr;
+	IClassesComponent* classes = nullptr;
+	IConsoleComponent* console = nullptr;
+	IDatabasesComponent* databases = nullptr;
+	IDialogsComponent* dialogs = nullptr;
+	IGangZonesComponent* gangzones = nullptr;
+	IFixesComponent* fixes = nullptr;
+	IMenusComponent* menus = nullptr;
+	IObjectsComponent* objects = nullptr;
+	IPickupsComponent* pickups = nullptr;
+	ITextDrawsComponent* textdraws = nullptr;
+	ITextLabelsComponent* textlabels = nullptr;
+	ITimersComponent* timers = nullptr;
+	IVariablesComponent* vars = nullptr;
+	IVehiclesComponent* vehicles = nullptr;
+	ICustomModelsComponent* models = nullptr;
+	DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
+	PawnPluginManager pluginManager;
 
 private:
-    int gamemodeIndex_ = 0;
-    int gamemodeRepeat_ = 1;
-    DynamicArray<String> gamemodes_;
-    DynamicArray<int> repeats_;
-    TimePoint nextRestart_;
-    Milliseconds restartDelay_;
-    bool reloading_ = false;
-    TimePoint nextSleep_;
-    bool unloadNextTick_ = false;
-    String nextScriptName_ = "";
+	int gamemodeIndex_ = 0;
+	int gamemodeRepeat_ = 1;
+	DynamicArray<String> gamemodes_;
+	DynamicArray<int> repeats_;
+	TimePoint nextRestart_;
+	Milliseconds restartDelay_;
+	bool reloading_ = false;
+	TimePoint nextSleep_;
+	bool unloadNextTick_ = false;
+	String nextScriptName_ = "";
 
-    // To preserve main script `sleep` information between callbacks.
-    struct
-    {
-        cell cip;
-        cell frm;
-        cell hea;
-        cell stk;
-        cell pri;
-        cell alt;
-        cell reset_stk;
-        cell reset_hea;
-    } sleepData_;
+	// To preserve main script `sleep` information between callbacks.
+	struct
+	{
+		cell cip;
+		cell frm;
+		cell hea;
+		cell stk;
+		cell pri;
+		cell alt;
+		cell reset_stk;
+		cell reset_hea;
+	} sleepData_;
 
-    DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const& name) const
-    {
-        return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const& it) {
-            return it.first == name;
-        });
-    }
+	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const& name) const
+	{
+		return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const& it)
+			{ return it.first == name; });
+	}
 
 public:
-    PawnManager();
-    ~PawnManager();
+	PawnManager();
+	~PawnManager();
 
-    void printPawnLog(const std::string& type, const std::string& message)
-    {
-        core->printLn("[PAWN-LOG] %s: %s", type.c_str(), message.c_str());
-    }
+	void printPawnLog(const std::string& type, const std::string& message)
+	{
+		core->printLn("[PAWN-LOG] %s: %s", type.c_str(), message.c_str());
+	}
 
-    void SetBasePath(std::string const& path);
-    void SetScriptPath(std::string const& path);
+	void SetBasePath(std::string const& path);
+	void SetScriptPath(std::string const& path);
 
-    bool Load(std::string const& name, bool primary = false);
-    bool Load(DynamicArray<StringView> const& mainScripts);
-    bool Reload(std::string const& name);
-    bool Unload(std::string const& name);
-    bool Changemode(std::string const& name);
-    void EndMainScript();
+	bool Load(std::string const& name, bool primary = false);
+	bool Load(DynamicArray<StringView> const& mainScripts);
+	bool Reload(std::string const& name);
+	bool Unload(std::string const& name);
+	bool Changemode(std::string const& name);
+	void EndMainScript();
 
-    void ProcessTick(Microseconds elapsed, TimePoint now);
-    inline int getRestartMS() const
-    {
-        return (int)restartDelay_.count();
-    }
+	void ProcessTick(Microseconds elapsed, TimePoint now);
+	inline int getRestartMS() const
+	{
+		return (int)restartDelay_.count();
+	}
 
-    inline void setRestartMS(int ms)
-    {
-        if (nextRestart_ == TimePoint::min()) {
-            restartDelay_ = Milliseconds(ms);
-        } else {
-            Milliseconds delay = Milliseconds(ms);
-            nextRestart_ = nextRestart_ - restartDelay_ + delay;
-            restartDelay_ = delay;
-        }
-    }
+	inline void setRestartMS(int ms)
+	{
+		if (nextRestart_ == TimePoint::min())
+		{
+			restartDelay_ = Milliseconds(ms);
+		}
+		else
+		{
+			Milliseconds delay = Milliseconds(ms);
+			nextRestart_ = nextRestart_ - restartDelay_ + delay;
+			restartDelay_ = delay;
+		}
+	}
 
-    template <typename... T>
-    cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
-    {
-        cell ret = static_cast<cell>(defaultRetValue);
+	template <typename... T>
+	cell CallAllInSidesFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
+	{
+		cell ret = static_cast<cell>(defaultRetValue);
 
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, defaultRetValue, args...);
-        }
-        if (mainScript_) {
-            ret = mainScript_->Call(name, defaultRetValue, args...);
-        }
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, defaultRetValue, args...);
+		}
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, defaultRetValue, args...);
+		}
 
-        return ret;
-    }
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallAllInEntryFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
-    {
-        cell ret = static_cast<cell>(defaultRetValue);
+	template <typename... T>
+	cell CallAllInEntryFirst(char const* name, DefaultReturnValue defaultRetValue, T... args)
+	{
+		cell ret = static_cast<cell>(defaultRetValue);
 
-        if (mainScript_) {
-            ret = mainScript_->Call(name, defaultRetValue, args...);
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, defaultRetValue, args...);
-        }
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, defaultRetValue, args...);
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, defaultRetValue, args...);
+		}
 
-        return ret;
-    }
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallInSidesWhile0(char const* name, T... args)
-    {
-        cell
-            ret
-            = 0;
+	template <typename... T>
+	cell CallInSidesWhile0(char const* name, T... args)
+	{
+		cell
+			ret
+			= 0;
 
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_False, args...);
-            if (ret) {
-                break;
-            }
-        }
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+			{
+				break;
+			}
+		}
 
-        return ret;
-    }
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallInSidesWhile1(char const* name, T... args)
-    {
-        cell
-            ret
-            = 1;
+	template <typename... T>
+	cell CallInSidesWhile1(char const* name, T... args)
+	{
+		cell
+			ret
+			= 1;
 
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_True, args...);
-            if (!ret) {
-                break;
-            }
-        }
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+			{
+				break;
+			}
+		}
 
-        return ret;
-    }
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallInSides(char const* name, DefaultReturnValue defaultRetValue, T... args)
-    {
-        cell ret = static_cast<cell>(defaultRetValue);
+	template <typename... T>
+	cell CallInSides(char const* name, DefaultReturnValue defaultRetValue, T... args)
+	{
+		cell ret = static_cast<cell>(defaultRetValue);
 
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, defaultRetValue, args...);
-        }
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, defaultRetValue, args...);
+		}
 
-        return ret;
-    }
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallInEntry(char const* name, DefaultReturnValue defaultRetValue, T... args)
-    {
-        cell ret = static_cast<cell>(defaultRetValue);
+	template <typename... T>
+	cell CallInEntry(char const* name, DefaultReturnValue defaultRetValue, T... args)
+	{
+		cell ret = static_cast<cell>(defaultRetValue);
 
-        if (mainScript_) {
-            ret = mainScript_->Call(name, defaultRetValue, args...);
-        }
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, defaultRetValue, args...);
+		}
 
-        return ret;
-    }
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallAll(char const* name, T... args)
-    {
-        cell
-            ret
-            = 0;
-        if (mainScript_) {
-            ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_False, args...);
-        }
-        return ret;
-    }
+	template <typename... T>
+	cell CallAll(char const* name, T... args)
+	{
+		cell
+			ret
+			= 0;
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+		}
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallAll(std::string const& name, T... args)
-    {
-        cell
-            ret
-            = 0;
-        if (mainScript_) {
-            ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_False, args...);
-        }
-        return ret;
-    }
+	template <typename... T>
+	cell CallAll(std::string const& name, T... args)
+	{
+		cell
+			ret
+			= 0;
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+		}
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallWhile0(char const* name, T... args)
-    {
-        cell
-            ret
-            = 0;
-        if (mainScript_) {
-            ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
-            if (ret)
-                return ret;
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_False, args...);
-            if (ret)
-                return ret;
-        }
-        return ret;
-    }
+	template <typename... T>
+	cell CallWhile0(char const* name, T... args)
+	{
+		cell
+			ret
+			= 0;
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+				return ret;
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+				return ret;
+		}
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallWhile0(std::string const& name, T... args)
-    {
-        cell ret = static_cast<cell>(DefaultReturnValue_False);
-        if (mainScript_) {
-            ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
-            if (ret)
-                return ret;
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_False, args...);
-            if (ret)
-                return ret;
-        }
-        return ret;
-    }
+	template <typename... T>
+	cell CallWhile0(std::string const& name, T... args)
+	{
+		cell ret = static_cast<cell>(DefaultReturnValue_False);
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+				return ret;
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			if (ret)
+				return ret;
+		}
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallWhile1(char const* name, T... args)
-    {
-        cell ret = static_cast<cell>(DefaultReturnValue_True);
+	template <typename... T>
+	cell CallWhile1(char const* name, T... args)
+	{
+		cell ret = static_cast<cell>(DefaultReturnValue_True);
 
-        if (mainScript_) {
-            ret = mainScript_->Call(name, DefaultReturnValue_True, args...);
-            if (!ret)
-                return ret;
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_True, args...);
-            if (!ret)
-                return ret;
-        }
-        return ret;
-    }
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+				return ret;
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+				return ret;
+		}
+		return ret;
+	}
 
-    template <typename... T>
-    cell CallWhile1(std::string const& name, T... args)
-    {
-        cell ret = static_cast<cell>(DefaultReturnValue_True);
+	template <typename... T>
+	cell CallWhile1(std::string const& name, T... args)
+	{
+		cell ret = static_cast<cell>(DefaultReturnValue_True);
 
-        if (mainScript_) {
-            ret = mainScript_->Call(name, DefaultReturnValue_True, args...);
-            if (!ret)
-                return ret;
-        }
-        for (auto& cur : scripts_) {
-            ret = cur.second->Call(name, DefaultReturnValue_True, args...);
-            if (!ret)
-                return ret;
-        }
-        return ret;
-    }
+		if (mainScript_)
+		{
+			ret = mainScript_->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+				return ret;
+		}
+		for (auto& cur : scripts_)
+		{
+			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			if (!ret)
+				return ret;
+		}
+		return ret;
+	}
 
-    AMX* AMXFromID(int id) const;
-    int IDFromAMX(AMX*) const;
+	AMX* AMXFromID(int id) const;
+	int IDFromAMX(AMX*) const;
 
-    bool OnServerCommand(const ConsoleCommandSenderData& sender, std::string const& cmd, std::string const& args);
+	bool OnServerCommand(const ConsoleCommandSenderData& sender, std::string const& cmd, std::string const& args);
 
 private:
-    std::string
-        scriptPath_,
-        basePath_;
-    int
-        id_
-        = 0;
+	std::string
+		scriptPath_,
+		basePath_;
+	int
+		id_
+		= 0;
 
-    void CheckNatives(PawnScript& script);
+	void CheckNatives(PawnScript& script);
 };

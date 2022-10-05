@@ -9,65 +9,67 @@
 #include "legacy_network_impl.hpp"
 #include <sdk.hpp>
 
-class RakNetLegacyNetworkComponent final : public INetworkComponent {
+class RakNetLegacyNetworkComponent final : public INetworkComponent
+{
 private:
-    RakNetLegacyNetwork legacyNetwork;
+	RakNetLegacyNetwork legacyNetwork;
 
 public:
-    void onLoad(ICore* core) override
-    {
-        legacyNetwork.init(core);
-    }
+	void onLoad(ICore* core) override
+	{
+		legacyNetwork.init(core);
+	}
 
-    void onReady() override
-    {
-        legacyNetwork.start();
-    }
+	void onReady() override
+	{
+		legacyNetwork.start();
+	}
 
-    void onInit(IComponentList* components) override
-    {
-        legacyNetwork.setQueryConsole(components->queryComponent<IConsoleComponent>());
-    }
+	void onInit(IComponentList* components) override
+	{
+		legacyNetwork.setQueryConsole(components->queryComponent<IConsoleComponent>());
+	}
 
-    void onFree(IComponent* component) override
-    {
-        if (component == legacyNetwork.getQueryConsole()) {
-            legacyNetwork.setQueryConsole(nullptr);
-        }
-    }
+	void onFree(IComponent* component) override
+	{
+		if (component == legacyNetwork.getQueryConsole())
+		{
+			legacyNetwork.setQueryConsole(nullptr);
+		}
+	}
 
-    INetwork* getNetwork() override
-    {
-        return &legacyNetwork;
-    }
+	INetwork* getNetwork() override
+	{
+		return &legacyNetwork;
+	}
 
-    StringView componentName() const override
-    {
-        return "RakNetLegacyNetwork";
-    }
+	StringView componentName() const override
+	{
+		return "RakNetLegacyNetwork";
+	}
 
-    SemanticVersion componentVersion() const override
-    {
-        return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
-    }
+	SemanticVersion componentVersion() const override
+	{
+		return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
+	}
 
-    UID getUID() override
-    {
-        return 0xea9799fd79cf8442;
-    }
+	UID getUID() override
+	{
+		return 0xea9799fd79cf8442;
+	}
 
-    void free() override
-    {
-        delete this;
-    }
+	void free() override
+	{
+		delete this;
+	}
 
-    void reset() override
-    {
-        // Nothing to reset here.
-    }
+	void reset() override
+	{
+		// Nothing to reset here.
+	}
 };
 
 COMPONENT_ENTRY_POINT()
 {
-    return new RakNetLegacyNetworkComponent();
+	return new RakNetLegacyNetworkComponent();
 }

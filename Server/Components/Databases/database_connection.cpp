@@ -9,8 +9,8 @@
 #include "databases_component.hpp"
 
 DatabaseConnection::DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle)
-    : parentDatabasesComponent(parentDatabasesComponent)
-    , databaseConnectionHandle(databaseConnectionHandle)
+	: parentDatabasesComponent(parentDatabasesComponent)
+	, databaseConnectionHandle(databaseConnectionHandle)
 {
 }
 
@@ -18,19 +18,20 @@ DatabaseConnection::DatabaseConnection(DatabasesComponent* parentDatabasesCompon
 /// @return Pool element ID
 int DatabaseConnection::getID() const
 {
-    return poolID;
+	return poolID;
 }
 
 /// Closes this database
 /// @returns "true" if connection has been successfully closed, otherwise "false"
 bool DatabaseConnection::close()
 {
-    bool ret(databaseConnectionHandle != nullptr);
-    if (ret) {
-        sqlite3_close(databaseConnectionHandle);
-        databaseConnectionHandle = nullptr;
-    }
-    return ret;
+	bool ret(databaseConnectionHandle != nullptr);
+	if (ret)
+	{
+		sqlite3_close(databaseConnectionHandle);
+		databaseConnectionHandle = nullptr;
+	}
+	return ret;
 }
 
 /// Executes the specified query
@@ -38,15 +39,17 @@ bool DatabaseConnection::close()
 /// @returns Result set
 IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query)
 {
-    IDatabaseResultSet* ret(parentDatabasesComponent->createResultSet());
-    if (ret) {
-        // TODO: Properly handle errors
-        if (sqlite3_exec(databaseConnectionHandle, query.data(), queryStepExecuted, ret, nullptr) != SQLITE_OK) {
-            parentDatabasesComponent->freeResultSet(*ret);
-            ret = nullptr;
-        }
-    }
-    return ret;
+	IDatabaseResultSet* ret(parentDatabasesComponent->createResultSet());
+	if (ret)
+	{
+		// TODO: Properly handle errors
+		if (sqlite3_exec(databaseConnectionHandle, query.data(), queryStepExecuted, ret, nullptr) != SQLITE_OK)
+		{
+			parentDatabasesComponent->freeResultSet(*ret);
+			ret = nullptr;
+		}
+	}
+	return ret;
 }
 
 /// Gets invoked when a query step has been performed
@@ -57,5 +60,5 @@ IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query)
 /// @returns Query step result
 int DatabaseConnection::queryStepExecuted(void* userData, int fieldCount, char** values, char** fieldNames)
 {
-    return reinterpret_cast<DatabaseResultSet*>(userData)->addRow(fieldCount, fieldNames, values) ? SQLITE_OK : SQLITE_ABORT;
+	return reinterpret_cast<DatabaseResultSet*>(userData)->addRow(fieldCount, fieldNames, values) ? SQLITE_OK : SQLITE_ABORT;
 }

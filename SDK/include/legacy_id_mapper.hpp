@@ -8,26 +8,27 @@
 /// `I` (`INVALID`) is the invalid legacy ID returned in errors.
 /// `F` (`FAIL`) is the invalid new ID returned in errors.
 template <int /*MA*/ X, int /*MI*/ N = 0, int I /*NVALID*/ = -1, int F /*AIL*/ = 0>
-struct ILegacyIDMapper {
-    static const int MIN;
-    static const int MAX;
-    static const int INVALID;
-    static const int NOT_FOUND;
+struct ILegacyIDMapper
+{
+	static const int MIN;
+	static const int MAX;
+	static const int INVALID;
+	static const int NOT_FOUND;
 
-    /// Request a new legacy ID.
-    virtual int reserve() = 0;
+	/// Request a new legacy ID.
+	virtual int reserve() = 0;
 
-    /// Store the given new ID in a legacy ID.
-    virtual void set(int legacy, int real) = 0;
+	/// Store the given new ID in a legacy ID.
+	virtual void set(int legacy, int real) = 0;
 
-    /// Release a previously used legacy ID and return the new ID it referenced.
-    virtual void release(int legacy) = 0;
+	/// Release a previously used legacy ID and return the new ID it referenced.
+	virtual void release(int legacy) = 0;
 
-    /// Get the legacy ID for the given new ID, or `INVALID`.
-    virtual int toLegacy(int real) const = 0;
+	/// Get the legacy ID for the given new ID, or `INVALID`.
+	virtual int toLegacy(int real) const = 0;
 
-    /// Get the new ID for the given legacy ID, or `NOT_FOUND`.
-    virtual int fromLegacy(int legacy) const = 0;
+	/// Get the new ID for the given legacy ID, or `NOT_FOUND`.
+	virtual int fromLegacy(int legacy) const = 0;
 };
 
 template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>
@@ -44,69 +45,77 @@ const int ILegacyIDMapper<X, N, I, F>::NOT_FOUND = F;
 
 // TODO: Use a faster `toLegacy` lookup system.  Maybe binary search or similar.
 template <int /*MA*/ X, int /*MI*/ N = 0, int I /*NVALID*/ = -1, int F /*AIL*/ = 0>
-class FiniteLegacyIDMapper final : public ILegacyIDMapper<X, N, I, F> {
+class FiniteLegacyIDMapper final : public ILegacyIDMapper<X, N, I, F>
+{
 public:
-    static const int MIN;
-    static const int MAX;
-    static const int INVALID;
-    static const int NOT_FOUND;
+	static const int MIN;
+	static const int MAX;
+	static const int INVALID;
+	static const int NOT_FOUND;
 
 private:
-    StaticArray<int, MAX - MIN> ids_;
+	StaticArray<int, MAX - MIN> ids_;
 
 public:
-    FiniteLegacyIDMapper()
-        : ids_()
-    {
-        ids_.fill(NOT_FOUND);
-    }
+	FiniteLegacyIDMapper()
+		: ids_()
+	{
+		ids_.fill(NOT_FOUND);
+	}
 
-    /// Request a new legacy ID.
-    virtual int reserve() override
-    {
-        for (size_t legacy = 0; legacy != MAX - MIN; ++legacy) {
-            if (ids_[legacy] == NOT_FOUND) {
-                return legacy + MIN;
-            }
-        }
-        return INVALID;
-    }
+	/// Request a new legacy ID.
+	virtual int reserve() override
+	{
+		for (size_t legacy = 0; legacy != MAX - MIN; ++legacy)
+		{
+			if (ids_[legacy] == NOT_FOUND)
+			{
+				return legacy + MIN;
+			}
+		}
+		return INVALID;
+	}
 
-    /// Store the given new ID in a legacy ID.
-    virtual void set(int legacy, int real) override
-    {
-        if (legacy >= MIN && legacy < MAX) {
-            ids_[legacy - MIN] = real;
-        }
-    }
+	/// Store the given new ID in a legacy ID.
+	virtual void set(int legacy, int real) override
+	{
+		if (legacy >= MIN && legacy < MAX)
+		{
+			ids_[legacy - MIN] = real;
+		}
+	}
 
-    /// Release a previously used legacy ID.
-    virtual void release(int legacy) override
-    {
-        if (legacy >= MIN && legacy < MAX) {
-            ids_[legacy - MIN] = NOT_FOUND;
-        }
-    }
+	/// Release a previously used legacy ID.
+	virtual void release(int legacy) override
+	{
+		if (legacy >= MIN && legacy < MAX)
+		{
+			ids_[legacy - MIN] = NOT_FOUND;
+		}
+	}
 
-    /// Get the legacy ID for the given new ID, or `INVALID`.
-    virtual int toLegacy(int real) const override
-    {
-        for (size_t legacy = 0; legacy != MAX - MIN; ++legacy) {
-            if (ids_[legacy] == real) {
-                return legacy + MIN;
-            }
-        }
-        return INVALID;
-    }
+	/// Get the legacy ID for the given new ID, or `INVALID`.
+	virtual int toLegacy(int real) const override
+	{
+		for (size_t legacy = 0; legacy != MAX - MIN; ++legacy)
+		{
+			if (ids_[legacy] == real)
+			{
+				return legacy + MIN;
+			}
+		}
+		return INVALID;
+	}
 
-    /// Get the new ID for the given legacy ID, or `NOT_FOUND`.
-    virtual int fromLegacy(int legacy) const override
-    {
-        if (legacy < MIN || legacy >= MAX) {
-            return NOT_FOUND;
-        }
-        return ids_[legacy - MIN];
-    }
+	/// Get the new ID for the given legacy ID, or `NOT_FOUND`.
+	virtual int fromLegacy(int legacy) const override
+	{
+		if (legacy < MIN || legacy >= MAX)
+		{
+			return NOT_FOUND;
+		}
+		return ids_[legacy - MIN];
+	}
 };
 
 template <int /*MA*/ X, int /*MI*/ N, int I /*NVALID*/, int F /*AIL*/>

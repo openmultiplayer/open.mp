@@ -66,7 +66,8 @@ typedef std::chrono::duration<float> RealSeconds;
 using std::chrono::duration_cast;
 
 /// Don't pass these around the SDK
-namespace Impl {
+namespace Impl
+{
 
 using String = std::string;
 
@@ -97,462 +98,486 @@ using StaticArray = std::array<T, Size>;
 template <typename First, typename Second>
 using Pair = std::pair<First, Second>;
 
-struct NoCopy {
-    NoCopy() = default;
+struct NoCopy
+{
+	NoCopy() = default;
 
-    NoCopy(const NoCopy& other) = delete;
-    NoCopy(NoCopy&& other) = delete;
+	NoCopy(const NoCopy& other) = delete;
+	NoCopy(NoCopy&& other) = delete;
 
-    NoCopy& operator=(const NoCopy& other) = delete;
-    NoCopy& operator=(NoCopy&& other) = delete;
+	NoCopy& operator=(const NoCopy& other) = delete;
+	NoCopy& operator=(NoCopy&& other) = delete;
 };
 
-struct Colour {
-    union {
-        struct {
-            uint8_t r, g, b, a;
-        };
-    };
+struct Colour
+{
+	union
+	{
+		struct
+		{
+			uint8_t r, g, b, a;
+		};
+	};
 
-    Colour() = default;
+	Colour() = default;
 
-    Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF)
-        : r(r)
-        , g(g)
-        , b(b)
-        , a(a)
-    {
-    }
+	Colour(uint8_t r, uint8_t g, uint8_t b, uint8_t a = 0xFF)
+		: r(r)
+		, g(g)
+		, b(b)
+		, a(a)
+	{
+	}
 
-    uint32_t RGBA() const
-    {
-        return ((r << 24) & 0xFF000000) | ((g << 16) & 0x00FF0000) | ((b << 8) & 0x0000FF00) | (a & 0x000000FF);
-    }
+	uint32_t RGBA() const
+	{
+		return ((r << 24) & 0xFF000000) | ((g << 16) & 0x00FF0000) | ((b << 8) & 0x0000FF00) | (a & 0x000000FF);
+	}
 
-    uint32_t ARGB() const
-    {
-        return ((a << 24) & 0xFF000000) | ((r << 16) & 0x00FF0000) | ((g << 8) & 0x0000FF00) | (b & 0x000000FF);
-    }
+	uint32_t ARGB() const
+	{
+		return ((a << 24) & 0xFF000000) | ((r << 16) & 0x00FF0000) | ((g << 8) & 0x0000FF00) | (b & 0x000000FF);
+	}
 
-    uint32_t ABGR() const
-    {
-        return ((a << 24) & 0xFF000000) | ((b << 16) & 0x00FF0000) | ((g << 8) & 0x0000FF00) | (r & 0x000000FF);
-    }
+	uint32_t ABGR() const
+	{
+		return ((a << 24) & 0xFF000000) | ((b << 16) & 0x00FF0000) | ((g << 8) & 0x0000FF00) | (r & 0x000000FF);
+	}
 
-    static Colour FromRGBA(uint32_t from)
-    {
-        Colour c;
-        c.r = (from & 0xFF000000) >> 24;
-        c.g = (from & 0x00FF0000) >> 16;
-        c.b = (from & 0x0000FF00) >> 8;
-        c.a = (from & 0x000000FF);
-        return c;
-    }
+	static Colour FromRGBA(uint32_t from)
+	{
+		Colour c;
+		c.r = (from & 0xFF000000) >> 24;
+		c.g = (from & 0x00FF0000) >> 16;
+		c.b = (from & 0x0000FF00) >> 8;
+		c.a = (from & 0x000000FF);
+		return c;
+	}
 
-    static Colour FromARGB(uint32_t from)
-    {
-        Colour c;
-        c.a = (from & 0xFF000000) >> 24;
-        c.r = (from & 0x00FF0000) >> 16;
-        c.g = (from & 0x0000FF00) >> 8;
-        c.b = (from & 0x000000FF);
-        return c;
-    }
+	static Colour FromARGB(uint32_t from)
+	{
+		Colour c;
+		c.a = (from & 0xFF000000) >> 24;
+		c.r = (from & 0x00FF0000) >> 16;
+		c.g = (from & 0x0000FF00) >> 8;
+		c.b = (from & 0x000000FF);
+		return c;
+	}
 
-    static Colour White()
-    {
-        return Colour::FromRGBA(0xFFFFFFFF);
-    }
+	static Colour White()
+	{
+		return Colour::FromRGBA(0xFFFFFFFF);
+	}
 
-    static Colour Black()
-    {
-        return Colour::FromRGBA(0x000000FF);
-    }
+	static Colour Black()
+	{
+		return Colour::FromRGBA(0x000000FF);
+	}
 
-    static Colour None()
-    {
-        return Colour::FromRGBA(0);
-    }
+	static Colour None()
+	{
+		return Colour::FromRGBA(0);
+	}
 
-    static Colour Yellow()
-    {
-        return Colour::FromRGBA(0xFFFF00FF);
-    }
+	static Colour Yellow()
+	{
+		return Colour::FromRGBA(0xFFFF00FF);
+	}
 
-    static Colour Cyan()
-    {
-        return Colour::FromRGBA(0x00FFFFFF);
-    }
+	static Colour Cyan()
+	{
+		return Colour::FromRGBA(0x00FFFFFF);
+	}
 };
 
 /// SemVer
-struct SemanticVersion {
-    uint8_t major; ///< MAJOR version when you make incompatible API changes
-    uint8_t minor; ///< MINOR version when you add functionality in a backwards compatible manner
-    uint8_t patch; ///< PATCH version when you make backwards compatible bug fixes
-    uint16_t prerel; ///< PRE-RELEASE version
+struct SemanticVersion
+{
+	uint8_t major; ///< MAJOR version when you make incompatible API changes
+	uint8_t minor; ///< MINOR version when you add functionality in a backwards compatible manner
+	uint8_t patch; ///< PATCH version when you make backwards compatible bug fixes
+	uint16_t prerel; ///< PRE-RELEASE version
 
-    SemanticVersion(uint8_t major, uint8_t minor, uint8_t patch, uint16_t prerel = 0)
-        : major(major)
-        , minor(minor)
-        , patch(patch)
-        , prerel(prerel)
-    {
-    }
+	SemanticVersion(uint8_t major, uint8_t minor, uint8_t patch, uint16_t prerel = 0)
+		: major(major)
+		, minor(minor)
+		, patch(patch)
+		, prerel(prerel)
+	{
+	}
 
-    int compare(const SemanticVersion& other, bool cmpPreRel) const
-    {
-        if (major != other.major) {
-            return major - other.major;
-        }
+	int compare(const SemanticVersion& other, bool cmpPreRel) const
+	{
+		if (major != other.major)
+		{
+			return major - other.major;
+		}
 
-        if (minor != other.minor) {
-            return minor - other.minor;
-        }
+		if (minor != other.minor)
+		{
+			return minor - other.minor;
+		}
 
-        if (patch != other.patch) {
-            return patch - other.patch;
-        }
+		if (patch != other.patch)
+		{
+			return patch - other.patch;
+		}
 
-        if (cmpPreRel && prerel != other.prerel) {
-            return prerel - other.prerel;
-        }
+		if (cmpPreRel && prerel != other.prerel)
+		{
+			return prerel - other.prerel;
+		}
 
-        return 0;
-    }
+		return 0;
+	}
 
-    bool operator==(const SemanticVersion& other) const
-    {
-        return compare(other, false) == 0;
-    }
+	bool operator==(const SemanticVersion& other) const
+	{
+		return compare(other, false) == 0;
+	}
 
-    bool operator!=(const SemanticVersion& other) const
-    {
-        return !(*this == other);
-    }
+	bool operator!=(const SemanticVersion& other) const
+	{
+		return !(*this == other);
+	}
 
-    bool operator>(const SemanticVersion& other) const
-    {
-        return compare(other, false) > 0;
-    }
+	bool operator>(const SemanticVersion& other) const
+	{
+		return compare(other, false) > 0;
+	}
 
-    bool operator<(const SemanticVersion& other) const
-    {
-        return compare(other, false) < 0;
-    }
+	bool operator<(const SemanticVersion& other) const
+	{
+		return compare(other, false) < 0;
+	}
 
-    bool operator>=(const SemanticVersion& other) const
-    {
-        return compare(other, false) >= 0;
-    }
+	bool operator>=(const SemanticVersion& other) const
+	{
+		return compare(other, false) >= 0;
+	}
 
-    bool operator<=(const SemanticVersion& other) const
-    {
-        return compare(other, false) <= 0;
-    }
+	bool operator<=(const SemanticVersion& other) const
+	{
+		return compare(other, false) <= 0;
+	}
 };
 
 /// An ABI-stable, C-compatible string on the stack
 template <size_t Size>
-struct StaticString {
-    /// The actual usable size - this accounts for the trailing 0
-    constexpr static size_t UsableStaticSize = Size - 1;
+struct StaticString
+{
+	/// The actual usable size - this accounts for the trailing 0
+	constexpr static size_t UsableStaticSize = Size - 1;
 
-    /// Empty string constructor
-    StaticString()
-        : len(0)
-    {
-        storage[0] = 0;
-    }
+	/// Empty string constructor
+	StaticString()
+		: len(0)
+	{
+		storage[0] = 0;
+	}
 
-    /// StringView copy constructor
-    StaticString(StringView string)
-    {
-        len = std::min(string.size(), UsableStaticSize);
-        memcpy(storage.data(), string.data(), len);
-        storage[len] = 0;
-    }
+	/// StringView copy constructor
+	StaticString(StringView string)
+	{
+		len = std::min(string.size(), UsableStaticSize);
+		memcpy(storage.data(), string.data(), len);
+		storage[len] = 0;
+	}
 
-    /// StringView copy assignment
-    StaticString<Size>& operator=(StringView string)
-    {
-        len = std::min(string.size(), UsableStaticSize);
-        memcpy(storage.data(), string.data(), len);
-        storage[len] = 0;
+	/// StringView copy assignment
+	StaticString<Size>& operator=(StringView string)
+	{
+		len = std::min(string.size(), UsableStaticSize);
+		memcpy(storage.data(), string.data(), len);
+		storage[len] = 0;
 
-        return *this;
-    }
+		return *this;
+	}
 
-    /// Get the data
-    constexpr StaticArray<char, Size>& data()
-    {
-        return storage;
-    }
+	/// Get the data
+	constexpr StaticArray<char, Size>& data()
+	{
+		return storage;
+	}
 
-    /// Get the data
-    constexpr const StaticArray<char, Size>& data() const
-    {
-        return storage;
-    }
+	/// Get the data
+	constexpr const StaticArray<char, Size>& data() const
+	{
+		return storage;
+	}
 
-    /// Get the string's length
-    constexpr size_t length() const
-    {
-        return len;
-    }
+	/// Get the string's length
+	constexpr size_t length() const
+	{
+		return len;
+	}
 
-    constexpr bool empty() const
-    {
-        return length() == 0;
-    }
+	constexpr bool empty() const
+	{
+		return length() == 0;
+	}
 
-    /// Clear the string
-    void clear()
-    {
-        storage[0] = 0;
-        len = 0;
-    }
+	/// Clear the string
+	void clear()
+	{
+		storage[0] = 0;
+		len = 0;
+	}
 
-    /// Compare the string to another string
-    int cmp(const StaticString<Size>& other) const
-    {
-        return strcmp(data().data(), other.data().data());
-    }
+	/// Compare the string to another string
+	int cmp(const StaticString<Size>& other) const
+	{
+		return strcmp(data().data(), other.data().data());
+	}
 
-    /// Return whether the string is equal to another string
-    bool operator==(const StaticString<Size>& other) const
-    {
-        if (length() != other.length()) {
-            return false;
-        }
-        return !strncmp(data().data(), other.data().data(), length());
-    }
+	/// Return whether the string is equal to another string
+	bool operator==(const StaticString<Size>& other) const
+	{
+		if (length() != other.length())
+		{
+			return false;
+		}
+		return !strncmp(data().data(), other.data().data(), length());
+	}
 
-    constexpr char& operator[](size_t index)
-    {
-        assert(index < length());
-        return data()[index];
-    }
+	constexpr char& operator[](size_t index)
+	{
+		assert(index < length());
+		return data()[index];
+	}
 
-    constexpr const char& operator[](size_t index) const
-    {
-        assert(index < length());
-        return data()[index];
-    }
+	constexpr const char& operator[](size_t index) const
+	{
+		assert(index < length());
+		return data()[index];
+	}
 
-    /// Cast to StringView
-    operator StringView() const
-    {
-        return StringView(data().data(), length());
-    }
+	/// Cast to StringView
+	operator StringView() const
+	{
+		return StringView(data().data(), length());
+	}
 
 private:
-    size_t len;
-    StaticArray<char, Size> storage;
+	size_t len;
+	StaticArray<char, Size> storage;
 };
 
-namespace Impl {
-struct HybridStringDynamicStorage {
-    char* ptr; ///< The dynamic storage
-    void(__CDECL* free)(void*); ///< The free function to use for deallocating the dynamic storage
+namespace Impl
+{
+struct HybridStringDynamicStorage
+{
+	char* ptr; ///< The dynamic storage
+	void(__CDECL* free)(void*); ///< The free function to use for deallocating the dynamic storage
 };
 };
 
 /// An ABI-stable, C-compatible string that allows for specifying a static allocation of a size before falling back to dynamic allocation
 template <size_t Size>
-struct HybridString {
-    /// The actual usable size - this accounts for the trailing 0
-    constexpr static size_t UsableStaticSize = Size - 1;
+struct HybridString
+{
+	/// The actual usable size - this accounts for the trailing 0
+	constexpr static size_t UsableStaticSize = Size - 1;
 
-    /// Empty string constructor
-    HybridString()
-        : lenDynamic(0)
-    {
-        staticStorage[0] = 0;
-    }
+	/// Empty string constructor
+	HybridString()
+		: lenDynamic(0)
+	{
+		staticStorage[0] = 0;
+	}
 
-    /// StringView copy constructor
-    HybridString(StringView string)
-    {
-        initCopy(string.data(), string.length());
-    }
+	/// StringView copy constructor
+	HybridString(StringView string)
+	{
+		initCopy(string.data(), string.length());
+	}
 
-    /// StringView copy assignment
-    HybridString<Size>& operator=(StringView string)
-    {
-        clear();
-        initCopy(string.data(), string.length());
+	/// StringView copy assignment
+	HybridString<Size>& operator=(StringView string)
+	{
+		clear();
+		initCopy(string.data(), string.length());
 
-        return *this;
-    }
+		return *this;
+	}
 
-    /// Copy constructor
-    HybridString(const HybridString<Size>& other)
-    {
-        initCopy(other.data(), other.length());
-    }
+	/// Copy constructor
+	HybridString(const HybridString<Size>& other)
+	{
+		initCopy(other.data(), other.length());
+	}
 
-    /// Copy assignment
-    HybridString<Size>& operator=(const HybridString<Size>& other)
-    {
-        clear();
-        initCopy(other.data(), other.length());
+	/// Copy assignment
+	HybridString<Size>& operator=(const HybridString<Size>& other)
+	{
+		clear();
+		initCopy(other.data(), other.length());
 
-        return *this;
-    }
+		return *this;
+	}
 
-    /// Move constructor
-    HybridString(HybridString<Size>&& other)
-    {
-        initMove(other.data(), other.length(), other.dynamicStorage.free);
-        other.lenDynamic = 0;
-    }
+	/// Move constructor
+	HybridString(HybridString<Size>&& other)
+	{
+		initMove(other.data(), other.length(), other.dynamicStorage.free);
+		other.lenDynamic = 0;
+	}
 
-    /// Move assignment
-    HybridString<Size>& operator=(HybridString<Size>&& other)
-    {
-        clear();
-        initMove(other.data(), other.length(), other.dynamicStorage.free);
-        other.lenDynamic = 0;
+	/// Move assignment
+	HybridString<Size>& operator=(HybridString<Size>&& other)
+	{
+		clear();
+		initMove(other.data(), other.length(), other.dynamicStorage.free);
+		other.lenDynamic = 0;
 
-        return *this;
-    }
+		return *this;
+	}
 
-    /// Destructor
-    ~HybridString()
-    {
-        clear();
-    }
+	/// Destructor
+	~HybridString()
+	{
+		clear();
+	}
 
-    /// Reserve a given length for outside filling
-    void reserve(size_t len)
-    {
-        clear();
-        initReserve(len);
-    }
+	/// Reserve a given length for outside filling
+	void reserve(size_t len)
+	{
+		clear();
+		initReserve(len);
+	}
 
-    /// Get the data
-    constexpr char* data()
-    {
-        return dynamic() ? dynamicStorage.ptr : staticStorage;
-    }
+	/// Get the data
+	constexpr char* data()
+	{
+		return dynamic() ? dynamicStorage.ptr : staticStorage;
+	}
 
-    /// Get the data
-    constexpr const char* data() const
-    {
-        return dynamic() ? dynamicStorage.ptr : staticStorage;
-    }
+	/// Get the data
+	constexpr const char* data() const
+	{
+		return dynamic() ? dynamicStorage.ptr : staticStorage;
+	}
 
-    /// Get whether the string is dynamically allocated
-    constexpr bool dynamic() const
-    {
-        return lenDynamic & 1;
-    }
+	/// Get whether the string is dynamically allocated
+	constexpr bool dynamic() const
+	{
+		return lenDynamic & 1;
+	}
 
-    /// Get the string's length
-    constexpr size_t length() const
-    {
-        return lenDynamic >> 1;
-    }
+	/// Get the string's length
+	constexpr size_t length() const
+	{
+		return lenDynamic >> 1;
+	}
 
-    constexpr bool empty() const
-    {
-        return length() == 0;
-    }
+	constexpr bool empty() const
+	{
+		return length() == 0;
+	}
 
-    /// Clear the string and free any dynamic memory
-    void clear()
-    {
-        if (dynamic()) {
-            dynamicStorage.free(dynamicStorage.ptr);
-        }
-        staticStorage[0] = 0;
-        lenDynamic = 0;
-    }
+	/// Clear the string and free any dynamic memory
+	void clear()
+	{
+		if (dynamic())
+		{
+			dynamicStorage.free(dynamicStorage.ptr);
+		}
+		staticStorage[0] = 0;
+		lenDynamic = 0;
+	}
 
-    /// Compare the string to another string
-    int cmp(const HybridString<Size>& other) const
-    {
-        return strcmp(data(), other.data());
-    }
+	/// Compare the string to another string
+	int cmp(const HybridString<Size>& other) const
+	{
+		return strcmp(data(), other.data());
+	}
 
-    /// Return whether the string is equal to another string
-    bool operator==(const HybridString<Size>& other) const
-    {
-        if (length() != other.length()) {
-            return false;
-        }
-        return !strncmp(data(), other.data(), length());
-    }
+	/// Return whether the string is equal to another string
+	bool operator==(const HybridString<Size>& other) const
+	{
+		if (length() != other.length())
+		{
+			return false;
+		}
+		return !strncmp(data(), other.data(), length());
+	}
 
-    constexpr char& operator[](size_t index)
-    {
-        assert(index < length());
-        return data()[index];
-    }
+	constexpr char& operator[](size_t index)
+	{
+		assert(index < length());
+		return data()[index];
+	}
 
-    constexpr const char& operator[](size_t index) const
-    {
-        assert(index < length());
-        return data()[index];
-    }
+	constexpr const char& operator[](size_t index) const
+	{
+		assert(index < length());
+		return data()[index];
+	}
 
-    /// Cast to StringView
-    operator StringView() const
-    {
-        return StringView(data(), length());
-    }
+	/// Cast to StringView
+	operator StringView() const
+	{
+		return StringView(data(), length());
+	}
 
 private:
-    /// Copy data
-    void initCopy(const char* data, size_t len)
-    {
-        const bool isDynamic = len > UsableStaticSize;
-        lenDynamic = (len << 1) | int(isDynamic);
-        char* ptr;
-        if (isDynamic) {
-            dynamicStorage.ptr = reinterpret_cast<char*>(malloc(sizeof(char) * (len + 1)));
-            dynamicStorage.free = &free;
-            ptr = dynamicStorage.ptr;
-        } else {
-            ptr = staticStorage;
-        }
-        memcpy(ptr, data, len);
-        ptr[len] = 0;
-    }
+	/// Copy data
+	void initCopy(const char* data, size_t len)
+	{
+		const bool isDynamic = len > UsableStaticSize;
+		lenDynamic = (len << 1) | int(isDynamic);
+		char* ptr;
+		if (isDynamic)
+		{
+			dynamicStorage.ptr = reinterpret_cast<char*>(malloc(sizeof(char) * (len + 1)));
+			dynamicStorage.free = &free;
+			ptr = dynamicStorage.ptr;
+		}
+		else
+		{
+			ptr = staticStorage;
+		}
+		memcpy(ptr, data, len);
+		ptr[len] = 0;
+	}
 
-    /// Move data
-    void initMove(char* data, size_t len, void(__CDECL* freeFn)(void*))
-    {
-        const bool isDynamic = len > UsableStaticSize;
-        lenDynamic = (len << 1) | int(isDynamic);
-        if (isDynamic) {
-            dynamicStorage.ptr = data;
-            dynamicStorage.free = freeFn;
-        } else {
-            memcpy(staticStorage, data, len);
-            staticStorage[len] = 0;
-        }
-    }
+	/// Move data
+	void initMove(char* data, size_t len, void(__CDECL* freeFn)(void*))
+	{
+		const bool isDynamic = len > UsableStaticSize;
+		lenDynamic = (len << 1) | int(isDynamic);
+		if (isDynamic)
+		{
+			dynamicStorage.ptr = data;
+			dynamicStorage.free = freeFn;
+		}
+		else
+		{
+			memcpy(staticStorage, data, len);
+			staticStorage[len] = 0;
+		}
+	}
 
-    /// Reserve data
-    void initReserve(size_t len)
-    {
-        const bool isDynamic = len > UsableStaticSize;
-        lenDynamic = (len << 1) | int(isDynamic);
-        if (isDynamic) {
-            dynamicStorage.ptr = reinterpret_cast<char*>(malloc(sizeof(char) * (len + 1)));
-            dynamicStorage.free = &free;
-            dynamicStorage.ptr[0] = 0;
-        }
-        data()[len] = 0;
-    }
+	/// Reserve data
+	void initReserve(size_t len)
+	{
+		const bool isDynamic = len > UsableStaticSize;
+		lenDynamic = (len << 1) | int(isDynamic);
+		if (isDynamic)
+		{
+			dynamicStorage.ptr = reinterpret_cast<char*>(malloc(sizeof(char) * (len + 1)));
+			dynamicStorage.free = &free;
+			dynamicStorage.ptr[0] = 0;
+		}
+		data()[len] = 0;
+	}
 
-    size_t lenDynamic; ///< First bit is 1 if dynamic and 0 if static; the rest are the length
-    union {
-        Impl::HybridStringDynamicStorage dynamicStorage; ///< Used when first bit of lenDynamic is 1
-        char staticStorage[Size]; ///< Used when first bit of lenDynamic is 0
-    };
+	size_t lenDynamic; ///< First bit is 1 if dynamic and 0 if static; the rest are the length
+	union
+	{
+		Impl::HybridStringDynamicStorage dynamicStorage; ///< Used when first bit of lenDynamic is 1
+		char staticStorage[Size]; ///< Used when first bit of lenDynamic is 0
+	};
 };
 
 using OptimisedString = HybridString<sizeof(char) * sizeof(Impl::HybridStringDynamicStorage)>;
@@ -563,5 +588,5 @@ using OptimisedString = HybridString<sizeof(char) * sizeof(Impl::HybridStringDyn
 template <typename T, typename U>
 inline constexpr auto CEILDIV(T n, U d) -> decltype(n / d)
 {
-    return (n) ? ((n - (T)1) / d + (decltype(n / d))1) : (decltype(n / d))0;
+	return (n) ? ((n - (T)1) / d + (decltype(n / d))1) : (decltype(n / d))0;
 }

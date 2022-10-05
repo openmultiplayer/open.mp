@@ -25,12 +25,13 @@ class Scripting;
 #define SCRIPT_API_FAILRET(name, failret, prototype) PAWN_NATIVE_FAILRET(openmp_scripting, failret, name, prototype)
 #define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp_scripting, name, prototype)
 
-class Scripting {
+class Scripting
+{
 public:
-    Scripting()
-    {
-    }
+	Scripting()
+	{
+	}
 
-    ~Scripting();
-    void addEvents() const;
+	~Scripting();
+	void addEvents() const;
 };
