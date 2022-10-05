@@ -12,7 +12,7 @@
 void Player::setColour(Colour colour)
 {
 	colour_ = colour;
-
+	// Test
 	// Remove per player colour, so marker sync will be forced to use the global one.
 	for (IPlayer* other : pool_.entries())
 	{
