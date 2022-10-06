@@ -92,17 +92,6 @@ private:
 	StaticArray<ITimer*, MAX_GAMETEXT_STYLES> gtTimers_;
 	inline static std::deque<ReapplyAnimationData> animationToReapply_ {};
 
-	void GameTextTimer(int style)
-	{
-		// Hide and destroy the TD.
-		if (gts_[style])
-		{
-			tds_->release(gts_[style]->getID());
-			gts_[style] = nullptr;
-		}
-		gtTimers_[style] = nullptr;
-	}
-
 	// TODO: There are so many ways to make this code smaller and faster.  Thus I've just abstracted
 	// recording which animation libraries are loaded to these two functions.  Feel free to replace
 	// them with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
@@ -196,8 +185,23 @@ public:
 		{
 			moneyTimer_->kill();
 			player_.setMoney(player_.getMoney());
+			moneyTimer_ = nullptr;
 		}
-		moneyTimer_ = nullptr;
+	}
+
+	void doHideGameText(int style)
+	{
+		// Hide and destroy the TD.
+		if (gts_[style])
+		{
+			tds_->release(gts_[style]->getID());
+			gts_[style] = nullptr;
+		}
+		if (gtTimers_[style])
+		{
+			gtTimers_[style]->kill();
+			gtTimers_[style] = nullptr;
+		}
 	}
 
 	bool doSendGameText(StringView message, Milliseconds time, int style)
@@ -284,11 +288,7 @@ public:
 		}
 		// If this style is already shown hide it first (also handily frees up a
 		// TD we might need to create this new GT).  Also stop the timer.
-		if (gts_[style])
-		{
-			tds_->release(gts_[style]->getID());
-			gtTimers_[style]->kill();
-		}
+		doHideGameText(style);
 		IPlayerTextDraw* td = tds_->create(pos, message);
 		if (td == nullptr)
 		{
@@ -528,7 +528,7 @@ public:
 		}
 		// Show the TD to the player and start a timer to hide it again.
 		td->show();
-		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::GameTextTimer, this, style)), time, false);
+		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::doHideGameText, this, style)), time, false);
 		gts_[style] = td;
 
 		return true;
@@ -542,6 +542,33 @@ public:
 			return false;
 		}
 		return doSendGameText(message, time, style);
+	}
+
+	bool hideGameText(int style) override
+	{
+		if (gts_[style])
+		{
+			doHideGameText(style);
+			return true;
+		}
+		return false;
+	}
+
+	bool hasGameText(int style) override
+	{
+		return !!gts_[style];
+	}
+
+	bool getGameText(int style, String& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (gts_[style] && gtTimers_[style])
+		{
+			message = String(gts_[style]->getText());
+			time = gtTimers_[style]->interval();
+			remaining = gtTimers_[style]->remaining();
+			return true;
+		}
+		return false;
 	}
 
 	void reset() override
@@ -757,7 +784,21 @@ public:
 			}
 		}
 		// Always just return `true`.  What else should we return if half the
-		// shows succeeded and half don't?
+		// shows succeeded and half didn't?
+		return true;
+	}
+
+	bool hideGameText(int style) override
+	{
+		for (auto player : players_->entries())
+		{
+			if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
+			{
+				data->doHideGameText(style);
+			}
+		}
+		// Always just return `true`.  What else should we return if half the
+		// hides succeeded and half didn't?
 		return true;
 	}
 
