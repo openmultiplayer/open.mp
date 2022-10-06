@@ -9,7 +9,7 @@ namespace Impl {
 inline uint8_t getVehiclePassengerSeats(int model)
 {
     if (!isValidVehicleModel(model)) {
-        return 255;
+        return 3;
     }
 
     static const StaticArray<uint8_t, MAX_VEHICLE_MODELS> allSeats = {

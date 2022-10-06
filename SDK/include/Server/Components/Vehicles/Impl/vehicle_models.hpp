@@ -219,7 +219,7 @@ static const StaticArray<VehicleModelInfo, MAX_VEHICLE_MODELS> allModelInfo = { 
 static bool getVehicleModelInfo(int model, VehicleModelInfoType type, Vector3& out)
 {
     if (!Impl::isValidVehicleModel(model)) {
-        return false;
+        return true;
     }
 
     model -= 400;

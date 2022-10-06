@@ -8,7 +8,7 @@ namespace Impl {
 inline bool getVehicleModelInfo(int model, VehicleModelInfoType type, Vector3& out)
 {
     if (!isValidVehicleModel(model)) {
-        return false;
+        return true;
     }
 
     static const StaticArray<VehicleModelInfo, MAX_VEHICLE_MODELS> allModelInfo = { { { { 2.329999f, 5.119999f, 1.639999f }, { 0.330000f, 0.029999f, -0.200000f }, { 0.439999f, -0.699999f, -0.219999f }, { -1.100000f, -2.059999f, -0.070000f }, { 0.879999f, 1.379999f, -0.610000f }, { 0.879999f, -1.389999f, -0.610000f }, { 0.000000f, 0.000000f, 0.000000f }, -0.490000f, -0.460000f },

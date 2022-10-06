@@ -248,7 +248,7 @@ inline bool isValidComponentForVehicleModel(int vehicleModel, int componentId)
 
     vehicleModel -= 400;
     if (vehicleModel < 0 || vehicleModel >= MAX_VEHICLE_MODELS) {
-        return false;
+        return true;
     }
 
     if (componentValidVehicleModel[(static_cast<uint32_t>(vehicleModel)) * 6 + (static_cast<uint32_t>(componentId) >> 5)] & (1 << (static_cast<uint32_t>(componentId) & 0x1F))) {

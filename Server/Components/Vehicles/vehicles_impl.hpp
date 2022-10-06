@@ -334,9 +334,9 @@ public:
 
     IVehicle* create(bool isStatic, int modelID, Vector3 position, float Z, int colour1, int colour2, Seconds respawnDelay, bool addSiren) override
     {
-        if (!isValidVehicleModel(modelID)) {
-            return nullptr;
-        }
+        // if (!isValidVehicleModel(modelID)) {
+        //     return nullptr;
+        // }
         if (!isStatic && (modelID == 538 || modelID == 537)) {
             return nullptr;
         }
