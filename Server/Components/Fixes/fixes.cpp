@@ -306,7 +306,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -320,7 +320,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -334,7 +334,7 @@ public:
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(3);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_0);
 			td->setProportional(true);
 			td->useBox(true);
@@ -348,7 +348,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -362,7 +362,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -376,7 +376,7 @@ public:
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -390,7 +390,7 @@ public:
 			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -404,7 +404,7 @@ public:
 			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -418,7 +418,7 @@ public:
 			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_0);
 			td->setProportional(true);
 			td->useBox(true);
@@ -432,7 +432,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -446,7 +446,7 @@ public:
 			td->setColour(Colour(0x96, 0x96, 0x96, 0xFF));
 			td->setShadow(0);
 			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -460,7 +460,7 @@ public:
 			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(true);
@@ -474,7 +474,7 @@ public:
 			td->setColour(Colour(0xB4, 0x19, 0x1D, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(true);
@@ -488,7 +488,7 @@ public:
 			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
 			td->setShadow(2);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
@@ -501,10 +501,10 @@ public:
 			td->setAlignment(TextDrawAlignment_Right);
 			// There's some debate over this colour.  It seems some versions
 			// somehow end up with `0xE1E1E1FF` instead.
-			td->setColour(Colour(0xC3, 0xC3, 0xC3, 0xFF));
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(false);
@@ -518,7 +518,7 @@ public:
 			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
 			td->setShadow(0);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
