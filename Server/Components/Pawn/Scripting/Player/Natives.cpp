@@ -1005,6 +1005,12 @@ SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, cell const* format, int time
 	return true;
 }
 
+SCRIPT_API(HideGameTextForPlayer, bool(IPlayer& player, int style))
+{
+	player.hideGameText(style);
+	return true;
+}
+
 SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, int time, int style, cell const* format))
 {
 	auto string = svprintf(format, GetAMX(), GetParams(), 4);
