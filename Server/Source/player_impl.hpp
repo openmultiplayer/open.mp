@@ -1409,6 +1409,25 @@ removeWeapon_has_weapon:
 		}
 	}
 
+	bool hasGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			return data->hasGameText(style);
+		}
+		return false;
+	}
+
+	bool getGameText(int style, Impl::String& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->getGameText(style, message, time, remaining);
+			return true;
+		}
+		return false;
+	}
+
 	int getVirtualWorld() const override
 	{
 		return virtualWorld_;
