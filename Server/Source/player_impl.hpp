@@ -1392,7 +1392,7 @@ removeWeapon_has_weapon:
 			PacketHelper::send(gameText, *this);
 		}
 	}
-	
+
 	void hideGameText(int style) override
 	{
 		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))

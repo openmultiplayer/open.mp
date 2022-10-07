@@ -733,7 +733,7 @@ struct IPlayer : public IExtensible, public IEntity
 
 	/// Send a game text message to the player
 	virtual void sendGameText(StringView message, Milliseconds time, int style) = 0;
-	
+
 	/// Hide a game text message from the player
 	virtual void hideGameText(int style) = 0;
 
@@ -928,7 +928,7 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer>
 
 	/// sendGameText for all players
 	virtual void sendGameTextToAll(StringView message, Milliseconds time, int style) = 0;
-	
+
 	/// hideGameText for all players
 	virtual void hideGameTextForAll(int style) = 0;
 

@@ -39,4 +39,3 @@ struct IFixesComponent : public IComponent
 	/// hideGameText for all players
 	virtual bool hideGameTextForAll(int style) = 0;
 };
-
