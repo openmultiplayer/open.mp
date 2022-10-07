@@ -1392,6 +1392,22 @@ removeWeapon_has_weapon:
 			PacketHelper::send(gameText, *this);
 		}
 	}
+	
+	void hideGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->hideGameText(style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = " ";
+			gameText.Time = 0;
+			gameText.Style = style;
+			PacketHelper::send(gameText, *this);
+		}
+	}
 
 	int getVirtualWorld() const override
 	{

@@ -666,7 +666,7 @@ public:
 		}
 	}
 
-	bool sendGameText(StringView message, Milliseconds time, int style) override
+	bool sendGameTextToAll(StringView message, Milliseconds time, int style) override
 	{
 		// Check the parameters.
 		if (!validateGameText(message, time, style))
@@ -685,7 +685,7 @@ public:
 		return true;
 	}
 
-	bool hideGameText(int style) override
+	bool hideGameTextForAll(int style) override
 	{
 		for (auto player : players_->entries())
 		{
