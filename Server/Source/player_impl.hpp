@@ -1485,7 +1485,7 @@ removeWeapon_has_weapon:
 			PacketHelper::send(gameText, *this);
 		}
 	}
-	
+
 	void hideGameText(int style) override
 	{
 		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
@@ -1500,6 +1500,25 @@ removeWeapon_has_weapon:
 			gameText.Style = style;
 			PacketHelper::send(gameText, *this);
 		}
+	}
+
+	bool hasGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			return data->hasGameText(style);
+		}
+		return false;
+	}
+
+	bool getGameText(int style, Impl::String& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->getGameText(style, message, time, remaining);
+			return true;
+		}
+		return false;
 	}
 
 	int getVirtualWorld() const override
