@@ -26,9 +26,9 @@ struct PawnTimerImpl : public Singleton<PawnTimerImpl>
 		if (const auto& res = pool.find(id); res != pool.end())
 		{
 			return res->second;
-        }
+		}
 		return nullptr;
-    }
+	}
 
 	void killTimers(AMX* amx);
 
