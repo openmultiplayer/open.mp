@@ -11,9 +11,13 @@
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
+#include <queue>
 
 using namespace Impl;
+
+class PlayerFixesData;
 
 static bool validateGameText(StringView& message, Milliseconds time, int style)
 {
@@ -55,6 +59,27 @@ static bool validateGameText(StringView& message, Milliseconds time, int style)
 	return true;
 }
 
+struct ReapplyAnimationData
+{
+	PlayerFixesData* data;
+	// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
+	// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
+	// We also remove these pointers if a second animation is applied to this target before the
+	// first one has been re-shown, to ensure that we don't get the following case:
+	//
+	//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
+	//    2) Loaded library is then applied to actor 1.  No timer set.
+	//    3) Timer expires and out-of-date animation is re-applied to actor 1.
+	//
+	// By blanking the pointers when new animations are applied we still ensure that the
+	// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
+	// ensure that the latest animation is never accidentally wiped out.
+	IPlayer* player;
+	IActor* actor;
+	AnimationData animation;
+	ITimer* timer;
+};
+
 class PlayerFixesData final : public IPlayerFixesData
 {
 private:
@@ -65,11 +90,7 @@ private:
 	int money_ = 0;
 	StaticArray<IPlayerTextDraw*, MAX_GAMETEXT_STYLES> gts_;
 	StaticArray<ITimer*, MAX_GAMETEXT_STYLES> gtTimers_;
-
-	void MoneyTimer()
-	{
-		player_.setMoney(money_);
-	}
+	inline static std::deque<ReapplyAnimationData> animationToReapply_ {};
 
 	void GameTextTimer(int style)
 	{
@@ -81,6 +102,64 @@ private:
 		}
 		gtTimers_[style] = nullptr;
 	}
+
+	// TODO: There are so many ways to make this code smaller and faster.  Thus I've just abstracted
+	// recording which animation libraries are loaded to these two functions.  Feel free to replace
+	// them with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
+	FlatHashSet<size_t> libraries_;
+
+	void See(StringView const lib)
+	{
+		size_t hash = std::hash<StringView>{}(lib);
+		libraries_.insert(hash);
+	}
+
+	bool Saw(StringView const lib) const
+	{
+		size_t hash = std::hash<StringView>{}(lib);
+		return libraries_.find(hash) != libraries_.end();
+	}
+
+	static void AnimationTimer()
+	{
+		// Pop the next animation off the queue.
+		ReapplyAnimationData const&
+			next = animationToReapply_.front();
+		// Only timer for a disconnected player.
+		if (next.data)
+		{
+			if (next.player)
+			{
+				// This could be ourselves, or another player, doesn't matter.  There's no need to
+				// check the stream type because if this needs fixing it was sent to this player
+				// earlier by whatever the sync type was back then.
+				NetCode::RPC::ApplyPlayerAnimation RPC(next.animation);
+				RPC.PlayerID = next.player->getID();
+				PacketHelper::send(RPC, next.data->player_);
+			}
+			else if (next.actor)
+			{
+				NetCode::RPC::ApplyActorAnimationForPlayer RPC(next.animation);
+				RPC.ActorID = next.actor->getID();
+				PacketHelper::send(RPC, next.data->player_);
+			}
+			/*else
+			{
+				// They can both be false if the target left during the delay timer.
+			}*/
+			// Always mark the library as now loaded, because it was shown at least one in the past,
+			// even if we didn't need to re-show it now.
+			next.data->See(next.animation.lib);
+		}
+		animationToReapply_.pop_front();
+	}
+
+	void MoneyTimer()
+	{
+		player_.setMoney(money_);
+	}
+
+	friend class FixesComponent;
 
 public:
 	void freeExtension() override
@@ -482,15 +561,38 @@ public:
 				gtTimers_[style] = nullptr;
 			}
 		}
+		// Kill all animation timers for this player.
+		for (auto& anim : animationToReapply_)
+		{
+			if (anim.data == this)
+			{
+				anim.data = nullptr;
+			}
+			if (anim.player == &player_)
+			{
+				anim.player = nullptr;
+			}
+		}
+	}
+
+	void applyAnimation(IPlayer* player, IActor* actor, AnimationData const* animation) override
+	{
+		// Create a new reapplication.
+		if (!Saw(animation->lib))
+		{
+			PlayerFixesData::animationToReapply_.push_back({
+				this,
+				player,
+				actor,
+				*animation,
+				timers_.create(new SimpleTimerHandler(&PlayerFixesData::AnimationTimer), Milliseconds(500), false),
+			});
+		}
 	}
 
 	~PlayerFixesData()
 	{
-		if (moneyTimer_)
-		{
-			moneyTimer_->kill();
-			moneyTimer_ = nullptr;
-		}
+		reset();
 	}
 };
 
@@ -656,6 +758,30 @@ public:
 		// Always just return `true`.  What else should we return if half the
 		// shows succeeded and half don't?
 		return true;
+	}
+
+	void clearAnimation(IPlayer* player, IActor* actor) override
+	{
+		if (player)
+		{
+			for (auto& anim : PlayerFixesData::animationToReapply_)
+			{
+				if (anim.player == player)
+				{
+					anim.player = nullptr;
+				}
+			}
+		}
+		if (actor)
+		{
+			for (auto& anim : PlayerFixesData::animationToReapply_)
+			{
+				if (anim.actor == actor)
+				{
+					anim.actor = nullptr;
+				}
+			}
+		}
 	}
 };
 

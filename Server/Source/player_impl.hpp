@@ -15,6 +15,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
 #include <events.hpp>
 #include <glm/glm.hpp>
 #include <netcode.hpp>
@@ -132,6 +133,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool kicked_;
 	bool* allAnimationLibraries_;
 
+	IFixesComponent* fixesComponent_;
+
 	void clearExtensions()
 	{
 		freeExtensions();
@@ -193,7 +196,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
-	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries)
+	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, IFixesComponent* fixesComponent)
 		: pool_(pool)
 		, netData_(netData)
 		, version_(params.version)
@@ -247,6 +250,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, lastScoresAndPings_(Time::now())
 		, kicked_(false)
 		, allAnimationLibraries_(allAnimationLibraries)
+		, fixesComponent_(fixesComponent)
 	{
 		weapons_.fill({ 0, 0 });
 		skillLevels_.fill(MAX_SKILL_LEVEL);
@@ -705,10 +709,27 @@ private:
 		if (syncType == PlayerAnimationSyncType_NoSync)
 		{
 			PacketHelper::send(applyPlayerAnimationRPC, *this);
+			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+			{
+				data->applyAnimation(this, nullptr, &animation);
+			}
 		}
 		else
 		{
-			PacketHelper::broadcastToStreamed(applyPlayerAnimationRPC, *this, syncType == PlayerAnimationSyncType_SyncOthers /* skipFrom */);
+			bool skipFrom = syncType == PlayerAnimationSyncType_SyncOthers;
+			// Inlined `broadcastToStreamed`, so we can apply fixes in the loop too.
+			for (IPlayer* player : streamedForPlayers())
+			{
+				if (skipFrom && player == this)
+				{
+					continue;
+				}
+				PacketHelper::send(applyPlayerAnimationRPC, *player);
+				if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*player))
+				{
+					data->applyAnimation(this, nullptr, &animation);
+				}
+			}
 		}
 	}
 
@@ -719,11 +740,19 @@ public:
 		{
 			return;
 		}
+		if (fixesComponent_)
+		{
+			fixesComponent_->clearAnimation(this, nullptr);
+		}
 		applyAnimationImpl(animation, syncType);
 	}
 
 	void clearTasks(PlayerAnimationSyncType syncType) override
 	{
+		if (fixesComponent_)
+		{
+			fixesComponent_->clearAnimation(this, nullptr);
+		}
 		NetCode::RPC::ClearPlayerTasks clearPlayerTasksRPC;
 		clearPlayerTasksRPC.PlayerID = poolID;
 
@@ -739,7 +768,6 @@ public:
 		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
 		if (!data || !data->getVehicle())
 		{
-
 			// TODO: This must be fixed on client side
 			// *
 			// *     <problem>
@@ -773,6 +801,10 @@ public:
 
 		if (data && data->getVehicle())
 		{
+			if (fixesComponent_)
+			{
+				fixesComponent_->clearAnimation(this, nullptr);
+			}
 			// TODO: This must be fixed on client side
 			// *
 			// *     <problem>
