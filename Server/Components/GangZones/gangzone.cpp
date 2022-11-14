@@ -91,7 +91,7 @@ public:
 	}
 };
 
-class GangZonesComponent final : public IGangZonesComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class GangZonesComponent final : public IGangZonesComponent, public PlayerConnectEventHandler, public PlayerClickEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -117,7 +117,8 @@ public:
 	void onLoad(ICore* core) override
 	{
 		this->core = core;
-		this->core->getPlayers().getEventDispatcher().addEventHandler(this);
+		this->core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+		this->core->getPlayers().getPlayerClickDispatcher().addEventHandler(this);
 		this->core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
 		this->core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 	}
@@ -126,7 +127,8 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerClickDispatcher().removeEventHandler(this);
 			core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
 			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 		}
@@ -147,7 +149,7 @@ public:
 		player.addExtension(new PlayerGangZoneData(), true);
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
 		// only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
 		if (checkingList.entries().size())

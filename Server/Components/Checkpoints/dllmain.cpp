@@ -12,7 +12,7 @@
 
 using namespace Impl;
 
-class CheckpointsComponent final : public ICheckpointsComponent, public PlayerEventHandler
+class CheckpointsComponent final : public ICheckpointsComponent, public PlayerConnectEventHandler
 {
 private:
 	DefaultEventDispatcher<PlayerCheckpointEventHandler> eventDispatcher;
@@ -108,7 +108,7 @@ private:
 		{
 		}
 
-		bool onUpdate(IPlayer& player, TimePoint now) override
+		bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 		{
 			processPlayerCheckpoint(self, player);
 			processPlayerRaceCheckpoint(self, player);
@@ -125,7 +125,7 @@ public:
 	void onLoad(ICore* c) override
 	{
 		core = c;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(&playerCheckpointActionHandler);
 	}
 
@@ -153,7 +153,7 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 			core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(&playerCheckpointActionHandler);
 		}
 	}

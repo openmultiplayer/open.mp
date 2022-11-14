@@ -10,7 +10,7 @@
 
 using namespace Impl;
 
-class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerEventHandler, public PoolEventHandler<IPlayer>
+class MenusComponent final : public IMenusComponent, public MenuEventHandler, public PlayerConnectEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -107,7 +107,7 @@ public:
 	{
 		this->core = core;
 		players = &core->getPlayers();
-		players->getEventDispatcher().addEventHandler(this);
+		players->getPlayerConnectDispatcher().addEventHandler(this);
 		players->getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerSelectedMenuRow::addEventHandler(*core, &playerSelectedMenuRowEventHandler);
 		NetCode::RPC::OnPlayerExitedMenu::addEventHandler(*core, &playerExitedMenuEventHandler);
@@ -132,7 +132,7 @@ public:
 	{
 		if (core)
 		{
-			players->getEventDispatcher().removeEventHandler(this);
+			players->getPlayerConnectDispatcher().removeEventHandler(this);
 			players->getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerSelectedMenuRow::removeEventHandler(*core, &playerSelectedMenuRowEventHandler);
 			NetCode::RPC::OnPlayerExitedMenu::removeEventHandler(*core, &playerExitedMenuEventHandler);

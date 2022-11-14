@@ -42,7 +42,7 @@ EPlayerNameStatus Player::setName(StringView name)
 
 	const auto oldName = name_;
 	name_ = name;
-	pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerNameChange, *this, oldName);
+	pool_.playerChangeDispatcher.dispatch(&PlayerChangeEventHandler::onPlayerNameChange, *this, oldName);
 
 	NetCode::RPC::SetPlayerName setPlayerNameRPC;
 	setPlayerNameRPC.PlayerID = poolID;
@@ -212,7 +212,7 @@ void Player::setState(PlayerState state, bool dispatchEvents)
 		state_ = state;
 		if (dispatchEvents)
 		{
-			pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStateChange, *this, state, oldstate);
+			pool_.playerChangeDispatcher.dispatch(&PlayerChangeEventHandler::onPlayerStateChange, *this, state, oldstate);
 		}
 	}
 }
@@ -222,7 +222,7 @@ void Player::setScore(int score)
 	if (score_ != score)
 	{
 		score_ = score;
-		pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerScoreChange, *this, score);
+		pool_.playerChangeDispatcher.dispatch(&PlayerChangeEventHandler::onPlayerScoreChange, *this, score);
 	}
 }
 
@@ -265,7 +265,7 @@ void Player::streamInForPlayer(IPlayer& other)
 				PacketHelper::send(RPC, other);
 			}
 
-			pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStreamIn, *this, other);
+			pool_.playerStreamDispatcher.dispatch(&PlayerStreamEventHandler::onPlayerStreamIn, *this, other);
 		}
 	}
 }
@@ -350,7 +350,7 @@ void Player::streamOutForPlayer(IPlayer& other)
 		playerStreamOutRPC.PlayerID = poolID;
 		PacketHelper::send(playerStreamOutRPC, other);
 
-		pool_.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerStreamOut, *this, other);
+		pool_.playerStreamDispatcher.dispatch(&PlayerStreamEventHandler::onPlayerStreamOut, *this, other);
 	}
 }
 

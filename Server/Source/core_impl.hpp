@@ -865,7 +865,7 @@ private:
 	String body;
 };
 
-class Core final : public ICore, public PlayerEventHandler, public ConsoleEventHandler
+class Core final : public ICore, public PlayerConnectEventHandler, public ConsoleEventHandler
 {
 private:
 	static constexpr const char* LogFileName = "log.txt";
@@ -1020,7 +1020,7 @@ private:
 
 	void playerInit(IPlayer& player)
 	{
-		players.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClientInit, player);
+		players.playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onPlayerClientInit, player);
 
 		NetCode::RPC::PlayerInit playerInitRPC;
 		playerInitRPC.EnableZoneNames = *EnableZoneNames;
@@ -1362,7 +1362,7 @@ public:
 		// Initialize start time
 		getTickCount();
 
-		players.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow);
+		players.getPlayerConnectDispatcher().addEventHandler(this, EventPriority_FairlyLow);
 
 		// Read config params before loading config file
 		if (cmd.count("config"))
@@ -1515,7 +1515,7 @@ public:
 			console = nullptr;
 		}
 
-		players.getEventDispatcher().removeEventHandler(this);
+		players.getPlayerConnectDispatcher().removeEventHandler(this);
 
 		players.free();
 		networks.clear();
