@@ -58,6 +58,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					return handler->onPlayerRequestSpawn(peer);
 				});
 
+			// Only set this if return is true.
+			if (playerRequestSpawnResponse.Allow) 
+			{
+				static_cast<Player&>(peer).toSpawn_ = true;
+			}
+
 			PacketHelper::send(playerRequestSpawnResponse, peer);
 			return true;
 		}
