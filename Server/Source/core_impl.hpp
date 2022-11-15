@@ -85,6 +85,7 @@ static const std::map<String, ConfigStorage> Defaults {
     { "game.weather", 10 },
     { "game.use_all_animations", false },
     { "game.lag_compensation_mode", LagCompMode_Enabled },
+    { "game.group_player_objects", false },
     // logging
     { "logging.enable", true },
     { "logging.log_chat", true },
