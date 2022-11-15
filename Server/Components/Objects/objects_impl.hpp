@@ -21,12 +21,14 @@ private:
 	MarkedDynamicPoolStorage<Object, IObject, 1, OBJECT_POOL_SIZE> storage;
 	DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
 	StaticArray<int, OBJECT_POOL_SIZE> isPlayerObject;
+	std::list<uint16_t> slotsUsedByPlayerObjects;
 	FlatPtrHashSet<PlayerObject> processedPlayerObjects;
 	FlatPtrHashSet<Object> processedObjects;
 	bool defCameraCollision = true;
 
 	ICustomModelsComponent* models = nullptr;
 	bool compatModeEnabled = false;
+	bool* groupPlayerObjects = nullptr;
 
 	struct PlayerSelectObjectEventHandler : public SingleNetworkInEventHandler
 	{
@@ -189,7 +191,10 @@ private:
 public:
 	inline void incrementPlayerCounter(int objid)
 	{
-		++isPlayerObject[objid];
+		if (++isPlayerObject[objid] == 1)
+		{
+			slotsUsedByPlayerObjects.emplace_back(objid);
+		}
 	}
 
 	inline void decrementPlayerCounter(int objid)
@@ -197,7 +202,10 @@ public:
 		if (objid < isPlayerObject.size())
 		{
 			assert(isPlayerObject[objid] != 0);
-			--isPlayerObject[objid];
+			if (--isPlayerObject[objid] == 0)
+			{
+				slotsUsedByPlayerObjects.remove(objid);
+			}
 		}
 	}
 
@@ -239,6 +247,7 @@ public:
 
 		bool* artwork = core->getConfig().getBool("artwork.enable");
 		compatModeEnabled = (!artwork || !*artwork || (*artwork && *core->getConfig().getBool("network.allow_037_clients")));
+		groupPlayerObjects = core->getConfig().getBool("game.group_player_objects");
 	}
 
 	void onInit(IComponentList* components) override
@@ -490,6 +499,9 @@ public:
 
 	bool is037CompatModeEnabled() const { return compatModeEnabled; }
 	void onPlayerFinishedDownloading(IPlayer& player) override;
+
+	inline const std::list<uint16_t>& getSlotsUsedByPlayerObjects() const { return slotsUsedByPlayerObjects; }
+	bool isGroupPlayerObjects() const { return groupPlayerObjects ? *groupPlayerObjects : false; }
 };
 
 class PlayerObjectData final : public IPlayerObjectData
@@ -526,29 +538,48 @@ public:
 
 	IPlayerObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
 	{
-		int freeIdx = storage.findFreeIndex();
-		while (freeIdx >= storage.Lower)
-		{
-			// Per-player and global objects shared an ID pool in SA:MP.  If an
-			// ID was "assigned" to players each player could have a unique
-			// object with that ID, but if you created the maximum global
-			// objects you couldn't then create any per-player objects.  This
-			// replicates that by finding an ID that isn't assigned to a global
-			// object.  This looks to see if there is a global object in that
-			// slot, and if there isn't marks the slot as per-player, which in
-			// turn prevents the global pool from using it (BUG: ever again).
-			if (!component_.get(freeIdx))
-			{
-				break;
-			}
+		int freeIdx = -1;
 
-			freeIdx = storage.findFreeIndex(freeIdx + 1);
+		// Per-player and global objects share an ID pool in SA:MP.  If an
+		// ID was "assigned" to players each player could have a unique
+		// object with that ID, but if you created the maximum global
+		// objects you couldn't then create any per-player objects.
+
+		// If player objects grouping is enables the server will try to find an already used player object slot
+		// by another player.
+		if (component_.isGroupPlayerObjects())
+		{
+			auto& slots_in_use = component_.getSlotsUsedByPlayerObjects();
+
+			for (auto slotId : slots_in_use)
+			{
+				if (!storage.get(slotId))
+				{
+					freeIdx = slotId;
+					break;
+				}
+			}
 		}
 
-		if (freeIdx < storage.Lower)
+		// If not, find an ID that isn't assigned to a global object.
+		if (freeIdx == -1)
 		{
-			// No free index
-			return nullptr;
+			freeIdx = storage.findFreeIndex();
+			while (freeIdx >= storage.Lower)
+			{
+				if (!component_.get(freeIdx))
+				{
+					break;
+				}
+
+				freeIdx = storage.findFreeIndex(freeIdx + 1);
+			}
+
+			if (freeIdx < storage.Lower)
+			{
+				// No free index
+				return nullptr;
+			}
 		}
 
 		// The server accepts connections from 0.3.7 clients.
