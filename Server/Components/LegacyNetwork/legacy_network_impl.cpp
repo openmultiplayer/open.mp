@@ -389,8 +389,6 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 
 	if (remoteSystem->sampData.authType == SAMPRakNet::AuthType_Player)
 	{
-		SAMPRakNet::SetRequestingConnection(rpcParams->sender.binaryAddress, false);
-
 		NetworkBitStream bs = GetBitStream(*rpcParams);
 		NetCode::RPC::PlayerConnect playerConnectRPC;
 		if (playerConnectRPC.read(bs))
@@ -479,8 +477,6 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 
 	if (remoteSystem->sampData.authType == SAMPRakNet::AuthType_NPC)
 	{
-		SAMPRakNet::SetRequestingConnection(rpcParams->sender.binaryAddress, false);
-
 		NetworkBitStream bs = GetBitStream(*rpcParams);
 		NetCode::RPC::NPCConnect NPCConnectRPC;
 		if (NPCConnectRPC.read(bs))
