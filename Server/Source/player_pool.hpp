@@ -40,20 +40,22 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
         bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
         {
-            Player& player = static_cast<Player&>(peer);
-
             PlayerState state = peer.getState();
             if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)) {
                 return false;
             }
 
-            player.toSpawn_ = self.eventDispatcher.stopAtFalse(
+            NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
+            playerRequestSpawnResponse.Allow = self.eventDispatcher.stopAtFalse(
                 [&peer](PlayerEventHandler* handler) {
                     return handler->onPlayerRequestSpawn(peer);
                 });
 
-            NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
-            playerRequestSpawnResponse.Allow = player.toSpawn_;
+            // Only set this if return is true.
+            if (playerRequestSpawnResponse.Allow) {
+                static_cast<Player&>(peer).toSpawn_ = true;
+            }
+
             PacketHelper::send(playerRequestSpawnResponse, peer);
 
             return true;
