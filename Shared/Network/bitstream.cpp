@@ -528,17 +528,17 @@ void NetworkBitStream::AddBitsAndReallocate(const int numberOfBitsToWrite)
 
     if (numberOfBitsToWrite + numberOfBitsUsed > 0 && ((numberOfBitsAllocated - 1) >> 3) < ((newNumberOfBitsAllocated - 1) >> 3)) // If we need to allocate 1 or more new bytes
     {
-
-        // If this assert hits then we need to specify true for the third parameter in the constructor
-        // It needs to reallocate to hold all the data and can't do it unless we allocated to begin with
-        assert(copyData == true);
-
         // Less memory efficient but saves on news and deletes
         newNumberOfBitsAllocated = (numberOfBitsToWrite + numberOfBitsUsed) * 2;
         //		int newByteOffset = bitsToBytes( numberOfBitsAllocated );
         // Use realloc and free so we are more efficient than delete and new for resizing
         int amountToAllocate = bitsToBytes(newNumberOfBitsAllocated);
         if (data == (unsigned char*)stackData) {
+
+            // If this assert hits then we need to specify true for the third parameter in the constructor
+            // It needs to reallocate to hold all the data and can't do it unless we allocated to begin with
+            assert(copyData == true);
+
             if (amountToAllocate > StackAllocationSize) {
                 data = (unsigned char*)malloc(amountToAllocate);
 
@@ -546,12 +546,18 @@ void NetworkBitStream::AddBitsAndReallocate(const int numberOfBitsToWrite)
                 memcpy((void*)data, (void*)stackData, bitsToBytes(numberOfBitsAllocated));
             }
         } else {
-            data = (unsigned char*)realloc(data, amountToAllocate);
+            if (copyData == true) {
+                data = (unsigned char*)realloc(data, amountToAllocate);
+                assert(data);
+            } else {
+                copyData = true;
+                unsigned char* new_data = amountToAllocate < StackAllocationSize ? (unsigned char*)stackData : (unsigned char*)malloc(amountToAllocate);
+                assert(new_data);
+                memcpy((void*)new_data, (void*)data, bitsToBytes(numberOfBitsAllocated));
+                numberOfBitsAllocated = new_data == stackData ? bytesToBits(StackAllocationSize) : amountToAllocate;
+                data = new_data;
+            }
         }
-
-        assert(data); // Make sure realloc succeeded
-
-        //  memset(data+newByteOffset, 0,  ((newNumberOfBitsAllocated-1)>>3) - ((numberOfBitsAllocated-1)>>3)); // Set the new data block to 0
     }
 
     if (newNumberOfBitsAllocated > numberOfBitsAllocated)
@@ -659,24 +665,6 @@ unsigned char* NetworkBitStream::GetData( void ) const
 }
 
 */
-
-void NetworkBitStream::OwnData(void)
-{
-    if (copyData == false) {
-        copyData = true;
-
-        if (numberOfBitsAllocated > 0) {
-            unsigned char* newdata = (unsigned char*)malloc(bitsToBytes(numberOfBitsAllocated));
-
-            assert(data);
-
-            memcpy(newdata, data, bitsToBytes(numberOfBitsAllocated));
-            data = newdata;
-        } else {
-            data = 0;
-        }
-    }
-}
 
 void NetworkBitStream::WriteCompressedStr(StringView data)
 {
