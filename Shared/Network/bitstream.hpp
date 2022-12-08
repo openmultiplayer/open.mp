@@ -463,10 +463,6 @@ public:
     /// \return A pointer to the internal state
     inline unsigned char* GetData(void) const { return data; }
 
-    /// Makes a copy of the data if NetworkBitStream is not owning it so we can safely write.
-    /// Can be used to write on top of incoming packets.
-    /// void OwnData(void);
-
 private:
     /// Write a 0
     void Write0(void);
