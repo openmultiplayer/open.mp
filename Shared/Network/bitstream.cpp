@@ -666,24 +666,6 @@ unsigned char* NetworkBitStream::GetData( void ) const
 
 */
 
-/*void NetworkBitStream::OwnData(void)
-{
-    if (copyData == false) {
-        copyData = true;
-
-        if (numberOfBitsAllocated > 0) {
-            unsigned char* newdata = (unsigned char*)malloc(bitsToBytes(numberOfBitsAllocated));
-
-            assert(data);
-
-            memcpy(newdata, data, bitsToBytes(numberOfBitsAllocated));
-            data = newdata;
-        } else {
-            data = 0;
-        }
-    }
-}*/
-
 void NetworkBitStream::WriteCompressedStr(StringView data)
 {
     stringCompressor->EncodeString(data.data(), data.length() + 1, this);
