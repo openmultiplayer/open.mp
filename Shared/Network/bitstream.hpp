@@ -39,7 +39,7 @@ class NetworkBitStream {
 
 public:
     /// The version of the NetworkBitStream class; increased when breaking changes are introduced
-    constexpr static const int Version = 2;
+    constexpr static const int Version = 3;
 
     /// Default Constructor
     NetworkBitStream();
@@ -465,7 +465,7 @@ public:
 
     /// Makes a copy of the data if NetworkBitStream is not owning it so we can safely write.
     /// Can be used to write on top of incoming packets.
-    void OwnData(void);
+    /// void OwnData(void);
 
 private:
     /// Write a 0
