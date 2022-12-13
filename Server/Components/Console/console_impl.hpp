@@ -80,6 +80,10 @@ private:
             StringView command = trim(packet.cmd);
             PlayerConsoleData* pdata = queryExtension<PlayerConsoleData>(peer);
 
+            if (pdata == nullptr) {
+                return false;
+            }
+
             if (pdata->hasConsoleAccess()) {
                 if (command.size() < 1) {
                     peer.sendClientMessage(Colour::White(), "You forgot the RCON command!");
@@ -230,7 +234,8 @@ public:
         }
     }
 
-    DefaultEventDispatcher<ConsoleEventHandler>& defEventDispatcher() {
+    DefaultEventDispatcher<ConsoleEventHandler>& defEventDispatcher()
+    {
         return eventDispatcher;
     }
 

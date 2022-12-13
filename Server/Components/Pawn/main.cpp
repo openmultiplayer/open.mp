@@ -173,7 +173,8 @@ public:
         return AMX_FUNCTIONS;
     }
 
-    void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override {
+    void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override
+    {
         PawnManager::Get()->OnServerCommandList(commands);
     }
 
