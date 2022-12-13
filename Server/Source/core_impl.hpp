@@ -1052,6 +1052,95 @@ private:
 		PacketHelper::send(RPC, player);
 	}
 
+	bool setArrayFromString(StringView key, StringView value)
+	{
+		size_t len = value.length();
+		char const* data = value.data();
+		DynamicArray<StringView> view {};
+		// Clear the old values.
+		config.setStrings(key, view);
+
+		for (size_t i = 0, start = 0, state = 0; i != len; ++i)
+		{
+			switch (state)
+			{
+			case 0:
+				// Array not started yet.
+				if (data[i] == '[')
+				{
+					state = 1;
+				}
+				else if (data[i] <= '\0' || data[i] > ' ')
+				{
+					return false;
+				}
+				break;
+			case 1:
+				// String not started yet.
+				if (data[i] == ']')
+				{
+					config.setStrings(key, view);
+					return true;
+				}
+				else if (data[i] == '"')
+				{
+					state = 2;
+					start = i + 1;
+				}
+				else if (data[i] <= '\0' || data[i] > ' ')
+				{
+					return false;
+				}
+				break;
+			case 2:
+				// In a string, not escaped.
+				if (data[i] == '\0')
+				{
+					return false;
+				}
+				else if (data[i] == '\\')
+				{
+					state = 3;
+				}
+				else if (data[i] == '"')
+				{
+					// Add the string.  Doesn't currently escape things.
+					view.push_back(StringView(data + start, i - start));
+					state = 4;
+				}
+				break;
+			case 3:
+				// In a string, not escaped.
+				if (data[i] == '\0')
+				{
+					return false;
+				}
+				else
+				{
+					state = 2;
+				}
+				break;
+			case 4:
+				// String just ended.
+				if (data[i] == ']')
+				{
+					config.setStrings(key, view);
+					return true;
+				}
+				else if (data[i] == ',')
+				{
+					state = 1;
+				}
+				else if (data[i] <= '\0' || data[i] > ' ')
+				{
+					return false;
+				}
+				break;
+			}
+		}
+		return false;
+	}
+
 	bool setConfigFromString(StringView conf)
 	{
 		size_t split = conf.find_first_of('=');
@@ -1096,7 +1185,7 @@ private:
 				case ConfigOptionType_Strings:
 					// Unfortunately we're still setting up the config options so this may display
 					// oddly (wrong place/prefix etc).
-					logLn(LogLevel::Warning, "String arrays are not currently supported via `--config`");
+					setArrayFromString(key, value);
 					return false;
 				case ConfigOptionType_Bool:
 					*config.getBool(key) = value == "true" || (value != "false" && !!std::stoi(value.data()));
