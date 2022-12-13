@@ -3,7 +3,7 @@
 #define STRINGIFY(s) _STRINGIFY(s)
 #define _STRINGIFY(s) #s
 
-StringView trim(StringView view)
+inline StringView trim(StringView view)
 {
 	char const* const whitespace = " \t\n\r\f\v";
 	const size_t start = view.find_first_not_of(whitespace);

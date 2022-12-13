@@ -74,6 +74,18 @@ PawnManager::~PawnManager()
 	}
 }
 
+void PawnManager::OnServerCommandList(FlatHashSet<StringView>& commands)
+{
+	commands.emplace("loadfs");
+	commands.emplace("unloadfs");
+	commands.emplace("reloadfs");
+	commands.emplace("gmx");
+	commands.emplace("changemode");
+	commands.emplace("loadscript");
+	commands.emplace("unloadscript");
+	commands.emplace("reloadscript");
+}
+
 bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::string const& cmd, std::string const& args)
 {
 	// Legacy commands.

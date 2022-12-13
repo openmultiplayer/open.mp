@@ -1780,6 +1780,13 @@ public:
 		return true;
 	}
 
+	void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override
+	{
+		commands.emplace("exit");
+		commands.emplace("reloadlog");
+		commands.emplace("config");
+	}
+
 	bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
 	{
 		if (command == "exit")
