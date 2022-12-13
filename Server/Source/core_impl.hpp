@@ -892,7 +892,7 @@ private:
         }
 
         std::string absPath = ghc::filesystem::canonical(path).string();
-        printLn("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
+        printLnU8("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
     }
 
     void playerInit(IPlayer& player)
@@ -1124,12 +1124,26 @@ public:
         , ticksThisSecond(0u)
         , EnableLogTimestamp(false)
     {
-        printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
-
         // Initialize start time
         getTickCount();
 
         players.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow);
+
+        // Read config params before loading config file
+        if (cmd.count("config")) {
+            auto configs = cmd["config"].as<std::vector<std::string>>();
+            // Loop through all the config options, get the key/value pair, and store it.
+            for (auto const& conf : configs) {
+                setConfigFromString(conf);
+            }
+        }
+
+        // Decide whether to enable logging early on
+        if (*config.getBool("logging.enable")) {
+            logFile = ::fopen(LogFileName, "a");
+        }
+
+        printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
 
         // Try to load components from the current directory
         loadComponents("components");
@@ -1152,6 +1166,12 @@ public:
 
         config.setInt("max_players", std::clamp(*config.getInt("max_players"), 1, PLAYER_POOL_SIZE));
 
+        // If logging was enabled by config file, open the file
+        if (*config.getBool("logging.enable") && logFile == nullptr) {
+            logFile = ::fopen(LogFileName, "a");
+        }
+
+        // Overwrite config file data with config params
         if (cmd.count("config")) {
             auto configs = cmd["config"].as<std::vector<std::string>>();
             // Loop through all the config options, get the key/value pair, and store it.
@@ -1191,10 +1211,6 @@ public:
             versionStr += "." + std::to_string(version.prerel);
         }
         config.setString("version", versionStr);
-
-        if (*config.getBool("logging.enable")) {
-            logFile = ::fopen(LogFileName, "a");
-        }
 
         EnableZoneNames = config.getBool("game.use_zone_names");
         UsePlayerPedAnims = config.getBool("game.use_player_ped_anims");
@@ -1306,6 +1322,27 @@ public:
         va_end(args);
     }
 
+    void printLnU8(const char* fmt, ...) override
+    {
+        va_list args;
+        va_start(args, fmt);
+        vprintLnU8(fmt, args);
+        va_end(args);
+    }
+
+    void vprintLnU8(const char* fmt, va_list args) override
+    {
+        vlogLnU8(LogLevel::Message, fmt, args);
+    }
+
+    virtual void logLnU8(LogLevel level, const char* fmt, ...) override
+    {
+        va_list args;
+        va_start(args, fmt);
+        vlogLnU8(level, fmt, args);
+        va_end(args);
+    }
+
     void logToStream(FILE* stream, const char* iso8601, const char* prefix, const char* message)
     {
         if (iso8601[0]) {
@@ -1322,17 +1359,38 @@ public:
 
     virtual void vlogLn(LogLevel level, const char* fmt, va_list args) override
     {
-#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
+        vlogLnInternal(level, false, fmt, args);
+    }
+
+    virtual void vlogLnU8(LogLevel level, const char* fmt, va_list args) override
+    {
+        vlogLnInternal(level, true, fmt, args);
+    }
+
+    virtual void vlogLnInternal(LogLevel level, bool utf8, const char* fmt, va_list args)
+    {
+#ifdef BUILD_WINDOWS
+        _lock_locales();
+        UINT oldCP = 0;
+        const char* oldLocale = nullptr;
+        if (utf8) {
+            oldCP = GetConsoleOutputCP();
+            SetConsoleOutputCP(CP_UTF8);
+            oldLocale = std::setlocale(LC_CTYPE, ".UTF-8");
+        }
+#endif
+
+#ifndef _DEBUG
+        if (level == LogLevel::Debug) {
+            return;
+        }
+#endif
+#ifdef BUILD_WINDOWS
         if (level == LogLevel::Debug) {
             char debugStr[4096] = { 0 };
             const int written = vsnprintf(debugStr, sizeof(debugStr) - 1, fmt, args);
             debugStr[written] = '\n';
             OutputDebugString(debugStr);
-        }
-#endif
-#ifndef _DEBUG
-        if (level == LogLevel::Debug) {
-            return;
         }
 #endif
         const char* prefix = nullptr;
@@ -1379,6 +1437,14 @@ public:
         if (logFile) {
             logToStream(logFile, iso8601, prefix, buf.data());
         }
+
+#ifdef BUILD_WINDOWS
+        if (utf8) {
+            std::setlocale(LC_CTYPE, oldLocale);
+            SetConsoleOutputCP(oldCP);
+        }
+        _unlock_locales();
+#endif
     }
 
     IPlayerPool& getPlayers() override
