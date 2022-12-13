@@ -407,6 +407,11 @@ public:
         delete this;
     }
 
+    void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override
+    {
+        commands.emplace("exec");
+    }
+
     bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
     {
         if (command == "exec") {

@@ -10,7 +10,7 @@
 
 FlatHashMap<String, CommandHandlerFuncType> ConsoleCmdHandler::Commands;
 
-ADD_CONSOLE_CMD(gamemodetext, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(gamemodetext, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("game.mode = \"") + core->getConfig().getString("game.mode").data() + "\"");
         return;
@@ -18,7 +18,7 @@ ADD_CONSOLE_CMD(gamemodetext, [](const String& params, const ConsoleCommandSende
     core->setData(SettableCoreDataType::ModeText, params);
 });
 
-ADD_CONSOLE_CMD(hostname, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(hostname, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("name = \"") + core->getConfig().getString("name").data() + "\"");
         return;
@@ -26,7 +26,7 @@ ADD_CONSOLE_CMD(hostname, [](const String& params, const ConsoleCommandSenderDat
     core->setData(SettableCoreDataType::ServerName, params);
 });
 
-ADD_CONSOLE_CMD(mapname, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(mapname, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("game.map = \"") + core->getConfig().getString("game.map").data() + "\"");
         return;
@@ -34,7 +34,7 @@ ADD_CONSOLE_CMD(mapname, [](const String& params, const ConsoleCommandSenderData
     core->setData(SettableCoreDataType::MapName, params);
 });
 
-ADD_CONSOLE_CMD(weburl, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(weburl, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("website = \"") + core->getConfig().getString("website").data() + "\"");
         return;
@@ -42,7 +42,7 @@ ADD_CONSOLE_CMD(weburl, [](const String& params, const ConsoleCommandSenderData&
     core->setData(SettableCoreDataType::URL, params);
 });
 
-ADD_CONSOLE_CMD(language, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(language, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("language = \"") + core->getConfig().getString("language").data() + "\"");
         return;
@@ -51,19 +51,30 @@ ADD_CONSOLE_CMD(language, [](const String& params, const ConsoleCommandSenderDat
     console.sendMessage(sender, "Setting server language to: \"" + params + "\"");
 });
 
-ADD_CONSOLE_CMD(cmdlist, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(cmdlist, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
+    FlatHashSet<StringView> commands;
+
     console.sendMessage(sender, "Console commands:");
     for (auto& kv : ConsoleCmdHandler::Commands) {
-        console.sendMessage(sender, kv.first);
+        commands.emplace(kv.first);
+    }
+
+    console.defEventDispatcher().all(
+        [&commands](ConsoleEventHandler* handler) {
+            handler->onConsoleCommandListRequest(commands);
+        });
+
+    for (auto kv : commands) {
+        console.sendMessage(sender, kv);
     }
 });
 
 struct VarlistEnumCallback : OptionEnumeratorCallback {
-    IConsoleComponent& console;
+    ConsoleComponent& console;
     IConfig& config;
     const ConsoleCommandSenderData& sender;
 
-    VarlistEnumCallback(IConsoleComponent& console, IConfig& config, const ConsoleCommandSenderData& sender)
+    VarlistEnumCallback(ConsoleComponent& console, IConfig& config, const ConsoleCommandSenderData& sender)
         : console(console)
         , config(config)
         , sender(sender)
@@ -116,13 +127,13 @@ struct VarlistEnumCallback : OptionEnumeratorCallback {
     }
 };
 
-ADD_CONSOLE_CMD(varlist, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(varlist, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     console.sendMessage(sender, "Console variables:");
     VarlistEnumCallback cb(console, core->getConfig(), sender);
     core->getConfig().enumOptions(cb);
 });
 
-ADD_CONSOLE_CMD(password, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(password, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("password = \"") + core->getConfig().getString("password").data() + "\"");
         return;
@@ -135,14 +146,14 @@ ADD_CONSOLE_CMD(password, [](const String& params, const ConsoleCommandSenderDat
     console.sendMessage(sender, "Setting server password to: \"" + params + "\"");
 });
 
-ADD_CONSOLE_CMD(say, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(say, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         return;
     }
     core->getPlayers().sendClientMessageToAll(Colour(37, 135, 206), String("* Admin: ") + params);
 });
 
-ADD_CONSOLE_CMD(players, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(players, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (!core->getPlayers().entries().size()) {
         return;
     }
@@ -165,7 +176,7 @@ ADD_CONSOLE_CMD(players, [](const String& params, const ConsoleCommandSenderData
     }
 });
 
-ADD_CONSOLE_CMD(kick, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(kick, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int playerId;
     if (sscanf(params.data(), "%d", &playerId) == EOF) {
         return;
@@ -185,7 +196,7 @@ ADD_CONSOLE_CMD(kick, [](const String& params, const ConsoleCommandSenderData& s
     player->kick();
 });
 
-ADD_CONSOLE_CMD(ban, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(ban, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int playerId;
     if (sscanf(params.data(), "%d", &playerId) == EOF) {
         return;
@@ -205,7 +216,7 @@ ADD_CONSOLE_CMD(ban, [](const String& params, const ConsoleCommandSenderData& se
     player->ban("CONSOLE BAN");
 });
 
-ADD_CONSOLE_CMD(banip, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(banip, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         return;
     }
@@ -219,12 +230,12 @@ ADD_CONSOLE_CMD(banip, [](const String& params, const ConsoleCommandSenderData& 
     console.sendMessage(sender, String("IP ") + params.data() + String(" has been banned."));
 });
 
-ADD_CONSOLE_CMD(reloadbans, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(reloadbans, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     core->getConfig().reloadBans();
     console.sendMessage(sender, "Banlist reloded.");
 });
 
-ADD_CONSOLE_CMD(unbanip, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(unbanip, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         return;
     }
@@ -237,7 +248,7 @@ ADD_CONSOLE_CMD(unbanip, [](const String& params, const ConsoleCommandSenderData
     core->getConfig().removeBan(unban);
 });
 
-ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     float gravity = 0.008f;
     if (sscanf(params.data(), "%f", &gravity) == EOF) {
         console.sendMessage(sender, String("game.gravity = " + std::to_string(*core->getConfig().getFloat("game.gravity"))));
@@ -246,7 +257,7 @@ ADD_CONSOLE_CMD(gravity, [](const String& params, const ConsoleCommandSenderData
     core->setGravity(gravity);
 });
 
-ADD_CONSOLE_CMD(weather, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(weather, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int weather = 0;
     if (sscanf(params.data(), "%d", &weather) == EOF) {
         console.sendMessage(sender, String("game.weather = " + std::to_string(*core->getConfig().getInt("game.weather"))));
@@ -255,7 +266,7 @@ ADD_CONSOLE_CMD(weather, [](const String& params, const ConsoleCommandSenderData
     core->setWeather(weather);
 });
 
-ADD_CONSOLE_CMD(rcon_password, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(rcon_password, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params.empty()) {
         console.sendMessage(sender, String("rcon.password = \"") + core->getConfig().getString("rcon.password").data() + "\"");
         return;
@@ -263,11 +274,11 @@ ADD_CONSOLE_CMD(rcon_password, [](const String& params, const ConsoleCommandSend
     core->setData(SettableCoreDataType::AdminPassword, params);
 });
 
-ADD_CONSOLE_CMD(echo, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(echo, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     console.sendMessage(sender, params);
 });
 
-ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.messages_limit = \"") + std::to_string(*core->getConfig().getInt("network.messages_limit")) + "\"");
@@ -277,7 +288,7 @@ ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSend
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(messageholelimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(messageholelimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.message_hole_limit = \"") + std::to_string(*core->getConfig().getInt("network.message_hole_limit")) + "\"");
@@ -287,7 +298,7 @@ ADD_CONSOLE_CMD(messageholelimit, [](const String& params, const ConsoleCommandS
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.acks_limit = \"") + std::to_string(*core->getConfig().getInt("network.acks_limit")) + "\"");
@@ -297,7 +308,7 @@ ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderDa
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("network.player_timeout = \"") + std::to_string(*core->getConfig().getInt("network.player_timeout")) + "\"");
@@ -307,7 +318,7 @@ ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSend
     core->updateNetworks();
 });
 
-ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     if (params == "1") {
         console.sendMessage(sender, "Remote console enabled.");
         *core->getConfig().getBool("rcon.enable") = true;
@@ -321,7 +332,7 @@ ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& s
     }
 });
 
-ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     float value = 0.0f;
     if (sscanf(params.data(), "%f", &value) == EOF) {
         console.sendMessage(sender, String("sleep = \"") + std::to_string(*core->getConfig().getFloat("sleep")) + "\"");
@@ -331,7 +342,7 @@ ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& 
     core->setThreadSleep(Microseconds(static_cast<long long>(value * 1000.0f)));
 });
 
-ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("dynticks = \"") + std::to_string(*core->getConfig().getBool("use_dyn_ticks")) + "\"");
@@ -341,7 +352,7 @@ ADD_CONSOLE_CMD(dynticks, [](const String& params, const ConsoleCommandSenderDat
     core->useDynTicks(bool(value));
 });
 
-ADD_CONSOLE_CMD(tickrate, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(tickrate, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int value = 0;
     if (sscanf(params.data(), "%d", &value) == EOF) {
         console.sendMessage(sender, String("tickrate = \"") + std::to_string(static_cast<int>(1000.0f / *core->getConfig().getFloat("sleep"))) + "\"");
@@ -353,7 +364,7 @@ ADD_CONSOLE_CMD(tickrate, [](const String& params, const ConsoleCommandSenderDat
     core->setThreadSleep(Microseconds(static_cast<long long>(sleep * 1000.0f)));
 });
 
-ADD_CONSOLE_CMD(worldtime, [](const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core) {
+ADD_CONSOLE_CMD(worldtime, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core) {
     int time;
     if (sscanf(params.data(), "%d", &time) == EOF) {
         console.sendMessage(sender, String("worldtime = \"") + std::to_string(*core->getConfig().getInt("game.time")) + "\"");

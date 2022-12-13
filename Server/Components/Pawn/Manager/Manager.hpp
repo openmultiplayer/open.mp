@@ -334,6 +334,7 @@ public:
     AMX* AMXFromID(int id) const;
     int IDFromAMX(AMX*) const;
 
+    void OnServerCommandList(FlatHashSet<StringView>& commands);
     bool OnServerCommand(const ConsoleCommandSenderData& sender, std::string const& cmd, std::string const& args);
 
 private:

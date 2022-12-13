@@ -9,12 +9,12 @@
 #pragma once
 
 #include "sdk.hpp"
-#include <Server/Components/Console/console.hpp>
 #include <unordered_map>
+#include "console_impl.hpp"
 
 using namespace Impl;
 
-using CommandHandlerFuncType = void (*)(const String& params, const ConsoleCommandSenderData& sender, IConsoleComponent& console, ICore* core);
+using CommandHandlerFuncType = void (*)(const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core);
 
 class ConsoleCmdHandler {
 public:
