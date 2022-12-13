@@ -10,6 +10,7 @@
 
 #include <ghc/filesystem.hpp>
 #include <types.hpp>
+#include <core.hpp>
 
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
 struct IUnknown;
@@ -90,12 +91,17 @@ std::string GetLastErrorAsString()
 }
 #endif
 
-void RunProcess(StringView exe, StringView args, bool runInBackground = false)
+void RunProcess(ILogger& logger, StringView exe, StringView args, bool runInBackground = false)
 {
 	auto exePath = ghc::filesystem::path(exe.data());
 	if (!exePath.has_extension())
 	{
 		exePath.replace_extension(EXECUTABLE_EXT);
+	}
+
+	if (!ghc::filesystem::exists(exePath))
+	{
+		logger.logLn(LogLevel::Warning, "Bot executable not found: %.*s", PRINT_VIEW(exePath.string()));
 	}
 
 #ifdef BUILD_WINDOWS

@@ -1851,7 +1851,7 @@ public:
 		{
 			args += " -z " + std::string(password);
 		}
-		utils::RunProcess(config.getString("bot_exe"), args, true);
+		utils::RunProcess(*this, config.getString("bot_exe"), args, true);
 	}
 
 	void requestHTTP(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override
