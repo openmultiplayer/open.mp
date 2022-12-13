@@ -51,7 +51,7 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
 	reinterpret_cast<void*>(&amx_PushArray),
 	reinterpret_cast<void*>(&amx_PushString),
 	reinterpret_cast<void*>(&amx_RaiseError),
-	reinterpret_cast<void*>(&amx_Register),
+	reinterpret_cast<void*>(&amx_RegisterChecked),
 	reinterpret_cast<void*>(&amx_Release),
 	reinterpret_cast<void*>(&amx_SetCallback),
 	reinterpret_cast<void*>(&amx_SetDebugHook),
