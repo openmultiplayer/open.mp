@@ -17,6 +17,7 @@
 #include <stdarg.h>
 
 #include "Script.hpp"
+#include "../Manager/Manager.hpp"
 
 extern "C" {
 int AMXEXPORT amx_ArgsInit(AMX* amx);
@@ -280,4 +281,48 @@ int AMXAPI amx_StrSize(const cell* cstr, int* length)
         *length = len + 1;
     } /* if */
     return AMX_ERR_NONE;
+}
+
+static AMX_NATIVE findfunction(const char* name, const AMX_NATIVE_INFO* list, int number)
+{
+    int i;
+
+    assert(list != NULL);
+    for (i = 0; list[i].name != NULL && (i < number || number == -1); i++)
+        if (strcmp(name, list[i].name) == 0)
+            return list[i].func;
+    return NULL;
+}
+
+int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number)
+{
+    AMX_FUNCPART* func;
+    AMX_HEADER* hdr;
+    int i, numnatives, err;
+    AMX_NATIVE funcptr;
+
+    hdr = (AMX_HEADER*)amx->base;
+    assert(hdr != NULL);
+    assert(hdr->magic == AMX_MAGIC);
+    assert(hdr->natives <= hdr->libraries);
+    numnatives = NUMENTRIES(hdr, natives, libraries);
+
+    err = AMX_ERR_NONE;
+    func = GETENTRY(hdr, natives, 0);
+    for (i = 0; i < numnatives; i++) {
+        funcptr = (list != NULL) ? findfunction(GETENTRYNAME(hdr, func), list, number) : NULL;
+        if (func->address == 0) {
+            /* this function is not yet located */
+            if (funcptr != NULL)
+                ((AMX_FUNCWIDE*)func)->address = funcptr;
+            else
+                err = AMX_ERR_NOTFOUND;
+        } else if (funcptr != NULL && PawnManager::Get()->core) {
+            PawnManager::Get()->core->logLn(LogLevel::Warning, "Tried to register native which is already registered: %s", GETENTRYNAME(hdr, func));
+        } /* if */
+        func = (AMX_FUNCPART*)((unsigned char*)func + hdr->defsize);
+    } /* for */
+    if (err == AMX_ERR_NONE)
+        amx->flags |= AMX_FLAG_NTVREG;
+    return err;
 }
