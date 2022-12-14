@@ -25,4 +25,3 @@ struct IFixesComponent : public IComponent
 
 	virtual bool sendGameText(StringView message, Milliseconds time, int style) = 0;
 };
-
