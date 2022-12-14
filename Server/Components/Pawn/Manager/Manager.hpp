@@ -102,7 +102,9 @@ private:
 	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const& name) const
 	{
 		return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const& it)
-			{ return it.first == name; });
+			{
+				return it.first == name;
+			});
 	}
 
 public:

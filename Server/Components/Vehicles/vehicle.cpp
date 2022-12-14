@@ -190,7 +190,9 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 		sirenState = vehicleSync.Siren;
 		params.siren = sirenState != 0;
 		static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
-			{ return handler->onVehicleSirenStateChange(player, *this, sirenState); });
+			{
+				return handler->onVehicleSirenStateChange(player, *this, sirenState);
+			});
 	}
 
 	if (driver != &player)
@@ -254,7 +256,9 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 
 	UnoccupiedVehicleUpdate data = UnoccupiedVehicleUpdate { unoccupiedSync.SeatID, unoccupiedSync.Position, unoccupiedSync.Velocity };
 	bool allowed = static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this, &data](VehicleEventHandler* handler)
-		{ return handler->onUnoccupiedVehicleUpdate(*this, player, data); });
+		{
+			return handler->onUnoccupiedVehicleUpdate(*this, player, data);
+		});
 
 	if (tower && !towing)
 	{
@@ -325,7 +329,9 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	*/
 
 	bool allowed = static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
-		{ return handler->onTrailerUpdate(player, *this); });
+		{
+			return handler->onTrailerUpdate(player, *this);
+		});
 	return allowed;
 }
 

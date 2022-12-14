@@ -231,7 +231,9 @@ private:
 				}
 
 				self.eventDispatcher.all([&peer, scmEvent](VehicleEventHandler* handler)
-					{ handler->onEnterExitModShop(peer, scmEvent.Arg1, scmEvent.Arg2); });
+					{
+						handler->onEnterExitModShop(peer, scmEvent.Arg1, scmEvent.Arg2);
+					});
 
 				NetCode::RPC::SCMEvent enterExitRPC;
 				enterExitRPC.PlayerID = peer.getID();

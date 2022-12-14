@@ -2005,7 +2005,9 @@ inline bool animationNameValid(StringView lib, StringView name)
 	Impl::String fullName(lib);
 	fullName += ':' + Impl::String(name);
 	std::transform(fullName.begin(), fullName.end(), fullName.begin(), [](unsigned char c)
-		{ return std::toupper(c); });
+		{
+			return std::toupper(c);
+		});
 	return AnimationNamesLookup.valid.find(fullName) != AnimationNamesLookup.valid.end();
 }
 
@@ -2013,7 +2015,9 @@ inline bool animationLibraryValid(StringView lib, bool v1_0 = true)
 {
 	Impl::String fullName(lib);
 	std::transform(fullName.begin(), fullName.end(), fullName.begin(), [](unsigned char c)
-		{ return std::toupper(c); });
+		{
+			return std::toupper(c);
+		});
 	if (AnimationLibraryLookup.valid.find(fullName) != AnimationLibraryLookup.valid.end())
 	{
 		return true;
