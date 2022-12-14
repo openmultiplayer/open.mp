@@ -184,7 +184,7 @@ inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
 #define GET_TIMER(timer, name, failRet)                        \
 	AMX_MIN_PARAMETERS(name, params, 1);                       \
 	ITimer* timer = PawnTimerImpl::Get()->getTimer(params[1]); \
-	if (timer == nullptr || !timer->running())				   \
+	if (timer == nullptr || !timer->running())                 \
 	{                                                          \
 		return failRet;                                        \
 	}
