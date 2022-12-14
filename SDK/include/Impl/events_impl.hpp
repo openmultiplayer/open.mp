@@ -152,7 +152,9 @@ struct DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType>,
 		// `anyTrue` should still CALL them call, don't short-circuit.
 		bool ret = false;
 		std::for_each(handlers.begin(), handlers.end(), typename Storage::template Func<bool, Fn>([&fn, &ret]()
-															{ ret = fn() || ret; }));
+															{
+																ret = fn() || ret;
+															}));
 		return ret;
 	}
 
@@ -167,7 +169,9 @@ struct DefaultEventDispatcher final : public IEventDispatcher<EventHandlerType>,
 	{
 		bool ret = true;
 		std::for_each(handlers.begin(), handlers.end(), typename Storage::template Func<bool, Fn>([&fn, &ret]()
-															{ ret = fn() && ret; }));
+															{
+																ret = fn() && ret;
+															}));
 		return ret;
 	}
 

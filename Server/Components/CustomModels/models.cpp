@@ -684,7 +684,9 @@ public:
 	bool getCustomModelPath(int32_t modelId, StringView& dffPath, StringView& txdPath) const override
 	{
 		auto model = std::find_if(storage.begin(), storage.end(), [&](const auto& model)
-			{ return model->getId() == modelId; });
+			{
+				return model->getId() == modelId;
+			});
 
 		if (model != storage.end())
 		{

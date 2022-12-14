@@ -416,7 +416,9 @@ SCRIPT_API(GetVehicleModelsUsed, int())
 	auto& vehicle_models = PawnManager::Get()->vehicles->models();
 
 	return std::count_if(vehicle_models.begin(), vehicle_models.end(), [](uint8_t model_instances)
-		{ return model_instances > 0; });
+		{
+			return model_instances > 0;
+		});
 }
 
 SCRIPT_API(GetVehiclePaintjob, int(IVehicle& vehicle))

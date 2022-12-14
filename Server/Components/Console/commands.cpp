@@ -336,7 +336,9 @@ ADD_CONSOLE_CMD(rcon_password, [](const String& params, const ConsoleCommandSend
 	});
 
 ADD_CONSOLE_CMD(echo, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{ console.sendMessage(sender, params); });
+	{
+		console.sendMessage(sender, params);
+	});
 
 ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
 	{

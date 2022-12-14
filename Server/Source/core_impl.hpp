@@ -134,7 +134,9 @@ struct adl_serializer<std::variant<Args...>>
 	static void to_json(ordered_json& j, std::variant<Args...> const& v)
 	{
 		std::visit([&](auto&& value)
-			{ j = std::forward<decltype(value)>(value); },
+			{
+				j = std::forward<decltype(value)>(value);
+			},
 			v);
 	}
 };
@@ -468,7 +470,9 @@ public:
 	void removeBan(const BanEntry& entry) override
 	{
 		auto ban_itr = std::find_if(bans.begin(), bans.end(), [&](const BanEntry& ban)
-			{ return ban.address == entry.address; });
+			{
+				return ban.address == entry.address;
+			});
 
 		if (ban_itr != bans.end())
 		{
@@ -532,7 +536,9 @@ public:
 	bool isBanned(const BanEntry& entry) const override
 	{
 		return std::any_of(bans.begin(), bans.end(), [&](const BanEntry& ban)
-			{ return entry.address == ban.address; });
+			{
+				return entry.address == ban.address;
+			});
 	}
 
 	size_t getBansCount() const override

@@ -584,7 +584,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (filteredMessage.size() > 1)
 			{
 				bool send = self.eventDispatcher.stopAtTrue([&peer, filteredMessage](PlayerEventHandler* handler)
-					{ return handler->onPlayerCommandText(peer, filteredMessage); });
+					{
+						return handler->onPlayerCommandText(peer, filteredMessage);
+					});
 
 				if (!send)
 				{
@@ -707,7 +709,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
 				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
-					{ handler->onPlayerKeyStateChange(peer, newKeys, oldKeys); });
+					{
+						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
+					});
 			}
 
 			player.setState(PlayerState_OnFoot);
@@ -778,13 +782,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
 				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
-					{ handler->onPlayerKeyStateChange(peer, newKeys, oldKeys); });
+					{
+						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
+					});
 			}
 			player.setState(PlayerState_Spectating);
 
 			TimePoint now = Time::now();
 			if (self.playerUpdateDispatcher.stopAtFalse([&peer, now](PlayerUpdateEventHandler* handler)
-					{ return handler->onUpdate(peer, now); }))
+					{
+						return handler->onUpdate(peer, now);
+					}))
 			{
 			}
 			return true;
@@ -1098,7 +1106,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
 				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
-					{ handler->onPlayerKeyStateChange(peer, newKeys, oldKeys); });
+					{
+						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
+					});
 			}
 			player.setState(PlayerState_Driver);
 
@@ -1346,7 +1356,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
 				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
-					{ handler->onPlayerKeyStateChange(peer, newKeys, oldKeys); });
+					{
+						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
+					});
 			}
 			player.setState(PlayerState_Passenger);
 

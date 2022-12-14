@@ -216,7 +216,9 @@ private:
 		// Try all variants from most specific to least specific.
 		Impl::String lower(right);
 		std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c)
-			{ return std::tolower(c); });
+			{
+				return std::tolower(c);
+			});
 		if (lower == "true")
 		{
 			config.setBool(name, true);
@@ -334,7 +336,9 @@ private:
 			{
 				Impl::String lower(right);
 				std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c)
-					{ return std::tolower(c); });
+					{
+						return std::tolower(c);
+					});
 				if (lower == "true" || lower == "1")
 				{
 					config.setBool(dictIt->second, true);
