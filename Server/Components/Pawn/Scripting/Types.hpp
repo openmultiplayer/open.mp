@@ -853,7 +853,7 @@ public:
 	ParamCast(ParamCast<DynamicArray<T> const&> const&) = delete;
 	ParamCast(ParamCast<DynamicArray<T> const&>&&) = delete;
 
-	operator DynamicArray<T> const &()
+	operator DynamicArray<T> const&()
 	{
 		return value_;
 	}
