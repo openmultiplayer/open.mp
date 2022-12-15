@@ -741,7 +741,7 @@ struct IPlayer : public IExtensible, public IEntity
 	virtual bool hasGameText(int style) = 0;
 
 	/// Get the data for this gametext, if they have one.
-	virtual bool getGameText(int style, Impl::String& message, Milliseconds& time, Milliseconds& remaining) = 0;
+	virtual bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) = 0;
 
 	/// Set the player's weather
 	virtual void setWeather(int weatherID) = 0;

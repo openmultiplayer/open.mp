@@ -479,7 +479,7 @@ public:
 		return !!gts_[style];
 	}
 
-	bool getGameText(int style, String& message, Milliseconds& time, Milliseconds& remaining) override
+	bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) override
 	{
 		if (gts_[style] && gtTimers_[style])
 		{
