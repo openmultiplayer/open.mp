@@ -1015,7 +1015,7 @@ SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& messa
 {
 	Milliseconds mt;
 	Milliseconds mr;
-	String ms;
+	StringView ms;
 	if (player.getGameText(style, ms, mt, mr))
 	{
 		message = ms;
