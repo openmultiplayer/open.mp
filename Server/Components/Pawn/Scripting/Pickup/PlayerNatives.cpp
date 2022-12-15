@@ -171,4 +171,3 @@ SCRIPT_API(SetPlayerPickupVirtualWorld, bool(IPlayer& player, cell pickupid, int
 	pickup->setVirtualWorld(virtualworld);
 	return true;
 }
-

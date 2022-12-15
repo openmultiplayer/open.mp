@@ -113,4 +113,3 @@ struct IPlayerPickupData : public IExtension
 	/// Assign a full ID to the legacy ID reserved earlier.
 	virtual void setClientID(int legacy, int real) = 0;
 };
-

@@ -227,4 +227,3 @@ public:
 		return legacyPerPlayer_;
 	}
 };
-
