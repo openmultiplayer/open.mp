@@ -110,13 +110,13 @@ private:
 
 	void See(StringView const lib)
 	{
-		size_t hash = std::hash<StringView>{}(lib);
+		size_t hash = std::hash<StringView> {}(lib);
 		libraries_.insert(hash);
 	}
 
 	bool Saw(StringView const lib) const
 	{
-		size_t hash = std::hash<StringView>{}(lib);
+		size_t hash = std::hash<StringView> {}(lib);
 		return libraries_.find(hash) != libraries_.end();
 	}
 
@@ -124,7 +124,8 @@ private:
 	{
 		// Pop the next animation off the queue.
 		ReapplyAnimationData const&
-			next = animationToReapply_.front();
+			next
+			= animationToReapply_.front();
 		// Only timer for a disconnected player.
 		if (next.data)
 		{
