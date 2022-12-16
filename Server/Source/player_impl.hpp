@@ -113,8 +113,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int gravity_;
 	bool ghostMode_;
 	int defaultObjectsRemoved_;
-	bool allowWeapons_ = true;
-	bool allowTeleport_ = true;
+	bool allowWeapons_;
+	bool allowTeleport_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -171,6 +171,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		enableCameraTargeting_ = false;
 		widescreen_ = 0;
 		numStreamed_ = 0;
+		allowWeapons_ = true;
+		allowTeleport_ = false;
 
 		streamedFor_.clear();
 		streamedFor_.add(poolID, *this);
@@ -245,6 +247,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, gravity_(0)
 		, ghostMode_(false)
 		, defaultObjectsRemoved_(0)
+		, allowWeapons_(true)
+		, allowTeleport_(false)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
