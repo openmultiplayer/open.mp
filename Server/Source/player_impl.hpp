@@ -1251,7 +1251,7 @@ public:
 		{
 			// Fail.
 		}
-		else if (allowWeapons())
+		else if (areWeaponsAllowed())
 		{
 			// Set from sync
 			NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
@@ -1275,7 +1275,7 @@ public:
 				weapon.id = 0;
 				weapon.ammo = 0;
 				// Yes.
-				if (allowWeapons())
+				if (areWeaponsAllowed())
 				{
 					goto removeWeapon_has_weapon;
 				}
@@ -1307,7 +1307,7 @@ removeWeapon_has_weapon:
 		{
 			// Fail.
 		}
-		else if (allowWeapons())
+		else if (areWeaponsAllowed())
 		{
 			// Set from sync
 			NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
@@ -1344,7 +1344,7 @@ removeWeapon_has_weapon:
 
 	void resetWeapons() override
 	{
-		if (allowWeapons())
+		if (areWeaponsAllowed())
 		{
 			// Set from sync
 			NetCode::RPC::ResetPlayerWeapons RPC;
@@ -1363,7 +1363,7 @@ removeWeapon_has_weapon:
 	void setArmedWeapon(uint32_t weapon) override
 	{
 		// Set from sync
-		if (allowWeapons())
+		if (areWeaponsAllowed())
 		{
 			NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
 			setPlayerArmedWeaponRPC.Weapon = weapon;
@@ -1373,7 +1373,7 @@ removeWeapon_has_weapon:
 
 	uint32_t getArmedWeapon() const override
 	{
-		if (!allowWeapons())
+		if (!areWeaponsAllowed())
 		{
 			return 0;
 		}
@@ -1382,7 +1382,7 @@ removeWeapon_has_weapon:
 
 	uint32_t getArmedWeaponAmmo() const override
 	{
-		if (!allowWeapons())
+		if (!areWeaponsAllowed())
 		{
 			return 0;
 		}
@@ -1666,7 +1666,7 @@ removeWeapon_has_weapon:
 		}
 	}
 
-	bool allowWeapons() const override
+	bool areWeaponsAllowed() const override
 	{
 		return allowWeapons_ && (*allowInteriorWeapons_ || interior_ == 0);
 	}
