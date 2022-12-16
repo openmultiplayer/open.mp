@@ -1184,7 +1184,7 @@ SCRIPT_API(AllowPlayerWeapons, bool(IPlayer& player, bool allow))
 	return true;
 }
 
-SCRIPT_API(IsPlayerWeaponsAllowed, bool(IPlayer& player))
+SCRIPT_API(ArePlayerWeaponsAllowed, bool(IPlayer& player))
 {
 	return player.areWeaponsAllowed();
 }
