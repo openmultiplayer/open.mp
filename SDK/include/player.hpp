@@ -858,7 +858,7 @@ struct IPlayer : public IExtensible, public IEntity
 	virtual void allowTeleport(bool allow) = 0;
 
 	/// Does the player teleport when they click the map?
-	virtual bool allowTeleport() const = 0;
+	virtual bool isTeleportAllowed() const = 0;
 };
 
 /// A player event handler

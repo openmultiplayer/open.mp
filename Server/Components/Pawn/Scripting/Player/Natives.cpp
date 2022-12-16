@@ -914,7 +914,7 @@ SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
 
 SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer* player))
 {
-	return player->allowTeleport();
+	return player->isTeleportAllowed();
 }
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))

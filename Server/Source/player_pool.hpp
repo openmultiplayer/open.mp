@@ -112,7 +112,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (peer.allowTeleport())
+			if (peer.isTeleportAllowed())
 			{
 				// Teleport the player.
 				peer.setPositionFindZ(onPlayerClickMapRPC.Pos);

@@ -1678,7 +1678,7 @@ removeWeapon_has_weapon:
 	}
 
 	/// Does the player teleport when they click the map?
-	bool allowTeleport() const override
+	bool isTeleportAllowed() const override
 	{
 		return allowTeleport_;
 	}
