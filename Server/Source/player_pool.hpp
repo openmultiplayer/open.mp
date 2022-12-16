@@ -31,6 +31,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	bool* markersLimit;
 	float* markersLimitRadius;
 	int* gameTimeUpdateRate;
+	bool* useAllAnimations_;
+	bool* allowInteriorWeapons_;
 	int maxBots = 0;
 	StaticArray<bool, 256> allowNickCharacter;
 
@@ -95,8 +97,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct OnPlayerClickMapRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
+		bool * const allowTeleport_;
 		OnPlayerClickMapRPCHandler(PlayerPool& self)
 			: self(self)
+			, allowTeleport_(self.core.getConfig().getBool("rcon.allow_teleport"))
 		{
 		}
 
@@ -113,7 +117,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				// Teleport the player.
 				peer.setPositionFindZ(onPlayerClickMapRPC.Pos);
 			}
-			else if (*self.core.getConfig().getBool("rcon.allow_teleport"))
+			else if (*allowTeleport_)
 			{
 				if (IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(peer))
 				{
@@ -254,8 +258,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct PlayerInteriorChangeRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
+		bool* const allowInteriorWeapons_;
+
 		PlayerInteriorChangeRPCHandler(PlayerPool& self)
 			: self(self)
+			, allowInteriorWeapons_(self.core.getConfig().getBool("game.allow_interior_weapons"))
 		{
 		}
 
@@ -277,7 +284,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (!*self.core.getConfig().getBool("game.allow_interior_weapons"))
+			if (!*allowInteriorWeapons_)
 			{
 				if (player.interior_)
 				{
@@ -1570,7 +1577,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"), core.getConfig().getBool("game.allow_interior_weapons"));
+		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, allowInteriorWeapons_);
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
@@ -1878,6 +1885,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		markersLimitRadius = config.getFloat("game.player_marker_draw_radius");
 		markersUpdateRate = config.getInt("network.player_marker_sync_rate");
 		gameTimeUpdateRate = config.getInt("network.time_sync_rate");
+		useAllAnimations_ = config.getBool("game.use_all_animations");
+		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
 		maxBots = *config.getInt("max_bots");
 
 		playerUpdateDispatcher.addEventHandler(this);
