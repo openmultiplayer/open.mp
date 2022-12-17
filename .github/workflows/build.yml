@@ -147,46 +147,6 @@ jobs:
           echo "${CI_PRIVATE_KEY}" | ssh-add -
           echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
-  build-arm:
-    name: Linux ARMhf build
-    runs-on: [self-hosted, Linux, ARM]
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: true
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
-
-      - name: Generate build files
-        run: |
-          export CC=clang
-          export CXX=clang++
-          export OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | wc -l)
-          export OMP_BUILD_COMMIT=$(git rev-parse HEAD)
-          mkdir build && cd build && cmake -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCROSS_BUILD=1 -DCROSS_BUILD_ARCH=armv7 ..
-
-      - name: Build
-        run: |
-          export CC=clang
-          export CXX=clang++
-          cd build
-          ninja
-
-      - name: Create a snapshot
-        env:
-          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-          archive_name="open.mp-linux-snapshot-${version}-arm.tar.xz"
-          cd build/Output/*
-          tar -cJvf "${archive_name}" "Server"
-          eval $(ssh-agent -s)
-          echo "${CI_PRIVATE_KEY}" | ssh-add -
-          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
-
   abi-check:
     if: github.event_name == 'pull_request'
     name: SDK ABI check
