@@ -1172,3 +1172,8 @@ SCRIPT_API(GetPlayerGhostMode, bool(IPlayer& player))
 {
 	return player.isGhostModeEnabled();
 }
+
+SCRIPT_API(IsPlayerUsingOfficialClient, int(IPlayer& player))
+{
+	return player.isUsingOfficialClient();
+}

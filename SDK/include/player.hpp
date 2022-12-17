@@ -847,6 +847,9 @@ struct IPlayer : public IExtensible, public IEntity
 
 	/// Clear player tasks
 	virtual void clearTasks(PlayerAnimationSyncType syncType) = 0;
+
+	/// Check if player is using an official client or not
+	virtual bool isUsingOfficialClient() const = 0;
 };
 
 /// A player event handler

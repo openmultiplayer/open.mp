@@ -113,6 +113,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int gravity_;
 	bool ghostMode_;
 	int defaultObjectsRemoved_;
+	bool isUsingOfficialClient_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -242,6 +243,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, gravity_(0)
 		, ghostMode_(false)
 		, defaultObjectsRemoved_(0)
+		, isUsingOfficialClient_(params.isUsingOfficialClient)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -294,6 +296,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isBot() const override
 	{
 		return isBot_;
+	}
+
+	bool isUsingOfficialClient() const override
+	{
+		return isUsingOfficialClient_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);

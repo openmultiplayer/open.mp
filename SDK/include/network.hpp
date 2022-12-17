@@ -88,6 +88,7 @@ struct PeerRequestParams
 	bool bot;
 	StringView name;
 	StringView serial;
+	bool isUsingOfficialClient;
 };
 
 struct NetworkStats
