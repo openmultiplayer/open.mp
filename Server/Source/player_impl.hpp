@@ -1393,6 +1393,41 @@ removeWeapon_has_weapon:
 		}
 	}
 
+	void hideGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->hideGameText(style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = " ";
+			gameText.Time = 0;
+			gameText.Style = style;
+			PacketHelper::send(gameText, *this);
+		}
+	}
+
+	bool hasGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			return data->hasGameText(style);
+		}
+		return false;
+	}
+
+	bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->getGameText(style, message, time, remaining);
+			return true;
+		}
+		return false;
+	}
+
 	int getVirtualWorld() const override
 	{
 		return virtualWorld_;

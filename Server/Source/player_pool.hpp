@@ -1760,13 +1760,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	{
 		if (fixesComponent)
 		{
-			fixesComponent->sendGameText(message, time, style);
+			fixesComponent->sendGameTextToAll(message, time, style);
 		}
 		else
 		{
 			NetCode::RPC::SendGameText gameText;
 			gameText.Text = message;
 			gameText.Time = time.count();
+			gameText.Style = style;
+			PacketHelper::broadcast(gameText, *this);
+		}
+	}
+
+	void hideGameTextForAll(int style) override
+	{
+		if (fixesComponent)
+		{
+			fixesComponent->hideGameTextForAll(style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = " ";
+			gameText.Time = 0;
 			gameText.Style = style;
 			PacketHelper::broadcast(gameText, *this);
 		}

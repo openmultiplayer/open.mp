@@ -1000,6 +1000,32 @@ SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, cell const* format, int time
 	return true;
 }
 
+SCRIPT_API(HideGameTextForPlayer, bool(IPlayer& player, int style))
+{
+	player.hideGameText(style);
+	return true;
+}
+
+SCRIPT_API(HasGameText, bool(IPlayer& player, int style))
+{
+	return player.hasGameText(style);
+}
+
+SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& message, int time, int remaining))
+{
+	Milliseconds mt;
+	Milliseconds mr;
+	StringView ms;
+	if (player.getGameText(style, ms, mt, mr))
+	{
+		message = ms;
+		time = (int)mt.count();
+		remaining = (int)mr.count();
+		return true;
+	}
+	return false;
+}
+
 SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, int time, int style, cell const* format))
 {
 	auto string = svprintf(format, GetAMX(), GetParams(), 4);
