@@ -43,7 +43,10 @@ jobs:
         uses: actions/setup-python@v2
 
       - name: Install CMake
-        uses: lukka/get-cmake@v.3.23.2
+        uses: lukka/get-cmake@local-cache
+        with:
+          useLocalCache: true
+          useCloudCache: false
 
       - name: Install latest conan
         run: |
