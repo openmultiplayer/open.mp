@@ -293,13 +293,13 @@ public:
 					{
 						props = nlohmann::json::parse(ifs, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
 					}
-					catch (nlohmann::json::exception const & e)
+					catch (nlohmann::json::exception const& e)
 					{
 						std::cout << "Error while parsing config file: " << e.what() << '\n';
 						//core.printLn("Error parsing config file:");
 						//core.printLn("%s", e.what());
 					}
-					catch (std::ios_base::failure const & e)
+					catch (std::ios_base::failure const& e)
 					{
 						std::cout << "Error while parsing config file: " << e.what() << '\n';
 						//core.printLn("Error parsing config file:");
