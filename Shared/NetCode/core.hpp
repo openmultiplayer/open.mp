@@ -38,6 +38,7 @@ namespace RPC
 		uint32_t ChallengeResponse;
 		HybridString<16> Key;
 		HybridString<16> VersionString;
+		bool IsUsingOfficialClient;
 
 		bool read(NetworkBitStream& bs)
 		{
@@ -46,7 +47,12 @@ namespace RPC
 			bs.readDynStr8(Name);
 			bs.readUINT32(ChallengeResponse);
 			bs.readDynStr8(Key);
-			return bs.readDynStr8(VersionString);
+			auto readFailed = bs.readDynStr8(VersionString);
+
+			uint32_t dummyVar = 0;
+			IsUsingOfficialClient = bs.readUINT32(dummyVar);
+
+			return readFailed;
 		}
 
 		void write(NetworkBitStream& bs) const

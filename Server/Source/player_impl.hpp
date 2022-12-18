@@ -115,6 +115,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int defaultObjectsRemoved_;
 	bool allowWeapons_;
 	bool allowTeleport_;
+	bool isUsingOfficialClient_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -249,6 +250,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, defaultObjectsRemoved_(0)
 		, allowWeapons_(true)
 		, allowTeleport_(false)
+		, isUsingOfficialClient_(params.isUsingOfficialClient)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -302,6 +304,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isBot() const override
 	{
 		return isBot_;
+	}
+
+	bool isUsingOfficialClient() const override
+	{
+		return isUsingOfficialClient_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
@@ -1456,6 +1463,41 @@ removeWeapon_has_weapon:
 			gameText.Style = style;
 			PacketHelper::send(gameText, *this);
 		}
+	}
+
+	void hideGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->hideGameText(style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = " ";
+			gameText.Time = 0;
+			gameText.Style = style;
+			PacketHelper::send(gameText, *this);
+		}
+	}
+
+	bool hasGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			return data->hasGameText(style);
+		}
+		return false;
+	}
+
+	bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->getGameText(style, message, time, remaining);
+			return true;
+		}
+		return false;
 	}
 
 	int getVirtualWorld() const override
