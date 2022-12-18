@@ -227,7 +227,7 @@ SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 		IPlayerPool* players = PawnManager::Get()->players;
 		for (IPlayer* player : players->entries())
 		{
-			if (player->getInterior() && player->allowWeapons())
+			if (player->getInterior() && player->areWeaponsAllowed())
 			{
 				// Because they are allowed weapons currently this will send a full client reset.
 				player->resetWeapons();
