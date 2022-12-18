@@ -857,6 +857,18 @@ struct IPlayer : public IExtensible, public IEntity
 	/// Clear player tasks
 	virtual void clearTasks(PlayerAnimationSyncType syncType) = 0;
 
+	/// Allow player to use weapons
+	virtual void allowWeapons(bool allow) = 0;
+
+	/// Check if player is allowed to use weapons
+	virtual bool areWeaponsAllowed() const = 0;
+
+	/// Teleport the player when they click the map
+	virtual void allowTeleport(bool allow) = 0;
+
+	/// Does the player teleport when they click the map
+	virtual bool isTeleportAllowed() const = 0;
+
 	/// Check if player is using an official client or not
 	virtual bool isUsingOfficialClient() const = 0;
 };
