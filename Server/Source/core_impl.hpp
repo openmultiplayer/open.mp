@@ -291,11 +291,21 @@ public:
 					nlohmann::json props;
 					try
 					{
-						props = nlohmann::json::parse(ifs, nullptr, false /* allow_exceptions */, true /* ignore_comments */);
+						props = nlohmann::json::parse(ifs, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
 					}
-					catch (std::ios_base::failure)
+					catch (nlohmann::json::exception const & e)
 					{
-					} // Is a directory?
+						std::cout << "Error while parsing config file: " << e.what() << '\n';
+						//core.printLn("Error parsing config file:");
+						//core.printLn("%s", e.what());
+					}
+					catch (std::ios_base::failure const & e)
+					{
+						std::cout << "Error while parsing config file: " << e.what() << '\n';
+						//core.printLn("Error parsing config file:");
+						//core.printLn("%s", e.what());
+					}
+					// Is a directory?
 					if (props.is_null() || props.is_discarded() || !props.is_object())
 					{
 						processed = Defaults;
