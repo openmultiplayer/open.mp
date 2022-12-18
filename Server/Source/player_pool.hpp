@@ -97,7 +97,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct OnPlayerClickMapRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
-		bool * const allowTeleport_;
+		bool* const allowTeleport_;
 		OnPlayerClickMapRPCHandler(PlayerPool& self)
 			: self(self)
 			, allowTeleport_(self.core.getConfig().getBool("rcon.allow_teleport"))
