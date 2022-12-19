@@ -72,7 +72,7 @@ constexpr int AMX_FUNC_SetStringLen = 45;
 constexpr int AMX_FUNC_Swap16 = 46;
 #endif
 
-#if PAWN_CELL_SIZE == 16
+#if PAWN_CELL_SIZE == 32
 constexpr int AMX_FUNC_Swap32 = 47;
 #endif
 
@@ -134,6 +134,9 @@ typedef int (*amx_UTF8Check_t)(const char* string, int* length);
 typedef int (*amx_UTF8Get_t)(const char* string, const char** endptr, cell* value);
 typedef int (*amx_UTF8Len_t)(const cell* cstr, int* length);
 typedef int (*amx_UTF8Put_t)(char* string, char** endptr, int maxchars, cell value);
+typedef int (*amx_GetNativeByIndex_t)(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
+typedef int (*amx_MakeAddr_t)(AMX* amx, cell* phys_addr, cell* amx_addr);
+typedef int (*amx_StrSize_t)(const cell* cstr, int* length);
 
 #if PAWN_CELL_SIZE == 16
 typedef void (*amx_Swap16(uint16_t* v);
@@ -169,7 +172,7 @@ int AMXAPI amx_Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
 
 int AMXAPI amx_Callback(AMX* amx, cell index, cell* result, const cell* params)
 {
-	return ((amx_Callback_t)funcs_[AMX_FUNC_Callback])(amx, cell index, result, params);
+	return ((amx_Callback_t)funcs_[AMX_FUNC_Callback])(amx, index, result, params);
 }
 
 int AMXAPI amx_Cleanup(AMX* amx)
@@ -204,7 +207,7 @@ int AMXAPI amx_FindPubVar(AMX* amx, const char* varname, cell* amx_addr)
 
 int AMXAPI amx_FindTagId(AMX* amx, cell tag_id, char* tagname)
 {
-	return ((amx_FindTagId_t)funcs_[AMX_FUNC_FindTagId])(amx, cell tag_id, tagname);
+	return ((amx_FindTagId_t)funcs_[AMX_FUNC_FindTagId])(amx, tag_id, tagname);
 }
 
 int AMXAPI amx_Flags(AMX* amx, uint16_t* flags)
@@ -294,7 +297,7 @@ int AMXAPI amx_NumTags(AMX* amx, int* number)
 
 int AMXAPI amx_Push(AMX* amx, cell value)
 {
-	return ((amx_Push_t)funcs_[AMX_FUNC_Push])(amx, cell value);
+	return ((amx_Push_t)funcs_[AMX_FUNC_Push])(amx, value);
 }
 
 int AMXAPI amx_PushArray(AMX* amx, cell* amx_addr, cell** phys_addr, const cell array[], int numcells)
@@ -324,17 +327,17 @@ int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* nativelist, int number)
 
 int AMXAPI amx_Release(AMX* amx, cell amx_addr)
 {
-	return ((amx_Release_t)funcs_[AMX_FUNC_Release])(amx, cell amx_addr);
+	return ((amx_Release_t)funcs_[AMX_FUNC_Release])(amx, amx_addr);
 }
 
 int AMXAPI amx_SetCallback(AMX* amx, AMX_CALLBACK callback)
 {
-	return ((amx_SetCallback_t)funcs_[AMX_FUNC_SetCallback])(amx, AMX_CALLBACK callback);
+	return ((amx_SetCallback_t)funcs_[AMX_FUNC_SetCallback])(amx, callback);
 }
 
 int AMXAPI amx_SetDebugHook(AMX* amx, AMX_DEBUG debug)
 {
-	return ((amx_SetDebugHook_t)funcs_[AMX_FUNC_SetDebugHook])(amx, AMX_DEBUG debug);
+	return ((amx_SetDebugHook_t)funcs_[AMX_FUNC_SetDebugHook])(amx, debug);
 }
 
 int AMXAPI amx_SetString(cell* dest, const char* source, int pack, int use_wchar, size_t size)
@@ -362,7 +365,7 @@ int AMXAPI amx_UTF8Check(const char* string, int* length)
 	return ((amx_UTF8Check_t)funcs_[AMX_FUNC_UTF8Check])(string, length);
 }
 
-int AMXAPI amx_UTF8Get(const char* string, const char** endptr, value)
+int AMXAPI amx_UTF8Get(const char* string, const char** endptr, cell* value)
 {
 	return ((amx_UTF8Get_t)funcs_[AMX_FUNC_UTF8Get])(string, endptr, value);
 }
@@ -397,11 +400,6 @@ void amx_Swap64(uint64_t* v)
 	return ((amx_Swap64_t)funcs_[AMX_FUNC_Swap64])(v);
 }
 #endif
-
-int AMXAPI amx_PushStringLen(AMX* amx, cell* amx_addr, cell** phys_addr, const char* string, int length, int pack, int use_wchar)
-{
-	return ((amx_PushStringLen_t)funcs_[AMX_FUNC_PushStringLen])(amx, amx_addr, phys_addr, string, length, pack, use_wchar);
-}
 
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 {
