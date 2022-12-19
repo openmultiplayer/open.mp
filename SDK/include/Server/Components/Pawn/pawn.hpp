@@ -357,9 +357,3 @@ struct IPawnComponent : public IComponent
 	virtual IPawnScript const* getScript(AMX * amx) const = 0;
 	virtual IPawnScript* getScript(AMX * amx) = 0;
 };
-
-// This is ONLY implemented in components that include `pawn_impl.cpp`, not in the core server.  It
-// should really check the build conditions to see if this prototype is needed.  The only reason it
-// is here and not in some other place is that it ended up being the only declaration in the entire
-// `pawn_impl.hpp` file, which seemed pointless.
-void setPawnComponent(IPawnComponent* pawn);

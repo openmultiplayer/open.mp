@@ -2,25 +2,18 @@
 
 #include "pawn.hpp"
 
-static IPawnComponent* pawn_;
+static PawnImpl::events_;
 
-static std::array<void*, NUM_AMX_FUNCS>& funcs_;
-
-static class : public PawnEventHandler
+void PawnImpl::onAmxLoad(IPawnScript* script) override
 {
-public:
-	void onAmxLoad(IPawnScript* amx) override
-	{
+	pawn_natives::AmxLoad(script->GetAMX());
+}
 
-	}
+void PawnImpl::onAmxUnload(IPawnScript* script) override
+{
+}
 
-	void onAmxUnload(IPawnScript* amx) override
-	{
-
-	}
-} events_;
-
-void setPawnComponent(IPawnComponent* pawn)
+void PawnImpl::setPawnComponent(IPawnComponent* pawn)
 {
 	if (pawn_)
 	{
