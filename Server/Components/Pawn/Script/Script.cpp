@@ -391,12 +391,6 @@ int PawnScript::PushArray(cell* amx_addr, cell** phys_addr, const cell array[], 
 int PawnScript::PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) { return amx_PushStringLen(&amx_, amx_addr, phys_addr, string.data(), string.length(), pack, use_wchar); }
 int PawnScript::RaiseError(int error) { return amx_RaiseError(&amx_, error); }
 int PawnScript::Register(const AMX_NATIVE_INFO* nativelist, int number) { return amx_RegisterChecked(&amx_, nativelist, number); }
-int PawnScript::Register(char const _FAR* name, AMX_NATIVE func)
-{
-	AMX_NATIVE_INFO
-	nativelist = { name, func };
-	return amx_RegisterChecked(&amx_, &nativelist, 1);
-}
 int PawnScript::Release(cell amx_addr) { return amx_Release(&amx_, amx_addr); }
 int PawnScript::SetCallback(AMX_CALLBACK callback) { return amx_SetCallback(&amx_, callback); }
 int PawnScript::SetDebugHook(AMX_DEBUG debug) { return amx_SetDebugHook(&amx_, debug); }

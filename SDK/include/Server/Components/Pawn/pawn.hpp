@@ -55,7 +55,12 @@ struct IPawnScript
 	virtual int PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) = 0;
 	virtual int RaiseError(int error) = 0;
 	virtual int Register(const AMX_NATIVE_INFO* nativelist, int number) = 0;
-	virtual int Register(char const _FAR* name, AMX_NATIVE func) = 0;
+	inline int Register(char const _FAR* name, AMX_NATIVE func)
+	{
+		AMX_NATIVE_INFO
+			nativelist = { name, func };
+		return Register(&nativelist, 1);
+	}
 	virtual int Release(cell amx_addr) = 0;
 	virtual int SetCallback(AMX_CALLBACK callback) = 0;
 	virtual int SetDebugHook(AMX_DEBUG debug) = 0;
@@ -68,6 +73,12 @@ struct IPawnScript
 	virtual int UTF8Len(const cell* cstr, int* length) const = 0;
 	virtual int UTF8Put(char* string, char** endptr, int maxchars, cell value) const = 0;
 	virtual int RegisterChecked(const AMX_NATIVE_INFO* list, int number) = 0;
+	inline int RegisterChecked(char const _FAR* name, AMX_NATIVE func)
+	{
+		AMX_NATIVE_INFO
+			nativelist = { name, func };
+		return RegisterChecked(&nativelist, 1);
+	}
 
 	virtual cell GetCIP() const = 0;
 	virtual cell GetHEA() const = 0;
