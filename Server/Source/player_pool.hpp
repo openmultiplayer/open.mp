@@ -25,6 +25,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	IActorsComponent* actorsComponent = nullptr;
 	IFixesComponent* fixesComponent = nullptr;
 	ICustomModelsComponent* modelsComponent = nullptr;
+	IFixesComponent* fixesComponent_ = nullptr;
 	StreamConfigHelper streamConfigHelper;
 	int* markersShow;
 	int* markersUpdateRate;
@@ -97,15 +98,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct OnPlayerClickMapRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
-		bool* const allowTeleport_;
+
 		OnPlayerClickMapRPCHandler(PlayerPool& self)
 			: self(self)
-			, allowTeleport_(self.core.getConfig().getBool("rcon.allow_teleport"))
 		{
 		}
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
+			static const bool* allowTeleport_ = self.core.getConfig().getBool("rcon.allow_teleport");
+
 			NetCode::RPC::OnPlayerClickMap onPlayerClickMapRPC;
 			if (!onPlayerClickMapRPC.read(bs))
 			{
@@ -117,7 +119,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				// Teleport the player.
 				peer.setPositionFindZ(onPlayerClickMapRPC.Pos);
 			}
-			else if (*allowTeleport_)
+			else if (allowTeleport_ && *allowTeleport_)
 			{
 				if (IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(peer))
 				{
@@ -258,16 +260,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct PlayerInteriorChangeRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
-		bool* const allowInteriorWeapons_;
 
 		PlayerInteriorChangeRPCHandler(PlayerPool& self)
 			: self(self)
-			, allowInteriorWeapons_(self.core.getConfig().getBool("game.allow_interior_weapons"))
 		{
 		}
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
+			const bool* allowInteriorWeapons_ = self.core.getConfig().getBool("game.allow_interior_weapons");
+
 			NetCode::RPC::OnPlayerInteriorChange onPlayerInteriorChangeRPC;
 			if (!onPlayerInteriorChangeRPC.read(bs))
 			{
@@ -284,7 +286,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (!*allowInteriorWeapons_)
+			if (allowInteriorWeapons_ && (!*allowInteriorWeapons_))
 			{
 				if (player.interior_)
 				{
@@ -1577,7 +1579,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, allowInteriorWeapons_);
+		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, allowInteriorWeapons_, fixesComponent_);
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
