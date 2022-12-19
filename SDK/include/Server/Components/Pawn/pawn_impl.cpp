@@ -1,6 +1,7 @@
 #pragma once
 
 #include "pawn.hpp"
+#include "pawn_impl.hpp"
 
 static PawnImpl::events_;
 
@@ -13,22 +14,37 @@ void PawnImpl::onAmxUnload(IPawnScript* script) override
 {
 }
 
-void PawnImpl::setPawnComponent(IPawnComponent* pawn)
+static void PawnImpl::onInit(IComponentList* components)
 {
-	if (pawn_)
+	events_.pawn_ = components->queryComponent<IPawnComponent>();
+
+	if (events_.pawn_)
 	{
-		funcs_ = nullptr;
-		pawn_->getEventDispatcher().removeEventHandler(&events_);
-	}
-	if (pawn)
-	{
-		funcs_ = pawn->getAmxFunctions();
+		events_.funcs_ = pawn->getAmxFunctions();
 		pawn->getEventDispatcher().addEventHandler(&events_);
 	}
-	pawn_ = pawn;
 }
 
-uint16_t* AMXAPI amx_Align16(uint16_t* v) { return ((amx_Align16_t)PawnImpl::funcs_[AMX_FUNC_Align16])(v) } uint32_t* AMXAPI amx_Align32(uint32_t* v) { return ((amx_Align32_t)PawnImpl::funcs_[AMX_FUNC_Align32])(v) }
+static void PawnImpl::onFree(IComponent* component)
+{
+	if (component == events_.pawn_)
+	{
+		events_.pawn_ = nullptr;
+		events_.funcs_ = nullptr;
+	}
+}
+
+static void PawnImpl::free()
+{
+	if (events_.pawn_)
+	{
+		events_.pawn_->getEventDispatcher().removeEventHandler(&events_);
+		events_.pawn_ = nullptr;
+	}
+}
+
+uint16_t* AMXAPI amx_Align16(uint16_t* v) { return ((amx_Align16_t)PawnImpl::funcs_[AMX_FUNC_Align16])(v) }
+uint32_t* AMXAPI amx_Align32(uint32_t* v) { return ((amx_Align32_t)PawnImpl::funcs_[AMX_FUNC_Align32])(v) }
 
 #if defined _I64_MAX || defined HAVE_I64
 uint64_t* AMXAPI amx_Align64(uint64_t* v)

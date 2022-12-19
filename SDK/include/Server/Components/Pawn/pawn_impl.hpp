@@ -1,5 +1,6 @@
 #pragma once
 
+#include <sdk.hpp>
 #include "pawn.hpp"
 
 constexpr int AMX_FUNC_Align16 = 0;
@@ -129,10 +130,13 @@ public:
 
 	void onAmxUnload(IPawnScript * script) override;
 
-	static void setPawnComponent(IPawnComponent * pawn);
+	// Psudo-component.
+	static void onInit(IComponentList* components);
+	static void onFree(IComponent* component);
+	static void free();
 
 private:
-	static IPawnComponent* pawn_;
+	IPawnComponent* pawn_;
 
-	static std::array<void*, NUM_AMX_FUNCS>& funcs_;
+	std::array<void*, NUM_AMX_FUNCS>& funcs_;
 }
