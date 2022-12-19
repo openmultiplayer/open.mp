@@ -15,23 +15,26 @@ static PawnLookup lookups_;
 void setAmxLookups()
 {
 	// Refresh the list.
-	lookups_.actors = components_->queryComponent<IActorsComponent>();
-	lookups_.checkpoints = components_->queryComponent<ICheckpointsComponent>();
-	lookups_.classes = components_->queryComponent<IClassesComponent>();
-	lookups_.console = components_->queryComponent<IConsoleComponent>();
-	lookups_.databases = components_->queryComponent<IDatabasesComponent>();
-	lookups_.dialogs = components_->queryComponent<IDialogsComponent>();
-	lookups_.fixes = components_->queryComponent<IFixesComponent>();
-	lookups_.gangzones = components_->queryComponent<IGangZonesComponent>();
-	lookups_.menus = components_->queryComponent<IMenusComponent>();
-	lookups_.objects = components_->queryComponent<IObjectsComponent>();
-	lookups_.pickups = components_->queryComponent<IPickupsComponent>();
-	lookups_.textdraws = components_->queryComponent<ITextDrawsComponent>();
-	lookups_.textlabels = components_->queryComponent<ITextLabelsComponent>();
-	lookups_.timers = components_->queryComponent<ITimersComponent>();
-	lookups_.vars = components_->queryComponent<IVariablesComponent>();
-	lookups_.vehicles = components_->queryComponent<IVehiclesComponent>();
-	lookups_.models = components_->queryComponent<ICustomModelsComponent>();
+	if (components_)
+	{
+		lookups_.actors = components_->queryComponent<IActorsComponent>();
+		lookups_.checkpoints = components_->queryComponent<ICheckpointsComponent>();
+		lookups_.classes = components_->queryComponent<IClassesComponent>();
+		lookups_.console = components_->queryComponent<IConsoleComponent>();
+		lookups_.databases = components_->queryComponent<IDatabasesComponent>();
+		lookups_.dialogs = components_->queryComponent<IDialogsComponent>();
+		lookups_.fixes = components_->queryComponent<IFixesComponent>();
+		lookups_.gangzones = components_->queryComponent<IGangZonesComponent>();
+		lookups_.menus = components_->queryComponent<IMenusComponent>();
+		lookups_.objects = components_->queryComponent<IObjectsComponent>();
+		lookups_.pickups = components_->queryComponent<IPickupsComponent>();
+		lookups_.textdraws = components_->queryComponent<ITextDrawsComponent>();
+		lookups_.textlabels = components_->queryComponent<ITextLabelsComponent>();
+		lookups_.timers = components_->queryComponent<ITimersComponent>();
+		lookups_.vars = components_->queryComponent<IVariablesComponent>();
+		lookups_.vehicles = components_->queryComponent<IVehiclesComponent>();
+		lookups_.models = components_->queryComponent<ICustomModelsComponent>();
+	}
 }
 
 void setAmxLookups(IComponentList* components)
