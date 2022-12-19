@@ -195,7 +195,7 @@ public:
 		mgr->Load(mainScripts);
 	}
 
-	const StaticArray<void*, NUM_AMX_FUNCS>& getLegacyPluginFunctions() const override
+	const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const override
 	{
 		return AMX_FUNCTIONS;
 	}

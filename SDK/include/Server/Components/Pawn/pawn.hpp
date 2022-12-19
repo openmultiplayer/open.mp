@@ -338,5 +338,5 @@ struct IPawnComponent : public IComponent
 	/// Get the ConsoleEventHandler event dispatcher
 	virtual IEventDispatcher<PawnEventHandler>& getEventDispatcher() = 0;
 
-	virtual const StaticArray<void*, NUM_AMX_FUNCS>& getLegacyPluginFunctions() const = 0;
+	virtual const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const = 0;
 };
