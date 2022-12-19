@@ -112,8 +112,7 @@ struct IPawnScript
 	// In inheriting classes.
 	inline int Register(char const* name, AMX_NATIVE func)
 	{
-		AMX_NATIVE_INFO
-			nativelist = { name, func };
+		AMX_NATIVE_INFO nativelist = { name, func };
 		return Register(&nativelist, 1);
 	}
 

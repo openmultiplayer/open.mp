@@ -19,30 +19,30 @@
 
 namespace pawn_natives
 {
-	template <>
-	class ParamCast<PawnScript&>
+template <>
+class ParamCast<PawnScript&>
+{
+public:
+	ParamCast(AMX* amx, cell* params, int idx)
+		: value_(PawnManager::Get()->amxToScript_.find(amx)->second)
 	{
-	public:
-		ParamCast(AMX* amx, cell* params, int idx)
-			: value_(PawnManager::Get()->amxToScript_.find(amx)->second)
-		{
-		}
+	}
 
-		~ParamCast()
-		{
-		}
+	~ParamCast()
+	{
+	}
 
-		ParamCast(ParamCast<IDatabaseConnection*> const&) = delete;
-		ParamCast(ParamCast<IDatabaseConnection*>&&) = delete;
+	ParamCast(ParamCast<IDatabaseConnection*> const&) = delete;
+	ParamCast(ParamCast<IDatabaseConnection*>&&) = delete;
 
-		operator PawnScript& ()
-		{
-			return *value_;
-		}
+	operator PawnScript&()
+	{
+		return *value_;
+	}
 
-		static constexpr int Size = 0;
+	static constexpr int Size = 0;
 
-	private:
-		PawnScript* value_;
-	};
+private:
+	PawnScript* value_;
+};
 }
