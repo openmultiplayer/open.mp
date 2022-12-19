@@ -11,9 +11,13 @@
 #include <Server/Components/Fixes/fixes.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Actors/actors.hpp>
 #include <netcode.hpp>
+#include <queue>
 
 using namespace Impl;
+
+class PlayerFixesData;
 
 static bool validateGameText(StringView& message, Milliseconds time, int style)
 {
@@ -55,6 +59,27 @@ static bool validateGameText(StringView& message, Milliseconds time, int style)
 	return true;
 }
 
+struct ReapplyAnimationData
+{
+	PlayerFixesData* data;
+	// If the player or actor are destroyed these are set to nullptr.  There's no point worrying
+	// about the timer, it isn't a huge strain on resources and will kill itself soon enough.
+	// We also remove these pointers if a second animation is applied to this target before the
+	// first one has been re-shown, to ensure that we don't get the following case:
+	//
+	//    1) Unloaded library is applied to actor 1.  Timer is set to reapply.
+	//    2) Loaded library is then applied to actor 1.  No timer set.
+	//    3) Timer expires and out-of-date animation is re-applied to actor 1.
+	//
+	// By blanking the pointers when new animations are applied we still ensure that the
+	// libraries will be marked as loaded (another excellent reason to not kill the timers) AND
+	// ensure that the latest animation is never accidentally wiped out.
+	IPlayer* player;
+	IActor* actor;
+	AnimationData animation;
+	ITimer* timer;
+};
+
 class PlayerFixesData final : public IPlayerFixesData
 {
 private:
@@ -65,11 +90,7 @@ private:
 	int money_ = 0;
 	StaticArray<IPlayerTextDraw*, MAX_GAMETEXT_STYLES> gts_;
 	StaticArray<ITimer*, MAX_GAMETEXT_STYLES> gtTimers_;
-
-	void MoneyTimer()
-	{
-		player_.setMoney(money_);
-	}
+	inline static std::deque<ReapplyAnimationData> animationToReapply_ {};
 
 	void GameTextTimer(int style)
 	{
@@ -81,6 +102,65 @@ private:
 		}
 		gtTimers_[style] = nullptr;
 	}
+
+	// TODO: There are so many ways to make this code smaller and faster.  Thus I've just abstracted
+	// recording which animation libraries are loaded to these two functions.  Feel free to replace
+	// them with a bit map, or string hash, or anything else.  I used a hash anyway, basically free.
+	FlatHashSet<size_t> libraries_;
+
+	void See(StringView const lib)
+	{
+		size_t hash = std::hash<StringView> {}(lib);
+		libraries_.insert(hash);
+	}
+
+	bool Saw(StringView const lib) const
+	{
+		size_t hash = std::hash<StringView> {}(lib);
+		return libraries_.find(hash) != libraries_.end();
+	}
+
+	static void AnimationTimer()
+	{
+		// Pop the next animation off the queue.
+		ReapplyAnimationData const&
+			next
+			= animationToReapply_.front();
+		// Only timer for a disconnected player.
+		if (next.data)
+		{
+			if (next.player)
+			{
+				// This could be ourselves, or another player, doesn't matter.  There's no need to
+				// check the stream type because if this needs fixing it was sent to this player
+				// earlier by whatever the sync type was back then.
+				NetCode::RPC::ApplyPlayerAnimation RPC(next.animation);
+				RPC.PlayerID = next.player->getID();
+				PacketHelper::send(RPC, next.data->player_);
+			}
+			else if (next.actor)
+			{
+				NetCode::RPC::ApplyActorAnimationForPlayer RPC(next.animation);
+				RPC.ActorID = next.actor->getID();
+				PacketHelper::send(RPC, next.data->player_);
+			}
+			/*else
+			{
+				// They can both be false if the target left during the delay timer.
+			}*/
+			// Always mark the library as now loaded, because it was shown at least one in the past,
+			// even if we didn't need to re-show it now.
+			next.data->See(next.animation.lib);
+		}
+		animationToReapply_.pop_front();
+	}
+
+	void MoneyTimer()
+	{
+		player_.setMoney(money_);
+	}
+
+	friend class FixesComponent;
 
 public:
 	void freeExtension() override
@@ -116,8 +196,23 @@ public:
 		{
 			moneyTimer_->kill();
 			player_.setMoney(player_.getMoney());
+			moneyTimer_ = nullptr;
 		}
-		moneyTimer_ = nullptr;
+	}
+
+	void doHideGameText(int style)
+	{
+		// Hide and destroy the TD.
+		if (gts_[style])
+		{
+			tds_->release(gts_[style]->getID());
+			gts_[style] = nullptr;
+		}
+		if (gtTimers_[style])
+		{
+			gtTimers_[style]->kill();
+			gtTimers_[style] = nullptr;
+		}
 	}
 
 	bool doSendGameText(StringView message, Milliseconds time, int style)
@@ -204,11 +299,7 @@ public:
 		}
 		// If this style is already shown hide it first (also handily frees up a
 		// TD we might need to create this new GT).  Also stop the timer.
-		if (gts_[style])
-		{
-			tds_->release(gts_[style]->getID());
-			gtTimers_[style]->kill();
-		}
+		doHideGameText(style);
 		IPlayerTextDraw* td = tds_->create(pos, message);
 		if (td == nullptr)
 		{
@@ -226,7 +317,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -240,7 +331,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -254,7 +345,7 @@ public:
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(3);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_0);
 			td->setProportional(true);
 			td->useBox(true);
@@ -268,7 +359,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -282,7 +373,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -296,7 +387,7 @@ public:
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -310,7 +401,7 @@ public:
 			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -324,7 +415,7 @@ public:
 			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -338,7 +429,7 @@ public:
 			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_0);
 			td->setProportional(true);
 			td->useBox(true);
@@ -352,7 +443,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -366,7 +457,7 @@ public:
 			td->setColour(Colour(0x96, 0x96, 0x96, 0xFF));
 			td->setShadow(0);
 			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -380,7 +471,7 @@ public:
 			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(true);
@@ -394,7 +485,7 @@ public:
 			td->setColour(Colour(0xB4, 0x19, 0x1D, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(true);
@@ -408,7 +499,7 @@ public:
 			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
 			td->setShadow(2);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
@@ -421,10 +512,10 @@ public:
 			td->setAlignment(TextDrawAlignment_Right);
 			// There's some debate over this colour.  It seems some versions
 			// somehow end up with `0xE1E1E1FF` instead.
-			td->setColour(Colour(0xC3, 0xC3, 0xC3, 0xFF));
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(false);
@@ -438,7 +529,7 @@ public:
 			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
 			td->setShadow(0);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
@@ -448,7 +539,7 @@ public:
 		}
 		// Show the TD to the player and start a timer to hide it again.
 		td->show();
-		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::GameTextTimer, this, style)), time, false);
+		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::doHideGameText, this, style)), time, false);
 		gts_[style] = td;
 
 		return true;
@@ -462,6 +553,33 @@ public:
 			return false;
 		}
 		return doSendGameText(message, time, style);
+	}
+
+	bool hideGameText(int style) override
+	{
+		if (gts_[style])
+		{
+			doHideGameText(style);
+			return true;
+		}
+		return false;
+	}
+
+	bool hasGameText(int style) override
+	{
+		return !!gts_[style];
+	}
+
+	bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (gts_[style] && gtTimers_[style])
+		{
+			message = String(gts_[style]->getText());
+			time = gtTimers_[style]->interval();
+			remaining = gtTimers_[style]->remaining();
+			return true;
+		}
+		return false;
 	}
 
 	void reset() override
@@ -482,15 +600,38 @@ public:
 				gtTimers_[style] = nullptr;
 			}
 		}
+		// Kill all animation timers for this player.
+		for (auto& anim : animationToReapply_)
+		{
+			if (anim.data == this)
+			{
+				anim.data = nullptr;
+			}
+			if (anim.player == &player_)
+			{
+				anim.player = nullptr;
+			}
+		}
+	}
+
+	void applyAnimation(IPlayer* player, IActor* actor, AnimationData const* animation) override
+	{
+		// Create a new reapplication.
+		if (!Saw(animation->lib))
+		{
+			PlayerFixesData::animationToReapply_.push_back({
+				this,
+				player,
+				actor,
+				*animation,
+				timers_.create(new SimpleTimerHandler(&PlayerFixesData::AnimationTimer), Milliseconds(500), false),
+			});
+		}
 	}
 
 	~PlayerFixesData()
 	{
-		if (moneyTimer_)
-		{
-			moneyTimer_->kill();
-			moneyTimer_ = nullptr;
-		}
+		reset();
 	}
 };
 
@@ -639,7 +780,7 @@ public:
 		}
 	}
 
-	bool sendGameText(StringView message, Milliseconds time, int style) override
+	bool sendGameTextToAll(StringView message, Milliseconds time, int style) override
 	{
 		// Check the parameters.
 		if (!validateGameText(message, time, style))
@@ -654,8 +795,46 @@ public:
 			}
 		}
 		// Always just return `true`.  What else should we return if half the
-		// shows succeeded and half don't?
+		// shows succeeded and half didn't?
 		return true;
+	}
+
+	bool hideGameTextForAll(int style) override
+	{
+		for (auto player : players_->entries())
+		{
+			if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
+			{
+				data->doHideGameText(style);
+			}
+		}
+		// Always just return `true`.  What else should we return if half the
+		// hides succeeded and half didn't?
+		return true;
+	}
+
+	void clearAnimation(IPlayer* player, IActor* actor) override
+	{
+		if (player)
+		{
+			for (auto& anim : PlayerFixesData::animationToReapply_)
+			{
+				if (anim.player == player)
+				{
+					anim.player = nullptr;
+				}
+			}
+		}
+		if (actor)
+		{
+			for (auto& anim : PlayerFixesData::animationToReapply_)
+			{
+				if (anim.actor == actor)
+				{
+					anim.actor = nullptr;
+				}
+			}
+		}
 	}
 };
 

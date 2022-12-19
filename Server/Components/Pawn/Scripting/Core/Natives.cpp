@@ -189,15 +189,54 @@ SCRIPT_API(print, bool(const std::string& text))
 	return false;
 }
 
+SCRIPT_API(IsAdminTeleportAllowed, bool())
+{
+	return *PawnManager::Get()->config->getBool("rcon.allow_teleport");
+}
+
 SCRIPT_API(AllowAdminTeleport, bool(bool allow))
 {
 	*PawnManager::Get()->config->getBool("rcon.allow_teleport") = allow;
 	return true;
 }
 
+SCRIPT_API(AreAllAnimationsEnabled, bool())
+{
+	return *PawnManager::Get()->config->getBool("game.use_all_animations");
+}
+
+SCRIPT_API(EnableAllAnimations, bool(bool allow))
+{
+	*PawnManager::Get()->config->getBool("game.use_all_animations") = allow;
+	return true;
+}
+
+SCRIPT_API(AreInteriorWeaponsAllowed, bool())
+{
+	return *PawnManager::Get()->config->getBool("game.allow_interior_weapons");
+}
+
 SCRIPT_API(AllowInteriorWeapons, bool(bool allow))
 {
-	*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = allow;
+	if (allow)
+	{
+		*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = true;
+	}
+	else
+	{
+		IPlayerPool* players = PawnManager::Get()->players;
+		for (IPlayer* player : players->entries())
+		{
+			if (player->getInterior() && player->areWeaponsAllowed())
+			{
+				// Because they are allowed weapons currently this will send a full client reset.
+				player->resetWeapons();
+			}
+		}
+		// By the time the player reports having no weapons, this is set and so we remember the old
+		// ones still.
+		*PawnManager::Get()->config->getBool("game.allow_interior_weapons") = false;
+	}
 	return true;
 }
 
@@ -269,6 +308,12 @@ SCRIPT_API(GameTextForAll, bool(cell const* format, int time, int style))
 		return false;
 	}
 	PawnManager::Get()->players->sendGameTextToAll(msg, Milliseconds(time), style);
+	return true;
+}
+
+SCRIPT_API(HideGameTextForAll, bool(int style))
+{
+	PawnManager::Get()->players->hideGameTextForAll(style);
 	return true;
 }
 
@@ -687,7 +732,7 @@ SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 
 SCRIPT_API(SetTeamCount, bool(int count))
 {
-	return false;
+	throw pawn_natives::NotImplemented();
 }
 
 SCRIPT_API(SetWeather, bool(int weatherid))

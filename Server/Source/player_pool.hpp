@@ -9,6 +9,7 @@
 #pragma once
 
 #include "player_impl.hpp"
+#include <Server/Components/Console/console.hpp>
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
 {
@@ -24,12 +25,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	IActorsComponent* actorsComponent = nullptr;
 	IFixesComponent* fixesComponent = nullptr;
 	ICustomModelsComponent* modelsComponent = nullptr;
+	IFixesComponent* fixesComponent_ = nullptr;
 	StreamConfigHelper streamConfigHelper;
 	int* markersShow;
 	int* markersUpdateRate;
 	bool* markersLimit;
 	float* markersLimitRadius;
 	int* gameTimeUpdateRate;
+	bool* useAllAnimations_;
+	bool* allowInteriorWeapons_;
 	int maxBots = 0;
 	StaticArray<bool, 256> allowNickCharacter;
 
@@ -94,6 +98,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct OnPlayerClickMapRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
+
 		OnPlayerClickMapRPCHandler(PlayerPool& self)
 			: self(self)
 		{
@@ -101,10 +106,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
+			static const bool* allowTeleport_ = self.core.getConfig().getBool("rcon.allow_teleport");
+
 			NetCode::RPC::OnPlayerClickMap onPlayerClickMapRPC;
 			if (!onPlayerClickMapRPC.read(bs))
 			{
 				return false;
+			}
+
+			if (peer.isTeleportAllowed())
+			{
+				// Teleport the player.
+				peer.setPositionFindZ(onPlayerClickMapRPC.Pos);
+			}
+			else if (allowTeleport_ && *allowTeleport_)
+			{
+				if (IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(peer))
+				{
+					if (data->hasConsoleAccess())
+					{
+						// Teleport the player.
+						peer.setPositionFindZ(onPlayerClickMapRPC.Pos);
+					}
+				}
 			}
 
 			self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClickMap, peer, onPlayerClickMapRPC.Pos);
@@ -180,6 +204,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					{
 						return false;
 					}
+					if (!from->areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+					{
+						// They were shooting and shouldn't be.
+						return false;
+					}
 				}
 				else
 				{
@@ -209,6 +238,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					return false;
 				}
+				if (!peer.areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+				{
+					// They were shooting and shouldn't be.
+					return false;
+				}
 
 				self.eventDispatcher.dispatch(
 					&PlayerEventHandler::onPlayerGiveDamage,
@@ -226,6 +260,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	struct PlayerInteriorChangeRPCHandler : public SingleNetworkInEventHandler
 	{
 		PlayerPool& self;
+
 		PlayerInteriorChangeRPCHandler(PlayerPool& self)
 			: self(self)
 		{
@@ -233,6 +268,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
+			const bool* allowInteriorWeapons_ = self.core.getConfig().getBool("game.allow_interior_weapons");
+
 			NetCode::RPC::OnPlayerInteriorChange onPlayerInteriorChangeRPC;
 			if (!onPlayerInteriorChangeRPC.read(bs))
 			{
@@ -247,6 +284,32 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (oldInterior == player.interior_)
 			{
 				return false;
+			}
+
+			if (allowInteriorWeapons_ && (!*allowInteriorWeapons_))
+			{
+				if (player.interior_)
+				{
+					// Moved inside.  Remove their weapons.
+					NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+					PacketHelper::send(resetWeaponsRPC, player);
+				}
+				else if (player.areWeaponsAllowed())
+				{
+					// Moved outside.  Give them their weapons back.
+					NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+					PacketHelper::send(resetWeaponsRPC, player);
+					for (auto& weapon : player.weapons_)
+					{
+						if (weapon.id)
+						{
+							NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+							givePlayerWeaponRPC.Weapon = weapon.id;
+							givePlayerWeaponRPC.Ammo = weapon.ammo;
+							PacketHelper::send(givePlayerWeaponRPC, player);
+						}
+					}
+				}
 			}
 
 			self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerInteriorChange, peer, player.interior_, oldInterior);
@@ -594,7 +657,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			player.rot_ = footSync.Rotation;
 			player.health_ = footSync.HealthArmour.x;
 			player.armour_ = footSync.HealthArmour.y;
-			player.armedWeapon_ = footSync.Weapon;
+			player.armedWeapon_ = player.areWeaponsAllowed() ? footSync.Weapon : 0;
 			player.velocity_ = footSync.Velocity;
 			player.animation_.ID = footSync.AnimationID;
 			player.animation_.flags = footSync.AnimationFlags;
@@ -833,6 +896,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false; // They're sending data for a weapon that doesn't shoot
 			}
+			else if (!player.areWeaponsAllowed())
+			{
+				// They're sending shot data when they should be unarmed.
+				return false;
+			}
 			else if (bulletSync.HitType == PlayerBulletHitType_Player)
 			{
 				if (player.poolID == bulletSync.HitID)
@@ -1021,7 +1089,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
 			player.armour_ = vehicleSync.PlayerHealthArmour.y;
-			player.armedWeapon_ = vehicleSync.WeaponID;
+			player.armedWeapon_ = player.areWeaponsAllowed() ? vehicleSync.WeaponID : 0;
 			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
 			uint32_t newKeys = vehicleSync.Keys;
@@ -1101,13 +1169,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
-			player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
-			player.targetActor_ = weaponsUpdatePacket.TargetActor;
-
-			for (auto i = 0u; i != weaponsUpdatePacket.WeaponDataCount; ++i)
+			if (player.areWeaponsAllowed())
 			{
-				const auto& data = weaponsUpdatePacket.WeaponData[i];
-				player.weapons_[data.first] = data.second;
+				// Only update their weapons if weapons are allowed.
+				player.targetPlayer_ = weaponsUpdatePacket.TargetPlayer;
+				player.targetActor_ = weaponsUpdatePacket.TargetActor;
+
+				for (auto i = 0u; i != weaponsUpdatePacket.WeaponDataCount; ++i)
+				{
+					const auto& data = weaponsUpdatePacket.WeaponData[i];
+					player.weapons_[data.first] = data.second;
+				}
 			}
 
 			return true;
@@ -1267,7 +1339,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
-			player.armedWeapon_ = passengerSync.WeaponID;
+			player.armedWeapon_ = player.areWeaponsAllowed() ? passengerSync.WeaponID : 0;
 			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
@@ -1507,7 +1579,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, core.getConfig().getBool("game.use_all_animations"));
+		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, allowInteriorWeapons_, fixesComponent_);
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
@@ -1760,13 +1832,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	{
 		if (fixesComponent)
 		{
-			fixesComponent->sendGameText(message, time, style);
+			fixesComponent->sendGameTextToAll(message, time, style);
 		}
 		else
 		{
 			NetCode::RPC::SendGameText gameText;
 			gameText.Text = message;
 			gameText.Time = time.count();
+			gameText.Style = style;
+			PacketHelper::broadcast(gameText, *this);
+		}
+	}
+
+	void hideGameTextForAll(int style) override
+	{
+		if (fixesComponent)
+		{
+			fixesComponent->hideGameTextForAll(style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = " ";
+			gameText.Time = 0;
 			gameText.Style = style;
 			PacketHelper::broadcast(gameText, *this);
 		}
@@ -1815,6 +1903,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		markersLimitRadius = config.getFloat("game.player_marker_draw_radius");
 		markersUpdateRate = config.getInt("network.player_marker_sync_rate");
 		gameTimeUpdateRate = config.getInt("network.time_sync_rate");
+		useAllAnimations_ = config.getBool("game.use_all_animations");
+		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
 		maxBots = *config.getInt("max_bots");
 
 		playerUpdateDispatcher.addEventHandler(this);

@@ -853,7 +853,12 @@ public:
 	ParamCast(ParamCast<DynamicArray<T> const&> const&) = delete;
 	ParamCast(ParamCast<DynamicArray<T> const&>&&) = delete;
 
+	// clang-format off
+	// Adding this here because clang formatter (locally, even using format.bat)
+	// Keeps adding a space between `const` and `&` and according to our `.clang-format`
+	// Style guide, it's not acceptable, since `PointerAlignment` is set to `Left`
 	operator DynamicArray<T> const&()
+	// clang-format on
 	{
 		return value_;
 	}

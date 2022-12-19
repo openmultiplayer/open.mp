@@ -23,6 +23,7 @@ private:
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> hiddenFor_;
 	PickupType type;
 	bool isStatic_;
+	IPlayer* legacyPerPlayer_ = nullptr;
 
 	void restream()
 	{
@@ -35,19 +36,35 @@ private:
 
 	void streamInForClient(IPlayer& player)
 	{
-		NetCode::RPC::PlayerCreatePickup createPickupRPC;
-		createPickupRPC.PickupID = poolID;
-		createPickupRPC.Model = modelId;
-		createPickupRPC.Type = type;
-		createPickupRPC.Position = pos;
-		PacketHelper::send(createPickupRPC, player);
+		auto data = queryExtension<IPlayerPickupData>(player);
+		int id = data->toClientID(poolID);
+		if (id == INVALID_PICKUP_ID)
+		{
+			id = data->reserveClientID();
+		}
+		if (id != INVALID_PICKUP_ID)
+		{
+			data->setClientID(id, poolID);
+			NetCode::RPC::PlayerCreatePickup createPickupRPC;
+			createPickupRPC.PickupID = id;
+			createPickupRPC.Model = modelId;
+			createPickupRPC.Type = type;
+			createPickupRPC.Position = pos;
+			PacketHelper::send(createPickupRPC, player);
+		}
 	}
 
 	void streamOutForClient(IPlayer& player)
 	{
-		NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
-		destroyPickupRPC.PickupID = poolID;
-		PacketHelper::send(destroyPickupRPC, player);
+		auto data = queryExtension<IPlayerPickupData>(player);
+		int id = data->toClientID(poolID);
+		if (id != INVALID_PICKUP_ID)
+		{
+			data->releaseClientID(id);
+			NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
+			destroyPickupRPC.PickupID = id;
+			PacketHelper::send(destroyPickupRPC, player);
+		}
 	}
 
 public:
@@ -92,12 +109,24 @@ public:
 
 	bool isPickupHiddenForPlayer(IPlayer& player) const override
 	{
-		return hiddenFor_.valid(player.getID());
+		if (legacyPerPlayer_ == nullptr)
+		{
+			return hiddenFor_.valid(player.getID());
+		}
+		else
+		{
+			// Hidden if this isn't the legacy player.
+			return legacyPerPlayer_ != &player;
+		}
 	}
 
 	void setPickupHiddenForPlayer(IPlayer& player, bool hidden) override
 	{
-		if (hidden)
+		if (legacyPerPlayer_ != nullptr)
+		{
+			// Doesn't matter if this is the right player or not.  Do nothing.
+		}
+		else if (hidden)
 		{
 			if (!isPickupHiddenForPlayer(player))
 			{
@@ -186,5 +215,15 @@ public:
 		{
 			streamOutForClient(*player);
 		}
+	}
+
+	virtual void setLegacyPlayer(IPlayer* player) override
+	{
+		legacyPerPlayer_ = player;
+	}
+
+	virtual IPlayer* getLegacyPlayer() const override
+	{
+		return legacyPerPlayer_;
 	}
 };
