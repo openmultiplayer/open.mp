@@ -6,6 +6,10 @@
 #include <string>
 #include <vector>
 
+#define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp_scripting, name, prototype)
+#define SCRIPT_API_FAILRET(name, failret, prototype) PAWN_NATIVE_FAILRET(openmp_scripting, failret, name, prototype)
+#define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp_scripting, name, prototype)
+
 constexpr int NUM_AMX_FUNCS = 52;
 
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
