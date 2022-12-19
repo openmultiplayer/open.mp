@@ -196,8 +196,23 @@ public:
 		{
 			moneyTimer_->kill();
 			player_.setMoney(player_.getMoney());
+			moneyTimer_ = nullptr;
 		}
-		moneyTimer_ = nullptr;
+	}
+
+	void doHideGameText(int style)
+	{
+		// Hide and destroy the TD.
+		if (gts_[style])
+		{
+			tds_->release(gts_[style]->getID());
+			gts_[style] = nullptr;
+		}
+		if (gtTimers_[style])
+		{
+			gtTimers_[style]->kill();
+			gtTimers_[style] = nullptr;
+		}
 	}
 
 	bool doSendGameText(StringView message, Milliseconds time, int style)
@@ -284,11 +299,7 @@ public:
 		}
 		// If this style is already shown hide it first (also handily frees up a
 		// TD we might need to create this new GT).  Also stop the timer.
-		if (gts_[style])
-		{
-			tds_->release(gts_[style]->getID());
-			gtTimers_[style]->kill();
-		}
+		doHideGameText(style);
 		IPlayerTextDraw* td = tds_->create(pos, message);
 		if (td == nullptr)
 		{
@@ -306,7 +317,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -320,7 +331,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -334,7 +345,7 @@ public:
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(3);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_0);
 			td->setProportional(true);
 			td->useBox(true);
@@ -348,7 +359,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -362,7 +373,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -376,7 +387,7 @@ public:
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -390,7 +401,7 @@ public:
 			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(true);
 			td->useBox(true);
@@ -404,7 +415,7 @@ public:
 			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -418,7 +429,7 @@ public:
 			td->setColour(Colour(0xAC, 0xCB, 0xF1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_0);
 			td->setProportional(true);
 			td->useBox(true);
@@ -432,7 +443,7 @@ public:
 			td->setColour(Colour(0x90, 0x62, 0x10, 0xFF));
 			td->setShadow(0);
 			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -446,7 +457,7 @@ public:
 			td->setColour(Colour(0x96, 0x96, 0x96, 0xFF));
 			td->setShadow(0);
 			td->setOutline(1);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_2);
 			td->setProportional(true);
 			td->useBox(true);
@@ -460,7 +471,7 @@ public:
 			td->setColour(Colour(0x36, 0x68, 0x2C, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(true);
@@ -474,7 +485,7 @@ public:
 			td->setColour(Colour(0xB4, 0x19, 0x1D, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(true);
@@ -488,7 +499,7 @@ public:
 			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
 			td->setShadow(2);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
@@ -501,10 +512,10 @@ public:
 			td->setAlignment(TextDrawAlignment_Right);
 			// There's some debate over this colour.  It seems some versions
 			// somehow end up with `0xE1E1E1FF` instead.
-			td->setColour(Colour(0xC3, 0xC3, 0xC3, 0xFF));
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
 			td->useBox(false);
@@ -518,7 +529,7 @@ public:
 			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
 			td->setShadow(0);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xAA));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
@@ -528,7 +539,7 @@ public:
 		}
 		// Show the TD to the player and start a timer to hide it again.
 		td->show();
-		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::GameTextTimer, this, style)), time, false);
+		gtTimers_[style] = timers_.create(new SimpleTimerHandler(std::bind(&PlayerFixesData::doHideGameText, this, style)), time, false);
 		gts_[style] = td;
 
 		return true;
@@ -542,6 +553,33 @@ public:
 			return false;
 		}
 		return doSendGameText(message, time, style);
+	}
+
+	bool hideGameText(int style) override
+	{
+		if (gts_[style])
+		{
+			doHideGameText(style);
+			return true;
+		}
+		return false;
+	}
+
+	bool hasGameText(int style) override
+	{
+		return !!gts_[style];
+	}
+
+	bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (gts_[style] && gtTimers_[style])
+		{
+			message = String(gts_[style]->getText());
+			time = gtTimers_[style]->interval();
+			remaining = gtTimers_[style]->remaining();
+			return true;
+		}
+		return false;
 	}
 
 	void reset() override
@@ -742,7 +780,7 @@ public:
 		}
 	}
 
-	bool sendGameText(StringView message, Milliseconds time, int style) override
+	bool sendGameTextToAll(StringView message, Milliseconds time, int style) override
 	{
 		// Check the parameters.
 		if (!validateGameText(message, time, style))
@@ -757,7 +795,21 @@ public:
 			}
 		}
 		// Always just return `true`.  What else should we return if half the
-		// shows succeeded and half don't?
+		// shows succeeded and half didn't?
+		return true;
+	}
+
+	bool hideGameTextForAll(int style) override
+	{
+		for (auto player : players_->entries())
+		{
+			if (PlayerFixesData* data = queryExtension<PlayerFixesData>(player))
+			{
+				data->doHideGameText(style);
+			}
+		}
+		// Always just return `true`.  What else should we return if half the
+		// hides succeeded and half didn't?
 		return true;
 	}
 

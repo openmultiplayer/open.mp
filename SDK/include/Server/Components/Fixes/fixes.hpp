@@ -15,8 +15,19 @@ struct IPlayerFixesData : public IExtension
 {
 	PROVIDE_EXT_UID(FixesData_UID);
 
+	/// Send a game text message to the player
 	virtual bool sendGameText(StringView message, Milliseconds time, int style) = 0;
 
+	/// Hide a game text message from the player
+	virtual bool hideGameText(int style) = 0;
+
+	/// Check if the player can currently see this game text.
+	virtual bool hasGameText(int style) = 0;
+
+	/// Get the data for this gametext, if they have one.
+	virtual bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) = 0;
+
+	// Apply animation to fix animation library not being loaded for the first time
 	virtual void applyAnimation(IPlayer* player, IActor* actor, AnimationData const* animation) = 0;
 };
 
@@ -25,7 +36,12 @@ struct IFixesComponent : public IComponent
 {
 	PROVIDE_UID(FixesComponent_UID);
 
-	virtual bool sendGameText(StringView message, Milliseconds time, int style) = 0;
+	/// sendGameText for all players
+	virtual bool sendGameTextToAll(StringView message, Milliseconds time, int style) = 0;
 
+	/// hideGameText for all players
+	virtual bool hideGameTextForAll(int style) = 0;
+
+	// Cleat a player's or an actor's animation reapply storage
 	virtual void clearAnimation(IPlayer* player, IActor* actor) = 0;
 };

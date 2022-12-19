@@ -114,6 +114,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int gravity_;
 	bool ghostMode_;
 	int defaultObjectsRemoved_;
+	bool allowWeapons_;
+	bool allowTeleport_;
+	bool isUsingOfficialClient_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -132,6 +135,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	TimePoint lastScoresAndPings_;
 	bool kicked_;
 	bool* allAnimationLibraries_;
+	bool* allowInteriorWeapons_;
 
 	IFixesComponent* fixesComponent_;
 
@@ -171,6 +175,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		enableCameraTargeting_ = false;
 		widescreen_ = 0;
 		numStreamed_ = 0;
+		allowWeapons_ = true;
+		allowTeleport_ = false;
 
 		streamedFor_.clear();
 		streamedFor_.add(poolID, *this);
@@ -196,7 +202,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
-	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, IFixesComponent* fixesComponent)
+	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, bool* allowInteriorWeapons, IFixesComponent* fixesComponent)
 		: pool_(pool)
 		, netData_(netData)
 		, version_(params.version)
@@ -245,11 +251,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, gravity_(0)
 		, ghostMode_(false)
 		, defaultObjectsRemoved_(0)
+		, allowWeapons_(true)
+		, allowTeleport_(false)
+		, isUsingOfficialClient_(params.isUsingOfficialClient)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
 		, kicked_(false)
 		, allAnimationLibraries_(allAnimationLibraries)
+		, allowInteriorWeapons_(allowInteriorWeapons)
 		, fixesComponent_(fixesComponent)
 	{
 		weapons_.fill({ 0, 0 });
@@ -298,6 +308,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isBot() const override
 	{
 		return isBot_;
+	}
+
+	bool isUsingOfficialClient() const override
+	{
+		return isUsingOfficialClient_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
@@ -1270,11 +1285,24 @@ public:
 
 	void giveWeapon(WeaponSlotData weapon) override
 	{
-		// Set from sync
-		NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
-		givePlayerWeaponRPC.Weapon = weapon.id;
-		givePlayerWeaponRPC.Ammo = weapon.ammo;
-		PacketHelper::send(givePlayerWeaponRPC, *this);
+		uint8_t slot = weapon.slot();
+		if (slot == INVALID_WEAPON_SLOT)
+		{
+			// Fail.
+		}
+		else if (areWeaponsAllowed())
+		{
+			// Set from sync
+			NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+			givePlayerWeaponRPC.Weapon = weapon.id;
+			givePlayerWeaponRPC.Ammo = weapon.ammo;
+			PacketHelper::send(givePlayerWeaponRPC, *this);
+		}
+		else
+		{
+			// We need to record this manually for later.
+			weapons_[slot] = weapon;
+		}
 	}
 
 	void removeWeapon(uint8_t weaponid) override
@@ -1286,29 +1314,51 @@ public:
 				weapon.id = 0;
 				weapon.ammo = 0;
 				// Yes.
-				goto removeWeapon_has_weapon;
+				if (areWeaponsAllowed())
+				{
+					goto removeWeapon_has_weapon;
+				}
+				return;
 			}
 		}
 		// Doesn't have the weapon.
 		return;
 removeWeapon_has_weapon:
-		resetWeapons();
+		NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+		PacketHelper::send(resetWeaponsRPC, *this);
 		for (auto& weapon : weapons_)
 		{
 			if (weapon.id)
 			{
-				giveWeapon(weapon);
+				NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+				givePlayerWeaponRPC.Weapon = weapon.id;
+				givePlayerWeaponRPC.Ammo = weapon.ammo;
+				PacketHelper::send(givePlayerWeaponRPC, *this);
 			}
 		}
 	}
 
-	void setWeaponAmmo(WeaponSlotData data) override
+	void setWeaponAmmo(WeaponSlotData weapon) override
 	{
 		// Set from sync
-		NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
-		setPlayerAmmoRPC.Weapon = data.id;
-		setPlayerAmmoRPC.Ammo = data.ammo;
-		PacketHelper::send(setPlayerAmmoRPC, *this);
+		uint8_t slot = weapon.slot();
+		if (slot == INVALID_WEAPON_SLOT)
+		{
+			// Fail.
+		}
+		else if (areWeaponsAllowed())
+		{
+			// Set from sync
+			NetCode::RPC::SetPlayerAmmo setPlayerAmmoRPC;
+			setPlayerAmmoRPC.Weapon = weapon.id;
+			setPlayerAmmoRPC.Ammo = weapon.ammo;
+			PacketHelper::send(setPlayerAmmoRPC, *this);
+		}
+		else
+		{
+			// We need to record this manually for later.
+			weapons_[slot] = weapon;
+		}
 	}
 
 	const WeaponSlots& getWeapons() const override
@@ -1333,26 +1383,48 @@ removeWeapon_has_weapon:
 
 	void resetWeapons() override
 	{
-		// Set from sync
-		NetCode::RPC::ResetPlayerWeapons RPC;
-		PacketHelper::send(RPC, *this);
+		if (areWeaponsAllowed())
+		{
+			// Set from sync
+			NetCode::RPC::ResetPlayerWeapons RPC;
+			PacketHelper::send(RPC, *this);
+		}
+		else
+		{
+			for (auto& weapon : weapons_)
+			{
+				weapon.id = 0;
+				weapon.ammo = 0;
+			}
+		}
 	}
 
 	void setArmedWeapon(uint32_t weapon) override
 	{
 		// Set from sync
-		NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
-		setPlayerArmedWeaponRPC.Weapon = weapon;
-		PacketHelper::send(setPlayerArmedWeaponRPC, *this);
+		if (areWeaponsAllowed())
+		{
+			NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+			setPlayerArmedWeaponRPC.Weapon = weapon;
+			PacketHelper::send(setPlayerArmedWeaponRPC, *this);
+		}
 	}
 
 	uint32_t getArmedWeapon() const override
 	{
+		if (!areWeaponsAllowed())
+		{
+			return 0;
+		}
 		return armedWeapon_;
 	}
 
 	uint32_t getArmedWeaponAmmo() const override
 	{
+		if (!areWeaponsAllowed())
+		{
+			return 0;
+		}
 		WeaponSlotData weapon;
 		for (WeaponSlotData it : weapons_)
 		{
@@ -1423,6 +1495,41 @@ removeWeapon_has_weapon:
 			gameText.Style = style;
 			PacketHelper::send(gameText, *this);
 		}
+	}
+
+	void hideGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->hideGameText(style);
+		}
+		else
+		{
+			NetCode::RPC::SendGameText gameText;
+			gameText.Text = " ";
+			gameText.Time = 0;
+			gameText.Style = style;
+			PacketHelper::send(gameText, *this);
+		}
+	}
+
+	bool hasGameText(int style) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			return data->hasGameText(style);
+		}
+		return false;
+	}
+
+	bool getGameText(int style, StringView& message, Milliseconds& time, Milliseconds& remaining) override
+	{
+		if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*this))
+		{
+			data->getGameText(style, message, time, remaining);
+			return true;
+		}
+		return false;
 	}
 
 	int getVirtualWorld() const override
@@ -1595,5 +1702,58 @@ removeWeapon_has_weapon:
 	bool isGhostModeEnabled() const override
 	{
 		return ghostMode_;
+	}
+
+	void allowWeapons(bool enable) override
+	{
+		if (enable)
+		{
+			if (!allowWeapons_)
+			{
+				// Give the player all their weapons back.  Don't worry about the armed weapon.
+				allowWeapons_ = true;
+				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+				PacketHelper::send(resetWeaponsRPC, *this);
+				for (auto& weapon : weapons_)
+				{
+					if (weapon.id)
+					{
+						NetCode::RPC::GivePlayerWeapon givePlayerWeaponRPC;
+						givePlayerWeaponRPC.Weapon = weapon.id;
+						givePlayerWeaponRPC.Ammo = weapon.ammo;
+						PacketHelper::send(givePlayerWeaponRPC, *this);
+					}
+				}
+			}
+		}
+		else
+		{
+			if (allowWeapons_)
+			{
+				// If they are now not allowed weapons, remove all their weapons from them client-
+				// side.  We still track them server-side as if they had them (because they
+				// logically do), they are just banned from touching them.
+				allowWeapons_ = false;
+				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
+				PacketHelper::send(resetWeaponsRPC, *this);
+			}
+		}
+	}
+
+	bool areWeaponsAllowed() const override
+	{
+		return allowWeapons_ && (*allowInteriorWeapons_ || interior_ == 0);
+	}
+
+	/// Teleport the player when they click the map?
+	void allowTeleport(bool allow) override
+	{
+		allowTeleport_ = allow;
+	}
+
+	/// Does the player teleport when they click the map?
+	bool isTeleportAllowed() const override
+	{
+		return allowTeleport_;
 	}
 };

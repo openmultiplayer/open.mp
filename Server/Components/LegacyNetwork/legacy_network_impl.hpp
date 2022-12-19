@@ -284,7 +284,7 @@ public:
 	static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
 	static void OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra);
 
-	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name);
+	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient = false);
 	template <size_t ID>
 	static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 	void onTick(Microseconds elapsed, TimePoint now) override;
