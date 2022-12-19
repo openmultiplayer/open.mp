@@ -356,3 +356,67 @@ int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 		amx->flags |= AMX_FLAG_NTVREG;
 	return err;
 }
+
+#if PAWN_CELL_SIZE == 16
+void amx_Swap16(uint16_t* v)
+{
+	assert_static(sizeof(*v) == 2);
+#if BYTE_ORDER == BIG_ENDIAN
+	unsigned char* s = (unsigned char*)v;
+	unsigned char t;
+
+	/* swap two bytes */
+	t = s[0];
+	s[0] = s[1];
+	s[1] = t;
+#endif
+	return v;
+}
+#endif
+
+#if PAWN_CELL_SIZE == 32
+void amx_Swap32(uint32_t* v)
+{
+	assert_static(sizeof(*v) == 4);
+#if BYTE_ORDER == BIG_ENDIAN
+	unsigned char* s = (unsigned char*)v;
+	unsigned char t;
+
+	/* swap outer two bytes */
+	t = s[0];
+	s[0] = s[3];
+	s[3] = t;
+	/* swap inner two bytes */
+	t = s[1];
+	s[1] = s[2];
+	s[2] = t;
+#endif
+}
+#endif
+
+#if PAWN_CELL_SIZE == 64 && (defined _I64_MAX || defined INT64_MAX || defined HAVE_I64)
+void amx_Swap64(uint64_t* v)
+{
+	assert(sizeof(*v) == 8);
+#if BYTE_ORDER == BIG_ENDIAN
+	unsigned char* s = (unsigned char*)v;
+	unsigned char t;
+
+	t = s[0];
+	s[0] = s[7];
+	s[7] = t;
+
+	t = s[1];
+	s[1] = s[6];
+	s[6] = t;
+
+	t = s[2];
+	s[2] = s[5];
+	s[5] = t;
+
+	t = s[3];
+	s[3] = s[4];
+	s[4] = t;
+#endif
+}
+#endif /* _I64_MAX || HAVE_I64 */
