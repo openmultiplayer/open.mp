@@ -4,8 +4,6 @@
 #include <amx/amxaux.h>
 #include "pawn.hpp"
 
-enum AMX_IMPL
-{
 const int AMX_IMPL_Align16          = 0;
 const int AMX_IMPL_Align32          = 1;
 const int AMX_IMPL_Align64          = 2;
