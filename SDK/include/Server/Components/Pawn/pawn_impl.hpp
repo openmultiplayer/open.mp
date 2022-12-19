@@ -3,10 +3,16 @@
 // This file should only be included in one place.
 
 #include <amx/amx.h>
+
 #include "pawn.hpp"
+
+#if defined PAWN_NATIVES_HAS_FUNC
+#include <pawn-natives/NativesMain.hpp>
+#endif
 
 static std::array<void*, NUM_AMX_FUNCS> funcs_;
 static IComponentList* components_;
+static PawnLookup lookups_;
 
 void setAmxFunctions(std::array<void*, NUM_AMX_FUNCS> const& funcs)
 {
@@ -17,10 +23,6 @@ void setAmxFunctions()
 {
 	funcs_.fill(nullptr);
 }
-
-static std::array<void*, NUM_AMX_FUNCS> funcs_;
-
-PawnLookup lookups_;
 
 void setAmxLookups()
 {
