@@ -394,7 +394,7 @@ int PawnScript::Register(const AMX_NATIVE_INFO* nativelist, int number) { return
 int PawnScript::Register(char const _FAR* name, AMX_NATIVE func)
 {
 	AMX_NATIVE_INFO
-		nativelist = { name, func };
+	nativelist = { name, func };
 	return amx_RegisterChecked(&amx_, &nativelist, 1);
 }
 int PawnScript::Release(cell amx_addr) { return amx_Release(&amx_, amx_addr); }

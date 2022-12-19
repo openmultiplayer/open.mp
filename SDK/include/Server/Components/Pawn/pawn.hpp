@@ -75,7 +75,7 @@ struct IPawnScript
 	virtual cell GetSTK() const = 0;
 	virtual cell GetHLW() const = 0;
 	virtual cell GetFRM() const = 0;
-	
+
 	virtual void SetCIP(cell v) = 0;
 	virtual void SetHEA(cell v) = 0;
 	virtual void SetSTP(cell v) = 0;
@@ -225,4 +225,3 @@ struct IPawnComponent : public IComponent
 
 	virtual const StaticArray<void*, NUM_AMX_FUNCS>& getLegacyPluginFunctions() const = 0;
 };
-

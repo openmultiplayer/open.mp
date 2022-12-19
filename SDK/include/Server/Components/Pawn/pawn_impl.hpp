@@ -4,59 +4,59 @@
 #include <amx/amxaux.h>
 #include "pawn.hpp"
 
-const int AMX_IMPL_Align16          = 0;
-const int AMX_IMPL_Align32          = 1;
-const int AMX_IMPL_Align64          = 2;
-const int AMX_IMPL_Allot            = 3;
-const int AMX_IMPL_Callback         = 4;
-const int AMX_IMPL_Cleanup          = 5;
-const int AMX_IMPL_Clone            = 6;
-const int AMX_IMPL_Exec             = 7;
-const int AMX_IMPL_FindNative       = 8;
-const int AMX_IMPL_FindPublic       = 9;
-const int AMX_IMPL_FindPubVar       = 10;
-const int AMX_IMPL_FindTagId        = 11;
-const int AMX_IMPL_Flags            = 12;
-const int AMX_IMPL_GetAddr          = 13;
-const int AMX_IMPL_GetNative        = 14;
-const int AMX_IMPL_GetPublic        = 15;
-const int AMX_IMPL_GetPubVar        = 16;
-const int AMX_IMPL_GetString        = 17;
-const int AMX_IMPL_GetTag           = 18;
-const int AMX_IMPL_GetUserData      = 19;
-const int AMX_IMPL_Init             = 20;
-const int AMX_IMPL_InitJIT          = 21;
-const int AMX_IMPL_MemInfo          = 22;
-const int AMX_IMPL_NameLength       = 23;
-const int AMX_IMPL_NativeInfo       = 24;
-const int AMX_IMPL_NumNatives       = 25;
-const int AMX_IMPL_NumPublics       = 26;
-const int AMX_IMPL_NumPubVars       = 27;
-const int AMX_IMPL_NumTags          = 28;
-const int AMX_IMPL_Push             = 29;
-const int AMX_IMPL_PushArray        = 30;
-const int AMX_IMPL_PushString       = 31;
-const int AMX_IMPL_RaiseError       = 32;
-const int AMX_IMPL_Register         = 33;
-const int AMX_IMPL_Release          = 34;
-const int AMX_IMPL_SetCallback      = 35;
-const int AMX_IMPL_SetDebugHook     = 36;
-const int AMX_IMPL_SetString        = 37;
-const int AMX_IMPL_SetUserData      = 38;
-const int AMX_IMPL_StrLen           = 39;
-const int AMX_IMPL_UTF8Check        = 40;
-const int AMX_IMPL_UTF8Get          = 41;
-const int AMX_IMPL_UTF8Len          = 42;
-const int AMX_IMPL_UTF8Put          = 43;
-const int AMX_IMPL_PushStringLen    = 44;
-const int AMX_IMPL_SetStringLen     = 45;
-const int AMX_IMPL_Swap16           = 46;
-const int AMX_IMPL_Swap32           = 47;
-const int AMX_IMPL_Swap64           = 48;
+const int AMX_IMPL_Align16 = 0;
+const int AMX_IMPL_Align32 = 1;
+const int AMX_IMPL_Align64 = 2;
+const int AMX_IMPL_Allot = 3;
+const int AMX_IMPL_Callback = 4;
+const int AMX_IMPL_Cleanup = 5;
+const int AMX_IMPL_Clone = 6;
+const int AMX_IMPL_Exec = 7;
+const int AMX_IMPL_FindNative = 8;
+const int AMX_IMPL_FindPublic = 9;
+const int AMX_IMPL_FindPubVar = 10;
+const int AMX_IMPL_FindTagId = 11;
+const int AMX_IMPL_Flags = 12;
+const int AMX_IMPL_GetAddr = 13;
+const int AMX_IMPL_GetNative = 14;
+const int AMX_IMPL_GetPublic = 15;
+const int AMX_IMPL_GetPubVar = 16;
+const int AMX_IMPL_GetString = 17;
+const int AMX_IMPL_GetTag = 18;
+const int AMX_IMPL_GetUserData = 19;
+const int AMX_IMPL_Init = 20;
+const int AMX_IMPL_InitJIT = 21;
+const int AMX_IMPL_MemInfo = 22;
+const int AMX_IMPL_NameLength = 23;
+const int AMX_IMPL_NativeInfo = 24;
+const int AMX_IMPL_NumNatives = 25;
+const int AMX_IMPL_NumPublics = 26;
+const int AMX_IMPL_NumPubVars = 27;
+const int AMX_IMPL_NumTags = 28;
+const int AMX_IMPL_Push = 29;
+const int AMX_IMPL_PushArray = 30;
+const int AMX_IMPL_PushString = 31;
+const int AMX_IMPL_RaiseError = 32;
+const int AMX_IMPL_Register = 33;
+const int AMX_IMPL_Release = 34;
+const int AMX_IMPL_SetCallback = 35;
+const int AMX_IMPL_SetDebugHook = 36;
+const int AMX_IMPL_SetString = 37;
+const int AMX_IMPL_SetUserData = 38;
+const int AMX_IMPL_StrLen = 39;
+const int AMX_IMPL_UTF8Check = 40;
+const int AMX_IMPL_UTF8Get = 41;
+const int AMX_IMPL_UTF8Len = 42;
+const int AMX_IMPL_UTF8Put = 43;
+const int AMX_IMPL_PushStringLen = 44;
+const int AMX_IMPL_SetStringLen = 45;
+const int AMX_IMPL_Swap16 = 46;
+const int AMX_IMPL_Swap32 = 47;
+const int AMX_IMPL_Swap64 = 48;
 const int AMX_IMPL_GetNativeByIndex = 49;
-const int AMX_IMPL_MakeAddr         = 50;
-const int AMX_IMPL_StrSize          = 51;
-const int AMX_IMPL_RegisterChecked  = 52;
+const int AMX_IMPL_MakeAddr = 50;
+const int AMX_IMPL_StrSize = 51;
+const int AMX_IMPL_RegisterChecked = 52;
 
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
 int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
@@ -69,11 +69,17 @@ public:
 	static inline uint16_t* Align16(uint16_t* v) { return ((amx_Align16_t)funcs_[AMX_IMPL_Align16])(v) }
 	static inline uint32_t* Align32(uint32_t* v) { return ((amx_Align32_t)funcs_[AMX_IMPL_Align32])(v) }
 
-	#if defined _I64_MAX || defined HAVE_I64
-	static inline uint64_t* Align64(uint64_t* v) { return ((amx_Align64_t)funcs_[AMX_IMPL_Align64])(v) }
-	#endif
+#if defined _I64_MAX || defined HAVE_I64
+	static inline uint64_t* Align64(uint64_t* v)
+	{
+		return ((amx_Align64_t)funcs_[AMX_IMPL_Align64])(v)
+	}
+#endif
 
-	static inline int Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr) { return ((amx_Allot_t)funcs_[AMX_IMPL_Allot])(amx, cells, amx_addr, phys_addr); }
+	static inline int Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
+	{
+		return ((amx_Allot_t)funcs_[AMX_IMPL_Allot])(amx, cells, amx_addr, phys_addr);
+	}
 	static inline int Callback(AMX* amx, cell index, cell* result, const cell* params) { return ((amx_Callback_t)funcs_[AMX_IMPL_Callback])(amx, cell index, result, params); }
 	static inline int Cleanup(AMX* amx) { return ((amx_Cleanup_t)funcs_[AMX_IMPL_Cleanup])(amx); }
 	static inline int Clone(AMX* amxClone, AMX* amxSource, void* data) { return ((amx_Clone_t)funcs_[AMX_IMPL_Clone])(amxClone, amxSource, data); }
@@ -122,16 +128,24 @@ public:
 	static inline int StrSize(const cell* cstr, int* length) { return ((amx_StrCheck_t)funcs_[AMX_IMPL_StrSize])(cstr, length); }
 	static inline int RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number) { return ((amx_RegisterChecked_t)funcs_[AMX_IMPL_RegisterChecked])(amx, list, number); }
 
-	#if PAWN_CELL_SIZE==16
-	static inline void Swap16(uint16_t* v) { ((amx_Swap16_t)funcs_[AMX_IMPL_Swap16])(v); }
-	#endif
+#if PAWN_CELL_SIZE == 16
+	static inline void Swap16(uint16_t* v)
+	{
+		((amx_Swap16_t)funcs_[AMX_IMPL_Swap16])(v);
+	}
+#endif
 
-	#if PAWN_CELL_SIZE==32
-	static inline void Swap32(uint32_t* v) { ((amx_Swap32_t)funcs_[AMX_IMPL_Swap32])(v); }
-	#endif
+#if PAWN_CELL_SIZE == 32
+	static inline void Swap32(uint32_t* v)
+	{
+		((amx_Swap32_t)funcs_[AMX_IMPL_Swap32])(v);
+	}
+#endif
 
-	#if PAWN_CELL_SIZE==64 && (defined _I64_MAX || defined INT64_MAX || defined HAVE_I64)
-	static inline void Swap64(uint64_t* v) { ((amx_Swap64_t)funcs_[AMX_IMPL_Swap64])(v); }
-	#endif
+#if PAWN_CELL_SIZE == 64 && (defined _I64_MAX || defined INT64_MAX || defined HAVE_I64)
+	static inline void Swap64(uint64_t* v)
+	{
+		((amx_Swap64_t)funcs_[AMX_IMPL_Swap64])(v);
+	}
+#endif
 };
-
