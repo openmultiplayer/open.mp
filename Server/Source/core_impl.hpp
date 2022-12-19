@@ -296,14 +296,18 @@ public:
 					catch (nlohmann::json::exception const& e)
 					{
 						std::cout << "Error while parsing config file: " << e.what() << '\n';
-						//core.printLn("Error parsing config file:");
-						//core.printLn("%s", e.what());
+						// We can't use core's logging system since config is not fully yet
+						// To decide whether logging is enabled or not
+						// core.printLn("Error parsing config file:");
+						// core.printLn("%s", e.what());
 					}
 					catch (std::ios_base::failure const& e)
 					{
 						std::cout << "Error while parsing config file: " << e.what() << '\n';
-						//core.printLn("Error parsing config file:");
-						//core.printLn("%s", e.what());
+						// We can't use core's logging system since config is not fully yet
+						// To decide whether logging is enabled or not
+						// core.printLn("Error parsing config file:");
+						// core.printLn("%s", e.what());
 					}
 					// Is a directory?
 					if (props.is_null() || props.is_discarded() || !props.is_object())
