@@ -402,7 +402,6 @@ int PawnScript::UTF8Check(char const* string, int* length) const { return amx_UT
 int PawnScript::UTF8Get(char const* string, char const** endptr, cell* value) const { return amx_UTF8Get(string, endptr, value); }
 int PawnScript::UTF8Len(const cell* cstr, int* length) const { return amx_UTF8Len(cstr, length); }
 int PawnScript::UTF8Put(char* string, char** endptr, int maxchars, cell value) const { return amx_UTF8Put(string, endptr, maxchars, value); }
-int PawnScript::RegisterChecked(const AMX_NATIVE_INFO* list, int number) { return amx_RegisterChecked(&amx_, list, number); }
 
 cell PawnScript::GetCIP() const { return amx_.cip; }
 cell PawnScript::GetHEA() const { return amx_.hea; }

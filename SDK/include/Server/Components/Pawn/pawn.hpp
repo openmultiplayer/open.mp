@@ -57,14 +57,12 @@ constexpr int AMX_FUNC_Swap64 = 48;
 constexpr int AMX_FUNC_GetNativeByIndex = 49;
 constexpr int AMX_FUNC_MakeAddr = 50;
 constexpr int AMX_FUNC_StrSize = 51;
-constexpr int AMX_FUNC_RegisterChecked = 52;
 
-constexpr int NUM_AMX_FUNCS = 53;
+constexpr int NUM_AMX_FUNCS = 52;
 
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
 int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
 int AMXAPI amx_StrSize(const cell* cstr, int* length);
-int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number);
 
 typedef uint16_t* (*amx_Align16_t)(uint16_t* v);
 typedef uint32_t* (*amx_Align32_t)(uint32_t* v);
@@ -124,7 +122,6 @@ typedef void (*amx_Swap32_t)(uint32_t* v);
 #if PAWN_CELL_SIZE==64 && (defined _I64_MAX || defined INT64_MAX || defined HAVE_I64)
 typedef void (*amx_Swap64_t)(uint64_t* v);
 #endif
-
 
 enum DefaultReturnValue
 {
@@ -186,13 +183,6 @@ struct IPawnScript
 	virtual int UTF8Get(char const* string, char const** endptr, cell* value) const = 0;
 	virtual int UTF8Len(const cell* cstr, int* length) const = 0;
 	virtual int UTF8Put(char* string, char** endptr, int maxchars, cell value) const = 0;
-	virtual int RegisterChecked(const AMX_NATIVE_INFO* list, int number) = 0;
-	inline int RegisterChecked(char const _FAR* name, AMX_NATIVE func)
-	{
-		AMX_NATIVE_INFO
-			nativelist = { name, func };
-		return RegisterChecked(&nativelist, 1);
-	}
 
 	virtual cell GetCIP() const = 0;
 	virtual cell GetHEA() const = 0;

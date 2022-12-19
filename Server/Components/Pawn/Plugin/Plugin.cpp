@@ -17,6 +17,8 @@ int PluginCallGM(char* name);
 int PluginCallFS(char* name);
 void PluginLogprintf(const char* fmt, ...);
 
+int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number);
+
 static const void
 	*AMX_FUNCTIONS[]
 	= {

@@ -94,7 +94,6 @@ public:
 	int UTF8Get(char const* string, char const** endptr, cell* value) const override;
 	int UTF8Len(const cell* cstr, int* length) const override;
 	int UTF8Put(char* string, char** endptr, int maxchars, cell value) const override;
-	int RegisterChecked(const AMX_NATIVE_INFO* list, int number) override;
 
 	cell GetCIP() const override;
 	cell GetHEA() const override;
