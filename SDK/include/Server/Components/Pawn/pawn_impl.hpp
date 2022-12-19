@@ -8,21 +8,9 @@
 
 #if defined PAWN_NATIVES_HAS_FUNC
 #include <pawn-natives/NativesMain.hpp>
-#endif
 
-static std::array<void*, NUM_AMX_FUNCS> funcs_;
 static IComponentList* components_;
 static PawnLookup lookups_;
-
-void setAmxFunctions(std::array<void*, NUM_AMX_FUNCS> const& funcs)
-{
-	funcs_ = funcs;
-}
-
-void setAmxFunctions()
-{
-	funcs_.fill(nullptr);
-}
 
 void setAmxLookups()
 {
@@ -63,6 +51,19 @@ void setAmxLookups(ICore* core)
 PawnLookup* getAmxLookups()
 {
 	return &lookups_;
+}
+#endif
+
+static std::array<void*, NUM_AMX_FUNCS> funcs_;
+
+void setAmxFunctions(std::array<void*, NUM_AMX_FUNCS> const& funcs)
+{
+	funcs_ = funcs;
+}
+
+void setAmxFunctions()
+{
+	funcs_.fill(nullptr);
 }
 
 constexpr int AMX_FUNC_Align16 = 0;
