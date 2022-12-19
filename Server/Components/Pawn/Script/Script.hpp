@@ -114,6 +114,8 @@ public:
 	int GetID() const override { return id_; }
 	bool IsLoaded() const override { return loaded_; }
 
+	using IPawnScript::Register;
+
 private:
 	ICore* serverCore;
 	AMX amx_;

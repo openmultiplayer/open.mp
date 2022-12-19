@@ -63,10 +63,6 @@ constexpr int AMX_FUNC_GetNativeByIndex = 49;
 constexpr int AMX_FUNC_MakeAddr = 50;
 constexpr int AMX_FUNC_StrSize = 51;
 
-int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
-int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
-int AMXAPI amx_StrSize(const cell* cstr, int* length);
-
 typedef uint16_t* (*amx_Align16_t)(uint16_t* v);
 typedef uint32_t* (*amx_Align32_t)(uint32_t* v);
 #if defined _I64_MAX || defined HAVE_I64

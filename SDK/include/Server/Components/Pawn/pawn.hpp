@@ -8,6 +8,10 @@
 
 constexpr int NUM_AMX_FUNCS = 52;
 
+int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
+int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
+int AMXAPI amx_StrSize(const cell* cstr, int* length);
+
 enum DefaultReturnValue
 {
 	DefaultReturnValue_False,
@@ -63,6 +67,7 @@ struct IPawnScript
 		nativelist = { name, func };
 		return Register(&nativelist, 1);
 	}
+
 	virtual int Release(cell amx_addr) = 0;
 	virtual int SetCallback(AMX_CALLBACK callback) = 0;
 	virtual int SetDebugHook(AMX_DEBUG debug) = 0;
