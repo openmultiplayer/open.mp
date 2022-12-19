@@ -46,7 +46,7 @@ class PawnScript : public IPawnScript
 {
 public:
 	PawnScript(int id, std::string const& path, ICore* core);
-	~PawnScript();
+	virtual ~PawnScript();
 
 	// Wrap the AMX API.
 	int Allot(int cells, cell* amx_addr, cell** phys_addr) override;

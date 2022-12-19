@@ -62,7 +62,7 @@ PawnManager::~PawnManager()
 		CallInSides("OnGameModeExit", DefaultReturnValue_False);
 		PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
 		pluginManager.AmxUnload(mainScript_->GetAMX());
-		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_);
+		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_.get());
 	}
 	for (auto& cur : scripts_)
 	{
