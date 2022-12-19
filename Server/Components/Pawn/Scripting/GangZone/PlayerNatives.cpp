@@ -55,9 +55,9 @@ SCRIPT_API(PlayerGangZoneDestroy, bool(IPlayer& player, int legacyid))
 		{
 			pool->release(realid);
 			data->releaseLegacyID(legacyid);
+			return true;
 		}
 	}
-
 	return false;
 }
 
