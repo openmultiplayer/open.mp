@@ -44,33 +44,13 @@
 
 using namespace Impl;
 
-class PawnManager : public Singleton<PawnManager>
+class PawnManager : public Singleton<PawnManager>, public PawnLookup
 {
 public:
 	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
 	std::string mainName_ = "";
 	std::unique_ptr<PawnScript> mainScript_;
 	FlatHashMap<AMX*, PawnScript*> amxToScript_;
-	ICore* core = nullptr;
-	IConfig* config = nullptr;
-	IPlayerPool* players = nullptr;
-	IActorsComponent* actors = nullptr;
-	ICheckpointsComponent* checkpoints = nullptr;
-	IClassesComponent* classes = nullptr;
-	IConsoleComponent* console = nullptr;
-	IDatabasesComponent* databases = nullptr;
-	IDialogsComponent* dialogs = nullptr;
-	IGangZonesComponent* gangzones = nullptr;
-	IFixesComponent* fixes = nullptr;
-	IMenusComponent* menus = nullptr;
-	IObjectsComponent* objects = nullptr;
-	IPickupsComponent* pickups = nullptr;
-	ITextDrawsComponent* textdraws = nullptr;
-	ITextLabelsComponent* textlabels = nullptr;
-	ITimersComponent* timers = nullptr;
-	IVariablesComponent* vars = nullptr;
-	IVehiclesComponent* vehicles = nullptr;
-	ICustomModelsComponent* models = nullptr;
 	DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
 	PawnPluginManager pluginManager;
 

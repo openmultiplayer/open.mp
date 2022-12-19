@@ -301,3 +301,8 @@ COMPONENT_ENTRY_POINT()
 {
 	return new PawnComponent();
 }
+
+PawnLookup* getAmxLookups()
+{
+	return PawnManager::Get();
+}

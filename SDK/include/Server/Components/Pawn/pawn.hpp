@@ -6,6 +6,25 @@
 #include <string>
 #include <vector>
 
+#include <Server/Components/Actors/actors.hpp>
+#include <Server/Components/Checkpoints/checkpoints.hpp>
+#include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/Console/console.hpp>
+#include <Server/Components/Databases/databases.hpp>
+#include <Server/Components/Dialogs/dialogs.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
+#include <Server/Components/GangZones/gangzones.hpp>
+#include <Server/Components/Menus/menus.hpp>
+#include <Server/Components/Objects/objects.hpp>
+#include <Server/Components/Pawn/pawn.hpp>
+#include <Server/Components/Pickups/pickups.hpp>
+#include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/Timers/timers.hpp>
+#include <Server/Components/Variables/variables.hpp>
+#include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
+
 #define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp_scripting, name, prototype)
 #define SCRIPT_API_FAILRET(name, failret, prototype) PAWN_NATIVE_FAILRET(openmp_scripting, failret, name, prototype)
 #define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp_scripting, name, prototype)
@@ -21,6 +40,32 @@ enum DefaultReturnValue
 	DefaultReturnValue_False,
 	DefaultReturnValue_True
 };
+
+struct PawnLookup
+{
+	ICore* core = nullptr;
+	IConfig* config = nullptr;
+	IPlayerPool* players = nullptr;
+	IActorsComponent* actors = nullptr;
+	ICheckpointsComponent* checkpoints = nullptr;
+	IClassesComponent* classes = nullptr;
+	IConsoleComponent* console = nullptr;
+	IDatabasesComponent* databases = nullptr;
+	IDialogsComponent* dialogs = nullptr;
+	IGangZonesComponent* gangzones = nullptr;
+	IFixesComponent* fixes = nullptr;
+	IMenusComponent* menus = nullptr;
+	IObjectsComponent* objects = nullptr;
+	IPickupsComponent* pickups = nullptr;
+	ITextDrawsComponent* textdraws = nullptr;
+	ITextLabelsComponent* textlabels = nullptr;
+	ITimersComponent* timers = nullptr;
+	IVariablesComponent* vars = nullptr;
+	IVehiclesComponent* vehicles = nullptr;
+	ICustomModelsComponent* models = nullptr;
+};
+
+PawnLookup* getAmxLookups();
 
 struct IPawnScript
 {
@@ -68,7 +113,7 @@ struct IPawnScript
 	inline int Register(char const* name, AMX_NATIVE func)
 	{
 		AMX_NATIVE_INFO
-		nativelist = { name, func };
+			nativelist = { name, func };
 		return Register(&nativelist, 1);
 	}
 

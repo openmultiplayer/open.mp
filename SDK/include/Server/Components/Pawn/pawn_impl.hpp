@@ -6,6 +6,7 @@
 #include "pawn.hpp"
 
 static std::array<void*, NUM_AMX_FUNCS> funcs_;
+static IComponentList* components_;
 
 void setAmxFunctions(std::array<void*, NUM_AMX_FUNCS> const& funcs)
 {
@@ -15,6 +16,51 @@ void setAmxFunctions(std::array<void*, NUM_AMX_FUNCS> const& funcs)
 void setAmxFunctions()
 {
 	funcs_.fill(nullptr);
+}
+
+static std::array<void*, NUM_AMX_FUNCS> funcs_;
+
+PawnLookup lookups_;
+
+void setAmxLookups()
+{
+	// Refresh the list.
+	lookups_.actors = components_->queryComponent<IActorsComponent>();
+	lookups_.checkpoints = components_->queryComponent<ICheckpointsComponent>();
+	lookups_.classes = components_->queryComponent<IClassesComponent>();
+	lookups_.console = components_->queryComponent<IConsoleComponent>();
+	lookups_.databases = components_->queryComponent<IDatabasesComponent>();
+	lookups_.dialogs = components_->queryComponent<IDialogsComponent>();
+	lookups_.fixes = components_->queryComponent<IFixesComponent>();
+	lookups_.gangzones = components_->queryComponent<IGangZonesComponent>();
+	lookups_.menus = components_->queryComponent<IMenusComponent>();
+	lookups_.objects = components_->queryComponent<IObjectsComponent>();
+	lookups_.pickups = components_->queryComponent<IPickupsComponent>();
+	lookups_.textdraws = components_->queryComponent<ITextDrawsComponent>();
+	lookups_.textlabels = components_->queryComponent<ITextLabelsComponent>();
+	lookups_.timers = components_->queryComponent<ITimersComponent>();
+	lookups_.vars = components_->queryComponent<IVariablesComponent>();
+	lookups_.vehicles = components_->queryComponent<IVehiclesComponent>();
+	lookups_.models = components_->queryComponent<ICustomModelsComponent>();
+}
+
+void setAmxLookups(IComponentList* components)
+{
+	components_ = components;
+	setAmxLookups();
+}
+
+void setAmxLookups(ICore* core)
+{
+	lookups_.core = core;
+	lookups_.config = &core->getConfig();
+	lookups_.players = &core->getPlayers();
+	setAmxLookups();
+}
+
+PawnLookup* getAmxLookups()
+{
+	return &lookups_;
 }
 
 constexpr int AMX_FUNC_Align16 = 0;
