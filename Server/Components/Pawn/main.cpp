@@ -62,6 +62,27 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
 	reinterpret_cast<void*>(&amx_UTF8Get),
 	reinterpret_cast<void*>(&amx_UTF8Len),
 	reinterpret_cast<void*>(&amx_UTF8Put),
+	reinterpret_cast<void*>(&amx_PushStringLen),
+	reinterpret_cast<void*>(&amx_SetStringLen),
+#if PAWN_CELL_SIZE==16
+	reinterpret_cast<void*>(&amx_Swap16),
+#else
+	nullptr,
+#endif
+#if PAWN_CELL_SIZE==32
+	reinterpret_cast<void*>(&amx_Swap32),
+#else
+	nullptr,
+#endif
+#if PAWN_CELL_SIZE==64 && (defined _I64_MAX || defined INT64_MAX || defined HAVE_I64)
+	reinterpret_cast<void*>(&amx_Swap64),
+#else
+	nullptr,
+#endif
+	reinterpret_cast<void*>(&amx_GetNativeByIndex),
+	reinterpret_cast<void*>(&amx_MakeAddr),
+	reinterpret_cast<void*>(&amx_StrSize),
+	reinterpret_cast<void*>(&amx_RegisterChecked),
 };
 
 class PawnComponent final : public IPawnComponent, public CoreEventHandler, public ConsoleEventHandler
