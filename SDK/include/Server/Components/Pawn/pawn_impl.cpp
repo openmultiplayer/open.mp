@@ -2,11 +2,37 @@
 
 #include "pawn.hpp"
 
+static IPawnComponent* pawn_;
+
 static std::array<void*, NUM_AMX_FUNCS>& funcs_;
+
+static class : public PawnEventHandler
+{
+public:
+	void onAmxLoad(IPawnScript* amx) override
+	{
+
+	}
+
+	void onAmxUnload(IPawnScript* amx) override
+	{
+
+	}
+} events_;
 
 void setPawnComponent(IPawnComponent* pawn)
 {
-	funcs_ = pawn->getAmxFunctions();
+	if (pawn_)
+	{
+		funcs_ = nullptr;
+		pawn_->getEventDispatcher().removeEventHandler(&events_);
+	}
+	if (pawn)
+	{
+		funcs_ = pawn->getAmxFunctions();
+		pawn->getEventDispatcher().addEventHandler(&events_);
+	}
+	pawn_ = pawn;
 }
 
 uint16_t* AMXAPI amx_Align16(uint16_t* v) { return ((amx_Align16_t)PawnImpl::funcs_[AMX_FUNC_Align16])(v) } uint32_t* AMXAPI amx_Align32(uint32_t* v) { return ((amx_Align32_t)PawnImpl::funcs_[AMX_FUNC_Align32])(v) }
