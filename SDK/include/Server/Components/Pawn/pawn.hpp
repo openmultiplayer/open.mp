@@ -339,4 +339,6 @@ struct IPawnComponent : public IComponent
 	virtual IEventDispatcher<PawnEventHandler>& getEventDispatcher() = 0;
 
 	virtual const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const = 0;
+	virtual IPawnScript const* getScript(AMX* amx) const = 0;
+	virtual IPawnScript * getScript(AMX* amx) = 0;
 };

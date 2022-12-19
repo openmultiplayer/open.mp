@@ -200,6 +200,28 @@ public:
 		return AMX_FUNCTIONS;
 	}
 
+	IPawnScript const* getScript(AMX* amx) const override
+	{
+		auto& amx_map = PawnManager::Get()->amxToScript_;
+		auto script_itr = amx_map.find(amx);
+		if (script_itr != amx_map.end())
+		{
+			return script_itr->second;
+		}
+		return nullptr;
+	}
+
+	IPawnScript* getScript(AMX* amx) override
+	{
+		auto& amx_map = PawnManager::Get()->amxToScript_;
+		auto script_itr = amx_map.find(amx);
+		if (script_itr != amx_map.end())
+		{
+			return script_itr->second;
+		}
+		return nullptr;
+	}
+
 	void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override
 	{
 		PawnManager::Get()->OnServerCommandList(commands);
