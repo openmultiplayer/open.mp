@@ -83,6 +83,7 @@ public:
 	int PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) override;
 	int RaiseError(int error) override;
 	int Register(const AMX_NATIVE_INFO* nativelist, int number) override;
+	using IPawnScript::Register;
 	int Release(cell amx_addr) override;
 	int SetCallback(AMX_CALLBACK callback) override;
 	int SetDebugHook(AMX_DEBUG debug) override;
