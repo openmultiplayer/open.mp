@@ -119,6 +119,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				// Teleport the player.
 				peer.setPositionFindZ(onPlayerClickMapRPC.Pos);
 			}
+
 			else if (allowTeleport_  && * allowTeleport_)
 			{
 				if (IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(peer))

@@ -202,6 +202,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
+
 	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, bool* allowInteriorWeapons, IFixesComponent* fixesComponent)
 		: pool_(pool)
 		, netData_(netData)
