@@ -18,16 +18,16 @@ struct IPawnScript
 {
 	// Wrap the AMX API.
 	virtual int Allot(int cells, cell* amx_addr, cell** phys_addr) = 0;
-	virtual int Callback(cell index, cell * result, const cell* params) = 0;
+	virtual int Callback(cell index, cell* result, const cell* params) = 0;
 	virtual int Cleanup() = 0;
-	virtual int Clone(AMX * amxClone, void* data) const = 0;
-	virtual int Exec(cell * retval, int index) = 0;
+	virtual int Clone(AMX* amxClone, void* data) const = 0;
+	virtual int Exec(cell* retval, int index) = 0;
 	virtual int FindNative(char const* name, int* index) const = 0;
 	virtual int FindPublic(char const* funcname, int* index) const = 0;
 	virtual int FindPubVar(char const* varname, cell* amx_addr) const = 0;
 	virtual int FindTagId(cell tag_id, char* tagname) const = 0;
-	virtual int Flags(uint16_t * flags) const = 0;
-	virtual int GetAddr(cell amx_addr, cell * *phys_addr) const = 0;
+	virtual int Flags(uint16_t* flags) const = 0;
+	virtual int GetAddr(cell amx_addr, cell** phys_addr) const = 0;
 	virtual int GetNative(int index, char* funcname) const = 0;
 	virtual int GetNativeByIndex(int index, AMX_NATIVE_INFO* ret) const = 0;
 	virtual int GetPublic(int index, char* funcname) const = 0;
@@ -38,7 +38,7 @@ struct IPawnScript
 	virtual int GetUserData(long tag, void** ptr) const = 0;
 	virtual int Init(void* program) = 0;
 	virtual int InitJIT(void* reloc_table, void* native_code) = 0;
-	virtual int MakeAddr(cell * phys_addr, cell * amx_addr) const = 0;
+	virtual int MakeAddr(cell* phys_addr, cell* amx_addr) const = 0;
 	virtual int MemInfo(long* codesize, long* datasize, long* stackheap) const = 0;
 	virtual int NameLength(int* length) const = 0;
 	virtual AMX_NATIVE_INFO* NativeInfo(char const* name, AMX_NATIVE func) const = 0;
@@ -47,8 +47,8 @@ struct IPawnScript
 	virtual int NumPubVars(int* number) const = 0;
 	virtual int NumTags(int* number) const = 0;
 	virtual int Push(cell value) = 0;
-	virtual int PushArray(cell * amx_addr, cell * *phys_addr, const cell array[], int numcells) = 0;
-	virtual int PushString(cell * amx_addr, cell * *phys_addr, StringView string, bool pack, bool use_wchar) = 0;
+	virtual int PushArray(cell* amx_addr, cell** phys_addr, const cell array[], int numcells) = 0;
+	virtual int PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) = 0;
 	virtual int RaiseError(int error) = 0;
 	virtual int Register(const AMX_NATIVE_INFO* nativelist, int number) = 0;
 
@@ -66,7 +66,7 @@ struct IPawnScript
 	virtual int Release(cell amx_addr) = 0;
 	virtual int SetCallback(AMX_CALLBACK callback) = 0;
 	virtual int SetDebugHook(AMX_DEBUG debug) = 0;
-	virtual int SetString(cell * dest, StringView source, bool pack, bool use_wchar, size_t size) const = 0;
+	virtual int SetString(cell* dest, StringView source, bool pack, bool use_wchar, size_t size) const = 0;
 	virtual int SetUserData(long tag, void* ptr) = 0;
 	virtual int StrLen(const cell* cstring, int* length) const = 0;
 	virtual int StrSize(const cell* cstr, int* length) const = 0;
@@ -97,7 +97,7 @@ struct IPawnScript
 	virtual bool IsLoaded() const = 0;
 
 	template <typename... T>
-	void Call(cell & ret, int idx, T... args)
+	void Call(cell& ret, int idx, T... args)
 	{
 		// Check if the public exists.
 		if (idx == INT_MAX)
@@ -217,8 +217,8 @@ struct IPawnScript
 
 struct PawnEventHandler
 {
-	virtual void onAmxLoad(IPawnScript * amx) = 0;
-	virtual void onAmxUnload(IPawnScript * amx) = 0;
+	virtual void onAmxLoad(IPawnScript* amx) = 0;
+	virtual void onAmxUnload(IPawnScript* amx) = 0;
 };
 
 static const UID PawnComponent_UID = UID(0x78906cd9f19c36a6);
@@ -230,6 +230,6 @@ struct IPawnComponent : public IComponent
 	virtual IEventDispatcher<PawnEventHandler>& getEventDispatcher() = 0;
 
 	virtual const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const = 0;
-	virtual IPawnScript const* getScript(AMX * amx) const = 0;
-	virtual IPawnScript* getScript(AMX * amx) = 0;
+	virtual IPawnScript const* getScript(AMX* amx) const = 0;
+	virtual IPawnScript* getScript(AMX* amx) = 0;
 };

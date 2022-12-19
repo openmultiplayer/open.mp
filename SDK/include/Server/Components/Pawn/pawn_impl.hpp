@@ -129,15 +129,14 @@ typedef void (*amx_Swap64_t)(uint64_t* v);
 class PawnImpl : private PawnEventHandler
 {
 public:
-	void onAmxLoad(IPawnScript* script) override;
+	void onAmxLoad(IPawnScript * script) override;
 
-	void onAmxUnload(IPawnScript* script) override;
+	void onAmxUnload(IPawnScript * script) override;
 
-	static void setPawnComponent(IPawnComponent* pawn);
+	static void setPawnComponent(IPawnComponent * pawn);
 
 private:
 	static IPawnComponent* pawn_;
 
 	static std::array<void*, NUM_AMX_FUNCS>& funcs_;
 }
-
