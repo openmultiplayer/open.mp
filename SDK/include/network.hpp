@@ -50,7 +50,7 @@ enum ENetworkType
 {
 	ENetworkType_RakNetLegacy,
 	ENetworkType_ENet,
-
+	ENetworkType_NPC,
 	ENetworkType_End
 };
 

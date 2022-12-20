@@ -31,6 +31,7 @@
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 #include <sdk.hpp>
 
 #include <algorithm>
@@ -71,6 +72,7 @@ public:
 	IVariablesComponent* vars = nullptr;
 	IVehiclesComponent* vehicles = nullptr;
 	ICustomModelsComponent* models = nullptr;
+	INPCComponent* npcs = nullptr;
 	DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
 	PawnPluginManager pluginManager;
 
