@@ -270,8 +270,8 @@ struct IPawnScript
 
 struct PawnEventHandler
 {
-	virtual void onAmxLoad(IPawnScript* amx) = 0;
-	virtual void onAmxUnload(IPawnScript* amx) = 0;
+	virtual void onAmxLoad(IPawnScript& script) = 0;
+	virtual void onAmxUnload(IPawnScript& script) = 0;
 };
 
 static const UID PawnComponent_UID = UID(0x78906cd9f19c36a6);

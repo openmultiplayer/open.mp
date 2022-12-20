@@ -62,7 +62,7 @@ PawnManager::~PawnManager()
 		CallInSides("OnGameModeExit", DefaultReturnValue_False);
 		PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
 		pluginManager.AmxUnload(mainScript_->GetAMX());
-		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_.get());
+		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, *mainScript_);
 	}
 	for (auto& cur : scripts_)
 	{
@@ -70,7 +70,7 @@ PawnManager::~PawnManager()
 		script.Call("OnFilterScriptExit", DefaultReturnValue_False);
 		PawnTimerImpl::Get()->killTimers(script.GetAMX());
 		pluginManager.AmxUnload(script.GetAMX());
-		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, &script);
+		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script);
 	}
 }
 
@@ -499,7 +499,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	script.Register("SetModeRestartTime", &utils::pawn_SetModeRestartTime);
 	script.Register("GetModeRestartTime", &utils::pawn_GetModeRestartTime);
 
-	eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, &script);
+	eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script);
 	pawn_natives::AmxLoad(script.GetAMX());
 	pluginManager.AmxLoad(script.GetAMX());
 
@@ -657,7 +657,7 @@ is `2`.
 
 	PawnTimerImpl::Get()->killTimers(script.GetAMX());
 	pluginManager.AmxUnload(script.GetAMX());
-	eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, &script);
+	eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script);
 	amxToScript_.erase(script.GetAMX());
 
 	if (isEntryScript)
