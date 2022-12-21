@@ -64,9 +64,9 @@ PawnManager::~PawnManager()
 		pluginManager.AmxUnload(mainScript_->GetAMX());
 		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, *mainScript_);
 	}
-	for (auto& cur : scripts_)
+	for (IPawnScript* cur : scripts_)
 	{
-		auto& script = *cur;
+		IPawnScript& script = *cur;
 		script.Call("OnFilterScriptExit", DefaultReturnValue_False);
 		PawnTimerImpl::Get()->killTimers(script.GetAMX());
 		pluginManager.AmxUnload(script.GetAMX());
@@ -188,7 +188,7 @@ AMX* PawnManager::AMXFromID(int id) const
 	{
 		return mainScript_->GetAMX();
 	}
-	for (auto& cur : scripts_)
+	for (IPawnScript* cur : scripts_)
 	{
 		if (cur->GetID() == id)
 		{
@@ -204,7 +204,7 @@ int PawnManager::IDFromAMX(AMX* amx) const
 	{
 		return mainScript_->GetID();
 	}
-	for (auto& cur : scripts_)
+	for (IPawnScript* cur : scripts_)
 	{
 		if (cur->GetAMX() == amx)
 		{
@@ -605,7 +605,7 @@ bool PawnManager::Unload(std::string const& name)
 			return false;
 		}
 	}
-	auto& script = isEntryScript ? *mainScript_ : *pos;
+	PawnScript& script = isEntryScript ? *mainScript_ : *pos;
 
 	// Call `OnPlayerDisconnect`.
 	AMX* amx = script.GetAMX();

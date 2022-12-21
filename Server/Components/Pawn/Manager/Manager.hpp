@@ -136,7 +136,7 @@ public:
 	{
 		cell ret = static_cast<cell>(defaultRetValue);
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, defaultRetValue, args...);
 		}
@@ -157,7 +157,7 @@ public:
 		{
 			ret = mainScript_->Call(name, defaultRetValue, args...);
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, defaultRetValue, args...);
 		}
@@ -172,7 +172,7 @@ public:
 			ret
 			= 0;
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
@@ -191,7 +191,7 @@ public:
 			ret
 			= 1;
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
@@ -208,7 +208,7 @@ public:
 	{
 		cell ret = static_cast<cell>(defaultRetValue);
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, defaultRetValue, args...);
 		}
@@ -239,7 +239,7 @@ public:
 		{
 			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 		}
@@ -256,7 +256,7 @@ public:
 		{
 			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 		}
@@ -275,7 +275,7 @@ public:
 			if (ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
@@ -294,7 +294,7 @@ public:
 			if (ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
@@ -314,7 +314,7 @@ public:
 			if (!ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
@@ -334,7 +334,7 @@ public:
 			if (!ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
 			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
