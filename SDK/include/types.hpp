@@ -92,6 +92,9 @@ using FlatHashMap = robin_hood::unordered_flat_map<K, V>;
 template <typename T>
 using FlatPtrHashSet = FlatHashSet<T*>;
 
+template <typename K, typename V>
+using FlatPtrHashMap = FlatHashMap<K, V*>;
+
 template <typename T, size_t Size>
 using StaticArray = std::array<T, Size>;
 

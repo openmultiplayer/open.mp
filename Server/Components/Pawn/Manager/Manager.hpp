@@ -47,9 +47,9 @@ using namespace Impl;
 class PawnManager : public Singleton<PawnManager>, public PawnLookup
 {
 public:
-	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
+	FlatPtrHashSet<PawnScript> scripts_;
 	std::string mainName_ = "";
-	std::unique_ptr<PawnScript> mainScript_;
+	PawnScript* mainScript_;
 	FlatHashMap<AMX*, PawnScript*> amxToScript_;
 	DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
 	PawnPluginManager pluginManager;
@@ -79,12 +79,16 @@ private:
 		cell reset_hea;
 	} sleepData_;
 
-	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const& name) const
+	PawnScript* findScript(String const& name) const
 	{
-		return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const& it)
+		for (auto it : scripts_)
+		{
+			if (it->name_ == name)
 			{
-				return it.first == name;
-			});
+				return it;
+			}
+		}
+		return nullptr;
 	}
 
 public:

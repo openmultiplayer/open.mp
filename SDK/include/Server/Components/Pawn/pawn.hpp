@@ -279,10 +279,13 @@ struct IPawnComponent : public IComponent
 {
 	PROVIDE_UID(PawnComponent_UID);
 
-	/// Get the ConsoleEventHandler event dispatcher
+	/// Get the PawnEventHandler event dispatcher
 	virtual IEventDispatcher<PawnEventHandler>& getEventDispatcher() = 0;
 
 	virtual const StaticArray<void*, NUM_AMX_FUNCS>& getAmxFunctions() const = 0;
 	virtual IPawnScript const* getScript(AMX* amx) const = 0;
 	virtual IPawnScript* getScript(AMX* amx) = 0;
+
+	/// Get a set of all the available scripts.
+	virtual const FlatPtrHashMap<IPawnScript>& entries() = 0;
 };

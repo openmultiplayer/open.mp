@@ -121,6 +121,7 @@ private:
 	AMX amx_;
 	AMXCache cache_;
 	bool loaded_ = false;
+	String name_;
 
 	int id_;
 
