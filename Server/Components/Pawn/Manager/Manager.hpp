@@ -47,7 +47,7 @@ using namespace Impl;
 class PawnManager : public Singleton<PawnManager>, public PawnLookup
 {
 public:
-	FlatPtrHashSet<PawnScript> scripts_;
+	FlatPtrHashSet<IPawnScript> scripts_;
 	std::string mainName_ = "";
 	PawnScript* mainScript_;
 	FlatHashMap<AMX*, PawnScript*> amxToScript_;
@@ -83,9 +83,10 @@ private:
 	{
 		for (auto it : scripts_)
 		{
-			if (it->name_ == name)
+			PawnScript* script = reinterpret_cast<PawnScript*>(it);
+			if (script->name_ == name)
 			{
-				return it;
+				return script;
 			}
 		}
 		return nullptr;
