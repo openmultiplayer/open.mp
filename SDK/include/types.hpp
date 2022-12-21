@@ -71,13 +71,13 @@ namespace Impl
 
 using String = std::string;
 
-template <typename T>
-using DynamicArray = std::vector<T>;
-
 template <size_t Size>
 using StaticBitset = std::bitset<Size>;
 
 }
+
+template <typename T>
+using DynamicArray = std::vector<T>;
 
 template <typename T>
 using Span = nonstd::span<T>;
@@ -86,6 +86,7 @@ using StringView = nonstd::string_view;
 
 template <typename T>
 using FlatHashSet = robin_hood::unordered_flat_set<T>;
+
 template <typename K, typename V>
 using FlatHashMap = robin_hood::unordered_flat_map<K, V>;
 
