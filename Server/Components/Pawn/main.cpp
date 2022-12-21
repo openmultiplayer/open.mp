@@ -222,7 +222,7 @@ public:
 		return nullptr;
 	}
 
-	const FlatPtrHashSet<IPawnScript>& sideScripts() override
+	const DynamicArray<IPawnScript*>& sideScripts() override
 	{
 		return PawnManager::Get()->scripts_;
 	}

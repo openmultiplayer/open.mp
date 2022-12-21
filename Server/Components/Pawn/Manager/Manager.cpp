@@ -442,7 +442,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	}
 	else
 	{
-		if (findScript(name) != nullptr)
+		if (findScript(name) != scripts_.end())
 		{
 			return false;
 		}
@@ -477,7 +477,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	}
 	else
 	{
-		scripts_.emplace(ptr);
+		scripts_.push_back(ptr);
 		amxToScript_.emplace(script.GetAMX(), ptr);
 	}
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
@@ -600,12 +600,12 @@ bool PawnManager::Unload(std::string const& name)
 	}
 	else
 	{
-		if (pos == nullptr)
+		if (pos == scripts_.end())
 		{
 			return false;
 		}
 	}
-	PawnScript& script = isEntryScript ? *mainScript_ : *pos;
+	PawnScript& script = isEntryScript ? *mainScript_ : *reinterpret_cast<PawnScript*>(*pos);
 
 	// Call `OnPlayerDisconnect`.
 	AMX* amx = script.GetAMX();
@@ -666,7 +666,7 @@ is `2`.
 	}
 	else
 	{
-		delete pos;
+		delete *pos;
 		scripts_.erase(pos);
 	}
 

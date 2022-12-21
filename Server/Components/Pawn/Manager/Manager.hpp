@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <vector>
 #include <string>
 
 #include "../PluginManager/PluginManager.hpp"
@@ -47,7 +48,7 @@ using namespace Impl;
 class PawnManager : public Singleton<PawnManager>, public PawnLookup
 {
 public:
-	FlatPtrHashSet<IPawnScript> scripts_;
+	DynamicArray<IPawnScript*> scripts_;
 	std::string mainName_ = "";
 	PawnScript* mainScript_;
 	FlatHashMap<AMX*, PawnScript*> amxToScript_;
@@ -79,17 +80,12 @@ private:
 		cell reset_hea;
 	} sleepData_;
 
-	PawnScript* findScript(String const& name) const
+	DynamicArray<IPawnScript*>::const_iterator const findScript(String const& name) const
 	{
-		for (auto it : scripts_)
-		{
-			PawnScript* script = reinterpret_cast<PawnScript*>(it);
-			if (script->name_ == name)
+		return std::find_if(scripts_.begin(), scripts_.end(), [name](IPawnScript* const it)
 			{
-				return script;
-			}
-		}
-		return nullptr;
+				return reinterpret_cast<PawnScript*>(it)->name_ == name;
+			});
 	}
 
 public:
