@@ -666,7 +666,7 @@ is `2`.
 	}
 	else
 	{
-		delete *pos;
+		delete reinterpret_cast<PawnScript*>(*pos);
 		scripts_.erase(pos);
 	}
 
