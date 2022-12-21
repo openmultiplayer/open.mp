@@ -287,5 +287,6 @@ struct IPawnComponent : public IComponent
 	virtual IPawnScript* getScript(AMX* amx) = 0;
 
 	/// Get a set of all the available scripts.
-	virtual const FlatPtrHashMap<IPawnScript>& entries() = 0;
+	virtual IPawnScript* mainScript() = 0;
+	virtual const FlatPtrHashSet<IPawnScript>& sideScripts() = 0;
 };

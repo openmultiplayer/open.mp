@@ -222,6 +222,16 @@ public:
 		return nullptr;
 	}
 
+	const FlatPtrHashSet<IPawnScript>& sideScripts() override
+	{
+		return PawnManager::Get()->scripts_;
+	}
+	
+	IPawnScript* mainScript() override
+	{
+		return PawnManager::Get()->mainScript_;
+	}
+	
 	void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override
 	{
 		PawnManager::Get()->OnServerCommandList(commands);
