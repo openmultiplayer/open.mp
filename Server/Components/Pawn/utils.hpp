@@ -541,10 +541,10 @@ pawn_CallRemoteFunction_gmnext:
 			amx->stk = stk;
 		}
 	}
-	for (auto& cur : manager->scripts_)
+	for (auto cur : manager->scripts_)
 	{
 		// Get the next script to call in to, always starting with the GM.
-		amx = cur.second->GetAMX();
+		amx = cur->GetAMX();
 		// Step 2: Get the function.
 		int
 			index;

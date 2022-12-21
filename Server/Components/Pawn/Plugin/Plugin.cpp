@@ -461,9 +461,9 @@ int PluginCallFS(char* name)
 		ret
 		= 0;
 	auto manager = PawnManager::Get();
-	for (auto& cur : manager->scripts_)
+	for (auto cur : manager->scripts_)
 	{
-		ret = cur.second->Call(name, DefaultReturnValue_False);
+		ret = cur->Call(name, DefaultReturnValue_False);
 		if (!ret)
 			return ret;
 	}

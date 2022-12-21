@@ -138,7 +138,7 @@ public:
 
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, defaultRetValue, args...);
+			ret = cur->Call(name, defaultRetValue, args...);
 		}
 		if (mainScript_)
 		{
@@ -159,7 +159,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, defaultRetValue, args...);
+			ret = cur->Call(name, defaultRetValue, args...);
 		}
 
 		return ret;
@@ -174,7 +174,7 @@ public:
 
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 			{
 				break;
@@ -193,7 +193,7 @@ public:
 
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			ret = cur->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 			{
 				break;
@@ -210,7 +210,7 @@ public:
 
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, defaultRetValue, args...);
+			ret = cur->Call(name, defaultRetValue, args...);
 		}
 
 		return ret;
