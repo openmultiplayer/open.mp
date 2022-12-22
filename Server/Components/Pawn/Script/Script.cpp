@@ -314,13 +314,13 @@ static AMX_NATIVE findfunction(const char* name, const AMX_NATIVE_INFO* list, in
 	int i;
 
 	assert(list != NULL);
-	for (i = 0; list[i].name != NULL && (i < number || number == -1); i++)
+	for (i = 0; (i < number || number == -1) && list[i].name != NULL; i++)
 		if (strcmp(name, list[i].name) == 0)
 			return list[i].func;
 	return NULL;
 }
 
-int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number)
+int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 {
 	AMX_FUNCPART* func;
 	AMX_HEADER* hdr;

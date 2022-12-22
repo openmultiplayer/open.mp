@@ -96,7 +96,7 @@ class GangZonesComponent final : public IGangZonesComponent, public PlayerEventH
 private:
 	ICore* core = nullptr;
 	constexpr static const size_t Lower = 1;
-	constexpr static const size_t Upper = GANG_ZONE_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + 1;
+	constexpr static const size_t Upper = GANG_ZONE_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + Lower;
 
 	MarkedPoolStorage<GangZone, IGangZone, Lower, Upper> storage;
 	UniqueIDArray<IGangZone, Upper> checkingList;
@@ -314,10 +314,9 @@ public:
 
 	void onPlayerClickMap(IPlayer& player, Vector3 clickPos) override
 	{
-		// only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+		// Only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
 		for (auto gangzone : checkingList.entries())
 		{
-
 			// only check visible gangzones
 			if (!gangzone->isShownForPlayer(player))
 			{

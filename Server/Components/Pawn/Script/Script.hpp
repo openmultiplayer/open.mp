@@ -27,7 +27,6 @@ using namespace Impl;
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
 int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
 int AMXAPI amx_StrSize(const cell* cstr, int* length);
-int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number);
 
 enum DefaultReturnValue
 {
@@ -82,12 +81,11 @@ public:
 	inline int PushArray(cell* amx_addr, cell** phys_addr, const cell array[], int numcells) { return amx_PushArray(&amx_, amx_addr, phys_addr, array, numcells); }
 	inline int PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) { return amx_PushStringLen(&amx_, amx_addr, phys_addr, string.data(), string.length(), pack, use_wchar); }
 	inline int RaiseError(int error) { return amx_RaiseError(&amx_, error); }
-	inline int Register(const AMX_NATIVE_INFO* nativelist, int number) { return amx_RegisterChecked(&amx_, nativelist, number); }
+	inline int Register(const AMX_NATIVE_INFO* nativelist, int number) { return amx_Register(&amx_, nativelist, number); }
 	inline int Register(char const _FAR* name, AMX_NATIVE func)
 	{
-		AMX_NATIVE_INFO
-		nativelist = { name, func };
-		return amx_RegisterChecked(&amx_, &nativelist, 1);
+		AMX_NATIVE_INFO nativelist = { name, func };
+		return amx_Register(&amx_, &nativelist, 1);
 	}
 	inline int Release(cell amx_addr) { return amx_Release(&amx_, amx_addr); }
 	inline int SetCallback(AMX_CALLBACK callback) { return amx_SetCallback(&amx_, callback); }

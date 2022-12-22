@@ -311,7 +311,7 @@ enum LegacyClientVersion
 	LegacyClientVersion_03DL = 4062
 };
 
-IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name)
+IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient)
 {
 	const RakNet::PlayerID rid = rpcParams->sender;
 
@@ -341,6 +341,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 		params.name = name;
 		params.bot = isNPC;
 		params.serial = serial;
+		params.isUsingOfficialClient = isUsingOfficialClient;
 		newConnectionResult = core->getPlayers().requestPlayer(netData, params);
 	}
 	else
@@ -427,7 +428,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 				return;
 			}
 
-			IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name);
+			IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name, playerConnectRPC.IsUsingOfficialClient);
 			if (newPeer)
 			{
 				if (!network->inEventDispatcher.stopAtFalse(

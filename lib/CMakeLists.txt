@@ -54,6 +54,7 @@ if(BUILD_SERVER)
 
 			target_compile_definitions(pawn-runtime
 				PRIVATE
+					-DOVERWRITE_AMX_REGISTER
 					-DFLOATPOINT
 					-DAMX_STRING_LIB
 					-DsNAMEMAX=63

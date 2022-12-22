@@ -9,6 +9,7 @@
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <Server/Components/Fixes/fixes.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
 
@@ -45,6 +46,7 @@ private:
 	ActorSpawnData spawnData_;
 	bool* allAnimationLibraries_;
 	ICustomModelsComponent*& modelsComponent_;
+	IFixesComponent* fixesComponent_;
 
 	void restream()
 	{
@@ -77,6 +79,10 @@ private:
 			NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
 			RPC.ActorID = poolID;
 			PacketHelper::send(RPC, player);
+			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(player))
+			{
+				data->applyAnimation(nullptr, this, &animation_);
+			}
 		}
 	}
 
@@ -96,7 +102,7 @@ public:
 		}
 	}
 
-	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, ICustomModelsComponent*& modelsComponent)
+	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, ICustomModelsComponent*& modelsComponent, IFixesComponent* fixesComponent)
 		: virtualWorld_(0)
 		, skin_(skin)
 		, invulnerable_(true)
@@ -107,6 +113,7 @@ public:
 		, spawnData_ { pos, angle, skin }
 		, allAnimationLibraries_(allAnimationLibraries)
 		, modelsComponent_(modelsComponent)
+		, fixesComponent_(fixesComponent)
 	{
 	}
 
@@ -141,6 +148,10 @@ public:
 		{
 			return;
 		}
+		if (fixesComponent_)
+		{
+			fixesComponent_->clearAnimation(nullptr, this);
+		}
 
 		animation_ = animation;
 
@@ -156,7 +167,14 @@ public:
 
 		NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation);
 		RPC.ActorID = poolID;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+		for (IPlayer* peer : streamedFor_.entries())
+		{
+			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*peer))
+			{
+				data->applyAnimation(nullptr, this, &animation);
+			}
+			PacketHelper::send(RPC, *peer);
+		}
 	}
 
 	const AnimationData& getAnimation() const override
@@ -166,6 +184,10 @@ public:
 
 	void clearAnimations() override
 	{
+		if (fixesComponent_)
+		{
+			fixesComponent_->clearAnimation(nullptr, this);
+		}
 		animation_.lib.clear();
 		animation_.name.clear();
 		animationLoop_ = false;
