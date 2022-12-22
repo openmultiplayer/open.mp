@@ -25,16 +25,6 @@
 
 using namespace Impl;
 
-int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret);
-int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr);
-int AMXAPI amx_StrSize(const cell* cstr, int* length);
-
-enum DefaultReturnValue
-{
-	DefaultReturnValue_False,
-	DefaultReturnValue_True
-};
-
 /// A struct for different AMX caches
 struct AMXCache
 {
@@ -82,7 +72,7 @@ public:
 	int PushArray(cell* amx_addr, cell** phys_addr, const cell array[], int numcells) override { return amx_PushArray(&amx_, amx_addr, phys_addr, array, numcells); }
 	int PushString(cell* amx_addr, cell** phys_addr, StringView string, bool pack, bool use_wchar) override { return amx_PushStringLen(&amx_, amx_addr, phys_addr, string.data(), string.length(), pack, use_wchar); }
 	int RaiseError(int error) override { return amx_RaiseError(&amx_, error); }
-	int Register(const AMX_NATIVE_INFO* nativelist, int number) override { return amx_RegisterChecked(&amx_, nativelist, number); }
+	int Register(const AMX_NATIVE_INFO* nativelist, int number) override { return amx_Register(&amx_, nativelist, number); }
 	int Release(cell amx_addr) override { return amx_Release(&amx_, amx_addr); }
 	int SetCallback(AMX_CALLBACK callback) override { return amx_SetCallback(&amx_, callback); }
 	int SetDebugHook(AMX_DEBUG debug) override { return amx_SetDebugHook(&amx_, debug); }
