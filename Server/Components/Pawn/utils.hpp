@@ -130,7 +130,7 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
 
 	char buf[8192];
 	int param = 2;
-	amx_GetAddr(amx, params[1],&cstr);
+	amx_GetAddr(amx, params[1], &cstr);
 	int len = atcprintf(buf, sizeof(buf) - 1, cstr, amx, params, &param);
 
 	if (param <= num)
