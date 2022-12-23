@@ -237,7 +237,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 		}
 		return ret;
 	}
@@ -254,7 +254,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 		}
 		return ret;
 	}
@@ -273,7 +273,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 				return ret;
 		}
@@ -292,7 +292,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 				return ret;
 		}
@@ -312,7 +312,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			ret = cur->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 				return ret;
 		}
@@ -332,7 +332,7 @@ public:
 		}
 		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			ret = cur->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 				return ret;
 		}
