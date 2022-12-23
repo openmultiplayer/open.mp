@@ -873,14 +873,14 @@ struct IPlayer : public IExtensible, public IEntity
 	virtual bool isUsingOfficialClient() const = 0;
 };
 
-/// A player event handler
+/// Player spawn event handlers
 struct PlayerSpawnEventHandler
 {
 	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
 	virtual void onPlayerSpawn(IPlayer& player) { }
 };
 
-/// A player event handler
+/// Player connection event handlers
 struct PlayerConnectEventHandler
 {
 	virtual void onIncomingConnection(IPlayer& player, StringView ipAddress, unsigned short port) { }
@@ -889,21 +889,21 @@ struct PlayerConnectEventHandler
 	virtual void onPlayerClientInit(IPlayer& player) { }
 };
 
-/// A player event handler
+/// Player streaming event handlers
 struct PlayerStreamEventHandler
 {
 	virtual void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) { }
 	virtual void onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer) { }
 };
 
-/// A player event handler
+/// Player text and commands event handlers
 struct PlayerTextEventHandler
 {
 	virtual bool onPlayerText(IPlayer& player, StringView message) { return true; }
 	virtual bool onPlayerCommandText(IPlayer& player, StringView message) { return false; }
 };
 
-/// A player event handler
+/// Player shooting event handlers
 struct PlayerShotEventHandler
 {
 	virtual bool onPlayerShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
@@ -913,7 +913,7 @@ struct PlayerShotEventHandler
 	virtual bool onPlayerShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
 };
 
-/// A player event handler
+/// Player data change event handlers
 struct PlayerChangeEventHandler
 {
 	virtual void onPlayerScoreChange(IPlayer& player, int score) { }
@@ -923,7 +923,7 @@ struct PlayerChangeEventHandler
 	virtual void onPlayerKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) { }
 };
 
-/// A player event handler
+/// APlayer death and damage event handlers
 struct PlayerDamageEventHandler
 {
 	virtual void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) { }
@@ -931,18 +931,20 @@ struct PlayerDamageEventHandler
 	virtual void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) { }
 };
 
-/// A player event handler
+/// Player clicking event handlers
 struct PlayerClickEventHandler
 {
 	virtual void onPlayerClickMap(IPlayer& player, Vector3 pos) { }
 	virtual void onPlayerClickPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
 };
 
+/// Player client check response event handler
 struct PlayerCheckEventHandler
 {
 	virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) { }
 };
 
+/// Player update event handler
 struct PlayerUpdateEventHandler
 {
 	virtual bool onPlayerUpdate(IPlayer& player, TimePoint now) { return true; }
