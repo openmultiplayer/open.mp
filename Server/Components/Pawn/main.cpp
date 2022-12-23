@@ -13,8 +13,6 @@
 #include <ghc/filesystem.hpp>
 #include <stdlib.h>
 
-int AMXAPI amx_RegisterChecked(AMX* amx, const AMX_NATIVE_INFO* list, int number);
-
 static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
 	reinterpret_cast<void*>(&amx_Align16),
 	reinterpret_cast<void*>(&amx_Align32),
