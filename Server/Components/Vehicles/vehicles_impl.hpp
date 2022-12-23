@@ -16,7 +16,7 @@
 
 using namespace Impl;
 
-class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -327,7 +327,8 @@ public:
 		if (core)
 		{
 			core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerEnterVehicle::removeEventHandler(*core, &playerEnterVehicleHandler);
 			NetCode::RPC::OnPlayerExitVehicle::removeEventHandler(*core, &playerExitVehicleHandler);
@@ -342,7 +343,8 @@ public:
 		this->core = core;
 		core->getEventDispatcher().addEventHandler(this);
 		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
 		core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);
 		NetCode::RPC::OnPlayerExitVehicle::addEventHandler(*core, &playerExitVehicleHandler);
@@ -543,7 +545,7 @@ public:
 		}
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
 
 		PlayerVehicleData* playerVehicleData = queryExtension<PlayerVehicleData>(player);

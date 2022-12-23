@@ -49,7 +49,7 @@ public:
 	}
 };
 
-class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerEventHandler
+class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerConnectEventHandler
 {
 private:
 	struct ThreadProcData
@@ -198,7 +198,7 @@ public:
 		this->core = core;
 		core->getEventDispatcher().addEventHandler(this);
 		this->getEventDispatcher().addEventHandler(this);
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 
 		NetCode::Packet::PlayerRconCommand::addEventHandler(*core, &playerRconCommandHandler);
 
@@ -259,7 +259,7 @@ public:
 		if (core)
 		{
 			core->getEventDispatcher().removeEventHandler(this);
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 
 			NetCode::Packet::PlayerRconCommand::removeEventHandler(*core, &playerRconCommandHandler);
 		}

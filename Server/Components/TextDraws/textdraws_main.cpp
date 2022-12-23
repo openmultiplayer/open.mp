@@ -117,7 +117,7 @@ public:
 	}
 };
 
-class TextDrawsComponent final : public ITextDrawsComponent, public PlayerEventHandler, public PoolEventHandler<IPlayer>
+class TextDrawsComponent final : public ITextDrawsComponent, public PlayerConnectEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -196,7 +196,7 @@ public:
 	void onLoad(ICore* c) override
 	{
 		core = c;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 		core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerSelectTextDraw::addEventHandler(*core, &playerSelectTextDrawEventHandler);
 	}
@@ -211,7 +211,7 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerSelectTextDraw::removeEventHandler(*core, &playerSelectTextDrawEventHandler);
 		}

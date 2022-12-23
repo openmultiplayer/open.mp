@@ -9,7 +9,7 @@
 #include "actor.hpp"
 #include <Server/Components/Fixes/fixes.hpp>
 
-class ActorsComponent final : public IActorsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class ActorsComponent final : public IActorsComponent, public PlayerConnectEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -87,7 +87,7 @@ public:
 	{
 		this->core = core;
 		players = &core->getPlayers();
-		players->getEventDispatcher().addEventHandler(this);
+		players->getPlayerConnectDispatcher().addEventHandler(this);
 		players->getPlayerUpdateDispatcher().addEventHandler(this);
 		players->getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerDamageActor::addEventHandler(*core, &playerDamageActorEventHandler);
@@ -117,7 +117,7 @@ public:
 		if (core)
 		{
 			players->getPlayerUpdateDispatcher().removeEventHandler(this);
-			players->getEventDispatcher().removeEventHandler(this);
+			players->getPlayerConnectDispatcher().removeEventHandler(this);
 			players->getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerDamageActor::removeEventHandler(*core, &playerDamageActorEventHandler);
 		}
@@ -203,7 +203,7 @@ public:
 		storage.clear();
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
 		const float maxDist = streamConfigHelper.getDistanceSqr();
 		if (streamConfigHelper.shouldStream(player.getID(), now))

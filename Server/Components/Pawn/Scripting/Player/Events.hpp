@@ -11,7 +11,7 @@
 #include "../../Singleton.hpp"
 #include "sdk.hpp"
 
-class PlayerEvents : public PlayerEventHandler, public PlayerUpdateEventHandler, public Singleton<PlayerEvents>
+class PlayerEvents : public PlayerSpawnEventHandler, public PlayerConnectEventHandler, public PlayerStreamEventHandler, public PlayerTextEventHandler, public PlayerShotEventHandler, public PlayerChangeEventHandler, public PlayerDamageEventHandler, public PlayerClickEventHandler, public PlayerCheckEventHandler, public PlayerUpdateEventHandler, public Singleton<PlayerEvents>
 {
 public:
 	void onPlayerConnect(IPlayer& player) override
@@ -223,7 +223,7 @@ public:
 		PawnManager::Get()->CallAllInSidesFirst("OnClientCheckResponse", DefaultReturnValue_True, player.getID(), actionType, address, results);
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
 		cell ret = PawnManager::Get()->CallInSidesWhile1("OnPlayerUpdate", player.getID());
 		if (ret)

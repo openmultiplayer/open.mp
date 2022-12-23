@@ -106,7 +106,7 @@ public:
 	}
 };
 
-class DialogsComponent final : public IDialogsComponent, public PlayerEventHandler
+class DialogsComponent final : public IDialogsComponent, public PlayerConnectEventHandler
 {
 private:
 	ICore* core = nullptr;
@@ -179,7 +179,7 @@ public:
 	void onLoad(ICore* c) override
 	{
 		core = c;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
 	}
 
@@ -200,7 +200,7 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
 		}
 	}

@@ -92,7 +92,7 @@ public:
 	}
 };
 
-class PickupsComponent final : public IPickupsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class PickupsComponent final : public IPickupsComponent, public PlayerConnectEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -162,7 +162,7 @@ public:
 		this->core = core;
 		players = &core->getPlayers();
 		players->getPlayerUpdateDispatcher().addEventHandler(this);
-		players->getEventDispatcher().addEventHandler(this);
+		players->getPlayerConnectDispatcher().addEventHandler(this);
 		players->getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerPickUpPickup::addEventHandler(*core, &playerPickUpPickupEventHandler);
 		streamConfigHelper = StreamConfigHelper(core->getConfig());
@@ -173,7 +173,7 @@ public:
 		if (core)
 		{
 			players->getPlayerUpdateDispatcher().removeEventHandler(this);
-			players->getEventDispatcher().removeEventHandler(this);
+			players->getPlayerConnectDispatcher().removeEventHandler(this);
 			players->getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerPickUpPickup::removeEventHandler(*core, &playerPickUpPickupEventHandler);
 		}
@@ -270,7 +270,7 @@ public:
 		return storage._entries();
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
 		const float maxDist = streamConfigHelper.getDistanceSqr();
 		if (streamConfigHelper.shouldStream(player.getID(), now))

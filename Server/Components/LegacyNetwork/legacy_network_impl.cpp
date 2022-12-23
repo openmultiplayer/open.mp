@@ -286,7 +286,8 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
 	if (core)
 	{
 		core->getEventDispatcher().removeEventHandler(this);
-		core->getPlayers().getEventDispatcher().removeEventHandler(this);
+		core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 	}
 	rakNetServer.Disconnect(300);
 	RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
@@ -763,7 +764,8 @@ void RakNetLegacyNetwork::init(ICore* c)
 	core = c;
 
 	core->getEventDispatcher().addEventHandler(this);
-	core->getPlayers().getEventDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 }
 
 void RakNetLegacyNetwork::start()

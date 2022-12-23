@@ -635,7 +635,7 @@ public:
 	}
 };
 
-class FixesComponent final : public IFixesComponent, public PlayerEventHandler, public ClassEventHandler
+class FixesComponent final : public IFixesComponent, public PlayerConnectEventHandler, public PlayerSpawnEventHandler, public PlayerDamageEventHandler, public ClassEventHandler
 {
 private:
 	IClassesComponent* classes_ = nullptr;
@@ -662,7 +662,9 @@ public:
 	{
 		if (players_)
 		{
-			players_->getEventDispatcher().removeEventHandler(this);
+			players_->getPlayerConnectDispatcher().removeEventHandler(this);
+			players_->getPlayerSpawnDispatcher().removeEventHandler(this);
+			players_->getPlayerDamageDispatcher().removeEventHandler(this);
 		}
 		if (classes_)
 		{
@@ -683,7 +685,9 @@ public:
 	{
 		constexpr event_order_t EventPriority_Fixes = 100;
 		players_ = &c->getPlayers();
-		players_->getEventDispatcher().addEventHandler(this, EventPriority_Fixes);
+		players_->getPlayerConnectDispatcher().addEventHandler(this, EventPriority_Fixes);
+		players_->getPlayerSpawnDispatcher().addEventHandler(this, EventPriority_Fixes);
+		players_->getPlayerDamageDispatcher().addEventHandler(this, EventPriority_Fixes);
 	}
 
 	void onInit(IComponentList* components) override

@@ -112,7 +112,7 @@ public:
 	}
 };
 
-class TextLabelsComponent final : public ITextLabelsComponent, public PlayerEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class TextLabelsComponent final : public ITextLabelsComponent, public PlayerConnectEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -137,7 +137,7 @@ public:
 		this->core = core;
 		players = &core->getPlayers();
 		players->getPlayerUpdateDispatcher().addEventHandler(this);
-		players->getEventDispatcher().addEventHandler(this);
+		players->getPlayerConnectDispatcher().addEventHandler(this);
 		players->getPoolEventDispatcher().addEventHandler(this);
 		streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
@@ -152,7 +152,7 @@ public:
 		if (core)
 		{
 			players->getPlayerUpdateDispatcher().removeEventHandler(this);
-			players->getEventDispatcher().removeEventHandler(this);
+			players->getPlayerConnectDispatcher().removeEventHandler(this);
 			players->getPoolEventDispatcher().removeEventHandler(this);
 		}
 	}
@@ -244,7 +244,7 @@ public:
 		return storage.getEventDispatcher();
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
 		const float maxDist = streamConfigHelper.getDistanceSqr();
 		if (streamConfigHelper.shouldStream(player.getID(), now))

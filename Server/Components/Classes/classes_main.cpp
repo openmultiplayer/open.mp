@@ -123,7 +123,7 @@ public:
 	}
 };
 
-class ClassesComponent final : public IClassesComponent, public PlayerEventHandler
+class ClassesComponent final : public IClassesComponent, public PlayerConnectEventHandler
 {
 private:
 	MarkedPoolStorage<Class, IClass, 0, CLASS_POOL_SIZE> storage;
@@ -270,7 +270,7 @@ public:
 	{
 		core = c;
 		NetCode::RPC::PlayerRequestClass::addEventHandler(*core, &onPlayerRequestClassHandler);
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 	}
 
 	void onInit(IComponentList* components) override
@@ -366,7 +366,7 @@ public:
 		if (core)
 		{
 			NetCode::RPC::PlayerRequestClass::removeEventHandler(*core, &onPlayerRequestClassHandler);
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 		}
 	}
 };

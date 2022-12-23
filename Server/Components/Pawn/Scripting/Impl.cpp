@@ -29,7 +29,15 @@ Scripting::~Scripting()
 	// remove event handlers
 	if (mgr->players)
 	{
-		mgr->players->getEventDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerSpawnDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerConnectDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerStreamDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerTextDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerShotDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerChangeDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerDamageDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerClickDispatcher().removeEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerCheckDispatcher().removeEventHandler(PlayerEvents::Get());
 		mgr->players->getPlayerUpdateDispatcher().removeEventHandler(PlayerEvents::Get());
 	}
 	if (mgr->actors)
@@ -89,7 +97,15 @@ void Scripting::addEvents() const
 	// add event handlers
 	if (mgr->players)
 	{
-		mgr->players->getEventDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerSpawnDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerConnectDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerStreamDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerTextDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerShotDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerChangeDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerDamageDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerClickDispatcher().addEventHandler(PlayerEvents::Get());
+		mgr->players->getPlayerCheckDispatcher().addEventHandler(PlayerEvents::Get());
 		mgr->players->getPlayerUpdateDispatcher().addEventHandler(PlayerEvents::Get());
 	}
 	if (mgr->actors)

@@ -276,7 +276,7 @@ public:
 	}
 };
 
-class CustomModelsComponent final : public ICustomModelsComponent, public PlayerEventHandler
+class CustomModelsComponent final : public ICustomModelsComponent, public PlayerConnectEventHandler
 {
 private:
 	ICore* core = nullptr;
@@ -390,7 +390,7 @@ public:
 		NetCode::RPC::RequestTXD::removeEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::RequestDFF::removeEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::FinishDownload::removeEventHandler(*core, &finishDownloadHandler);
-		players->getEventDispatcher().removeEventHandler(this);
+		players->getPlayerConnectDispatcher().removeEventHandler(this);
 
 		if (webServer)
 		{
@@ -429,7 +429,7 @@ public:
 	{
 		this->core = core;
 		players = &core->getPlayers();
-		players->getEventDispatcher().addEventHandler(this);
+		players->getPlayerConnectDispatcher().addEventHandler(this);
 
 		enabled = *core->getConfig().getBool("artwork.enable");
 		modelsPath = String(core->getConfig().getString("artwork.models_path"));

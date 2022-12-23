@@ -171,7 +171,7 @@ public:
 	}
 };
 
-class VariablesComponent final : public VariableStorageBase<IVariablesComponent>, public PlayerEventHandler
+class VariablesComponent final : public VariableStorageBase<IVariablesComponent>, public PlayerConnectEventHandler
 {
 private:
 	ICore* core = nullptr;
@@ -195,7 +195,7 @@ public:
 	void onLoad(ICore* core) override
 	{
 		this->core = core;
-		core->getPlayers().getEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 	}
 
 	void free() override
@@ -207,7 +207,7 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 		}
 	}
 

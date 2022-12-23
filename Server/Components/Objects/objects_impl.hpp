@@ -13,7 +13,7 @@
 #include <Server/Components/CustomModels/custommodels.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerEventHandler, public PoolEventHandler<IPlayer>, public PlayerModelsEventHandler
+class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerStreamEventHandler, public PlayerSpawnEventHandler, public PoolEventHandler<IPlayer>, public PlayerModelsEventHandler
 {
 private:
 	ICore* core = nullptr;
@@ -239,7 +239,9 @@ public:
 		this->core = core;
 		this->players = &core->getPlayers();
 		core->getEventDispatcher().addEventHandler(this);
-		players->getEventDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
+		players->getPlayerSpawnDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyHigh + 1 /* want this to be called before Pawn */);
+		players->getPlayerStreamDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
+		players->getPlayerConnectDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
 		players->getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
 		NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
@@ -283,7 +285,9 @@ public:
 		if (core)
 		{
 			core->getEventDispatcher().removeEventHandler(this);
-			players->getEventDispatcher().removeEventHandler(this);
+			players->getPlayerConnectDispatcher().removeEventHandler(this);
+			players->getPlayerStreamDispatcher().removeEventHandler(this);
+			players->getPlayerSpawnDispatcher().removeEventHandler(this);
 			players->getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
 			NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
@@ -460,7 +464,7 @@ public:
 	}
 
 	// Pre-spawn so you can safely attach onPlayerSpawn
-	void onBeforePlayerSpawn(IPlayer& player) override
+	void onPlayerSpawn(IPlayer& player) override
 	{
 		const int pid = player.getID();
 		for (IObject* object : storage)

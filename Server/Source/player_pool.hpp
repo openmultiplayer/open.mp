@@ -18,7 +18,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	PoolStorage<Player, IPlayer, 0, PLAYER_POOL_SIZE> storage;
 	FlatPtrHashSet<IPlayer> playerList;
 	FlatPtrHashSet<IPlayer> botList;
-	DefaultEventDispatcher<PlayerEventHandler> eventDispatcher;
+	DefaultEventDispatcher<PlayerSpawnEventHandler> playerSpawnDispatcher;
+	DefaultEventDispatcher<PlayerConnectEventHandler> playerConnectDispatcher;
+	DefaultEventDispatcher<PlayerStreamEventHandler> playerStreamDispatcher;
+	DefaultEventDispatcher<PlayerTextEventHandler> playerTextDispatcher;
+	DefaultEventDispatcher<PlayerShotEventHandler> playerShotDispatcher;
+	DefaultEventDispatcher<PlayerChangeEventHandler> playerChangeDispatcher;
+	DefaultEventDispatcher<PlayerDamageEventHandler> playerDamageDispatcher;
+	DefaultEventDispatcher<PlayerClickEventHandler> playerClickDispatcher;
+	DefaultEventDispatcher<PlayerCheckEventHandler> playerCheckDispatcher;
 	DefaultEventDispatcher<PlayerUpdateEventHandler> playerUpdateDispatcher;
 	IVehiclesComponent* vehiclesComponent = nullptr;
 	IObjectsComponent* objectsComponent = nullptr;
@@ -54,8 +62,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			NetCode::RPC::PlayerRequestSpawnResponse playerRequestSpawnResponse;
-			playerRequestSpawnResponse.Allow = self.eventDispatcher.stopAtFalse(
-				[&peer](PlayerEventHandler* handler)
+			playerRequestSpawnResponse.Allow = self.playerSpawnDispatcher.stopAtFalse(
+				[&peer](PlayerSpawnEventHandler* handler)
 				{
 					return handler->onPlayerRequestSpawn(peer);
 				});
@@ -131,7 +139,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				}
 			}
 
-			self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerClickMap, peer, onPlayerClickMapRPC.Pos);
+			self.playerClickDispatcher.dispatch(&PlayerClickEventHandler::onPlayerClickMap, peer, onPlayerClickMapRPC.Pos);
 			return true;
 		}
 	} onPlayerClickMapRPCHandler;
@@ -155,8 +163,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			Player* clickedPlayer = self.storage.get(onPlayerClickPlayerRPC.PlayerID);
 			if (clickedPlayer)
 			{
-				self.eventDispatcher.dispatch(
-					&PlayerEventHandler::onPlayerClickPlayer,
+				self.playerClickDispatcher.dispatch(
+					&PlayerClickEventHandler::onPlayerClickPlayer,
 					peer,
 					*clickedPlayer,
 					PlayerClickSource(onPlayerClickPlayerRPC.Source));
@@ -218,8 +226,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 						return false;
 					}
 				}
-				self.eventDispatcher.dispatch(
-					&PlayerEventHandler::onPlayerTakeDamage,
+				self.playerDamageDispatcher.dispatch(
+					&PlayerDamageEventHandler::onPlayerTakeDamage,
 					peer,
 					from,
 					onPlayerGiveTakeDamageRPC.Damage,
@@ -244,8 +252,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					return false;
 				}
 
-				self.eventDispatcher.dispatch(
-					&PlayerEventHandler::onPlayerGiveDamage,
+				self.playerDamageDispatcher.dispatch(
+					&PlayerDamageEventHandler::onPlayerGiveDamage,
 					peer,
 					to,
 					onPlayerGiveTakeDamageRPC.Damage,
@@ -312,7 +320,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				}
 			}
 
-			self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerInteriorChange, peer, player.interior_, oldInterior);
+			self.playerChangeDispatcher.dispatch(&PlayerChangeEventHandler::onPlayerInteriorChange, peer, player.interior_, oldInterior);
 
 			return true;
 		}
@@ -373,8 +381,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				}
 			}
 
-			self.eventDispatcher.dispatch(
-				&PlayerEventHandler::onPlayerDeath,
+			self.playerDamageDispatcher.dispatch(
+				&PlayerDamageEventHandler::onPlayerDeath,
 				peer,
 				killer,
 				reason);
@@ -429,8 +437,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				player.setState(PlayerState_Spawned);
 				player.controllable_ = true;
 
-				self.eventDispatcher.dispatch(&PlayerEventHandler::onBeforePlayerSpawn, peer);
-
 				IPlayerClassData* classData = queryExtension<IPlayerClassData>(peer);
 				if (classData)
 				{
@@ -465,7 +471,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					}
 				}
 
-				self.eventDispatcher.dispatch(&PlayerEventHandler::onPlayerSpawn, peer);
+				self.playerSpawnDispatcher.dispatch(&PlayerSpawnEventHandler::onPlayerSpawn, peer);
 			}
 
 			return true;
@@ -521,8 +527,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				self.core.printLn("[chat] [%.*s]: %s", PRINT_VIEW(peer.getName()), filteredMessage.c_str());
 			}
 
-			bool send = self.eventDispatcher.stopAtFalse(
-				[&peer, &filteredMessage](PlayerEventHandler* handler)
+			bool send = self.playerTextDispatcher.stopAtFalse(
+				[&peer, &filteredMessage](PlayerTextEventHandler* handler)
 				{
 					return handler->onPlayerText(peer, filteredMessage);
 				});
@@ -591,7 +597,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			if (filteredMessage.size() > 1)
 			{
-				bool send = self.eventDispatcher.stopAtTrue([&peer, filteredMessage](PlayerEventHandler* handler)
+				bool send = self.playerTextDispatcher.stopAtTrue([&peer, filteredMessage](PlayerTextEventHandler* handler)
 					{
 						return handler->onPlayerCommandText(peer, filteredMessage);
 					});
@@ -622,8 +628,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			self.eventDispatcher.dispatch(
-				&PlayerEventHandler::onClientCheckResponse,
+			self.playerCheckDispatcher.dispatch(
+				&PlayerCheckEventHandler::onClientCheckResponse,
 				peer,
 				rpc.Type,
 				rpc.Address,
@@ -716,7 +722,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
-				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
+				self.playerChangeDispatcher.all([&peer, oldKeys, newKeys](PlayerChangeEventHandler* handler)
 					{
 						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
 					});
@@ -728,7 +734,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
 				[&peer, now](PlayerUpdateEventHandler* handler)
 				{
-					return handler->onUpdate(peer, now);
+					return handler->onPlayerUpdate(peer, now);
 				});
 
 			if (allowedupdate)
@@ -789,7 +795,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
-				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
+				self.playerChangeDispatcher.all([&peer, oldKeys, newKeys](PlayerChangeEventHandler* handler)
 					{
 						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
 					});
@@ -799,7 +805,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			TimePoint now = Time::now();
 			if (self.playerUpdateDispatcher.stopAtFalse([&peer, now](PlayerUpdateEventHandler* handler)
 					{
-						return handler->onUpdate(peer, now);
+						return handler->onPlayerUpdate(peer, now);
 					}))
 			{
 			}
@@ -986,8 +992,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			switch (player.bulletData_.hitType)
 			{
 			case PlayerBulletHitType_None:
-				allowed = self.eventDispatcher.stopAtFalse(
-					[&player](PlayerEventHandler* handler)
+				allowed = self.playerShotDispatcher.stopAtFalse(
+					[&player](PlayerShotEventHandler* handler)
 					{
 						return handler->onPlayerShotMissed(player, player.bulletData_);
 					});
@@ -997,8 +1003,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				IPlayer* target = self.storage.get(player.bulletData_.hitID);
 				if (target)
 				{
-					allowed = self.eventDispatcher.stopAtFalse(
-						[&player, target](PlayerEventHandler* handler)
+					allowed = self.playerShotDispatcher.stopAtFalse(
+						[&player, target](PlayerShotEventHandler* handler)
 						{
 							return handler->onPlayerShotPlayer(player, *target, player.bulletData_);
 						});
@@ -1011,8 +1017,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					ScopedPoolReleaseLock lock(*self.vehiclesComponent, player.bulletData_.hitID);
 					if (lock.entry)
 					{
-						allowed = self.eventDispatcher.stopAtFalse(
-							[&player, &lock](PlayerEventHandler* handler)
+						allowed = self.playerShotDispatcher.stopAtFalse(
+							[&player, &lock](PlayerShotEventHandler* handler)
 							{
 								return handler->onPlayerShotVehicle(player, *lock.entry, player.bulletData_);
 							});
@@ -1026,8 +1032,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					ScopedPoolReleaseLock lock(*self.objectsComponent, player.bulletData_.hitID);
 					if (lock.entry)
 					{
-						allowed = self.eventDispatcher.stopAtFalse(
-							[&player, &lock](PlayerEventHandler* handler)
+						allowed = self.playerShotDispatcher.stopAtFalse(
+							[&player, &lock](PlayerShotEventHandler* handler)
 							{
 								return handler->onPlayerShotObject(player, *lock.entry, player.bulletData_);
 							});
@@ -1041,8 +1047,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 							ScopedPoolReleaseLock lock(*data, player.bulletData_.hitID);
 							if (lock.entry)
 							{
-								allowed = self.eventDispatcher.stopAtFalse(
-									[&player, &lock](PlayerEventHandler* handler)
+								allowed = self.playerShotDispatcher.stopAtFalse(
+									[&player, &lock](PlayerShotEventHandler* handler)
 									{
 										return handler->onPlayerShotPlayerObject(player, *lock.entry, player.bulletData_);
 									});
@@ -1113,7 +1119,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
-				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
+				self.playerChangeDispatcher.all([&peer, oldKeys, newKeys](PlayerChangeEventHandler* handler)
 					{
 						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
 					});
@@ -1139,7 +1145,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
 					[&peer, now](PlayerUpdateEventHandler* handler)
 					{
-						return handler->onUpdate(peer, now);
+						return handler->onPlayerUpdate(peer, now);
 					});
 
 				if (allowedupdate)
@@ -1363,7 +1369,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				const uint32_t oldKeys = player.keys_.keys;
 				player.keys_.keys = newKeys;
-				self.eventDispatcher.all([&peer, oldKeys, newKeys](PlayerEventHandler* handler)
+				self.playerChangeDispatcher.all([&peer, oldKeys, newKeys](PlayerChangeEventHandler* handler)
 					{
 						handler->onPlayerKeyStateChange(peer, newKeys, oldKeys);
 					});
@@ -1376,7 +1382,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
 					[&peer, now](PlayerUpdateEventHandler* handler)
 					{
-						return handler->onUpdate(peer, now);
+						return handler->onPlayerUpdate(peer, now);
 					});
 
 				if (allowedupdate)
@@ -1536,9 +1542,49 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		return botList;
 	}
 
-	IEventDispatcher<PlayerEventHandler>& getEventDispatcher() override
+	IEventDispatcher<PlayerSpawnEventHandler>& getPlayerSpawnDispatcher() override
 	{
-		return eventDispatcher;
+		return playerSpawnDispatcher;
+	}
+
+	IEventDispatcher<PlayerConnectEventHandler>& getPlayerConnectDispatcher() override
+	{
+		return playerConnectDispatcher;
+	}
+
+	IEventDispatcher<PlayerStreamEventHandler>& getPlayerStreamDispatcher() override
+	{
+		return playerStreamDispatcher;
+	}
+
+	IEventDispatcher<PlayerTextEventHandler>& getPlayerTextDispatcher() override
+	{
+		return playerTextDispatcher;
+	}
+
+	IEventDispatcher<PlayerShotEventHandler>& getPlayerShotDispatcher() override
+	{
+		return playerShotDispatcher;
+	}
+
+	IEventDispatcher<PlayerChangeEventHandler>& getPlayerChangeDispatcher() override
+	{
+		return playerChangeDispatcher;
+	}
+
+	IEventDispatcher<PlayerDamageEventHandler>& getPlayerDamageDispatcher() override
+	{
+		return playerDamageDispatcher;
+	}
+
+	IEventDispatcher<PlayerClickEventHandler>& getPlayerClickDispatcher() override
+	{
+		return playerClickDispatcher;
+	}
+
+	IEventDispatcher<PlayerCheckEventHandler>& getPlayerCheckDispatcher() override
+	{
+		return playerCheckDispatcher;
 	}
 
 	IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() override
@@ -1603,7 +1649,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			addressString.data(),
 			port,
 			peer.getID());
-		eventDispatcher.dispatch(&PlayerEventHandler::onIncomingConnection, peer, addressString, port);
+		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onIncomingConnection, peer, addressString, port);
 
 		// Don't process player, about to be disconnected
 		if (peer.getKickStatus())
@@ -1655,7 +1701,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		RPC.Time = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count();
 		PacketHelper::send(RPC, peer);
 
-		eventDispatcher.dispatch(&PlayerEventHandler::onPlayerConnect, peer);
+		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onPlayerConnect, peer);
 	}
 
 	void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
@@ -1689,7 +1735,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 		}
 
-		eventDispatcher.dispatch(&PlayerEventHandler::onPlayerDisconnect, peer, reason);
+		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onPlayerDisconnect, peer, reason);
 
 		NetCode::RPC::PlayerQuit packet;
 		packet.PlayerID = player.poolID;
@@ -1933,7 +1979,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		fixesComponent = components.queryComponent<IFixesComponent>();
 	}
 
-	bool onUpdate(IPlayer& p, TimePoint now) override
+	bool onPlayerUpdate(IPlayer& p, TimePoint now) override
 	{
 		Player& player = static_cast<Player&>(p);
 		const float maxDist = streamConfigHelper.getDistanceSqr();

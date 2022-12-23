@@ -873,41 +873,81 @@ struct IPlayer : public IExtensible, public IEntity
 	virtual bool isUsingOfficialClient() const = 0;
 };
 
-/// A player event handler
-struct PlayerEventHandler
+/// Player spawn event handlers
+struct PlayerSpawnEventHandler
+{
+	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
+	virtual void onPlayerSpawn(IPlayer& player) { }
+};
+
+/// Player connection event handlers
+struct PlayerConnectEventHandler
 {
 	virtual void onIncomingConnection(IPlayer& player, StringView ipAddress, unsigned short port) { }
 	virtual void onPlayerConnect(IPlayer& player) { }
 	virtual void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) { }
-	virtual bool onPlayerRequestSpawn(IPlayer& player) { return true; }
-	virtual void onBeforePlayerSpawn(IPlayer& player) { }
-	virtual void onPlayerSpawn(IPlayer& player) { }
+	virtual void onPlayerClientInit(IPlayer& player) { }
+};
+
+/// Player streaming event handlers
+struct PlayerStreamEventHandler
+{
 	virtual void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) { }
 	virtual void onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer) { }
+};
+
+/// Player text and commands event handlers
+struct PlayerTextEventHandler
+{
 	virtual bool onPlayerText(IPlayer& player, StringView message) { return true; }
 	virtual bool onPlayerCommandText(IPlayer& player, StringView message) { return false; }
+};
+
+/// Player shooting event handlers
+struct PlayerShotEventHandler
+{
 	virtual bool onPlayerShotMissed(IPlayer& player, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onPlayerShotPlayer(IPlayer& player, IPlayer& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onPlayerShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onPlayerShotObject(IPlayer& player, IObject& target, const PlayerBulletData& bulletData) { return true; }
 	virtual bool onPlayerShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) { return true; }
+};
+
+/// Player data change event handlers
+struct PlayerChangeEventHandler
+{
 	virtual void onPlayerScoreChange(IPlayer& player, int score) { }
 	virtual void onPlayerNameChange(IPlayer& player, StringView oldName) { }
-	virtual void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) { }
-	virtual void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) { }
-	virtual void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) { }
 	virtual void onPlayerInteriorChange(IPlayer& player, unsigned newInterior, unsigned oldInterior) { }
 	virtual void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) { }
 	virtual void onPlayerKeyStateChange(IPlayer& player, uint32_t newKeys, uint32_t oldKeys) { }
-	virtual void onPlayerClickMap(IPlayer& player, Vector3 pos) { }
-	virtual void onPlayerClickPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
-	virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) { }
-	virtual void onPlayerClientInit(IPlayer& player) { }
 };
 
+/// APlayer death and damage event handlers
+struct PlayerDamageEventHandler
+{
+	virtual void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) { }
+	virtual void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) { }
+	virtual void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) { }
+};
+
+/// Player clicking event handlers
+struct PlayerClickEventHandler
+{
+	virtual void onPlayerClickMap(IPlayer& player, Vector3 pos) { }
+	virtual void onPlayerClickPlayer(IPlayer& player, IPlayer& clicked, PlayerClickSource source) { }
+};
+
+/// Player client check response event handler
+struct PlayerCheckEventHandler
+{
+	virtual void onClientCheckResponse(IPlayer& player, int actionType, int address, int results) { }
+};
+
+/// Player update event handler
 struct PlayerUpdateEventHandler
 {
-	virtual bool onUpdate(IPlayer& player, TimePoint now) = 0;
+	virtual bool onPlayerUpdate(IPlayer& player, TimePoint now) { return true; }
 };
 
 /// A player pool interface
@@ -923,7 +963,15 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer>
 	virtual const FlatPtrHashSet<IPlayer>& bots() = 0;
 
 	/// Returns a dispatcher to the main player event dispatcher.
-	virtual IEventDispatcher<PlayerEventHandler>& getEventDispatcher() = 0;
+	virtual IEventDispatcher<PlayerSpawnEventHandler>& getPlayerSpawnDispatcher() = 0;
+	virtual IEventDispatcher<PlayerConnectEventHandler>& getPlayerConnectDispatcher() = 0;
+	virtual IEventDispatcher<PlayerStreamEventHandler>& getPlayerStreamDispatcher() = 0;
+	virtual IEventDispatcher<PlayerTextEventHandler>& getPlayerTextDispatcher() = 0;
+	virtual IEventDispatcher<PlayerShotEventHandler>& getPlayerShotDispatcher() = 0;
+	virtual IEventDispatcher<PlayerChangeEventHandler>& getPlayerChangeDispatcher() = 0;
+	virtual IEventDispatcher<PlayerDamageEventHandler>& getPlayerDamageDispatcher() = 0;
+	virtual IEventDispatcher<PlayerClickEventHandler>& getPlayerClickDispatcher() = 0;
+	virtual IEventDispatcher<PlayerCheckEventHandler>& getPlayerCheckDispatcher() = 0;
 
 	/// Returns a dispatcher to the PlayerUpdateEvent.
 	virtual IEventDispatcher<PlayerUpdateEventHandler>& getPlayerUpdateDispatcher() = 0;
