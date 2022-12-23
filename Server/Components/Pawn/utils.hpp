@@ -86,7 +86,8 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 	}
 
 	int param = 4;
-	cell* cinput = amx_Address(amx, params[3]);
+	cell* cinput;
+	amx_GetAddr(amx, params[3], &cinput);
 
 	cell staticOutput[4096];
 	cell* output = staticOutput;
@@ -106,7 +107,8 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 		PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given to `format`: \"%s\" < %u", fmt, num - 3);
 	}
 
-	cell* coutput = amx_Address(amx, params[1]);
+	cell* coutput;
+	amx_GetAddr(amx, params[1], &coutput);
 	memcpy(coutput, output, (len + 1) * sizeof(cell));
 
 	return 1;
@@ -128,7 +130,7 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
 
 	char buf[8192];
 	int param = 2;
-	cstr = amx_Address(amx, params[1]);
+	amx_GetAddr(amx, params[1],&cstr);
 	int len = atcprintf(buf, sizeof(buf) - 1, cstr, amx, params, &param);
 
 	if (param <= num)

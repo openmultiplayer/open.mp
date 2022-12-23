@@ -40,7 +40,6 @@
 		PawnManager::Get()->core->logLn(LogLevel::Error, "String formatted incorrectly - parameter %d (total %d)", arg, args); \
 		return 0;                                                                                                              \
 	}
-#define get_amxaddr(amx, addr) amx_Address(amx, addr)
 
 template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
 template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*);
@@ -587,6 +586,7 @@ static inline unsigned char atcadvance(unsigned char const** fmt, bool ispacked)
 template <typename D, typename S>
 size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, const cell* params, int* param)
 {
+	cell* cptr;
 	int arg;
 	int args = params[0] / sizeof(cell);
 	D* buf_p;
@@ -639,7 +639,8 @@ reswitch:
 			ch = static_cast<D>(*fmt);
 			if (ch == '*')
 			{
-				prec = *get_amxaddr(amx, params[arg]);
+				amx_GetAddr(amx, params[arg], &cptr);
+				prec = *cptr;
 				arg++;
 				atcadvance<S>(&fmt, ispacked);
 				goto rflag;
@@ -673,61 +674,72 @@ reswitch:
 			width = n;
 			goto reswitch;
 		case '*':
-			width = *get_amxaddr(amx, params[arg]);
+			amx_GetAddr(amx, params[arg], &cptr);
+			width = *cptr;
 			arg++;
 			goto rflag;
 		case 'c':
 			CHECK_ARGS(0);
-			*buf_p++ = static_cast<D>(*get_amxaddr(amx, params[arg]));
+			amx_GetAddr(amx, params[arg], &cptr);
+			*buf_p++ = static_cast<D>(*cptr);
 			llen--;
 			arg++;
 			break;
 		case 'b':
 			CHECK_ARGS(0);
-			AddBinary(&buf_p, llen, *get_amxaddr(amx, params[arg]), width, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddBinary(&buf_p, llen, *cptr, width, flags);
 			arg++;
 			break;
 		case 'o':
 			CHECK_ARGS(0);
-			AddOctal(&buf_p, llen, *get_amxaddr(amx, params[arg]), width, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddOctal(&buf_p, llen, *cptr, width, flags);
 			arg++;
 			break;
 		case 'd':
 		case 'i':
 			CHECK_ARGS(0);
-			AddInt(&buf_p, llen, *get_amxaddr(amx, params[arg]), width, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddInt(&buf_p, llen, *cptr, width, flags);
 			arg++;
 			break;
 		case 'u':
 			CHECK_ARGS(0);
-			AddUInt(&buf_p, llen, static_cast<unsigned int>(*get_amxaddr(amx, params[arg])), width, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddUInt(&buf_p, llen, static_cast<unsigned int>(*cptr), width, flags);
 			arg++;
 			break;
 		case 'f':
 			CHECK_ARGS(0);
-			AddFloat(&buf_p, llen, amx_ctof(*get_amxaddr(amx, params[arg])), width, prec, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddFloat(&buf_p, llen, amx_ctof(*cptr), width, prec, flags);
 			arg++;
 			break;
 		case 'H':
 		case 'x':
 			CHECK_ARGS(0);
 			flags |= UPPERDIGITS;
-			AddHex(&buf_p, llen, static_cast<unsigned int>(*get_amxaddr(amx, params[arg])), width, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddHex(&buf_p, llen, static_cast<unsigned int>(*cptr), width, flags);
 			arg++;
 			break;
 		case 'h':
 			CHECK_ARGS(0);
-			AddHex(&buf_p, llen, static_cast<unsigned int>(*get_amxaddr(amx, params[arg])), width, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddHex(&buf_p, llen, static_cast<unsigned int>(*cptr), width, flags);
 			arg++;
 			break;
 		case 'a':
 		{
 			CHECK_ARGS(0);
 			// %a is passed a pointer directly to a cell string.
-			cell* ptr = reinterpret_cast<cell*>(*get_amxaddr(amx, params[arg]));
+			amx_GetAddr(amx, params[arg], &cptr);
+			cell* ptr = reinterpret_cast<cell*>(*cptr);
 			if (!ptr)
 			{
-				PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid vector string handle provided (%d)", *get_amxaddr(amx, params[arg]));
+				amx_GetAddr(amx, params[arg], &cptr);
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid vector string handle provided (%d)", *cptr);
 				return 0;
 			}
 
@@ -737,7 +749,8 @@ reswitch:
 		}
 		case 's':
 			CHECK_ARGS(0);
-			AddString(&buf_p, llen, get_amxaddr(amx, params[arg]), width, prec, flags);
+			amx_GetAddr(amx, params[arg], &cptr);
+			AddString(&buf_p, llen, cptr, width, prec, flags);
 			arg++;
 			break;
 		case 'q':
@@ -745,7 +758,8 @@ reswitch:
 			CHECK_ARGS(0);
 
 			int argLen = 0;
-			amx_StrLen(get_amxaddr(amx, params[arg]), &argLen);
+			amx_GetAddr(amx, params[arg], &cptr);
+			amx_StrLen(cptr, &argLen);
 
 			if (argLen > 0)
 			{
@@ -753,7 +767,8 @@ reswitch:
 				std::string strArg;
 				strArg.resize(argLen);
 
-				amx_GetString((char*)strArg.data(), get_amxaddr(amx, params[arg]), false, argLen);
+				amx_GetAddr(amx, params[arg], &cptr);
+				amx_GetString((char*)strArg.data(), cptr, false, argLen);
 
 				size_t pos = 0;
 				while ((pos = strArg.find('\'', pos)) != std::string::npos)
