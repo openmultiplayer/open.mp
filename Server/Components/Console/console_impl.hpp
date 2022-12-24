@@ -152,7 +152,7 @@ private:
 public:
 	void sendMessage(const ConsoleCommandSenderData& recipient, StringView message) override
 	{
-		core->logLn(LogLevel::Message, "%.*s", PRINT_VIEW(message));
+		core->logLnU8(LogLevel::Message, "%.*s", PRINT_VIEW(message));
 
 		switch (recipient.sender)
 		{
