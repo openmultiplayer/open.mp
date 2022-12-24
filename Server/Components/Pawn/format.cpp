@@ -37,7 +37,7 @@
 #define CHECK_ARGS(n)                                                                                                          \
 	if ((arg + n) > args)                                                                                                      \
 	{                                                                                                                          \
-		PawnManager::Get()->core->logLn(LogLevel::Error, "String formatted incorrectly - parameter %d (total %d)", arg, args); \
+		PawnManager::Get()->core->logLn(LogLevel::Error, "String formatted incorrectly - parameter: %d, total: %d, format: %s", arg, args, fmt); \
 		return 0;                                                                                                              \
 	}
 
