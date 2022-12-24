@@ -29,7 +29,8 @@ docker build \
 folders=('build' 'conan')
 for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
-        mkdir ${folder} && ls -l
+        mkdir ${folder} &&
+        sudo chown 1000:1000 ${folder} || exit 1
     fi
 done
 
