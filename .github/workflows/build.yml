@@ -161,6 +161,7 @@ jobs:
         with:
           name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}
           path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          if-no-files-found: error
 
   abi-check:
     if: github.event_name == 'pull_request'
