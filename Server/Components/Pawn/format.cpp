@@ -34,11 +34,11 @@
 #define to_digit(c) ((c) - '0')
 #define is_digit(c) ((unsigned)to_digit(c) <= 9)
 #define to_char(n) ((n) + '0')
-#define CHECK_ARGS(n)                                                                                                          \
-	if ((arg + n) > args)                                                                                                      \
-	{                                                                                                                          \
+#define CHECK_ARGS(n)                                                                                                                            \
+	if ((arg + n) > args)                                                                                                                        \
+	{                                                                                                                                            \
 		PawnManager::Get()->core->logLn(LogLevel::Error, "String formatted incorrectly - parameter: %d, total: %d, format: %s", arg, args, fmt); \
-		return 0;                                                                                                              \
+		return 0;                                                                                                                                \
 	}
 
 template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
