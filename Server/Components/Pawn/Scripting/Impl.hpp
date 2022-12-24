@@ -21,10 +21,6 @@ class Scripting;
 #include <glm/gtc/quaternion.hpp>
 #include <pawn-natives/NativeFunc.hpp>
 
-#define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp_scripting, name, prototype)
-#define SCRIPT_API_FAILRET(name, failret, prototype) PAWN_NATIVE_FAILRET(openmp_scripting, failret, name, prototype)
-#define EXTERN_API(name, prototype) PAWN_NATIVE_DECL(openmp_scripting, name, prototype)
-
 class Scripting
 {
 public:

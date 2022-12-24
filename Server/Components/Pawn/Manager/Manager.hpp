@@ -36,6 +36,7 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <vector>
 #include <string>
 
 #include "../PluginManager/PluginManager.hpp"
@@ -44,33 +45,13 @@
 
 using namespace Impl;
 
-class PawnManager : public Singleton<PawnManager>
+class PawnManager : public Singleton<PawnManager>, public PawnLookup
 {
 public:
-	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>> scripts_;
+	DynamicArray<IPawnScript*> scripts_;
 	std::string mainName_ = "";
-	std::unique_ptr<PawnScript> mainScript_;
+	PawnScript* mainScript_;
 	FlatHashMap<AMX*, PawnScript*> amxToScript_;
-	ICore* core = nullptr;
-	IConfig* config = nullptr;
-	IPlayerPool* players = nullptr;
-	IActorsComponent* actors = nullptr;
-	ICheckpointsComponent* checkpoints = nullptr;
-	IClassesComponent* classes = nullptr;
-	IConsoleComponent* console = nullptr;
-	IDatabasesComponent* databases = nullptr;
-	IDialogsComponent* dialogs = nullptr;
-	IGangZonesComponent* gangzones = nullptr;
-	IFixesComponent* fixes = nullptr;
-	IMenusComponent* menus = nullptr;
-	IObjectsComponent* objects = nullptr;
-	IPickupsComponent* pickups = nullptr;
-	ITextDrawsComponent* textdraws = nullptr;
-	ITextLabelsComponent* textlabels = nullptr;
-	ITimersComponent* timers = nullptr;
-	IVariablesComponent* vars = nullptr;
-	IVehiclesComponent* vehicles = nullptr;
-	ICustomModelsComponent* models = nullptr;
 	DefaultEventDispatcher<PawnEventHandler> eventDispatcher;
 	PawnPluginManager pluginManager;
 
@@ -99,11 +80,11 @@ private:
 		cell reset_hea;
 	} sleepData_;
 
-	DynamicArray<Pair<String, std::unique_ptr<PawnScript>>>::const_iterator const findScript(String const& name) const
+	DynamicArray<IPawnScript*>::const_iterator const findScript(String const& name) const
 	{
-		return std::find_if(scripts_.begin(), scripts_.end(), [name](Pair<String, std::unique_ptr<PawnScript>> const& it)
+		return std::find_if(scripts_.begin(), scripts_.end(), [name](IPawnScript* const it)
 			{
-				return it.first == name;
+				return reinterpret_cast<PawnScript*>(it)->name_ == name;
 			});
 	}
 
@@ -151,9 +132,9 @@ public:
 	{
 		cell ret = static_cast<cell>(defaultRetValue);
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, defaultRetValue, args...);
+			ret = cur->Call(name, defaultRetValue, args...);
 		}
 		if (mainScript_)
 		{
@@ -172,9 +153,9 @@ public:
 		{
 			ret = mainScript_->Call(name, defaultRetValue, args...);
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, defaultRetValue, args...);
+			ret = cur->Call(name, defaultRetValue, args...);
 		}
 
 		return ret;
@@ -187,9 +168,9 @@ public:
 			ret
 			= 0;
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 			{
 				break;
@@ -206,9 +187,9 @@ public:
 			ret
 			= 1;
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			ret = cur->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 			{
 				break;
@@ -223,9 +204,9 @@ public:
 	{
 		cell ret = static_cast<cell>(defaultRetValue);
 
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, defaultRetValue, args...);
+			ret = cur->Call(name, defaultRetValue, args...);
 		}
 
 		return ret;
@@ -254,9 +235,9 @@ public:
 		{
 			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 		}
 		return ret;
 	}
@@ -271,9 +252,9 @@ public:
 		{
 			ret = mainScript_->Call(name, DefaultReturnValue_False, args...);
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 		}
 		return ret;
 	}
@@ -290,9 +271,9 @@ public:
 			if (ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 				return ret;
 		}
@@ -309,9 +290,9 @@ public:
 			if (ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_False, args...);
+			ret = cur->Call(name, DefaultReturnValue_False, args...);
 			if (ret)
 				return ret;
 		}
@@ -329,9 +310,9 @@ public:
 			if (!ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			ret = cur->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 				return ret;
 		}
@@ -349,9 +330,9 @@ public:
 			if (!ret)
 				return ret;
 		}
-		for (auto& cur : scripts_)
+		for (IPawnScript* cur : scripts_)
 		{
-			ret = cur.second->Call(name, DefaultReturnValue_True, args...);
+			ret = cur->Call(name, DefaultReturnValue_True, args...);
 			if (!ret)
 				return ret;
 		}

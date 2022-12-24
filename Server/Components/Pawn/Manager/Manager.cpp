@@ -62,15 +62,15 @@ PawnManager::~PawnManager()
 		CallInSides("OnGameModeExit", DefaultReturnValue_False);
 		PawnTimerImpl::Get()->killTimers(mainScript_->GetAMX());
 		pluginManager.AmxUnload(mainScript_->GetAMX());
-		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, mainScript_->GetAMX());
+		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, *mainScript_);
 	}
-	for (auto& cur : scripts_)
+	for (IPawnScript* cur : scripts_)
 	{
-		auto& script = *cur.second;
+		IPawnScript& script = *cur;
 		script.Call("OnFilterScriptExit", DefaultReturnValue_False);
 		PawnTimerImpl::Get()->killTimers(script.GetAMX());
 		pluginManager.AmxUnload(script.GetAMX());
-		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
+		eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script);
 	}
 }
 
@@ -188,11 +188,11 @@ AMX* PawnManager::AMXFromID(int id) const
 	{
 		return mainScript_->GetAMX();
 	}
-	for (auto& cur : scripts_)
+	for (IPawnScript* cur : scripts_)
 	{
-		if (cur.second->GetID() == id)
+		if (cur->GetID() == id)
 		{
-			return cur.second->GetAMX();
+			return cur->GetAMX();
 		}
 	}
 	return nullptr;
@@ -204,11 +204,11 @@ int PawnManager::IDFromAMX(AMX* amx) const
 	{
 		return mainScript_->GetID();
 	}
-	for (auto& cur : scripts_)
+	for (IPawnScript* cur : scripts_)
 	{
-		if (cur.second->GetAMX() == amx)
+		if (cur->GetAMX() == amx)
 		{
-			return cur.second->GetID();
+			return cur->GetID();
 		}
 	}
 	return 0;
@@ -454,34 +454,31 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 
 	std::string canon;
 	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	std::unique_ptr<PawnScript> ptr = std::make_unique<PawnScript>(++id_, canon, core);
+	PawnScript* ptr = new PawnScript(++id_, canon, core);
 
-	if (!ptr.get()->IsLoaded())
+	if (!ptr || !ptr->IsLoaded())
 	{
 		// core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
 		return false;
 	}
+	ptr->name_ = name;
 
 	PawnScript& script = *ptr;
 
 	if (isEntryScript)
 	{
 		mainName_ = name;
-		mainScript_ = std::move(ptr);
-		amxToScript_.emplace(mainScript_->GetAMX(), mainScript_.get());
+		delete mainScript_;
+		mainScript_ = ptr;
+		amxToScript_.emplace(mainScript_->GetAMX(), mainScript_);
 
 		unloadNextTick_ = false;
 		nextScriptName_ = "";
 	}
 	else
 	{
-		Pair<String, std::unique_ptr<PawnScript>> pair = std::make_pair(name, std::move(ptr));
-		scripts_.push_back(std::move(pair));
-		auto res = findScript(name);
-		if (res != scripts_.end())
-		{
-			amxToScript_.emplace(script.GetAMX(), res->second.get());
-		}
+		scripts_.push_back(ptr);
+		amxToScript_.emplace(script.GetAMX(), ptr);
 	}
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
 	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
@@ -499,7 +496,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	script.Register("SetModeRestartTime", &utils::pawn_SetModeRestartTime);
 	script.Register("GetModeRestartTime", &utils::pawn_GetModeRestartTime);
 
-	eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script.GetAMX());
+	eventDispatcher.dispatch(&PawnEventHandler::onAmxLoad, script);
 	pawn_natives::AmxLoad(script.GetAMX());
 	pluginManager.AmxLoad(script.GetAMX());
 
@@ -608,7 +605,7 @@ bool PawnManager::Unload(std::string const& name)
 			return false;
 		}
 	}
-	auto& script = isEntryScript ? *mainScript_ : *pos->second;
+	PawnScript& script = isEntryScript ? *mainScript_ : *reinterpret_cast<PawnScript*>(*pos);
 
 	// Call `OnPlayerDisconnect`.
 	AMX* amx = script.GetAMX();
@@ -657,17 +654,19 @@ is `2`.
 
 	PawnTimerImpl::Get()->killTimers(script.GetAMX());
 	pluginManager.AmxUnload(script.GetAMX());
-	eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script.GetAMX());
+	eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script);
 	amxToScript_.erase(script.GetAMX());
 
 	if (isEntryScript)
 	{
 		core->resetAll();
 		mainName_ = "";
-		mainScript_.reset();
+		delete mainScript_;
+		mainScript_ = nullptr;
 	}
 	else
 	{
+		delete reinterpret_cast<PawnScript*>(*pos);
 		scripts_.erase(pos);
 	}
 

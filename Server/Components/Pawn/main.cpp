@@ -62,6 +62,26 @@ static StaticArray<void*, NUM_AMX_FUNCS> AMX_FUNCTIONS = {
 	reinterpret_cast<void*>(&amx_UTF8Get),
 	reinterpret_cast<void*>(&amx_UTF8Len),
 	reinterpret_cast<void*>(&amx_UTF8Put),
+	reinterpret_cast<void*>(&amx_PushStringLen),
+	reinterpret_cast<void*>(&amx_SetStringLen),
+#if PAWN_CELL_SIZE == 16
+	reinterpret_cast<void*>(&amx_Swap16),
+#else
+	nullptr,
+#endif
+#if PAWN_CELL_SIZE == 32
+	reinterpret_cast<void*>(&amx_Swap32),
+#else
+	nullptr,
+#endif
+#if PAWN_CELL_SIZE == 64 && (defined _I64_MAX || defined INT64_MAX || defined HAVE_I64)
+	reinterpret_cast<void*>(&amx_Swap64),
+#else
+	nullptr,
+#endif
+	reinterpret_cast<void*>(&amx_GetNativeByIndex),
+	reinterpret_cast<void*>(&amx_MakeAddr),
+	reinterpret_cast<void*>(&amx_StrSize),
 };
 
 class PawnComponent final : public IPawnComponent, public CoreEventHandler, public ConsoleEventHandler
@@ -178,6 +198,38 @@ public:
 		return AMX_FUNCTIONS;
 	}
 
+	IPawnScript const* getScript(AMX* amx) const override
+	{
+		auto& amx_map = PawnManager::Get()->amxToScript_;
+		auto script_itr = amx_map.find(amx);
+		if (script_itr != amx_map.end())
+		{
+			return script_itr->second;
+		}
+		return nullptr;
+	}
+
+	IPawnScript* getScript(AMX* amx) override
+	{
+		auto& amx_map = PawnManager::Get()->amxToScript_;
+		auto script_itr = amx_map.find(amx);
+		if (script_itr != amx_map.end())
+		{
+			return script_itr->second;
+		}
+		return nullptr;
+	}
+
+	const DynamicArray<IPawnScript*>& sideScripts() override
+	{
+		return PawnManager::Get()->scripts_;
+	}
+
+	IPawnScript* mainScript() override
+	{
+		return PawnManager::Get()->mainScript_;
+	}
+
 	void onConsoleCommandListRequest(FlatHashSet<StringView>& commands) override
 	{
 		PawnManager::Get()->OnServerCommandList(commands);
@@ -256,4 +308,9 @@ public:
 COMPONENT_ENTRY_POINT()
 {
 	return new PawnComponent();
+}
+
+PawnLookup* getAmxLookups()
+{
+	return PawnManager::Get();
 }
