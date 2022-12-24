@@ -159,6 +159,7 @@ jobs:
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
+          name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}
           path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
 
   abi-check:
