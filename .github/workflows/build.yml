@@ -27,55 +27,71 @@ on:
       - ".github/workflows/build.yml"
 
 jobs:
-  # build-windows:
-  #   name: Windows x86 build
-  #   runs-on: windows-2019
+  build-windows:
+    name: Windows x86 build
+    runs-on: windows-2019
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         clean: true
-  #         submodules: recursive
-  #         token: ${{ secrets.CI_TOKEN }}
-  #         fetch-depth: 0
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
 
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v2
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+          echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+          echo "build_ubuntu_version=18.04" >> $GITHUB_OUTPUT
+          echo "build_shared=0" >> $GITHUB_OUTPUT
+          echo "build_server=1" >> $GITHUB_OUTPUT
+          echo "build_tools=0" >> $GITHUB_OUTPUT
 
-  #     - name: Install CMake
-  #       uses: lukka/get-cmake@v.3.23.2
+      - name: Setup Python
+        uses: actions/setup-python@v2
 
-  #     - name: Install latest conan
-  #       run: |
-  #         python -m pip install --upgrade pip
-  #         pip install conan
+      - name: Install CMake
+        uses: lukka/get-cmake@v.3.23.2
 
-  #     - name: Generate build files
-  #       run: |
-  #         $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
-  #         $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
-  #         mkdir build
-  #         cd build
-  #         cmake .. -A Win32 -T "ClangCL"
+      - name: Install latest conan
+        run: |
+          python -m pip install --upgrade pip
+          pip install conan
 
-  #     - name: Build
-  #       run: |
-  #         cd build
-  #         cmake --build . --config RelWithDebInfo
+      - name: Generate build files
+        run: |
+          $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
+          $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
+          mkdir build
+          cd build
+          cmake .. -A Win32 -T "ClangCL"
 
-  #     - name: Create a snapshot
-  #       shell: bash
-  #       env:
-  #         CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-  #         HEAD_REF: ${{ github.head_ref || github.ref_name }}
-  #       run: |
-  #         version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-  #         archive_name="open.mp-win-snapshot-${version}.zip"
-  #         cd build/Output/*
-  #         powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
-  #         eval $(ssh-agent -s)
-  #         echo "${CI_PRIVATE_KEY}" | ssh-add -
-  #         echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config ${{ steps.vars.outputs.build_config }}
+
+      - name: Create a build archive
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          version=${{ steps.vars.outputs.build_version }}
+          archive_name="open.mp-win-${version}.zip"
+          cd build/Output/*
+          powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: open.mp-win-${{ steps.vars.outputs.build_version }}
+          path: build/Output/${{ steps.vars.outputs.build_config }}/open.mp-win-${{ steps.vars.outputs.build_version }}.zip
+          if-no-files-found: error
 
   build-linux-static:
     name: Linux x86 dynssl build
