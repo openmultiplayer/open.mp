@@ -77,40 +77,56 @@ jobs:
   #         echo "${CI_PRIVATE_KEY}" | ssh-add -
   #         echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
-  # build-linux-static:
-  #   name: Linux x86 dynssl build
-  #   runs-on: ubuntu-latest
+  build-linux-static:
+    name: Linux x86 dynssl build
+    runs-on: ubuntu-latest
 
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         clean: true
-  #         submodules: recursive
-  #         token: ${{ secrets.CI_TOKEN }}
-  #         fetch-depth: 0
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
 
-  #     - name: Set ownership
-  #       run: |
-  #         # this is to fix GIT not liking owner of the checkout dir
-  #         chown -R $(id -u):$(id -g) $PWD
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+          echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+          echo "build_ubuntu_version=18.04" >> $GITHUB_OUTPUT
+          echo "build_shared=0" >> $GITHUB_OUTPUT
+          echo "build_server=1" >> $GITHUB_OUTPUT
+          echo "build_tools=0" >> $GITHUB_OUTPUT
 
-  #     - name: Build
-  #       run: |
-  #         cd docker
-  #         CONFIG=RelWithDebInfo UBUNTU_VERSION=18.04 BUILD_SHARED=0 BUILD_SERVER=1 BUILD_TOOLS=0 ./build.sh
+      - name: Set ownership
+        run: |
+          # this is to fix GIT not liking owner of the checkout dir
+          chown -R $(id -u):$(id -g) $PWD
 
-  #     - name: Create a snapshot
-  #       env:
-  #         CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-  #         HEAD_REF: ${{ github.head_ref || github.ref_name }}
-  #       run: |
-  #         version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-  #         archive_name="open.mp-linux-static-snapshot-${version}.tar.xz"
-  #         cd docker/build/Output/*
-  #         tar -cJvf "${archive_name}" "Server"
-  #         eval $(ssh-agent -s)
-  #         echo "${CI_PRIVATE_KEY}" | ssh-add -
-  #         echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+      - name: Build
+        run: |
+          cd docker
+          CONFIG=${{ steps.vars.outputs.build_config }} UBUNTU_VERSION=${{ steps.vars.outputs.build_ubuntu_version }} BUILD_SHARED=${{ steps.vars.outputs.build_shared }} BUILD_SERVER=${{ steps.vars.outputs.build_server }} BUILD_TOOLS=${{ steps.vars.outputs.build_tools }} ./build.sh
+
+      - name: Create a build archive
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          version=${{ steps.vars.outputs.build_version }}
+          archive_name="open.mp-linux-${version}.tar.xz"
+          cd docker/build/Output/*
+          sudo tar -cJvf "${archive_name}" "Server"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: open.mp-linux-${{ steps.vars.outputs.build_version }}
+          path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
+          if-no-files-found: error
 
   build-linux:
     name: Linux x86 build
