@@ -77,40 +77,40 @@ jobs:
   #         echo "${CI_PRIVATE_KEY}" | ssh-add -
   #         echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
-  build-linux-static:
-    name: Linux x86 dynssl build
-    runs-on: ubuntu-latest
+  # build-linux-static:
+  #   name: Linux x86 dynssl build
+  #   runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: true
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         clean: true
+  #         submodules: recursive
+  #         token: ${{ secrets.CI_TOKEN }}
+  #         fetch-depth: 0
 
-      - name: Set ownership
-        run: |
-          # this is to fix GIT not liking owner of the checkout dir
-          chown -R $(id -u):$(id -g) $PWD
+  #     - name: Set ownership
+  #       run: |
+  #         # this is to fix GIT not liking owner of the checkout dir
+  #         chown -R $(id -u):$(id -g) $PWD
 
-      - name: Build
-        run: |
-          cd docker
-          CONFIG=RelWithDebInfo UBUNTU_VERSION=18.04 BUILD_SHARED=0 BUILD_SERVER=1 BUILD_TOOLS=0 ./build.sh
+  #     - name: Build
+  #       run: |
+  #         cd docker
+  #         CONFIG=RelWithDebInfo UBUNTU_VERSION=18.04 BUILD_SHARED=0 BUILD_SERVER=1 BUILD_TOOLS=0 ./build.sh
 
-      - name: Create a snapshot
-        env:
-          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-          archive_name="open.mp-linux-static-snapshot-${version}.tar.xz"
-          cd docker/build/Output/*
-          tar -cJvf "${archive_name}" "Server"
-          eval $(ssh-agent -s)
-          echo "${CI_PRIVATE_KEY}" | ssh-add -
-          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+  #     - name: Create a snapshot
+  #       env:
+  #         CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+  #         HEAD_REF: ${{ github.head_ref || github.ref_name }}
+  #       run: |
+  #         version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
+  #         archive_name="open.mp-linux-static-snapshot-${version}.tar.xz"
+  #         cd docker/build/Output/*
+  #         tar -cJvf "${archive_name}" "Server"
+  #         eval $(ssh-agent -s)
+  #         echo "${CI_PRIVATE_KEY}" | ssh-add -
+  #         echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
   build-linux:
     name: Linux x86 build
