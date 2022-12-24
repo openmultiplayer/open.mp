@@ -27,55 +27,55 @@ on:
       - ".github/workflows/build.yml"
 
 jobs:
-  build-windows:
-    name: Windows x86 build
-    runs-on: windows-2019
+  # build-windows:
+  #   name: Windows x86 build
+  #   runs-on: windows-2019
 
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: true
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         clean: true
+  #         submodules: recursive
+  #         token: ${{ secrets.CI_TOKEN }}
+  #         fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@v2
+  #     - name: Setup Python
+  #       uses: actions/setup-python@v2
 
-      - name: Install CMake
-        uses: lukka/get-cmake@v.3.23.2
+  #     - name: Install CMake
+  #       uses: lukka/get-cmake@v.3.23.2
 
-      - name: Install latest conan
-        run: |
-          python -m pip install --upgrade pip
-          pip install conan
+  #     - name: Install latest conan
+  #       run: |
+  #         python -m pip install --upgrade pip
+  #         pip install conan
 
-      - name: Generate build files
-        run: |
-          $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
-          $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
-          mkdir build
-          cd build
-          cmake .. -A Win32 -T "ClangCL"
+  #     - name: Generate build files
+  #       run: |
+  #         $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
+  #         $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
+  #         mkdir build
+  #         cd build
+  #         cmake .. -A Win32 -T "ClangCL"
 
-      - name: Build
-        run: |
-          cd build
-          cmake --build . --config RelWithDebInfo
+  #     - name: Build
+  #       run: |
+  #         cd build
+  #         cmake --build . --config RelWithDebInfo
 
-      - name: Create a snapshot
-        shell: bash
-        env:
-          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-          archive_name="open.mp-win-snapshot-${version}.zip"
-          cd build/Output/*
-          powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
-          eval $(ssh-agent -s)
-          echo "${CI_PRIVATE_KEY}" | ssh-add -
-          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+  #     - name: Create a snapshot
+  #       shell: bash
+  #       env:
+  #         CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
+  #         HEAD_REF: ${{ github.head_ref || github.ref_name }}
+  #       run: |
+  #         version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
+  #         archive_name="open.mp-win-snapshot-${version}.zip"
+  #         cd build/Output/*
+  #         powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
+  #         eval $(ssh-agent -s)
+  #         echo "${CI_PRIVATE_KEY}" | ssh-add -
+  #         echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
 
   build-linux-static:
     name: Linux x86 dynssl build
