@@ -151,10 +151,14 @@ jobs:
           cd docker/build/Output/*
           sudo tar -cJvf "${archive_name}" "Server"
 
+      - name: show tree
+        run: |
+          tree ./
+
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          path: ./docker/build/Output/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          path: docker/build/Output/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
 
   abi-check:
     if: github.event_name == 'pull_request'
