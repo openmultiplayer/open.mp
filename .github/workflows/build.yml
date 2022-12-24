@@ -124,6 +124,14 @@ jobs:
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "::set-output name=build_version::$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")"
+
       - name: Set ownership
         run: |
           # this is to fix GIT not liking owner of the checkout dir
@@ -134,18 +142,19 @@ jobs:
           cd docker
           CONFIG=RelWithDebInfo UBUNTU_VERSION=18.04 BUILD_SHARED=1 BUILD_SERVER=1 BUILD_TOOLS=0 ./build.sh
 
-      - name: Create a snapshot
+      - name: Create a build archive
         env:
-          CI_PRIVATE_KEY: ${{ secrets.CI_PRIVATE_KEY }}
           HEAD_REF: ${{ github.head_ref || github.ref_name }}
         run: |
-          version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
+          version=${{ steps.vars.outputs.build_version }}
           archive_name="open.mp-linux-snapshot-${version}.tar.xz"
           cd docker/build/Output/*
           tar -cJvf "${archive_name}" "Server"
-          eval $(ssh-agent -s)
-          echo "${CI_PRIVATE_KEY}" | ssh-add -
-          echo "put ${archive_name}" | sftp -oStrictHostKeyChecking=accept-new omp-ci@tms-server.com:snapshots/
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          path: ./docker/build/Output/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
 
   abi-check:
     if: github.event_name == 'pull_request'
