@@ -1,0 +1,190 @@
+name: Build
+
+on:
+  release:
+    types:
+      - created
+
+jobs:
+  build-windows:
+    name: Windows x86 build
+    runs-on: windows-2019
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          ref: stable
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+          echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+          echo "build_ubuntu_version=18.04" >> $GITHUB_OUTPUT
+          echo "build_shared=0" >> $GITHUB_OUTPUT
+          echo "build_server=1" >> $GITHUB_OUTPUT
+          echo "build_tools=0" >> $GITHUB_OUTPUT
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+
+      - name: Install CMake
+        uses: lukka/get-cmake@v.3.23.2
+
+      - name: Install latest conan
+        run: |
+          python -m pip install --upgrade pip
+          pip install conan
+
+      - name: Generate build files
+        run: |
+          $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
+          $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
+          mkdir build
+          cd build
+          cmake .. -A Win32 -T "ClangCL"
+
+      - name: Build
+        run: |
+          cd build
+          cmake --build . --config ${{ steps.vars.outputs.build_config }}
+
+      - name: Create a build archive
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          version=${{ steps.vars.outputs.build_version }}
+          archive_name="open.mp-win-${version}.zip"
+          cd build/Output/*
+          powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
+
+      - name: Upload to release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/Output/${{ steps.vars.outputs.build_config }}/open.mp-win-${{ steps.vars.outputs.build_version }}.zip
+          asset_name: open.mp-win-${{ steps.vars.outputs.build_version }}.zip
+          asset_content_type: application/gzip
+
+  build-linux-static:
+    name: Linux x86 dynssl build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          ref: stable
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+          echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+          echo "build_ubuntu_version=18.04" >> $GITHUB_OUTPUT
+          echo "build_shared=0" >> $GITHUB_OUTPUT
+          echo "build_server=1" >> $GITHUB_OUTPUT
+          echo "build_tools=0" >> $GITHUB_OUTPUT
+
+      - name: Set ownership
+        run: |
+          # this is to fix GIT not liking owner of the checkout dir
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build
+        run: |
+          cd docker
+          CONFIG=${{ steps.vars.outputs.build_config }} UBUNTU_VERSION=${{ steps.vars.outputs.build_ubuntu_version }} BUILD_SHARED=${{ steps.vars.outputs.build_shared }} BUILD_SERVER=${{ steps.vars.outputs.build_server }} BUILD_TOOLS=${{ steps.vars.outputs.build_tools }} ./build.sh
+
+      - name: Create a build archive
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          version=${{ steps.vars.outputs.build_version }}
+          archive_name="open.mp-linux-${version}.tar.xz"
+          cd docker/build/Output/*
+          sudo tar -cJvf "${archive_name}" "Server"
+
+      - name: Upload to release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_name: open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_content_type: application/gzip
+
+  build-linux:
+    name: Linux x86 build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          ref: stable
+          submodules: recursive
+          token: ${{ secrets.CI_TOKEN }}
+          fetch-depth: 0
+
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+          echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+          echo "build_ubuntu_version=18.04" >> $GITHUB_OUTPUT
+          echo "build_shared=1" >> $GITHUB_OUTPUT
+          echo "build_server=1" >> $GITHUB_OUTPUT
+          echo "build_tools=0" >> $GITHUB_OUTPUT
+
+      - name: Set ownership
+        run: |
+          # this is to fix GIT not liking owner of the checkout dir
+          chown -R $(id -u):$(id -g) $PWD
+
+      - name: Build
+        run: |
+          cd docker
+          CONFIG=${{ steps.vars.outputs.build_config }} UBUNTU_VERSION=${{ steps.vars.outputs.build_ubuntu_version }} BUILD_SHARED=${{ steps.vars.outputs.build_shared }} BUILD_SERVER=${{ steps.vars.outputs.build_server }} BUILD_TOOLS=${{ steps.vars.outputs.build_tools }} ./build.sh
+
+      - name: Create a build archive
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          version=${{ steps.vars.outputs.build_version }}
+          archive_name="open.mp-linux-dynssl-${version}.tar.xz"
+          cd docker/build/Output/*
+          sudo tar -cJvf "${archive_name}" "Server"
+
+      - name: Upload to release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_content_type: application/gzip
