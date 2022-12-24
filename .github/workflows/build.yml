@@ -147,9 +147,9 @@ jobs:
           HEAD_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           version=${{ steps.vars.outputs.build_version }}
-          archive_name="open.mp-linux-snapshot-${version}.tar.xz"
+          archive_name="open.mp-linux-dynssl-${version}.tar.xz"
           cd docker/build/Output/*
-          tar -cJvf "${archive_name}" "Server"
+          sudo tar -cJvf "${archive_name}" "Server"
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
