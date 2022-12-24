@@ -1,30 +1,9 @@
 name: Build
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - "master"
-      - "stable_master"
-      - "dev"
-    paths:
-      - "**.hpp"
-      - "**.cpp"
-      - "**.h"
-      - "**.c"
-      - "**CMakeLists.txt"
-      - ".github/workflows/build.yml"
-  pull_request:
-    branches:
-      - "master"
-      - "stable_master"
-    paths:
-      - "**.hpp"
-      - "**.cpp"
-      - "**.h"
-      - "**.c"
-      - "**CMakeLists.txt"
-      - ".github/workflows/build.yml"
+  release:
+    types:
+      - created
 
 jobs:
   build-windows:
@@ -35,6 +14,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           clean: true
+          ref: stable
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -86,12 +66,16 @@ jobs:
           cd build/Output/*
           powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload to release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: open.mp-win-${{ steps.vars.outputs.build_version }}
-          path: build/Output/${{ steps.vars.outputs.build_config }}/open.mp-win-${{ steps.vars.outputs.build_version }}.zip
-          if-no-files-found: error
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: build/Output/${{ steps.vars.outputs.build_config }}/open.mp-win-${{ steps.vars.outputs.build_version }}.zip
+          asset_name: open.mp-win-${{ steps.vars.outputs.build_version }}.zip
+          asset_content_type: application/gzip
 
   build-linux-static:
     name: Linux x86 dynssl build
@@ -101,6 +85,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           clean: true
+          ref: stable
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -137,12 +122,16 @@ jobs:
           cd docker/build/Output/*
           sudo tar -cJvf "${archive_name}" "Server"
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+      - name: Upload to release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          name: open.mp-linux-${{ steps.vars.outputs.build_version }}
-          path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
-          if-no-files-found: error
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_name: open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_content_type: application/gzip
 
   build-linux:
     name: Linux x86 build
@@ -152,6 +141,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           clean: true
+          ref: stable
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
@@ -188,41 +178,13 @@ jobs:
           cd docker/build/Output/*
           sudo tar -cJvf "${archive_name}" "Server"
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
-        with:
-          name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}
-          path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
-          if-no-files-found: error
-
-  abi-check:
-    if: github.event_name == 'pull_request'
-    name: SDK ABI check
-    needs: build-linux
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: true
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-          fetch-depth: 0
-
-      - name: Set ownership
-        run: |
-          # this is to fix GIT not liking owner of the checkout dir
-          chown -R $(id -u):$(id -g) $PWD
-
-      - name: Build & run abi-check
+      - name: Upload to release
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
         env:
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          ref_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-          ref_archive_name="open.mp-linux-snapshot-${ref_version}.tar.xz"
-          master_version=$(git describe --always --tags "refs/remotes/origin/master")
-          master_archive_name="open.mp-linux-snapshot-${master_version}.tar.xz"
-          cd docker
-          chmod +x ./abicheck.sh
-          chmod +x ./abicheck_ubuntu-18.04/docker-entrypoint.sh
-          CONFIG=RelWithDebInfo REF_ARCHIVE="${ref_archive_name}" MASTER_ARCHIVE="${master_archive_name}" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_content_type: application/gzip

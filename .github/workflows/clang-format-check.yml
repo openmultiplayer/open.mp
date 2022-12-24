@@ -3,7 +3,7 @@ on: [pull_request]
 jobs:
   formatting-check:
     name: Formatting Check
-    runs-on: [self-hosted, Linux, X64]
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         path:
