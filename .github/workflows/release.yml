@@ -1,4 +1,4 @@
-name: Build
+name: Release
 
 on:
   release:
@@ -74,7 +74,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: build/Output/${{ steps.vars.outputs.build_config }}/open.mp-win-${{ steps.vars.outputs.build_version }}.zip
-          asset_name: open.mp-win-${{ steps.vars.outputs.build_version }}.zip
+          asset_name: open.mp-win-x86.zip
           asset_content_type: application/gzip
 
   build-linux-static:
@@ -130,7 +130,7 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
-          asset_name: open.mp-linux-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_name: open.mp-linux-x86.tar.xz
           asset_content_type: application/gzip
 
   build-linux:
@@ -186,5 +186,5 @@ jobs:
         with:
           upload_url: ${{ github.event.release.upload_url }}
           asset_path: docker/build/Output/${{ steps.vars.outputs.build_config }}/open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
-          asset_name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz
+          asset_name: open.mp-linux-x86-dynssl.tar.xz
           asset_content_type: application/gzip
