@@ -29,7 +29,7 @@ docker build \
 folders=('build' 'conan')
 for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
-        mkdir ${folder}
+        mkdir ${folder} && ls -l
     fi
 done
 
