@@ -18,6 +18,12 @@ SCRIPT_API(db_open, int(const std::string& name))
 	return database_connection ? database_connection->getID() : 0;
 }
 
+SCRIPT_API(db_open_raw, int(const std::string& name))
+{
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(name));
+	return database_connection ? database_connection->getID() : 0;
+}
+
 SCRIPT_API(db_close, bool(IDatabaseConnection& db))
 {
 	return PawnManager::Get()->databases->close(db);
@@ -125,6 +131,12 @@ SCRIPT_API(DB_Open, int(const std::string& name))
 {
 	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
 	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
+	return database_connection ? database_connection->getID() : 0;
+}
+
+SCRIPT_API(DB_OpenRaw, int(const std::string& name))
+{
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(name));
 	return database_connection ? database_connection->getID() : 0;
 }
 
