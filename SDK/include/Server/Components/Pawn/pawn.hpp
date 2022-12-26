@@ -288,5 +288,5 @@ struct IPawnComponent : public IComponent
 
 	/// Get a set of all the available scripts.
 	virtual IPawnScript* mainScript() = 0;
-	virtual const DynamicArray<IPawnScript*>& sideScripts() = 0;
+	virtual const Span<IPawnScript*> sideScripts() = 0;
 };

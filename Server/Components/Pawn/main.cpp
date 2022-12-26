@@ -220,7 +220,7 @@ public:
 		return nullptr;
 	}
 
-	const DynamicArray<IPawnScript*>& sideScripts() override
+	const Span<IPawnScript*> sideScripts() override
 	{
 		return PawnManager::Get()->scripts_;
 	}

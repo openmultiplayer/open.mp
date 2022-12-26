@@ -68,16 +68,14 @@ using std::chrono::duration_cast;
 /// Don't pass these around the SDK
 namespace Impl
 {
-
 using String = std::string;
 
 template <size_t Size>
 using StaticBitset = std::bitset<Size>;
 
-}
-
 template <typename T>
 using DynamicArray = std::vector<T>;
+}
 
 template <typename T>
 using Span = nonstd::span<T>;
