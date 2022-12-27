@@ -78,6 +78,12 @@ elseif(UNIX)
 		add_compile_options(-msse2 -mfpmath=sse)
 	endif()
 
+	if(TARGET_BUILD_ARCH MATCHES "(i[3-6]86|x86)")
+		set(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
+		set(CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}")
+		set(CMAKE_SIZEOF_VOID_P 4)
+	endif ()
+
 endif()
 
 # Flags to know when we are compiling in Debug mode.
