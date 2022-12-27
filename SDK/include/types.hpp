@@ -1,7 +1,8 @@
 #pragma once
 
 #include <array>
-#include <bitset>
+#include <stdexcept>
+#include <bitset2/bitset2.hpp>
 #include <chrono>
 #include <cstdint>
 #include <glm/vec2.hpp>
@@ -72,7 +73,7 @@ namespace Impl
 using String = std::string;
 
 template <size_t Size>
-using StaticBitset = std::bitset<Size>;
+using StaticBitset = Bitset2::bitset2<Size, unsigned long long>;
 
 }
 

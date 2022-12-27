@@ -16,3 +16,6 @@
 [submodule "lib/cpp-httplib"]
 	path = lib/cpp-httplib
 	url = git@github.com:ksenonadv/cpp-httplib.git
+[submodule "SDK/lib/bitset2"]
+	path = SDK/lib/bitset2
+	url = https://github.com/openmultiplayer/bitset2.git
