@@ -47,7 +47,7 @@ public:
 	void setString(StringView key, StringView value) override
 	{
 		TO_UPPER_KEY(upperKey, key);
-		data_[upperKey].emplace<String>(value);
+		data_[upperKey].template emplace<String>(value);
 	}
 
 	const StringView getString(StringView key) const override
@@ -68,7 +68,7 @@ public:
 	void setInt(StringView key, int value) override
 	{
 		TO_UPPER_KEY(upperKey, key);
-		data_[upperKey].emplace<int>(value);
+		data_[upperKey].template emplace<int>(value);
 	}
 
 	int getInt(StringView key) const override
@@ -89,7 +89,7 @@ public:
 	void setFloat(StringView key, float value) override
 	{
 		TO_UPPER_KEY(upperKey, key);
-		data_[upperKey].emplace<float>(value);
+		data_[upperKey].template emplace<float>(value);
 	}
 
 	float getFloat(StringView key) const override
