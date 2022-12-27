@@ -1,8 +1,10 @@
 #pragma once
 
 #include <array>
+#if !defined OMP_NO_EXCEPTIONS
 #include <stdexcept>
 #include <bitset2/bitset2.hpp>
+#endif
 #include <chrono>
 #include <cstdint>
 #include <glm/vec2.hpp>
@@ -69,12 +71,12 @@ using std::chrono::duration_cast;
 /// Don't pass these around the SDK
 namespace Impl
 {
-
 using String = std::string;
 
+#if !defined OMP_NO_EXCEPTIONS
 template <size_t Size>
 using StaticBitset = Bitset2::bitset2<Size, unsigned long long>;
-
+#endif
 }
 
 template <typename T>
