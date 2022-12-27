@@ -98,7 +98,7 @@ private:
 	constexpr static const size_t Lower = 1;
 	constexpr static const size_t Upper = GANG_ZONE_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + Lower;
 
-	MarkedPoolStorage<GangZone, IGangZone, Lower, Upper> storage;
+	MarkedDynamicPoolStorage<GangZone, IGangZone, Lower, Upper> storage;
 	UniqueIDArray<IGangZone, Upper> checkingList;
 	DefaultEventDispatcher<GangZoneEventHandler> eventDispatcher;
 	FiniteLegacyIDMapper<GANG_ZONE_POOL_SIZE> legacyIDs_;
