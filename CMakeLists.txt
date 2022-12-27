@@ -3,7 +3,7 @@ project(open-mp LANGUAGES C CXX VERSION 0.0.11)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-if (NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL Clang)
+if (NOT ${CMAKE_CXX_COMPILER_ID} MATCHES "(Clang)")
 	message(
 		FATAL_ERROR
 		"Clang is the only compiler officially supported for building."
@@ -27,7 +27,7 @@ elseif(UNIX)
 	if(NOT APPLE)
 		set(CMAKE_CXX_STDLIB "libstdc++" CACHE STRING "The standard library to use.")
 		set(CROSS_BUILD FALSE CACHE BOOL "Whether to cross-build.")
-		set(CROSS_BUILD_ARCH "armv6" CACHE STRING "The architecture to cross-build for.")
+		set(TARGET_BUILD_ARCH "armv6" CACHE STRING "The architecture to cross-build for.")
 		set(SHARED_OPENSSL TRUE CACHE BOOL "Whether to dynamically link the OpenSSL library")
 		set(STATIC_STDCXX FALSE CACHE BOOL "Whether to statically link against libc++.")
 	# Apple Clang
@@ -35,7 +35,12 @@ elseif(UNIX)
 		set(CMAKE_CXX_STDLIB "libc++" CACHE STRING "The standard library to use.")
 
 		set(CROSS_BUILD FALSE)
-		set(CROSS_BUILD_ARCH)
+
+		if (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm64)")
+			set(TARGET_BUILD_ARCH armv8)
+		else ()
+			set(TARGET_BUILD_ARCH x86_64)
+		endif ()
 
 		set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 		set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -54,13 +59,14 @@ elseif(UNIX)
 
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(CROSS_BUILD)
-		set(CMAKE_CXX_FLAGS "-march=${CROSS_BUILD_ARCH} ${CMAKE_CXX_FLAGS}")
-		message("Generating cross-build project for ${CROSS_BUILD_ARCH}.")
+		set(CMAKE_CXX_FLAGS "-march=${TARGET_BUILD_ARCH} ${CMAKE_CXX_FLAGS}")
+		message("Generating cross-build project for ${TARGET_BUILD_ARCH}.")
 	else()
-		set(CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}")
-		set(CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}")
-		set(CMAKE_SIZEOF_VOID_P 4)
-		message("Generating x86 project")
+		if(TARGET_BUILD_ARCH)
+			message("Generating ${TARGET_BUILD_ARCH} project")
+		else ()
+			message(WARNING "TARGET_BUILD_ARCH not provided; generating a project based on host's arch")
+		endif ()
 	endif()
 	# Clang or Apple Clang
 	if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
