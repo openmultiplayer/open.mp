@@ -51,6 +51,7 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
 endif()
 
 target_include_directories(OMP-SDK INTERFACE include/)
+target_include_directories(OMP-SDK INTERFACE lib/)
 
 file(GLOB_RECURSE omp_sdk_source_list "*.hpp")
 
