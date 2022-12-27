@@ -20,6 +20,10 @@
 [[ -z "$BUILD_TOOLS" ]] \
 && build_tools=0 \
 || build_tools="$BUILD_TOOLS"
+# Available options: any architecture name
+[[ -z "$TARGET_BUILD_ARCH" ]] \
+&& target_build_arch=x86 \
+|| target_build_arch="$TARGET_BUILD_ARCH"
 
 docker build \
     -t open.mp/abicheck:ubuntu-${ubuntu_version} \
@@ -42,6 +46,7 @@ docker run \
     -v $PWD/build:/code/build \
     -v $PWD/conan:/home/user/.conan \
     -e CONFIG=${config} \
+    -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \
     -e BUILD_SERVER=${build_server} \
     -e BUILD_TOOLS=${build_tools} \
