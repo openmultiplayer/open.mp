@@ -13,14 +13,14 @@
 
 SCRIPT_API(db_open, int(const std::string& name))
 {
-	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
-	return database_connection ? database_connection->getID() : 0;
-}
+	bool inMemoryOrURI = false;
+	if (name.find(":memory:") == 0 || name.find("file:") == 0)
+	{
+		inMemoryOrURI = true;
+	}
 
-SCRIPT_API(db_open_raw, int(const std::string& name))
-{
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(name));
+	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(inMemoryOrURI ? name : dbFilePath.string()));
 	return database_connection ? database_connection->getID() : 0;
 }
 
@@ -129,14 +129,14 @@ SCRIPT_API(db_debug_openresults, int())
 
 SCRIPT_API(DB_Open, int(const std::string& name))
 {
-	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
-	return database_connection ? database_connection->getID() : 0;
-}
+	bool inMemoryOrURI = false;
+	if (name.find(":memory:") == 0 || name.find("file:") == 0)
+	{
+		inMemoryOrURI = true;
+	}
 
-SCRIPT_API(DB_OpenRaw, int(const std::string& name))
-{
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(name));
+	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
+	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(inMemoryOrURI ? name : dbFilePath.string()));
 	return database_connection ? database_connection->getID() : 0;
 }
 
