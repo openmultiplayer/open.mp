@@ -333,10 +333,41 @@ int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 	assert(hdr->natives <= hdr->libraries);
 	numnatives = NUMENTRIES(hdr, natives, libraries);
 
+	uintptr_t funcidx = 0;
+
 	err = AMX_ERR_NONE;
 	func = GETENTRY(hdr, natives, 0);
-	for (i = 0; i < numnatives; i++)
+	for (i = 0; i < numnatives; i++, func = (AMX_FUNCPART*)((unsigned char*)func + hdr->defsize))
 	{
+		// Special case:
+		//
+		//   samp-gdk hooks `funcidx` to inject its own version.  It does this by just writing
+		//   straight to the pointer in the header, which is then seen here as a double-registered
+		//   pointer.  However, it has a bug as well, in that it only hooks the first instance of
+		//   `funcidx`, when there can be more with external native names.  So this code, while it
+		//   isn't really our job, fixes both those issues.
+		//
+		if (strcmp("funcidx", GETENTRYNAME(hdr, func)) == 0)
+		{
+			if (func->address == 0)
+			{
+				if (funcidx != 0)
+				{
+					((AMX_FUNCWIDE*)func)->address = funcidx;
+					// The two different `continue` locations are correct.
+					continue;
+				}
+			}
+			else
+			{
+				if (funcidx == 0)
+				{
+					funcidx = ((AMX_FUNCWIDE*)func)->address;
+				}
+				// The two different `continue` locations are correct.
+				continue;
+			}
+		}
 		funcptr = (list != NULL) ? findfunction(GETENTRYNAME(hdr, func), list, number) : NULL;
 		if (func->address == 0)
 		{
@@ -350,7 +381,6 @@ int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 		{
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "Tried to register native which is already registered: %s", GETENTRYNAME(hdr, func));
 		} /* if */
-		func = (AMX_FUNCPART*)((unsigned char*)func + hdr->defsize);
 	} /* for */
 	if (err == AMX_ERR_NONE)
 		amx->flags |= AMX_FLAG_NTVREG;
