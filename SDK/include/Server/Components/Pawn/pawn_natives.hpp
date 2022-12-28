@@ -796,7 +796,7 @@ private:
 };
 
 template <typename T>
-class ParamCast<DynamicArray<T> const&>
+class ParamCast<Impl::DynamicArray<T> const&>
 {
 public:
 	ParamCast(AMX* amx, cell* params, int idx)
@@ -819,14 +819,14 @@ public:
 		// No writing back for constants.
 	}
 
-	ParamCast(ParamCast<DynamicArray<T> const&> const&) = delete;
-	ParamCast(ParamCast<DynamicArray<T> const&>&&) = delete;
+	ParamCast(ParamCast<Impl::DynamicArray<T> const&> const&) = delete;
+	ParamCast(ParamCast<Impl::DynamicArray<T> const&>&&) = delete;
 
 	// clang-format off
 		// Adding this here because clang formatter (locally, even using format.bat)
 		// Keeps adding a space between `const` and `&` and according to our `.clang-format`
 		// Style guide, it's not acceptable, since `PointerAlignment` is set to `Left`
-		operator DynamicArray<T> const& ()
+		operator Impl::DynamicArray<T> const& ()
 	// clang-format on
 	{
 		return value_;
@@ -841,12 +841,12 @@ private:
 	int
 		len_;
 
-	DynamicArray<T>
+	Impl::DynamicArray<T>
 		value_;
 };
 
 template <typename T>
-class ParamCast<DynamicArray<T>>
+class ParamCast<Impl::DynamicArray<T>>
 {
 public:
 	ParamCast(AMX* amx, cell* params, int idx)
@@ -868,10 +868,10 @@ public:
 	{
 	}
 
-	ParamCast(ParamCast<DynamicArray<T>> const&) = delete;
-	ParamCast(ParamCast<DynamicArray<T>>&&) = delete;
+	ParamCast(ParamCast<Impl::DynamicArray<T>> const&) = delete;
+	ParamCast(ParamCast<Impl::DynamicArray<T>>&&) = delete;
 
-	operator DynamicArray<T>()
+	operator Impl::DynamicArray<T>()
 	{
 		return value_;
 	}
@@ -885,12 +885,12 @@ private:
 	int
 		len_;
 
-	DynamicArray<T>
+	Impl::DynamicArray<T>
 		value_;
 };
 
 template <typename T>
-class ParamCast<DynamicArray<T>&>
+class ParamCast<Impl::DynamicArray<T>&>
 {
 public:
 	ParamCast(AMX* amx, cell* params, int idx)
@@ -919,10 +919,10 @@ public:
 		}
 	}
 
-	ParamCast(ParamCast<DynamicArray<T>&> const&) = delete;
-	ParamCast(ParamCast<DynamicArray<T>&>&&) = delete;
+	ParamCast(ParamCast<Impl::DynamicArray<T>&> const&) = delete;
+	ParamCast(ParamCast<Impl::DynamicArray<T>&>&&) = delete;
 
-	operator DynamicArray<T>&()
+	operator Impl::DynamicArray<T>&()
 	{
 		return value_;
 	}
@@ -936,7 +936,7 @@ private:
 	int
 		len_;
 
-	DynamicArray<T>
+	Impl::DynamicArray<T>
 		value_;
 };
 
