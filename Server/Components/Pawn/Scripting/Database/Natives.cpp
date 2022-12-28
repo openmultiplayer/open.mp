@@ -64,31 +64,35 @@ static IDatabaseConnection* doDBOpen(const std::string& name, int flags)
 	if ((flags & 0x80 /* SQLITE_OPEN_MEMORY */) != 0 || path == ":memory:" || path == "" || parameters.find("mode=memory") != std::string::npos)
 	{
 		// All the ways of opening an in-memory database that I know of.
-		return PawnManager::Get()->databases->open(name);
+		return PawnManager::Get()->databases->open(name, flags);
 	}
 	// Should we allow this?
 	//else if (protocol == "file:///")
 	//{
-	//	return PawnManager::Get()->databases->open(name);
+	//	return PawnManager::Get()->databases->open(name, flags);
 	//}
 	else
 	{
 		// TODO: Pass in the flags.
 		ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + path);
-		return PawnManager::Get()->databases->open(protocol + dbFilePath.string() + parameters);
+		return PawnManager::Get()->databases->open(protocol + dbFilePath.string() + parameters, flags);
 	}
 }
 
 SCRIPT_API(db_open, int(const std::string& name))
 {
-	int flags = 0x02 /* SQLITE_OPEN_READWRITE */ | 0x04 /* SQLITE_OPEN_CREATE */;
-
 	// Get the flags.
+	int flags;
 	auto params = GetParams();
 	if ((params[0] / sizeof(cell)) >= 2)
 	{
 		// Optional parameter.
 		flags = params[2];
+	}
+	else
+	{
+		// Defer the defaults to the implementation.
+		flags = 0;
 	}
 
 	IDatabaseConnection* database_connection = doDBOpen(name, flags);
@@ -200,14 +204,18 @@ SCRIPT_API(db_debug_openresults, int())
 
 SCRIPT_API(DB_Open, int(const std::string& name))
 {
-	int flags = 0x02 /* SQLITE_OPEN_READWRITE */ | 0x04 /* SQLITE_OPEN_CREATE */;
-
 	// Get the flags.
+	int flags;
 	auto params = GetParams();
 	if ((params[0] / sizeof(cell)) >= 2)
 	{
 		// Optional parameter.
 		flags = params[2];
+	}
+	else
+	{
+		// Defer the defaults to the implementation.
+		flags = 0;
 	}
 
 	IDatabaseConnection* database_connection = doDBOpen(name, flags);
