@@ -11,6 +11,21 @@
 #include <ghc/filesystem.hpp>
 #include "../../format.hpp"
 
+static int getFlags(cell* params)
+{
+	// Get the flags.
+	if (params[0] >= 2 * sizeof(cell))
+	{
+		// Optional parameter.
+		return params[2];
+	}
+	else
+	{
+		// Defer the defaults to the implementation.
+		return 0;
+	}
+}
+
 static IDatabaseConnection* doDBOpen(const std::string& name, int flags)
 {
 	size_t start;
@@ -82,19 +97,8 @@ static IDatabaseConnection* doDBOpen(const std::string& name, int flags)
 SCRIPT_API(db_open, int(const std::string& name))
 {
 	// Get the flags.
-	int flags;
 	auto params = GetParams();
-	if ((params[0] / sizeof(cell)) >= 2)
-	{
-		// Optional parameter.
-		flags = params[2];
-	}
-	else
-	{
-		// Defer the defaults to the implementation.
-		flags = 0;
-	}
-
+	int flags = getFlags(params);
 	IDatabaseConnection* database_connection = doDBOpen(name, flags);
 	return database_connection ? database_connection->getID() : 0;
 }
@@ -205,19 +209,8 @@ SCRIPT_API(db_debug_openresults, int())
 SCRIPT_API(DB_Open, int(const std::string& name))
 {
 	// Get the flags.
-	int flags;
 	auto params = GetParams();
-	if ((params[0] / sizeof(cell)) >= 2)
-	{
-		// Optional parameter.
-		flags = params[2];
-	}
-	else
-	{
-		// Defer the defaults to the implementation.
-		flags = 0;
-	}
-
+	int flags = getFlags(params);
 	IDatabaseConnection* database_connection = doDBOpen(name, flags);
 	return database_connection ? database_connection->getID() : 0;
 }
