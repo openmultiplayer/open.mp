@@ -1011,6 +1011,11 @@ private:
 						addComponent(component);
 					}
 				}
+				else
+				{
+					printLn("Loading component %s", file.filename().u8string().c_str());
+					printLn("\tCould not find component");
+				}
 			}
 		}
 
