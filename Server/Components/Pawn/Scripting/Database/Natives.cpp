@@ -11,10 +11,95 @@
 #include <ghc/filesystem.hpp>
 #include "../../format.hpp"
 
+static int getFlags(cell* params)
+{
+	// Get the flags.
+	if (params[0] >= 2 * sizeof(cell))
+	{
+		// Optional parameter.
+		return params[2];
+	}
+	else
+	{
+		// Defer the defaults to the implementation.
+		return 0;
+	}
+}
+
+static IDatabaseConnection* doDBOpen(const std::string& name, int flags)
+{
+	size_t start;
+	size_t end;
+
+	// Get the protocol.
+	String protocol = name.substr(0, 5);
+	if (protocol == "file:")
+	{
+		// We always use an aboslute path, even when a relative path is given.
+		protocol = "file:///";
+		// URI mode.
+		if (name[5] == '/' && name[6] == '/')
+		{
+			// Skip the next `/`.
+			start = name.find('/', 7) + 1;
+			if (start == 0)
+			{
+				return 0;
+			}
+		}
+		else
+		{
+			start = 5;
+		}
+	}
+	else
+	{
+		protocol = "";
+		start = 0;
+	}
+
+	// Get the parameters.
+	String parameters;
+	end = name.find('?', start);
+	if (end == std::string::npos)
+	{
+		parameters = "";
+		end = name.length();
+	}
+	else
+	{
+		// There are parameters.
+		parameters = name.substr(end);
+	}
+
+	// Get the path.
+	String path = name.substr(start, end - start);
+
+	// Get the database.
+	if ((flags & 0x80 /* SQLITE_OPEN_MEMORY */) != 0 || path == ":memory:" || path == "" || parameters.find("mode=memory") != std::string::npos)
+	{
+		// All the ways of opening an in-memory database that I know of.
+		return PawnManager::Get()->databases->open(name, flags);
+	}
+	// Should we allow this?
+	//else if (protocol == "file:///")
+	//{
+	//	return PawnManager::Get()->databases->open(name, flags);
+	//}
+	else
+	{
+		// TODO: Pass in the flags.
+		ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + path);
+		return PawnManager::Get()->databases->open(protocol + dbFilePath.string() + parameters, flags);
+	}
+}
+
 SCRIPT_API(db_open, int(const std::string& name))
 {
-	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
+	// Get the flags.
+	auto params = GetParams();
+	int flags = getFlags(params);
+	IDatabaseConnection* database_connection = doDBOpen(name, flags);
 	return database_connection ? database_connection->getID() : 0;
 }
 
@@ -123,8 +208,10 @@ SCRIPT_API(db_debug_openresults, int())
 
 SCRIPT_API(DB_Open, int(const std::string& name))
 {
-	ghc::filesystem::path dbFilePath = ghc::filesystem::absolute("scriptfiles/" + name);
-	IDatabaseConnection* database_connection(PawnManager::Get()->databases->open(dbFilePath.string()));
+	// Get the flags.
+	auto params = GetParams();
+	int flags = getFlags(params);
+	IDatabaseConnection* database_connection = doDBOpen(name, flags);
 	return database_connection ? database_connection->getID() : 0;
 }
 

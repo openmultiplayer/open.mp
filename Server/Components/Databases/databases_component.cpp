@@ -28,11 +28,16 @@ void DatabasesComponent::onLoad(ICore* c) { }
 /// Opens a new database connection
 /// @param path Path to the database
 /// @returns Database if successful, otherwise "nullptr"
-IDatabaseConnection* DatabasesComponent::open(StringView path)
+IDatabaseConnection* DatabasesComponent::open(StringView path, int flags)
 {
+	if (flags == 0)
+	{
+		// Defaults.
+		flags = SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE;
+	}
 	DatabaseConnection* ret(nullptr);
 	sqlite3* database_connection_handle(nullptr);
-	if (sqlite3_open_v2(path.data(), &database_connection_handle, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, nullptr) == SQLITE_OK)
+	if (sqlite3_open_v2(path.data(), &database_connection_handle, flags, nullptr) == SQLITE_OK)
 	{
 		ret = databaseConnections.emplace(this, database_connection_handle);
 		if (!ret)

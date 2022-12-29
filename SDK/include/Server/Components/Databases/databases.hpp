@@ -137,7 +137,7 @@ struct IDatabasesComponent : public IComponent
 	/// Opens a new database connection
 	/// @param path Path to the database
 	/// @returns Database if successful, otherwise "nullptr"
-	virtual IDatabaseConnection* open(StringView path) = 0;
+	virtual IDatabaseConnection* open(StringView path, int flags = 0) = 0;
 
 	/// Closes the specified database connection
 	/// @param connection Database connection
