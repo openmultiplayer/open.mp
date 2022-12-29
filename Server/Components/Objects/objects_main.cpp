@@ -72,6 +72,96 @@ void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
 	}
 }
 
+void ObjectComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
+{
+	const int pid = player.getID();
+	for (Object* object : attachedToPlayer)
+	{
+		const ObjectAttachmentData& attachment = object->getAttachmentData();
+		if (attachment.type == ObjectAttachmentData::Type::Player && attachment.ID == pid)
+		{
+			NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+			attachObjectToPlayerRPC.ObjectID = object->poolID;
+			attachObjectToPlayerRPC.PlayerID = attachment.ID;
+			attachObjectToPlayerRPC.Offset = attachment.offset;
+			attachObjectToPlayerRPC.Rotation = attachment.rotation;
+			PacketHelper::send(attachObjectToPlayerRPC, forPlayer);
+		}
+	}
+
+	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer); objectData != nullptr)
+	{
+
+		for (int i = 0; i != MAX_ATTACHED_OBJECT_SLOTS; ++i)
+		{
+			if (objectData->hasAttachedObject(i))
+			{
+				NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
+				setPlayerAttachedObjectRPC.PlayerID = player.getID();
+				setPlayerAttachedObjectRPC.Index = i;
+				setPlayerAttachedObjectRPC.Create = true;
+				setPlayerAttachedObjectRPC.AttachmentData = objectData->getAttachedObject(i);
+				PacketHelper::send(setPlayerAttachedObjectRPC, forPlayer);
+			}
+		}
+
+		for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
+		{
+			if (object->getAttachmentData().ID == pid)
+			{
+				object->createForPlayer();
+			}
+		}
+	}
+}
+
+void ObjectComponent::onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer)
+{
+	const int pid = player.getID();
+	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer); objectData != nullptr)
+	{
+		for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
+		{
+			if (object->getAttachmentData().ID == pid)
+			{
+				object->destream();
+			}
+		}
+	}
+}
+
+void ObjectComponent::onPoolEntryDestroyed(IPlayer& player)
+{
+	const int pid = player.getID();
+	for (IObject* obj : attachedToPlayer)
+	{
+		if (obj->getAttachmentData().ID == pid)
+		{
+			obj->resetAttachment();
+		}
+	}
+
+	for (IPlayer* other : players->entries())
+	{
+		if (other == &player)
+		{
+			continue;
+		}
+
+		if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(other); objectData != nullptr)
+		{
+			for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
+			{
+				const auto& attach = object->getAttachmentData();
+				if (attach.ID == pid)
+				{
+					object->resetAttachment();
+				}
+			}
+		}
+	}
+}
+
 COMPONENT_ENTRY_POINT()
 {
 	return new ObjectComponent();

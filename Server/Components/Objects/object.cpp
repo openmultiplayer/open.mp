@@ -12,6 +12,7 @@
 Object::~Object()
 {
 	eraseFromProcessed(true /* force */);
+	objects_.getAttachedToPlayers().erase(this);
 }
 
 void Object::destream()
@@ -143,6 +144,27 @@ void Object::setRotation(GTAQuat rotation)
 	PacketHelper::broadcast(setObjectRotationRPC, objects_.getPlayers());
 }
 
+void Object::attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation)
+{
+	const int id = player.getID();
+	setAttachmentData(ObjectAttachmentData::Type::Player, id, offset, rotation, true);
+	NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+	attachObjectToPlayerRPC.ObjectID = poolID;
+	attachObjectToPlayerRPC.PlayerID = id;
+	attachObjectToPlayerRPC.Offset = offset;
+	attachObjectToPlayerRPC.Rotation = rotation;
+	PacketHelper::broadcastToStreamed(attachObjectToPlayerRPC, player);
+
+	objects_.getAttachedToPlayers().insert(this);
+}
+
+void Object::resetAttachment()
+{
+	objects_.getAttachedToPlayers().erase(this);
+	this->BaseObject<IObject>::resetAttachment();
+	restream();
+}
+
 void PlayerObject::restream()
 {
 	createObjectForClient(objects_.getPlayer());
@@ -241,7 +263,7 @@ void PlayerObject::createForPlayer()
 {
 	createObjectForClient(objects_.getPlayer());
 
-	if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player)
+	if (isMoving())
 	{
 		delayedProcessingTime_ = Time::now() + Seconds(1);
 		enableDelayedProcessing();
@@ -278,9 +300,58 @@ void PlayerObject::setRotation(GTAQuat rotation)
 PlayerObject::~PlayerObject()
 {
 	eraseFromProcessed(true /* force*/);
+	this->objects_.getAttachedToPlayerObjects().erase(this);
 }
 
 void PlayerObject::destream()
 {
 	destroyForPlayer();
+}
+
+void PlayerObject::resetAttachment()
+{
+	this->objects_.getAttachedToPlayerObjects().erase(this);
+	this->BaseObject<IPlayerObject>::resetAttachment();
+	restream();
+}
+
+void PlayerObject::attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation)
+{
+	this->objects_.getAttachedToPlayerObjects().insert(this);
+	setAttachmentData(ObjectAttachmentData::Type::Player, player.getID(), offset, rotation, true);
+	restream();
+}
+
+void PlayerObject::createObjectForClient(IPlayer& player)
+{
+	auto& attach = getAttachmentData();
+
+	// Object attached to player.
+	if (attach.type == ObjectAttachmentData::Type::Player)
+	{
+		auto attachTo = objects_.getComponent().getPlayers().get(attach.ID);
+
+		// Invalid player or player is not streamed.
+		// Object won't be created on client.
+		if (!attachTo || !attachTo->isStreamedInForPlayer(player))
+		{
+			destream();
+			return;
+		}
+
+		// Create object.
+		this->BaseObject<IPlayerObject>::createObjectForClient(player);
+
+		// Attach object.
+		NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
+		attachObjectToPlayerRPC.ObjectID = poolID;
+		attachObjectToPlayerRPC.PlayerID = attach.ID;
+		attachObjectToPlayerRPC.Offset = attach.offset;
+		attachObjectToPlayerRPC.Rotation = attach.rotation;
+		PacketHelper::send(attachObjectToPlayerRPC, player);
+		return;
+	}
+
+	// Create object.
+	this->BaseObject<IPlayerObject>::createObjectForClient(player);
 }

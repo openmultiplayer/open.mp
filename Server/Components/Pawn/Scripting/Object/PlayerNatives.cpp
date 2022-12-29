@@ -45,15 +45,29 @@ SCRIPT_API(AttachPlayerObjectToVehicle, bool(IPlayer& player, IPlayerObject& obj
 	return true;
 }
 
-SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& object, IPlayer& playerAttachedTo, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& object, IPlayer* playerAttachedTo, Vector3 offset, Vector3 rotation))
 {
-	PawnManager::Get()->core->logLn(LogLevel::Warning, "AttachPlayerObjectToPlayer was removed from sa-mp, we do not support it either (yet)");
-	return false;
+	if (playerAttachedTo)
+	{
+		object.attachToPlayer(*playerAttachedTo, offset, rotation);
+	}
+	else
+	{
+		object.resetAttachment();
+	}
+	return true;
 }
 
-SCRIPT_API(AttachPlayerObjectToObject, bool(IPlayer& player, IPlayerObject& object, IPlayerObject& attachedTo, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachPlayerObjectToObject, bool(IPlayer& player, IPlayerObject& object, IPlayerObject* attachedTo, Vector3 offset, Vector3 rotation))
 {
-	object.attachToObject(attachedTo, offset, rotation);
+	if (attachedTo)
+	{
+		object.attachToObject(*attachedTo, offset, rotation);
+	}
+	else
+	{
+		object.resetAttachment();
+	}
 	return true;
 }
 
