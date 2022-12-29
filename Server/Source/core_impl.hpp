@@ -979,12 +979,25 @@ private:
 		ghc::filesystem::create_directory(path);
 
 		auto componentsCfg = config.getStrings("components");
+		auto excludeCfg = config.getStrings("exclude");
 		if (!componentsCfg || componentsCfg->empty())
 		{
-			for (auto& p : ghc::filesystem::directory_iterator(path))
+			for (auto& de : ghc::filesystem::directory_iterator(path))
 			{
-				if (p.path().extension() == LIBRARY_EXT)
+				ghc::filesystem::path p = de.path();
+				if (p.extension() == LIBRARY_EXT)
 				{
+					if (excludeCfg && !excludeCfg->empty())
+					{
+						p.replace_extension("");
+						// Is this in the "don't load" list?
+						if (std::find(excludeCfg->begin(), excludeCfg->end(), p.filename().string()) != excludeCfg->end())
+						{
+							continue;
+						}
+						p.replace_extension(LIBRARY_EXT);
+					}
+
 					IComponent* component = loadComponent(p);
 					if (component)
 					{
@@ -998,11 +1011,22 @@ private:
 			for (const StringView component : *componentsCfg)
 			{
 				auto file = ghc::filesystem::path(path) / component.data();
-				if (!file.has_extension())
+				if (file.has_extension())
 				{
-					file.replace_extension(LIBRARY_EXT);
+					file.replace_extension("");
 				}
 
+				if (excludeCfg && !excludeCfg->empty())
+				{
+					// Is this in the "don't load" list?
+					if (std::find(excludeCfg->begin(), excludeCfg->end(), file.filename().string()) != excludeCfg->end())
+					{
+						continue;
+					}
+				}
+
+				// Now load it.
+				file.replace_extension(LIBRARY_EXT);
 				if (ghc::filesystem::exists(file))
 				{
 					IComponent* component = loadComponent(file);
@@ -1010,6 +1034,11 @@ private:
 					{
 						addComponent(component);
 					}
+				}
+				else
+				{
+					printLn("Loading component %s", file.filename().u8string().c_str());
+					printLn("\tCould not find component");
 				}
 			}
 		}
