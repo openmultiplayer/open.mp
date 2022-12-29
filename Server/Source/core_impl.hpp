@@ -998,7 +998,6 @@ private:
 						p.replace_extension(LIBRARY_EXT);
 					}
 
-					printLn("Loading component %s", p.filename().c_str());
 					IComponent* component = loadComponent(p);
 					if (component)
 					{
