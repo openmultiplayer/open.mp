@@ -27,6 +27,8 @@ private:
 	bool* logSQLite_;
 	bool* logSQLiteQueries_;
 
+	ICore* core_;
+
 public:
 	/// Creates a result set
 	/// @returns Result set if successful, otherwise "nullptr"
@@ -102,6 +104,12 @@ public:
 	/// @param databaseResultSetID Database result set ID
 	/// @returns Database result set
 	IDatabaseResultSet& getDatabaseResultSetByID(int databaseResultSetID) override;
+
+	/// To optionally log things from connections.
+	void log(LogLevel level, const char* fmt, ...) const;
+
+	/// To optionally log things from connections.
+	void logQuery(const char* fmt, ...) const;
 
 	void free() override
 	{

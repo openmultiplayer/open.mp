@@ -27,11 +27,8 @@ private:
 	/// Database connection handle
 	sqlite3* databaseConnectionHandle;
 
-	bool* const logSQLite_;
-	bool* const logSQLiteQueries_;
-
 public:
-	DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle, bool* logSQLite, bool* logSQLiteQueries);
+	DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle);
 
 	/// Gets its pool element ID
 	/// @return Pool element ID
