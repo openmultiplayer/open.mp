@@ -421,7 +421,26 @@ namespace RPC
 		HybridString<128> message;
 		bool read(NetworkBitStream& bs)
 		{
-			return bs.readDynStr32(message);
+			uint32_t len;
+			if (!bs.readUINT32(len))
+			{
+				return false;
+			}
+
+			// Check if received command has at least 2 characters (one is "/", and at least one more character as a command name)
+			// And if the entire string's length is over 256 or not, if it is, ignore it. (This is prevents malicious acts and spams)
+			if (len < 2 || len > 256)
+			{
+				return false;
+			}
+
+			if (len > unsigned(bitsToBytes(bs.GetNumberOfUnreadBits())))
+			{
+				return false;
+			}
+
+			message.reserve(len);
+			return bs.ReadBits(reinterpret_cast<unsigned char *>(message.data()), len * 8);
 		}
 
 		void write(NetworkBitStream& bs) const

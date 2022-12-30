@@ -1824,18 +1824,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		return std::all_of(name.begin(), name.end(),
 			[&](const char& character)
 			{
-				return allowNickCharacter[character];
+				return allowNickCharacter[static_cast<uint8_t>(character)];
 			});
 	}
 
 	void allowNickNameCharacter(char character, bool allow) override
 	{
-		allowNickCharacter[character] = allow;
+		allowNickCharacter[static_cast<uint8_t>(character)] = allow;
 	}
 
 	bool isNickNameCharacterAllowed(char character) const override
 	{
-		return allowNickCharacter[character];
+		return allowNickCharacter[static_cast<uint8_t>(character)];
 	}
 
 	bool isNameTaken(StringView name, const IPlayer* skip) override

@@ -57,6 +57,26 @@ public:
 			return;
 		}
 
+		// Limit list item length to prevent client from crashing
+		if (style == DialogStyle_LIST)
+		{
+			auto pos = body.find("\n");
+			if (pos == body.npos)
+			{
+				if (body.length() > 130)
+				{
+					return;
+				}
+			}
+			else
+			{
+				if (pos > 130)
+				{
+					return;
+				}
+			}
+		}
+
 		style_ = style;
 		title_ = String(title);
 		body_ = String(body);
