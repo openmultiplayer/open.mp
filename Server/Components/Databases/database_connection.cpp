@@ -43,17 +43,17 @@ IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query)
 	if (ret)
 	{
 		// TODO: Properly handle errors
-		parentDatabasesComponent->logQuery("%.*s", PRINT_VIEW(query));
+		parentDatabasesComponent->logQuery("[log_sqlite_queries]: %.*s", PRINT_VIEW(query));
 		if (sqlite3_exec(databaseConnectionHandle, query.data(), queryStepExecuted, ret, nullptr) != SQLITE_OK)
 		{
-			parentDatabasesComponent->log(LogLevel::Error, "Error executing query.");
+			parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query.");
 			parentDatabasesComponent->freeResultSet(*ret);
 			ret = nullptr;
 		}
 	}
 	else
 	{
-		parentDatabasesComponent->log(LogLevel::Error, "Could not create SQLite result set.");
+		parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Could not create SQLite result set.");
 	}
 	return ret;
 }
