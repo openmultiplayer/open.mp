@@ -108,7 +108,7 @@ public:
 	/// To optionally log things from connections.
 	void log(LogLevel level, const char* fmt, ...) const;
 
-	/// To optionally log things from connections.
+	/// To optionally log queries from connections.
 	void logQuery(const char* fmt, ...) const;
 
 	void free() override

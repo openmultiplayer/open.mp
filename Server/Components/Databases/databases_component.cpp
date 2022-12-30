@@ -42,7 +42,7 @@ void DatabasesComponent::log(LogLevel level, const char* fmt, ...) const
 	}
 }
 
-/// To optionally log things from queries.
+/// To optionally log queries from connections.
 void DatabasesComponent::logQuery(const char* fmt, ...) const
 {
 	if (core_ && logSQLiteQueries_ && *logSQLiteQueries_)
