@@ -807,7 +807,7 @@ SCRIPT_API(IsValidNickName, bool(const std::string& name))
 	return PawnManager::Get()->players->isNameValid(name);
 }
 
-SCRIPT_API(AllowNickNameCharacter, bool(char character, bool allow))
+SCRIPT_API(AllowNickNameCharacter, bool(int character, bool allow))
 {
 	PawnManager::Get()->players->allowNickNameCharacter(character, allow);
 	return true;
