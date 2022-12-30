@@ -705,4 +705,6 @@ static const FlatHashMap<String, String> DeprecatedNatives {
 	{ "RedirectDownload", "artwork cdn config option" },
 	{ "GetRunningTimers", "CountRunningTimers" },
 	{ "GetVehicleTower", "GetVehicleCab" },
+	// So people know how to use PawnPlus with us.
+	{ "str_buf_addr", "only using AmxString:" },
 };

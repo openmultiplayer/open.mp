@@ -311,6 +311,17 @@ int AMXAPI amx_StrSize(const cell* cstr, int* length)
 
 static AMX_NATIVE findfunction(const char* name, const AMX_NATIVE_INFO* list, int number)
 {
+	// Special case:
+	//
+	//   PawnPlus has `AmxString:` and `AmxBufferString:` to deal with the different ways that SA:MP
+	//   accesses strings in memory.  We have a more consistent access method, which always
+	//   corresponds to `AmxString:`.  Thus we replace the `AmxBufferString:` lookup function with
+	//   the `AmxString:` lookup function and lie to the script.
+	//
+	if (strcmp("str_buf_addr", name) == 0)
+	{
+		name = "str_addr";
+	}
 	int i;
 
 	assert(list != NULL);
