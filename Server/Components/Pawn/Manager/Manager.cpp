@@ -551,7 +551,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 				amx->reset_hea,
 			};
 		}
-		else
+		else if (err != AMX_ERR_NOTFOUND)
 		{
 			// If there's no `main` ignore it for now.
 			core->logLn(LogLevel::Error, "%s", aux_StrError(err));
