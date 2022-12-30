@@ -27,7 +27,7 @@ elseif(UNIX)
 	if(NOT APPLE)
 		set(CMAKE_CXX_STDLIB "libstdc++" CACHE STRING "The standard library to use.")
 		set(CROSS_BUILD FALSE CACHE BOOL "Whether to cross-build.")
-		set(TARGET_BUILD_ARCH "armv6" CACHE STRING "The architecture to cross-build for.")
+		set(TARGET_BUILD_ARCH "x86" CACHE STRING "The architecture to build for.")
 		set(SHARED_OPENSSL TRUE CACHE BOOL "Whether to dynamically link the OpenSSL library")
 		set(STATIC_STDCXX FALSE CACHE BOOL "Whether to statically link against libc++.")
 	# Apple Clang
