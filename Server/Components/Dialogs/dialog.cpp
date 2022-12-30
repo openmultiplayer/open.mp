@@ -28,6 +28,8 @@ static const NetCode::RPC::ShowDialog hideDialog = {
 class PlayerDialogData final : public IPlayerDialogData
 {
 private:
+	ICore* core_ = nullptr;
+
 	int activeId = INVALID_DIALOG_ID;
 
 	String title_ = "";
@@ -39,6 +41,15 @@ private:
 	friend class DialogsComponent;
 
 public:
+	PlayerDialogData(ICore* c)
+		: core_(c)
+	{
+	}
+
+	~PlayerDialogData()
+	{
+	}
+
 	void hide(IPlayer& player) override
 	{
 		if (activeId != INVALID_DIALOG_ID)
@@ -158,7 +169,7 @@ private:
 public:
 	void onPlayerConnect(IPlayer& player) override
 	{
-		player.addExtension(new PlayerDialogData(), true);
+		player.addExtension(new PlayerDialogData(core), true);
 	}
 
 	StringView componentName() const override
