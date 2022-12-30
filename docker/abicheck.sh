@@ -20,7 +20,7 @@
 [[ -z "$BUILD_TOOLS" ]] \
 && build_tools=0 \
 || build_tools="$BUILD_TOOLS"
-# Available options: any architecture name
+# Available options: [x86], x86_64, armv4, armv4i, armv5el, armv5hf, armv6, armv7, armv7hf, armv7s, armv7k, armv8, armv8_32, armv8.3
 [[ -z "$TARGET_BUILD_ARCH" ]] \
 && target_build_arch=x86 \
 || target_build_arch="$TARGET_BUILD_ARCH"
