@@ -42,7 +42,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	int* gameTimeUpdateRate;
 	bool* useAllAnimations_;
 	bool* allowInteriorWeapons_;
-	int maxBots = 0;
+	int* maxBots;
 	StaticArray<bool, 256> allowNickCharacter;
 
 	struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler
@@ -1615,7 +1615,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 	Pair<NewConnectionResult, IPlayer*> requestPlayer(const PeerNetworkData& netData, const PeerRequestParams& params) override
 	{
-		if (params.bot && botList.size() >= maxBots)
+		if (params.bot && botList.size() >= *maxBots)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
 		}
@@ -1951,7 +1951,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		gameTimeUpdateRate = config.getInt("network.time_sync_rate");
 		useAllAnimations_ = config.getBool("game.use_all_animations");
 		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
-		maxBots = *config.getInt("max_bots");
+		maxBots = config.getInt("max_bots");
 
 		playerUpdateDispatcher.addEventHandler(this);
 		core.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
