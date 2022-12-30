@@ -8,9 +8,11 @@
 
 #include "databases_component.hpp"
 
-DatabaseConnection::DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle)
+DatabaseConnection::DatabaseConnection(DatabasesComponent* parentDatabasesComponent, sqlite3* databaseConnectionHandle, bool* logSQLite, bool* logSQLiteQueries)
 	: parentDatabasesComponent(parentDatabasesComponent)
 	, databaseConnectionHandle(databaseConnectionHandle)
+	, logSQLite_(logSQLite)
+	, logSQLiteQueries_(logSQLiteQueries)
 {
 }
 
@@ -48,6 +50,9 @@ IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query)
 			parentDatabasesComponent->freeResultSet(*ret);
 			ret = nullptr;
 		}
+	}
+	else if (logSQLite_ && *logSQLite_)
+	{
 	}
 	return ret;
 }

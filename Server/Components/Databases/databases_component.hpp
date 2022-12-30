@@ -24,6 +24,9 @@ private:
 	/// TODO: Replace with a pool type that grows dynamically
 	DynamicPoolStorage<DatabaseResultSet, IDatabaseResultSet, 1, 2049> databaseResultSets;
 
+	bool* logSQLite_;
+	bool* logSQLiteQueries_;
+
 public:
 	/// Creates a result set
 	/// @returns Result set if successful, otherwise "nullptr"

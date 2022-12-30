@@ -23,7 +23,11 @@ IDatabaseResultSet* DatabasesComponent::createResultSet()
 /// Called for every component after components have been loaded
 /// Should be used for storing the core interface, registering player/core event handlers
 /// Should NOT be used for interacting with other components as they might not have been initialised yet
-void DatabasesComponent::onLoad(ICore* c) { }
+void DatabasesComponent::onLoad(ICore* c)
+{
+	logSQLite_ = c->getConfig().getBool("logging.log_sqlite");
+	logSQLiteQueries_ = c->getConfig().getBool("logging.log_sqlite_queries");
+}
 
 /// Opens a new database connection
 /// @param path Path to the database
@@ -39,7 +43,7 @@ IDatabaseConnection* DatabasesComponent::open(StringView path, int flags)
 	sqlite3* database_connection_handle(nullptr);
 	if (sqlite3_open_v2(path.data(), &database_connection_handle, flags, nullptr) == SQLITE_OK)
 	{
-		ret = databaseConnections.emplace(this, database_connection_handle);
+		ret = databaseConnections.emplace(this, database_connection_handle, logSQLite_, logSQLiteQueries_);
 		if (!ret)
 		{
 			sqlite3_close_v2(database_connection_handle);
