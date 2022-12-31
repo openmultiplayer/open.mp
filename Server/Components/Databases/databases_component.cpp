@@ -23,7 +23,36 @@ IDatabaseResultSet* DatabasesComponent::createResultSet()
 /// Called for every component after components have been loaded
 /// Should be used for storing the core interface, registering player/core event handlers
 /// Should NOT be used for interacting with other components as they might not have been initialised yet
-void DatabasesComponent::onLoad(ICore* c) { }
+void DatabasesComponent::onLoad(ICore* c)
+{
+	core_ = c;
+	logSQLite_ = core_->getConfig().getBool("logging.log_sqlite");
+	logSQLiteQueries_ = core_->getConfig().getBool("logging.log_sqlite_queries");
+}
+
+/// To optionally log things from connections.
+void DatabasesComponent::log(LogLevel level, const char* fmt, ...) const
+{
+	if (core_ && logSQLite_ && *logSQLite_)
+	{
+		va_list args;
+		va_start(args, fmt);
+		core_->vlogLn(level, fmt, args);
+		va_end(args);
+	}
+}
+
+/// To optionally log queries from connections.
+void DatabasesComponent::logQuery(const char* fmt, ...) const
+{
+	if (core_ && logSQLiteQueries_ && *logSQLiteQueries_)
+	{
+		va_list args;
+		va_start(args, fmt);
+		core_->vlogLn(LogLevel::Message, fmt, args);
+		va_end(args);
+	}
+}
 
 /// Opens a new database connection
 /// @param path Path to the database
