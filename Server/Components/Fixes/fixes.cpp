@@ -592,13 +592,13 @@ public:
 		// Hide all gametexts.
 		for (int style = 0; style != MAX_GAMETEXT_STYLES; ++style)
 		{
-			if (gts_[style])
+			if (gtTimers_[style])
 			{
 				gtTimers_[style]->kill();
-				tds_->release(gts_[style]->getID());
-				gts_[style] = nullptr;
 				gtTimers_[style] = nullptr;
 			}
+			// Don't destroy the TD, the TD component does that.  Just reset the pointer.
+			gts_[style] = nullptr;
 		}
 		// Kill all animation timers for this player.
 		for (auto& anim : animationToReapply_)
