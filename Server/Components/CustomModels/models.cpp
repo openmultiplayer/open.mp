@@ -121,7 +121,8 @@ public:
 			core->logLn(LogLevel::Warning, "No bind address provided. Attempting to start webserver on 127.0.0.1:%d", port);
 		}
 
-		svr.new_task_queue = [&] {
+		svr.new_task_queue = [&]
+		{
 			return new httplib::ThreadPool(threadsCount);
 		};
 

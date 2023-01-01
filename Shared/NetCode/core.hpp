@@ -440,7 +440,7 @@ namespace RPC
 			}
 
 			message.reserve(len);
-			return bs.ReadBits(reinterpret_cast<unsigned char *>(message.data()), len * 8);
+			return bs.ReadBits(reinterpret_cast<unsigned char*>(message.data()), len * 8);
 		}
 
 		void write(NetworkBitStream& bs) const
