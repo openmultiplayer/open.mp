@@ -237,6 +237,8 @@ private:
 	IUnicodeComponent* unicode = nullptr;
 	ICore& core;
 
+	std::map<String, ConfigStorage> defaults;
+
 	void processNode(const nlohmann::json::object_t& node, String ns = "")
 	{
 		for (const auto& kv : node)
@@ -347,6 +349,24 @@ public:
 		else
 		{
 			processed = Defaults;
+		}
+		defaults = processed;
+	}
+
+	void reset()
+	{
+		// Don't use the copy constructor because we need to keep pointers valid.
+		for (auto const& i : defaults)
+		{
+			auto it = processed.find(i.first);
+			if (it == processed.end())
+			{
+				continue;
+			}
+			if (it->second.index() == i.second.index())
+			{
+				it->second = i.second;
+			}
 		}
 	}
 
@@ -1347,6 +1367,7 @@ public:
 		reloading_ = true;
 		NetCode::RPC::PlayerClose RPC;
 		PacketHelper::broadcast(RPC, players);
+		config.reset();
 		components.reset();
 		players.removeSyncPacketsHandlers();
 
