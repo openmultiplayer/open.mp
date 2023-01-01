@@ -82,10 +82,10 @@ static IDatabaseConnection* doDBOpen(const std::string& name, int flags)
 		return PawnManager::Get()->databases->open(name, flags);
 	}
 	// Should we allow this?
-	//else if (protocol == "file:///")
-	//{
-	//	return PawnManager::Get()->databases->open(name, flags);
-	//}
+	// else if (protocol == "file:///")
+	// {
+	// 	return PawnManager::Get()->databases->open(name, flags);
+	// }
 	else
 	{
 		// TODO: Pass in the flags.

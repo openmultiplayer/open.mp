@@ -95,7 +95,7 @@ private:
 	std::shared_mutex mutex_;
 
 public:
-	WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port, StringView publicAddr)
+	WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port, StringView publicAddr, uint16_t threadsCount)
 		: port_(port)
 	{
 
@@ -120,6 +120,11 @@ public:
 
 			core->logLn(LogLevel::Warning, "No bind address provided. Attempting to start webserver on 127.0.0.1:%d", port);
 		}
+
+		svr.new_task_queue = [&]
+		{
+			return new httplib::ThreadPool(threadsCount);
+		};
 
 		svr.set_pre_routing_handler([&](const auto& req, auto& res)
 			{
@@ -292,6 +297,7 @@ private:
 	String modelsPath = "models";
 	String cdn = "";
 	bool usingCdn = false;
+	uint16_t httpThreads = 50; // default max_players is 50
 
 	DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
@@ -405,6 +411,7 @@ public:
 			config.setBool("artwork.enable", enabled);
 			config.setString("artwork.cdn", cdn);
 			config.setString("artwork.models_path", modelsPath);
+			config.setInt("network.http_threads", httpThreads);
 		}
 		else
 		{
@@ -422,6 +429,10 @@ public:
 			{
 				config.setString("artwork.models_path", modelsPath);
 			}
+			if (config.getType("network.http_threads") == ConfigOptionType_None)
+			{
+				config.setInt("network.http_threads", httpThreads);
+			}
 		}
 	}
 
@@ -434,6 +445,7 @@ public:
 		enabled = *core->getConfig().getBool("artwork.enable");
 		modelsPath = String(core->getConfig().getString("artwork.models_path"));
 		cdn = String(core->getConfig().getString("artwork.cdn"));
+		httpThreads = *core->getConfig().getInt("network.http_threads");
 
 		NetCode::RPC::RequestTXD::addEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::RequestDFF::addEventHandler(*core, &requestDownloadLinkHandler);
@@ -502,11 +514,17 @@ public:
 			return;
 		}
 
-		webServer = new WebServer(core, modelsPath, core->getConfig().getString("network.bind"), *core->getConfig().getInt("network.port"), core->getConfig().getString("network.public_addr"));
+		webServer = new WebServer(core, modelsPath, core->getConfig().getString("network.bind"), *core->getConfig().getInt("network.port"), core->getConfig().getString("network.public_addr"), httpThreads);
 
 		if (webServer->is_running())
 		{
 			core->logLn(LogLevel::Message, "Web server is running on %.*s", PRINT_VIEW(webServer->getUrl()));
+
+			const auto maxPlayers = *core->getConfig().getInt("max_players");
+			if (httpThreads < maxPlayers / 2)
+			{
+				core->logLn(LogLevel::Warning, "HTTP threads count value (%d) is much lower than MAX_PLAYERS (%d). Players may encounter slow download times.", httpThreads, maxPlayers);
+			}
 		}
 		else
 		{
