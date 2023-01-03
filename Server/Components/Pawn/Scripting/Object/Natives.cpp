@@ -57,9 +57,16 @@ SCRIPT_API(AttachObjectToObject, bool(IObject& object, IObject* objAttachedTo, V
 	return true;
 }
 
-SCRIPT_API(AttachObjectToPlayer, bool(IObject& object, IPlayer& player, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachObjectToPlayer, bool(IObject& object, IPlayer* player, Vector3 offset, Vector3 rotation))
 {
-	object.attachToPlayer(player, offset, rotation);
+	if (player)
+	{
+		object.attachToPlayer(*player, offset, rotation);
+	}
+	else
+	{
+		object.resetAttachment();
+	}
 	return true;
 }
 

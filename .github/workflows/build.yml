@@ -47,10 +47,6 @@ jobs:
         run: |
           echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
           echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
-          echo "build_ubuntu_version=18.04" >> $GITHUB_OUTPUT
-          echo "build_shared=0" >> $GITHUB_OUTPUT
-          echo "build_server=1" >> $GITHUB_OUTPUT
-          echo "build_tools=0" >> $GITHUB_OUTPUT
 
       - name: Setup Python
         uses: actions/setup-python@v2
@@ -69,7 +65,7 @@ jobs:
           $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
           mkdir build
           cd build
-          cmake .. -A Win32 -T "ClangCL"
+          cmake -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A Win32 -T "ClangCL"
 
       - name: Build
         run: |

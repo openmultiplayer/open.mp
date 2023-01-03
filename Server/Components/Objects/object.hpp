@@ -367,11 +367,7 @@ public:
 
 	void stop() override;
 
-	void resetAttachment() override
-	{
-		this->BaseObject<IObject>::resetAttachment();
-		restream();
-	}
+	void resetAttachment() override;
 
 	void setPosition(Vector3 position) override;
 
@@ -407,17 +403,7 @@ public:
 		restream();
 	}
 
-	void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) override
-	{
-		const int id = player.getID();
-		setAttachmentData(ObjectAttachmentData::Type::Player, id, offset, rotation, true);
-		NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-		attachObjectToPlayerRPC.ObjectID = poolID;
-		attachObjectToPlayerRPC.PlayerID = id;
-		attachObjectToPlayerRPC.Offset = offset;
-		attachObjectToPlayerRPC.Rotation = rotation;
-		PacketHelper::broadcastToStreamed(attachObjectToPlayerRPC, player);
-	}
+	void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) override;
 
 	~Object();
 	void destream();
@@ -451,6 +437,8 @@ public:
 	{
 	}
 
+	void createObjectForClient(IPlayer& player);
+
 	void setMaterial(uint32_t materialIndex, int model, StringView textureLibrary, StringView textureName, Colour colour) override;
 
 	void setMaterialText(uint32_t materialIndex, StringView text, ObjectMaterialSize materialSize, StringView fontFace, int fontSize, bool bold, Colour fontColour, Colour backgroundColour, ObjectMaterialTextAlign align) override;
@@ -461,11 +449,7 @@ public:
 
 	bool advance(Microseconds elapsed, TimePoint now);
 
-	void resetAttachment() override
-	{
-		this->BaseObject<IPlayerObject>::resetAttachment();
-		restream();
-	}
+	void resetAttachment() override;
 
 	void setPosition(Vector3 position) override;
 
@@ -500,6 +484,8 @@ public:
 		setAttachmentData(ObjectAttachmentData::Type::Object, object.getID(), offset, rotation, true);
 		restream();
 	}
+
+	void attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation) override;
 
 	~PlayerObject();
 	void destream();

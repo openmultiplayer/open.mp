@@ -24,6 +24,7 @@ private:
 	std::list<uint16_t> slotsUsedByPlayerObjects;
 	FlatPtrHashSet<PlayerObject> processedPlayerObjects;
 	FlatPtrHashSet<Object> processedObjects;
+	FlatPtrHashSet<Object> attachedToPlayer;
 	bool defCameraCollision = true;
 
 	ICustomModelsComponent* models = nullptr;
@@ -414,54 +415,9 @@ public:
 		return storage._entries();
 	}
 
-	void onPoolEntryDestroyed(IPlayer& player) override
-	{
-		const int pid = player.getID();
-		for (IObject* obj : storage)
-		{
-			const ObjectAttachmentData& data = obj->getAttachmentData();
-			if (data.type == ObjectAttachmentData::Type::Player && data.ID == pid)
-			{
-				obj->resetAttachment();
-			}
-		}
-	}
+	void onPoolEntryDestroyed(IPlayer& player) override;
 
-	void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) override
-	{
-		const int pid = player.getID();
-		for (IObject* object : storage)
-		{
-			Object* obj = static_cast<Object*>(object);
-			const ObjectAttachmentData& attachment = obj->getAttachmentData();
-			if (attachment.type == ObjectAttachmentData::Type::Player && attachment.ID == pid)
-			{
-				NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-				attachObjectToPlayerRPC.ObjectID = obj->poolID;
-				attachObjectToPlayerRPC.PlayerID = attachment.ID;
-				attachObjectToPlayerRPC.Offset = attachment.offset;
-				attachObjectToPlayerRPC.Rotation = attachment.rotation;
-				PacketHelper::send(attachObjectToPlayerRPC, forPlayer);
-			}
-		}
-
-		IPlayerObjectData* objectData = queryExtension<IPlayerObjectData>(player);
-		if (objectData)
-		{
-			for (int i = 0; i < MAX_ATTACHED_OBJECT_SLOTS; ++i)
-			{
-				if (objectData->hasAttachedObject(i))
-				{
-					NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
-					setPlayerAttachedObjectRPC.PlayerID = player.getID();
-					setPlayerAttachedObjectRPC.Index = i;
-					setPlayerAttachedObjectRPC.Create = true;
-					setPlayerAttachedObjectRPC.AttachmentData = objectData->getAttachedObject(i);
-					PacketHelper::send(setPlayerAttachedObjectRPC, forPlayer);
-				}
-			}
-		}
-	}
+	void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) override;
 
 	// Pre-spawn so you can safely attach onPlayerSpawn
 	void onPlayerSpawn(IPlayer& player) override
@@ -499,6 +455,7 @@ public:
 		storage.clear();
 		isPlayerObject.fill(0);
 		defCameraCollision = true;
+		attachedToPlayer.clear();
 	}
 
 	bool is037CompatModeEnabled() const { return compatModeEnabled; }
@@ -506,6 +463,9 @@ public:
 
 	inline const std::list<uint16_t>& getSlotsUsedByPlayerObjects() const { return slotsUsedByPlayerObjects; }
 	bool isGroupPlayerObjects() const { return groupPlayerObjects ? *groupPlayerObjects : false; }
+
+	void onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer) override;
+	inline FlatPtrHashSet<Object>& getAttachedToPlayers() { return attachedToPlayer; }
 };
 
 class PlayerObjectData final : public IPlayerObjectData
@@ -516,6 +476,7 @@ private:
 	StaticBitset<MAX_ATTACHED_OBJECT_SLOTS> slotsOccupied_;
 	StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
 	MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, 1, OBJECT_POOL_SIZE> storage;
+	FlatPtrHashSet<PlayerObject> attachedToPlayer_;
 	bool inObjectSelection_;
 	bool inObjectEdit_;
 	bool streamedGlobalObjects_;
@@ -635,6 +596,7 @@ public:
 			component_.decrementPlayerCounter(index);
 			obj->destream();
 			storage.release(index, false);
+			attachedToPlayer_.erase(obj);
 		}
 	}
 
@@ -677,6 +639,7 @@ public:
 		streamedGlobalObjects_ = false;
 		slotsOccupied_.reset();
 		storage.clear();
+		attachedToPlayer_.clear();
 	}
 
 	void beginSelecting() override
@@ -794,5 +757,15 @@ public:
 	void setStreamedGlobalObjects(bool value)
 	{
 		streamedGlobalObjects_ = value;
+	}
+
+	ObjectComponent& getComponent()
+	{
+		return component_;
+	}
+
+	inline FlatPtrHashSet<PlayerObject>& getAttachedToPlayerObjects()
+	{
+		return attachedToPlayer_;
 	}
 };
