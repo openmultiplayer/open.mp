@@ -212,7 +212,7 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
 /// Pass-through to a noinline function to avoid adding complex instructions to the prologue that sampgdk can't handle
 /// This should work in every case as both JMP and CALL are at least 5 bytes in size;
 /// even in the minimal case it's guaranteed to contain a single JMP which is what sampgdk needs for a hook
-int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
+__attribute__((optnone)) int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
 {
 	return amx_FindPublic_impl(amx, name, index);
 }
