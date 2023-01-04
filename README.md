@@ -22,7 +22,7 @@
 
 * [Visual Studio 2019+](https://www.visualstudio.com/)
 
-Visual Studio needs the `Desktop development with C++` workload with the `MSVC v142`, `Windows 10 SDK` and `C++ Clang tools for Windows` components.
+Visual Studio needs the `Desktop development with C++` workload with the `MSVC v143`, `Windows 11 SDK`, `C++ CMake tools for Windows` and `C++ Clang tools for Windows` components.
 
 ## Sources
 
@@ -42,6 +42,5 @@ cd open.mp
 mkdir build
 cd build
 cmake .. -A Win32 -T ClangCL
+cmake --build . --config RelWithDebInfo
 ```
-
-Open Visual Studio and build the solution.
