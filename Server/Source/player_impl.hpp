@@ -17,6 +17,7 @@
 #include <Server/Components/CustomModels/custommodels.hpp>
 #include <Server/Components/Fixes/fixes.hpp>
 #include <events.hpp>
+#include <ghc/filesystem.hpp>
 #include <glm/glm.hpp>
 #include <netcode.hpp>
 #include <network.hpp>
@@ -117,6 +118,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool allowWeapons_;
 	bool allowTeleport_;
 	bool isUsingOfficialClient_;
+	PlayerRecordingType recordType_;
+	TimePoint recordStart_;
+	std::ofstream recordFile_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -177,6 +181,9 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		numStreamed_ = 0;
 		allowWeapons_ = true;
 		allowTeleport_ = false;
+		recordType_ = PlayerRecordingType_None;
+		recordStart_ = TimePoint();
+		recordFile_.close();
 
 		streamedFor_.clear();
 		streamedFor_.add(poolID, *this);
@@ -254,6 +261,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, allowWeapons_(true)
 		, allowTeleport_(false)
 		, isUsingOfficialClient_(params.isUsingOfficialClient)
+		, recordType_(PlayerRecordingType_None)
+		, recordStart_()
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -313,6 +322,40 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isUsingOfficialClient() const override
 	{
 		return isUsingOfficialClient_;
+	}
+
+	void startRecordingData(PlayerRecordingType recordType, StringView recordFile) override
+	{
+		recordType_ = recordType;
+		recordStart_ = Time::now();
+
+		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles/");
+		std::string recordFilePath = scriptfilesPath.string() + std::string(recordFile) + ".rec";
+		recordFile_.open(recordFilePath, std::ios_base::out | std::ios_base::binary);
+
+		// Write recording header
+		if (recordFile_.good())
+		{
+			uint32_t version = 1000;
+			recordFile_.write((char*)&version, sizeof(uint32_t));
+			recordFile_.write((char*)&recordType_, sizeof(uint32_t));
+		}
+
+		// To view/edit the recorded data as a CSV, see https://github.com/WoutProvost/samp-rec-to-csv
+
+		// SA-MP server:
+		// - file already exists ==> overwrite
+		// - mode is NONE ==>  don't record parts when on foot or driver, so only header is written
+		// - mode is DRIVER ==> don't record parts when on foot, but record parts when driver, timer keeps going for non recorded parts
+		// - mode is ONFOOT ==> don't record parts when driver, but record parts when on foot, timer keeps going for non recorded parts
+		// - OnPlayerUpdate return 0 ==> keep recording, recording not affected by this event's return value
+	}
+
+	void stopRecordingData() override
+	{
+		recordType_ = PlayerRecordingType_None;
+		recordStart_ = TimePoint();
+		recordFile_.close();
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);

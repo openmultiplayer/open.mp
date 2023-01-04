@@ -486,6 +486,27 @@ namespace Packet
 				bs.writeUINT16(TrailerID);
 			}
 		}
+
+		void writeRecording(std::ofstream& fs) const
+		{
+			uint8_t playerHealth = PlayerHealthArmour.x;
+			uint8_t playerArmour = PlayerHealthArmour.y;
+			fs.write((char*)&VehicleID, sizeof(uint16_t));
+			fs.write((char*)&LeftRight, sizeof(uint16_t));
+			fs.write((char*)&UpDown, sizeof(uint16_t));
+			fs.write((char*)&Keys, sizeof(uint16_t));
+			fs.write((char*)&Rotation, sizeof(float)*4);
+			fs.write((char*)&Position, sizeof(float)*3);
+			fs.write((char*)&Velocity, sizeof(float)*3);
+			fs.write((char*)&Health, sizeof(float));
+			fs.write((char*)&playerHealth, sizeof(uint8_t));
+			fs.write((char*)&playerArmour, sizeof(uint8_t));
+			fs.write((char*)&AdditionalKeyWeapon, sizeof(uint8_t));
+			fs.write((char*)&Siren, sizeof(uint8_t));
+			fs.write((char*)&LandingGear, sizeof(uint8_t));
+			fs.write((char*)&TrailerID, sizeof(uint16_t));
+			fs.write((char*)&HydraThrustAngle, sizeof(uint32_t));
+		}
 	};
 
 	struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::Packet, OrderingChannel_SyncPacket>, VehiclePassengerSyncPacket
