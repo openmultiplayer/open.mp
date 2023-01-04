@@ -755,6 +755,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				player.footSync_ = footSync;
 				player.primarySyncUpdateType_ = PrimarySyncUpdateType::OnFoot;
 			}
+
+			// Write on foot recording data
+			if (player.recordFile_.good() && player.recordType_ == PlayerRecordingType_OnFoot)
+			{
+				uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(now - player.recordStart_).count();
+				player.recordFile_.write((char*)&timeSinceRecordStart, sizeof(uint32_t));
+				footSync.writeRecording(player.recordFile_);
+			}
 			return true;
 		}
 	} playerFootSyncHandler;
@@ -1152,6 +1160,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					player.vehicleSync_ = vehicleSync;
 					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
+				}
+
+				// Write driver recording data
+				if (player.recordFile_.good() && player.recordType_ == PlayerRecordingType_Driver)
+				{
+					uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(now - player.recordStart_).count();
+					player.recordFile_.write((char*)&timeSinceRecordStart, sizeof(uint32_t));
+					vehicleSync.writeRecording(player.recordFile_);
 				}
 			}
 			return true;

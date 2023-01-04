@@ -964,12 +964,14 @@ SCRIPT_API(SpawnPlayer, bool(IPlayer& player))
 
 SCRIPT_API(StartRecordingPlayerData, bool(IPlayer& player, int recordType, std::string const& recordFile))
 {
-	throw pawn_natives::NotImplemented();
+	player.startRecordingData(PlayerRecordingType(recordType), recordFile);
+	return true;
 }
 
 SCRIPT_API(StopRecordingPlayerData, bool(IPlayer& player))
 {
-	throw pawn_natives::NotImplemented();
+	player.stopRecordingData();
+	return true;
 }
 
 SCRIPT_API(gpci, int(IPlayer& player, OutputOnlyString& output))
