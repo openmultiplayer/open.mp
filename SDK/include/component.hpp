@@ -6,6 +6,8 @@
 #define BUILD_NUMBER 0
 #endif
 
+#define OMP_VERSION_SUPPORTED 1
+
 /// Should always be used in classes inheriting IExtension
 #define PROVIDE_EXT_UID(uuid)                 \
 	static constexpr UID ExtensionIID = uuid; \
@@ -190,6 +192,17 @@ struct IEarlyConfig;
 /// A component interface
 struct IComponent : public IExtensible, public IUIDProvider
 {
+	/// The idea is for the SDK to be totally forward compatible, so code built at any time will
+	/// always work, thanks to ABI compatibility.  This method is an emergency trap door, just in
+	/// case that's ever not the problem.  Check which major version this component was built for,
+	/// if it isn't the current major version, fail to load it.  Always just returns a constant,
+	/// recompiling will often be enough to upgrade.  `virtual` and `final` to be the vtable, but it
+	/// can't be overridden because it is a constant.
+	virtual int supportedVersion() const final
+	{
+		return OMP_VERSION_SUPPORTED;
+	}
+
 	/// Get the component's name
 	virtual StringView componentName() const = 0;
 
