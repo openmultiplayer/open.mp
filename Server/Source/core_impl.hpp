@@ -973,25 +973,29 @@ private:
 			return nullptr;
 		}
 		IComponent* component = OnComponentLoad();
-		if (component != nullptr)
-		{
-			SemanticVersion ver = component->componentVersion();
-			printLn(
-				"\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
-				PRINT_VIEW(component->componentName()),
-				ver.major,
-				ver.minor,
-				ver.patch,
-				ver.prerel,
-				component->getUID());
-			return component;
-		}
-		else
+		if (component == nullptr)
 		{
 			printLn("\tFailed to load component.");
 			LIBRARY_FREE(componentLib);
 			return nullptr;
 		}
+		int supports = component->supportedVersion();
+		if (supports != OMP_VERSION_MAJOR)
+		{
+			printLn("\tFailed to load component: Built for open.mp version %d, now on %d.", supports, OMP_VERSION_MAJOR);
+			LIBRARY_FREE(componentLib);
+			return nullptr;
+		}
+		SemanticVersion ver = component->componentVersion();
+		printLn(
+			"\tSuccessfully loaded component %.*s (%u.%u.%u.%u) with UID %016llx",
+			PRINT_VIEW(component->componentName()),
+			ver.major,
+			ver.minor,
+			ver.patch,
+			ver.prerel,
+			component->getUID());
+		return component;
 	}
 
 	void loadComponents(const ghc::filesystem::path& path)
