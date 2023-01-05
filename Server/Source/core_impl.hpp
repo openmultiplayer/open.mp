@@ -980,7 +980,6 @@ private:
 			return nullptr;
 		}
 		int supports = component->supportedVersion();
-		printLn("\tComponent supported version: %d.", supports);
 		if (supports != OMP_VERSION_MAJOR)
 		{
 			printLn("\tFailed to load component: Built for open.mp version %d, now on %d.", supports, OMP_VERSION_MAJOR);
