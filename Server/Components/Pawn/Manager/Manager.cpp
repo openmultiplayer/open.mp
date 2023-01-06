@@ -652,6 +652,7 @@ bool PawnManager::Reload(std::string const& name)
 	script.tryLoad(canon);
 	openAMX(script, false);
 	amxToScript_.emplace(script.GetAMX(), &script);
+	return true;
 }
 
 bool PawnManager::Unload(std::string const& name)
