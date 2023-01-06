@@ -106,6 +106,8 @@ public:
 
 	using IPawnScript::Register;
 
+	bool tryLoad(std::string const& path);
+
 private:
 	ICore* serverCore;
 	AMX amx_;

@@ -431,55 +431,8 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 	return Load("gamemodes/" + gamemodes_[0], true);
 }
 
-bool PawnManager::Load(std::string const& name, bool isEntryScript)
+void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 {
-	if (mainName_ == name)
-	{
-		if (mainScript_)
-		{
-			return false;
-		}
-	}
-	else
-	{
-		if (findScript(name) != scripts_.end())
-		{
-			return false;
-		}
-	}
-
-	// if the user just supplied a script name, add the extension
-	// otherwise, don't, as they may have supplied a full abs/rel path.
-	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
-
-	std::string canon;
-	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	PawnScript* ptr = new PawnScript(++id_, canon, core);
-
-	if (!ptr || !ptr->IsLoaded())
-	{
-		// core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
-		return false;
-	}
-	ptr->name_ = name;
-
-	PawnScript& script = *ptr;
-
-	if (isEntryScript)
-	{
-		mainName_ = name;
-		delete mainScript_;
-		mainScript_ = ptr;
-		amxToScript_.emplace(mainScript_->GetAMX(), mainScript_);
-
-		unloadNextTick_ = false;
-		nextScriptName_ = "";
-	}
-	else
-	{
-		scripts_.push_back(ptr);
-		amxToScript_.emplace(script.GetAMX(), ptr);
-	}
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
 	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
 	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
@@ -572,42 +525,63 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	{
 		script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
 	}
-	return true;
 }
 
-bool PawnManager::Reload(std::string const& name)
+bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
-	// Entry script reload is not supported.
 	if (mainName_ == name)
 	{
-		return false;
-	}
-
-	Unload(name);
-	return Load(name, false);
-}
-
-bool PawnManager::Unload(std::string const& name)
-{
-	auto pos = findScript(name);
-	bool isEntryScript = mainName_ == name;
-	if (isEntryScript)
-	{
-		if (!mainScript_)
+		if (mainScript_)
 		{
 			return false;
 		}
 	}
 	else
 	{
-		if (pos == scripts_.end())
+		if (findScript(name) != scripts_.end())
 		{
 			return false;
 		}
 	}
-	PawnScript& script = isEntryScript ? *mainScript_ : *reinterpret_cast<PawnScript*>(*pos);
 
-	// Call `OnPlayerDisconnect`.
+	// if the user just supplied a script name, add the extension
+	// otherwise, don't, as they may have supplied a full abs/rel path.
+	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
+
+	std::string canon;
+	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
+	PawnScript* ptr = new PawnScript(++id_, canon, core);
+
+	if (!ptr || !ptr->IsLoaded())
+	{
+		// core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
+		return false;
+	}
+	ptr->name_ = name;
+
+	PawnScript& script = *ptr;
+
+	if (isEntryScript)
+	{
+		mainName_ = name;
+		delete mainScript_;
+		mainScript_ = ptr;
+		amxToScript_.emplace(mainScript_->GetAMX(), mainScript_);
+
+		unloadNextTick_ = false;
+		nextScriptName_ = "";
+	}
+	else
+	{
+		scripts_.push_back(ptr);
+		amxToScript_.emplace(script.GetAMX(), ptr);
+	}
+	openAMX(script, isEntryScript);
+	return true;
+}
+
+void PawnManager::closeAMX(PawnScript& script, bool isEntryScript)
+{
 	AMX* amx = script.GetAMX();
 	int idx;
 	bool once = true;
@@ -656,6 +630,46 @@ is `2`.
 	pluginManager.AmxUnload(script.GetAMX());
 	eventDispatcher.dispatch(&PawnEventHandler::onAmxUnload, script);
 	amxToScript_.erase(script.GetAMX());
+}
+
+bool PawnManager::Reload(std::string const& name)
+{
+	// Entry script reload is not supported.
+	if (mainName_ == name)
+	{
+		return false;
+	}
+
+	auto pos = findScript(name);
+	if (pos == scripts_.end())
+	{
+		return false;
+	}
+	PawnScript& script = *reinterpret_cast<PawnScript*>(*pos);
+	closeAMX(script, false);
+	return Load(name, false);
+}
+
+bool PawnManager::Unload(std::string const& name)
+{
+	auto pos = findScript(name);
+	bool isEntryScript = mainName_ == name;
+	if (isEntryScript)
+	{
+		if (!mainScript_)
+		{
+			return false;
+		}
+	}
+	else
+	{
+		if (pos == scripts_.end())
+		{
+			return false;
+		}
+	}
+	PawnScript& script = isEntryScript ? *mainScript_ : *reinterpret_cast<PawnScript*>(*pos);
+	closeAMX(script, isEntryScript);
 
 	if (isEntryScript)
 	{

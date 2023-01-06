@@ -46,6 +46,11 @@ extern "C"
 /// A map of per-AMX caches
 static FlatHashMap<AMX*, AMXCache*> cache;
 
+PawnScript::tryLoad(std::string const& path)
+{
+
+}
+
 PawnScript::PawnScript(int id, std::string const& path, ICore* core)
 	: serverCore(core)
 	, id_(id)
