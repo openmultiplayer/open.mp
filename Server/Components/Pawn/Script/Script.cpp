@@ -46,15 +46,24 @@ extern "C"
 /// A map of per-AMX caches
 static FlatHashMap<AMX*, AMXCache*> cache;
 
-PawnScript::tryLoad(std::string const& path)
+void PawnScript::tryLoad(std::string const& path)
 {
-
-}
-
-PawnScript::PawnScript(int id, std::string const& path, ICore* core)
-	: serverCore(core)
-	, id_(id)
-{
+	if (loaded_)
+	{
+		amx_FloatCleanup(&amx_);
+		amx_TimeCleanup(&amx_);
+		amx_StringCleanup(&amx_);
+		amx_FileCleanup(&amx_);
+		amx_CoreCleanup(&amx_);
+		amx_ArgsCleanup(&amx_);
+		aux_FreeProgram(&amx_);
+		cache.erase(&amx_);
+	}
+	loaded_ = false;
+	if (path == "")
+	{
+		return;
+	}
 	int err = aux_LoadProgram(&amx_, const_cast<char*>(path.c_str()), nullptr);
 	switch (err)
 	{
@@ -80,9 +89,8 @@ encountered.  This could be caused by many things:
 		break;
 	default:
 		serverCore->printLn("%s", aux_StrError(err));
-		return;
+		break;
 	}
-
 	if (loaded_)
 	{
 		amx_ArgsInit(&amx_);
@@ -93,25 +101,19 @@ encountered.  This could be caused by many things:
 		amx_FloatInit(&amx_);
 		cache.emplace(std::make_pair<AMX*, AMXCache*>(&amx_, &cache_));
 	}
-	else
-	{
-		return;
-	}
+}
+
+PawnScript::PawnScript(int id, std::string const& path, ICore* core)
+	: serverCore(core)
+	, loaded_(false)
+	, id_(id)
+{
+	tryLoad(path);
 }
 
 PawnScript::~PawnScript()
 {
-	if (loaded_)
-	{
-		amx_FloatCleanup(&amx_);
-		amx_TimeCleanup(&amx_);
-		amx_StringCleanup(&amx_);
-		amx_FileCleanup(&amx_);
-		amx_CoreCleanup(&amx_);
-		amx_ArgsCleanup(&amx_);
-		aux_FreeProgram(&amx_);
-		cache.erase(&amx_);
-	}
+	tryLoad("");
 }
 
 int AMXAPI amx_NumPublics(AMX* amx, int* number)

@@ -106,13 +106,13 @@ public:
 
 	using IPawnScript::Register;
 
-	bool tryLoad(std::string const& path);
+	void tryLoad(std::string const& path);
 
 private:
 	ICore* serverCore;
 	AMX amx_;
 	AMXCache cache_;
-	bool loaded_ = false;
+	bool loaded_;
 	String name_;
 
 	int id_;

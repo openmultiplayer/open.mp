@@ -639,7 +639,6 @@ bool PawnManager::Reload(std::string const& name)
 	{
 		return false;
 	}
-
 	auto pos = findScript(name);
 	if (pos == scripts_.end())
 	{
@@ -647,7 +646,12 @@ bool PawnManager::Reload(std::string const& name)
 	}
 	PawnScript& script = *reinterpret_cast<PawnScript*>(*pos);
 	closeAMX(script, false);
-	return Load(name, false);
+	std::string canon;
+	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
+	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
+	script.tryLoad(canon);
+	openAMX(script, false);
+	amxToScript_.emplace(script.GetAMX(), &script);
 }
 
 bool PawnManager::Unload(std::string const& name)
