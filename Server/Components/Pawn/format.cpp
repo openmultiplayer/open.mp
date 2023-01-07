@@ -640,7 +640,7 @@ reswitch:
 			if (ch == '*')
 			{
 				amx_GetAddr(amx, params[arg], &cptr);
-				prec = *cptr;
+				prec = cptr ? *cptr : 0;
 				arg++;
 				atcadvance<S>(&fmt, ispacked);
 				goto rflag;
@@ -675,45 +675,45 @@ reswitch:
 			goto reswitch;
 		case '*':
 			amx_GetAddr(amx, params[arg], &cptr);
-			width = *cptr;
+			width = cptr ? *cptr : 0;
 			arg++;
 			goto rflag;
 		case 'c':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			*buf_p++ = static_cast<D>(*cptr);
+			*buf_p++ = static_cast<D>(cptr ? *cptr : 0);
 			llen--;
 			arg++;
 			break;
 		case 'b':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddBinary(&buf_p, llen, *cptr, width, flags);
+			AddBinary(&buf_p, llen, cptr ? *cptr : 0, width, flags);
 			arg++;
 			break;
 		case 'o':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddOctal(&buf_p, llen, *cptr, width, flags);
+			AddOctal(&buf_p, llen, cptr ? *cptr : 0, width, flags);
 			arg++;
 			break;
 		case 'd':
 		case 'i':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddInt(&buf_p, llen, *cptr, width, flags);
+			AddInt(&buf_p, llen, cptr ? *cptr : 0, width, flags);
 			arg++;
 			break;
 		case 'u':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddUInt(&buf_p, llen, static_cast<unsigned int>(*cptr), width, flags);
+			AddUInt(&buf_p, llen, static_cast<unsigned int>(cptr ? *cptr : 0), width, flags);
 			arg++;
 			break;
 		case 'f':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddFloat(&buf_p, llen, amx_ctof(*cptr), width, prec, flags);
+			AddFloat(&buf_p, llen, cptr ? amx_ctof(*cptr) : 0.0f, width, prec, flags);
 			arg++;
 			break;
 		case 'H':
@@ -721,13 +721,13 @@ reswitch:
 			CHECK_ARGS(0);
 			flags |= UPPERDIGITS;
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddHex(&buf_p, llen, static_cast<unsigned int>(*cptr), width, flags);
+			AddHex(&buf_p, llen, static_cast<unsigned int>(cptr ? *cptr : 0), width, flags);
 			arg++;
 			break;
 		case 'h':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddHex(&buf_p, llen, static_cast<unsigned int>(*cptr), width, flags);
+			AddHex(&buf_p, llen, static_cast<unsigned int>(cptr ? *cptr : 0), width, flags);
 			arg++;
 			break;
 		case 'a':
@@ -735,10 +735,14 @@ reswitch:
 			CHECK_ARGS(0);
 			// %a is passed a pointer directly to a cell string.
 			amx_GetAddr(amx, params[arg], &cptr);
+			if (!cptr)
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid vector string handle provided");
+				return 0;
+			}
 			cell* ptr = reinterpret_cast<cell*>(*cptr);
 			if (!ptr)
 			{
-				amx_GetAddr(amx, params[arg], &cptr);
 				PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid vector string handle provided (%d)", *cptr);
 				return 0;
 			}
@@ -750,7 +754,10 @@ reswitch:
 		case 's':
 			CHECK_ARGS(0);
 			amx_GetAddr(amx, params[arg], &cptr);
-			AddString(&buf_p, llen, cptr, width, prec, flags);
+			if (cptr)
+			{
+				AddString(&buf_p, llen, cptr, width, prec, flags);
+			}
 			arg++;
 			break;
 		case 'q':
@@ -759,15 +766,16 @@ reswitch:
 
 			int argLen = 0;
 			amx_GetAddr(amx, params[arg], &cptr);
-			amx_StrLen(cptr, &argLen);
-
+			if (cptr)
+			{
+				amx_StrLen(cptr, &argLen);
+			}
 			if (argLen > 0)
 			{
 				++argLen;
 				std::string strArg;
 				strArg.resize(argLen);
 
-				amx_GetAddr(amx, params[arg], &cptr);
 				amx_GetString((char*)strArg.data(), cptr, false, argLen);
 
 				size_t pos = 0;
