@@ -88,6 +88,9 @@ private:
 			});
 	}
 
+	void openAMX(PawnScript& script, bool isEntryScript);
+	void closeAMX(PawnScript& script, bool isEntryScript);
+
 public:
 	PawnManager();
 	~PawnManager();
