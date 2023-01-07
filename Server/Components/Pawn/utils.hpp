@@ -75,7 +75,16 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `format`: %u < %u", num, 3);
 		return 0;
 	}
+
 	int maxlen = params[2];
+	int param = 4;
+	cell* cinput;
+	amx_GetAddr(amx, params[3], &cinput);
+	if (cinput == nullptr)
+	{
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid format string given to `format`/");
+		return 0;
+	}
 
 	if (maxlen < 0)
 	{
@@ -84,10 +93,6 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid output length (%d) given to `format`. fmt: \"%s\"", maxlen, fmt);
 		return 0;
 	}
-
-	int param = 4;
-	cell* cinput;
-	amx_GetAddr(amx, params[3], &cinput);
 
 	cell staticOutput[4096];
 	cell* output = staticOutput;
@@ -109,7 +114,10 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 
 	cell* coutput;
 	amx_GetAddr(amx, params[1], &coutput);
-	memcpy(coutput, output, (len + 1) * sizeof(cell));
+	if (coutput)
+	{
+		memcpy(coutput, output, (len + 1) * sizeof(cell));
+	}
 
 	return 1;
 }
@@ -131,6 +139,12 @@ inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
 	char buf[8192];
 	int param = 2;
 	amx_GetAddr(amx, params[1], &cstr);
+	if (cstr == nullptr)
+	{
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid format string given to `printf`/");
+		return 0;
+	}
+
 	int len = atcprintf(buf, sizeof(buf) - 1, cstr, amx, params, &param);
 
 	if (param <= num)

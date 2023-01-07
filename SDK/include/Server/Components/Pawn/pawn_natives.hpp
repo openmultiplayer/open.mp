@@ -246,6 +246,8 @@ public:
 			throw std::length_error("Invalid string length.");
 		if (len_)
 		{
+			// This is a rare case where we don't check that the address is valid and throw a
+			// param cast error.  Instead we just don't write the string back later.
 			amx_GetAddr(amx, params[idx], &addr_);
 		}
 		else
@@ -507,6 +509,10 @@ public:
 		amx_GetAddr(amx, params[idx + 0], &x_);
 		amx_GetAddr(amx, params[idx + 1], &y_);
 		amx_GetAddr(amx, params[idx + 2], &z_);
+		if (x_ == nullptr || y_ == nullptr || z_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		value_.x = amx_ctof(*x_);
 		value_.y = amx_ctof(*y_);
 		value_.z = amx_ctof(*z_);
@@ -590,6 +596,10 @@ public:
 	{
 		amx_GetAddr(amx, params[idx + 0], &x_);
 		amx_GetAddr(amx, params[idx + 1], &y_);
+		if (x_ == nullptr || y_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		value_.x = amx_ctof(*x_);
 		value_.y = amx_ctof(*y_);
 	}
@@ -672,6 +682,10 @@ public:
 		amx_GetAddr(amx, params[idx + 1], &y_);
 		amx_GetAddr(amx, params[idx + 2], &z_);
 		amx_GetAddr(amx, params[idx + 3], &w_);
+		if (w_ == nullptr || x_ == nullptr || y_ == nullptr || z_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		value_.x = amx_ctof(*x_);
 		value_.y = amx_ctof(*y_);
 		value_.z = amx_ctof(*z_);
@@ -760,6 +774,10 @@ public:
 		amx_GetAddr(amx, params[idx + 1], &x_);
 		amx_GetAddr(amx, params[idx + 2], &y_);
 		amx_GetAddr(amx, params[idx + 3], &z_);
+		if (w_ == nullptr || x_ == nullptr || y_ == nullptr || z_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		value_.q.w = amx_ctof(*w_);
 		value_.q.x = amx_ctof(*x_);
 		value_.q.y = amx_ctof(*y_);
@@ -806,6 +824,10 @@ public:
 	{
 		value_.resize(len_);
 		amx_GetAddr(amx, params[idx + 0], &data_);
+		if (data_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		cell* input = data_;
 		// Copy the data out.
 		for (size_t idx = 0; idx != len_; ++idx)
@@ -856,6 +878,10 @@ public:
 	{
 		value_.resize(len_);
 		amx_GetAddr(amx, params[idx + 0], &data_);
+		if (data_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		cell* input = data_;
 		// Copy the data out.
 		for (size_t idx = 0; idx != len_; ++idx)
@@ -900,6 +926,10 @@ public:
 	{
 		value_.resize(len_);
 		amx_GetAddr(amx, params[idx + 0], &data_);
+		if (data_ == nullptr)
+		{
+			throw pawn_natives::ParamCastFailure();
+		}
 		cell* input = data_;
 		// Copy the data out.
 		for (size_t idx = 0; idx != len_; ++idx)
