@@ -914,7 +914,6 @@ SCRIPT_API(GetPlayerMarkerForPlayer, int(IPlayer& player, IPlayer& other))
 	{
 		colour = other->getColour();
 	}
-	
 	return colour.RGBA();
 }
 
