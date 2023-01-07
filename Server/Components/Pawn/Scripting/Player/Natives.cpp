@@ -900,10 +900,22 @@ SCRIPT_API(SetPlayerFacingAngle, bool(IPlayer& player, float angle))
 	return true;
 }
 
-SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint32_t colour))
+SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other))
 {
 	player.setOtherColour(other, Colour::FromRGBA(colour));
 	return true;
+}
+
+SCRIPT_API(GetPlayerMarkerForPlayer, int(IPlayer& player, IPlayer& other))
+{
+	Colour colour;
+	bool hasPlayerSpecificColour = player.getOtherColour(*other, colour);
+	if (!hasPlayerSpecificColour)
+	{
+		colour = other->getColour();
+	}
+	
+	return colour.RGBA();
 }
 
 SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
