@@ -909,10 +909,10 @@ SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint3
 SCRIPT_API(GetPlayerMarkerForPlayer, int(IPlayer& player, IPlayer& other))
 {
 	Colour colour;
-	bool hasPlayerSpecificColour = player.getOtherColour(*other, colour);
+	bool hasPlayerSpecificColour = player.getOtherColour(other, colour);
 	if (!hasPlayerSpecificColour)
 	{
-		colour = other->getColour();
+		colour = other.getColour();
 	}
 	return colour.RGBA();
 }
