@@ -93,7 +93,20 @@ void PawnPluginManager::Spawn(std::string const& name)
 	// std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
 
 	std::string canon;
-	utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
+#ifndef WIN32
+	size_t pos = name.rfind(".so");
+	// You would think this could be done in one comparison, but the path may
+	// only be two characters long.
+	if (pos == std::string::npos || pos + 3 != name.length())
+	{
+		// Append the extension.
+		utils::Canonicalise(basePath_ + pluginPath_ + name + ".so", canon);
+	}
+	else
+#endif // WIN32
+	{
+		utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
+	}
 
 	core->printLn("Loading plugin: %s", name.c_str());
 
