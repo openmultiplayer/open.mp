@@ -15,13 +15,6 @@ struct IObject;
 struct IPlayerObject;
 struct IActor;
 
-enum PlayerRecordingType
-{
-	PlayerRecordingType_None,
-	PlayerRecordingType_Driver,
-	PlayerRecordingType_OnFoot
-};
-
 enum PlayerFightingStyle
 {
 	PlayerFightingStyle_Normal = 4,
@@ -926,13 +919,6 @@ struct IPlayer : public IExtensible, public IEntity
 
 	/// Check if player is using an official client or not
 	virtual bool isUsingOfficialClient() const = 0;
-
-	/// Start recording the player's data to a file
-	/// @note See https://open.mp/docs/scripting/resources/recordtypes
-	virtual void startRecordingData(PlayerRecordingType recordType, StringView recordFile) = 0;
-
-	/// Stop recording the player's data to a file
-	virtual void stopRecordingData() = 0;
 };
 
 /// Player spawn event handlers

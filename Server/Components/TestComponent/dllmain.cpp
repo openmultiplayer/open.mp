@@ -15,6 +15,7 @@
 #include <Server/Components/Menus/menus.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
+#include <Server/Components/Recordings/recordings.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
 #include <Server/Components/Timers/timers.hpp>
@@ -32,6 +33,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	IVehiclesComponent* vehicles = nullptr;
 	IObjectsComponent* objects = nullptr;
 	IPickupsComponent* pickups = nullptr;
+	IRecordingsComponent* recordings = nullptr;
 	ITextLabelsComponent* labels = nullptr;
 	ITextDrawsComponent* tds = nullptr;
 	IMenusComponent* menus = nullptr;
@@ -763,6 +765,29 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 			}
 		}
 
+		if (recordings)
+		{
+			IPlayerRecordingData* recData = player._queryExtension<IPlayerRecordingData>();
+
+			if (message == "/startonfootrecording")
+			{
+				recData->start(PlayerRecordingType_OnFoot, "onfoot.rec");
+				return true;
+			}
+
+			if (message == "/startvehiclerecording")
+			{
+				recData->start(PlayerRecordingType_Driver, "vehicle.rec");
+				return true;
+			}
+
+			if (message == "/stoprecording")
+			{
+				recData->stop();
+				return true;				
+			}
+		}
+
 		if (labels)
 		{
 			Vector3 origPos(5.f, 0.f, 3.f);
@@ -1017,6 +1042,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		vehicles = components->queryComponent<IVehiclesComponent>();
 		checkpoints = components->queryComponent<ICheckpointsComponent>();
 		objects = components->queryComponent<IObjectsComponent>();
+		recordings = components->queryComponent<IRecordingsComponent>();
 		labels = components->queryComponent<ITextLabelsComponent>();
 		pickups = components->queryComponent<IPickupsComponent>();
 		tds = components->queryComponent<ITextDrawsComponent>();

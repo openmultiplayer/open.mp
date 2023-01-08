@@ -149,6 +149,7 @@ public:
 		mgr->menus = components->queryComponent<IMenusComponent>();
 		mgr->objects = components->queryComponent<IObjectsComponent>();
 		mgr->pickups = components->queryComponent<IPickupsComponent>();
+		mgr->recordings = components->queryComponent<IRecordingsComponent>();
 		mgr->textdraws = components->queryComponent<ITextDrawsComponent>();
 		mgr->textlabels = components->queryComponent<ITextLabelsComponent>();
 		mgr->timers = components->queryComponent<ITimersComponent>();
@@ -265,6 +266,7 @@ public:
 		COMPONENT_UNLOADED(mgr->menus)
 		COMPONENT_UNLOADED(mgr->objects)
 		COMPONENT_UNLOADED(mgr->pickups)
+		COMPONENT_UNLOADED(mgr->recordings)
 		COMPONENT_UNLOADED(mgr->textdraws)
 		COMPONENT_UNLOADED(mgr->textlabels)
 		COMPONENT_UNLOADED(mgr->timers)
