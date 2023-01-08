@@ -1698,22 +1698,22 @@ namespace Packet
 
 		void writeRecording(std::ofstream& fs) const
 		{
-			uint8_t health = HealthArmour.x;
-			uint8_t armour = HealthArmour.y;
-			fs.write((char*)&LeftRight, sizeof(uint16_t));
-			fs.write((char*)&UpDown, sizeof(uint16_t));
-			fs.write((char*)&Keys, sizeof(uint16_t));
-			fs.write((char*)&Position, sizeof(float)*3);
-			fs.write((char*)&Rotation, sizeof(float)*4);
-			fs.write((char*)&health, sizeof(uint8_t));
-			fs.write((char*)&armour, sizeof(uint8_t));
-			fs.write((char*)&WeaponAdditionalKey, sizeof(uint8_t));
-			fs.write((char*)&SpecialAction, sizeof(uint8_t));
-			fs.write((char*)&Velocity, sizeof(float)*3);
-			fs.write((char*)&SurfingData.offset, sizeof(float)*3);
-			fs.write((char*)&SurfingData.ID, sizeof(uint16_t));
-			fs.write((char*)&AnimationID, sizeof(uint16_t));
-			fs.write((char*)&AnimationFlags, sizeof(uint16_t));
+			uint8_t health = static_cast<uint8_t>(HealthArmour.x);
+			uint8_t armour = static_cast<uint8_t>(HealthArmour.y);
+			fs.write(reinterpret_cast<const char*>(&LeftRight), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&UpDown), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&Keys), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&Position), sizeof(float)*3);
+			fs.write(reinterpret_cast<const char*>(&Rotation), sizeof(float)*4);
+			fs.write(reinterpret_cast<const char*>(&health), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&armour), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&WeaponAdditionalKey), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&SpecialAction), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&Velocity), sizeof(float)*3);
+			fs.write(reinterpret_cast<const char*>(&SurfingData.offset), sizeof(float)*3);
+			fs.write(reinterpret_cast<const char*>(&SurfingData.ID), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&AnimationID), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&AnimationFlags), sizeof(uint16_t));
 		}
 	};
 
