@@ -906,6 +906,17 @@ SCRIPT_API(SetPlayerMarkerForPlayer, bool(IPlayer& player, IPlayer& other, uint3
 	return true;
 }
 
+SCRIPT_API(GetPlayerMarkerForPlayer, int(IPlayer& player, IPlayer& other))
+{
+	Colour colour;
+	bool hasPlayerSpecificColour = player.getOtherColour(other, colour);
+	if (!hasPlayerSpecificColour)
+	{
+		colour = other.getColour();
+	}
+	return colour.RGBA();
+}
+
 SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
 {
 	player->allowTeleport(allow);
