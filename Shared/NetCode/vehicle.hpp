@@ -489,23 +489,23 @@ namespace Packet
 
 		void writeRecording(std::ofstream& fs) const
 		{
-			uint8_t playerHealth = PlayerHealthArmour.x;
-			uint8_t playerArmour = PlayerHealthArmour.y;
-			fs.write((char*)&VehicleID, sizeof(uint16_t));
-			fs.write((char*)&LeftRight, sizeof(uint16_t));
-			fs.write((char*)&UpDown, sizeof(uint16_t));
-			fs.write((char*)&Keys, sizeof(uint16_t));
-			fs.write((char*)&Rotation, sizeof(float)*4);
-			fs.write((char*)&Position, sizeof(float)*3);
-			fs.write((char*)&Velocity, sizeof(float)*3);
-			fs.write((char*)&Health, sizeof(float));
-			fs.write((char*)&playerHealth, sizeof(uint8_t));
-			fs.write((char*)&playerArmour, sizeof(uint8_t));
-			fs.write((char*)&AdditionalKeyWeapon, sizeof(uint8_t));
-			fs.write((char*)&Siren, sizeof(uint8_t));
-			fs.write((char*)&LandingGear, sizeof(uint8_t));
-			fs.write((char*)&TrailerID, sizeof(uint16_t));
-			fs.write((char*)&HydraThrustAngle, sizeof(uint32_t));
+			uint8_t playerHealth = static_cast<uint8_t>(PlayerHealthArmour.x);
+			uint8_t playerArmour = static_cast<uint8_t>(PlayerHealthArmour.y);
+			fs.write(reinterpret_cast<const char*>(&VehicleID), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&LeftRight), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&UpDown), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&Keys), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&Rotation), sizeof(float)*4);
+			fs.write(reinterpret_cast<const char*>(&Position), sizeof(float)*3);
+			fs.write(reinterpret_cast<const char*>(&Velocity), sizeof(float)*3);
+			fs.write(reinterpret_cast<const char*>(&Health), sizeof(float));
+			fs.write(reinterpret_cast<const char*>(&playerHealth), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&playerArmour), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&AdditionalKeyWeapon), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&Siren), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&LandingGear), sizeof(uint8_t));
+			fs.write(reinterpret_cast<const char*>(&TrailerID), sizeof(uint16_t));
+			fs.write(reinterpret_cast<const char*>(&HydraThrustAngle), sizeof(uint32_t));
 		}
 	};
 

@@ -337,8 +337,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		if (recordFile_.good())
 		{
 			uint32_t version = 1000;
-			recordFile_.write((char*)&version, sizeof(uint32_t));
-			recordFile_.write((char*)&recordType_, sizeof(uint32_t));
+			recordFile_.write(reinterpret_cast<const char*>(&version), sizeof(uint32_t));
+			recordFile_.write(reinterpret_cast<const char*>(&recordType_), sizeof(uint32_t));
 		}
 
 		// To view/edit the recorded data as a CSV, see https://github.com/WoutProvost/samp-rec-to-csv
