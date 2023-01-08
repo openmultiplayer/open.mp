@@ -18,6 +18,7 @@
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Pawn/pawn.hpp>
 #include <Server/Components/Pickups/pickups.hpp>
+#include <Server/Components/Recordings/recordings.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
 #include <Server/Components/TextLabels/textlabels.hpp>
 #include <Server/Components/Timers/timers.hpp>
@@ -57,6 +58,7 @@ struct PawnLookup
 	IMenusComponent* menus = nullptr;
 	IObjectsComponent* objects = nullptr;
 	IPickupsComponent* pickups = nullptr;
+	IRecordingsComponent* recordings = nullptr;
 	ITextDrawsComponent* textdraws = nullptr;
 	ITextLabelsComponent* textlabels = nullptr;
 	ITimersComponent* timers = nullptr;
