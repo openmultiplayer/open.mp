@@ -89,22 +89,24 @@ void ObjectComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
 		}
 	}
 
-	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer); objectData != nullptr)
+	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(player); objectData != nullptr)
 	{
-
 		for (int i = 0; i != MAX_ATTACHED_OBJECT_SLOTS; ++i)
 		{
 			if (objectData->hasAttachedObject(i))
 			{
 				NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
-				setPlayerAttachedObjectRPC.PlayerID = player.getID();
+				setPlayerAttachedObjectRPC.PlayerID = pid;
 				setPlayerAttachedObjectRPC.Index = i;
 				setPlayerAttachedObjectRPC.Create = true;
 				setPlayerAttachedObjectRPC.AttachmentData = objectData->getAttachedObject(i);
 				PacketHelper::send(setPlayerAttachedObjectRPC, forPlayer);
 			}
 		}
+	}
 
+	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer); objectData != nullptr)
+	{
 		for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
 		{
 			if (object->getAttachmentData().ID == pid)
