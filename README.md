@@ -7,11 +7,21 @@
 | Path | Content |
 | ---- | ------- |
 | `SDK/` | Core SDK headers (stable between versions) |
-| `SDK/Server/Components/*/` | Components/plug-in SDK headers (stable between versions) |
+| `SDK/include/Server/Components/*/` | Components/plug-in SDK headers (stable between versions) |
 | `Shared/NetCode/` | Netcode headers (RPC and packet read/write structures, NOT stable between versions) |
 | `lib/` | Various submodules and CMake helpers for Conan |
 | `Server/Source/` | Core server implementation (NOT stable between versions, do NOT use headers outside the Source folder) |
 | `Server/Components/*/` | Components/plug-in implementation (NOT stable between versions, do NOT use headers outside the component's folder) |
+
+## Concepts
+
+| Name | Description |
+| ---- | ------- |
+| Entity | Something that can appear in the 3D world of the game |
+| Pool | Container of something with limited amount of IDs |
+| Component | Something that's conceptually different enough it can be separated |
+| Extensible | Something to which extensions can be added |
+| Extension | Something which adds additional functionality to an extensible |
 
 ## Tools
 
