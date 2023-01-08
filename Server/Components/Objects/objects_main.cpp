@@ -89,23 +89,27 @@ void ObjectComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
 		}
 	}
 
-	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer); objectData != nullptr)
+	PlayerObjectData* playerObjectData = queryExtension<PlayerObjectData>(player);
+	if (playerObjectData != nullptr)
 	{
-
 		for (int i = 0; i != MAX_ATTACHED_OBJECT_SLOTS; ++i)
 		{
-			if (objectData->hasAttachedObject(i))
+			if (playerObjectData->hasAttachedObject(i))
 			{
 				NetCode::RPC::SetPlayerAttachedObject setPlayerAttachedObjectRPC;
-				setPlayerAttachedObjectRPC.PlayerID = player.getID();
+				setPlayerAttachedObjectRPC.PlayerID = pid;
 				setPlayerAttachedObjectRPC.Index = i;
 				setPlayerAttachedObjectRPC.Create = true;
-				setPlayerAttachedObjectRPC.AttachmentData = objectData->getAttachedObject(i);
+				setPlayerAttachedObjectRPC.AttachmentData = playerObjectData->getAttachedObject(i);
 				PacketHelper::send(setPlayerAttachedObjectRPC, forPlayer);
 			}
 		}
+	}
 
-		for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
+	PlayerObjectData* forPlayerObjectData = queryExtension<PlayerObjectData>(forPlayer);
+	if (forPlayerObjectData != nullptr)
+	{
+		for (PlayerObject* object : forPlayerObjectData->getAttachedToPlayerObjects())
 		{
 			if (object->getAttachmentData().ID == pid)
 			{
@@ -118,7 +122,8 @@ void ObjectComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
 void ObjectComponent::onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer)
 {
 	const int pid = player.getID();
-	if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer); objectData != nullptr)
+	PlayerObjectData* objectData = queryExtension<PlayerObjectData>(forPlayer);
+	if (objectData != nullptr)
 	{
 		for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
 		{
@@ -148,7 +153,8 @@ void ObjectComponent::onPoolEntryDestroyed(IPlayer& player)
 			continue;
 		}
 
-		if (PlayerObjectData* objectData = queryExtension<PlayerObjectData>(other); objectData != nullptr)
+		PlayerObjectData* objectData = queryExtension<PlayerObjectData>(other);
+		if (objectData != nullptr)
 		{
 			for (PlayerObject* object : objectData->getAttachedToPlayerObjects())
 			{
