@@ -637,13 +637,16 @@ inline cell AMX_NATIVE_CALL pawn_Script_GetID(AMX* amx, cell const* params)
 #include <Windows.h>
 #pragma comment(lib, "Shlwapi.lib")
 
-// Copies the string, to modify it.
+/// Important note:  The Linux version of this function resolves symlinks and
+/// ensures the file exists.  The Windows version just strips `..`s and `.`s,
+/// and collapses strings that look like paths.
 inline bool Canonicalise(std::string path, std::string& result)
 {
 	// To be compatible with Linux.
 	result.clear();
 	result.resize(FILENAME_MAX);
 	size_t pos = 0;
+	// Copies the string, to modify it.
 	while ((pos = path.find('/', pos)) != std::string::npos)
 	{
 		path.replace(pos, 1, 1, '\\');
@@ -672,6 +675,9 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 #include <cstring>
 #include <unistd.h>
 
+/// Important note:  The Linux version of this function resolves symlinks and
+/// ensures the file exists.  The Windows version just strips `..`s and `.`s,
+/// and collapses strings that look like paths.
 inline bool Canonicalise(std::string path, std::string& result)
 {
 	size_t pos = 0;

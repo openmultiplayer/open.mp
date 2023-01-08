@@ -318,18 +318,7 @@ PawnPlugin::PawnPlugin(std::string const& path, ICore* core)
 	// Windows doesn't need the extension.
 	pluginHandle_ = LoadLibraryA(path.c_str());
 #else
-	size_t pos = path.rfind(".so");
-	// You would think this could be done in one comparison, but the path may
-	// only be two characters long.
-	if (pos == std::string::npos || pos + 3 != path.length())
-	{
-		// Append the extension.
-		pluginHandle_ = dlopen((path + ".so").c_str(), RTLD_LAZY);
-	}
-	else
-	{
-		pluginHandle_ = dlopen(path.c_str(), RTLD_LAZY);
-	}
+	pluginHandle_ = dlopen(path.c_str(), RTLD_LAZY);
 #endif // WIN32
 
 	if (pluginHandle_ == nullptr)
