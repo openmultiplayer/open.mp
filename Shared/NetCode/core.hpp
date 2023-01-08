@@ -8,7 +8,6 @@
 
 #pragma once
 
-#include <fstream>
 #include <network.hpp>
 #include <player.hpp>
 #include <types.hpp>
@@ -1694,26 +1693,6 @@ namespace Packet
 				bs.writeUINT16(AnimationID);
 				bs.writeUINT16(AnimationFlags);
 			}
-		}
-
-		void writeRecording(std::ofstream& fs) const
-		{
-			uint8_t health = static_cast<uint8_t>(HealthArmour.x);
-			uint8_t armour = static_cast<uint8_t>(HealthArmour.y);
-			fs.write(reinterpret_cast<const char*>(&LeftRight), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&UpDown), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&Keys), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&Position), sizeof(float)*3);
-			fs.write(reinterpret_cast<const char*>(&Rotation), sizeof(float)*4);
-			fs.write(reinterpret_cast<const char*>(&health), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&armour), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&WeaponAdditionalKey), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&SpecialAction), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&Velocity), sizeof(float)*3);
-			fs.write(reinterpret_cast<const char*>(&SurfingData.offset), sizeof(float)*3);
-			fs.write(reinterpret_cast<const char*>(&SurfingData.ID), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&AnimationID), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&AnimationFlags), sizeof(uint16_t));
 		}
 	};
 

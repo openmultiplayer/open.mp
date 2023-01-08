@@ -486,27 +486,6 @@ namespace Packet
 				bs.writeUINT16(TrailerID);
 			}
 		}
-
-		void writeRecording(std::ofstream& fs) const
-		{
-			uint8_t playerHealth = static_cast<uint8_t>(PlayerHealthArmour.x);
-			uint8_t playerArmour = static_cast<uint8_t>(PlayerHealthArmour.y);
-			fs.write(reinterpret_cast<const char*>(&VehicleID), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&LeftRight), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&UpDown), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&Keys), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&Rotation), sizeof(float)*4);
-			fs.write(reinterpret_cast<const char*>(&Position), sizeof(float)*3);
-			fs.write(reinterpret_cast<const char*>(&Velocity), sizeof(float)*3);
-			fs.write(reinterpret_cast<const char*>(&Health), sizeof(float));
-			fs.write(reinterpret_cast<const char*>(&playerHealth), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&playerArmour), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&AdditionalKeyWeapon), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&Siren), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&LandingGear), sizeof(uint8_t));
-			fs.write(reinterpret_cast<const char*>(&TrailerID), sizeof(uint16_t));
-			fs.write(reinterpret_cast<const char*>(&HydraThrustAngle), sizeof(uint32_t));
-		}
 	};
 
 	struct PlayerPassengerSync : NetworkPacketBase<211, NetworkPacketType::Packet, OrderingChannel_SyncPacket>, VehiclePassengerSyncPacket
