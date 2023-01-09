@@ -229,7 +229,7 @@ inline uint8_t getVehiclePassengerSeats(int model)
 		0
 	};
 
-	return allSeats[model - 400];
+	return allSeats[model - MIN_VEHICLE_ID];
 }
 
 }
