@@ -9,7 +9,11 @@ constexpr int CLASS_POOL_SIZE = 320;
 constexpr int OBJECT_POOL_SIZE = 2000;
 constexpr int OBJECT_POOL_SIZE_037 = 1000;
 constexpr int MAX_WEAPON_SLOTS = 13;
-constexpr int MAX_VEHICLE_MODELS = 611 - 400 + 1;
+constexpr int MIN_COMPONENT_ID = 1000;
+constexpr int MAX_COMPONENT_ID = 1193;
+constexpr int MIN_VEHICLE_ID = 400;
+constexpr int MAX_VEHICLE_ID = 611;
+constexpr int MAX_VEHICLE_MODELS = MAX_VEHICLE_ID - MIN_VEHICLE_ID + 1;
 constexpr int MAX_WEAPON_ID = 46;
 constexpr int NUM_SKILL_LEVELS = 11;
 constexpr uint8_t INVALID_WEAPON_SLOT = 0xFF;
@@ -29,7 +33,7 @@ constexpr int INVALID_TEXT_LABEL_ID = 0xFFFF;
 constexpr int PICKUP_POOL_SIZE = 4096;
 constexpr int GLOBAL_TEXTDRAW_POOL_SIZE = 2048;
 constexpr int PLAYER_TEXTDRAW_POOL_SIZE = 256;
-constexpr int MAX_VEHICLE_COMPONENTS = 194;
+constexpr int MAX_VEHICLE_COMPONENTS = MAX_COMPONENT_ID - MIN_COMPONENT_ID + 1;
 constexpr int INVALID_COMPONENT_ID = 0;
 constexpr int MAX_VEHICLE_COMPONENT_SLOT = 16;
 constexpr int MAX_VEHICLE_COMPONENT_SLOT_IN_RPC = 14;
@@ -62,32 +66,32 @@ constexpr int MAX_GAMETEXT_STYLES = 16;
 
 enum Key
 {
-	ACTION = 1,
-	CROUCH = 2,
-	FIRE = 4,
-	SPRINT = 8,
-	SECONDARY_ATTACK = 16,
-	JUMP = 32,
-	LOOK_RIGHT = 64,
-	HANDBRAKE = 128,
+	ACTION = 0b1 << 0,
+	CROUCH = 0b1 << 1,
+	FIRE = 0b1 << 2,
+	SPRINT = 0b1 << 3,
+	SECONDARY_ATTACK = 0b1 << 4,
+	JUMP = 0b1 << 5,
+	LOOK_RIGHT = 0b1 << 6,
+	HANDBRAKE = 0b1 << 7,
 	AIM = HANDBRAKE,
-	LOOK_LEFT = 256,
-	LOOK_BEHIND = 320,
-	SUBMISSION = 512,
-	WALK = 1024,
-	ANALOG_UP = 2048,
-	ANALOG_DOWN = 4096,
-	ANALOG_LEFT = 8192,
-	ANALOG_RIGHT = 16384,
+	LOOK_LEFT = 0b1 << 8,
+	LOOK_BEHIND = LOOK_LEFT | LOOK_RIGHT,
+	SUBMISSION = 0b1 << 9,
+	WALK = 0b1 << 10,
+	ANALOG_UP = 0b1 << 11,
+	ANALOG_DOWN = 0b1 << 12,
+	ANALOG_LEFT = 0b1 << 13,
+	ANALOG_RIGHT = 0b1 << 14,
 
-	YES = 65536,
-	NO = 131072,
-	CTRL_BACK = 262144,
+	YES = 0b1 << 16,
+	NO = 0b1 << 17,
+	CTRL_BACK = 0b1 << 18,
 
-	UP = -128,
-	DOWN = 128,
-	LEFT = -128,
-	RIGHT = 128,
+	DOWN = 0b1 << 7,
+	UP = -DOWN,
+	RIGHT = 0b1 << 7,
+	LEFT = -RIGHT,
 };
 
 constexpr uint16_t INVALID_MODEL_ID = 65535u;
