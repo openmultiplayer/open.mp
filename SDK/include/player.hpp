@@ -145,8 +145,9 @@ enum LagCompMode
 	LagCompMode_Enabled = 1
 };
 
-enum PlayerWeapon
+enum PlayerWeapon : uint8_t
 {
+	// --- Weapon IDs ---
 	PlayerWeapon_Fist,
 	PlayerWeapon_BrassKnuckle,
 	PlayerWeapon_GolfClub,
@@ -191,11 +192,16 @@ enum PlayerWeapon
 	PlayerWeapon_Night_Vis_Goggles,
 	PlayerWeapon_Thermal_Goggles,
 	PlayerWeapon_Parachute,
+	// --- Weapon IDs ---
+	
+	// --- Possible causes of death of a player ---
 	PlayerWeapon_Vehicle = 49,
 	PlayerWeapon_Heliblades,
 	PlayerWeapon_Explosion,
 	PlayerWeapon_Drown = 53,
 	PlayerWeapon_Collision,
+	// --- Possible causes of death of a player ---
+	
 	PlayerWeapon_End
 };
 
@@ -305,7 +311,7 @@ struct PlayerSurfingData
 /// Holds weapon slot data
 struct WeaponSlotData
 {
-	uint8_t id;
+	PlayerWeapon id;
 	uint32_t ammo;
 
 	WeaponSlotData()
@@ -338,7 +344,7 @@ struct WeaponSlotData
 
 	bool shootable()
 	{
-		return (id >= 22 && id <= 34) || id == 38;
+		return (id >= PlayerWeapon_Colt45 && id <= PlayerWeapon_Sniper) || id == PlayerWeapon_Minigun;
 	}
 };
 
@@ -370,7 +376,7 @@ struct PlayerBulletData
 	Vector3 origin;
 	Vector3 hitPos;
 	Vector3 offset;
-	uint8_t weapon;
+	PlayerWeapon weapon;
 	PlayerBulletHitType hitType;
 	uint16_t hitID;
 };
