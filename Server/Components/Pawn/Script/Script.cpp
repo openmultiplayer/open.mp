@@ -229,7 +229,7 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 	AMX_HEADER*
 		hdr;
 	int numnatives;
-	AMX_FUNCWIDE*
+	AMX_FUNCSTUBNT*
 		func;
 
 	hdr = (AMX_HEADER*)amx->base;
@@ -240,9 +240,22 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 
 	if (index < numnatives)
 	{
-		func = (AMX_FUNCWIDE*)((unsigned char*)GETENTRY(hdr, natives, 0) + hdr->defsize * index);
+		func = (AMX_FUNCSTUBNT*)((unsigned char*)GETENTRY(hdr, natives, 0) + hdr->defsize * index);
+#ifdef AMX_WIDE_POINTERS
+		if (func->address)
+		{
+			ret->func = (AMX_NATIVE)((AMX_FUNCWIDE*)func)->address;
+			ret->name = nullptr;
+		}
+		else
+		{
+			ret->func = nullptr;
+			ret->name = GETENTRYNAME(hdr, func);
+		}
+#else
 		ret->func = (AMX_NATIVE)func->address;
 		ret->name = GETENTRYNAME(hdr, func);
+#endif
 		return AMX_ERR_NONE;
 	}
 
