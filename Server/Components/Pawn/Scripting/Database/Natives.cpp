@@ -185,6 +185,7 @@ SCRIPT_API(db_get_field_assoc_float, float(IDatabaseResultSet& result, const std
 	return result.isFieldNameAvailable(field) ? static_cast<float>(result.getFieldFloatByName(field)) : 0.0f;
 }
 
+#ifndef AMX_WIDE_POINTERS
 SCRIPT_API(db_get_mem_handle, int(IDatabaseConnection& db))
 {
 	return reinterpret_cast<int>(&db);
@@ -195,6 +196,7 @@ SCRIPT_API(db_get_result_mem_handle, int(IDatabaseResultSet& result))
 	LegacyDBResult& legacyDbResult = result.getLegacyDBResult();
 	return reinterpret_cast<int>(&legacyDbResult);
 }
+#endif
 
 SCRIPT_API(db_debug_openfiles, int())
 {
@@ -297,6 +299,7 @@ SCRIPT_API(DB_GetFieldFloatByName, float(IDatabaseResultSet& result, const std::
 	return result.isFieldNameAvailable(field) ? static_cast<float>(result.getFieldFloatByName(field)) : 0.0f;
 }
 
+#ifndef AMX_WIDE_POINTERS
 SCRIPT_API(DB_GetMemHandle, int(IDatabaseConnection& db))
 {
 	return reinterpret_cast<int>(&db);
@@ -307,6 +310,7 @@ SCRIPT_API(DB_GetLegacyDBResult, int(IDatabaseResultSet& result))
 	LegacyDBResult& legacyDbResult = result.getLegacyDBResult();
 	return reinterpret_cast<int>(&legacyDbResult);
 }
+#endif
 
 SCRIPT_API(DB_GetDatabaseConnectionCount, int())
 {

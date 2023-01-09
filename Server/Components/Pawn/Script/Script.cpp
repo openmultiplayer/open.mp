@@ -251,6 +251,10 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 
 int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr)
 {
+#ifdef AMX_WIDE_POINTERS
+	// Can't truncate - a pointer doesn't fit in a cell.
+	return AMX_ERR_DOMAIN;
+#else
 	AMX_HEADER* hdr;
 	unsigned char* data;
 
@@ -272,6 +276,7 @@ int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr)
 	} /* if */
 
 	return AMX_ERR_NONE;
+#endif
 }
 
 int AMXAPI amx_StrSize(const cell* cstr, int* length)
