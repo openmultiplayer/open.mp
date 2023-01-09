@@ -240,12 +240,43 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 
 	if (index < numnatives)
 	{
-		func = (AMX_FUNCSTUBNT*)((unsigned char*)GETENTRY(hdr, natives, 0) + hdr->defsize * index);
+		func = (AMX_FUNCSTUBNT*)((unsigned char*)GETENTRY(hdr, natives, index));
 #ifdef AMX_WIDE_POINTERS
 		if (func->address)
 		{
 			ret->func = (AMX_NATIVE)((AMX_FUNCWIDE*)func)->address;
-			ret->name = nullptr;
+			// We know the index, and we know that the nametable is in order.  We can't use the
+			// offset in `func` to jump in to that table, but we can search through it
+			// manually (and sadly linearly).  Since *all* native pointers might be clobbered we
+			// need to start with the last public name instead.
+			int numpublics = NUMENTRIES(hdr, publics, natives);
+			char* curname;
+			if (numpublics)
+			{
+				// Get the name of the last public, then skip it.
+				--numpublics;
+				curname = GETENTRYNAME(hdr, GETENTRY(hdr, publics, numpublics));
+				// Skip the current name, with its NULL.
+				curname = curname + strlen(curname) + 1;
+			}
+			else if (USENAMETABLE(hdr))
+			{
+				// Probably a rare case, but we could have 0 publics, in which case the nametable
+				// pointer is already the start of the native names and we don't need to skip over
+				// anything.
+				curname = (char*)hdr + hdr->nametable;
+			}
+			else
+			{
+				// Old AMX versions.
+				return AMX_ERR_VERSION;
+			}
+			while (index--)
+			{
+				// Skip the current name, with its NULL.
+				curname = curname + strlen(curname) + 1;
+			}
+			ret->name = curname;
 		}
 		else
 		{
