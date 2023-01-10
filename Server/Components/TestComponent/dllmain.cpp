@@ -786,7 +786,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 				if (message == "/stoprecording")
 				{
 					recData->stop();
-					return true;				
+					return true;
 				}
 			}
 		}
