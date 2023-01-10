@@ -698,7 +698,7 @@ inline void getRandomVehicleColour(int modelid, int& colour1, int& colour2)
 	return getRandomVehicleColour(modelid, colour1, colour2, colour3, colour4);
 }
 
-inline uint32_t carColourIndexToColour(int index, uint32_t alpha = 0xFF)
+inline uint32_t carColourIndexToColour(int index, uint32_t alpha = 0xFF) // TODO: [Alpha] - is not used (and it seems that uint8_t is enough for this parameter)
 {
 	static const uint32_t vehicleColours[256] = {
 		0x00000000, 0xF5F5F500, 0x2A77A100, 0x84041000, 0x26373900, 0x86446E00, 0xD78E1000, 0x4C75B700,
