@@ -203,7 +203,14 @@ public:
 	{
 		for (IPlayer* player : core->getPlayers().entries())
 		{
-			queryExtension<IPlayerRecordingData>(player)->stop();
+			if (player)
+			{
+				IPlayerRecordingData* recording = queryExtension<IPlayerRecordingData>(player);
+				if (recording)
+				{
+					recording->stop();
+				}
+			}
 		}
 	}
 
