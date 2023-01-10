@@ -1817,7 +1817,7 @@ static StringView AnimationNames[] = {
 	"RUNNINGMAN:DANCE_B16",
 	"RUNNINGMAN:DANCE_LOOP",
 	"SAMP:FISHINGIDLE",
-	// TODO: Add The "SEX", "SNM", and "BLOWJOB" animations, optionally based on version.
+	// TODO: Add The "SEX", "SNM", and "BLOWJOBZ" animations, optionally based on version.
 };
 
 static StringView AnimLibs[] = {
