@@ -767,24 +767,27 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (recordings)
 		{
-			IPlayerRecordingData* recData = player._queryExtension<IPlayerRecordingData>();
+			IPlayerRecordingData* recData = player.queryExtension<IPlayerRecordingData>();
 
-			if (message == "/startonfootrecording")
+			if (recData)
 			{
-				recData->start(PlayerRecordingType_OnFoot, "onfoot.rec");
-				return true;
-			}
+				if (message == "/startonfootrecording")
+				{
+					recData->start(PlayerRecordingType_OnFoot, "onfoot.rec");
+					return true;
+				}
 
-			if (message == "/startvehiclerecording")
-			{
-				recData->start(PlayerRecordingType_Driver, "vehicle.rec");
-				return true;
-			}
+				if (message == "/startvehiclerecording")
+				{
+					recData->start(PlayerRecordingType_Driver, "vehicle.rec");
+					return true;
+				}
 
-			if (message == "/stoprecording")
-			{
-				recData->stop();
-				return true;				
+				if (message == "/stoprecording")
+				{
+					recData->stop();
+					return true;				
+				}
 			}
 		}
 
