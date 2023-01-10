@@ -89,7 +89,7 @@ jobs:
           if-no-files-found: error
 
   build-linux-static:
-    name: Linux x86 dynssl build
+    name: Linux x86 build
     runs-on: ubuntu-latest
 
     steps:
@@ -139,7 +139,7 @@ jobs:
           if-no-files-found: error
 
   build-linux:
-    name: Linux x86 build
+    name: Linux x86 dynssl build
     runs-on: ubuntu-latest
 
     steps:
@@ -200,6 +200,20 @@ jobs:
           clean: true
           submodules: recursive
           fetch-depth: 0
+      
+      - name: Declare build variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}
+          path: docker/ref
 
       - name: Set ownership
         run: |
@@ -207,14 +221,9 @@ jobs:
           chown -R $(id -u):$(id -g) $PWD
 
       - name: Build & run abi-check
-        env:
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        shell: bash
         run: |
-          ref_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-          ref_archive_name="open.mp-linux-snapshot-${ref_version}.tar.xz"
-          master_version=$(git describe --always --tags "refs/remotes/origin/master")
-          master_archive_name="open.mp-linux-snapshot-${master_version}.tar.xz"
           cd docker
           chmod +x ./abicheck.sh
           chmod +x ./abicheck_ubuntu-18.04/docker-entrypoint.sh
-          CONFIG=RelWithDebInfo REF_ARCHIVE="${ref_archive_name}" MASTER_ARCHIVE="${master_archive_name}" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh
+          CONFIG=RelWithDebInfo REF_ARCHIVE="open.mp-linux-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh

@@ -45,6 +45,7 @@ docker run \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
     -v $PWD/conan:/home/user/.conan \
+    -v $PWD/ref:/ref \
     -e CONFIG=${config} \
     -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \
