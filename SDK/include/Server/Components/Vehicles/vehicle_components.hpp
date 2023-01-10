@@ -242,14 +242,14 @@ inline bool isValidComponentForVehicleModel(int vehicleModel, int componentId)
 		return true;
 	}
 
-	componentId -= 1000;
+	componentId -= MIN_COMPONENT_ID;
 	if (componentId < 0 || componentId >= MAX_VEHICLE_COMPONENTS - 2)
 	{
 		// `- 2` because the last two are handled separately.
 		return false;
 	}
 
-	vehicleModel -= 400;
+	vehicleModel -= MIN_VEHICLE_ID;
 	if (vehicleModel < 0 || vehicleModel >= MAX_VEHICLE_MODELS)
 	{
 		return false;
@@ -461,7 +461,7 @@ inline int getVehicleComponentSlot(int component)
 		VehicleComponent_RearBumper // 1193
 	};
 
-	component -= 1000;
+	component -= MIN_COMPONENT_ID;
 	if (0 <= component && component < MAX_VEHICLE_COMPONENTS)
 	{
 		return allComponentSlots[component];
