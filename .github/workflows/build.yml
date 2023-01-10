@@ -36,7 +36,6 @@ jobs:
         with:
           clean: true
           submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
       - name: Declare build output variables
@@ -98,7 +97,6 @@ jobs:
         with:
           clean: true
           submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
       - name: Declare build output variables
@@ -149,7 +147,6 @@ jobs:
         with:
           clean: true
           submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
       - name: Declare build output variables
@@ -202,7 +199,6 @@ jobs:
         with:
           clean: true
           submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
           fetch-depth: 0
 
       - name: Set ownership
