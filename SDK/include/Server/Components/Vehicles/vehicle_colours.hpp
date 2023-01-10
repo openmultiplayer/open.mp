@@ -734,7 +734,7 @@ inline uint32_t carColourIndexToColour(int index, uint8_t alpha = 0xFF)
 		0x31949000, 0x56941D00, 0x59163D00, 0x1B8A2F00, 0x38160B00, 0x04180400, 0x355D8E00, 0x2E3F5B00,
 		0x561A2800, 0x4E0E2700, 0x706C6700, 0x3B3E4200, 0x2E2D3300, 0x7B7E7D00, 0x4A444200, 0x28344E00
 	};
-	if (0 >= index && index < 256)
+	if (0 <= index && index < 256)
 	{
 		return vehicleColours[index] | alpha;
 	}
