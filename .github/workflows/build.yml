@@ -200,6 +200,11 @@ jobs:
           clean: true
           submodules: recursive
           fetch-depth: 0
+      
+      - uses: actions/download-artifact@v3
+        with:
+          name: open.mp-linux-${{ steps.vars.outputs.build_version }}
+          path: open.mp-linux-snapshot-pr.tar.xz
 
       - name: Set ownership
         run: |
@@ -210,8 +215,7 @@ jobs:
         env:
           HEAD_REF: ${{ github.head_ref || github.ref_name }}
         run: |
-          ref_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")
-          ref_archive_name="open.mp-linux-snapshot-${ref_version}.tar.xz"
+          ref_archive_name="open.mp-linux-snapshot-pr.tar.xz"
           master_version=$(git describe --always --tags "refs/remotes/origin/master")
           master_archive_name="open.mp-linux-snapshot-${master_version}.tar.xz"
           cd docker
