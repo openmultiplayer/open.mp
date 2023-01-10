@@ -14,7 +14,6 @@ jobs:
       with:
         clean: true
         submodules: recursive
-        token: ${{ secrets.CI_TOKEN }}
 
     - name: Run clang-format style check for C/C++ programs.
       uses: jidicula/clang-format-action@v4.6.2
