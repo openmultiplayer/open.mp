@@ -2025,7 +2025,7 @@ inline bool animationLibraryValid(StringView lib, bool v1_0 = true)
 	if (v1_0)
 	{
 		// Check three more libraries, removed in version 1.1
-		return fullName == "BLOWJOBS" || fullName == "SEX" || fullName == "SNM";
+		return fullName == "BLOWJOBZ" || fullName == "SEX" || fullName == "SNM";
 	}
 	return false;
 }
