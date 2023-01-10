@@ -88,7 +88,8 @@ private:
 			}
 
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
-			if (!data) {
+			if (!data)
+			{
 				return false;
 			}
 
@@ -103,14 +104,14 @@ private:
 				data->file_.write(reinterpret_cast<const char*>(&footSync.LeftRight), sizeof(uint16_t));
 				data->file_.write(reinterpret_cast<const char*>(&footSync.UpDown), sizeof(uint16_t));
 				data->file_.write(reinterpret_cast<const char*>(&footSync.Keys), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Position), sizeof(float)*3);
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Rotation), sizeof(float)*4);
+				data->file_.write(reinterpret_cast<const char*>(&footSync.Position), sizeof(float) * 3);
+				data->file_.write(reinterpret_cast<const char*>(&footSync.Rotation), sizeof(float) * 4);
 				data->file_.write(reinterpret_cast<const char*>(&health), sizeof(uint8_t));
 				data->file_.write(reinterpret_cast<const char*>(&armour), sizeof(uint8_t));
 				data->file_.write(reinterpret_cast<const char*>(&footSync.WeaponAdditionalKey), sizeof(uint8_t));
 				data->file_.write(reinterpret_cast<const char*>(&footSync.SpecialAction), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Velocity), sizeof(float)*3);
-				data->file_.write(reinterpret_cast<const char*>(&footSync.SurfingData.offset), sizeof(float)*3);
+				data->file_.write(reinterpret_cast<const char*>(&footSync.Velocity), sizeof(float) * 3);
+				data->file_.write(reinterpret_cast<const char*>(&footSync.SurfingData.offset), sizeof(float) * 3);
 				data->file_.write(reinterpret_cast<const char*>(&footSync.SurfingData.ID), sizeof(uint16_t));
 				data->file_.write(reinterpret_cast<const char*>(&footSync.AnimationID), sizeof(uint16_t));
 				data->file_.write(reinterpret_cast<const char*>(&footSync.AnimationFlags), sizeof(uint16_t));
@@ -137,7 +138,8 @@ private:
 			}
 
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
-			if (!data) {
+			if (!data)
+			{
 				return false;
 			}
 
@@ -153,9 +155,9 @@ private:
 				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.LeftRight), sizeof(uint16_t));
 				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.UpDown), sizeof(uint16_t));
 				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Keys), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Rotation), sizeof(float)*4);
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Position), sizeof(float)*3);
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Velocity), sizeof(float)*3);
+				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Rotation), sizeof(float) * 4);
+				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Position), sizeof(float) * 3);
+				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Velocity), sizeof(float) * 3);
 				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Health), sizeof(float));
 				data->file_.write(reinterpret_cast<const char*>(&playerHealth), sizeof(uint8_t));
 				data->file_.write(reinterpret_cast<const char*>(&playerArmour), sizeof(uint8_t));
@@ -187,7 +189,8 @@ public:
 	}
 
 	RecordingsComponent()
-		: onFootRecordingHandler(*this), driverRecordingHandler(*this)
+		: onFootRecordingHandler(*this)
+		, driverRecordingHandler(*this)
 	{
 	}
 
