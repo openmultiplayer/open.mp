@@ -223,7 +223,7 @@ static bool getVehicleModelInfo(int model, VehicleModelInfoType type, Vector3& o
 		return false;
 	}
 
-	model -= 400;
+	model -= MIN_VEHICLE_ID;
 	switch (type)
 	{
 	case VehicleModelInfo_Size:
