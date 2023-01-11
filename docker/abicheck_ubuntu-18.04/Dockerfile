@@ -15,6 +15,8 @@ RUN \
     apt-get install -y \
         cmake \
         ninja-build \
+        curl \
+        unzip \
         clang-10 \
         python3-pip \
         gcc-8-multilib \
