@@ -117,7 +117,7 @@ private:
 
 						if (rconPassword == "")
 						{
-							peer.sendClientMessage(Colour::White(), "SERVER: Server's rcon_password is empty.");
+							peer.sendClientMessage(Colour::White(), "SERVER: Server's rcon password is empty.");
 							success = false;
 						}
 						else
@@ -215,10 +215,10 @@ public:
 			static_cast<IEarlyConfig&>(core->getConfig()).setBool("rcon.enable", false);
 		}
 
-		// Server exit server if rcon_password is set to changeme
+		// Server exit if rcon.password is set to changeme
 		if (core->getConfig().getString("rcon.password") == "changeme")
 		{
-			core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password. Please change your rcon password.");
+			core->logLn(LogLevel::Error, "Your rcon password must be changed from the default password, please change it.");
 			send("exit");
 		}
 	}

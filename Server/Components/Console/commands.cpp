@@ -109,7 +109,7 @@ struct VarlistEnumCallback : OptionEnumeratorCallback
 			console.sendMessage(sender, name + " = " + std::to_string(*config.getFloat(name)) + " (float)");
 			break;
 		case ConfigOptionType_Bool:
-			console.sendMessage(sender, name + " = " + std::to_string(*config.getBool(name)) + " (boolean)");
+			console.sendMessage(sender, name + " = " + std::to_string(*config.getBool(name)) + " (bool)");
 			break;
 		case ConfigOptionType_String:
 			console.sendMessage(sender, name + " = \"" + String(config.getString(name)) + "\" (string)");

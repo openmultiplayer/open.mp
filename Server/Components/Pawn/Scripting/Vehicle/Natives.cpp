@@ -529,7 +529,7 @@ SCRIPT_API(IsVehicleSirenEnabled, bool(IVehicle& vehicle))
 	return vehicle.getSpawnData().siren;
 }
 
-SCRIPT_API(GetVehicleLastDriver, int(IVehicle& vehicle))
+SCRIPT_API_FAILRET(GetVehicleLastDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
 {
 	return vehicle.getLastDriverPoolID();
 }

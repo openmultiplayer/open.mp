@@ -23,11 +23,12 @@ cmake \
 
 cd build/Output/*/Tools
 echo "Fetching ref artifacts"
-wget -O "./ref.tar.xz" "https://tms-server.com/open.mp-snapshots-CPWt44s0xqBIWOwk2B0NJi76zoq5dFMJ/$REF_ARCHIVE"
-echo "Fetching master artifacts"
-wget -O "./master.tar.xz" "https://tms-server.com/open.mp-snapshots-CPWt44s0xqBIWOwk2B0NJi76zoq5dFMJ/$MASTER_ARCHIVE"
+url=$(curl https://nightly.link/openmultiplayer/open.mp/workflows/build/master | grep -oP '(?<=")https://nightly.link/openmultiplayer/open.mp/workflows/build/master/open.mp-linux-dynssl.*\.zip(?=")')
+curl -L $url -o master.zip
+for z in master.zip; do unzip "$z"; mv "$(unzip -Z1 $z)" "master.tar.xz"; done
 echo "Extracting ref artifacts"
-mkdir -p ref && tar -xvf "./ref.tar.xz" -C ref
+ls /ref
+mkdir -p ref && tar -xvf "/ref/$REF_ARCHIVE" -C ref
 echo "Extracting master artifacts"
 mkdir -p master && tar -xvf "./master.tar.xz" -C master
 

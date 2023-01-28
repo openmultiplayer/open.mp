@@ -516,7 +516,7 @@ SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
 		<< "Bytes received: " << stats.bytesReceived << std::endl
 		<< "Acks received: " << stats.acknowlegementsReceived << std::endl
 		<< "Duplicate acks received: " << stats.duplicateAcknowlegementsReceived << std::endl
-		<< "Inst. KBits per second:" << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
+		<< "Inst. KBits per second: " << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
 		<< "KBits per second sent: " << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
 		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
@@ -544,10 +544,10 @@ SCRIPT_API(GetPlayerNetworkStats, bool(IPlayer& player, OutputOnlyString& output
 		<< "Packetloss: " << std::setprecision(1) << std::fixed << stats.packetloss << "%" << std::endl
 		<< "Messages received: " << stats.messagesReceived << std::endl
 		<< "Bytes received: " << stats.bytesReceived << std::endl
-		<< "Acks received:" << stats.acknowlegementsReceived << std::endl
+		<< "Acks received: " << stats.acknowlegementsReceived << std::endl
 		<< "Duplicate acks received: " << stats.duplicateAcknowlegementsReceived << std::endl
-		<< "Inst. KBits per second:" << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
-		<< "KBits per second sent:" << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
+		<< "Inst. KBits per second: " << std::setprecision(1) << (stats.bitsPerSecond / 1000.0) << std::endl
+		<< "KBits per second sent: " << std::setprecision(1) << (stats.bpsSent / 1000.0) << std::endl
 		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
 	// Scope-allocated string, copy it

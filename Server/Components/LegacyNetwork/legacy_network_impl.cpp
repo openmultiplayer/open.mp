@@ -812,7 +812,7 @@ void RakNetLegacyNetwork::start()
 	{
 		if (!bind.empty())
 		{
-			core->logLn(LogLevel::Error, "Unable to start legacy network on %.*s:%d. Port in use?.", PRINT_VIEW(bind), port);
+			core->logLn(LogLevel::Error, "Unable to start legacy network on %.*s:%d. Port in use?", PRINT_VIEW(bind), port);
 		}
 		else
 		{

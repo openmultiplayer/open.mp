@@ -1817,7 +1817,7 @@ static StringView AnimationNames[] = {
 	"RUNNINGMAN:DANCE_B16",
 	"RUNNINGMAN:DANCE_LOOP",
 	"SAMP:FISHINGIDLE",
-	// TODO: Add The "SEX", "SNM", and "BLOWJOB" animations, optionally based on version.
+	// TODO: Add The "SEX", "SNM", and "BLOWJOBZ" animations, optionally based on version.
 };
 
 static StringView AnimLibs[] = {
@@ -2025,7 +2025,7 @@ inline bool animationLibraryValid(StringView lib, bool v1_0 = true)
 	if (v1_0)
 	{
 		// Check three more libraries, removed in version 1.1
-		return fullName == "BLOWJOBS" || fullName == "SEX" || fullName == "SNM";
+		return fullName == "BLOWJOBZ" || fullName == "SEX" || fullName == "SNM";
 	}
 	return false;
 }
