@@ -10,6 +10,10 @@ jobs:
     name: Windows x86 build
     runs-on: windows-2019
 
+    strategy:
+      matrix:
+        arch: [Win32, x64]
+
     steps:
       - uses: actions/checkout@v3
         with:
@@ -45,7 +49,7 @@ jobs:
           $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A Win32 -T "ClangCL"
+          cmake -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A ${{ matrix.arch }} -T "ClangCL"
 
       - name: Build
         run: |
@@ -53,14 +57,16 @@ jobs:
           cmake --build . --config ${{ steps.vars.outputs.build_config }}
 
       - name: Create a build archive
+        id: build
         shell: bash
         env:
           HEAD_REF: ${{ github.head_ref || github.ref_name }}
         run: |
           version=${{ steps.vars.outputs.build_version }}
-          archive_name="open.mp-win-${version}.zip"
+          artifact_name="open.mp-win-${{ matrix.arch }}-${version}"
+          echo "artifact_name=${artifact_name}" >> $GITHUB_OUTPUT
           cd build/Output/*
-          powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${archive_name}" -Path "Server"
+          powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${artifact_name}.zip" -Path "Server"
 
       - name: Upload to release
         id: upload-release-asset
@@ -69,8 +75,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: build/Output/${{ steps.vars.outputs.build_config }}/open.mp-win-${{ steps.vars.outputs.build_version }}.zip
-          asset_name: open.mp-win-x86.zip
+          asset_path: build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.zip
+          asset_name: ${{ steps.build.outputs.artifact_name }}.zip
           asset_content_type: application/gzip
 
   build-linux:
