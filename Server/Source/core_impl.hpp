@@ -1732,7 +1732,12 @@ public:
 		char main[4096];
 		std::unique_ptr<char[]> fallback; // In case the string is larger than 4096
 		Span<char> buf(main, sizeof(main));
-		const int len = vsnprintf(nullptr, 0, fmt, args);
+
+		va_list args_copy;
+		va_copy(args_copy, args);
+		const int len = vsnprintf(nullptr, 0, fmt, args_copy);
+		va_end(args_copy);
+
 		if (len > sizeof(main))
 		{
 			// Stack won't fit our string; allocate space for it
