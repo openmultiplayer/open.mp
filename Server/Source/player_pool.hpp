@@ -1419,6 +1419,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			if (std::fabs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001)
+			{
+				return false;
+			}
+
 			IVehicle* vehiclePtr = self.vehiclesComponent->get(unoccupiedSync.VehicleID);
 			if (!vehiclePtr)
 			{
