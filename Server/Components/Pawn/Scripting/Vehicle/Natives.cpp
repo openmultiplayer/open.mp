@@ -529,12 +529,12 @@ SCRIPT_API(IsVehicleSirenEnabled, bool(IVehicle& vehicle))
 	return vehicle.getSpawnData().siren;
 }
 
-SCRIPT_API_FAILRET(GetVehicleLastDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
+SCRIPT_API_FAILRET(GetVehicleLastDriver, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
 {
 	return vehicle.getLastDriverPoolID();
 }
 
-SCRIPT_API_FAILRET(GetVehicleDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
+SCRIPT_API_FAILRET(GetVehicleDriver, INVALID_VEHICLE_ID, int(IVehicle& vehicle))
 {
 	IPlayer* driver = vehicle.getDriver();
 
