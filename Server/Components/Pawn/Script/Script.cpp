@@ -229,7 +229,7 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 	AMX_HEADER*
 		hdr;
 	int numnatives;
-	AMX_FUNCSTUB*
+	AMX_FUNCSTUBNT*
 		func;
 
 	hdr = (AMX_HEADER*)amx->base;
@@ -240,9 +240,53 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 
 	if (index < numnatives)
 	{
-		func = (AMX_FUNCSTUB*)((unsigned char*)GETENTRY(hdr, natives, 0) + hdr->defsize * index);
+		func = (AMX_FUNCSTUBNT*)((unsigned char*)GETENTRY(hdr, natives, index));
+#ifdef AMX_WIDE_POINTERS
+		if (func->address)
+		{
+			ret->func = (AMX_NATIVE)((AMX_FUNCWIDE*)func)->address;
+			// We know the index, and we know that the nametable is in order.  We can't use the
+			// offset in `func` to jump in to that table, but we can search through it
+			// manually (and sadly linearly).  Since *all* native pointers might be clobbered we
+			// need to start with the last public name instead.
+			int numpublics = NUMENTRIES(hdr, publics, natives);
+			char* curname;
+			if (numpublics)
+			{
+				// Get the name of the last public, then skip it.
+				--numpublics;
+				curname = GETENTRYNAME(hdr, GETENTRY(hdr, publics, numpublics));
+				// Skip the current name, with its NULL.
+				curname = curname + strlen(curname) + 1;
+			}
+			else if (USENAMETABLE(hdr))
+			{
+				// Probably a rare case, but we could have 0 publics, in which case the nametable
+				// pointer is already the start of the native names and we don't need to skip over
+				// anything.
+				curname = (char*)hdr + hdr->nametable;
+			}
+			else
+			{
+				// Old AMX versions.
+				return AMX_ERR_VERSION;
+			}
+			while (index--)
+			{
+				// Skip the current name, with its NULL.
+				curname = curname + strlen(curname) + 1;
+			}
+			ret->name = curname;
+		}
+		else
+		{
+			ret->func = nullptr;
+			ret->name = GETENTRYNAME(hdr, func);
+		}
+#else
 		ret->func = (AMX_NATIVE)func->address;
 		ret->name = GETENTRYNAME(hdr, func);
+#endif
 		return AMX_ERR_NONE;
 	}
 
@@ -251,6 +295,10 @@ int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 
 int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr)
 {
+#ifdef AMX_WIDE_POINTERS
+	// Can't truncate - a pointer doesn't fit in a cell.
+	return AMX_ERR_DOMAIN;
+#else
 	AMX_HEADER* hdr;
 	unsigned char* data;
 
@@ -272,6 +320,7 @@ int AMXAPI amx_MakeAddr(AMX* amx, cell* phys_addr, cell* amx_addr)
 	} /* if */
 
 	return AMX_ERR_NONE;
+#endif
 }
 
 int AMXAPI amx_StrSize(const cell* cstr, int* length)

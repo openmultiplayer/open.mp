@@ -226,6 +226,14 @@ void PawnManager::CheckNatives(PawnScript& script)
 	{
 		script.GetNativeByIndex(count, &func);
 
+		if (func.name == nullptr)
+		{
+			// This won't currently warn for using deprecated natives in x64, because the name gets
+			// clobebered by the longer address when it is registered.  But warning for unregistered
+			// natives will at least still work (because they, by definition, aren't clobbered).
+			continue;
+		}
+
 		auto itr = DeprecatedNatives.find(func.name);
 		bool is_deprecated = itr != DeprecatedNatives.end();
 

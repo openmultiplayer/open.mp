@@ -13,10 +13,16 @@ conan_omp_add_lib(string-view-lite 1.6.0)
 add_library(OMP-SDK INTERFACE)
 
 if(MSVC)
-	target_compile_options(OMP-SDK INTERFACE
-		"/fp:strict"
-		"/arch:SSE2"
-	)
+	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+		target_compile_options(OMP-SDK INTERFACE
+			"/fp:strict"
+			"/arch:SSE2"
+		)
+	else()
+		target_compile_options(OMP-SDK INTERFACE
+			"/fp:strict"
+		)
+	endif()
 elseif(UNIX)
 	if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
 		target_compile_options(OMP-SDK INTERFACE

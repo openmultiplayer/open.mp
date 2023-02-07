@@ -1,9 +1,6 @@
 #pragma once
 
 // This file should only be included in one place.
-
-#include <amx/amx.h>
-
 #include "pawn.hpp"
 
 #if defined PAWN_NATIVES_HAS_FUNC

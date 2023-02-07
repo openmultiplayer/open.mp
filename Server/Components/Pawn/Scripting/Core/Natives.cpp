@@ -112,7 +112,7 @@ SCRIPT_API(GetPlayers, int(DynamicArray<int>& outputPlayers))
 	if (outputPlayers.size() < players->entries().size())
 	{
 		PawnManager::Get()->core->printLn(
-			"There are %i players in your server but array size used in `GetPlayers` is %i; Use a bigger size in your script.",
+			"There are %zu players in your server but array size used in `GetPlayers` is %zu; Use a bigger size in your script.",
 			players->entries().size(),
 			outputPlayers.size());
 	}
@@ -138,7 +138,7 @@ SCRIPT_API(GetActors, int(DynamicArray<int>& outputActors))
 		if (outputActors.size() < actors->count())
 		{
 			PawnManager::Get()->core->printLn(
-				"There are %i actors in your server but array size used in `GetActors` is %i; Use a bigger size in your script.",
+				"There are %zu actors in your server but array size used in `GetActors` is %zu; Use a bigger size in your script.",
 				actors->count(),
 				outputActors.size());
 		}
@@ -165,7 +165,7 @@ SCRIPT_API(GetVehicles, int(DynamicArray<int>& outputVehicles))
 		if (outputVehicles.size() < vehicles->count())
 		{
 			PawnManager::Get()->core->printLn(
-				"There are %i vehicles in your server but array size used in `GetVehicles` is %i; Use a bigger size in your script.",
+				"There are %zu vehicles in your server but array size used in `GetVehicles` is %zu; Use a bigger size in your script.",
 				vehicles->count(),
 				outputVehicles.size());
 		}
