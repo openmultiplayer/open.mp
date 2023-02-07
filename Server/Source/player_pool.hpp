@@ -1419,6 +1419,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001 || glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001 || glm::abs(unoccupiedSync.Roll.x * unoccupiedSync.Rotation.x + unoccupiedSync.Roll.y * unoccupiedSync.Rotation.y + unoccupiedSync.Roll.z * unoccupiedSync.Rotation.z) >= 0.000001)
+			{
+				return false;
+			}
+
 			IVehicle* vehiclePtr = self.vehiclesComponent->get(unoccupiedSync.VehicleID);
 			if (!vehiclePtr)
 			{
