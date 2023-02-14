@@ -244,7 +244,7 @@ void Player::streamInForPlayer(IPlayer& other)
 			{
 				playerStreamInRPC.CustomSkin = models_data->getCustomSkin();
 			}
-			
+
 			Colour colour;
 			bool hasPlayerSpecificColour = other.getOtherColour(*this, colour);
 			if (!hasPlayerSpecificColour)
