@@ -245,8 +245,15 @@ void Player::streamInForPlayer(IPlayer& other)
 				playerStreamInRPC.CustomSkin = models_data->getCustomSkin();
 			}
 
+			Colour colour;
+			bool hasPlayerSpecificColour = other.getOtherColour(*this, colour);
+			if (!hasPlayerSpecificColour)
+			{
+				colour = colour_;
+			}
+
 			playerStreamInRPC.Team = team_;
-			playerStreamInRPC.Col = colour_;
+			playerStreamInRPC.Col = colour;
 			playerStreamInRPC.Pos = pos_;
 			playerStreamInRPC.Angle = rot_.ToEuler().z;
 			playerStreamInRPC.FightingStyle = fightingStyle_;
