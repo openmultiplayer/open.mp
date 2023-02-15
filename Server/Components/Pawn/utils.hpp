@@ -335,7 +335,8 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallByIndex(AMX* amx, cell const* params
 		= amx_NumParams(params);
 	AMX_MIN_PARAMETERS("Script_CallByIndex", params, 2);
 	int
-		index = params[1];
+		index
+		= params[1];
 	char*
 		fmat;
 	amx_StrParamChar(amx, params[2], fmat);
@@ -488,7 +489,8 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallOneByIndex(AMX* amx, cell const* par
 		return 0;
 	}
 	int
-		index = params[2];
+		index
+		= params[2];
 	char*
 		fmat;
 	amx_StrParamChar(amx, params[3], fmat);
