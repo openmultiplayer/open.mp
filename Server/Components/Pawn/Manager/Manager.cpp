@@ -442,8 +442,10 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 {
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
+	script.Register("Script_CallByIndex", &utils::pawn_Script_CallByIndex);
 	script.Register("CallRemoteFunction", &utils::pawn_Script_CallAll);
 	script.Register("Script_CallTargeted", &utils::pawn_Script_CallOne);
+	script.Register("Script_CallTargetedByIndex", &utils::pawn_Script_CallOneByIndex);
 	script.Register("format", &utils::pawn_format);
 	script.Register("printf", &utils::pawn_printf);
 	script.Register("Script_GetID", &utils::pawn_Script_GetID);

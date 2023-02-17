@@ -328,6 +328,75 @@ inline cell AMX_NATIVE_CALL pawn_Script_Call(AMX* amx, cell const* params)
 	return ret;
 }
 
+inline cell AMX_NATIVE_CALL pawn_Script_CallByIndex(AMX* amx, cell const* params)
+{
+	int
+		num
+		= amx_NumParams(params);
+	AMX_MIN_PARAMETERS("Script_CallByIndex", params, 2);
+	int
+		index
+		= params[1];
+	char*
+		fmat;
+	amx_StrParamChar(amx, params[2], fmat);
+	if (num != (int)(2 + strlen(fmat)))
+	{
+		PawnManager::Get()->core->logLn(LogLevel::Warning, "Parameter count does not match specifier in `Script_CallByIndex`. callback index: %d - fmat: %s - count: %d)", index, fmat, num - 2);
+	}
+	cell *
+		data,
+		hea = amx->hea,
+		stk = amx->stk;
+	for (size_t i = strlen(fmat); i--;)
+	{
+		switch (fmat[i])
+		{
+		case 'a':
+			if (fmat[i + 1] != 'i' && fmat[i + 1] != 'd')
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Array not followed by size in `Script_CallByIndex`");
+				amx->hea = hea;
+				amx->stk = stk;
+				return 0;
+			}
+			[[fallthrough]];
+		case 'v':
+		case 's':
+			// Just put the pointer directly.
+			if (amx_Push(amx, params[i + 3]) != AMX_ERR_NONE)
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallByIndex`");
+				amx->hea = hea;
+				amx->stk = stk;
+				return 0;
+			}
+			break;
+		default:
+			// Get the original source.  This is needed even for normal parameters since everything is
+			// passed by reference to varargs functions.
+			if (amx_GetAddr(amx, params[i + 3], &data) != AMX_ERR_NONE || amx_Push(amx, *data) != AMX_ERR_NONE)
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallByIndex`");
+				amx->hea = hea;
+				amx->stk = stk;
+				return 0;
+			}
+			break;
+		}
+	}
+	cell
+		ret
+		= 0;
+	if (amx_Exec(amx, &ret, index) != AMX_ERR_NONE)
+	{
+		ret = 0;
+	}
+	amx->hea = hea;
+	amx->stk = stk;
+	return ret;
+}
+
 inline cell AMX_NATIVE_CALL pawn_Script_CallOne(AMX* amx, cell const* params)
 {
 	int
@@ -388,6 +457,81 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallOne(AMX* amx, cell const* params)
 			if (amx_GetAddr(amx, params[i + 4], &data) != AMX_ERR_NONE || amx_Push(amx, *data) != AMX_ERR_NONE)
 			{
 				PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallOne`");
+				amx->hea = hea;
+				amx->stk = stk;
+				return 0;
+			}
+			break;
+		}
+	}
+	cell
+		ret
+		= 0;
+	if (amx_Exec(amx, &ret, index) != AMX_ERR_NONE)
+	{
+		ret = 0;
+	}
+	amx->hea = hea;
+	amx->stk = stk;
+	return ret;
+}
+
+inline cell AMX_NATIVE_CALL pawn_Script_CallOneByIndex(AMX* amx, cell const* params)
+{
+	int
+		num
+		= amx_NumParams(params);
+	AMX_MIN_PARAMETERS("Script_CallOneByIndex", params, 3);
+	amx = PawnManager::Get()->AMXFromID(params[1]);
+	if (amx == nullptr)
+	{
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Could not find target script (%u) in `Script_CallOneByIndex`", params[1]);
+		return 0;
+	}
+	int
+		index
+		= params[2];
+	char*
+		fmat;
+	amx_StrParamChar(amx, params[3], fmat);
+	if (num != (int)(2 + strlen(fmat)))
+	{
+		PawnManager::Get()->core->logLn(LogLevel::Warning, "Parameter count does not match specifier in `Script_CallOneByIndex`. callback index: %d - fmat: %s - count: %d)", index, fmat, num - 2);
+	}
+	cell *
+		data,
+		hea = amx->hea,
+		stk = amx->stk;
+	for (size_t i = strlen(fmat); i--;)
+	{
+		switch (fmat[i])
+		{
+		case 'a':
+			if (fmat[i + 1] != 'i' && fmat[i + 1] != 'd')
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Array not followed by size in `Script_CallOneByIndex`");
+				amx->hea = hea;
+				amx->stk = stk;
+				return 0;
+			}
+			[[fallthrough]];
+		case 'v':
+		case 's':
+			// Just put the pointer directly.
+			if (amx_Push(amx, params[i + 4]) != AMX_ERR_NONE)
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallOneByIndex`");
+				amx->hea = hea;
+				amx->stk = stk;
+				return 0;
+			}
+			break;
+		default:
+			// Get the original source.  This is needed even for normal parameters since everything is
+			// passed by reference to varargs functions.
+			if (amx_GetAddr(amx, params[i + 4], &data) != AMX_ERR_NONE || amx_Push(amx, *data) != AMX_ERR_NONE)
+			{
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Error pushing parameters in `Script_CallOneByIndex`");
 				amx->hea = hea;
 				amx->stk = stk;
 				return 0;
