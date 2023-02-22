@@ -386,7 +386,7 @@ void Vehicle::setColour(int col1, int col2)
 	bodyColour2 = col2 & 0xFF;
 
 	NetCode::RPC::SCMEvent colourRPC;
-	colourRPC.PlayerID = 0xFFFF;
+	colourRPC.PlayerID = INVALID_PLAYER_ID;
 	colourRPC.VehicleID = poolID;
 	colourRPC.EventType = VehicleSCMEvent_SetColour;
 	colourRPC.Arg1 = col1;
@@ -434,7 +434,7 @@ void Vehicle::setPaintJob(int paintjob)
 {
 	paintJob = paintjob + 1;
 	NetCode::RPC::SCMEvent paintRPC;
-	paintRPC.PlayerID = 0xFFFF;
+	paintRPC.PlayerID = INVALID_PLAYER_ID;
 	paintRPC.EventType = VehicleSCMEvent_SetPaintjob;
 	paintRPC.VehicleID = poolID;
 	paintRPC.Arg1 = paintjob;
@@ -463,7 +463,7 @@ void Vehicle::addComponent(int component)
 
 	mods[slot] = component;
 	NetCode::RPC::SCMEvent modRPC;
-	modRPC.PlayerID = 0xFFFF;
+	modRPC.PlayerID = INVALID_PLAYER_ID;
 	modRPC.EventType = VehicleSCMEvent_AddComponent;
 	modRPC.VehicleID = poolID;
 	modRPC.Arg1 = component;
