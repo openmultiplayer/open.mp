@@ -16,7 +16,7 @@ struct BrokenPluginMessageData
 	StringView message;
 };
 
-static const StaticArray<BrokenPluginMessageData, 15> BrokenPlugins = {
+static const StaticArray<BrokenPluginMessageData, 20> BrokenPlugins = {
 	{
 		{ "YSF", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
 		{ "YSF_DL", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
@@ -33,6 +33,11 @@ static const StaticArray<BrokenPluginMessageData, 15> BrokenPlugins = {
 		{ "ASAN", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
 		{ "nativechecker", "It is not needed anymore since open.mp has built in native checking mechanism when a script is being loaded" },
 		{ "samp-compat", "It is not needed anymore since open.mp has built in compat mechanism between 0.3.7 and 0.3DL versions" },
+		{ "LFN", "It is not needed anymore since open.mp has support for longer function names, just compile your scripts with our compiler" },
+		{ "samp-custom-query-flood-check", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+		{ "AntiVehicleSpawn", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+		{ "mcmd", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
+		{ "raktimefix", "It is not needed anymore since open.mp has no stability issues on the latest linux systems" },
 	}
 };
 
