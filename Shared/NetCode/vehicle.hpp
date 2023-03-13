@@ -283,7 +283,7 @@ namespace RPC
 		uint32_t DoorStatus;
 		uint32_t PanelStatus;
 		uint8_t LightStatus;
-		uint8_t TyreStatus;
+		uint8_t TireStatus;
 
 		bool read(NetworkBitStream& bs)
 		{
@@ -291,7 +291,7 @@ namespace RPC
 			bs.readUINT32(PanelStatus);
 			bs.readUINT32(DoorStatus);
 			bs.readUINT8(LightStatus);
-			return bs.readUINT8(TyreStatus);
+			return bs.readUINT8(TireStatus);
 		}
 
 		void write(NetworkBitStream& bs) const
@@ -300,7 +300,7 @@ namespace RPC
 			bs.writeUINT32(PanelStatus);
 			bs.writeUINT32(DoorStatus);
 			bs.writeUINT8(LightStatus);
-			bs.writeUINT8(TyreStatus);
+			bs.writeUINT8(TireStatus);
 		}
 	};
 
