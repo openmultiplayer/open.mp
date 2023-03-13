@@ -116,7 +116,7 @@ namespace RPC
 		uint32_t DoorDamage;
 		uint32_t PanelDamage;
 		uint8_t LightDamage;
-		uint8_t TyreDamage;
+		uint8_t TireDamage;
 		uint8_t Siren;
 		StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT_IN_RPC> Mods;
 		uint8_t Paintjob;
@@ -141,7 +141,7 @@ namespace RPC
 			bs.writeUINT32(DoorDamage);
 			bs.writeUINT32(PanelDamage);
 			bs.writeUINT8(LightDamage);
-			bs.writeUINT8(TyreDamage);
+			bs.writeUINT8(TireDamage);
 			bs.writeUINT8(Siren);
 			for (int mod : Mods)
 			{
