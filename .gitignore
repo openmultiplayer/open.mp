@@ -294,3 +294,4 @@ __pycache__/
 .vscode/
 /docker/conan/
 /docker/data/
+/buildlinux/*
