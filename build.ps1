@@ -37,7 +37,7 @@ if (-not (Test-Path build)) {
     catch [System.Management.Automation.CommandNotFoundException] {
         Write-Warning "Conan not found in PATH; installing it through pip3."
         try {
-            & pip3 install --no-warn-script-location conan
+            & pip3 install --no-warn-script-location -v "conan==1.57.0"
         }
         catch [System.Management.Automation.CommandNotFoundException] {
             throw "Pip3 not found. Please install it and run the script again."

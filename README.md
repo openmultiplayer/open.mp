@@ -16,7 +16,7 @@
 ## Tools
 
 * [CMake 3.19+](https://cmake.org/)
-* [Conan 1.33+](https://conan.io/)
+* [Conan 1.57+](https://conan.io/) (Can't use conan v2.x)
 
 ## Tools on Windows
 
