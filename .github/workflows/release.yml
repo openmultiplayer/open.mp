@@ -41,7 +41,7 @@ jobs:
       - name: Install latest conan
         run: |
           python -m pip install --upgrade pip
-          pip install conan
+          pip install -v "conan==1.57.0"
 
       - name: Generate build files
         run: |

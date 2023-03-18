@@ -110,7 +110,7 @@ SCRIPT_API(IsValidObject, bool(IObject* object))
 	return object != nullptr;
 }
 
-SCRIPT_API(MoveObject, bool(IObject& object, Vector3 position, float speed, Vector3 rotation))
+SCRIPT_API(MoveObject, float(IObject& object, Vector3 position, float speed, Vector3 rotation))
 {
 	ObjectMoveData data;
 	data.targetPos = position;
@@ -118,7 +118,9 @@ SCRIPT_API(MoveObject, bool(IObject& object, Vector3 position, float speed, Vect
 	data.speed = speed;
 
 	object.move(data);
-	return true;
+
+	float estimatedTime = (glm::length(data.targetPos - object.getPosition()) / speed) * 1000.0f;
+	return estimatedTime;
 }
 
 SCRIPT_API(StopObject, bool(IObject& object))

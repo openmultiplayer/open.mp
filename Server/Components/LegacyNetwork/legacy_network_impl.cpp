@@ -429,6 +429,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 				return;
 			}
 
+			remoteSystem->isLogon = true;
 			IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name, playerConnectRPC.IsUsingOfficialClient);
 			if (newPeer)
 			{
@@ -483,6 +484,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 		NetCode::RPC::NPCConnect NPCConnectRPC;
 		if (NPCConnectRPC.read(bs))
 		{
+			remoteSystem->isLogon = true;
 			IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
 			if (newPeer)
 			{

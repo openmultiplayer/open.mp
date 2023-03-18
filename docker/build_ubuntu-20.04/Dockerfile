@@ -22,7 +22,7 @@ RUN \
         libstdc++-10-dev:i386 \
     && \
     useradd -m user && \
-    su user -c 'pip3 install --user conan'
+    su user -c 'pip3 install --user -v "conan==1.57.0"'
 
 USER user
 
