@@ -15,6 +15,7 @@
 #include <iomanip>
 #include <math.h>
 #include <sstream>
+#include <anim.hpp>
 
 SCRIPT_API(GetTickCount, int())
 {
@@ -209,6 +210,12 @@ SCRIPT_API(EnableAllAnimations, bool(bool allow))
 {
 	*PawnManager::Get()->config->getBool("game.use_all_animations") = allow;
 	return true;
+}
+
+SCRIPT_API(IsValidAnimationLibrary, bool(std::string const& name))
+{
+	cell* args = GetParams();
+	return animationLibraryValid(name, args[0] == 1 * sizeof(cell) || args[2]);
 }
 
 SCRIPT_API(AreInteriorWeaponsAllowed, bool())

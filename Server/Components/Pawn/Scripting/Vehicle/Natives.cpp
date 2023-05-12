@@ -10,6 +10,7 @@
 #include <Server/Components/Vehicles/vehicle_components.hpp>
 #include <Server/Components/Vehicles/vehicle_models.hpp>
 #include <Server/Components/Vehicles/vehicle_colours.hpp>
+#include <Server/Components/Vehicles/vehicle_seats.hpp>
 #include <sdk.hpp>
 
 SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colour1, int colour2, int respawnDelay))
@@ -31,6 +32,11 @@ SCRIPT_API(CreateVehicle, int(int modelid, Vector3 pos, float rotation, int colo
 		}
 	}
 	return INVALID_VEHICLE_ID;
+}
+
+SCRIPT_API(GetVehicleSeats, int(int modelid))
+{
+	return Impl::getVehiclePassengerSeats(modelid);
 }
 
 SCRIPT_API(DestroyVehicle, bool(IVehicle& vehicle))
@@ -265,9 +271,14 @@ SCRIPT_API(GetVehicleComponentInSlot, int(IVehicle& vehicle, int slot))
 	return vehicle.getComponentInSlot(slot);
 }
 
-SCRIPT_API(GetVehicleComponentType, int(int component))
+SCRIPT_API(GetVehicleComponentType, int(int componentid))
 {
-	return getVehicleComponentSlot(component);
+	return getVehicleComponentSlot(componentid);
+}
+
+SCRIPT_API(VehicleCanHaveComponent, bool(int modelid, int componentid))
+{
+	return Impl::isValidComponentForVehicleModel(modelid, componentid);
 }
 
 SCRIPT_API(GetRandomCarColPair, void(int modelid, int& colour1, int& colour2, int& colour3, int& colour4))

@@ -1192,11 +1192,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		}
 	} playerWeaponsUpdateHandler;
 
-	void initPlayer(Player& player)
+	Colour getDefaultColour(int pid) const override
 	{
-		player.streamedFor_.add(player.poolID, player);
-
-		// Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846)
+		// Predefined set of colours. (https://github.com/Open-GTO/sa-mp-fixes/blob/master/fixes.inc#L3846
 		static constexpr uint32_t colours[] = {
 			0xFF8C13FF,
 			0xC715FFFF,
@@ -1299,7 +1297,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			0xD8C762FF,
 			0xD8C762FF,
 		};
-		player.colour_ = Colour::FromRGBA(colours[player.poolID % GLM_COUNTOF(colours)]);
+		return Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
+	}
+
+	void initPlayer(Player& player)
+	{
+		player.streamedFor_.add(player.poolID, player);
+		player.colour_ = getDefaultColour(player.poolID);
 	}
 
 	struct PlayerPassengerSyncHandler : public SingleNetworkInEventHandler
