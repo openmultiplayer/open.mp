@@ -1676,24 +1676,35 @@ public:
 
 	virtual void vlogLnInternal(LogLevel level, bool utf8, const char* fmt, va_list args)
 	{
-#ifdef BUILD_WINDOWS
-		_lock_locales();
-		UINT oldCP = 0;
-		const char* oldLocale = nullptr;
-		if (utf8)
-		{
-			oldCP = GetConsoleOutputCP();
-			SetConsoleOutputCP(CP_UTF8);
-			oldLocale = std::setlocale(LC_CTYPE, ".UTF-8");
-		}
-#endif
-
 #ifndef _DEBUG
 		if (level == LogLevel::Debug)
 		{
 			return;
 		}
 #endif
+
+#ifdef BUILD_WINDOWS
+		_lock_locales();
+		UINT oldCP = 0;
+		char oldLocale[64] = { 0 };
+		bool oldLocaleSaved = false;
+		if (utf8)
+		{
+			oldCP = GetConsoleOutputCP();
+			SetConsoleOutputCP(CP_UTF8);
+
+			/* Getting current locale */
+			const char* old_locale_ptr = std::setlocale(LC_CTYPE, nullptr);
+			if (old_locale_ptr != nullptr)
+			{
+				strcpy_s(oldLocale, old_locale_ptr);
+				oldLocaleSaved = true;
+
+				std::setlocale(LC_CTYPE, ".UTF-8");
+			}
+		}
+#endif
+
 #ifdef BUILD_WINDOWS
 		if (level == LogLevel::Debug)
 		{
@@ -1762,7 +1773,10 @@ public:
 #ifdef BUILD_WINDOWS
 		if (utf8)
 		{
-			std::setlocale(LC_CTYPE, oldLocale);
+			if (oldLocaleSaved)
+			{
+				std::setlocale(LC_CTYPE, oldLocale);
+			}
 			SetConsoleOutputCP(oldCP);
 		}
 		_unlock_locales();
