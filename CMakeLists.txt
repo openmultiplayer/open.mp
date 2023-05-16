@@ -153,6 +153,7 @@ if(BUILD_SERVER)
 	add_subdirectory(SDK)
 	add_subdirectory(Shared)
 	add_subdirectory(Server)
+	set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT Server)
 endif()
 
 if(BUILD_ABI_CHECK_TOOL)
