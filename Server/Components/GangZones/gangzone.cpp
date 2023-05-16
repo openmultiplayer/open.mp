@@ -151,16 +151,18 @@ public:
 
 	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
-		// only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
+		// Only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
 		if (checkingList.entries().size())
 		{
 			const Vector3& playerPos = player.getPosition();
 			DynamicArray<IGangZone*> enteredList;
+			// Guarantee a single allocation
+			enteredList.reserve(checkingList.entries().size());
 
 			for (auto gangzone : checkingList.entries())
 			{
 
-				// only check visible gangzones
+				// Only check visible gangzones
 				if (!gangzone->isShownForPlayer(player))
 				{
 					continue;
