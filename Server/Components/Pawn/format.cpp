@@ -839,31 +839,30 @@ void __WHOA_DONT_CALL_ME_PLZ_K_lol_o_O()
 }
 
 // StringView printf.
-StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramOffset)
+AmxStringFormatter::AmxStringFormatter(cell const* format, AMX* amx, cell const* params, int paramOffset) noexcept
 {
-	static char buf[8192];
 	int count = params[0] / sizeof(cell);
 	int diff = count - paramOffset;
-	int len;
 	int formatLength;
 	buf[0] = '\0';
 	amx_StrLen(format, &formatLength);
-	if (formatLength <= 0 || formatLength >= sizeof(buf))
+	if (formatLength <= 0 || formatLength >= buf.size())
 	{
 		// Too big.
-		return StringView(buf, 0);
+		length = 0;
+		return;
 	}
 	if (diff == 0)
 	{
 		// No formatting.  Fallback.
-		amx_GetString(buf, format, false, formatLength + 1);
-		len = formatLength;
+		amx_GetString(buf.data(), format, false, formatLength + 1);
+		length = formatLength;
 	}
 	else
 	{
 		// Adjust the offset by 1 to account for the initial hidden `count` parameter.
 		++paramOffset;
-		len = atcprintf(buf, sizeof(buf) - 1, format, amx, params, &paramOffset);
+		length = atcprintf(buf.data(), buf.size() - 1, format, amx, params, &paramOffset);
 		if (paramOffset <= count)
 		{
 			char* fmt;
@@ -878,5 +877,4 @@ StringView svprintf(cell const* format, AMX* amx, cell const* params, int paramO
 			PawnManager::Get()->core->logLn(LogLevel::Warning, "Insufficient specifiers given: \"%s\" does not format %u parameters.", fmt, diff);
 		}
 	}
-	return StringView(buf, len);
 }

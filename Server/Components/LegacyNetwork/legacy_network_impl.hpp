@@ -322,7 +322,7 @@ public:
 			return false;
 		}
 
-		query.setRuleValue(String(rule), String(value));
+		query.setRuleValue<true>(String(rule), String(value));
 		query.buildRulesBuffer();
 		return true;
 	}

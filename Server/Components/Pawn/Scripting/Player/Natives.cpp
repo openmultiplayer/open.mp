@@ -13,28 +13,28 @@
 
 SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, cell const* format))
 {
-	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter msg(format, GetAMX(), GetParams(), 3);
 	player.sendClientMessage(Colour::FromRGBA(colour), msg);
 	return true;
 }
 
 SCRIPT_API(SendClientMessagef, bool(IPlayer& player, uint32_t colour, cell const* format))
 {
-	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter msg(format, GetAMX(), GetParams(), 3);
 	player.sendClientMessage(Colour::FromRGBA(colour), msg);
 	return true;
 }
 
 SCRIPT_API(SendClientMessageToAll, bool(uint32_t colour, cell const* format))
 {
-	auto msg = svprintf(format, GetAMX(), GetParams(), 2);
+	AmxStringFormatter msg(format, GetAMX(), GetParams(), 2);
 	PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
 	return true;
 }
 
 SCRIPT_API(SendClientMessageToAllf, bool(uint32_t colour, cell const* format))
 {
-	auto msg = svprintf(format, GetAMX(), GetParams(), 2);
+	AmxStringFormatter msg(format, GetAMX(), GetParams(), 2);
 	PawnManager::Get()->players->sendClientMessageToAll(Colour::FromRGBA(colour), msg);
 	return true;
 }
@@ -536,7 +536,7 @@ SCRIPT_API(SetPlayerArmedWeapon, bool(IPlayer& player, uint8_t weapon))
 
 SCRIPT_API(SetPlayerChatBubble, bool(IPlayer& player, cell const* format, uint32_t colour, float drawdistance, int expiretime))
 {
-	auto text = svprintf(format, GetAMX(), GetParams(), 5);
+	AmxStringFormatter text(format, GetAMX(), GetParams(), 5);
 	player.setChatBubble(text, Colour::FromRGBA(colour), drawdistance, std::chrono::milliseconds(expiretime));
 	return true;
 }
@@ -1007,7 +1007,7 @@ SCRIPT_API(Kick, bool(IPlayer& player))
 
 SCRIPT_API(GameTextForPlayer, bool(IPlayer& player, cell const* format, int time, int style))
 {
-	auto string = svprintf(format, GetAMX(), GetParams(), 4);
+	AmxStringFormatter string(format, GetAMX(), GetParams(), 4);
 	if (string.empty())
 	{
 		return false;
@@ -1044,7 +1044,7 @@ SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& messa
 
 SCRIPT_API(GameTextForPlayerf, bool(IPlayer& player, int time, int style, cell const* format))
 {
-	auto string = svprintf(format, GetAMX(), GetParams(), 4);
+	AmxStringFormatter string(format, GetAMX(), GetParams(), 4);
 	if (string.empty())
 	{
 		return false;
@@ -1061,7 +1061,7 @@ SCRIPT_API(Ban, bool(IPlayer& player))
 
 SCRIPT_API(BanEx, bool(IPlayer& player, cell const* format))
 {
-	auto reason = svprintf(format, GetAMX(), GetParams(), 2);
+	AmxStringFormatter reason(format, GetAMX(), GetParams(), 2);
 	player.ban(reason);
 	return true;
 }
@@ -1081,14 +1081,14 @@ SCRIPT_API(SendDeathMessageToPlayer, bool(IPlayer& player, IPlayer* killer, IPla
 
 SCRIPT_API(SendPlayerMessageToPlayer, bool(IPlayer& player, IPlayer& sender, cell const* format))
 {
-	auto message = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter message(format, GetAMX(), GetParams(), 3);
 	player.sendChatMessage(sender, message);
 	return true;
 }
 
 SCRIPT_API(SendPlayerMessageToPlayerf, bool(IPlayer& player, IPlayer& sender, cell const* format))
 {
-	auto message = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter message(format, GetAMX(), GetParams(), 3);
 	player.sendChatMessage(sender, message);
 	return true;
 }

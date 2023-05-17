@@ -18,7 +18,7 @@ SCRIPT_API(TextDrawCreate, int(Vector2 position, cell const* format))
 	ITextDrawsComponent* component = PawnManager::Get()->textdraws;
 	if (component)
 	{
-		auto text = svprintf(format, GetAMX(), GetParams(), 3); // Not 2
+		AmxStringFormatter text(format, GetAMX(), GetParams(), 3); // Not 2
 		ITextDraw* textdraw = component->create(position, text);
 		if (textdraw)
 		{
@@ -154,7 +154,7 @@ SCRIPT_API(TextDrawHideForAll, bool(ITextDraw& textdraw))
 
 SCRIPT_API(TextDrawSetString, bool(ITextDraw& textdraw, cell const* format))
 {
-	auto text = svprintf(format, GetAMX(), GetParams(), 2);
+	AmxStringFormatter text(format, GetAMX(), GetParams(), 2);
 	textdraw.setText(text);
 	return true;
 }
@@ -280,7 +280,7 @@ SCRIPT_API(TextDrawGetPreviewVehCol, bool(ITextDraw& textdraw, int& colour1, int
 
 SCRIPT_API(TextDrawSetStringForPlayer, bool(ITextDraw& textdraw, IPlayer& player, cell const* format))
 {
-	auto text = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter text(format, GetAMX(), GetParams(), 3);
 	textdraw.setTextForPlayer(player, text);
 	return true;
 }
