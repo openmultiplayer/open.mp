@@ -307,7 +307,7 @@ SCRIPT_API(GameTextForAll, bool(cell const* format, int time, int style))
 	{
 		return false;
 	}
-	PawnManager::Get()->players->sendGameTextToAll(AmxStringFormatter(format, GetAMX(), GetParams(), 3), Milliseconds(time), style);
+	PawnManager::Get()->players->sendGameTextToAll(msg, Milliseconds(time), style);
 	return true;
 }
 
