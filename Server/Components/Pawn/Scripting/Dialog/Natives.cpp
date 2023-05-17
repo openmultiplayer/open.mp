@@ -38,7 +38,7 @@ SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const 
 	}
 
 	// And instead mask the ID here.
-	auto body = svprintf(format, GetAMX(), GetParams(), 7);
+	AmxStringFormatter body(format, GetAMX(), GetParams(), 7);
 	data->show(player, dialog & 0xFFFF, DialogStyle(style), title, body, button1, button2);
 	return true;
 }
