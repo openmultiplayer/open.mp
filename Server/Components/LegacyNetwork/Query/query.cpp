@@ -164,9 +164,9 @@ void Query::buildRulesBuffer()
 		writeToBuffer(output, rule.first.c_str(), offset, ruleNameLength);
 
 		// Write rule value
-		uint8_t ruleValueLength = static_cast<uint8_t>(rule.second.length());
+		uint8_t ruleValueLength = static_cast<uint8_t>(rule.second.first.length());
 		writeToBuffer(output, offset, ruleValueLength);
-		writeToBuffer(output, rule.second.c_str(), offset, ruleValueLength);
+		writeToBuffer(output, rule.second.first.c_str(), offset, ruleValueLength);
 	}
 }
 

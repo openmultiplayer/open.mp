@@ -25,7 +25,23 @@
 template <typename D, typename S>
 size_t atcprintf(D* buffer, size_t maxlen, const S* format, AMX* amx, cell const* params, int* param);
 
-// StringView returning shared buffer format.
-StringView svprintf(cell const* format, AMX* amx, cell const* params, int offset);
+/// Amx string format which can be cast to StringView
+class AmxStringFormatter
+{
+private:
+	StaticArray<char, 8192> buf; ///< The buffer of the formatted string
+	int length; ///< The length of the formatted string
+
+public:
+	/// Constructor which fills the buffer and length with the formatted string
+	AmxStringFormatter(cell const* format, AMX* amx, cell const* params, int paramOffset) noexcept;
+	/// True if the formatted string is empty, false otherwise
+	bool empty() const noexcept { return (length == 0); }
+
+	/// Convert to StringView for convenience
+	operator StringView() const noexcept {
+		return StringView(buf.data(), length);
+	}
+};
 
 #endif //_INCLUDE_FORMATTING_H

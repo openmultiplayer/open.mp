@@ -76,7 +76,8 @@ public:
 		logQueries = value;
 	}
 
-	template <typename... Args>
+	/// @param custom Whether the parameter is custom or set automatically by the server; if a user is setting the rule value it should be true
+	template <bool custom, typename... Args>
 	void setRuleValue(Args... args)
 	{
 		std::initializer_list<std::string> ruleData = { args... };
@@ -92,12 +93,18 @@ public:
 			++it;
 			const std::string& ruleValue = *it;
 
-			auto res = rules.emplace(ruleName, ruleValue);
+			auto res = rules.emplace(ruleName, std::make_pair(ruleValue, custom));
 			if (!res.second)
 			{
-				rulesLength -= sizeof(uint8_t) + res.first->first.size();
-				rulesLength -= sizeof(uint8_t) + res.first->second.size();
-				res.first->second = ruleValue;
+				auto& key = res.first->first;
+				auto& val = res.first->second;
+				// If we already have a custom rule set, skip setting the non-custom one (allows for overriding rules)
+				if (!custom && val.second) {
+					continue;
+				}
+				rulesLength -= sizeof(uint8_t) + key.size();
+				rulesLength -= sizeof(uint8_t) + val.first.size();
+				val = std::make_pair(ruleValue, custom);
 			}
 			rulesLength += sizeof(uint8_t) + ruleName.size();
 			rulesLength += sizeof(uint8_t) + ruleValue.size();
@@ -110,7 +117,7 @@ public:
 		if (it != rules.end())
 		{
 			rulesLength -= sizeof(uint8_t) + it->first.size();
-			rulesLength -= sizeof(uint8_t) + it->second.size();
+			rulesLength -= sizeof(uint8_t) + it->second.first.size();
 			rules.erase(String(ruleName));
 		}
 	}
@@ -153,7 +160,7 @@ private:
 	std::unique_ptr<char[]> serverInfoBuffer;
 	size_t serverInfoBufferLength = 0;
 
-	std::map<String, String> rules;
+	std::map<String, Pair<String, bool>> rules;
 	size_t rulesLength = 0;
 
 	std::unique_ptr<char[]> rulesBuffer;

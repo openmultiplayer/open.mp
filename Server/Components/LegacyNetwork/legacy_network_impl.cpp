@@ -713,7 +713,7 @@ void RakNetLegacyNetwork::update()
 		query.setServerName(hostName);
 	}
 
-	query.setRuleValue("lagcomp", (*config.getInt("game.lag_compensation_mode") != LagCompMode_Disabled) ? "On" : "Off");
+	query.setRuleValue<false>("lagcomp", (*config.getInt("game.lag_compensation_mode") != LagCompMode_Disabled) ? "On" : "Off");
 
 	StringView language = config.getString("language");
 	if (!language.empty())
@@ -730,22 +730,22 @@ void RakNetLegacyNetwork::update()
 	StringView mapName = config.getString("game.map");
 	if (!mapName.empty())
 	{
-		query.setRuleValue("mapname", String(mapName));
+		query.setRuleValue<false>("mapname", String(mapName));
 	}
 	else
 	{
-		query.setRuleValue("mapname", "San Andreas");
+		query.setRuleValue<false>("mapname", "San Andreas");
 	}
 
-	query.setRuleValue("weather", std::to_string(*config.getInt("game.weather")));
+	query.setRuleValue<false>("weather", std::to_string(*config.getInt("game.weather")));
 
 	StringView website = config.getString("website");
 	if (!website.empty())
 	{
-		query.setRuleValue("weburl", String(website));
+		query.setRuleValue<false>("weburl", String(website));
 	}
 
-	query.setRuleValue("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
+	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");
 	query.setRconPassword(rconPassword);
@@ -792,12 +792,12 @@ void RakNetLegacyNetwork::start()
 	bool allow037 = *config.getBool("network.allow_037_clients");
 
 	query.setCore(core);
-	query.setRuleValue("version", !allow037 ? "0.3.DL-R1" : "0.3.7-R2");
-	query.setRuleValue("artwork", artwork ? "Yes" : "No");
+	query.setRuleValue<false>("version", !allow037 ? "0.3.DL-R1" : "0.3.7-R2");
+	query.setRuleValue<false>("artwork", artwork ? "Yes" : "No");
 
 	if (allow037)
 	{
-		query.setRuleValue("allow_DL", "Yes");
+		query.setRuleValue<false>("allow_DL", "Yes");
 	}
 
 	query.setMaxPlayers(maxPlayers);

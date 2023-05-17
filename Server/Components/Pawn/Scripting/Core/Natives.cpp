@@ -302,12 +302,12 @@ SCRIPT_API(GameModeExit, bool())
 
 SCRIPT_API(GameTextForAll, bool(cell const* format, int time, int style))
 {
-	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter msg(format, GetAMX(), GetParams(), 3);
 	if (msg.empty())
 	{
 		return false;
 	}
-	PawnManager::Get()->players->sendGameTextToAll(msg, Milliseconds(time), style);
+	PawnManager::Get()->players->sendGameTextToAll(AmxStringFormatter(format, GetAMX(), GetParams(), 3), Milliseconds(time), style);
 	return true;
 }
 
@@ -319,7 +319,7 @@ SCRIPT_API(HideGameTextForAll, bool(int style))
 
 SCRIPT_API(GameTextForAllf, bool(int time, int style, cell const* format))
 {
-	auto msg = svprintf(format, GetAMX(), GetParams(), 3);
+	AmxStringFormatter msg(format, GetAMX(), GetParams(), 3);
 	if (msg.empty())
 	{
 		return false;
@@ -666,14 +666,14 @@ SCRIPT_API(NetStats_PacketLossPercent, float(IPlayer& player))
 
 SCRIPT_API(SendPlayerMessageToAll, bool(IPlayer& sender, cell const* format))
 {
-	auto message = svprintf(format, GetAMX(), GetParams(), 2);
+	AmxStringFormatter message(format, GetAMX(), GetParams(), 2);
 	PawnManager::Get()->players->sendChatMessageToAll(sender, message);
 	return true;
 }
 
 SCRIPT_API(SendPlayerMessageToAllf, bool(IPlayer& sender, cell const* format))
 {
-	auto message = svprintf(format, GetAMX(), GetParams(), 2);
+	AmxStringFormatter message(format, GetAMX(), GetParams(), 2);
 	PawnManager::Get()->players->sendChatMessageToAll(sender, message);
 	return true;
 }
@@ -683,7 +683,7 @@ SCRIPT_API(SendRconCommand, bool(cell const* format))
 	IConsoleComponent* console = PawnManager::Get()->console;
 	if (console)
 	{
-		auto command = svprintf(format, GetAMX(), GetParams(), 1);
+		AmxStringFormatter command(format, GetAMX(), GetParams(), 1);
 		console->send(command);
 	}
 	return true;
@@ -694,7 +694,7 @@ SCRIPT_API(SendRconCommandf, bool(cell const* format))
 	IConsoleComponent* console = PawnManager::Get()->console;
 	if (console)
 	{
-		auto command = svprintf(format, GetAMX(), GetParams(), 1);
+		AmxStringFormatter command(format, GetAMX(), GetParams(), 1);
 		console->send(command);
 	}
 	return true;
@@ -708,7 +708,7 @@ SCRIPT_API(SetDeathDropAmount, bool(int amount))
 
 SCRIPT_API(SetGameModeText, bool(cell const* format))
 {
-	auto string = svprintf(format, GetAMX(), GetParams(), 1);
+	AmxStringFormatter string(format, GetAMX(), GetParams(), 1);
 	PawnManager::Get()->core->setData(SettableCoreDataType::ModeText, string);
 	return true;
 }
@@ -846,15 +846,15 @@ SCRIPT_API(GetWeaponSlot, int(uint8_t weapon))
 	return WeaponSlotData { weapon }.slot();
 }
 
-SCRIPT_API(AddServerRule, bool(const std::string& name, cell const* format))
+bool addRule(AMX* amx, cell* params, const std::string& name, cell const* format)
 {
-	auto value = svprintf(format, GetAMX(), GetParams(), 2);
 	ICore* core = PawnManager::Get()->core;
 	if (!core)
 	{
 		return false;
 	}
 
+	AmxStringFormatter value(format, amx, params, 2);
 	for (INetwork* network : core->getNetworks())
 	{
 		INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
@@ -867,25 +867,14 @@ SCRIPT_API(AddServerRule, bool(const std::string& name, cell const* format))
 	return false;
 }
 
+SCRIPT_API(AddServerRule, bool(const std::string& name, cell const* format))
+{
+	return addRule(GetAMX(), GetParams(), name, format);
+}
+
 SCRIPT_API(SetServerRule, bool(const std::string& name, cell const* format))
 {
-	auto value = svprintf(format, GetAMX(), GetParams(), 2);
-	ICore* core = PawnManager::Get()->core;
-	if (!core)
-	{
-		return false;
-	}
-
-	for (INetwork* network : core->getNetworks())
-	{
-		INetworkQueryExtension* query = queryExtension<INetworkQueryExtension>(network);
-
-		if (query)
-		{
-			return query->addRule(name, value);
-		}
-	}
-	return false;
+	return addRule(GetAMX(), GetParams(), name, format);
 }
 
 SCRIPT_API(IsValidServerRule, bool(const std::string& name))
