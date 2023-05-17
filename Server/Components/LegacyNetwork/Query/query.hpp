@@ -99,7 +99,8 @@ public:
 				auto& key = res.first->first;
 				auto& val = res.first->second;
 				// If we already have a custom rule set, skip setting the non-custom one (allows for overriding rules)
-				if (!custom && val.second) {
+				if (!custom && val.second)
+				{
 					continue;
 				}
 				rulesLength -= sizeof(uint8_t) + key.size();
