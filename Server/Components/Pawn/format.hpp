@@ -39,7 +39,8 @@ public:
 	bool empty() const noexcept { return (length == 0); }
 
 	/// Convert to StringView for convenience
-	operator StringView() const noexcept {
+	operator StringView() const noexcept
+	{
 		return StringView(buf.data(), length);
 	}
 };
