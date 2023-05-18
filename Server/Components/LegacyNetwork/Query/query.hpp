@@ -76,32 +76,31 @@ public:
 		logQueries = value;
 	}
 
-	template <typename... Args>
-	void setRuleValue(Args... args)
+	void resetRules()
 	{
-		std::initializer_list<std::string> ruleData = { args... };
-		int ruleCount = ruleData.size();
-		if (ruleCount % 2)
-		{
-			ruleCount--;
-		}
+		customs.clear();
+	}
 
-		for (auto it = ruleData.begin(); it != ruleData.end(); ++it)
+	void setRuleValue(StringView ruleName, StringView ruleValue, bool custom = false)
+	{
+		auto res = rules.emplace(String(ruleName), String(ruleValue));
+		if (!res.second)
 		{
-			const std::string& ruleName = *it;
-			++it;
-			const std::string& ruleValue = *it;
-
-			auto res = rules.emplace(ruleName, ruleValue);
-			if (!res.second)
+			if (custom)
 			{
-				rulesLength -= sizeof(uint8_t) + res.first->first.size();
-				rulesLength -= sizeof(uint8_t) + res.first->second.size();
-				res.first->second = ruleValue;
+				customs.emplace(String(ruleName));
 			}
-			rulesLength += sizeof(uint8_t) + ruleName.size();
-			rulesLength += sizeof(uint8_t) + ruleValue.size();
+			else if (customs.find(String(ruleName)) != customs.end())
+			{
+				// This new value isn't a custom rule, but the existing one is.
+				return;
+			}
+			rulesLength -= sizeof(uint8_t) + res.first->first.size();
+			rulesLength -= sizeof(uint8_t) + res.first->second.size();
+			res.first->second = String(ruleValue);
 		}
+		rulesLength += sizeof(uint8_t) + ruleName.size();
+		rulesLength += sizeof(uint8_t) + ruleValue.size();
 	}
 
 	void removeRule(StringView ruleName)
@@ -111,13 +110,28 @@ public:
 		{
 			rulesLength -= sizeof(uint8_t) + it->first.size();
 			rulesLength -= sizeof(uint8_t) + it->second.size();
-			rules.erase(String(ruleName));
+			rules.erase(it);
+			// `emplace` not `erase`.  Deleting a rule is customising it; we don't want it to re-
+			// appear the very next tick.
+			customs.emplace(String(ruleName));
 		}
 	}
 
 	bool isValidRule(StringView ruleName)
 	{
 		return rules.find(String(ruleName)) != rules.end();
+	}
+
+	bool isCustomRule(StringView ruleName)
+	{
+		return customs.find(String(ruleName)) != customs.end();
+	}
+
+	bool isRemovedRule(StringView ruleName)
+	{
+		// The rule is deleted if it isn't valid but is customised.
+		String key { ruleName };
+		return rules.find(key) == rules.end() && customs.find(key) != customs.end();
 	}
 
 	void setServerName(StringView value)
@@ -154,6 +168,7 @@ private:
 	size_t serverInfoBufferLength = 0;
 
 	std::map<String, String> rules;
+	std::set<String> customs;
 	size_t rulesLength = 0;
 
 	std::unique_ptr<char[]> rulesBuffer;

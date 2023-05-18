@@ -686,6 +686,12 @@ NetworkStats RakNetLegacyNetwork::getStatistics(IPlayer* player)
 	return stats;
 }
 
+void RakNetLegacyNetwork::reset()
+{
+	// Clear the rules that update every tick.
+	query.resetRules();
+}
+
 void RakNetLegacyNetwork::update()
 {
 	IConfig& config = core->getConfig();

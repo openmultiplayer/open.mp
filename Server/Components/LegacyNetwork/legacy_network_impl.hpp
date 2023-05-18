@@ -322,7 +322,7 @@ public:
 			return false;
 		}
 
-		query.setRuleValue(String(rule), String(value));
+		query.setRuleValue(rule, value, true);
 		query.buildRulesBuffer();
 		return true;
 	}
@@ -376,9 +376,7 @@ public:
 	void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
 	void unban(const BanEntry& entry) override;
 
-	void reset() override
-	{
-	}
+	void reset() override;
 };
 
 struct AnnounceHTTPResponseHandler final : HTTPResponseHandler
