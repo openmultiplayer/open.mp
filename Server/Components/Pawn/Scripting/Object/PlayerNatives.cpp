@@ -115,7 +115,7 @@ SCRIPT_API(IsValidPlayerObject, bool(IPlayer& player, IPlayerObject* object))
 	return object != nullptr;
 }
 
-SCRIPT_API(MovePlayerObject, float(IPlayer& player, IPlayerObject& object, Vector3 position, float speed, Vector3 rotation))
+SCRIPT_API(MovePlayerObject, int(IPlayer& player, IPlayerObject& object, Vector3 position, float speed, Vector3 rotation))
 {
 	ObjectMoveData data;
 	data.targetPos = position;
@@ -125,7 +125,7 @@ SCRIPT_API(MovePlayerObject, float(IPlayer& player, IPlayerObject& object, Vecto
 	object.move(data);
 
 	float estimatedTime = (glm::length(data.targetPos - object.getPosition()) / speed) * 1000.0f;
-	return estimatedTime;
+	return static_cast<int>(estimatedTime);
 }
 
 SCRIPT_API(StopPlayerObject, bool(IPlayer& player, IPlayerObject& object))
