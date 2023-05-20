@@ -266,18 +266,20 @@ void PawnManager::CheckNatives(PawnScript& script)
 
 bool PawnManager::Changemode(std::string const& name)
 {
+	std::string canon_name;
+	utils::CanonicaliseScriptName(name, canon_name);
+
 	// First check that the new script exists.
 	FILE* fp;
-	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
-	std::string canon;
-	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
+	std::string canon_path;
+	utils::Canonicalise(basePath_ + scriptPath_ + canon_name, canon_path);
 	// This is exactly the code that pawn itself uses to open a mode, and here we're basically
 	// checking that the mode will be loadable when it comes to it.  Using a different system such
 	// as `std::filesystem` might introduce incompatibilities between what we think can be loaded
 	// and what can actually be loaded.  So while this is "old" C, it is better in this use-case.
-	if ((fp = fopen(canon.c_str(), "rb")) == NULL)
+	if ((fp = fopen(canon_path.c_str(), "rb")) == NULL)
 	{
-		core->printLn("Could not find:\n\n\t %s %s", name.c_str(),
+		core->printLn("Could not find:\n\n\t %s %s", canon_name.c_str(),
 			R"(
 While attempting to load a PAWN gamemode, a file-not-found error was
 encountered.  This could be caused by many things:
@@ -299,7 +301,7 @@ encountered.  This could be caused by many things:
 
 	// Unload the main script in the next server tick.
 	unloadNextTick_ = true;
-	nextScriptName_ = name;
+	nextScriptName_ = canon_name;
 
 	return true;
 }
@@ -539,7 +541,10 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 
 bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
-	if (mainName_ == name)
+	std::string canon_name;
+	utils::CanonicaliseScriptName(name, canon_name);
+
+	if (mainName_ == canon_name)
 	{
 		if (mainScript_)
 		{
@@ -548,32 +553,28 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	}
 	else
 	{
-		if (findScript(name) != scripts_.end())
+		if (findScript(canon_name) != scripts_.end())
 		{
 			return false;
 		}
 	}
 
-	// if the user just supplied a script name, add the extension
-	// otherwise, don't, as they may have supplied a full abs/rel path.
-	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
-
-	std::string canon;
-	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	PawnScript* ptr = new PawnScript(++id_, canon, core);
+	std::string canon_path;
+	utils::Canonicalise(basePath_ + scriptPath_ + canon_name, canon_path);
+	PawnScript* ptr = new PawnScript(++id_, canon_path, core);
 
 	if (!ptr || !ptr->IsLoaded())
 	{
 		// core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
 		return false;
 	}
-	ptr->name_ = name;
+	ptr->name_ = canon_name;
 
 	PawnScript& script = *ptr;
 
 	if (isEntryScript)
 	{
-		mainName_ = name;
+		mainName_ = canon_name;
 		delete mainScript_;
 		mainScript_ = ptr;
 		amxToScript_.emplace(mainScript_->GetAMX(), mainScript_);
@@ -644,22 +645,24 @@ is `2`.
 
 bool PawnManager::Reload(std::string const& name)
 {
+	std::string canon_name;
+	utils::CanonicaliseScriptName(name, canon_name);
+
 	// Entry script reload is not supported.
-	if (mainName_ == name)
+	if (mainName_ == canon_name)
 	{
 		return false;
 	}
-	auto pos = findScript(name);
+	auto pos = findScript(canon_name);
 	if (pos == scripts_.end())
 	{
 		return false;
 	}
 	PawnScript& script = *reinterpret_cast<PawnScript*>(*pos);
 	closeAMX(script, false);
-	std::string canon;
-	std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
-	utils::Canonicalise(basePath_ + scriptPath_ + name + ext, canon);
-	script.tryLoad(canon);
+	std::string canon_path;
+	utils::Canonicalise(basePath_ + scriptPath_ + canon_name, canon_path);
+	script.tryLoad(canon_path);
 	openAMX(script, false);
 	amxToScript_.emplace(script.GetAMX(), &script);
 	return true;
@@ -667,8 +670,11 @@ bool PawnManager::Reload(std::string const& name)
 
 bool PawnManager::Unload(std::string const& name)
 {
-	auto pos = findScript(name);
-	bool isEntryScript = mainName_ == name;
+	std::string canon_name;
+	utils::CanonicaliseScriptName(name, canon_name);
+
+	auto pos = findScript(canon_name);
+	bool isEntryScript = mainName_ == canon_name;
 	if (isEntryScript)
 	{
 		if (!mainScript_)
