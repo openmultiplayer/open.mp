@@ -804,21 +804,6 @@ inline bool Canonicalise(std::string path, std::string& result)
 	return ret;
 }
 
-inline bool CanonicaliseScriptName(const std::string& name, std::string& result)
-{
-	if (utils::Canonicalise(name, result))
-	{
-		// if the user just supplied a script name, add the extension
-		// otherwise, don't, as they may have supplied a full abs/rel path.
-		if (!utils::endsWith(result, ".amx"))
-		{
-			result.append(".amx");
-		}
-		return true;
-	}
-	return false;
-}
-
 inline bool GetCurrentWorkingDirectory(std::string& result)
 {
 	result.clear();
@@ -866,6 +851,22 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 }
 
 #endif
+	
+inline bool CanonicaliseScriptName(const std::string& name, std::string& result)
+{
+	if (utils::Canonicalise(name, result))
+	{
+		// if the user just supplied a script name, add the extension
+		// otherwise, don't, as they may have supplied a full abs/rel path.
+		if (!utils::endsWith(result, ".amx"))
+		{
+			result.append(".amx");
+		}
+		return true;
+	}
+	return false;
+}
+	
 }
 
 static const FlatHashMap<String, String> DeprecatedNatives {
