@@ -804,7 +804,7 @@ inline bool Canonicalise(std::string path, std::string& result)
 	return ret;
 }
 
-inline bool CanonicaliseScriptName(const std::string &name, std::string& result)
+inline bool CanonicaliseScriptName(const std::string& name, std::string& result)
 {
 	if (utils::Canonicalise(name, result))
 	{
