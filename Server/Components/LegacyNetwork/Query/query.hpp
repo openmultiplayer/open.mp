@@ -116,7 +116,7 @@ public:
 			customs.emplace(String(ruleName));
 		}
 	}
-	
+
 	void resetRule(StringView ruleName)
 	{
 		customs.erase(String(ruleName));
@@ -138,7 +138,7 @@ public:
 		String key { ruleName };
 		return rules.find(key) == rules.end() && customs.find(key) != customs.end();
 	}
-	
+
 	String getRule(StringView ruleName) const
 	{
 		String key { ruleName };

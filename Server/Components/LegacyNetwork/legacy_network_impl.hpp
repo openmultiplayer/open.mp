@@ -343,12 +343,12 @@ public:
 	{
 		return query.isValidRule(rule);
 	}
-	
+
 	bool isCustomRule(StringView rule) const override
 	{
 		return query.isCustomRule(rule);
 	}
-	
+
 	bool isRemovedRule(StringView rule) const override
 	{
 		return query.isRemovedRule(rule);
@@ -375,12 +375,12 @@ public:
 		}
 		return false;
 	}
-	
+
 	const StringView getRule(StringView rule) const override
 	{
 		return query.getRule(rule);
 	}
-	
+
 	bool protectRule(StringView rule) override
 	{
 		if (isProtectedRule(rule))
