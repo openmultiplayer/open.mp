@@ -849,24 +849,30 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 	}
 	return ret;
 }
-
 #endif
-	
-inline bool CanonicaliseScriptName(const std::string& name, std::string& result)
+inline void NormalizeScriptName(std::string name, std::string& result)
 {
-	if (utils::Canonicalise(name, result))
+#ifdef WIN32
+	constexpr auto wrong_slash = '/';
+	constexpr auto right_slash = '\\';
+#else
+	constexpr auto wrong_slash = '\\';
+	constexpr auto right_slash = '/';
+#endif
+	size_t pos = 0;
+	while ((pos = name.find(wrong_slash, pos)) != std::string::npos)
 	{
-		// if the user just supplied a script name, add the extension
-		// otherwise, don't, as they may have supplied a full abs/rel path.
-		if (!utils::endsWith(result, ".amx"))
-		{
-			result.append(".amx");
-		}
-		return true;
+		name.replace(pos, 1, 1, right_slash);
 	}
-	return false;
+
+	if (!utils::endsWith(name, ".amx"))
+	{
+		name.append(".amx");
+	}
+
+	result = name;
+	return;
 }
-	
 }
 
 static const FlatHashMap<String, String> DeprecatedNatives {

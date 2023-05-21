@@ -266,20 +266,20 @@ void PawnManager::CheckNatives(PawnScript& script)
 
 bool PawnManager::Changemode(std::string const& name)
 {
-	std::string canon_name;
-	utils::CanonicaliseScriptName(name, canon_name);
+	std::string normal_script_name;
+	utils::NormalizeScriptName(name, normal_script_name);
 
 	// First check that the new script exists.
 	FILE* fp;
 	std::string canon_path;
-	utils::Canonicalise(basePath_ + scriptPath_ + canon_name, canon_path);
+	utils::Canonicalise(basePath_ + scriptPath_ + normal_script_name, canon_path);
 	// This is exactly the code that pawn itself uses to open a mode, and here we're basically
 	// checking that the mode will be loadable when it comes to it.  Using a different system such
 	// as `std::filesystem` might introduce incompatibilities between what we think can be loaded
 	// and what can actually be loaded.  So while this is "old" C, it is better in this use-case.
 	if ((fp = fopen(canon_path.c_str(), "rb")) == NULL)
 	{
-		core->printLn("Could not find:\n\n\t %s %s", canon_name.c_str(),
+		core->printLn("Could not find:\n\n\t %s %s", normal_script_name.c_str(),
 			R"(
 While attempting to load a PAWN gamemode, a file-not-found error was
 encountered.  This could be caused by many things:
@@ -301,7 +301,7 @@ encountered.  This could be caused by many things:
 
 	// Unload the main script in the next server tick.
 	unloadNextTick_ = true;
-	nextScriptName_ = canon_name;
+	nextScriptName_ = normal_script_name;
 
 	return true;
 }
@@ -541,10 +541,10 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 
 bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
-	std::string canon_name;
-	utils::CanonicaliseScriptName(name, canon_name);
+	std::string normal_script_name;
+	utils::NormalizeScriptName(name, normal_script_name);
 
-	if (mainName_ == canon_name)
+	if (mainName_ == normal_script_name)
 	{
 		if (mainScript_)
 		{
@@ -553,14 +553,14 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 	}
 	else
 	{
-		if (findScript(canon_name) != scripts_.end())
+		if (findScript(normal_script_name) != scripts_.end())
 		{
 			return false;
 		}
 	}
 
 	std::string canon_path;
-	utils::Canonicalise(basePath_ + scriptPath_ + canon_name, canon_path);
+	utils::Canonicalise(basePath_ + scriptPath_ + normal_script_name, canon_path);
 	PawnScript* ptr = new PawnScript(++id_, canon_path, core);
 
 	if (!ptr || !ptr->IsLoaded())
@@ -568,13 +568,13 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript)
 		// core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
 		return false;
 	}
-	ptr->name_ = canon_name;
+	ptr->name_ = normal_script_name;
 
 	PawnScript& script = *ptr;
 
 	if (isEntryScript)
 	{
-		mainName_ = canon_name;
+		mainName_ = normal_script_name;
 		delete mainScript_;
 		mainScript_ = ptr;
 		amxToScript_.emplace(mainScript_->GetAMX(), mainScript_);
@@ -645,15 +645,15 @@ is `2`.
 
 bool PawnManager::Reload(std::string const& name)
 {
-	std::string canon_name;
-	utils::CanonicaliseScriptName(name, canon_name);
+	std::string normal_script_name;
+	utils::NormalizeScriptName(name, normal_script_name);
 
 	// Entry script reload is not supported.
-	if (mainName_ == canon_name)
+	if (mainName_ == normal_script_name)
 	{
 		return false;
 	}
-	auto pos = findScript(canon_name);
+	auto pos = findScript(normal_script_name);
 	if (pos == scripts_.end())
 	{
 		return false;
@@ -661,7 +661,7 @@ bool PawnManager::Reload(std::string const& name)
 	PawnScript& script = *reinterpret_cast<PawnScript*>(*pos);
 	closeAMX(script, false);
 	std::string canon_path;
-	utils::Canonicalise(basePath_ + scriptPath_ + canon_name, canon_path);
+	utils::Canonicalise(basePath_ + scriptPath_ + normal_script_name, canon_path);
 	script.tryLoad(canon_path);
 	openAMX(script, false);
 	amxToScript_.emplace(script.GetAMX(), &script);
@@ -670,11 +670,11 @@ bool PawnManager::Reload(std::string const& name)
 
 bool PawnManager::Unload(std::string const& name)
 {
-	std::string canon_name;
-	utils::CanonicaliseScriptName(name, canon_name);
+	std::string normal_script_name;
+	utils::NormalizeScriptName(name, normal_script_name);
 
-	auto pos = findScript(canon_name);
-	bool isEntryScript = mainName_ == canon_name;
+	auto pos = findScript(normal_script_name);
+	bool isEntryScript = mainName_ == normal_script_name;
 	if (isEntryScript)
 	{
 		if (!mainScript_)
