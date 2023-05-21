@@ -371,6 +371,30 @@ struct INetworkQueryExtension : public IExtension
 	virtual bool isValidRule(StringView rule) = 0;
 };
 
+static const UID QueryRulesExtension_UID = UID(0xBC2B6AB9E411D4FB);
+struct IQueryRulesExtension : public IExtension
+{
+	PROVIDE_EXT_UID(QueryRulesExtension_UID);
+
+	/// Check if a rule is customised.
+	virtual bool isCustomRule(StringView rule) const = 0;
+
+	/// Check if a rule is deleted.
+	virtual bool isRemovedRule(StringView rule) const = 0;
+
+	/// Check if a rule is protected.
+	virtual bool isProtectedRule(StringView rule) const = 0;
+
+	/// Remove the `custom` flag on a rule.
+	virtual bool resetRule(StringView rule) = 0;
+
+	/// Add a rule to the protected list.  This can never be reversed.
+	virtual bool protectRule(StringView rule) = 0;
+
+	/// Remove a rule from the network rules
+	virtual const StringView getRule(StringView rule) const = 0;
+};
+
 /// Peer network data
 struct PeerNetworkData
 {

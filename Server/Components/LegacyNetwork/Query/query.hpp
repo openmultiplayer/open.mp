@@ -116,22 +116,38 @@ public:
 			customs.emplace(String(ruleName));
 		}
 	}
+	
+	void resetRule(StringView ruleName)
+	{
+		customs.erase(String(ruleName));
+	}
 
-	bool isValidRule(StringView ruleName)
+	bool isValidRule(StringView ruleName) const
 	{
 		return rules.find(String(ruleName)) != rules.end();
 	}
 
-	bool isCustomRule(StringView ruleName)
+	bool isCustomRule(StringView ruleName) const
 	{
 		return customs.find(String(ruleName)) != customs.end();
 	}
 
-	bool isRemovedRule(StringView ruleName)
+	bool isRemovedRule(StringView ruleName) const
 	{
 		// The rule is deleted if it isn't valid but is customised.
 		String key { ruleName };
 		return rules.find(key) == rules.end() && customs.find(key) != customs.end();
+	}
+	
+	String getRule(StringView ruleName) const
+	{
+		String key { ruleName };
+		auto const& it = rules.find(key);
+		if (it == rules.end())
+		{
+			return String();
+		}
+		return it->second;
 	}
 
 	void setServerName(StringView value)

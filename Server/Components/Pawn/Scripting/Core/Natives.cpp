@@ -888,6 +888,21 @@ SCRIPT_API(SetServerRule, bool(const std::string& name, cell const* format))
 	return false;
 }
 
+SCRIPT_API(ResetServerRule, bool(const std::string& name))
+{
+	if (ICore* core = PawnManager::Get()->core)
+	{
+		for (INetwork* network : core->getNetworks())
+		{
+			if (IQueryRulesExtension* query = queryExtension<IQueryRulesExtension>(network))
+			{
+				return query->resetRule(name);
+			}
+		}
+	}
+	return false;
+}
+
 SCRIPT_API(IsValidServerRule, bool(const std::string& name))
 {
 	ICore* core = PawnManager::Get()->core;
@@ -903,6 +918,91 @@ SCRIPT_API(IsValidServerRule, bool(const std::string& name))
 		if (query)
 		{
 			return query->isValidRule(name);
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(IsCustomServerRule, bool(const std::string& name))
+{
+	if (ICore* core = PawnManager::Get()->core)
+	{
+		for (INetwork* network : core->getNetworks())
+		{
+			if (IQueryRulesExtension* query = queryExtension<IQueryRulesExtension>(network))
+			{
+				return query->isCustomRule(name);
+			}
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(IsRemovedServerRule, bool(const std::string& name))
+{
+	if (ICore* core = PawnManager::Get()->core)
+	{
+		for (INetwork* network : core->getNetworks())
+		{
+			if (IQueryRulesExtension* query = queryExtension<IQueryRulesExtension>(network))
+			{
+				if (query->isRemovedRule(name))
+				{
+					return true;
+				}
+			}
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(IsProtectedServerRule, bool(const std::string& name))
+{
+	if (ICore* core = PawnManager::Get()->core)
+	{
+		for (INetwork* network : core->getNetworks())
+		{
+			if (IQueryRulesExtension* query = queryExtension<IQueryRulesExtension>(network))
+			{
+				return query->isProtectedRule(name);
+			}
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(ProtectServerRule, bool(const std::string& name))
+{
+	if (ICore* core = PawnManager::Get()->core)
+	{
+		for (INetwork* network : core->getNetworks())
+		{
+			if (IQueryRulesExtension* query = queryExtension<IQueryRulesExtension>(network))
+			{
+				return query->protectRule(name);
+			}
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(GetServerRule, bool(const std::string& name, OutputOnlyString& value))
+{
+	if (ICore* core = PawnManager::Get()->core)
+	{
+		for (INetwork* network : core->getNetworks())
+		{
+			if (INetworkQueryExtension* a = queryExtension<INetworkQueryExtension>(network))
+			{
+				if (a->isValidRule(name))
+				{
+					if (IQueryRulesExtension* b = queryExtension<IQueryRulesExtension>(network))
+					{
+						value = b->getRule(name);
+						return true;
+					}
+				}
+			}
 		}
 	}
 	return false;

@@ -25,13 +25,13 @@ using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
 
-static const StaticArray<StringView, 2> ProtectedRules = {
+static DynamicArray<String> ProtectedRules = {
 	"version", "allow_037"
 };
 
 class Core;
 
-class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension, public IQueryRulesExtension
 {
 private:
 	ICore* core = nullptr;
@@ -317,7 +317,7 @@ public:
 
 	bool addRule(StringView rule, StringView value) override
 	{
-		if (isRuleProtected(rule))
+		if (isProtectedRule(rule))
 		{
 			return false;
 		}
@@ -329,7 +329,7 @@ public:
 
 	bool removeRule(StringView rule) override
 	{
-		if (isRuleProtected(rule))
+		if (isProtectedRule(rule))
 		{
 			return false;
 		}
@@ -343,8 +343,18 @@ public:
 	{
 		return query.isValidRule(rule);
 	}
+	
+	bool isCustomRule(StringView rule) const override
+	{
+		return query.isCustomRule(rule);
+	}
+	
+	bool isRemovedRule(StringView rule) const override
+	{
+		return query.isRemovedRule(rule);
+	}
 
-	bool isRuleProtected(StringView rule)
+	bool isProtectedRule(StringView rule) const override
 	{
 		for (StringView r : ProtectedRules)
 		{
@@ -354,6 +364,31 @@ public:
 			}
 		}
 		return false;
+	}
+
+	bool resetRule(StringView rule) override
+	{
+		if (query.isCustomRule(rule))
+		{
+			query.resetRule(rule);
+			return true;
+		}
+		return false;
+	}
+	
+	const StringView getRule(StringView rule) const override
+	{
+		return query.getRule(rule);
+	}
+	
+	bool protectRule(StringView rule) override
+	{
+		if (isProtectedRule(rule))
+		{
+			return false;
+		}
+		ProtectedRules.push_back(String(rule));
+		return true;
 	}
 
 	void handlePreConnectPacketData(int playerIndex);
