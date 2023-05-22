@@ -865,7 +865,7 @@ inline void NormalizeScriptName(std::string name, std::string& result)
 		name.replace(pos, 1, 1, right_slash);
 	}
 
-	if (!utils::endsWith(name, ".amx"))
+	if (name.rbegin() != name.rend() && *name.rbegin() != right_slash && !utils::endsWith(name, ".amx"))
 	{
 		name.append(".amx");
 	}
