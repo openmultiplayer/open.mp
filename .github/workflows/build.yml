@@ -52,10 +52,14 @@ jobs:
           echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10' 
 
       - name: Install CMake
-        uses: lukka/get-cmake@v.3.23.2
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.23.2"
 
       - name: Install latest conan
         run: |
@@ -222,3 +226,51 @@ jobs:
           chmod +x ./abicheck.sh
           chmod +x ./abicheck_ubuntu-18.04/docker-entrypoint.sh
           CONFIG=RelWithDebInfo REF_ARCHIVE="open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh
+
+  build-arm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        clean: true
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Try to restore conan cache
+      id: conan-cache-restore
+      uses: actions/cache/restore@v3
+      env:
+        cache-name: cache-conan-modules
+      with:
+        path: docker/conan/data
+        key: conan-linux-armhf-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+
+    - name: Run ARM build
+      uses: pguyot/arm-runner-action@v2
+      with:
+        base_image: raspios_lite:2022-04-04
+        image_additional_mb: 10000
+        bind_mount_repository: true
+        cpu: cortex-a7
+        commands: |
+            apt update && apt install -y ninja-build clang-10 python3-pip libstdc++6 libc6
+            pip3 install --user -v "conan==1.57.0"
+            pip3 install --user -v "cmake==3.23.3"
+            export CC=/usr/bin/clang-10
+            export CXX=/usr/bin/clang++-10
+            export PATH=~/.local/bin:${PATH}
+            mkdir -p docker/conan/data
+            mkdir ~/.conan
+            mv docker/conan/data ~/.conan
+            cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=armv6 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSHARED_OPENSSL=0 -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
+            cmake --build build --config RelWithDebInfo --parallel $(nproc)
+            mv ~/.conan/data docker/conan
+
+    - name: Try to save conan cache
+      if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      env:
+        cache-name: cache-conan-modules
+      with:
+        path: docker/conan/data
+        key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
