@@ -62,6 +62,15 @@ jobs:
           python -m pip install --upgrade pip
           pip install -v "conan==1.57.0"
 
+      - name: Try to restore conan cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: ~/.conan/data
+          key: conan-windows-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+
       - name: Generate build files
         run: |
           $env:OMP_BUILD_VERSION=$(git rev-list $(git rev-list --max-parents=0 HEAD) HEAD | Measure-Object -Line).Lines
@@ -69,6 +78,15 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A ${{ matrix.arch }} -T "ClangCL"
+
+      - name: Try to save conan cache
+        if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: ~/.conan/data
+          key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Build
         run: |
@@ -129,10 +147,28 @@ jobs:
           # this is to fix GIT not liking owner of the checkout dir
           chown -R $(id -u):$(id -g) $PWD
 
+      - name: Try to restore conan cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: docker/conan/data
+          key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+
       - name: Build
         run: |
           cd docker
           CONFIG=${{ steps.vars.outputs.build_config }} UBUNTU_VERSION=${{ steps.vars.outputs.build_ubuntu_version }} BUILD_SHARED=${{ steps.vars.outputs.build_shared }} BUILD_SERVER=${{ steps.vars.outputs.build_server }} BUILD_TOOLS=${{ steps.vars.outputs.build_tools }} TARGET_BUILD_ARCH=${{ steps.vars.outputs.build_target_arch }} ./build.sh
+
+      - name: Try to save conan cache
+        if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: docker/conan/data
+          key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Create a build archive
         id: build
@@ -178,11 +214,6 @@ jobs:
         with:
           name: open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}
           path: docker/ref
-
-      - name: Set ownership
-        run: |
-          # this is to fix GIT not liking owner of the checkout dir
-          chown -R $(id -u):$(id -g) $PWD
 
       - name: Build & run abi-check
         shell: bash
