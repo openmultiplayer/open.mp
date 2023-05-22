@@ -64,6 +64,11 @@ inline bool endsWith(const std::string& mainStr, const std::string& toMatch)
 		return false;
 }
 
+inline bool endsWith(const std::string& mainStr, const char toMatch)
+{
+	return mainStr.rbegin() != mainStr.rend() && *mainStr.rbegin() == toMatch;
+}
+
 inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 {
 	int
@@ -852,7 +857,7 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 #endif
 inline void NormalizeScriptName(std::string name, std::string& result)
 {
-#ifdef WIN32
+#if defined(_WIN32) || defined(WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64) || defined(__WIN64__)
 	constexpr auto wrong_slash = '/';
 	constexpr auto right_slash = '\\';
 #else
@@ -865,7 +870,7 @@ inline void NormalizeScriptName(std::string name, std::string& result)
 		name.replace(pos, 1, 1, right_slash);
 	}
 
-	if (name.rbegin() != name.rend() && *name.rbegin() != right_slash && !utils::endsWith(name, ".amx"))
+	if (!utils::endsWith(name, right_slash) && !utils::endsWith(name, ".amx"))
 	{
 		name.append(".amx");
 	}
