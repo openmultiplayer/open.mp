@@ -260,11 +260,11 @@ jobs:
         bind_mount_repository: true
         cpu: cortex-a7
         commands: |
-            apt update && apt install -y ninja-build clang-10 python3-pip libstdc++6 libc6
+            apt update && apt install -y ninja-build clang-11 python3-pip libstdc++6 libc6
             pip3 install --user -v "conan==1.57.0"
             pip3 install --user -v "cmake==3.23.3"
-            export CC=/usr/bin/clang-10
-            export CXX=/usr/bin/clang++-10
+            export CC=/usr/bin/clang-11
+            export CXX=/usr/bin/clang++-11
             export PATH=~/.local/bin:${PATH}
             mkdir -p docker/conan/data
             mkdir ~/.conan
