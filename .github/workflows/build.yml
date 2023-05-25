@@ -227,8 +227,15 @@ jobs:
           chmod +x ./abicheck_ubuntu-18.04/docker-entrypoint.sh
           CONFIG=RelWithDebInfo REF_ARCHIVE="open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh
 
-  build-arm:
+  build-arm-gnu:
+    name: ARM build (GNU)
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [arm32, aarch64]
+        ssl: [dynamic, static]
+
     steps:
     - uses: actions/checkout@v2
       with:
@@ -243,12 +250,12 @@ jobs:
         cache-name: cache-conan-modules
       with:
         path: docker/conan/data
-        key: conan-linux-armhf-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+        key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
     - name: Run ARM build
-      uses: pguyot/arm-runner-action@v2
+      uses: pguyot/arm-runner-action@v2.5.2
       with:
-        base_image: raspios_lite:2022-04-04
+        base_image: ${{ matrix.arch == 'arm32' && 'raspios_lite' || 'raspios_lite_arm64' }}:2022-04-04
         image_additional_mb: 10000
         bind_mount_repository: true
         cpu: cortex-a7
@@ -262,7 +269,7 @@ jobs:
             mkdir -p docker/conan/data
             mkdir ~/.conan
             mv docker/conan/data ~/.conan
-            cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=armv6 -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSHARED_OPENSSL=0 -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
+            cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv6' || 'armv8' }} -DCMAKE_BUILD_TYPE=RelWithDebInfo -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
             cmake --build build --config RelWithDebInfo --parallel $(nproc)
             mv ~/.conan/data docker/conan
 
