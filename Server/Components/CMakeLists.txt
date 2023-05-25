@@ -4,7 +4,12 @@ add_subdirectory(Checkpoints)
 add_subdirectory(Classes)
 add_subdirectory(Console)
 add_subdirectory(Dialogs)
-add_subdirectory(Fixes)
+
+# Fixes
+if(BUILD_FIXES_COMPONENT)
+	add_subdirectory(Fixes)
+endif()
+
 add_subdirectory(GangZones)
 add_subdirectory(Menus)
 add_subdirectory(Objects)
