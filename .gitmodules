@@ -4,9 +4,6 @@
 [submodule "lib/pawn-natives"]
 	path = lib/pawn-natives
 	url = https://github.com/openmultiplayer/pawn-natives.git
-[submodule "lib/RakNet"]
-	path = lib/RakNet
-	url = https://github.com/openmultiplayer/RakNet.git
 [submodule "lib/ttmath"]
 	path = lib/ttmath
 	url = https://github.com/openmultiplayer/ttmath.git
