@@ -93,7 +93,7 @@
 	defined(__alpha__) || defined(__alpha) || defined(__ia64) || defined(__ia64__) || \
 	defined(_M_ALPHA) || defined(ns32000) || defined(__ns32000__) || defined(sequent) || \
 	defined(MIPSEL) || defined(_MIPSEL) || defined(sun386) || defined(__sun386__) || \
-	defined(__arm__) || defined(__APPLE__)
+	defined(__arm__) || defined(__APPLE__) || defined(__aarch64__)
 
 # define HOST_ENDIAN_IS_LITTLE
 
@@ -128,11 +128,11 @@ namespace cat
 # define BIG_ENDIAN
 
 #elif defined(__i386__) || defined(i386) || defined(intel) || defined(_M_IX86) || \
-	defined(__amd64) || defined(__amd64__)	|| defined(_M_AMD64) || \
+	defined(__amd64) || defined(__amd64__) || defined(_M_AMD64) || \
 	defined(__alpha__) || defined(__alpha) || defined(__ia64) || defined(__ia64__) || \
 	defined(_M_ALPHA) || defined(ns32000) || defined(__ns32000__) || defined(sequent) || \
 	defined(MIPSEL) || defined(_MIPSEL) || defined(sun386) || defined(__sun386__) || \
-	defined(__arm__) || defined(__APPLE__)
+	defined(__arm__) || defined(__APPLE__) || defined(__aarch64__)
 
 # define LITTLE_ENDIAN
 
