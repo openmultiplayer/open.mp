@@ -1,9 +1,6 @@
 [submodule "lib/pawn"]
 	path = lib/pawn
 	url = https://github.com/openmultiplayer/compiler.git
-[submodule "lib/pawn-natives"]
-	path = lib/pawn-natives
-	url = https://github.com/openmultiplayer/pawn-natives.git
 [submodule "lib/ttmath"]
 	path = lib/ttmath
 	url = https://github.com/openmultiplayer/ttmath.git
