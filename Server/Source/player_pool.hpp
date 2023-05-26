@@ -1761,10 +1761,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
 	{
 		Player& player = static_cast<Player&>(peer);
-		if (player.kicked_)
-		{
-			reason = PeerDisconnectReason_Kicked;
-		}
 		clearPlayer(player, reason);
 		storage.release(player.poolID);
 	}
