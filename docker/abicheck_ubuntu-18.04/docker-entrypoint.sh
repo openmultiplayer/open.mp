@@ -22,15 +22,10 @@ cmake \
     --parallel $(nproc)
 
 cd build/Output/*/Tools
-echo "Fetching ref artifacts"
+echo "Fetching master artifacts"
 url=$(curl https://nightly.link/openmultiplayer/open.mp/workflows/build/master | grep -oP '(?<=")https://nightly.link/openmultiplayer/open.mp/workflows/build/master/open.mp-linux-dynssl.*\.zip(?=")')
 curl -L $url -o master.zip
-for z in master.zip; do unzip "$z"; mv "$(unzip -Z1 $z)" "master.tar.xz"; done
-echo "Extracting ref artifacts"
-ls /ref
-mkdir -p ref && tar -xvf "/ref/$REF_ARCHIVE" -C ref
-echo "Extracting master artifacts"
-mkdir -p master && tar -xvf "./master.tar.xz" -C master
+mkdir -p master && unzip master.zip -d master
 
 binaries=(
     "omp-server"
@@ -38,24 +33,24 @@ binaries=(
 )
 
 echo "Collecting files"
-cd master/Server
+cd master
 files=$(echo ${binaries[@]})
-cd ../..
+cd ..
 
 ret=0
 
 for file in $files; do
     echo "Processing $file"
-    diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") > /dev/null
+    diff --minimal <(./abi-check "master/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") > /dev/null
     if [ $? -ne 0 ]; then
-        sdiff -s --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*")
+        sdiff -s --minimal <(./abi-check "master/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*") <(./abi-check "ref/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*")
         echo "Possible ABI break in $file; trying with no names"
-        res=$(diff --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names))
+        res=$(diff --minimal <(./abi-check "master/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names))
         if [ $? -ne 0 ]; then
             # This is done to skip additions only by making sure lines in master differ
             echo "$res" | grep -G -m 1 '^<' > /dev/null
             if [ $? -eq 0 ]; then
-                sdiff -s --minimal <(./abi-check "master/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/Server/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
+                sdiff -s --minimal <(./abi-check "master/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names) <(./abi-check "ref/$file" --incl ".*/SDK/include/.*" --excl ".*/Impl/.*" --no-names)
                 ret=1
                 echo "ABI break in $file; setting ret to $ret"
             fi
