@@ -1762,7 +1762,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	{
 		Player& player = static_cast<Player&>(peer);
 		clearPlayer(player, reason);
-		storage.release(player.poolID);
+		storage.remove(player.poolID);
 	}
 
 	PlayerPool(ICore& core)
@@ -2051,7 +2051,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
-		auto players = storage._entries();
+		auto players = storage.entries();
 		for (auto it = players.begin(); it != players.end();)
 		{
 			Player* player = static_cast<Player*>(*it);
@@ -2060,7 +2060,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (player->kicked_)
 			{
 				clearPlayer(*player, PeerDisconnectReason_Kicked);
-				it = players.erase(it);
+				it = storage.remove(player->poolID).second;
 				continue;
 			}
 

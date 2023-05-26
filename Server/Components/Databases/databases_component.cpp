@@ -98,7 +98,7 @@ bool DatabasesComponent::close(IDatabaseConnection& connection)
 /// @returns "true" if result set has been successfully freed, otherwise "false"
 bool DatabasesComponent::freeResultSet(IDatabaseResultSet& resultSet)
 {
-	return databaseResultSets.remove(resultSet.getID());
+	return databaseResultSets.remove(resultSet.getID()).first;
 }
 
 /// Gets the number of database connections
