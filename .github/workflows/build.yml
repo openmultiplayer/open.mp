@@ -97,27 +97,15 @@ jobs:
           cd build
           cmake --build . --config ${{ steps.vars.outputs.build_config }}
 
-      - name: Create a build archive
-        id: build
-        shell: bash
-        env:
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          version=${{ steps.vars.outputs.build_version }}
-          artifact_name="open.mp-win-${{ matrix.arch }}-${version}"
-          echo "artifact_name=${artifact_name}" >> $GITHUB_OUTPUT
-          cd build/Output/*
-          powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${artifact_name}.zip" -Path "Server"
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.build.outputs.artifact_name }}
-          path: build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.zip
+          name: open.mp-win-${{ matrix.arch }}-${{ steps.vars.outputs.build_version }}
+          path: build/Output/${{ steps.vars.outputs.build_config }}/Server
           if-no-files-found: error
 
   build-linux:
-    name: Linux build
+    name: Linux build (GNU)
     runs-on: ubuntu-latest
 
     strategy:
@@ -174,22 +162,11 @@ jobs:
           path: docker/conan/data
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
-      - name: Create a build archive
-        id: build
-        env:
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          version=${{ steps.vars.outputs.build_version }}
-          artifact_name="open.mp-linux-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${version}"
-          echo "artifact_name=${artifact_name}" >> $GITHUB_OUTPUT
-          cd docker/build/Output/*
-          sudo tar -cJvf "${artifact_name}.tar.xz" "Server"
-
       - name: Upload build artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: ${{ steps.build.outputs.artifact_name }}
-          path: docker/build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.tar.xz
+          name: open.mp-linux-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${{ steps.vars.outputs.build_version }}
+          path: docker/build/Output/${{ steps.vars.outputs.build_config }}/Server
           if-no-files-found: error
 
   abi-check:
