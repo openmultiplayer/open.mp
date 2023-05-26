@@ -2051,8 +2051,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
-		auto players = storage.entries();
-		for (auto it = players.begin(); it != players.end();)
+		for (auto it = storage.entries().begin(); it != storage.entries().end();)
 		{
 			Player* player = static_cast<Player*>(*it);
 
