@@ -1964,7 +1964,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		playerUpdateDispatcher.addEventHandler(this);
 		core.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
-		core.addNetworkEventHandler(this);
+		core.addNetworkEventHandler(this, EventPriority_Lowest);
 
 		NetCode::RPC::PlayerSpawn::addEventHandler(core, &playerSpawnRPCHandler);
 		NetCode::RPC::PlayerRequestSpawn::addEventHandler(core, &playerRequestSpawnRPCHandler);

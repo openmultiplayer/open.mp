@@ -119,7 +119,11 @@ struct NetworkStats
 /// An event handler for network events
 struct NetworkEventHandler
 {
+	/// Low-level network connect event, called after IPlayerPool::requestPlayer succeeds but before onIncomingConnection & onPlayerConnect
 	virtual void onPeerConnect(IPlayer& peer) { }
+	/// Low-level network disconnect event, called before onPlayerDisconnect
+	/// Only disconnect reasons supported are PeerDisconnectReason_Timeout and PeerDisconnectReason_Quit
+	/// any other reason should be handled by onPlayerDisconnect
 	virtual void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) { }
 };
 
