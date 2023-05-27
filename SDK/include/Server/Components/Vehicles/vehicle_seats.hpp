@@ -152,8 +152,8 @@ inline uint8_t getVehiclePassengerSeats(int model)
 		1, // 534 - remingtn
 		1, // 535 - slamvan
 		1, // 536 - blade
-		255, // 537 - freight
-		255, // 538 - streak
+		5, // 537 - freight
+		5, // 538 - streak
 		0, // 539 - vortex
 		3, // 540 - vincent
 		1, // 541 - bullet
@@ -184,8 +184,8 @@ inline uint8_t getVehiclePassengerSeats(int model)
 		3, // 566 - tahoma
 		3, // 567 - savanna
 		0, // 568 - bandito
-		255, // 569 - freiflat
-		255, // 570 - streakc
+		5, // 569 - freiflat
+		5, // 570 - streakc
 		0, // 571 - kart
 		0, // 572 - mower
 		1, // 573 - duneride
