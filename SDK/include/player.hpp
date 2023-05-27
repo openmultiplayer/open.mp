@@ -328,7 +328,55 @@ struct WeaponSlotData
 
 	uint8_t slot()
 	{
-		static const uint8_t slots[] = { 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 10, 10, 10, 10, 10, 10, 8, 8, 8, INVALID_WEAPON_SLOT, INVALID_WEAPON_SLOT, INVALID_WEAPON_SLOT, 2, 2, 2, 3, 3, 3, 4, 4, 5, 5, 4, 6, 6, 7, 7, 7, 7, 8, 12, 9, 9, 9, 11, 11, 11 };
+		static const uint8_t slots[] = {
+			0, // 0 - Fist
+			0, // 1 - Brass Knuckles
+			1, // 2 - Golf Club
+			1, // 3 - Nite Stick
+			1, // 4 - Knife
+			1, // 5 - Baseball Bat
+			1, // 6 - Shovel
+			1, // 7 - Pool Cue
+			1, // 8 - Katana
+			1, // 9 - Chainsaw
+			10, // 10 - Dildo
+			10, // 11 - Dildo
+			10, // 12 - Vibrator
+			10, // 13 - Vibrator
+			10, // 14 - Flowers
+			10, // 15 - Cane
+			8, // 16 - Grenade
+			8, // 17 - Teargas
+			8, // 18 - Molotov Cocktail
+			INVALID_WEAPON_SLOT, //
+			INVALID_WEAPON_SLOT, //
+			INVALID_WEAPON_SLOT, //
+			2, // 22 - Colt 45
+			2, // 23 - Silenced Pistol
+			2, // 24 - Desert Eagle
+			3, // 25 - Shotgun
+			3, // 26 - Sawn-off Shotgun
+			3, // 27 - Combat Shotgun
+			4, // 28 - UZI
+			4, // 29 - MP5
+			5, // 30 - AK47
+			5, // 31 - M4
+			4, // 32 - TEC9
+			6, // 33 - Rifle
+			6, // 34 - Sniper Rifle
+			7, // 35 - Rocket Launcher
+			7, // 36 - Heat Seaker
+			7, // 37 - Flamethrower
+			7, // 38 - Minigun
+			8, // 39 - Satchel Explosives
+			12, // 40 - Bomb
+			9, // 41 - Spray Can
+			9, // 42 - Fire Extinguisher
+			9, // 43 - Camera
+			11, // 44 - Night Vision Goggles
+			11, // 45 - Thermal Goggles
+			11 // 46 - Parachute
+		};
 		if (id >= GLM_COUNTOF(slots))
 		{
 			return INVALID_WEAPON_SLOT;
