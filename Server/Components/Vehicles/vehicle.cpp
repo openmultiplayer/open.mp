@@ -166,9 +166,13 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
 	pos = vehicleSync.Position;
 	rot = vehicleSync.Rotation;
-	health = vehicleSync.Health;
 	velocity = vehicleSync.Velocity;
 	landingGear = vehicleSync.LandingGear;
+	health = vehicleSync.Health;
+	if (vehicleSync.Health <= 0.f)
+	{
+		setDead(player);
+	}
 
 	hydraThrustAngle = vehicleSync.HydraThrustAngle;
 	trainSpeed = vehicleSync.TrainSpeed;
@@ -270,6 +274,11 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 		pos = unoccupiedSync.Position;
 		velocity = unoccupiedSync.Velocity;
 		angularVelocity = unoccupiedSync.AngularVelocity;
+		health = unoccupiedSync.Health;
+		if (health <= 0.f)
+		{
+			setDead(player);
+		}
 	}
 	return allowed;
 }
@@ -622,15 +631,14 @@ Vector3 Vehicle::getPosition() const
 
 void Vehicle::setDead(IPlayer& killer)
 {
-	dead = true;
-	timeOfDeath = Time::now();
-	ScopedPoolReleaseLock lock(*pool, *this);
-	static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleDeath, *lock.entry, killer);
+	deathData.dead = true;
+	deathData.time = Time::now();
+	deathData.killerID = killer.getID();
 }
 
 bool Vehicle::isDead()
 {
-	return dead;
+	return deathData.dead;
 }
 
 void Vehicle::respawn()
@@ -643,7 +651,9 @@ void Vehicle::respawn()
 	}
 	streamedFor_.clear();
 
-	dead = false;
+	deathData.dead = false;
+	deathData.time = TimePoint();
+	deathData.killerID = INVALID_PLAYER_ID;
 	pos = spawnData.position;
 	interior = spawnData.interior;
 	bodyColour1 = -1;
@@ -651,7 +661,6 @@ void Vehicle::respawn()
 	rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
 	beenOccupied = false;
 	lastOccupiedChange = TimePoint();
-	timeOfDeath = TimePoint();
 	timeOfSpawn = Time::now();
 	mods.fill(0);
 	doorDamage = 0;

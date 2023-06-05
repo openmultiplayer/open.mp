@@ -18,6 +18,13 @@ using namespace Impl;
 
 class VehiclesComponent;
 
+struct VehicleDeathData
+{
+	bool dead = false;
+	TimePoint time;
+	int killerID = INVALID_PLAYER_ID; ///< Purposely made an ID instead of a pointer because a player might become invalid between reporting tick and next tick
+};
+
 class Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy
 {
 private:
@@ -46,8 +53,7 @@ private:
 	HybridString<16> numberPlate = StringView("XYZSR998");
 	uint8_t objective;
 	uint8_t doorsLocked;
-	bool dead = false;
-	TimePoint timeOfDeath;
+	VehicleDeathData deathData;
 	TimePoint timeOfSpawn;
 	TimePoint lastOccupiedChange;
 	bool beenOccupied = false;
@@ -94,14 +100,21 @@ public:
 		return lastOccupiedChange;
 	}
 
+	void setLastOccupiedTime(TimePoint time) {
+		lastOccupiedChange = time;
+	}
+
 	const TimePoint& getLastSpawnTime() override
 	{
 		return timeOfSpawn;
 	}
 
-	inline const TimePoint& getTimeOfDeath() const
-	{
-		return timeOfDeath;
+	const VehicleDeathData& getDeathData() const {
+		return deathData;
+	}
+
+	inline void setTimeOfDeath(TimePoint time) {
+		deathData.time = time;
 	}
 
 	void removeFor(int pid, IPlayer& player)
