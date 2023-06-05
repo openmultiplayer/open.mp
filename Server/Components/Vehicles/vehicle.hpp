@@ -100,7 +100,8 @@ public:
 		return lastOccupiedChange;
 	}
 
-	void setLastOccupiedTime(TimePoint time) {
+	void setLastOccupiedTime(TimePoint time)
+	{
 		lastOccupiedChange = time;
 	}
 
@@ -109,11 +110,13 @@ public:
 		return timeOfSpawn;
 	}
 
-	const VehicleDeathData& getDeathData() const {
+	const VehicleDeathData& getDeathData() const
+	{
 		return deathData;
 	}
 
-	inline void setTimeOfDeath(TimePoint time) {
+	inline void setTimeOfDeath(TimePoint time)
+	{
 		deathData.time = time;
 	}
 
