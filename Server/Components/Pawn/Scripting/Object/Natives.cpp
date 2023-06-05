@@ -227,7 +227,7 @@ SCRIPT_API(SetObjectsDefaultCameraCol, bool(bool disable))
 
 SCRIPT_API(SetObjectsDefaultCameraCollision, bool(bool disable))
 {
-	return NATIVE_SetObjectsDefaultCameraCol<bool>(disable);
+	return openmp_scripting::SetObjectsDefaultCameraCol(disable);
 }
 
 SCRIPT_API(GetObjectDrawDistance, float(IObject& object))
