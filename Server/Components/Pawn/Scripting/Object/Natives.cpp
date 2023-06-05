@@ -225,6 +225,11 @@ SCRIPT_API(SetObjectsDefaultCameraCol, bool(bool disable))
 	return false;
 }
 
+SCRIPT_API(SetObjectsDefaultCameraCollision, bool(bool disable))
+{
+	return NATIVE_SetObjectsDefaultCameraCol<bool>(disable);
+}
+
 SCRIPT_API(GetObjectDrawDistance, float(IObject& object))
 {
 	return object.getDrawDistance();
