@@ -272,6 +272,7 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 	if (allowed)
 	{
 		pos = unoccupiedSync.Position;
+		rot.q = glm::quat_cast(glm::transpose(glm::mat3(unoccupiedSync.Roll, unoccupiedSync.Rotation, glm::cross(unoccupiedSync.Roll, unoccupiedSync.Rotation))));
 		velocity = unoccupiedSync.Velocity;
 		angularVelocity = unoccupiedSync.AngularVelocity;
 		health = unoccupiedSync.Health;
@@ -293,6 +294,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	pos = trailerSync.Position;
 	velocity = trailerSync.Velocity;
 	angularVelocity = trailerSync.TurnVelocity;
+	rot.q = glm::quat(trailerSync.Quat[0], trailerSync.Quat[1], trailerSync.Quat[2], trailerSync.Quat[3]);
 
 	updateOccupied();
 
