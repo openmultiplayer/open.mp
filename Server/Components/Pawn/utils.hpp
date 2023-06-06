@@ -73,7 +73,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 	if (num < 3)
 	{
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `format`: %u < %u", num, 3);
-		return 0;
+		return -1;
 	}
 
 	int maxlen = params[2];
@@ -83,7 +83,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 	if (cinput == nullptr)
 	{
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid format string given to `format`/");
-		return 0;
+		return -1;
 	}
 
 	if (maxlen < 0)
@@ -91,7 +91,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 		char* fmt;
 		amx_StrParamChar(amx, params[3], fmt);
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid output length (%d) given to `format`. fmt: \"%s\"", maxlen, fmt);
-		return 0;
+		return -1;
 	}
 
 	cell staticOutput[4096];
@@ -119,7 +119,7 @@ inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 		memcpy(coutput, output, (len + 1) * sizeof(cell));
 	}
 
-	return 1;
+	return len + 1;
 }
 
 inline cell AMX_NATIVE_CALL pawn_printf(AMX* amx, cell const* params)
