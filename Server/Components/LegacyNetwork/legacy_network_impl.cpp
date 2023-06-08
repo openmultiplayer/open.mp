@@ -840,6 +840,13 @@ void RakNetLegacyNetwork::start()
 
 	rakNetServer.StartOccasionalPing();
 	SAMPRakNet::SetPort(port);
+
+	int* gracePeriod = config.getInt("network.grace_period");
+
+	if (gracePeriod)
+	{
+		SAMPRakNet::SetGracePeriod(*gracePeriod);
+	}
 }
 
 void RakNetLegacyNetwork::handlePreConnectPacketData(int playerIndex)

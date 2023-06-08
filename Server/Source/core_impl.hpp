@@ -119,6 +119,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "network.time_sync_rate", 30000 },
 	{ "network.use_lan_mode", false },
 	{ "network.allow_037_clients", true },
+	{ "network.grace_period", 5000 },
 	// rcon
 	{ "rcon.allow_teleport", false },
 	{ "rcon.enable", false },
