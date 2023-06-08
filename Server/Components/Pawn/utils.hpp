@@ -855,7 +855,7 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 	return ret;
 }
 #endif
-inline void NormalizeScriptName(std::string name, std::string& result)
+inline void NormaliseScriptName(std::string name, std::string& result)
 {
 #if defined(_WIN32) || defined(WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64) || defined(__WIN64__)
 	constexpr auto wrong_slash = '/';

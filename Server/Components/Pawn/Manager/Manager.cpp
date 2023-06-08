@@ -267,7 +267,7 @@ void PawnManager::CheckNatives(PawnScript& script)
 bool PawnManager::Changemode(std::string const& name)
 {
 	std::string normal_script_name;
-	utils::NormalizeScriptName(name, normal_script_name);
+	utils::NormaliseScriptName(name, normal_script_name);
 
 	// First check that the new script exists.
 	FILE* fp;
@@ -542,7 +542,7 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
 	std::string normal_script_name;
-	utils::NormalizeScriptName(name, normal_script_name);
+	utils::NormaliseScriptName(name, normal_script_name);
 
 	if (mainName_ == normal_script_name)
 	{
@@ -646,7 +646,7 @@ is `2`.
 bool PawnManager::Reload(std::string const& name)
 {
 	std::string normal_script_name;
-	utils::NormalizeScriptName(name, normal_script_name);
+	utils::NormaliseScriptName(name, normal_script_name);
 
 	// Entry script reload is not supported.
 	if (mainName_ == normal_script_name)
@@ -671,7 +671,7 @@ bool PawnManager::Reload(std::string const& name)
 bool PawnManager::Unload(std::string const& name)
 {
 	std::string normal_script_name;
-	utils::NormalizeScriptName(name, normal_script_name);
+	utils::NormaliseScriptName(name, normal_script_name);
 
 	auto pos = findScript(normal_script_name);
 	bool isEntryScript = mainName_ == normal_script_name;
