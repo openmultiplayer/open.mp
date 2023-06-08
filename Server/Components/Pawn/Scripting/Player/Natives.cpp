@@ -214,6 +214,12 @@ SCRIPT_API(GetPlayerColor, int(IPlayer& player))
 	return player.getColour().RGBA();
 }
 
+SCRIPT_API(GetDefaultPlayerColour, int(int pid))
+{
+	// The player doesn't need to be connected for this to work.
+	return PawnManager::Get()->players->getDefaultColour(pid).RGBA();
+}
+
 SCRIPT_API(GetPlayerDrunkLevel, int(IPlayer& player))
 {
 	return player.getDrunkLevel();
@@ -290,6 +296,11 @@ SCRIPT_API(TogglePlayerClock, bool(IPlayer& player, bool enable))
 {
 	player.useClock(enable);
 	return true;
+}
+
+SCRIPT_API(PlayerHasClockEnabled, bool(IPlayer& player))
+{
+	return player.hasClock();
 }
 
 SCRIPT_API(ForceClassSelection, bool(IPlayer& player))
@@ -497,7 +508,7 @@ SCRIPT_API(GetPlayerBuildingsRemoved, int(IPlayer& player))
 SCRIPT_API(RemovePlayerFromVehicle, bool(IPlayer& player))
 {
 	cell* args = GetParams();
-	player.removeFromVehicle(args[0] == 8 && args[2]);
+	player.removeFromVehicle(args[0] == 2 * sizeof(cell) && args[2]);
 	return true;
 }
 

@@ -1028,4 +1028,7 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer>
 
 	/// Check if a specific character is allowed to be used in player names.
 	virtual bool isNickNameCharacterAllowed(char character) const = 0;
+
+	/// Get the colour assigned to a player ID when it first connects.
+	virtual Colour getDefaultColour(int pid) const = 0;
 };
