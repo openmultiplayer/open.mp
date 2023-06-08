@@ -3,7 +3,7 @@ name: Nightly bug report
 about: Report an issue with an up-to-date nightly build
 title: ''
 labels: bug, nightly
-assignees: Hual
+assignees: AmyrAhmady
 
 ---
 
