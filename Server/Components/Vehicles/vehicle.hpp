@@ -85,6 +85,9 @@ private:
 		towing = false;
 	}
 
+	/// Set vehicle to respawn without emitting onRespawn event
+	void _respawn();
+
 public:
 	int getLastDriverPoolID() const override
 	{
@@ -147,10 +150,10 @@ public:
 	Vehicle(VehiclesComponent* pool, const VehicleSpawnData& data)
 		: pool(pool)
 	{
-		mods.fill(0);
 		carriages.fill(nullptr);
+		// Set spawn data then set to respawn without emitting onRespawn event
 		setSpawnData(data);
-		timeOfSpawn = Time::now();
+		_respawn();
 	}
 
 	~Vehicle();
@@ -224,9 +227,6 @@ public:
 			int ignore;
 			getRandomVehicleColour(spawnData.modelID, spawnData.colour1 == -1 ? spawnData.colour1 : ignore, spawnData.colour2 == -1 ? spawnData.colour2 : ignore);
 		}
-		pos = spawnData.position;
-		rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
-		interior = spawnData.interior;
 	}
 
 	const VehicleSpawnData& getSpawnData() override

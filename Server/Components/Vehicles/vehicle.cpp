@@ -31,6 +31,8 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 	}
 	data->setNumStreamed(numStreamed + 1);
 
+	respawning = false;
+
 	NetCode::RPC::StreamInVehicle streamIn;
 	streamIn.VehicleID = poolID;
 	streamIn.ModelID = spawnData.modelID;
@@ -126,8 +128,6 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 
 	ScopedPoolReleaseLock lock(*pool, *this);
 	static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleStreamIn, *lock.entry, player);
-
-	respawning = false;
 }
 
 void Vehicle::streamOutForPlayer(IPlayer& player)
@@ -643,7 +643,7 @@ bool Vehicle::isDead()
 	return deathData.dead;
 }
 
-void Vehicle::respawn()
+void Vehicle::_respawn()
 {
 	respawning = true;
 	const auto& entries = streamedFor_.entries();
@@ -678,6 +678,11 @@ void Vehicle::respawn()
 	towing = false;
 	detaching = false;
 	params = VehicleParams {};
+}
+
+void Vehicle::respawn()
+{
+	_respawn();
 
 	ScopedPoolReleaseLock lock(*pool, *this);
 	static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleSpawn, *lock.entry);
