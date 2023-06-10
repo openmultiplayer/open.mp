@@ -678,3 +678,18 @@ SCRIPT_API(GetVehicleMaxPassengers, int(int model))
 {
 	return Impl::getVehiclePassengerSeats(model);
 }
+
+SCRIPT_API(CountVehicleOccupants, int(IVehicle& vehicle))
+{
+	IPlayer* driver = vehicle.getDriver();
+	const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
+	int occupants = 0;
+
+	if (driver)
+	{
+		occupants++;
+	}
+
+	occupants += passengers.size();
+	return occupants;
+}
