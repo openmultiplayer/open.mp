@@ -460,6 +460,8 @@ struct IPlayerVehicleData : public IExtension
 	/// Check if passenger is in drive-by mode or not
 	virtual bool isInDriveByMode() const = 0;
 
+	/// Check if passenger is cuffed or not
+	virtual bool isCuffed() const = 0;
 };
 
 namespace Impl

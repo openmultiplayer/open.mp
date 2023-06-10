@@ -444,6 +444,7 @@ private:
 	int numStreamed = 0;
 	bool inModShop = false;
 	bool inDriveByMode = false;
+	bool cuffed = false;
 
 public:
 	PlayerVehicleData(IPlayer& player)
@@ -514,6 +515,14 @@ public:
 		return vehicle && seat > 0 && inDriveByMode;
 	}
 
+	void setCuffed(bool enable)
+	{
+		cuffed = enable;
+	}
+
+	bool isCuffed() const override
+	{
+		return vehicle && seat > 0 && cuffed;
 	}
 
 	void freeExtension() override
