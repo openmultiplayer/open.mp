@@ -177,7 +177,8 @@ struct VehiclePassengerSyncPacket
 		struct
 		{
 			uint8_t SeatID : 6;
-			uint8_t DriveBy : 2;
+			uint8_t DriveBy : 1;
+			uint8_t Cuffed : 1;
 			uint8_t WeaponID : 6;
 			uint8_t AdditionalKey : 2;
 		};
