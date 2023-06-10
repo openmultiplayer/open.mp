@@ -88,7 +88,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "game.group_player_objects", false },
 	// logging
 	{ "logging.enable", true },
-	{ "logging.file", "log.txt" },
+	{ "logging.file", String("log.txt") },
 	{ "logging.log_chat", true },
 	{ "logging.log_cookies", false },
 	{ "logging.log_deaths", true },
