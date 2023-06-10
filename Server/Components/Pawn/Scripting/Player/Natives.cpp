@@ -1263,6 +1263,22 @@ SCRIPT_API(IsPlayerInDriveByMode, bool(IPlayer& player))
 	return false;
 }
 
+SCRIPT_API(IsPlayerCuffed, bool(IPlayer& player))
+{
+	if (player.getState() == PlayerState_OnFoot)
+	{
+		return player.getAction() == SpecialAction_Cuffed;
 	}
-	return false;
+	else if (player.getState() == PlayerState_Passenger)
+	{
+		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+		if (data)
+		{
+			return data->isCuffed();
+		}
+	}
+	else
+	{
+		return false;
+	}
 }
