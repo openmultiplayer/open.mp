@@ -88,6 +88,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "game.group_player_objects", false },
 	// logging
 	{ "logging.enable", true },
+	{ "logging.file", "log.txt" },
 	{ "logging.log_chat", true },
 	{ "logging.log_cookies", false },
 	{ "logging.log_deaths", true },
@@ -893,8 +894,6 @@ private:
 class Core final : public ICore, public PlayerConnectEventHandler, public ConsoleEventHandler
 {
 private:
-	static constexpr const char* LogFileName = "log.txt";
-
 	DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
 	PlayerPool players;
 	Microseconds sleepTimer;
@@ -941,6 +940,7 @@ private:
 	bool EnableLogTimestamp;
 	bool EnableLogPrefix;
 	String LogTimestampFormat;
+	String LogFileName;
 
 	void addComponent(IComponent* component)
 	{
@@ -1304,7 +1304,7 @@ public:
 		}
 
 		fclose(logFile);
-		logFile = ::fopen(LogFileName, "a");
+		logFile = ::fopen(LogFileName.c_str(), "a");
 		return true;
 	}
 
@@ -1433,10 +1433,16 @@ public:
 			}
 		}
 
+		if (config.getString("logging.file").length())
+		{
+			auto logFilePath = config.getString("logging.file");
+			LogFileName = logFilePath.data();
+		}
+
 		// Decide whether to enable logging early on
 		if (*config.getBool("logging.enable"))
 		{
-			logFile = ::fopen(LogFileName, "a");
+			logFile = ::fopen(LogFileName.c_str(), "a");
 		}
 
 		printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
@@ -1467,7 +1473,7 @@ public:
 		// If logging was enabled by config file, open the file
 		if (*config.getBool("logging.enable") && logFile == nullptr)
 		{
-			logFile = ::fopen(LogFileName, "a");
+			logFile = ::fopen(LogFileName.c_str(), "a");
 		}
 
 		// Overwrite config file data with config params
