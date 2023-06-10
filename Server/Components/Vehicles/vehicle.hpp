@@ -509,9 +509,11 @@ public:
 		inDriveByMode = enable;
 	}
 
-	bool isPlayerInDriveByMode() const override
+	bool isInDriveByMode() const override
 	{
-		return inDriveByMode;
+		return vehicle && seat > 0 && inDriveByMode;
+	}
+
 	}
 
 	void freeExtension() override

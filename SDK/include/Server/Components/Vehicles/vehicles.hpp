@@ -457,8 +457,9 @@ struct IPlayerVehicleData : public IExtension
 	/// Checks if player is in a mod shop
 	virtual bool isInModShop() const = 0;
 
-	/// Check if player is in drive-by mode or not
-	virtual bool isPlayerInDriveByMode() const = 0;
+	/// Check if passenger is in drive-by mode or not
+	virtual bool isInDriveByMode() const = 0;
+
 };
 
 namespace Impl

@@ -1258,7 +1258,11 @@ SCRIPT_API(IsPlayerInDriveByMode, bool(IPlayer& player))
 	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 	if (data)
 	{
-		return data->isPlayerInDriveByMode();
+		return data->isInDriveByMode();
+	}
+	return false;
+}
+
 	}
 	return false;
 }
