@@ -1241,3 +1241,14 @@ SCRIPT_API(IsPlayerUsingOfficialClient, int(IPlayer& player))
 {
 	return player.isUsingOfficialClient();
 }
+
+SCRIPT_API(GetPlayerAnimFlags, int(IPlayer& player))
+{
+	PlayerAnimationData data = player.getAnimationData();
+	return data.flags;
+}
+
+SCRIPT_API(GetPlayerAnimationFlags, int(IPlayer& player))
+{
+	return openmp_scripting::GetPlayerAnimFlags(player);
+}
