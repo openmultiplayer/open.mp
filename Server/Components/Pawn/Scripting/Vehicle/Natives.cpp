@@ -673,3 +673,8 @@ SCRIPT_API(GetVehicleOccupant, int(IVehicle& vehicle, int seat))
 	}
 	return INVALID_PLAYER_ID;
 }
+
+SCRIPT_API(GetVehicleMaxPassengers, int(int model))
+{
+	return Impl::getVehiclePassengerSeats(model);
+}
