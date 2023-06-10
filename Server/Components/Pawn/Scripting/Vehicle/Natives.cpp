@@ -646,3 +646,30 @@ SCRIPT_API(GetVehicleMatrix, bool(IVehicle& vehicle, Vector3& right, Vector3& up
 	at = mat[2];
 	return true;
 }
+
+SCRIPT_API(GetVehicleOccupant, int(IVehicle& vehicle, int seat))
+{
+	IPlayer* driver = vehicle.getDriver();
+	const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
+	// Looking for driver
+	if (seat == 0) 
+	{
+		return driver == nullptr ? INVALID_PLAYER_ID : driver->getID();
+	}
+	// Looking for a passenger
+	else
+	{
+		for (auto& passenger : passengers)
+		{
+			if (passenger)
+			{
+				IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(passenger);
+				if (data && data->getSeat() == seat)
+				{
+					return passenger->getID();
+				}
+			}
+		}
+	}
+	return INVALID_PLAYER_ID;
+}
