@@ -652,7 +652,7 @@ SCRIPT_API(GetVehicleOccupant, int(IVehicle& vehicle, int seat))
 	IPlayer* driver = vehicle.getDriver();
 	const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
 	// Looking for driver
-	if (seat == 0) 
+	if (seat == 0)
 	{
 		return driver == nullptr ? INVALID_PLAYER_ID : driver->getID();
 	}
