@@ -580,7 +580,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 #ifdef _DEBUG
 	if (network->inEventDispatcher.count() == 0 && network->rpcInEventDispatcher.count(ID) == 0)
 	{
-		network->core->printLn("Received unprocessed RPC %zu", ID);
+		network->core->logLn(LogLevel::Debug, "Received unprocessed RPC %zu", ID);
 	}
 #endif
 }
