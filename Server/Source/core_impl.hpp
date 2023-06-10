@@ -931,7 +931,6 @@ private:
 	int* WeaponRate;
 	int* Multiplier;
 	int* LagCompensation;
-	String ServerName;
 	bool* EnableVehicleFriendlyFire;
 	bool reloading_ = false;
 
@@ -1103,7 +1102,7 @@ private:
 		playerInitRPC.WeaponRate = *WeaponRate;
 		playerInitRPC.Multiplier = *Multiplier;
 		playerInitRPC.LagCompensation = *LagCompensation;
-		playerInitRPC.ServerName = StringView(ServerName);
+		playerInitRPC.ServerName = config.getString("name");
 		IClassesComponent* classes = components.queryComponent<IClassesComponent>();
 		playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
 		playerInitRPC.PlayerID = player.getID();
@@ -1538,7 +1537,6 @@ public:
 		WeaponRate = config.getInt("network.aiming_sync_rate");
 		Multiplier = config.getInt("network.multiplier");
 		LagCompensation = config.getInt("game.lag_compensation_mode");
-		ServerName = String(config.getString("name"));
 		EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
 		EnableLogTimestamp = *config.getBool("logging.use_timestamp");
@@ -1869,7 +1867,6 @@ public:
 		{
 		case SettableCoreDataType::ServerName:
 			config.setString("name", data);
-			ServerName = String(data);
 			break;
 		case SettableCoreDataType::ModeText:
 			config.setString("game.mode", data);

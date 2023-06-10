@@ -275,10 +275,13 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 		rot.q = glm::quat_cast(glm::transpose(glm::mat3(unoccupiedSync.Roll, unoccupiedSync.Rotation, glm::cross(unoccupiedSync.Roll, unoccupiedSync.Rotation))));
 		velocity = unoccupiedSync.Velocity;
 		angularVelocity = unoccupiedSync.AngularVelocity;
-		health = unoccupiedSync.Health;
-		if (health <= 0.f)
+		if (!driver && unoccupiedSync.SeatID != 0)
 		{
-			setDead(player);
+			health = unoccupiedSync.Health;
+			if (health <= 0.f)
+			{
+				setDead(player);
+			}
 		}
 	}
 	return allowed;
