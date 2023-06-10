@@ -54,6 +54,8 @@ target_compile_definitions(OMP-SDK INTERFACE
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)")
 	target_compile_definitions(OMP-SDK INTERFACE GLM_FORCE_SSE2)
+else()
+	target_compile_definitions(OMP-SDK INTERFACE GLM_FORCE_NEON)
 endif()
 
 target_include_directories(OMP-SDK INTERFACE include/)
