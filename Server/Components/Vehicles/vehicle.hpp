@@ -443,6 +443,7 @@ private:
 	int seat = SEAT_NONE;
 	int numStreamed = 0;
 	bool inModShop = false;
+	bool inDriveByMode = false;
 
 public:
 	PlayerVehicleData(IPlayer& player)
@@ -501,6 +502,16 @@ public:
 	bool isInModShop() const override
 	{
 		return inModShop;
+	}
+
+	void setInDriveByMode(bool enable)
+	{
+		inDriveByMode = enable;
+	}
+
+	bool isPlayerInDriveByMode() const override
+	{
+		return inDriveByMode;
 	}
 
 	void freeExtension() override

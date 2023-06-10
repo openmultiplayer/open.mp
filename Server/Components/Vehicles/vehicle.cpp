@@ -369,11 +369,13 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 			static_cast<Vehicle*>(data->getVehicle())->unoccupy(player);
 		}
 		data->setVehicle(this, passengerSync.SeatID);
+		data->setInDriveByMode(passengerSync.DriveBy);
 		updateOccupied();
 	}
 	else if (data->getSeat() != passengerSync.SeatID)
 	{
 		data->setVehicle(this, passengerSync.SeatID);
+		data->setInDriveByMode(passengerSync.DriveBy);
 		updateOccupied();
 	}
 

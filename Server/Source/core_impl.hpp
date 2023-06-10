@@ -1435,7 +1435,7 @@ public:
 
 		if (config.getString("logging.file").length())
 		{
-			auto logFilePath = config.getString("logging.file");
+			StringView logFilePath = config.getString("logging.file");
 			LogFileName = logFilePath.data();
 		}
 
