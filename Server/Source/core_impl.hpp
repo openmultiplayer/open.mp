@@ -232,11 +232,11 @@ static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%S%z";
 class Config final : public IEarlyConfig
 {
 private:
-	static constexpr const char* ConfigFileName = "config.json";
 	static constexpr const char* BansFileName = "bans.json";
 
 	IUnicodeComponent* unicode = nullptr;
 	ICore& core;
+	String ConfigFileName = "config.json";
 
 	std::map<String, ConfigStorage> defaults;
 
@@ -282,12 +282,16 @@ private:
 	}
 
 public:
-	Config(ICore& core, bool defaultsOnly = false)
+	Config(ICore& core, bool defaultsOnly = false, const cxxopts::ParseResult* cmd = nullptr)
 		: core(core)
 	{
 		if (!defaultsOnly)
 		{
 			{
+				if (cmd && cmd->count("config-path"))
+				{
+					ConfigFileName = cmd->operator[]("config-path").as<String>();
+				}
 				std::ifstream ifs(ConfigFileName);
 				if (ifs.good())
 				{
@@ -592,9 +596,9 @@ public:
 		bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
 	}
 
-	static bool writeDefault(ICore& core, ComponentList& components)
+	bool writeDefault(ComponentList& components)
 	{
-		core.printLn("Generating %s...", ConfigFileName);
+		core.printLn("Generating %s...", ConfigFileName.c_str());
 
 		// Creates default config.json file if it doesn't exist
 		// Returns true if a config file was written, false otherwise
@@ -632,9 +636,9 @@ public:
 		return true;
 	}
 
-	static bool writeCurrent(ICore& core, Config& config)
+	bool writeCurrent()
 	{
-		core.printLn("Generating %s...", ConfigFileName);
+		core.printLn("Generating %s...", ConfigFileName.c_str());
 
 		// Creates default config.json file if it doesn't exist
 		// Returns true if a config file was written, false otherwise
@@ -649,7 +653,7 @@ public:
 
 		if (ofs.good())
 		{
-			for (const auto& kv : config.options())
+			for (const auto& kv : options())
 			{
 				nlohmann::ordered_json* sub = &json;
 				size_t cur = String::npos, prev = 0;
@@ -1404,7 +1408,7 @@ public:
 
 	Core(const cxxopts::ParseResult& cmd)
 		: players(*this)
-		, config(*this)
+		, config(*this, false, &cmd)
 		, console(nullptr)
 		, models(nullptr)
 		, logFile(nullptr)
@@ -1451,7 +1455,7 @@ public:
 		if (cmd.count("default-config"))
 		{
 			// Generate config
-			Config::writeDefault(*this, components);
+			config.writeDefault(components);
 			stop();
 			return;
 		}
@@ -1501,7 +1505,7 @@ public:
 		if (cmd.count("dump-config"))
 		{
 			// Generate config
-			Config::writeCurrent(*this, config);
+			config.writeCurrent();
 			stop();
 			return;
 		}
