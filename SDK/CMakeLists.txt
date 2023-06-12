@@ -29,6 +29,13 @@ elseif(UNIX)
 			-msse2
 			-mfpmath=sse
 		)
+	else()
+		if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
+			target_compile_options(OMP-SDK INTERFACE "-mfpu=neon")
+		endif()
+		if(TARGET_BUILD_ARCH)
+			target_compile_options(OMP-SDK INTERFACE "-march=${TARGET_BUILD_ARCH}")
+		endif()
 	endif()
 endif()
 

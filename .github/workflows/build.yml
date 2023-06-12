@@ -205,7 +205,7 @@ jobs:
             mkdir -p docker/conan/data
             mkdir ~/.conan
             mv docker/conan/data ~/.conan
-            cmake -S . -B build -G Ninja -DCROSS_BUILD=1 -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
+            cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
             cmake --build build --config ${{ steps.vars.outputs.build_config }} --parallel $(nproc)
             mv ~/.conan/data docker/conan
 
