@@ -58,13 +58,9 @@ elseif(UNIX)
 
 	# If not cross-building, assume we're using a x86_64 compiler
 	if(TARGET_BUILD_ARCH)
-		set(CMAKE_CXX_FLAGS "-march=${TARGET_BUILD_ARCH} ${CMAKE_CXX_FLAGS}")
 		message("Generating ${TARGET_BUILD_ARCH} project")
-		message("Generating cross-build project for ${TARGET_BUILD_ARCH}.")
 	else ()
-	else()
 		message(WARNING "TARGET_BUILD_ARCH not provided; generating a project based on host's arch")
-		if(TARGET_BUILD_ARCH)
 	endif ()
 
 	# Clang or Apple Clang
