@@ -647,7 +647,7 @@ SCRIPT_API(GetVehicleMatrix, bool(IVehicle& vehicle, Vector3& right, Vector3& up
 	return true;
 }
 
-SCRIPT_API(GetVehicleOccupant, int(IVehicle& vehicle, int seat))
+SCRIPT_API_FAILRET(GetVehicleOccupant, INVALID_PLAYER_ID,int(IVehicle& vehicle, int seat))
 {
 	IPlayer* driver = vehicle.getDriver();
 	const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
