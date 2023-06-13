@@ -18,7 +18,7 @@ inline StringView trim(StringView view)
 	return view.substr(start, end - start + 1);
 }
 
-//Makes Case Insensitive comparison for StringView strings
+/// Makes Case Insensitive comparison of StringView strings
 inline bool strIsEqualCI(const StringView& str1, const StringView& str2)
 {
 	return std::equal(str1.begin(), str1.end(), str2.begin(), str2.end(),
