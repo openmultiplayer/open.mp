@@ -255,7 +255,6 @@ SCRIPT_API(SetPlayerName, int(IPlayer& player, const std::string& name))
 {
 	int result = -1;
 	EPlayerNameStatus status = player.setName(name);
-	
 	switch (status)
 	{
 	case EPlayerNameStatus::Updated:
