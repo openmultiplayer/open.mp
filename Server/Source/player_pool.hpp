@@ -8,6 +8,7 @@
 
 #pragma once
 
+#include "utils.hpp"
 #include "player_impl.hpp"
 #include <Server/Components/Console/console.hpp>
 
@@ -1858,12 +1859,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					return false;
 				}
-				StringView otherName = player->getName();
-				return std::equal(name.begin(), name.end(), otherName.begin(), otherName.end(),
-					[](const char& c1, const char& c2)
-					{
-						return std::tolower(c1) == std::tolower(c2);
-					});
+				return strIsEqualCI(name, player->getName());
 			});
 	}
 

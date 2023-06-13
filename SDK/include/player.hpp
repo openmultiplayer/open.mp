@@ -444,7 +444,8 @@ struct IPlayer;
 enum EPlayerNameStatus
 {
 	Updated, ///< The name has successfully been updated
-	Taken, ///< The name is already taken by another player
+	TakenByAnotherPlayer, ///< The name is already taken by another player
+	Taken, ///< The name is already taken by player
 	Invalid ///< The name is invalid
 };
 

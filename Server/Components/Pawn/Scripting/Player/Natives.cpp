@@ -253,8 +253,22 @@ SCRIPT_API(ResetPlayerMoney, bool(IPlayer& player))
 
 SCRIPT_API(SetPlayerName, int(IPlayer& player, const std::string& name))
 {
+	int result = -1;
 	EPlayerNameStatus status = player.setName(name);
-	return status == EPlayerNameStatus::Updated ? 1 : (status == EPlayerNameStatus::Invalid ? -1 : 0);
+	
+	switch (status)
+	{
+	case EPlayerNameStatus::Updated:
+		result = 1;
+		break;
+	case EPlayerNameStatus::Taken:
+		result = 0;
+		break;
+	default:
+		result = -1;
+		break;
+	}
+	return result;
 }
 
 SCRIPT_API(GetPlayerName, int(IPlayer& player, OutputOnlyString& name))

@@ -8,6 +8,7 @@
 
 #include "player_pool.hpp"
 #include <Impl/network_impl.hpp>
+#include <utils.hpp>
 
 void Player::setColour(Colour colour)
 {
@@ -35,9 +36,13 @@ EPlayerNameStatus Player::setName(StringView name)
 	{
 		return EPlayerNameStatus::Invalid;
 	}
-	if (pool_.isNameTaken(name, this))
+	if (strIsEqualCI(name_, name))
 	{
 		return EPlayerNameStatus::Taken;
+	}
+	if (pool_.isNameTaken(name, this))
+	{
+		return EPlayerNameStatus::TakenByAnotherPlayer;
 	}
 
 	const auto oldName = name_;
