@@ -36,13 +36,9 @@ EPlayerNameStatus Player::setName(StringView name)
 	{
 		return EPlayerNameStatus::Invalid;
 	}
-	if (strIsEqualCI(name_, name))
+	if (pool_.isNameTaken(name, nullptr))
 	{
 		return EPlayerNameStatus::Taken;
-	}
-	if (pool_.isNameTaken(name, this))
-	{
-		return EPlayerNameStatus::TakenByAnotherPlayer;
 	}
 
 	const auto oldName = name_;
