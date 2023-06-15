@@ -843,8 +843,9 @@ private:
 		request.enable_server_certificate_verification(true);
 		request.set_follow_location(true);
 		request.set_connection_timeout(Seconds(5));
-		request.set_read_timeout(Seconds(5));
+		request.set_read_timeout(Seconds(60));
 		request.set_write_timeout(Seconds(5));
+		request.set_keep_alive(true);
 
 		// Run request
 		httplib::Result res(nullptr, httplib::Error::Canceled);
