@@ -556,68 +556,46 @@ SCRIPT_API_FAILRET(GetVehicleDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
 	return driver->getID();
 }
 
-SCRIPT_API(IsPlayerInModShop, bool(IPlayer& player))
+SCRIPT_API(IsPlayerInModShop, bool(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
-	{
-		return data->isInModShop();
-	}
-	return false;
+	return data.isInModShop();
 }
 
-SCRIPT_API(GetPlayerSirenState, int(IPlayer& player))
+SCRIPT_API(GetPlayerSirenState, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getSirenState();
-		}
+		return vehicle->getSirenState();
 	}
-	return 0;
 }
 
-SCRIPT_API(GetPlayerLandingGearState, int(IPlayer& player))
+SCRIPT_API(GetPlayerLandingGearState, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getLandingGearState();
-		}
+		return vehicle->getLandingGearState();
 	}
 	return 0;
 }
 
-SCRIPT_API(GetPlayerHydraReactorAngle, int(IPlayer& player))
+SCRIPT_API(GetPlayerHydraReactorAngle, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getHydraThrustAngle();
-		}
+		return vehicle->getHydraThrustAngle();
 	}
 	return 0;
 }
 
-SCRIPT_API(GetPlayerTrainSpeed, float(IPlayer& player))
+SCRIPT_API(GetPlayerTrainSpeed, float(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getTrainSpeed();
-		}
+		return vehicle->getTrainSpeed();
 	}
 	return 0.0f;
 }

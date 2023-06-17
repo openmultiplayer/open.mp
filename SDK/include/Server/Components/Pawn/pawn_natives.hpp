@@ -325,6 +325,8 @@ PLAYER_POOL_PARAM(IPlayerObject, IPlayerObjectData);
 PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
 PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 
+PLAYER_DATA_PARAM(IPlayerVehicleData);
+
 /// A parameter used for only writing data to an output string
 /// Greatly speeds up code as there's no need for reading the input string
 /// and faster amx_SetString function is used which works well with string views
