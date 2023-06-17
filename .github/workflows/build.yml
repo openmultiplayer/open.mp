@@ -14,6 +14,7 @@ on:
       - "**.c"
       - "**CMakeLists.txt"
       - ".github/workflows/build.yml"
+      - "docker/**"
   pull_request:
     branches:
       - "master"
@@ -25,6 +26,7 @@ on:
       - "**.c"
       - "**CMakeLists.txt"
       - ".github/workflows/build.yml"
+      - "docker/**"
 
 jobs:
   build-windows:
@@ -151,6 +153,77 @@ jobs:
           name: ${{ steps.build.outputs.artifact_name }}
           path: docker/build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.tar.xz
           if-no-files-found: error
+
+  build-arm-gnu:
+    name: ARM build (GNU)
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        arch: [arm32, aarch64]
+        ssl: [dynamic, static]
+
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        clean: true
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Declare build output variables
+      id: vars
+      shell: bash
+      env:
+        HEAD_REF: ${{ github.head_ref || github.ref_name }}
+      run: |
+        echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+        echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+
+    - name: Try to restore conan cache
+      id: conan-cache-restore
+      uses: actions/cache/restore@v3
+      env:
+        cache-name: cache-conan-modules
+      with:
+        path: docker/conan/data
+        key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+
+    - name: Run ARM build
+      uses: pguyot/arm-runner-action@v2.5.2
+      with:
+        base_image: ${{ matrix.arch == 'arm32' && 'raspios_lite' || 'raspios_lite_arm64' }}:2022-04-04
+        image_additional_mb: 10000
+        bind_mount_repository: true
+        cpu: cortex-a7
+        commands: |
+            apt update && apt install -y ninja-build clang-11 python3-pip libstdc++6 libc6
+            pip3 install --user -v "conan==1.57.0"
+            pip3 install --user -v "cmake==3.23.3"
+            export CC=/usr/bin/clang-11
+            export CXX=/usr/bin/clang++-11
+            export PATH=~/.local/bin:${PATH}
+            mkdir -p docker/conan/data
+            mkdir ~/.conan
+            mv docker/conan/data ~/.conan
+            cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
+            cmake --build build --config ${{ steps.vars.outputs.build_config }} --parallel $(nproc)
+            mv ~/.conan/data docker/conan
+
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: open.mp-linux-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${{ steps.vars.outputs.build_version }}
+        path: build/Output/${{ steps.vars.outputs.build_config }}/Server
+        if-no-files-found: error
+
+    - name: Try to save conan cache
+      if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+      uses: actions/cache/save@v3
+      env:
+        cache-name: cache-conan-modules
+      with:
+        path: docker/conan/data
+        key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
   abi-check:
     if: github.event_name == 'pull_request'

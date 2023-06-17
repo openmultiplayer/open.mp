@@ -370,7 +370,7 @@ void Player::ban(StringView reason)
 	{
 		network->ban(entry);
 	}
-	netData_.network->disconnect(*this);
 	pool_.core.getConfig().addBan(entry);
 	pool_.core.getConfig().writeBans();
+	kick();
 }

@@ -28,15 +28,12 @@ elseif(UNIX)
 	# Linux GCC/Clang
 	if(NOT APPLE)
 		set(CMAKE_CXX_STDLIB "libstdc++" CACHE STRING "The standard library to use.")
-		set(CROSS_BUILD FALSE CACHE BOOL "Whether to cross-build.")
 		set(TARGET_BUILD_ARCH "x86" CACHE STRING "The architecture to build for.")
 		set(SHARED_OPENSSL TRUE CACHE BOOL "Whether to dynamically link the OpenSSL library")
 		set(STATIC_STDCXX FALSE CACHE BOOL "Whether to statically link against libc++.")
 	# Apple Clang
 	else()
 		set(CMAKE_CXX_STDLIB "libc++" CACHE STRING "The standard library to use.")
-
-		set(CROSS_BUILD FALSE)
 
 		if (CMAKE_SYSTEM_PROCESSOR MATCHES "(arm64)")
 			set(TARGET_BUILD_ARCH armv8)
@@ -60,16 +57,12 @@ elseif(UNIX)
 	endif()
 
 	# If not cross-building, assume we're using a x86_64 compiler
-	if(CROSS_BUILD)
-		set(CMAKE_CXX_FLAGS "-march=${TARGET_BUILD_ARCH} ${CMAKE_CXX_FLAGS}")
-		message("Generating cross-build project for ${TARGET_BUILD_ARCH}.")
-	else()
-		if(TARGET_BUILD_ARCH)
-			message("Generating ${TARGET_BUILD_ARCH} project")
-		else ()
-			message(WARNING "TARGET_BUILD_ARCH not provided; generating a project based on host's arch")
-		endif ()
-	endif()
+	if(TARGET_BUILD_ARCH)
+		message("Generating ${TARGET_BUILD_ARCH} project")
+	else ()
+		message(WARNING "TARGET_BUILD_ARCH not provided; generating a project based on host's arch")
+	endif ()
+
 	# Clang or Apple Clang
 	if(CMAKE_CXX_COMPILER_ID MATCHES Clang)
 		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -stdlib=${CMAKE_CXX_STDLIB} -fvisibility=hidden -Wno-switch")
@@ -153,6 +146,7 @@ if(BUILD_SERVER)
 	add_subdirectory(SDK)
 	add_subdirectory(Shared)
 	add_subdirectory(Server)
+	set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT Server)
 endif()
 
 if(BUILD_ABI_CHECK_TOOL)

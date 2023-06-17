@@ -38,7 +38,6 @@ private:
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
 	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
-	std::array<bool, PLAYER_POOL_SIZE> playerKickState;
 	std::array<bool, PLAYER_POOL_SIZE> hasUnprocessedPreConnectPackets;
 	FlatHashMap<int, DynamicArray<RakNet::Packet*>> preConnectPackets;
 	Milliseconds cookieSeedTime;
@@ -86,7 +85,7 @@ public:
 		const int playerIndex = rakNetServer.GetIndexFromPlayerID(rid);
 		if (playerIndex >= 0 && playerIndex < PLAYER_POOL_SIZE)
 		{
-			playerKickState[playerIndex] = true;
+			playerFromRakIndex[playerIndex] = nullptr;
 		}
 		rakNetServer.Kick(rid);
 	}

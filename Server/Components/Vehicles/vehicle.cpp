@@ -31,6 +31,8 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 	}
 	data->setNumStreamed(numStreamed + 1);
 
+	respawning = false;
+
 	NetCode::RPC::StreamInVehicle streamIn;
 	streamIn.VehicleID = poolID;
 	streamIn.ModelID = spawnData.modelID;
@@ -126,8 +128,6 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 
 	ScopedPoolReleaseLock lock(*pool, *this);
 	static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleStreamIn, *lock.entry, player);
-
-	respawning = false;
 }
 
 void Vehicle::streamOutForPlayer(IPlayer& player)
@@ -166,9 +166,13 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
 	pos = vehicleSync.Position;
 	rot = vehicleSync.Rotation;
-	health = vehicleSync.Health;
 	velocity = vehicleSync.Velocity;
 	landingGear = vehicleSync.LandingGear;
+	health = vehicleSync.Health;
+	if (vehicleSync.Health <= 0.f)
+	{
+		setDead(player);
+	}
 
 	hydraThrustAngle = vehicleSync.HydraThrustAngle;
 	trainSpeed = vehicleSync.TrainSpeed;
@@ -268,8 +272,17 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 	if (allowed)
 	{
 		pos = unoccupiedSync.Position;
+		rot.q = glm::quat_cast(glm::transpose(glm::mat3(unoccupiedSync.Roll, unoccupiedSync.Rotation, glm::cross(unoccupiedSync.Roll, unoccupiedSync.Rotation))));
 		velocity = unoccupiedSync.Velocity;
 		angularVelocity = unoccupiedSync.AngularVelocity;
+		if (!driver && unoccupiedSync.SeatID != 0)
+		{
+			health = unoccupiedSync.Health;
+			if (health <= 0.f)
+			{
+				setDead(player);
+			}
+		}
 	}
 	return allowed;
 }
@@ -284,6 +297,7 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	pos = trailerSync.Position;
 	velocity = trailerSync.Velocity;
 	angularVelocity = trailerSync.TurnVelocity;
+	rot.q = glm::quat(trailerSync.Quat[0], trailerSync.Quat[1], trailerSync.Quat[2], trailerSync.Quat[3]);
 
 	updateOccupied();
 
@@ -362,6 +376,9 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 		data->setVehicle(this, passengerSync.SeatID);
 		updateOccupied();
 	}
+
+	data->setInDriveByMode(passengerSync.DriveBy);
+	data->setCuffed(passengerSync.Cuffed);
 
 	return true;
 }
@@ -622,18 +639,17 @@ Vector3 Vehicle::getPosition() const
 
 void Vehicle::setDead(IPlayer& killer)
 {
-	dead = true;
-	timeOfDeath = Time::now();
-	ScopedPoolReleaseLock lock(*pool, *this);
-	static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleDeath, *lock.entry, killer);
+	deathData.dead = true;
+	deathData.time = Time::now();
+	deathData.killerID = killer.getID();
 }
 
 bool Vehicle::isDead()
 {
-	return dead;
+	return deathData.dead;
 }
 
-void Vehicle::respawn()
+void Vehicle::_respawn()
 {
 	respawning = true;
 	const auto& entries = streamedFor_.entries();
@@ -643,7 +659,9 @@ void Vehicle::respawn()
 	}
 	streamedFor_.clear();
 
-	dead = false;
+	deathData.dead = false;
+	deathData.time = TimePoint();
+	deathData.killerID = INVALID_PLAYER_ID;
 	pos = spawnData.position;
 	interior = spawnData.interior;
 	bodyColour1 = -1;
@@ -651,7 +669,6 @@ void Vehicle::respawn()
 	rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
 	beenOccupied = false;
 	lastOccupiedChange = TimePoint();
-	timeOfDeath = TimePoint();
 	timeOfSpawn = Time::now();
 	mods.fill(0);
 	doorDamage = 0;
@@ -667,6 +684,11 @@ void Vehicle::respawn()
 	towing = false;
 	detaching = false;
 	params = VehicleParams {};
+}
+
+void Vehicle::respawn()
+{
+	_respawn();
 
 	ScopedPoolReleaseLock lock(*pool, *this);
 	static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleSpawn, *lock.entry);

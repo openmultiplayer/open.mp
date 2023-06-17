@@ -18,6 +18,13 @@ using namespace Impl;
 
 class VehiclesComponent;
 
+struct VehicleDeathData
+{
+	bool dead = false;
+	TimePoint time;
+	int killerID = INVALID_PLAYER_ID; ///< Purposely made an ID instead of a pointer because a player might become invalid between reporting tick and next tick
+};
+
 class Vehicle final : public IVehicle, public PoolIDProvider, public NoCopy
 {
 private:
@@ -46,8 +53,7 @@ private:
 	HybridString<16> numberPlate = StringView("XYZSR998");
 	uint8_t objective;
 	uint8_t doorsLocked;
-	bool dead = false;
-	TimePoint timeOfDeath;
+	VehicleDeathData deathData;
 	TimePoint timeOfSpawn;
 	TimePoint lastOccupiedChange;
 	bool beenOccupied = false;
@@ -79,6 +85,9 @@ private:
 		towing = false;
 	}
 
+	/// Set vehicle to respawn without emitting onRespawn event
+	void _respawn();
+
 public:
 	int getLastDriverPoolID() const override
 	{
@@ -94,14 +103,24 @@ public:
 		return lastOccupiedChange;
 	}
 
+	void setLastOccupiedTime(TimePoint time)
+	{
+		lastOccupiedChange = time;
+	}
+
 	const TimePoint& getLastSpawnTime() override
 	{
 		return timeOfSpawn;
 	}
 
-	inline const TimePoint& getTimeOfDeath() const
+	const VehicleDeathData& getDeathData() const
 	{
-		return timeOfDeath;
+		return deathData;
+	}
+
+	inline void setTimeOfDeath(TimePoint time)
+	{
+		deathData.time = time;
 	}
 
 	void removeFor(int pid, IPlayer& player)
@@ -131,10 +150,10 @@ public:
 	Vehicle(VehiclesComponent* pool, const VehicleSpawnData& data)
 		: pool(pool)
 	{
-		mods.fill(0);
 		carriages.fill(nullptr);
+		// Set spawn data then set to respawn without emitting onRespawn event
 		setSpawnData(data);
-		timeOfSpawn = Time::now();
+		_respawn();
 	}
 
 	~Vehicle();
@@ -208,9 +227,6 @@ public:
 			int ignore;
 			getRandomVehicleColour(spawnData.modelID, spawnData.colour1 == -1 ? spawnData.colour1 : ignore, spawnData.colour2 == -1 ? spawnData.colour2 : ignore);
 		}
-		pos = spawnData.position;
-		rot = GTAQuat(0.0f, 0.0f, spawnData.zRotation);
-		interior = spawnData.interior;
 	}
 
 	const VehicleSpawnData& getSpawnData() override
@@ -427,6 +443,8 @@ private:
 	int seat = SEAT_NONE;
 	int numStreamed = 0;
 	bool inModShop = false;
+	bool inDriveByMode = false;
+	bool cuffed = false;
 
 public:
 	PlayerVehicleData(IPlayer& player)
@@ -485,6 +503,26 @@ public:
 	bool isInModShop() const override
 	{
 		return inModShop;
+	}
+
+	void setInDriveByMode(bool enable)
+	{
+		inDriveByMode = enable;
+	}
+
+	bool isInDriveByMode() const override
+	{
+		return vehicle && seat > 0 && inDriveByMode;
+	}
+
+	void setCuffed(bool enable)
+	{
+		cuffed = enable;
+	}
+
+	bool isCuffed() const override
+	{
+		return vehicle && seat > 0 && cuffed;
 	}
 
 	void freeExtension() override

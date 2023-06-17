@@ -556,68 +556,46 @@ SCRIPT_API_FAILRET(GetVehicleDriver, INVALID_PLAYER_ID, int(IVehicle& vehicle))
 	return driver->getID();
 }
 
-SCRIPT_API(IsPlayerInModShop, bool(IPlayer& player))
+SCRIPT_API(IsPlayerInModShop, bool(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
-	{
-		return data->isInModShop();
-	}
-	return false;
+	return data.isInModShop();
 }
 
-SCRIPT_API(GetPlayerSirenState, int(IPlayer& player))
+SCRIPT_API(GetPlayerSirenState, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getSirenState();
-		}
+		return vehicle->getSirenState();
 	}
-	return 0;
 }
 
-SCRIPT_API(GetPlayerLandingGearState, int(IPlayer& player))
+SCRIPT_API(GetPlayerLandingGearState, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getLandingGearState();
-		}
+		return vehicle->getLandingGearState();
 	}
 	return 0;
 }
 
-SCRIPT_API(GetPlayerHydraReactorAngle, int(IPlayer& player))
+SCRIPT_API(GetPlayerHydraReactorAngle, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getHydraThrustAngle();
-		}
+		return vehicle->getHydraThrustAngle();
 	}
 	return 0;
 }
 
-SCRIPT_API(GetPlayerTrainSpeed, float(IPlayer& player))
+SCRIPT_API(GetPlayerTrainSpeed, float(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getTrainSpeed();
-		}
+		return vehicle->getTrainSpeed();
 	}
 	return 0.0f;
 }
@@ -645,4 +623,51 @@ SCRIPT_API(GetVehicleMatrix, bool(IVehicle& vehicle, Vector3& right, Vector3& up
 	up = mat[1];
 	at = mat[2];
 	return true;
+}
+
+SCRIPT_API_FAILRET(GetVehicleOccupant, INVALID_PLAYER_ID, int(IVehicle& vehicle, int seat))
+{
+	IPlayer* driver = vehicle.getDriver();
+	// Looking for driver
+	if (seat == 0)
+	{
+		return driver == nullptr ? INVALID_PLAYER_ID : driver->getID();
+	}
+	// Looking for a passenger
+	else
+	{
+		const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
+		for (auto& passenger : passengers)
+		{
+			if (passenger)
+			{
+				IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(passenger);
+				if (data && data->getSeat() == seat)
+				{
+					return passenger->getID();
+				}
+			}
+		}
+	}
+	return INVALID_PLAYER_ID;
+}
+
+SCRIPT_API(GetVehicleMaxPassengers, int(int model))
+{
+	return Impl::getVehiclePassengerSeats(model);
+}
+
+SCRIPT_API(CountVehicleOccupants, int(IVehicle& vehicle))
+{
+	IPlayer* driver = vehicle.getDriver();
+	const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
+	int occupants = 0;
+
+	if (driver)
+	{
+		occupants++;
+	}
+
+	occupants += passengers.size();
+	return occupants;
 }

@@ -176,8 +176,9 @@ struct VehiclePassengerSyncPacket
 		uint16_t DriveBySeatAdditionalKeyWeapon;
 		struct
 		{
-			uint8_t SeatID : 2;
-			uint8_t DriveBy : 6;
+			uint8_t SeatID : 6;
+			uint8_t DriveBy : 1;
+			uint8_t Cuffed : 1;
 			uint8_t WeaponID : 6;
 			uint8_t AdditionalKey : 2;
 		};
@@ -455,13 +456,19 @@ struct IPlayerVehicleData : public IExtension
 
 	/// Checks if player is in a mod shop
 	virtual bool isInModShop() const = 0;
+
+	/// Check if passenger is in drive-by mode or not
+	virtual bool isInDriveByMode() const = 0;
+
+	/// Check if passenger is cuffed or not
+	virtual bool isCuffed() const = 0;
 };
 
 namespace Impl
 {
 inline bool isValidVehicleModel(int model)
 {
-	if (model < 400 || model > 612)
+	if (model < 400 || model > 611)
 	{
 		return false;
 	}

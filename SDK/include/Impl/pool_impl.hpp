@@ -73,10 +73,15 @@ struct UniqueIDArray : public NoCopy
 	}
 
 	/// Attempt to remove data for element at index and return the next iterator in the entries list
-	void remove(int index, T& data)
+	typename FlatPtrHashSet<T>::iterator remove(int index, T& data)
 	{
 		valid_.reset(index);
-		entries_.erase(&data);
+		auto it = entries_.find(&data);
+		if (it == entries_.end())
+		{
+			return it;
+		}
+		return entries_.erase(it);
 	}
 
 	void clear()
@@ -103,7 +108,7 @@ struct UniqueIDArray : public NoCopy
 		return entries_;
 	}
 
-	const FlatPtrHashSet<T>& entries()
+	FlatPtrHashSet<T>& entries()
 	{
 		return entries_;
 	}
@@ -122,9 +127,14 @@ struct UniqueEntryArray : public NoCopy
 	}
 
 	/// Attempt to remove data for element at index and return the next iterator in the entries list
-	void remove(T& data)
+	typename FlatPtrHashSet<T>::iterator remove(T& data)
 	{
-		entries_.erase(&data);
+		auto it = entries_.find(&data);
+		if (it == entries_.end())
+		{
+			return it;
+		}
+		return entries_.erase(it);
 	}
 
 	void clear()
@@ -137,7 +147,7 @@ struct UniqueEntryArray : public NoCopy
 		return entries_;
 	}
 
-	const FlatPtrHashSet<T>& entries()
+	FlatPtrHashSet<T>& entries()
 	{
 		return entries_;
 	}
@@ -274,21 +284,21 @@ struct StaticPoolStorageBase : public NoCopy
 		return getPtr(toInternalIndex(index));
 	}
 
-	bool remove(int index)
+	Pair<bool, typename FlatPtrHashSet<Interface>::iterator> remove(int index)
 	{
 		if (!valid(index))
 		{
-			return false;
+			return std::make_pair(false, allocated_.entries().end());
 		}
 		if (index < lowestFreeIndex_)
 		{
 			lowestFreeIndex_ = index;
 		}
 		index = toInternalIndex(index);
-		allocated_.remove(index, *getPtr(index));
+		auto it = allocated_.remove(index, *getPtr(index));
 		eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *getPtr(index));
 		getPtr(index)->~Type();
-		return true;
+		return std::make_pair(true, it);
 	}
 
 	~StaticPoolStorageBase()
@@ -485,22 +495,22 @@ struct DynamicPoolStorageBase : public NoCopy
 		return pool_[toInternalIndex(index)];
 	}
 
-	bool remove(int index)
+	Pair<bool, typename FlatPtrHashSet<Interface>::iterator> remove(int index)
 	{
 		if (!valid(index))
 		{
-			return false;
+			return std::make_pair(false, allocated_.entries().end());
 		}
 		if (index < lowestFreeIndex_)
 		{
 			lowestFreeIndex_ = index;
 		}
 		index = toInternalIndex(index);
-		allocated_.remove(*pool_[index]);
+		auto it = allocated_.remove(*pool_[index]);
 		eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *pool_[index]);
 		delete pool_[index];
 		pool_[index] = nullptr;
-		return true;
+		return std::make_pair(true, it);
 	}
 
 	/// Empty the array.
@@ -556,7 +566,7 @@ struct ImmediatePoolStorageLifetimeBase final : public PoolBase
 	}
 
 	/// Get the entries list
-	const FlatPtrHashSet<typename PoolBase::Interface>& entries()
+	FlatPtrHashSet<typename PoolBase::Interface>& entries()
 	{
 		return PoolBase::allocated_.entries();
 	}

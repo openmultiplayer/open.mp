@@ -1649,24 +1649,25 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 	void onPeerConnect(IPlayer& peer) override
 	{
+		Player& player = static_cast<Player&>(peer);
+
 		PeerAddress::AddressString addressString;
-		PeerAddress::ToString(peer.getNetworkData().networkID.address, addressString);
-		uint16_t port = peer.getNetworkData().networkID.port;
+		PeerAddress::ToString(player.netData_.networkID.address, addressString);
+		uint16_t port = player.netData_.networkID.port;
 		core.logLn(
 			LogLevel::Message,
 			"[connection] incoming connection: %s:%d id: %d",
 			addressString.data(),
 			port,
-			peer.getID());
+			player.poolID);
 		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onIncomingConnection, peer, addressString, port);
 
 		// Don't process player, about to be disconnected
-		if (peer.getKickStatus())
+		if (player.kicked_)
 		{
 			return;
 		}
 
-		Player& player = static_cast<Player&>(peer);
 		NetCode::RPC::PlayerJoin playerJoinPacket;
 		playerJoinPacket.PlayerID = player.poolID;
 		playerJoinPacket.Col = player.colour_;
@@ -1713,14 +1714,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onPlayerConnect, peer);
 	}
 
-	void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
+	void clearPlayer(Player& player, PeerDisconnectReason reason)
 	{
-		if (peer.getKickStatus())
-		{
-			reason = PeerDisconnectReason_Kicked;
-		}
-
-		Player& player = static_cast<Player&>(peer);
 		for (IPlayer* p : storage.entries())
 		{
 			if (p == &player)
@@ -1744,7 +1739,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 		}
 
-		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onPlayerDisconnect, peer, reason);
+		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onPlayerDisconnect, player, reason);
 
 		NetCode::RPC::PlayerQuit packet;
 		packet.PlayerID = player.poolID;
@@ -1761,8 +1756,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		auto& secondaryPool = player.isBot_ ? botList : playerList;
 		secondaryPool.erase(&player);
+	}
 
-		storage.release(player.poolID);
+	void onPeerDisconnect(IPlayer& peer, PeerDisconnectReason reason) override
+	{
+		Player& player = static_cast<Player&>(peer);
+		clearPlayer(player, reason);
+		storage.remove(player.poolID);
 	}
 
 	PlayerPool(ICore& core)
@@ -1964,7 +1964,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		playerUpdateDispatcher.addEventHandler(this);
 		core.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
-		core.addNetworkEventHandler(this);
+		core.addNetworkEventHandler(this, EventPriority_Lowest);
 
 		NetCode::RPC::PlayerSpawn::addEventHandler(core, &playerSpawnRPCHandler);
 		NetCode::RPC::PlayerRequestSpawn::addEventHandler(core, &playerRequestSpawnRPCHandler);
@@ -2051,9 +2051,18 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
-		for (IPlayer* p : storage.entries())
+		for (auto it = storage.entries().begin(); it != storage.entries().end();)
 		{
-			Player* player = static_cast<Player*>(p);
+			Player* player = static_cast<Player*>(*it);
+
+			// If a player is kicked, disconnect them ASAP
+			if (player->kicked_)
+			{
+				clearPlayer(*player, PeerDisconnectReason_Kicked);
+				it = storage.remove(player->poolID).second;
+				continue;
+			}
+
 			switch (player->primarySyncUpdateType_)
 			{
 			case PrimarySyncUpdateType::OnFoot:
@@ -2130,6 +2139,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				}
 			}
 			player->secondarySyncUpdateType_ = 0;
+			++it;
 		}
 
 		// TODO: sync time?

@@ -152,7 +152,15 @@ private:
 public:
 	void sendMessage(const ConsoleCommandSenderData& recipient, StringView message) override
 	{
-		core->logLnU8(LogLevel::Message, "%.*s", PRINT_VIEW(message));
+		// We don't output UTF-8 for ingame commands
+		if (recipient.sender == ConsoleCommandSender::Player)
+		{
+			core->logLn(LogLevel::Message, "%.*s", PRINT_VIEW(message));
+		}
+		else
+		{
+			core->logLnU8(LogLevel::Message, "%.*s", PRINT_VIEW(message));
+		}
 
 		switch (recipient.sender)
 		{

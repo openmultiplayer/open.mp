@@ -669,28 +669,19 @@ SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
 	return player.getAction();
 }
 
-SCRIPT_API(GetPlayerVehicleID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerVehicleID, INVALID_PLAYER_ID, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
+	IVehicle* vehicle = data.getVehicle();
+	if (vehicle)
 	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return vehicle->getID();
-		}
+		return vehicle->getID();
 	}
 	return 0;
 }
 
-SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerVehicleSeat, SEAT_NONE, int(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
-	{
-		return data->getSeat();
-	}
-	return FailRet;
+	return data.getSeat();
 }
 
 SCRIPT_API(GetPlayerWeaponData, bool(IPlayer& player, int slot, int& weaponid, int& ammo))
@@ -817,32 +808,16 @@ SCRIPT_API_FAILRET(GetPlayerTargetActor, INVALID_PLAYER_ID, int(IPlayer& player)
 	return FailRet;
 }
 
-SCRIPT_API(IsPlayerInVehicle, bool(IPlayer& player, IVehicle& targetVehicle))
+SCRIPT_API(IsPlayerInVehicle, bool(IPlayerVehicleData& data, IVehicle& targetVehicle))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
-	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle == &targetVehicle)
-		{
-			return true;
-		}
-	}
-	return false;
+	IVehicle* vehicle = data.getVehicle();
+	return vehicle == &targetVehicle;
 }
 
-SCRIPT_API(IsPlayerInAnyVehicle, bool(IPlayer& player))
+SCRIPT_API(IsPlayerInAnyVehicle, bool(IPlayerVehicleData& data))
 {
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
-	if (data)
-	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			return true;
-		}
-	}
-	return false;
+	IVehicle* vehicle = data.getVehicle();
+	return vehicle != nullptr;
 }
 
 SCRIPT_API(IsPlayerInRangeOfPoint, bool(IPlayer& player, float range, Vector3 position))
@@ -1240,4 +1215,37 @@ SCRIPT_API(ArePlayerWeaponsAllowed, bool(IPlayer& player))
 SCRIPT_API(IsPlayerUsingOfficialClient, int(IPlayer& player))
 {
 	return player.isUsingOfficialClient();
+}
+
+SCRIPT_API(GetPlayerAnimFlags, int(IPlayer& player))
+{
+	PlayerAnimationData data = player.getAnimationData();
+	return data.flags;
+}
+
+SCRIPT_API(GetPlayerAnimationFlags, int(IPlayer& player))
+{
+	return openmp_scripting::GetPlayerAnimFlags(player);
+}
+
+SCRIPT_API(IsPlayerInDriveByMode, bool(IPlayerVehicleData& data))
+{
+	return data.isInDriveByMode();
+}
+
+SCRIPT_API(IsPlayerCuffed, bool(IPlayer& player))
+{
+	if (player.getState() == PlayerState_OnFoot)
+	{
+		return player.getAction() == SpecialAction_Cuffed;
+	}
+	else if (player.getState() == PlayerState_Passenger)
+	{
+		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
+		if (data)
+		{
+			return data->isCuffed();
+		}
+	}
+	return false;
 }

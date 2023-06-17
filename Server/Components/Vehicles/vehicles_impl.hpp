@@ -489,14 +489,22 @@ public:
 
 			if (!vehicle->isOccupied())
 			{
+				TimePoint lastOccupied = vehicle->getLastOccupiedTime();
 				if (vehicle->isDead())
 				{
-					TimePoint lastInteraction = vehicle->getTimeOfDeath();
-					if (vehicle->hasBeenOccupied())
+					auto& deathData = vehicle->getDeathData();
+					if (deathData.time != TimePoint())
 					{
-						lastInteraction = std::max(lastInteraction, vehicle->getLastOccupiedTime());
+						vehicle->setTimeOfDeath(TimePoint());
+						vehicle->setLastOccupiedTime(std::max(deathData.time, lastOccupied));
+						IPlayer* killer = getPlayers().get(deathData.killerID);
+						if (killer)
+						{
+							ScopedPoolReleaseLock lock(*this, *vehicle);
+							eventDispatcher.dispatch(&VehicleEventHandler::onVehicleDeath, *lock.entry, *killer);
+						}
 					}
-					if (now - lastInteraction >= Milliseconds(*deathRespawnDelay))
+					if (now - vehicle->getLastOccupiedTime() >= Milliseconds(*deathRespawnDelay))
 					{
 						vehicle->respawn();
 					}

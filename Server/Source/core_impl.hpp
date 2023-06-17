@@ -83,11 +83,12 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "game.use_zone_names", false },
 	{ "game.vehicle_respawn_time", 10000 },
 	{ "game.weather", 10 },
-	{ "game.use_all_animations", false },
+	{ "game.use_all_animations", true },
 	{ "game.lag_compensation_mode", LagCompMode_Enabled },
 	{ "game.group_player_objects", false },
 	// logging
 	{ "logging.enable", true },
+	{ "logging.file", String("log.txt") },
 	{ "logging.log_chat", true },
 	{ "logging.log_cookies", false },
 	{ "logging.log_deaths", true },
@@ -119,6 +120,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "network.time_sync_rate", 30000 },
 	{ "network.use_lan_mode", false },
 	{ "network.allow_037_clients", true },
+	{ "network.grace_period", 5000 },
 	// rcon
 	{ "rcon.allow_teleport", false },
 	{ "rcon.enable", false },
@@ -231,11 +233,11 @@ static constexpr const char* TimeFormat = "%Y-%m-%dT%H:%M:%S%z";
 class Config final : public IEarlyConfig
 {
 private:
-	static constexpr const char* ConfigFileName = "config.json";
 	static constexpr const char* BansFileName = "bans.json";
 
 	IUnicodeComponent* unicode = nullptr;
 	ICore& core;
+	String ConfigFileName = "config.json";
 
 	std::map<String, ConfigStorage> defaults;
 
@@ -281,12 +283,16 @@ private:
 	}
 
 public:
-	Config(ICore& core, bool defaultsOnly = false)
+	Config(ICore& core, bool defaultsOnly = false, const cxxopts::ParseResult* cmd = nullptr)
 		: core(core)
 	{
 		if (!defaultsOnly)
 		{
 			{
+				if (cmd && cmd->count("config-path"))
+				{
+					ConfigFileName = cmd->operator[]("config-path").as<String>();
+				}
 				std::ifstream ifs(ConfigFileName);
 				if (ifs.good())
 				{
@@ -591,9 +597,9 @@ public:
 		bans.erase(std::unique(bans.begin(), bans.end()), bans.end());
 	}
 
-	static bool writeDefault(ICore& core, ComponentList& components)
+	bool writeDefault(ComponentList& components)
 	{
-		core.printLn("Generating %s...", ConfigFileName);
+		core.printLn("Generating %s...", ConfigFileName.c_str());
 
 		// Creates default config.json file if it doesn't exist
 		// Returns true if a config file was written, false otherwise
@@ -631,9 +637,9 @@ public:
 		return true;
 	}
 
-	static bool writeCurrent(ICore& core, Config& config)
+	bool writeCurrent()
 	{
-		core.printLn("Generating %s...", ConfigFileName);
+		core.printLn("Generating %s...", ConfigFileName.c_str());
 
 		// Creates default config.json file if it doesn't exist
 		// Returns true if a config file was written, false otherwise
@@ -648,7 +654,7 @@ public:
 
 		if (ofs.good())
 		{
-			for (const auto& kv : config.options())
+			for (const auto& kv : options())
 			{
 				nlohmann::ordered_json* sub = &json;
 				size_t cur = String::npos, prev = 0;
@@ -889,8 +895,6 @@ private:
 class Core final : public ICore, public PlayerConnectEventHandler, public ConsoleEventHandler
 {
 private:
-	static constexpr const char* LogFileName = "log.txt";
-
 	DefaultEventDispatcher<CoreEventHandler> eventDispatcher;
 	PlayerPool players;
 	Microseconds sleepTimer;
@@ -931,13 +935,13 @@ private:
 	int* WeaponRate;
 	int* Multiplier;
 	int* LagCompensation;
-	String ServerName;
 	bool* EnableVehicleFriendlyFire;
 	bool reloading_ = false;
 
 	bool EnableLogTimestamp;
 	bool EnableLogPrefix;
 	String LogTimestampFormat;
+	String LogFileName;
 
 	void addComponent(IComponent* component)
 	{
@@ -1103,7 +1107,7 @@ private:
 		playerInitRPC.WeaponRate = *WeaponRate;
 		playerInitRPC.Multiplier = *Multiplier;
 		playerInitRPC.LagCompensation = *LagCompensation;
-		playerInitRPC.ServerName = StringView(ServerName);
+		playerInitRPC.ServerName = config.getString("name");
 		IClassesComponent* classes = components.queryComponent<IClassesComponent>();
 		playerInitRPC.SetSpawnInfoCount = classes ? classes->count() : 0;
 		playerInitRPC.PlayerID = player.getID();
@@ -1301,7 +1305,7 @@ public:
 		}
 
 		fclose(logFile);
-		logFile = ::fopen(LogFileName, "a");
+		logFile = ::fopen(LogFileName.c_str(), "a");
 		return true;
 	}
 
@@ -1405,7 +1409,7 @@ public:
 
 	Core(const cxxopts::ParseResult& cmd)
 		: players(*this)
-		, config(*this)
+		, config(*this, false, &cmd)
 		, console(nullptr)
 		, models(nullptr)
 		, logFile(nullptr)
@@ -1430,10 +1434,16 @@ public:
 			}
 		}
 
+		if (config.getString("logging.file").length())
+		{
+			StringView logFilePath = config.getString("logging.file");
+			LogFileName = logFilePath.data();
+		}
+
 		// Decide whether to enable logging early on
 		if (*config.getBool("logging.enable"))
 		{
-			logFile = ::fopen(LogFileName, "a");
+			logFile = ::fopen(LogFileName.c_str(), "a");
 		}
 
 		printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
@@ -1452,7 +1462,7 @@ public:
 		if (cmd.count("default-config"))
 		{
 			// Generate config
-			Config::writeDefault(*this, components);
+			config.writeDefault(components);
 			stop();
 			return;
 		}
@@ -1464,7 +1474,7 @@ public:
 		// If logging was enabled by config file, open the file
 		if (*config.getBool("logging.enable") && logFile == nullptr)
 		{
-			logFile = ::fopen(LogFileName, "a");
+			logFile = ::fopen(LogFileName.c_str(), "a");
 		}
 
 		// Overwrite config file data with config params
@@ -1502,7 +1512,7 @@ public:
 		if (cmd.count("dump-config"))
 		{
 			// Generate config
-			Config::writeCurrent(*this, config);
+			config.writeCurrent();
 			stop();
 			return;
 		}
@@ -1538,7 +1548,6 @@ public:
 		WeaponRate = config.getInt("network.aiming_sync_rate");
 		Multiplier = config.getInt("network.multiplier");
 		LagCompensation = config.getInt("game.lag_compensation_mode");
-		ServerName = String(config.getString("name"));
 		EnableVehicleFriendlyFire = config.getBool("game.use_vehicle_friendly_fire");
 
 		EnableLogTimestamp = *config.getBool("logging.use_timestamp");
@@ -1869,7 +1878,6 @@ public:
 		{
 		case SettableCoreDataType::ServerName:
 			config.setString("name", data);
-			ServerName = String(data);
 			break;
 		case SettableCoreDataType::ModeText:
 			config.setString("game.mode", data);
