@@ -83,7 +83,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "game.use_zone_names", false },
 	{ "game.vehicle_respawn_time", 10000 },
 	{ "game.weather", 10 },
-	{ "game.use_all_animations", false },
+	{ "game.use_all_animations", true },
 	{ "game.lag_compensation_mode", LagCompMode_Enabled },
 	{ "game.group_player_objects", false },
 	// logging
