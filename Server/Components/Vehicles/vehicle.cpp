@@ -216,9 +216,31 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 		updateOccupied();
 	}
 
-	// Reset the detaching flag when trailer is detached on driver's client.
-	if (vehicleSync.TrailerID == 0)
+	if (vehicleSync.TrailerID)
 	{
+		if (trailer)
+		{
+			if (trailer->getID() != vehicleSync.TrailerID)
+			{
+				// The client instantly jumped from one trailer to another one.  Probably a cheat, so don't
+				// allow it.
+				return false;
+			}
+		}
+		else
+		{
+			// Got a new one that we didn't know about.
+			trailer = static_cast<Vehicle*>(pool->get(vehicleSync.TrailerID));
+			if (trailer)
+			{
+				trailer->cab = this;
+				towing = true;
+			}
+		}
+	}
+	else
+	{
+		// Reset the detaching flag when trailer is detached on driver's client.
 		detaching = false;
 
 		// Client is reporting no trailer (probably lost it) but server thinks there's still one. Detaching it server side.
@@ -768,10 +790,7 @@ Vehicle::~Vehicle()
 	{
 		cab->detachTrailer();
 	}
-	else if (trailer && towing)
-	{
-		detachTrailer();
-	}
+	detachTrailer();
 }
 
 void Vehicle::destream()
