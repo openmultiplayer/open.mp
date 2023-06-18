@@ -786,11 +786,17 @@ void Vehicle::setAngularVelocity(Vector3 velocity)
 
 Vehicle::~Vehicle()
 {
-	if (cab)
+	if (towing)
+	{
+		if (trailer)
+		{
+			detachTrailer();
+		}
+	}
+	else if (cab)
 	{
 		cab->detachTrailer();
 	}
-	detachTrailer();
 }
 
 void Vehicle::destream()
