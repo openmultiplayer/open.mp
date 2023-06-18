@@ -91,7 +91,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 
 	// Attempt to attach trailer to cab if both vehicles are streamed in.
 	// We are streaming in the trailer. Check if cab is streamed.
-	if (!towing && cab && cab->isStreamedInForPlayer(player))
+	if (cab && cab->isStreamedInForPlayer(player))
 	{
 		NetCode::RPC::AttachTrailer trailerRPC;
 		trailerRPC.TrailerID = poolID;
@@ -100,7 +100,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 	}
 
 	// We are streaming in the cab. Check if trailer is streamed.
-	if (towing && trailer && trailer->isStreamedInForPlayer(player))
+	if (trailer && trailer->isStreamedInForPlayer(player))
 	{
 		NetCode::RPC::AttachTrailer trailerRPC;
 		trailerRPC.TrailerID = trailer->poolID;
@@ -234,7 +234,6 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 			if (trailer)
 			{
 				trailer->cab = this;
-				towing = true;
 			}
 		}
 	}
@@ -247,7 +246,6 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 		if (trailer && Time::now() - trailer->trailerUpdateTime > Seconds(0))
 		{
 			trailer->cab = nullptr;
-			towing = false;
 			trailer = nullptr;
 		}
 	}
@@ -286,7 +284,7 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 			return handler->onUnoccupiedVehicleUpdate(*this, player, data);
 		});
 
-	if (cab && !towing)
+	if (cab)
 	{
 		cab->detachTrailer();
 		cab = nullptr;
@@ -334,16 +332,13 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	{
 		if (cab && cab->trailer == this)
 		{
-			cab->towing = false;
 			cab->trailer = nullptr;
 		}
 
 		// Don't call attach RPC here. Client will attach it because trailerId is sent in driver sync.
 		// https://github.com/openmultiplayer/server-beta/issues/181
 		vehicle->trailer = this;
-		vehicle->towing = true;
 		cab = vehicle;
-		towing = false;
 		trailerUpdateTime = Time::now();
 	}
 
@@ -703,7 +698,6 @@ void Vehicle::_respawn()
 	driver = nullptr;
 	trailer = nullptr;
 	cab = nullptr;
-	towing = false;
 	detaching = false;
 	params = VehicleParams {};
 }
@@ -733,7 +727,6 @@ void Vehicle::attachTrailer(IVehicle& trailer)
 		return;
 	}
 	this->trailer = static_cast<Vehicle*>(&trailer);
-	towing = true;
 	this->trailer->setCab(this);
 	this->trailer->trailerUpdateTime = Time::now();
 	NetCode::RPC::AttachTrailer trailerRPC;
@@ -744,14 +737,13 @@ void Vehicle::attachTrailer(IVehicle& trailer)
 
 void Vehicle::detachTrailer()
 {
-	if (trailer && towing)
+	if (trailer)
 	{
 		NetCode::RPC::DetachTrailer trailerRPC;
 		trailerRPC.VehicleID = poolID;
 		PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries());
 		trailer->setCab(nullptr);
 		trailer = nullptr;
-		towing = false;
 		detaching = true;
 	}
 }
@@ -786,16 +778,14 @@ void Vehicle::setAngularVelocity(Vector3 velocity)
 
 Vehicle::~Vehicle()
 {
-	if (towing)
+	if (trailer)
 	{
-		if (trailer)
-		{
-			detachTrailer();
-		}
+		detachTrailer();
 	}
-	else if (cab)
+	if (cab)
 	{
 		cab->detachTrailer();
+		cab = nullptr;
 	}
 }
 

@@ -47,7 +47,6 @@ private:
 	int32_t bodyColour2 = -1;
 	uint8_t landingGear = 1;
 	bool respawning = false;
-	bool towing = false;
 	bool detaching = false;
 	FlatHashSet<IPlayer*> passengers;
 	HybridString<16> numberPlate = StringView("XYZSR998");
@@ -60,11 +59,8 @@ private:
 	Vector3 velocity = Vector3(0.0f, 0.0f, 0.0f);
 	Vector3 angularVelocity = Vector3(0.0f, 0.0f, 0.0f);
 	TimePoint trailerUpdateTime;
-	union
-	{
-		Vehicle* trailer = nullptr;
-		Vehicle* cab;
-	};
+	Vehicle* trailer = nullptr;
+	Vehicle* cab = nullptr;
 	StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES> carriages;
 	VehicleParams params;
 	uint8_t sirenState = 0;
@@ -82,7 +78,6 @@ private:
 	void setCab(Vehicle* cab)
 	{
 		this->cab = cab;
-		towing = false;
 	}
 
 	/// Set vehicle to respawn without emitting onRespawn event
@@ -357,25 +352,17 @@ public:
 	void detachTrailer() override;
 
 	/// Checks if the current vehicle is a trailer.
-	bool isTrailer() const override { return !towing && cab != nullptr; }
+	bool isTrailer() const override { return cab != nullptr; }
 
 	/// Get the current vehicle's attached trailer.
 	IVehicle* getTrailer() const override
 	{
-		if (!towing)
-		{
-			return nullptr;
-		}
 		return trailer;
 	}
 
 	/// Get the current vehicle's cab.
 	IVehicle* getCab() const override
 	{
-		if (towing)
-		{
-			return nullptr;
-		}
 		return cab;
 	}
 
