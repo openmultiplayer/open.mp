@@ -64,6 +64,11 @@ inline bool endsWith(const std::string& mainStr, const std::string& toMatch)
 		return false;
 }
 
+inline bool endsWith(const std::string& mainStr, const char toMatch)
+{
+	return mainStr.rbegin() != mainStr.rend() && *mainStr.rbegin() == toMatch;
+}
+
 inline cell AMX_NATIVE_CALL pawn_format(AMX* amx, cell const* params)
 {
 	int
@@ -849,8 +854,30 @@ inline bool GetCurrentWorkingDirectory(std::string& result)
 	}
 	return ret;
 }
-
 #endif
+inline void NormaliseScriptName(std::string name, std::string& result)
+{
+#if defined(_WIN32) || defined(WIN32) || defined(__WIN32__) || defined(_WIN64) || defined(WIN64) || defined(__WIN64__)
+	constexpr auto wrong_slash = '/';
+	constexpr auto right_slash = '\\';
+#else
+	constexpr auto wrong_slash = '\\';
+	constexpr auto right_slash = '/';
+#endif
+	size_t pos = 0;
+	while ((pos = name.find(wrong_slash, pos)) != std::string::npos)
+	{
+		name.replace(pos, 1, 1, right_slash);
+	}
+
+	if (!utils::endsWith(name, right_slash) && !utils::endsWith(name, ".amx"))
+	{
+		name.append(".amx");
+	}
+
+	result = name;
+	return;
+}
 }
 
 static const FlatHashMap<String, String> DeprecatedNatives {
