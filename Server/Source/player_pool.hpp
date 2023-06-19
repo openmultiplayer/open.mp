@@ -2162,6 +2162,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	void removeSyncPacketsHandlers()
 	{
 		NetCode::Packet::PlayerFootSync::removeEventHandler(core, &playerFootSyncHandler);
+		NetCode::Packet::PlayerSpectatorSync::removeEventHandler(core, &playerSpectatorHandler);
 		NetCode::Packet::PlayerAimSync::removeEventHandler(core, &playerAimSyncHandler);
 		NetCode::Packet::PlayerBulletSync::removeEventHandler(core, &playerBulletSyncHandler);
 		NetCode::Packet::PlayerStatsSync::removeEventHandler(core, &playerStatsSyncHandler);

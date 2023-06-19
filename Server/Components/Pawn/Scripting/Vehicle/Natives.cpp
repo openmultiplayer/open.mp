@@ -568,6 +568,7 @@ SCRIPT_API(GetPlayerSirenState, int(IPlayerVehicleData& data))
 	{
 		return vehicle->getSirenState();
 	}
+	return 0;
 }
 
 SCRIPT_API(GetPlayerLandingGearState, int(IPlayerVehicleData& data))
