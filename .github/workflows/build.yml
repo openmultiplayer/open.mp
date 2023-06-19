@@ -13,6 +13,7 @@ on:
       - "**.h"
       - "**.c"
       - "**CMakeLists.txt"
+      - "**.cmake"
       - ".github/workflows/build.yml"
       - "docker/**"
   pull_request:
@@ -25,6 +26,7 @@ on:
       - "**.h"
       - "**.c"
       - "**CMakeLists.txt"
+      - "**.cmake"
       - ".github/workflows/build.yml"
       - "docker/**"
 
@@ -54,15 +56,28 @@ jobs:
           echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
 
       - name: Install CMake
-        uses: lukka/get-cmake@v.3.23.2
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.23.2"
 
       - name: Install latest conan
         run: |
           python -m pip install --upgrade pip
           pip install -v "conan==1.57.0"
+
+      - name: Try to restore conan cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: ~/.conan/data
+          key: conan-windows-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Generate build files
         run: |
@@ -71,6 +86,15 @@ jobs:
           mkdir build
           cd build
           cmake -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A ${{ matrix.arch }} -T "ClangCL"
+
+      - name: Try to save conan cache
+        if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: ~/.conan/data
+          key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Build
         run: |
@@ -131,10 +155,28 @@ jobs:
           # this is to fix GIT not liking owner of the checkout dir
           chown -R $(id -u):$(id -g) $PWD
 
+      - name: Try to restore conan cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: docker/conan/data
+          key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+
       - name: Build
         run: |
           cd docker
           CONFIG=${{ steps.vars.outputs.build_config }} UBUNTU_VERSION=${{ steps.vars.outputs.build_ubuntu_version }} BUILD_SHARED=${{ steps.vars.outputs.build_shared }} BUILD_SERVER=${{ steps.vars.outputs.build_server }} BUILD_TOOLS=${{ steps.vars.outputs.build_tools }} TARGET_BUILD_ARCH=${{ steps.vars.outputs.build_target_arch }} ./build.sh
+
+      - name: Try to save conan cache
+        if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: docker/conan/data
+          key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Create a build archive
         id: build
@@ -153,6 +195,41 @@ jobs:
           name: ${{ steps.build.outputs.artifact_name }}
           path: docker/build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.tar.xz
           if-no-files-found: error
+
+  abi-check:
+    if: github.event_name == 'pull_request'
+    name: SDK ABI check
+    needs: build-linux
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          clean: true
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Declare build variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+
+      - uses: actions/download-artifact@v3
+        id: download
+        with:
+          name: open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}
+          path: docker/ref
+
+      - name: Build & run abi-check
+        shell: bash
+        run: |
+          cd docker
+          chmod +x ./abicheck.sh
+          chmod +x ./abicheck_ubuntu-18.04/docker-entrypoint.sh
+          CONFIG=RelWithDebInfo NIGHTLY_REPO="${{ github.repository }}" REF_ARCHIVE="open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh
 
   build-arm-gnu:
     name: ARM build (GNU)
@@ -224,43 +301,3 @@ jobs:
       with:
         path: docker/conan/data
         key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
-
-  abi-check:
-    if: github.event_name == 'pull_request'
-    name: SDK ABI check
-    needs: build-linux
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          clean: true
-          submodules: recursive
-          fetch-depth: 0
-      
-      - name: Declare build variables
-        id: vars
-        shell: bash
-        env:
-          HEAD_REF: ${{ github.head_ref || github.ref_name }}
-        run: |
-          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
-
-      - uses: actions/download-artifact@v3
-        id: download
-        with:
-          name: open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}
-          path: docker/ref
-
-      - name: Set ownership
-        run: |
-          # this is to fix GIT not liking owner of the checkout dir
-          chown -R $(id -u):$(id -g) $PWD
-
-      - name: Build & run abi-check
-        shell: bash
-        run: |
-          cd docker
-          chmod +x ./abicheck.sh
-          chmod +x ./abicheck_ubuntu-18.04/docker-entrypoint.sh
-          CONFIG=RelWithDebInfo REF_ARCHIVE="open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}.tar.xz" UBUNTU_VERSION=18.04 BUILD_SERVER=0 BUILD_TOOLS=1 ./abicheck.sh

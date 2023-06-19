@@ -10,57 +10,6 @@
 
 FlatHashMap<String, CommandHandlerFuncType> ConsoleCmdHandler::Commands;
 
-ADD_CONSOLE_CMD(gamemodetext, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params.empty())
-		{
-			console.sendMessage(sender, String("game.mode = \"") + core->getConfig().getString("game.mode").data() + "\"");
-			return;
-		}
-		core->setData(SettableCoreDataType::ModeText, params);
-	});
-
-ADD_CONSOLE_CMD(hostname, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params.empty())
-		{
-			console.sendMessage(sender, String("name = \"") + core->getConfig().getString("name").data() + "\"");
-			return;
-		}
-		core->setData(SettableCoreDataType::ServerName, params);
-	});
-
-ADD_CONSOLE_CMD(mapname, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params.empty())
-		{
-			console.sendMessage(sender, String("game.map = \"") + core->getConfig().getString("game.map").data() + "\"");
-			return;
-		}
-		core->setData(SettableCoreDataType::MapName, params);
-	});
-
-ADD_CONSOLE_CMD(weburl, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params.empty())
-		{
-			console.sendMessage(sender, String("website = \"") + core->getConfig().getString("website").data() + "\"");
-			return;
-		}
-		core->setData(SettableCoreDataType::URL, params);
-	});
-
-ADD_CONSOLE_CMD(language, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params.empty())
-		{
-			console.sendMessage(sender, String("language = \"") + core->getConfig().getString("language").data() + "\"");
-			return;
-		}
-		core->setData(SettableCoreDataType::Language, params);
-		console.sendMessage(sender, "Setting server language to: \"" + params + "\"");
-	});
-
 ADD_CONSOLE_CMD(cmdlist, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
 	{
 		FlatHashSet<StringView> commands;
@@ -81,80 +30,6 @@ ADD_CONSOLE_CMD(cmdlist, [](const String& params, const ConsoleCommandSenderData
 		{
 			console.sendMessage(sender, kv);
 		}
-	});
-
-struct VarlistEnumCallback : OptionEnumeratorCallback
-{
-	ConsoleComponent& console;
-	IConfig& config;
-	const ConsoleCommandSenderData& sender;
-
-	VarlistEnumCallback(ConsoleComponent& console, IConfig& config, const ConsoleCommandSenderData& sender)
-		: console(console)
-		, config(config)
-		, sender(sender)
-	{
-	}
-
-	bool proc(StringView n, ConfigOptionType type) override
-	{
-		String name(n);
-
-		switch (type)
-		{
-		case ConfigOptionType_Int:
-			console.sendMessage(sender, name + " = " + std::to_string(*config.getInt(name)) + " (int)");
-			break;
-		case ConfigOptionType_Float:
-			console.sendMessage(sender, name + " = " + std::to_string(*config.getFloat(name)) + " (float)");
-			break;
-		case ConfigOptionType_Bool:
-			console.sendMessage(sender, name + " = " + std::to_string(*config.getBool(name)) + " (bool)");
-			break;
-		case ConfigOptionType_String:
-			console.sendMessage(sender, name + " = \"" + String(config.getString(name)) + "\" (string)");
-			break;
-		case ConfigOptionType_Strings:
-		{
-			size_t count = config.getStringsCount(name);
-
-			if (count)
-			{
-				DynamicArray<StringView> output(count);
-				config.getStrings(name, Span<StringView>(output.data(), output.size()));
-
-				String strings_list = "";
-
-				for (auto& string : output)
-				{
-					strings_list += String(string) + ' ';
-				}
-
-				if (strings_list.back() == ' ')
-				{
-					strings_list.pop_back();
-				}
-
-				console.sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
-			}
-			else
-			{
-				console.sendMessage(sender, name + " = \"\" (strings)");
-			}
-		}
-		break;
-		default:
-			break;
-		}
-		return true;
-	}
-};
-
-ADD_CONSOLE_CMD(varlist, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		console.sendMessage(sender, "Console variables:");
-		VarlistEnumCallback cb(console, core->getConfig(), sender);
-		core->getConfig().enumOptions(cb);
 	});
 
 ADD_CONSOLE_CMD(password, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
@@ -325,87 +200,9 @@ ADD_CONSOLE_CMD(weather, [](const String& params, const ConsoleCommandSenderData
 		core->setWeather(weather);
 	});
 
-ADD_CONSOLE_CMD(rcon_password, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params.empty())
-		{
-			console.sendMessage(sender, String("rcon.password = \"") + core->getConfig().getString("rcon.password").data() + "\"");
-			return;
-		}
-		core->setData(SettableCoreDataType::AdminPassword, params);
-	});
-
 ADD_CONSOLE_CMD(echo, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
 	{
 		console.sendMessage(sender, params);
-	});
-
-ADD_CONSOLE_CMD(messageslimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		int value = 0;
-		if (sscanf(params.data(), "%d", &value) == EOF)
-		{
-			console.sendMessage(sender, String("network.messages_limit = \"") + std::to_string(*core->getConfig().getInt("network.messages_limit")) + "\"");
-			return;
-		}
-		*core->getConfig().getInt("network.messages_limit") = value;
-		core->updateNetworks();
-	});
-
-ADD_CONSOLE_CMD(messageholelimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		int value = 0;
-		if (sscanf(params.data(), "%d", &value) == EOF)
-		{
-			console.sendMessage(sender, String("network.message_hole_limit = \"") + std::to_string(*core->getConfig().getInt("network.message_hole_limit")) + "\"");
-			return;
-		}
-		*core->getConfig().getInt("network.message_hole_limit") = value;
-		core->updateNetworks();
-	});
-
-ADD_CONSOLE_CMD(ackslimit, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		int value = 0;
-		if (sscanf(params.data(), "%d", &value) == EOF)
-		{
-			console.sendMessage(sender, String("network.acks_limit = \"") + std::to_string(*core->getConfig().getInt("network.acks_limit")) + "\"");
-			return;
-		}
-		*core->getConfig().getInt("network.acks_limit") = value;
-		core->updateNetworks();
-	});
-
-ADD_CONSOLE_CMD(playertimeout, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		int value = 0;
-		if (sscanf(params.data(), "%d", &value) == EOF)
-		{
-			console.sendMessage(sender, String("network.player_timeout = \"") + std::to_string(*core->getConfig().getInt("network.player_timeout")) + "\"");
-			return;
-		}
-		*core->getConfig().getInt("network.player_timeout") = value;
-		core->updateNetworks();
-	});
-
-ADD_CONSOLE_CMD(rcon, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)
-	{
-		if (params == "1")
-		{
-			console.sendMessage(sender, "Remote console enabled.");
-			*core->getConfig().getBool("rcon.enable") = true;
-			core->updateNetworks();
-		}
-		else if (params == "0")
-		{
-			console.sendMessage(sender, "Remote console disabled.");
-			*core->getConfig().getBool("rcon.enable") = false;
-			core->updateNetworks();
-		}
-		else
-		{
-			console.sendMessage(sender, "Unknown parameter. Use rcon 0 to disable remote console or rcon 1 to enable it.");
-		}
 	});
 
 ADD_CONSOLE_CMD(sleep, [](const String& params, const ConsoleCommandSenderData& sender, ConsoleComponent& console, ICore* core)

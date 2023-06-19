@@ -20,6 +20,10 @@ function(add_server_component name)
 		OMP_VERSION_PATCH=${CMAKE_PROJECT_VERSION_PATCH}
 	)
 
+	if(NOT MSVC)
+		target_compile_options(${PROJECT_NAME} PRIVATE -fno-eliminate-unused-debug-types)
+	endif()
+
 	if(DEFINED ENV{OMP_BUILD_VERSION})
 		target_compile_definitions(${PROJECT_NAME} PRIVATE BUILD_NUMBER=$ENV{OMP_BUILD_VERSION})
 	endif()

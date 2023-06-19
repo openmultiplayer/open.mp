@@ -134,6 +134,7 @@ set(BUILD_UNICODE_COMPONENT TRUE CACHE BOOL "Whether to build the Unicode compon
 set(BUILD_LEGACY_COMPONENTS TRUE CACHE BOOL "Whether to build the legacy components")
 set(BUILD_TEST_COMPONENTS FALSE CACHE BOOL "Whether to build the test component")
 set(BUILD_SQLITE_COMPONENT TRUE CACHE BOOL "Whether to build the SQLite component")
+set(BUILD_FIXES_COMPONENT TRUE CACHE BOOL "Whether to build the Fixes component")
 
 if (UNIX)
 	set(BUILD_ABI_CHECK_TOOL TRUE CACHE BOOL "Whether to build the abi-check tool")
@@ -146,7 +147,7 @@ if(BUILD_SERVER)
 	add_subdirectory(SDK)
 	add_subdirectory(Shared)
 	add_subdirectory(Server)
-	set_property(GLOBAL PROPERTY VS_STARTUP_PROJECT Server)
+	set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Server)
 endif()
 
 if(BUILD_ABI_CHECK_TOOL)

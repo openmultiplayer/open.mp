@@ -3,6 +3,7 @@
 [ -z $BUILD_SHARED ] && build_shared=1 || build_shared="$BUILD_SHARED"
 [ -z $BUILD_SERVER ] && build_server=1 || build_server="$BUILD_SERVER"
 [ -z $BUILD_TOOLS ] && build_tools=0 || build_tools="$BUILD_TOOLS"
+[ -z $NIGHTLY_REPO ] && nightly_repo="openmultiplayer/open.mp" || nightly_repo="$NIGHTLY_REPO"
 
 set -e
 
@@ -25,7 +26,7 @@ cmake \
 
 cd build/Output/*/Tools
 echo "Fetching ref artifacts"
-url=$(curl https://nightly.link/openmultiplayer/open.mp/workflows/build/master | grep -oP '(?<=")https://nightly.link/openmultiplayer/open.mp/workflows/build/master/open.mp-linux-x86-dynssl.*\.zip(?=")')
+url=$(curl "https://nightly.link/$NIGHTLY_REPO/workflows/build/master" | grep -oP "(?<=\")https://nightly.link/$NIGHTLY_REPO/workflows/build/master/open.mp-linux-x86-dynssl.*\.zip(?=\")")
 curl -L $url -o master.zip
 for z in master.zip; do unzip "$z"; mv "$(unzip -Z1 $z)" "master.tar.xz"; done
 echo "Extracting ref artifacts"

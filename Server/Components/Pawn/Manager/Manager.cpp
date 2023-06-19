@@ -308,7 +308,7 @@ encountered.  This could be caused by many things:
 
 void PawnManager::EndMainScript()
 {
-	if (reloading_)
+	if (reloading_ || gamemodes_.empty())
 	{
 		return;
 	}

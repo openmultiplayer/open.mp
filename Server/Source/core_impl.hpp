@@ -144,6 +144,73 @@ struct adl_serializer<std::variant<Args...>>
 };
 }
 
+struct VarlistEnumCallback : OptionEnumeratorCallback
+{
+	IConsoleComponent& console;
+	IConfig& config;
+	const ConsoleCommandSenderData& sender;
+
+	VarlistEnumCallback(IConsoleComponent& console, IConfig& config, const ConsoleCommandSenderData& sender)
+		: console(console)
+		, config(config)
+		, sender(sender)
+	{
+	}
+
+	bool proc(StringView n, ConfigOptionType type) override
+	{
+		String name(n);
+
+		switch (type)
+		{
+		case ConfigOptionType_Int:
+			console.sendMessage(sender, name + " = " + std::to_string(*config.getInt(name)) + " (int)");
+			break;
+		case ConfigOptionType_Float:
+			console.sendMessage(sender, name + " = " + std::to_string(*config.getFloat(name)) + " (float)");
+			break;
+		case ConfigOptionType_Bool:
+			console.sendMessage(sender, name + " = " + std::to_string(*config.getBool(name)) + " (bool)");
+			break;
+		case ConfigOptionType_String:
+			console.sendMessage(sender, name + " = \"" + String(config.getString(name)) + "\" (string)");
+			break;
+		case ConfigOptionType_Strings:
+		{
+			size_t count = config.getStringsCount(name);
+
+			if (count)
+			{
+				DynamicArray<StringView> output(count);
+				config.getStrings(name, Span<StringView>(output.data(), output.size()));
+
+				String strings_list = "";
+
+				for (auto& string : output)
+				{
+					strings_list += String(string) + ' ';
+				}
+
+				if (strings_list.back() == ' ')
+				{
+					strings_list.pop_back();
+				}
+
+				console.sendMessage(sender, name + " = \"" + strings_list + "\" (strings)");
+			}
+			else
+			{
+				console.sendMessage(sender, name + " = \"\" (strings)");
+			}
+		}
+		break;
+		default:
+			break;
+		}
+		return true;
+	}
+};
+
 class ComponentList : public IComponentList
 {
 public:
@@ -357,23 +424,6 @@ public:
 			processed = Defaults;
 		}
 		defaults = processed;
-	}
-
-	void reset()
-	{
-		// Don't use the copy constructor because we need to keep pointers valid.
-		for (auto const& i : defaults)
-		{
-			auto it = processed.find(i.first);
-			if (it == processed.end())
-			{
-				continue;
-			}
-			if (it->second.index() == i.second.index())
-			{
-				it->second = i.second;
-			}
-		}
 	}
 
 	void init(IComponentList& components)
@@ -1226,14 +1276,20 @@ private:
 		StringView value = trim(StringView(conf.data() + split + 1, conf.length() - split - 1));
 		if (key.empty())
 		{
-			logLn(LogLevel::Warning, "No key supplied to `--config`");
+			logLn(LogLevel::Warning, "No key supplied");
 			return false;
 		}
 		if (value.empty())
 		{
-			logLn(LogLevel::Warning, "No value supplied to `--config`");
+			logLn(LogLevel::Warning, "No value supplied");
 			return false;
 		}
+
+		return setConfigFromString(conf, key, value);
+	}
+
+	bool setConfigFromString(StringView conf, StringView key, StringView value)
+	{
 		try
 		{
 			// Try the code twice - once for the given config, once for it translated from legacy.
@@ -1277,7 +1333,7 @@ private:
 						StringView nu = legacyLookup->getConfig(key);
 						if (!nu.empty())
 						{
-							logLn(LogLevel::Warning, "Legacy key `%.*s` supplied to `--config`, using `%s`", key.length(), key.data(), nu.data());
+							logLn(LogLevel::Warning, "Legacy key `%.*s` supplied, using `%s`", key.length(), key.data(), nu.data());
 							key = nu;
 							retry = true;
 						}
@@ -1376,7 +1432,6 @@ public:
 		reloading_ = true;
 		NetCode::RPC::PlayerClose RPC;
 		PacketHelper::broadcast(RPC, players);
-		config.reset();
 		components.reset();
 		players.removeSyncPacketsHandlers();
 
@@ -1976,6 +2031,7 @@ public:
 		commands.emplace("exit");
 		commands.emplace("reloadlog");
 		commands.emplace("config");
+		commands.emplace("varlist");
 	}
 
 	bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override
@@ -2004,7 +2060,34 @@ public:
 				// Remove `"`s.
 				setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
 			}
+			updateNetworks();
 			return true;
+		}
+		else if (command == "varlist")
+		{
+			console->sendMessage(sender, "Console variables:");
+			VarlistEnumCallback cb(*console, config, sender);
+			config.enumOptions(cb);
+			return true;
+		}
+		else // Process potential variable set
+		{
+			const auto alias = config.getNameFromAlias(command);
+			const StringView name = (alias.first ? alias.second : command);
+			const ConfigOptionType type = config.getType(name);
+			if (type != ConfigOptionType_None)
+			{
+				if (parameters.empty())
+				{
+					VarlistEnumCallback(*console, config, sender).proc(name, type);
+				}
+				else
+				{
+					setConfigFromString(parameters, command, parameters);
+					updateNetworks();
+				}
+				return true;
+			}
 		}
 		return false;
 	}
