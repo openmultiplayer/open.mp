@@ -520,6 +520,7 @@ PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
 PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 
 PLAYER_DATA_PARAM(IPlayerVehicleData);
+PLAYER_DATA_PARAM(IPlayerCheckpointData);
 
 GLOBAL_MIXED_POOL_PARAM(IPickup, pickups);
 PLAYER_MIXED_POOL_PARAM(IPlayerPickup, IPlayerPickupData, pickups);
