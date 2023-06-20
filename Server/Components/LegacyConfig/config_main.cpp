@@ -77,7 +77,8 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "maxnpc", ParamType::Int },
 	{ "lagcompmode", ParamType::Int },
 	{ "useartwork", ParamType::Bool },
-	{ "artpath", ParamType::String }
+	{ "artpath", ParamType::String },
+	{ "queryflood", ParamType::Obsolete }
 };
 
 const FlatHashMap<StringView, StringView> dictionary = {

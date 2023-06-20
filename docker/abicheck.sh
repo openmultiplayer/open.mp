@@ -24,6 +24,9 @@
 [[ -z "$TARGET_BUILD_ARCH" ]] \
 && target_build_arch=x86 \
 || target_build_arch="$TARGET_BUILD_ARCH"
+[[ -z "$NIGHTLY_REPO" ]] \
+&& nightly_repo="openmultiplayer/open.mp" \
+|| nightly_repo="$NIGHTLY_REPO"
 
 docker build \
     -t open.mp/abicheck:ubuntu-${ubuntu_version} \
@@ -47,6 +50,7 @@ docker run \
     -v $PWD/conan:/home/user/.conan \
     -v $PWD/ref:/ref \
     -e CONFIG=${config} \
+    -e NIGHTLY_REPO=${nightly_repo} \
     -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \
     -e BUILD_SERVER=${build_server} \

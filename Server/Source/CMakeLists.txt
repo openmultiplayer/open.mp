@@ -59,6 +59,10 @@ if(DEFINED ENV{OMP_BUILD_COMMIT})
 	target_compile_definitions(Server PUBLIC OMP_VERSION_HASH=$ENV{OMP_BUILD_COMMIT})
 endif()
 
+if(NOT MSVC)
+	target_compile_options(Server PRIVATE -fno-eliminate-unused-debug-types)
+endif()
+
 set_property(TARGET Server PROPERTY OUTPUT_NAME omp-server)
 set_property(TARGET Server PROPERTY FOLDER "Server")
 set_property(TARGET Server PROPERTY ENABLE_EXPORTS ON)
