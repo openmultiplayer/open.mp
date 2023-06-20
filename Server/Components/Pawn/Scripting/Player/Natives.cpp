@@ -665,7 +665,7 @@ SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
 	return player.getAction();
 }
 
-SCRIPT_API_FAILRET(GetPlayerVehicleID, INVALID_PLAYER_ID, int(IPlayerVehicleData& data))
+SCRIPT_API_FAILRET(GetPlayerVehicleID, INVALID_VEHICLE_ID, int(IPlayerVehicleData& data))
 {
 	IVehicle* vehicle = data.getVehicle();
 	if (vehicle)
