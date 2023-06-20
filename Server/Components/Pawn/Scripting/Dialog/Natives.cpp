@@ -48,46 +48,31 @@ SCRIPT_API(ShowPlayerDialog, bool(IPlayer& player, int dialog, int style, const 
 /// clarity.
 ///
 /// TODO: Add a deprecation warning to this native.
-SCRIPT_API_FAILRET(GetPlayerDialog, INVALID_DIALOG_ID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerDialog, INVALID_DIALOG_ID, int(IPlayerDialogData& data))
 {
-	IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
-	if (dialog)
-	{
-		return dialog->getActiveID();
-	}
-	return INVALID_DIALOG_ID;
+	return data.getActiveID();
 }
 
-SCRIPT_API_FAILRET(GetPlayerDialogID, INVALID_DIALOG_ID, int(IPlayer& player))
+SCRIPT_API_FAILRET(GetPlayerDialogID, INVALID_DIALOG_ID, int(IPlayerDialogData& data))
 {
-	IPlayerDialogData* data = queryExtension<IPlayerDialogData>(player);
-	if (data)
-	{
-		return data->getActiveID();
-	}
-	return INVALID_DIALOG_ID;
+	return data.getActiveID();
 }
 
-SCRIPT_API(GetPlayerDialogData, bool(IPlayer& player, int& style, OutputOnlyString& title, OutputOnlyString& body, OutputOnlyString& button1, OutputOnlyString& button2))
+SCRIPT_API(GetPlayerDialogData, bool(IPlayerDialogData& data, int& style, OutputOnlyString& title, OutputOnlyString& body, OutputOnlyString& button1, OutputOnlyString& button2))
 {
-	IPlayerDialogData* dialog = queryExtension<IPlayerDialogData>(player);
-	if (dialog)
-	{
-		DialogStyle styleVar {};
-		StringView titleVar {};
-		StringView bodyVar {};
-		StringView button1Var {};
-		StringView button2Var {};
-		int dialogid;
-		dialog->get(dialogid, styleVar, titleVar, bodyVar, button1Var, button2Var);
-		style = int(styleVar);
-		title = titleVar;
-		body = bodyVar;
-		button1 = button1Var;
-		button2 = button2Var;
-		return dialogid != INVALID_DIALOG_ID;
-	}
-	return false;
+	DialogStyle styleVar {};
+	StringView titleVar {};
+	StringView bodyVar {};
+	StringView button1Var {};
+	StringView button2Var {};
+	int dialogid;
+	data.get(dialogid, styleVar, titleVar, bodyVar, button1Var, button2Var);
+	style = int(styleVar);
+	title = titleVar;
+	body = bodyVar;
+	button1 = button1Var;
+	button2 = button2Var;
+	return dialogid != INVALID_DIALOG_ID;
 }
 
 SCRIPT_API(HidePlayerDialog, bool(IPlayer& player))

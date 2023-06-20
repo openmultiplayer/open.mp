@@ -134,70 +134,40 @@ SCRIPT_API(IsObjectMoving, bool(IObject& object))
 	return object.isMoving();
 }
 
-SCRIPT_API(EditObject, bool(IPlayer& player, IObject& object))
+SCRIPT_API(EditObject, bool(IPlayerObjectData& data, IObject& object))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->beginEditing(object);
-		return true;
-	}
-	return false;
+	data.beginEditing(object);
+	return true;
 }
 
-SCRIPT_API(SelectObject, bool(IPlayer& player))
+SCRIPT_API(SelectObject, bool(IPlayerObjectData& data))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->beginSelecting();
-		return true;
-	}
-	return false;
+	data.beginSelecting();
+	return true;
 }
 
-SCRIPT_API(CancelEdit, bool(IPlayer& player))
+SCRIPT_API(CancelEdit, bool(IPlayerObjectData& data))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->endEditing();
-		return true;
-	}
-	return false;
+	data.endEditing();
+	return true;
 }
 
-SCRIPT_API(BeginObjectEditing, bool(IPlayer& player, IObject& object))
+SCRIPT_API(BeginObjectEditing, bool(IPlayerObjectData& data, IObject& object))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->beginEditing(object);
-		return true;
-	}
-	return false;
+	data.beginEditing(object);
+	return true;
 }
 
-SCRIPT_API(BeginObjectSelecting, bool(IPlayer& player))
+SCRIPT_API(BeginObjectSelecting, bool(IPlayerObjectData& data))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->beginSelecting();
-		return true;
-	}
-	return false;
+	data.beginSelecting();
+	return true;
 }
 
-SCRIPT_API(EndObjectEditing, bool(IPlayer& player))
+SCRIPT_API(EndObjectEditing, bool(IPlayerObjectData& data))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->endEditing();
-		return true;
-	}
-	return false;
+	data.endEditing();
+	return true;
 }
 
 SCRIPT_API(SetObjectMaterial, bool(IObject& object, int materialIndex, int modelId, const std::string& textureLibrary, const std::string& textureName, uint32_t materialColour))
@@ -342,15 +312,11 @@ SCRIPT_API(IsObjectNoCameraCol, bool(IObject& object))
 	return !object.getCameraCollision();
 }
 
-SCRIPT_API(GetObjectType, int(IPlayer& player, int objectid))
+SCRIPT_API(GetObjectType, int(IPlayerObjectData& data, int objectid))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
+	if (data.get(objectid) != nullptr)
 	{
-		if (playerData->get(objectid) != nullptr)
-		{
-			return 2; // Player object type
-		}
+		return 2; // Player object type
 	}
 
 	IObjectsComponent* component = PawnManager::Get()->objects;
