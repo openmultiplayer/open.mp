@@ -523,6 +523,8 @@ PLAYER_DATA_PARAM(IPlayerVehicleData);
 
 GLOBAL_MIXED_POOL_PARAM(IPickup, pickups);
 PLAYER_MIXED_POOL_PARAM(IPlayerPickup, IPlayerPickupData, pickups);
+GLOBAL_MIXED_POOL_PARAM(IGangZone, gangzones);
+PLAYER_MIXED_POOL_PARAM(IPlayerGangZone, IPlayerGangZoneData, gangzones);
 
 /// A parameter used for only writing data to an output string
 /// Greatly speeds up code as there's no need for reading the input string
