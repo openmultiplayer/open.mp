@@ -26,9 +26,13 @@ public:
 		type_ = type;
 		start_ = Time::now();
 
-		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles/");
-		std::string filePath = scriptfilesPath.string() + std::string(file) + ".rec";
-		file_.open(filePath, std::ios_base::out | std::ios_base::binary);
+		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles");
+		if (!ghc::filesystem::exists(scriptfilesPath) || !ghc::filesystem::is_directory(scriptfilesPath))
+		{
+			ghc::filesystem::create_directory(scriptfilesPath);
+		}
+		auto filePath = scriptfilesPath / ghc::filesystem::path(std::string(file) + ".rec");
+		file_.open(filePath.string(), std::ios_base::out | std::ios_base::binary);
 
 		// Write recording header
 		if (file_.good())
@@ -81,12 +85,6 @@ private:
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
-			NetCode::Packet::PlayerFootSync footSync;
-			if (!footSync.read(bs))
-			{
-				return false;
-			}
-
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
 			if (!data)
 			{
@@ -96,25 +94,9 @@ private:
 			// Write on foot recording data
 			if (data->file_.good() && data->type_ == PlayerRecordingType_OnFoot)
 			{
-				uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
+				const uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
-
-				uint8_t health = static_cast<uint8_t>(footSync.HealthArmour.x);
-				uint8_t armour = static_cast<uint8_t>(footSync.HealthArmour.y);
-				data->file_.write(reinterpret_cast<const char*>(&footSync.LeftRight), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.UpDown), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Keys), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Position), sizeof(float) * 3);
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Rotation), sizeof(float) * 4);
-				data->file_.write(reinterpret_cast<const char*>(&health), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&armour), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.WeaponAdditionalKey), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.SpecialAction), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.Velocity), sizeof(float) * 3);
-				data->file_.write(reinterpret_cast<const char*>(&footSync.SurfingData.offset), sizeof(float) * 3);
-				data->file_.write(reinterpret_cast<const char*>(&footSync.SurfingData.ID), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.AnimationID), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&footSync.AnimationFlags), sizeof(uint16_t));
+				data->file_.write(reinterpret_cast<const char*>(bs.GetData()), bs.GetNumberOfBytesUsed());
 			}
 
 			return true;
@@ -131,12 +113,6 @@ private:
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
-			NetCode::Packet::PlayerVehicleSync vehicleSync;
-			if (!vehicleSync.read(bs))
-			{
-				return false;
-			}
-
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
 			if (!data)
 			{
@@ -148,24 +124,7 @@ private:
 			{
 				uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
-
-				uint8_t playerHealth = static_cast<uint8_t>(vehicleSync.PlayerHealthArmour.x);
-				uint8_t playerArmour = static_cast<uint8_t>(vehicleSync.PlayerHealthArmour.y);
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.VehicleID), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.LeftRight), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.UpDown), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Keys), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Rotation), sizeof(float) * 4);
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Position), sizeof(float) * 3);
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Velocity), sizeof(float) * 3);
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Health), sizeof(float));
-				data->file_.write(reinterpret_cast<const char*>(&playerHealth), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&playerArmour), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.AdditionalKeyWeapon), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.Siren), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.LandingGear), sizeof(uint8_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.TrailerID), sizeof(uint16_t));
-				data->file_.write(reinterpret_cast<const char*>(&vehicleSync.HydraThrustAngle), sizeof(uint32_t));
+				data->file_.write(reinterpret_cast<const char*>(bs.GetData()), bs.GetNumberOfBytesUsed());
 			}
 
 			return true;
