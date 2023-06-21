@@ -92,7 +92,7 @@ private:
 			}
 
 			// Write on foot recording data
-			if (data->file_.good() && data->type_ == PlayerRecordingType_OnFoot)
+			if (data->type_ == PlayerRecordingType_Driver && data->file_.good())
 			{
 				const uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
@@ -120,7 +120,7 @@ private:
 			}
 
 			// Write driver recording data
-			if (data->file_.good() && data->type_ == PlayerRecordingType_Driver)
+			if (data->type_ == PlayerRecordingType_Driver && data->file_.good())
 			{
 				uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
