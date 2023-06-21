@@ -6,10 +6,11 @@
 
 | Path | Content |
 | ---- | ------- |
-| `SDK/` | Core SDK headers (stable between versions) |
+| `SDK/include` | Core SDK headers (stable between versions) |
 | `SDK/include/Server/Components/*/` | Components/plug-in SDK headers (stable between versions) |
 | `Shared/NetCode/` | Netcode headers (RPC and packet read/write structures, NOT stable between versions) |
-| `lib/` | Various submodules and CMake helpers for Conan |
+| `Shared/Network/` | Network utility headers (NOT stable between versions) |
+| `lib/` | Various submodules and third-party libraries |
 | `Server/Source/` | Core server implementation (NOT stable between versions, do NOT use headers outside the Source folder) |
 | `Server/Components/*/` | Components/plug-in implementation (NOT stable between versions, do NOT use headers outside the component's folder) |
 
@@ -19,9 +20,9 @@
 | ---- | ------- |
 | Entity | Something that can appear in the 3D world of the game |
 | Pool | Container of something with limited amount of IDs |
-| Component | Something that's conceptually different enough it can be separated |
-| Extensible | Something to which extensions can be added |
-| Extension | Something which adds additional functionality to an extensible |
+| Component | Something that's conceptually different enough it can be separated into its own module |
+| Extensible | Something to which extensions can be added to preserve ABI compatibility |
+| Extension | Something which adds additional functionality to an extensible and preserves ABI compatibility |
 
 ## Tools
 
@@ -32,7 +33,7 @@
 
 * [Visual Studio 2019+](https://www.visualstudio.com/)
 
-Visual Studio needs the `Desktop development with C++` workload with the `MSVC v143`, `Windows 11 SDK`, `C++ CMake tools for Windows` and `C++ Clang tools for Windows` components.
+Visual Studio needs the `Desktop development with C++` workload with the `C++ Clang tools for Windows` component.
 
 ## Sources
 

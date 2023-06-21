@@ -26,9 +26,13 @@ public:
 		type_ = type;
 		start_ = Time::now();
 
-		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles/");
-		std::string filePath = scriptfilesPath.string() + std::string(file) + ".rec";
-		file_.open(filePath, std::ios_base::out | std::ios_base::binary);
+		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles");
+		if (!ghc::filesystem::exists(scriptfilesPath) || !ghc::filesystem::is_directory(scriptfilesPath))
+		{
+			ghc::filesystem::create_directory(scriptfilesPath);
+		}
+		auto filePath = scriptfilesPath / ghc::filesystem::path(std::string(file) + ".rec");
+		file_.open(filePath.string(), std::ios_base::out | std::ios_base::binary);
 
 		// Write recording header
 		if (file_.good())
@@ -96,7 +100,7 @@ private:
 			// Write on foot recording data
 			if (data->file_.good() && data->type_ == PlayerRecordingType_OnFoot)
 			{
-				uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
+				const uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
 
 				uint8_t health = static_cast<uint8_t>(footSync.HealthArmour.x);
