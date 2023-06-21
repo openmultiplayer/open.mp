@@ -11,24 +11,19 @@
 #include <iostream>
 #include "../../format.hpp"
 
-SCRIPT_API(CreatePlayerObject, int(IPlayer& player, int modelid, Vector3 position, Vector3 rotation, float drawDistance))
+SCRIPT_API_FAILRET(CreatePlayerObject, INVALID_OBJECT_ID, int(IPlayerObjectData& data, int modelid, Vector3 position, Vector3 rotation, float drawDistance))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
+	IPlayerObject* object = data.create(modelid, position, rotation, drawDistance);
+	if (object)
 	{
-		IPlayerObject* object = playerData->create(modelid, position, rotation, drawDistance);
-		if (object)
-		{
-			return object->getID();
-		}
+		return object->getID();
 	}
-	return INVALID_OBJECT_ID;
+	return FailRet;
 }
 
-SCRIPT_API(DestroyPlayerObject, bool(IPlayer& player, IPlayerObject& object))
+SCRIPT_API(DestroyPlayerObject, bool(IPlayerObjectData& data, IPlayerObject& object))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	playerData->release(object.getID());
+	data.release(object.getID());
 	return true;
 }
 
@@ -139,26 +134,16 @@ SCRIPT_API(IsPlayerObjectMoving, bool(IPlayer& player, IPlayerObject& object))
 	return object.isMoving();
 }
 
-SCRIPT_API(EditPlayerObject, bool(IPlayer& player, IPlayerObject& object))
+SCRIPT_API(EditPlayerObject, bool(IPlayerObjectData& data, IPlayerObject& object))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->beginEditing(object);
-		return true;
-	}
-	return false;
+	data.beginEditing(object);
+	return true;
 }
 
-SCRIPT_API(BeginPlayerObjectEditing, bool(IPlayer& player, IPlayerObject& object))
+SCRIPT_API(BeginPlayerObjectEditing, bool(IPlayerObjectData& data, IPlayerObject& object))
 {
-	IPlayerObjectData* playerData = queryExtension<IPlayerObjectData>(player);
-	if (playerData)
-	{
-		playerData->beginEditing(object);
-		return true;
-	}
-	return false;
+	data.beginEditing(object);
+	return true;
 }
 
 SCRIPT_API(SetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialIndex, int modelId, const std::string& textureLibrary, const std::string& textureName, uint32_t materialColour))

@@ -7,8 +7,8 @@
 
 typedef uint8_t PickupType;
 
-/// Pickup interace
-struct IPickup : public IExtensible, public IEntity
+/// Pickup base interface
+struct IBasePickup : public IExtensible, public IEntity
 {
 	/// Sets pickup's type and restreams
 	virtual void setType(PickupType type, bool update = true) = 0;
@@ -45,6 +45,14 @@ struct IPickup : public IExtensible, public IEntity
 
 	/// Used by legacy per-player pickups for ID mapping.
 	virtual IPlayer* getLegacyPlayer() const = 0;
+};
+
+struct IPickup : public IBasePickup
+{
+};
+
+struct IPlayerPickup : public IBasePickup
+{
 };
 
 struct PickupEventHandler

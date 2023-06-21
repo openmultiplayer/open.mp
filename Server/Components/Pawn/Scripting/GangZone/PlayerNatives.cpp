@@ -2,17 +2,6 @@
 #include "sdk.hpp"
 #include <iostream>
 
-static IGangZone* TryGetGangZone(IPlayer& player, cell ref) noexcept
-{
-	auto data = queryExtension<IPlayerGangZoneData>(player);
-	auto pool = PawnManager::Get()->gangzones;
-	if (data && pool)
-	{
-		return pool->get(data->fromLegacyID(ref));
-	}
-	return nullptr;
-}
-
 SCRIPT_API(CreatePlayerGangZone, int(IPlayer& player, Vector2 min, Vector2 max))
 {
 	IGangZonesComponent* component = PawnManager::Get()->gangzones;
@@ -44,186 +33,113 @@ SCRIPT_API(CreatePlayerGangZone, int(IPlayer& player, Vector2 min, Vector2 max))
 	return INVALID_GANG_ZONE_ID;
 }
 
-SCRIPT_API(PlayerGangZoneDestroy, bool(IPlayer& player, int legacyid))
+SCRIPT_API(PlayerGangZoneDestroy, bool(IPlayer& player, int gangzoneid))
 {
 	auto data = queryExtension<IPlayerGangZoneData>(player);
 	auto pool = PawnManager::Get()->gangzones;
 	if (data && pool)
 	{
-		int realid = data->fromLegacyID(legacyid);
+		int realid = data->fromLegacyID(gangzoneid);
 		if (realid)
 		{
 			pool->release(realid);
-			data->releaseLegacyID(legacyid);
+			data->releaseLegacyID(gangzoneid);
 			return true;
 		}
 	}
 	return false;
 }
 
-SCRIPT_API(PlayerGangZoneShow, bool(IPlayer& player, cell gangzoneid, uint32_t colour))
+SCRIPT_API(PlayerGangZoneShow, bool(IPlayer& player, IPlayerGangZone& gangzone, uint32_t colour))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	gangzone->showForPlayer(player, Colour::FromRGBA(colour));
+	gangzone.showForPlayer(player, Colour::FromRGBA(colour));
 	return true;
 }
 
-SCRIPT_API(PlayerGangZoneHide, bool(IPlayer& player, cell gangzoneid))
+SCRIPT_API(PlayerGangZoneHide, bool(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	gangzone->hideForPlayer(player);
+	gangzone.hideForPlayer(player);
 	return true;
 }
 
-SCRIPT_API(PlayerGangZoneFlash, bool(IPlayer& player, cell gangzoneid, uint32_t colour))
+SCRIPT_API(PlayerGangZoneFlash, bool(IPlayer& player, IPlayerGangZone& gangzone, uint32_t colour))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	gangzone->flashForPlayer(player, Colour::FromRGBA(colour));
+	gangzone.flashForPlayer(player, Colour::FromRGBA(colour));
 	return true;
 }
 
-SCRIPT_API(PlayerGangZoneStopFlash, bool(IPlayer& player, cell gangzoneid))
+SCRIPT_API(PlayerGangZoneStopFlash, bool(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	gangzone->stopFlashForPlayer(player);
+	gangzone.stopFlashForPlayer(player);
 	return true;
 }
 
-SCRIPT_API(IsValidPlayerGangZone, bool(IPlayer& player, cell gangzoneid))
+SCRIPT_API(IsValidPlayerGangZone, bool(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	return TryGetGangZone(player, gangzoneid) != nullptr;
+	return true;
 }
 
-SCRIPT_API(IsPlayerInPlayerGangZone, bool(IPlayer& player, cell gangzoneid))
+SCRIPT_API(IsPlayerInPlayerGangZone, bool(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	return gangzone->isPlayerInside(player);
+	return gangzone.isPlayerInside(player);
 }
 
-SCRIPT_API(IsPlayerGangZoneVisible, bool(IPlayer& player, cell gangzoneid))
+SCRIPT_API(IsPlayerGangZoneVisible, bool(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	return gangzone->isShownForPlayer(player);
+	return gangzone.isShownForPlayer(player);
 }
 
-SCRIPT_API(PlayerGangZoneGetColor, int(IPlayer& player, cell gangzoneid))
+SCRIPT_API(PlayerGangZoneGetColor, int(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
+	if (gangzone.isShownForPlayer(player))
 	{
-		return 0;
+		return gangzone.getColourForPlayer(player).RGBA();
 	}
-	if (gangzone->isShownForPlayer(player))
-	{
-		return gangzone->getColourForPlayer(player).RGBA();
-	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
-SCRIPT_API(PlayerGangZoneGetFlashColor, int(IPlayer& player, cell gangzoneid))
+SCRIPT_API(PlayerGangZoneGetFlashColor, int(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
+	if (gangzone.isShownForPlayer(player))
 	{
-		return 0;
+		return gangzone.getFlashingColourForPlayer(player).RGBA();
 	}
-	if (gangzone->isShownForPlayer(player))
-	{
-		return gangzone->getFlashingColourForPlayer(player).RGBA();
-	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
-SCRIPT_API(PlayerGangZoneGetColour, int(IPlayer& player, cell gangzoneid))
+SCRIPT_API(PlayerGangZoneGetColour, int(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
+	if (gangzone.isShownForPlayer(player))
 	{
-		return 0;
+		return gangzone.getColourForPlayer(player).RGBA();
 	}
-	if (gangzone->isShownForPlayer(player))
-	{
-		return gangzone->getColourForPlayer(player).RGBA();
-	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
-SCRIPT_API(PlayerGangZoneGetFlashColour, int(IPlayer& player, cell gangzoneid))
+SCRIPT_API(PlayerGangZoneGetFlashColour, int(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
+	if (gangzone.isShownForPlayer(player))
 	{
-		return 0;
+		return gangzone.getFlashingColourForPlayer(player).RGBA();
 	}
-	if (gangzone->isShownForPlayer(player))
-	{
-		return gangzone->getFlashingColourForPlayer(player).RGBA();
-	}
-	else
-	{
-		return 0;
-	}
+	return 0;
 }
 
-SCRIPT_API(IsPlayerGangZoneFlashing, bool(IPlayer& player, cell gangzoneid))
+SCRIPT_API(IsPlayerGangZoneFlashing, bool(IPlayer& player, IPlayerGangZone& gangzone))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	return gangzone->isFlashingForPlayer(player);
+	return gangzone.isFlashingForPlayer(player);
 }
 
-SCRIPT_API(PlayerGangZoneGetPos, bool(IPlayer& player, cell gangzoneid, Vector2& min, Vector2& max))
+SCRIPT_API(PlayerGangZoneGetPos, bool(IPlayer& player, IPlayerGangZone& gangzone, Vector2& min, Vector2& max))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
-	if (gangzone == nullptr)
-	{
-		return false;
-	}
-	const GangZonePos& pos = gangzone->getPosition();
+	const GangZonePos& pos = gangzone.getPosition();
 	min = pos.min;
 	max = pos.max;
 	return true;
 }
 
-SCRIPT_API(UsePlayerGangZoneCheck, bool(IPlayer& player, cell gangzoneid, bool enable))
+SCRIPT_API(UsePlayerGangZoneCheck, bool(IPlayer& player, IPlayerGangZone* gangzone, bool enable))
 {
-	IGangZone* gangzone = TryGetGangZone(player, gangzoneid);
 	if (gangzone == nullptr)
 	{
 		return false;
@@ -231,7 +147,7 @@ SCRIPT_API(UsePlayerGangZoneCheck, bool(IPlayer& player, cell gangzoneid, bool e
 	IGangZonesComponent* component = PawnManager::Get()->gangzones;
 	if (component)
 	{
-		component->useGangZoneCheck(*gangzone, enable);
+		component->useGangZoneCheck(*reinterpret_cast<IGangZone*>(gangzone), enable);
 		return true;
 	}
 	return false;

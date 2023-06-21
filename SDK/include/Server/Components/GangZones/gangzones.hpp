@@ -13,7 +13,7 @@ struct GangZonePos
 };
 
 /// Gangzone interace
-struct IGangZone : public IExtensible, public IIDProvider
+struct IBaseGangZone : public IExtensible, public IIDProvider
 {
 	/// Check if a gangzone is shown for player
 	virtual bool isShownForPlayer(const IPlayer& player) const = 0;
@@ -56,6 +56,14 @@ struct IGangZone : public IExtensible, public IIDProvider
 
 	/// Used by legacy per-player gangzones for ID mapping.
 	virtual IPlayer* getLegacyPlayer() const = 0;
+};
+
+struct IGangZone : public IBaseGangZone
+{
+};
+
+struct IPlayerGangZone : public IBaseGangZone
+{
 };
 
 struct GangZoneEventHandler

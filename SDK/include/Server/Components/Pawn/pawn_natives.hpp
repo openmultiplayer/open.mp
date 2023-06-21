@@ -308,15 +308,209 @@ using OutputOnlyString = std::variant<bool, StringView, Impl::String>;
 		ParamCast() = delete;                                                              \
 	};
 
+/// Macro to define a script param for a mixed pool's global entry
+#define GLOBAL_MIXED_POOL_PARAM(type, poolPtr)                 \
+	template <>                                                \
+	struct ParamLookup<type>                                   \
+	{                                                          \
+		static type& ValReq(cell ref)                          \
+		{                                                      \
+			auto pool = getAmxLookups()->poolPtr;              \
+			if (pool)                                          \
+			{                                                  \
+				auto ptr = pool->get(pool->fromLegacyID(ref)); \
+				if (ptr)                                       \
+				{                                              \
+					return *ptr;                               \
+				}                                              \
+			}                                                  \
+			throw pawn_natives::ParamCastFailure();            \
+		}                                                      \
+                                                               \
+		static type* Val(cell ref) noexcept                    \
+		{                                                      \
+			auto pool = getAmxLookups()->poolPtr;              \
+			if (pool)                                          \
+			{                                                  \
+				return pool->get(pool->fromLegacyID(ref));     \
+			}                                                  \
+			return nullptr;                                    \
+		}                                                      \
+	};                                                         \
+                                                               \
+	template <>                                                \
+	class ParamCast<type*>                                     \
+	{                                                          \
+	public:                                                    \
+		ParamCast(AMX* amx, cell* params, int idx) noexcept    \
+		{                                                      \
+			value_ = ParamLookup<type>::Val(params[idx]);      \
+		}                                                      \
+                                                               \
+		~ParamCast()                                           \
+		{                                                      \
+		}                                                      \
+                                                               \
+		ParamCast(ParamCast<type*> const&) = delete;           \
+		ParamCast(ParamCast<type*>&&) = delete;                \
+                                                               \
+		operator type*()                                       \
+		{                                                      \
+			return value_;                                     \
+		}                                                      \
+                                                               \
+		static constexpr int Size = 1;                         \
+                                                               \
+	private:                                                   \
+		type* value_;                                          \
+	};                                                         \
+                                                               \
+	template <>                                                \
+	class ParamCast<type&>                                     \
+	{                                                          \
+	public:                                                    \
+		ParamCast(AMX* amx, cell* params, int idx)             \
+			: value_(ParamLookup<type>::ValReq(params[idx]))   \
+		{                                                      \
+		}                                                      \
+                                                               \
+		~ParamCast()                                           \
+		{                                                      \
+		}                                                      \
+                                                               \
+		ParamCast(ParamCast<type&> const&) = delete;           \
+		ParamCast(ParamCast<type&>&&) = delete;                \
+                                                               \
+		operator type&()                                       \
+		{                                                      \
+			return value_;                                     \
+		}                                                      \
+                                                               \
+		static constexpr int Size = 1;                         \
+                                                               \
+	private:                                                   \
+		type& value_;                                          \
+	};                                                         \
+                                                               \
+	template <>                                                \
+	class ParamCast<const type&>                               \
+	{                                                          \
+	public:                                                    \
+		ParamCast(AMX*, cell*, int) = delete;                  \
+		ParamCast() = delete;                                  \
+	};
+
+/// Macro to define a script param for a mixed pool's player entry
+#define PLAYER_MIXED_POOL_PARAM(type, dataType, poolPtr)                                                                                   \
+	template <>                                                                                                                            \
+	struct ParamLookup<type>                                                                                                               \
+	{                                                                                                                                      \
+		static type& ValReq(IPlayer& player, cell ref)                                                                                     \
+		{                                                                                                                                  \
+			auto data = queryExtension<dataType>(player);                                                                                  \
+			auto pool = getAmxLookups()->poolPtr;                                                                                          \
+			if (pool && data)                                                                                                              \
+			{                                                                                                                              \
+				auto ptr = pool->get(data->fromLegacyID(ref));                                                                             \
+				if (ptr)                                                                                                                   \
+				{                                                                                                                          \
+					return *reinterpret_cast<type*>(ptr);                                                                                  \
+				}                                                                                                                          \
+			}                                                                                                                              \
+			throw pawn_natives::ParamCastFailure();                                                                                        \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		static type* Val(IPlayer& player, cell ref) noexcept                                                                               \
+		{                                                                                                                                  \
+			auto data = queryExtension<dataType>(player);                                                                                  \
+			auto pool = getAmxLookups()->poolPtr;                                                                                          \
+			if (pool && data)                                                                                                              \
+			{                                                                                                                              \
+				return reinterpret_cast<type*>(pool->get(data->fromLegacyID(ref)));                                                        \
+			}                                                                                                                              \
+			return nullptr;                                                                                                                \
+		}                                                                                                                                  \
+	};                                                                                                                                     \
+                                                                                                                                           \
+	template <>                                                                                                                            \
+	class ParamCast<type*>                                                                                                                 \
+	{                                                                                                                                      \
+	public:                                                                                                                                \
+		ParamCast(AMX* amx, cell* params, int idx)                                                                                         \
+		{                                                                                                                                  \
+			value_ = ParamLookup<type>::Val(ParamLookup<IPlayer>::ValReq(params[1] /* first param is always playerid */), params[idx]);    \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		~ParamCast()                                                                                                                       \
+		{                                                                                                                                  \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		ParamCast(ParamCast<type*> const&) = delete;                                                                                       \
+		ParamCast(ParamCast<type*>&&) = delete;                                                                                            \
+                                                                                                                                           \
+		operator type*()                                                                                                                   \
+		{                                                                                                                                  \
+			return value_;                                                                                                                 \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		static constexpr int Size = 1;                                                                                                     \
+                                                                                                                                           \
+	private:                                                                                                                               \
+		type* value_;                                                                                                                      \
+	};                                                                                                                                     \
+                                                                                                                                           \
+	template <>                                                                                                                            \
+	class ParamCast<type const*>                                                                                                           \
+	{                                                                                                                                      \
+	public:                                                                                                                                \
+		ParamCast(AMX* amx, cell* params, int idx) = delete;                                                                               \
+		ParamCast() = delete;                                                                                                              \
+	};                                                                                                                                     \
+                                                                                                                                           \
+	template <>                                                                                                                            \
+	class ParamCast<type&>                                                                                                                 \
+	{                                                                                                                                      \
+	public:                                                                                                                                \
+		ParamCast(AMX* amx, cell* params, int idx)                                                                                         \
+			: value_(ParamLookup<type>::ValReq(ParamLookup<IPlayer>::ValReq(params[1] /* first param is always playerid */), params[idx])) \
+		{                                                                                                                                  \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		~ParamCast()                                                                                                                       \
+		{                                                                                                                                  \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		ParamCast(ParamCast<type&> const&) = delete;                                                                                       \
+		ParamCast(ParamCast<type&>&&) = delete;                                                                                            \
+                                                                                                                                           \
+		operator type&()                                                                                                                   \
+		{                                                                                                                                  \
+			return value_;                                                                                                                 \
+		}                                                                                                                                  \
+                                                                                                                                           \
+		static constexpr int Size = 1;                                                                                                     \
+                                                                                                                                           \
+	private:                                                                                                                               \
+		type& value_;                                                                                                                      \
+	};                                                                                                                                     \
+                                                                                                                                           \
+	template <>                                                                                                                            \
+	class ParamCast<const type&>                                                                                                           \
+	{                                                                                                                                      \
+	public:                                                                                                                                \
+		ParamCast(AMX*, cell*, int) = delete;                                                                                              \
+		ParamCast() = delete;                                                                                                              \
+	};
+
 // custom ParamCasts here to use custom types in native declarations
 namespace pawn_natives
 {
+
 POOL_PARAM(IPlayer, players);
 POOL_PARAM(IActor, actors);
 POOL_PARAM(IClass, classes);
 POOL_PARAM(IMenu, menus);
 POOL_PARAM(IObject, objects);
-POOL_PARAM(IPickup, pickups);
 POOL_PARAM(ITextDraw, textdraws);
 POOL_PARAM(ITextLabel, textlabels);
 POOL_PARAM(IVehicle, vehicles);
@@ -326,6 +520,16 @@ PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
 PLAYER_POOL_PARAM(IPlayerTextLabel, IPlayerTextLabelData);
 
 PLAYER_DATA_PARAM(IPlayerVehicleData);
+PLAYER_DATA_PARAM(IPlayerCheckpointData);
+PLAYER_DATA_PARAM(IPlayerObjectData);
+PLAYER_DATA_PARAM(IPlayerTextDrawData);
+PLAYER_DATA_PARAM(IPlayerConsoleData);
+PLAYER_DATA_PARAM(IPlayerDialogData);
+
+GLOBAL_MIXED_POOL_PARAM(IPickup, pickups);
+PLAYER_MIXED_POOL_PARAM(IPlayerPickup, IPlayerPickupData, pickups);
+GLOBAL_MIXED_POOL_PARAM(IGangZone, gangzones);
+PLAYER_MIXED_POOL_PARAM(IPlayerGangZone, IPlayerGangZoneData, gangzones);
 
 /// A parameter used for only writing data to an output string
 /// Greatly speeds up code as there's no need for reading the input string

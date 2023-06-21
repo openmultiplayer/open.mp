@@ -603,13 +603,9 @@ SCRIPT_API(GetAnimationName, bool(int index, OutputOnlyString& lib, OutputOnlySt
 	return true;
 }
 
-SCRIPT_API(EditAttachedObject, bool(IPlayer& player, int index))
+SCRIPT_API(EditAttachedObject, bool(IPlayerObjectData& data, int index))
 {
-	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-	if (data)
-	{
-		data->editAttachedObject(index);
-	}
+	data.editAttachedObject(index);
 	return true;
 }
 
@@ -669,7 +665,7 @@ SCRIPT_API(GetPlayerSpecialAction, int(IPlayer& player))
 	return player.getAction();
 }
 
-SCRIPT_API_FAILRET(GetPlayerVehicleID, INVALID_PLAYER_ID, int(IPlayerVehicleData& data))
+SCRIPT_API_FAILRET(GetPlayerVehicleID, INVALID_VEHICLE_ID, int(IPlayerVehicleData& data))
 {
 	IVehicle* vehicle = data.getVehicle();
 	if (vehicle)
@@ -713,14 +709,9 @@ SCRIPT_API(InterpolateCameraLookAt, bool(IPlayer& player, Vector3 from, Vector3 
 	return true;
 }
 
-SCRIPT_API(IsPlayerAttachedObjectSlotUsed, bool(IPlayer& player, int index))
+SCRIPT_API(IsPlayerAttachedObjectSlotUsed, bool(IPlayerObjectData& data, int index))
 {
-	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-	if (data)
-	{
-		return data->hasAttachedObject(index);
-	}
-	return false;
+	return data.hasAttachedObject(index);
 }
 
 SCRIPT_API(AttachCameraToObject, bool(IPlayer& player, IObject& object))
@@ -830,52 +821,37 @@ SCRIPT_API(PlayCrimeReportForPlayer, bool(IPlayer& player, IPlayer& suspect, int
 	return player.playerCrimeReport(suspect, crime);
 }
 
-SCRIPT_API(RemovePlayerAttachedObject, bool(IPlayer& player, int index))
+SCRIPT_API(RemovePlayerAttachedObject, bool(IPlayerObjectData& data, int index))
 {
-	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-	if (data)
-	{
-		data->removeAttachedObject(index);
-		return true;
-	}
-	return false;
+	data.removeAttachedObject(index);
+	return true;
 }
 
-SCRIPT_API(SetPlayerAttachedObject, bool(IPlayer& player, int index, int modelid, int bone, Vector3 offset, Vector3 rotation, Vector3 scale, uint32_t materialcolor1, uint32_t materialcolor2))
+SCRIPT_API(SetPlayerAttachedObject, bool(IPlayerObjectData& data, int index, int modelid, int bone, Vector3 offset, Vector3 rotation, Vector3 scale, uint32_t materialcolor1, uint32_t materialcolor2))
 {
-	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-	if (data)
-	{
-		ObjectAttachmentSlotData attachment;
-		attachment.model = modelid;
-		attachment.bone = bone;
-		attachment.offset = offset;
-		attachment.rotation = rotation;
-		attachment.scale = scale;
-		attachment.colour1 = Colour::FromARGB(materialcolor1);
-		attachment.colour2 = Colour::FromARGB(materialcolor2);
-		data->setAttachedObject(index, attachment);
-		return true;
-	}
-	return false;
+	ObjectAttachmentSlotData attachment;
+	attachment.model = modelid;
+	attachment.bone = bone;
+	attachment.offset = offset;
+	attachment.rotation = rotation;
+	attachment.scale = scale;
+	attachment.colour1 = Colour::FromARGB(materialcolor1);
+	attachment.colour2 = Colour::FromARGB(materialcolor2);
+	data.setAttachedObject(index, attachment);
+	return true;
 }
 
-SCRIPT_API(GetPlayerAttachedObject, bool(IPlayer& player, int index, int& modelid, int& bone, Vector3& offset, Vector3& rotation, Vector3& scale, uint32_t& materialcolor1, uint32_t& materialcolor2))
+SCRIPT_API(GetPlayerAttachedObject, bool(IPlayerObjectData& data, int index, int& modelid, int& bone, Vector3& offset, Vector3& rotation, Vector3& scale, uint32_t& materialcolor1, uint32_t& materialcolor2))
 {
-	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
-	if (data)
-	{
-		ObjectAttachmentSlotData attachment = data->getAttachedObject(index);
-		modelid = attachment.model;
-		bone = attachment.bone;
-		offset = attachment.offset;
-		rotation = attachment.rotation;
-		scale = attachment.scale;
-		materialcolor1 = attachment.colour1.ARGB();
-		materialcolor2 = attachment.colour2.ARGB();
-		return true;
-	}
-	return false;
+	ObjectAttachmentSlotData attachment = data.getAttachedObject(index);
+	modelid = attachment.model;
+	bone = attachment.bone;
+	offset = attachment.offset;
+	rotation = attachment.rotation;
+	scale = attachment.scale;
+	materialcolor1 = attachment.colour1.ARGB();
+	materialcolor2 = attachment.colour2.ARGB();
+	return true;
 }
 
 SCRIPT_API(SetPlayerFacingAngle, bool(IPlayer& player, float angle))
@@ -925,26 +901,16 @@ SCRIPT_API(GetPlayerCameraZoom, float(IPlayer& player))
 	return player.getAimData().camZoom;
 }
 
-SCRIPT_API(SelectTextDraw, bool(IPlayer& player, uint32_t hoverColour))
+SCRIPT_API(SelectTextDraw, bool(IPlayerTextDrawData& data, uint32_t hoverColour))
 {
-	IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
-	if (data)
-	{
-		data->beginSelection(Colour::FromRGBA(hoverColour));
-		return true;
-	}
-	return false;
+	data.beginSelection(Colour::FromRGBA(hoverColour));
+	return true;
 }
 
-SCRIPT_API(CancelSelectTextDraw, bool(IPlayer& player))
+SCRIPT_API(CancelSelectTextDraw, bool(IPlayerTextDrawData& data))
 {
-	IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
-	if (data)
-	{
-		data->endSelection();
-		return true;
-	}
-	return false;
+	data.endSelection();
+	return true;
 }
 
 SCRIPT_API(SendClientCheck, bool(IPlayer& player, int actionType, int address, int offset, int count))
@@ -975,14 +941,9 @@ SCRIPT_API(gpci, int(IPlayer& player, OutputOnlyString& output))
 	return std::get<StringView>(output).length();
 }
 
-SCRIPT_API(IsPlayerAdmin, bool(IPlayer& player))
+SCRIPT_API(IsPlayerAdmin, bool(IPlayerConsoleData& data))
 {
-	IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
-	if (data)
-	{
-		return data->hasConsoleAccess();
-	}
-	return false;
+	return data.hasConsoleAccess();
 }
 
 SCRIPT_API(Kick, bool(IPlayer& player))
@@ -1152,15 +1113,10 @@ SCRIPT_API(GetPlayerGravity, float(IPlayer& player))
 	return player.getGravity();
 }
 
-SCRIPT_API(SetPlayerAdmin, bool(IPlayer& player, bool set))
+SCRIPT_API(SetPlayerAdmin, bool(IPlayerConsoleData& data, bool set))
 {
-	IPlayerConsoleData* data = queryExtension<IPlayerConsoleData>(player);
-	if (data)
-	{
-		data->setConsoleAccessibility(set);
-		return true;
-	}
-	return false;
+	data.setConsoleAccessibility(set);
+	return true;
 }
 
 SCRIPT_API(IsPlayerSpawned, bool(IPlayer& player))

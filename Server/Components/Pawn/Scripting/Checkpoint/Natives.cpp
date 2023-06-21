@@ -11,134 +11,87 @@
 #include "sdk.hpp"
 #include <iostream>
 
-SCRIPT_API(SetPlayerCheckpoint, bool(IPlayer& player, Vector3 centrePosition, float radius))
+SCRIPT_API(SetPlayerCheckpoint, bool(IPlayerCheckpointData& data, Vector3 centrePosition, float radius))
 {
-	IPlayerCheckpointData* playerCheckpointData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerCheckpointData)
+	ICheckpointData& cp = data.getCheckpoint();
+	cp.setPosition(centrePosition);
+	cp.setRadius(radius); // samp native receives radius not diameter
+	cp.enable();
+	return true;
+}
+
+SCRIPT_API(DisablePlayerCheckpoint, bool(IPlayerCheckpointData& data))
+{
+	ICheckpointData& cp = data.getCheckpoint();
+	cp.disable();
+	return true;
+}
+
+SCRIPT_API(IsPlayerInCheckpoint, bool(IPlayerCheckpointData& data))
+{
+	ICheckpointData& cp = data.getCheckpoint();
+	if (cp.isEnabled())
 	{
-		ICheckpointData& cp = playerCheckpointData->getCheckpoint();
+		return cp.isPlayerInside();
+	}
+	return false;
+}
+
+SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayerCheckpointData& data, int type, Vector3 centrePosition, Vector3 nextPosition, float radius))
+{
+	IRaceCheckpointData& cp = data.getRaceCheckpoint();
+	if (type >= 0 && type <= 8)
+	{
+		cp.setType(RaceCheckpointType(type));
 		cp.setPosition(centrePosition);
-		cp.setRadius(radius); // samp native receives radius not diameter
+		cp.setNextPosition(nextPosition);
+		cp.setRadius(radius); // samp native receives radius unlike standard checkpoints
 		cp.enable();
 		return true;
 	}
 	return false;
 }
 
-SCRIPT_API(DisablePlayerCheckpoint, bool(IPlayer& player))
+SCRIPT_API(DisablePlayerRaceCheckpoint, bool(IPlayerCheckpointData& data))
 {
-	IPlayerCheckpointData* playerCheckpointData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerCheckpointData)
+	IRaceCheckpointData& cp = data.getRaceCheckpoint();
+	cp.disable();
+	return true;
+}
+
+SCRIPT_API(IsPlayerInRaceCheckpoint, bool(IPlayerCheckpointData& data))
+{
+	IRaceCheckpointData& cp = data.getRaceCheckpoint();
+	if (cp.getType() != RaceCheckpointType::RACE_NONE && cp.isEnabled())
 	{
-		ICheckpointData& cp = playerCheckpointData->getCheckpoint();
-		cp.disable();
-		return true;
+		return cp.isPlayerInside();
 	}
 	return false;
 }
 
-SCRIPT_API(IsPlayerInCheckpoint, bool(IPlayer& player))
+SCRIPT_API(IsPlayerCheckpointActive, bool(IPlayerCheckpointData& data))
 {
-	IPlayerCheckpointData* playerCheckpointData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerCheckpointData)
-	{
-		ICheckpointData& cp = playerCheckpointData->getCheckpoint();
-		if (cp.isEnabled())
-		{
-			return cp.isPlayerInside();
-		}
-	}
-	return false;
+	return data.getCheckpoint().isEnabled();
 }
 
-SCRIPT_API(SetPlayerRaceCheckpoint, bool(IPlayer& player, int type, Vector3 centrePosition, Vector3 nextPosition, float radius))
+SCRIPT_API(GetPlayerCheckpoint, bool(IPlayerCheckpointData& data, Vector3& centrePosition, float& radius))
 {
-	IPlayerCheckpointData* playerCheckpointData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerCheckpointData)
-	{
-		IRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
-		if (type >= 0 && type <= 8)
-		{
-			cp.setType(RaceCheckpointType(type));
-			cp.setPosition(centrePosition);
-			cp.setNextPosition(nextPosition);
-			cp.setRadius(radius); // samp native receives radius unlike standard checkpoints
-			cp.enable();
-			return true;
-		}
-	}
-	return false;
+	const ICheckpointData& cp = data.getCheckpoint();
+	centrePosition = cp.getPosition();
+	radius = cp.getRadius();
+	return true;
 }
 
-SCRIPT_API(DisablePlayerRaceCheckpoint, bool(IPlayer& player))
+SCRIPT_API(IsPlayerRaceCheckpointActive, bool(IPlayerCheckpointData& data))
 {
-	IPlayerCheckpointData* playerCheckpointData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerCheckpointData)
-	{
-		IRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
-		cp.disable();
-		return true;
-	}
-	return false;
+	return data.getRaceCheckpoint().isEnabled();
 }
 
-SCRIPT_API(IsPlayerInRaceCheckpoint, bool(IPlayer& player))
+SCRIPT_API(GetPlayerRaceCheckpoint, bool(IPlayerCheckpointData& data, Vector3& centrePosition, Vector3& nextPosition, float& radius))
 {
-	IPlayerCheckpointData* playerCheckpointData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerCheckpointData)
-	{
-		IRaceCheckpointData& cp = playerCheckpointData->getRaceCheckpoint();
-		if (cp.getType() != RaceCheckpointType::RACE_NONE && cp.isEnabled())
-		{
-			return cp.isPlayerInside();
-		}
-	}
-	return false;
-}
-
-SCRIPT_API(IsPlayerCheckpointActive, bool(IPlayer& player))
-{
-	IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerData)
-	{
-		return playerData->getCheckpoint().isEnabled();
-	}
-	return false;
-}
-
-SCRIPT_API(GetPlayerCheckpoint, bool(IPlayer& player, Vector3& centrePosition, float& radius))
-{
-	IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerData)
-	{
-		const ICheckpointData& data = playerData->getCheckpoint();
-		centrePosition = data.getPosition();
-		radius = data.getRadius();
-		return true;
-	}
-	return false;
-}
-
-SCRIPT_API(IsPlayerRaceCheckpointActive, bool(IPlayer& player))
-{
-	IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerData)
-	{
-		return playerData->getRaceCheckpoint().isEnabled();
-	}
-	return false;
-}
-
-SCRIPT_API(GetPlayerRaceCheckpoint, bool(IPlayer& player, Vector3& centrePosition, Vector3& nextPosition, float& radius))
-{
-	IPlayerCheckpointData* playerData = queryExtension<IPlayerCheckpointData>(player);
-	if (playerData)
-	{
-		const IRaceCheckpointData& data = playerData->getRaceCheckpoint();
-		centrePosition = data.getPosition();
-		nextPosition = data.getNextPosition();
-		radius = data.getRadius();
-		return true;
-	}
-	return false;
+	const IRaceCheckpointData& cp = data.getRaceCheckpoint();
+	centrePosition = cp.getPosition();
+	nextPosition = cp.getNextPosition();
+	radius = cp.getRadius();
+	return true;
 }

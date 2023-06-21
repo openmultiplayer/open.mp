@@ -10,16 +10,6 @@
 #include "sdk.hpp"
 #include <iostream>
 
-static IPickup* TryGetPickup(cell ref) noexcept
-{
-	auto pool = PawnManager::Get()->pickups;
-	if (pool)
-	{
-		return pool->get(pool->fromLegacyID(ref));
-	}
-	return nullptr;
-}
-
 SCRIPT_API(CreatePickup, int(int model, int type, Vector3 position, int virtualWorld))
 {
 	IPickupsComponent* component = PawnManager::Get()->pickups;
@@ -70,157 +60,97 @@ SCRIPT_API(AddStaticPickup, bool(int model, int type, Vector3 position, int virt
 	return false;
 }
 
-SCRIPT_API(DestroyPickup, bool(cell legacyid))
+SCRIPT_API(DestroyPickup, bool(int pickupid))
 {
 	IPickupsComponent* component = PawnManager::Get()->pickups;
 	if (component)
 	{
-		int realid = component->fromLegacyID(legacyid);
+		int realid = component->fromLegacyID(pickupid);
 		if (realid)
 		{
 			component->release(realid);
-			component->releaseLegacyID(legacyid);
+			component->releaseLegacyID(pickupid);
 			return true;
 		}
 	}
 	return false;
 }
 
-SCRIPT_API(IsValidPickup, bool(cell pickupid))
+SCRIPT_API(IsValidPickup, bool(IPickup& pickup))
 {
-	return TryGetPickup(pickupid) != nullptr;
-}
-
-SCRIPT_API(IsPickupStreamedIn, bool(IPlayer& player, cell pickupid))
-{
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	return pickup->isStreamedInForPlayer(player);
-}
-
-SCRIPT_API(GetPickupPos, bool(cell pickupid, Vector3& pos))
-{
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	pos = pickup->getPosition();
 	return true;
 }
 
-SCRIPT_API(GetPickupModel, int(cell pickupid))
+SCRIPT_API(IsPickupStreamedIn, bool(IPlayer& player, IPickup& pickup))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return 0;
-	}
-	return pickup->getModel();
+	return pickup.isStreamedInForPlayer(player);
 }
 
-SCRIPT_API(GetPickupType, int(cell pickupid))
+SCRIPT_API(GetPickupPos, bool(IPickup& pickup, Vector3& pos))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return -1;
-	}
-	return pickup->getType();
+	pos = pickup.getPosition();
+	return true;
 }
 
-SCRIPT_API(GetPickupVirtualWorld, int(cell pickupid))
+SCRIPT_API(GetPickupModel, int(IPickup& pickup))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return 0;
-	}
-	return pickup->getVirtualWorld();
+	return pickup.getModel();
 }
 
-SCRIPT_API(SetPickupPos, bool(cell pickupid, Vector3 pos, bool update))
+SCRIPT_API_FAILRET(GetPickupType, -1, int(IPickup& pickup))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
+	return pickup.getType();
+}
+
+SCRIPT_API(GetPickupVirtualWorld, int(IPickup& pickup))
+{
+	return pickup.getVirtualWorld();
+}
+
+SCRIPT_API(SetPickupPos, bool(IPickup& pickup, Vector3 pos, bool update))
+{
 	if (update)
 	{
-		pickup->setPosition(pos);
+		pickup.setPosition(pos);
 	}
 	else
 	{
-		pickup->setPositionNoUpdate(pos);
+		pickup.setPositionNoUpdate(pos);
 	}
 	return true;
 }
 
-SCRIPT_API(SetPickupModel, bool(cell pickupid, int model, bool update))
+SCRIPT_API(SetPickupModel, bool(IPickup& pickup, int model, bool update))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	pickup->setModel(model, update);
+	pickup.setModel(model, update);
 	return true;
 }
 
-SCRIPT_API(SetPickupType, bool(cell pickupid, int type, bool update))
+SCRIPT_API(SetPickupType, bool(IPickup& pickup, int type, bool update))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	pickup->setType(type, update);
+	pickup.setType(type, update);
 	return true;
 }
 
-SCRIPT_API(SetPickupVirtualWorld, bool(cell pickupid, int virtualworld))
+SCRIPT_API(SetPickupVirtualWorld, bool(IPickup& pickup, int virtualworld))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	pickup->setVirtualWorld(virtualworld);
+	pickup.setVirtualWorld(virtualworld);
 	return true;
 }
 
-SCRIPT_API(ShowPickupForPlayer, bool(IPlayer& player, cell pickupid))
+SCRIPT_API(ShowPickupForPlayer, bool(IPlayer& player, IPickup& pickup))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	pickup->setPickupHiddenForPlayer(player, false);
+	pickup.setPickupHiddenForPlayer(player, false);
 	return true;
 }
 
-SCRIPT_API(HidePickupForPlayer, bool(IPlayer& player, cell pickupid))
+SCRIPT_API(HidePickupForPlayer, bool(IPlayer& player, IPickup& pickup))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	pickup->setPickupHiddenForPlayer(player, true);
+	pickup.setPickupHiddenForPlayer(player, true);
 	return true;
 }
 
-SCRIPT_API(IsPickupHiddenForPlayer, bool(IPlayer& player, cell pickupid))
+SCRIPT_API(IsPickupHiddenForPlayer, bool(IPlayer& player, IPickup& pickup))
 {
-	IPickup* pickup = TryGetPickup(pickupid);
-	if (pickup == nullptr)
-	{
-		return false;
-	}
-	return pickup->isPickupHiddenForPlayer(player);
+	return pickup.isPickupHiddenForPlayer(player);
 }
