@@ -33,11 +33,7 @@ git clone --recursive https://github.com/openmultiplayer/open.mp
 git clone --recursive git@github.com:openmultiplayer/open.mp
 ```
 
-Note the use of the `--recursive` argument, because this repository contains submodules.  We recommend you use `https:`, but configure git to redirect with:
-
-```
-git config --global url."git@github.com:".insteadOf "https://github.com/"
-```
+Note the use of the `--recursive` argument, because this repository contains submodules.
 
 Using this command first allows you to clone everything and push to repos you have write permissions on.
 
