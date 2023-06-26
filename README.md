@@ -35,8 +35,6 @@ git clone --recursive git@github.com:openmultiplayer/open.mp
 
 Note the use of the `--recursive` argument, because this repository contains submodules.
 
-Using this command first allows you to clone everything and push to repos you have write permissions on.
-
 ## Building on Windows
 
 ```bash
