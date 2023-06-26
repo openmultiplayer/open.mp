@@ -16,7 +16,7 @@
 ## Tools
 
 * [CMake 3.19+](https://cmake.org/)
-* [Conan 1.57+](https://conan.io/) (Can't use conan v2.x)
+* [Conan 1.57+](https://conan.io/) [(You can't use conan v2.x, so may need to download directly from github releases)](https://github.com/conan-io/conan/releases)
 
 ## Tools on Windows
 
@@ -34,6 +34,8 @@ git clone --recursive git@github.com:openmultiplayer/open.mp
 ```
 
 Note the use of the `--recursive` argument, because this repository contains submodules.
+
+Using this command first allows you to clone everything and push to repos you have write permissions on.
 
 ## Building on Windows
 
