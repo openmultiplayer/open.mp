@@ -294,6 +294,7 @@ private:
 	FlatHashMap<uint32_t, std::pair<ModelDownloadType, ModelInfo*>> checksums;
 
 	bool enabled = true;
+	uint16_t modelsPort = 7776;
 	String modelsPath = "models";
 	String cdn = "";
 	bool usingCdn = false;
@@ -412,6 +413,7 @@ public:
 			config.setString("artwork.cdn", cdn);
 			config.setString("artwork.models_path", modelsPath);
 			config.setInt("network.http_threads", httpThreads);
+			config.setInt("artwork.port", modelsPort);
 		}
 		else
 		{
@@ -432,6 +434,11 @@ public:
 			if (config.getType("network.http_threads") == ConfigOptionType_None)
 			{
 				config.setInt("network.http_threads", httpThreads);
+			}
+			// Add the web server port to support some old TCP plugin like Incognito's audio plugin
+			if(config.getType("artwork.port") == ConfigOptionType_None)
+			{
+				config.setInt("artwork.port", modelsPort);
 			}
 		}
 	}
@@ -514,7 +521,7 @@ public:
 			return;
 		}
 
-		webServer = new WebServer(core, modelsPath, core->getConfig().getString("network.bind"), *core->getConfig().getInt("network.port"), core->getConfig().getString("network.public_addr"), httpThreads);
+		webServer = new WebServer(core, modelsPath, core->getConfig().getString("network.bind"), *core->getConfig().getInt("artwork.port"), core->getConfig().getString("network.public_addr"), httpThreads);
 
 		if (webServer->is_running())
 		{
