@@ -294,3 +294,7 @@ __pycache__/
 /docker/conan/
 /docker/data/
 /buildlinux/*
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
