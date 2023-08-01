@@ -294,5 +294,3 @@ __pycache__/
 /docker/conan/
 /docker/data/
 /buildlinux/*
-
-*.sublime-workspace
