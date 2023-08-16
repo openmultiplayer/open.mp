@@ -122,6 +122,16 @@ public:
 		{
 			ghc::filesystem::create_directory(scriptfilesPath);
 		}
+
+#if defined(GHC_USE_WCHAR_T)
+		std::wstring wstr_path = scriptfilesPath.wstring();
+		std::wstring::size_type size = wstr_path.size();
+
+		wchar_t* path = new wchar_t[size + 1];
+		memcpy((void*)path, (void*)wstr_path.c_str(), (size + 1) * sizeof(wchar_t));
+
+		_wputenv_s(L"AMXFILE", path);
+#else
 		std::string amxFileEnvVar = scriptfilesPath.string();
 
 		amxFileEnvVar.insert(0, "AMXFILE=");
@@ -132,6 +142,7 @@ public:
 		memcpy(amxFileEnvVarCString, amxFileEnvVar.c_str(), size + 1);
 
 		putenv(amxFileEnvVarCString);
+#endif
 	}
 
 	void onInit(IComponentList* components) override
