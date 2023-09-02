@@ -294,7 +294,7 @@ private:
 	FlatHashMap<uint32_t, std::pair<ModelDownloadType, ModelInfo*>> checksums;
 
 	bool enabled = true;
-	uint16_t modelsPort = 7776;
+	uint16_t modelsPort = 7777;
 	String modelsPath = "models";
 	String cdn = "";
 	bool usingCdn = false;
@@ -436,7 +436,7 @@ public:
 				config.setInt("network.http_threads", httpThreads);
 			}
 			// Add the web server port to support some old TCP plugin like Incognito's audio plugin
-			if(config.getType("artwork.port") == ConfigOptionType_None)
+			if (config.getType("artwork.port") == ConfigOptionType_None)
 			{
 				config.setInt("artwork.port", modelsPort);
 			}
