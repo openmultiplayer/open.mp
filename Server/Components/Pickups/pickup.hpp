@@ -37,33 +37,39 @@ private:
 	void streamInForClient(IPlayer& player)
 	{
 		auto data = queryExtension<IPlayerPickupData>(player);
-		int id = data->toClientID(poolID);
-		if (id == INVALID_PICKUP_ID)
+		if (data)
 		{
-			id = data->reserveClientID();
-		}
-		if (id != INVALID_PICKUP_ID)
-		{
-			data->setClientID(id, poolID);
-			NetCode::RPC::PlayerCreatePickup createPickupRPC;
-			createPickupRPC.PickupID = id;
-			createPickupRPC.Model = modelId;
-			createPickupRPC.Type = type;
-			createPickupRPC.Position = pos;
-			PacketHelper::send(createPickupRPC, player);
+			int id = data->toClientID(poolID);
+			if (id == INVALID_PICKUP_ID)
+			{
+				id = data->reserveClientID();
+			}
+			if (id != INVALID_PICKUP_ID)
+			{
+				data->setClientID(id, poolID);
+				NetCode::RPC::PlayerCreatePickup createPickupRPC;
+				createPickupRPC.PickupID = id;
+				createPickupRPC.Model = modelId;
+				createPickupRPC.Type = type;
+				createPickupRPC.Position = pos;
+				PacketHelper::send(createPickupRPC, player);
+			}
 		}
 	}
 
 	void streamOutForClient(IPlayer& player)
 	{
 		auto data = queryExtension<IPlayerPickupData>(player);
-		int id = data->toClientID(poolID);
-		if (id != INVALID_PICKUP_ID)
+		if (data)
 		{
-			data->releaseClientID(id);
-			NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
-			destroyPickupRPC.PickupID = id;
-			PacketHelper::send(destroyPickupRPC, player);
+			int id = data->toClientID(poolID);
+			if (id != INVALID_PICKUP_ID)
+			{
+				data->releaseClientID(id);
+				NetCode::RPC::PlayerDestroyPickup destroyPickupRPC;
+				destroyPickupRPC.PickupID = id;
+				PacketHelper::send(destroyPickupRPC, player);
+			}
 		}
 	}
 
