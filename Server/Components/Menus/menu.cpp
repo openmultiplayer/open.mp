@@ -41,10 +41,13 @@ private:
 
 			// Return false if menu id was invalid;
 			IPlayerMenuData* data = queryExtension<IPlayerMenuData>(peer);
-			if (!self.storage.get(data->getMenuID()))
+			if (data)
 			{
-				data->setMenuID(INVALID_MENU_ID);
-				return false;
+				if (!self.storage.get(data->getMenuID()))
+				{
+					data->setMenuID(INVALID_MENU_ID);
+					return false;
+				}
 			}
 
 			self.eventDispatcher.dispatch(
@@ -73,10 +76,13 @@ private:
 
 			// Return false if menu id was invalid;
 			IPlayerMenuData* data = queryExtension<IPlayerMenuData>(peer);
-			if (!self.storage.get(data->getMenuID()))
+			if (data)
 			{
-				data->setMenuID(INVALID_MENU_ID);
-				return false;
+				if (!self.storage.get(data->getMenuID()))
+				{
+					data->setMenuID(INVALID_MENU_ID);
+					return false;
+				}
 			}
 
 			self.eventDispatcher.dispatch(

@@ -207,7 +207,11 @@ public:
 	{
 		for (IPlayer* player : core->getPlayers().entries())
 		{
-			queryExtension<IPlayerDialogData>(player)->hide(*player);
+			auto data = queryExtension<IPlayerDialogData>(player);
+			if (data)
+			{
+				data->hide(*player);
+			}
 		}
 	}
 
