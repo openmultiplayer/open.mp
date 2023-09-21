@@ -122,7 +122,7 @@ private:
 			}
 
 			auto data = queryExtension<IPlayerPickupData>(peer);
-			if(!data)
+			if (!data)
 			{
 				return false;
 			}
