@@ -91,7 +91,7 @@ private:
 			}
 
 			IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
-			if (!lock.entry->isStreamedInForPlayer(peer) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry)
+			if (vehData == nullptr || !lock.entry->isStreamedInForPlayer(peer) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry)
 			{
 				return false;
 			}
@@ -126,6 +126,11 @@ private:
 			}
 
 			PlayerVehicleData* data = queryExtension<PlayerVehicleData>(peer);
+			if (!data)
+			{
+				return false;
+			}
+
 			IVehicle* vehicle = data->getVehicle();
 			if (vehicle && vehicle->getDriver() == &peer)
 			{

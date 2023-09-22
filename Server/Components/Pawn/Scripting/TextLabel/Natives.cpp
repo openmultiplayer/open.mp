@@ -152,7 +152,12 @@ SCRIPT_API_FAILRET(CreatePlayer3DTextLabel, INVALID_TEXT_LABEL_ID, int(IPlayer& 
 
 SCRIPT_API(DeletePlayer3DTextLabel, bool(IPlayer& player, IPlayerTextLabel& textlabel))
 {
-	queryExtension<IPlayerTextLabelData>(player)->release(textlabel.getID());
+	auto data = queryExtension<IPlayerTextLabelData>(player);
+	if (!data)
+	{
+		return false;
+	}
+	data->release(textlabel.getID());
 	return true;
 }
 

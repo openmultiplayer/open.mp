@@ -322,6 +322,11 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 	updateOccupied();
 
 	PlayerVehicleData* playerData = queryExtension<PlayerVehicleData>(player);
+	if (!playerData)
+	{
+		return false;
+	}
+
 	Vehicle* vehicle = static_cast<Vehicle*>(playerData->getVehicle());
 
 	if (!vehicle || vehicle->detaching)
@@ -369,6 +374,10 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player)
 {
 	PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
+	if (!data)
+	{
+		return false;
+	}
 	// Only do heavy processing if switching vehicle or switching between driver and passenger
 	int passengerSeats = Impl::getVehiclePassengerSeats(getModel());
 	// TODO: Deal with two players in the same seat.

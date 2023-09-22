@@ -120,7 +120,13 @@ private:
 			{
 				return false;
 			}
+
 			auto data = queryExtension<IPlayerPickupData>(peer);
+			if (!data)
+			{
+				return false;
+			}
+
 			int id = data->fromClientID(onPlayerPickUpPickupRPC.PickupID);
 			if (!id)
 			{

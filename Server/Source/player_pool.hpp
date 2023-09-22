@@ -1494,7 +1494,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			Player& player = static_cast<Player&>(peer);
 			PlayerState state = player.getState();
 			IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
-			if (state != PlayerState_Driver || vehData->getVehicle() == nullptr)
+			if (state != PlayerState_Driver || vehData == nullptr || vehData->getVehicle() == nullptr)
 			{
 				return false;
 			}
