@@ -277,8 +277,8 @@ public:
 					pair.second->onFree(it->second);
 				});
 			it->second->free();
+			it = components.erase(it);
 		}
-		components.clear();
 	}
 
 	auto add(IComponent* component)
