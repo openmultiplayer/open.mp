@@ -277,73 +277,108 @@ void Player::streamInForPlayer(IPlayer& other)
 	}
 }
 
-void Player::setSkin(int skin, bool send = true)
+void Player::setSkin(int skin, bool send /*= true*/)
 {
-	uint32_t customSkin = 0;
+    uint32_t customSkin = 0;
 
-	skin_ = skin;
-	if (pool_.modelsComponent)
-	{
-		pool_.modelsComponent->getBaseModel(skin_, customSkin);
-	}
+    // Set the player's skin to the specified value.
+    skin_ = skin;
 
-	if (auto models_data = queryExtension<IPlayerCustomModelsData>(*this); models_data != nullptr)
-	{
-		models_data->setCustomSkin(customSkin);
-	}
+    // If the player pool has a models component, get the base model for the skin.
+    if (pool_.modelsComponent)
+    {
+        pool_.modelsComponent->getBaseModel(skin_, customSkin);
+    }
 
-	if (!send)
-	{
-		return;
-	}
+    // If the player has a custom models data extension, set the custom skin.
+    if (auto models_data = queryExtension<IPlayerCustomModelsData>(*this); models_data != nullptr)
+    {
+        models_data->setCustomSkin(customSkin);
+    }
 
-	NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
-	setPlayerSkinRPC.PlayerID = poolID;
-	setPlayerSkinRPC.Skin = skin_;
-	setPlayerSkinRPC.CustomSkin = customSkin;
+    // If send is false, return early.
+    if (!send)
+    {
+        return;
+    }
 
-	IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
-	if (data)
-	{
-		IVehicle* vehicle = data->getVehicle();
-		if (vehicle)
-		{
-			// `SetPlayerSkin` fails in vehicles, so remove them, set the skin, and put them back in again
-			// in quick succession.
-			int seat = data->getSeat();
-			removeFromVehicle(true);
+    // Create an RPC object to set the player's skin.
+    NetCode::RPC::SetPlayerSkin setPlayerSkinRPC;
+    setPlayerSkinRPC.PlayerID = poolID;
+    setPlayerSkinRPC.Skin = skin_;
+    setPlayerSkinRPC.CustomSkin = customSkin;
 
-			// Manually broadcast to streamed players.
-			// Maybe find a better way to do this.
-			for (IPlayer* streamed : streamedFor_.entries())
-			{
-				NetworkBitStream bs;
-				setPlayerSkinRPC.isDL = streamed->getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
-				setPlayerSkinRPC.write(bs);
-				streamed->sendRPC(NetCode::RPC::SetPlayerSkin::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), NetCode::RPC::SetPlayerSkin::PacketChannel);
-			}
+    // If the player is in a vehicle, remove them from the vehicle and send the SetPlayerSkin RPC to streamed players.
+    IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
+    if (data)
+    {
+        IVehicle* vehicle = data->getVehicle();
+        if (vehicle)
+        {
+            int seat = data->getSeat();
+            removeFromVehicle(true);
 
-			// Put them back in the vehicle, but don't involve the vehicle subsystem (it does a
-			// load of other checks we know aren't required here).
-			NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
-			putPlayerInVehicleRPC.VehicleID = vehicle->getID();
-			putPlayerInVehicleRPC.SeatID = seat;
-			PacketHelper::send(putPlayerInVehicleRPC, *this);
-			// End early.
-			return;
-		}
-	}
+            // Create a buffer to hold the RPC data.
+            std::vector<uint8_t> buffer(NetCode::RPC::SetPlayerSkin::GetRPCSize());
 
-	// Not on a bike, the normal set works.
-	// Manually broadcast to streamed players.
-	// Maybe find a better way to do this.
-	for (IPlayer* streamed : streamedFor_.entries())
-	{
-		NetworkBitStream bs;
-		setPlayerSkinRPC.isDL = streamed->getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL;
-		setPlayerSkinRPC.write(bs);
-		streamed->sendRPC(NetCode::RPC::SetPlayerSkin::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), NetCode::RPC::SetPlayerSkin::PacketChannel);
-	}
+            // Write the RPC data to the buffer.
+            setPlayerSkinRPC.write(buffer.data());
+
+            // For each streamed player, check their client version and send the appropriate RPC.
+            for (IPlayer* streamed : streamedFor_.entries())
+            {
+                if (streamed->getClientVersion() >= 0x40000000)
+                {
+                    // If the client version is greater than or equal to 0x40000000, send the SetPlayerSkin RPC.
+                    streamed->sendRPC(NetCode::RPC::SetPlayerSkin::PacketID, Span<uint8_t>(buffer.data(), buffer.size()), NetCode::RPC::SetPlayerSkin::PacketChannel);
+                }
+                else
+                {
+                    // If the client version is less than 0x40000000, send the SetPlayerSkinDL RPC.
+                    NetCode::RPC::SetPlayerSkinDL setPlayerSkinDLRPC;
+                    setPlayerSkinDLRPC.PlayerID = poolID;
+                    setPlayerSkinDLRPC.Skin = skin_;
+                    setPlayerSkinDLRPC.write(buffer.data());
+
+                    streamed->sendRPC(NetCode::RPC::SetPlayerSkinDL::PacketID, Span<uint8_t>(buffer.data(), buffer.size()), NetCode::RPC::SetPlayerSkinDL::PacketChannel);
+                }
+            }
+
+            // Put the player back in the vehicle and return.
+            NetCode::RPC::PutPlayerInVehicle putPlayerInVehicleRPC;
+            putPlayerInVehicleRPC.VehicleID = vehicle->getID();
+            putPlayerInVehicleRPC.SeatID = seat;
+            PacketHelper::send(putPlayerInVehicleRPC, *this);
+            return;
+        }
+    }
+
+    // If the player is not in a vehicle, send the SetPlayerSkin RPC to streamed players.
+    // Create a buffer to hold the RPC data.
+    std::vector<uint8_t> buffer(NetCode::RPC::SetPlayerSkin::GetRPCSize());
+
+    // Write the RPC data to the buffer.
+    setPlayerSkinRPC.write(buffer.data());
+
+    // For each streamed player, check their client version and send the appropriate RPC.
+    for (IPlayer* streamed : streamedFor_.entries())
+    {
+        if (streamed->getClientVersion() >= 0x40000000)
+        {
+            // If the client version is greater than or equal to 0x40000000, send the SetPlayerSkin RPC.
+            streamed->sendRPC(NetCode::RPC::SetPlayerSkin::PacketID, Span<uint8_t>(buffer.data(), buffer.size()), NetCode::RPC::SetPlayerSkin::PacketChannel);
+        }
+        else
+        {
+            // If the client version is less than 0x40000000, send the SetPlayerSkinDL RPC.
+            NetCode::RPC::SetPlayerSkinDL setPlayerSkinDLRPC;
+            setPlayerSkinDLRPC.PlayerID = poolID;
+            setPlayerSkinDLRPC.Skin = skin_;
+            setPlayerSkinDLRPC.write(buffer.data());
+
+            streamed->sendRPC(NetCode::RPC::SetPlayerSkinDL::PacketID, Span<uint8_t>(buffer.data(), buffer.size()), NetCode::RPC::SetPlayerSkinDL::PacketChannel);
+        }
+    }
 }
 
 void Player::streamOutForPlayer(IPlayer& other)
