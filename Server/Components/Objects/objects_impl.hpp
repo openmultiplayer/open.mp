@@ -417,6 +417,8 @@ public:
 
 	void onPoolEntryDestroyed(IPlayer& player) override;
 
+	void onPoolEntryCreated(IPlayer& player) override;
+
 	void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) override;
 
 	// Pre-spawn so you can safely attach onPlayerSpawn

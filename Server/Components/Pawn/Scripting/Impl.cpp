@@ -98,7 +98,7 @@ void Scripting::addEvents() const
 	if (mgr->players)
 	{
 		mgr->players->getPlayerSpawnDispatcher().addEventHandler(PlayerEvents::Get());
-		mgr->players->getPlayerConnectDispatcher().addEventHandler(PlayerEvents::Get(), EventPriority_FairlyLow);
+		mgr->players->getPlayerConnectDispatcher().addEventHandler(PlayerEvents::Get());
 		mgr->players->getPlayerStreamDispatcher().addEventHandler(PlayerEvents::Get());
 		mgr->players->getPlayerTextDispatcher().addEventHandler(PlayerEvents::Get());
 		mgr->players->getPlayerShotDispatcher().addEventHandler(PlayerEvents::Get());

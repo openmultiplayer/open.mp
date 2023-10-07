@@ -33,20 +33,21 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
-	auto player_data = new PlayerObjectData(*this, player);
-	player.addExtension(player_data, true);
-
 	// If client is using 0.3.7 or artwork isn't enabled we can create objects right on connect.
 	// If not we need to wait for client to download custom models before creating objects.
 	static bool artwork = (core->getConfig().getBool("artwork.enable")) ? (*core->getConfig().getBool("artwork.enable")) : false;
 	if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
 		return;
 
-	player_data->setStreamedGlobalObjects(true);
-	for (IObject* o : storage)
+	auto playerData = reinterpret_cast<PlayerObjectData*>(queryExtension<IPlayerObjectData>(player));
+	if (playerData)
 	{
-		Object* obj = static_cast<Object*>(o);
-		obj->createForPlayer(player);
+		playerData->setStreamedGlobalObjects(true);
+		for (IObject* o : storage)
+		{
+			Object* obj = static_cast<Object*>(o);
+			obj->createForPlayer(player);
+		}
 	}
 }
 
@@ -166,6 +167,12 @@ void ObjectComponent::onPoolEntryDestroyed(IPlayer& player)
 			}
 		}
 	}
+}
+
+void ObjectComponent::onPoolEntryCreated(IPlayer& player)
+{
+	auto playerData = new PlayerObjectData(*this, player);
+	player.addExtension(playerData, true);
 }
 
 COMPONENT_ENTRY_POINT()
