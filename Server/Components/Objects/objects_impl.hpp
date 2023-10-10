@@ -381,11 +381,13 @@ public:
 
 	void release(int index) override
 	{
-		auto ptr = storage.get(index);
-		if (ptr)
+		auto obj = storage.get(index);
+		if (obj)
 		{
-			static_cast<Object*>(ptr)->destream();
+			obj->destream();
 			storage.release(index, false);
+			processedObjects.erase(obj);
+			attachedToPlayer.erase(obj);
 		}
 	}
 
@@ -599,6 +601,7 @@ public:
 			obj->destream();
 			storage.release(index, false);
 			attachedToPlayer_.erase(obj);
+			component_.getPlayerProcessedObjects().erase(obj);
 		}
 	}
 
