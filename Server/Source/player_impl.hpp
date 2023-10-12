@@ -606,6 +606,15 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 
 	void setSpectating(bool spectating) override
 	{
+		// Reset internal player spectating data if ID is already set to a player 
+		// Related issue: https://github.com/openmultiplayer/open.mp/issues/735
+		if (!spectating && spectateData_.spectateID != INVALID_PLAYER_ID)
+		{
+			spectateData_.type = PlayerSpectateData::ESpectateType::None;
+			spectateData_.spectateID = INVALID_PLAYER_ID;
+			spectateData_.spectating = false;
+		}
+
 		if (spectating == spectateData_.spectating)
 		{
 			return;
