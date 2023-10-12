@@ -296,6 +296,7 @@ private:
 	bool enabled = true;
 	uint16_t modelsPort = 7777;
 	String modelsPath = "models";
+	String webServerBindAddress = "";
 	String cdn = "";
 	bool usingCdn = false;
 	uint16_t httpThreads = 50; // default max_players is 50
@@ -414,6 +415,7 @@ public:
 			config.setString("artwork.models_path", modelsPath);
 			config.setInt("network.http_threads", httpThreads);
 			config.setInt("artwork.port", modelsPort);
+			config.setString("artwork.web_server_bind", webServerBindAddress);
 		}
 		else
 		{
@@ -440,6 +442,13 @@ public:
 			{
 				config.setInt("artwork.port", modelsPort);
 			}
+			// We provide a way for users to set webserver bind address, sometimes they want it
+			// To be different rather than 127.0.0.1 or server's public IP. For example, in some
+			// Situations you want to bind it to 0.0.0.0, like in a docker container.
+			if (config.getType("artwork.web_server_bind") == ConfigOptionType_None)
+			{
+				config.setString("artwork.web_server_bind", webServerBindAddress);
+			}
 		}
 	}
 
@@ -453,6 +462,7 @@ public:
 		modelsPath = String(core->getConfig().getString("artwork.models_path"));
 		cdn = String(core->getConfig().getString("artwork.cdn"));
 		httpThreads = *core->getConfig().getInt("network.http_threads");
+		webServerBindAddress = String(core->getConfig().getString("artwork.web_server_bind"));
 
 		NetCode::RPC::RequestTXD::addEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::RequestDFF::addEventHandler(*core, &requestDownloadLinkHandler);
@@ -521,7 +531,21 @@ public:
 			return;
 		}
 
-		webServer = new WebServer(core, modelsPath, core->getConfig().getString("network.bind"), *core->getConfig().getInt("artwork.port"), core->getConfig().getString("network.public_addr"), httpThreads);
+		StringView bindAddress;
+		StringView networkBindAddress = core->getConfig().getString("network.bind");
+		if (webServerBindAddress.size())
+		{
+			bindAddress = StringView(webServerBindAddress.c_str(), webServerBindAddress.size());
+		}
+		else
+		{
+			if (!networkBindAddress.empty())
+			{
+				bindAddress = networkBindAddress;
+			}
+		}
+
+		webServer = new WebServer(core, modelsPath, bindAddress, *core->getConfig().getInt("artwork.port"), core->getConfig().getString("network.public_addr"), httpThreads);
 
 		if (webServer->is_running())
 		{
