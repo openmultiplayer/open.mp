@@ -1722,7 +1722,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				continue;
 			}
+
 			Player* other = static_cast<Player*>(p);
+
+			// Related issue: https://github.com/openmultiplayer/open.mp/issues/735
+			// Disable spectator's spectating state when spectated player is disconnected
+			// This also makes spectateData values to be accurate and not remain with old data
+			if (other->spectateData_.type == PlayerSpectateData::ESpectateType::Player && other->spectateData_.spectateID == player.getID())
+			{
+				other->setSpectating(false);
+			}
+
 			if (player.streamedFor_.valid(other->poolID))
 			{
 				--other->numStreamed_;
