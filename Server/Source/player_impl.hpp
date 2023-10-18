@@ -606,21 +606,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 
 	void setSpectating(bool spectating) override
 	{
-		NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
-
-		// Reset internal player spectating data if ID is already set to a player
-		// Related issue: https://github.com/openmultiplayer/open.mp/issues/735
-		// UPD: Also send player spectating RPC to disable it first in client internally
-		if (spectating && spectateData_.type == PlayerSpectateData::ESpectateType::Player && spectateData_.spectateID != INVALID_PLAYER_ID)
-		{
-			spectateData_.type = PlayerSpectateData::ESpectateType::None;
-			spectateData_.spectateID = INVALID_PLAYER_ID;
-			spectateData_.spectating = false;
-
-			togglePlayerSpectatingRPC.Enable = spectateData_.spectating;
-			PacketHelper::send(togglePlayerSpectatingRPC, *this);
-		}
-
 		if (spectating == spectateData_.spectating)
 		{
 			return;
@@ -646,6 +631,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 			// Is called in here, which it shouldn't according to samp structure.
 		}
 
+		NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
 		spectateData_.spectating = spectating;
 		togglePlayerSpectatingRPC.Enable = spectating;
 		PacketHelper::send(togglePlayerSpectatingRPC, *this);
