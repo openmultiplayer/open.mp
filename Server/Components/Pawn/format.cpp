@@ -429,6 +429,7 @@ void AddInt(U** buf_p, size_t& maxlen, int val, int width, int flags)
 		if (flags & ZEROPAD)
 		{
 			*buf++ = '-';
+			maxlen--;
 		}
 		else
 		{
