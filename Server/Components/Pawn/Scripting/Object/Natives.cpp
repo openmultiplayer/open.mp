@@ -282,6 +282,7 @@ SCRIPT_API(GetObjectMaterial, bool(IObject& object, int materialIndex, int& mode
 	bool result = object.getMaterialData(materialIndex, data);
 	if (result)
 	{
+		modelid = data->model;
 		textureLibrary = data->textOrTXD;
 		textureName = data->fontOrTexture;
 		materialColour = data->materialColour.RGBA();
