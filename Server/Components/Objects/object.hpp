@@ -213,9 +213,11 @@ protected:
 		moving_ = true;
 		moveData_ = data;
 
-		/// targetRot being NAN will result in rotSpeed being NAN resulting in no rotation
 		if (moveData_.targetRot.x == -1000.0f && moveData_.targetRot.y == -1000.0f && moveData_.targetRot.z == -1000.0f)
 		{
+			/// Send client current object rotation.
+			moveData_.targetRot = this->rot_;
+			/// targetRot being NAN will result in rotSpeed being NAN resulting in no server side rotation
 			rotSpeed_ = NAN;
 		}
 		else
