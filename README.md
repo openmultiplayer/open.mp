@@ -27,7 +27,7 @@
 ## Tools
 
 * [CMake 3.19+](https://cmake.org/)
-* [Conan 1.57+](https://conan.io/) [(You can't use conan v2.x, so may need to download directly from github releases)](https://github.com/conan-io/conan/releases)
+* [Conan 1.57+](https://conan.io/) (You can't use conan v2.x, so may need to [download directly from github releases](https://github.com/conan-io/conan/releases) or install it using `pip3 install conan==1.57.0`)
 
 ## Tools on Windows
 
