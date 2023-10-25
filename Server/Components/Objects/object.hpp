@@ -213,16 +213,30 @@ protected:
 		moving_ = true;
 		moveData_ = data;
 
-		if (moveData_.targetRot.x == -1000.0f && moveData_.targetRot.y == -1000.0f && moveData_.targetRot.z == -1000.0f)
+		// Send client current object rotation when passed rotation is smaller than or equal to -1000
+		if (moveData_.targetRot.x <= -1000.0f)
 		{
-			/// Send client current object rotation.
-			moveData_.targetRot = this->rot_;
-			/// targetRot being NAN will result in rotSpeed being NAN resulting in no server side rotation
+			moveData_.targetRot.x = rot_.x;
+		}
+
+		if (moveData_.targetRot.y <= -1000.0f)
+		{
+			moveData_.targetRot.y = rot_.y;
+		}
+
+		if (moveData_.targetRot.z <= -1000.0f)
+		{
+			moveData_.targetRot.z = rot_.z;
+		}
+
+		float rotDistance = glm::distance(rot_, moveData_.targetRot);
+		if (rotDistance == 0.0f)
+		{
 			rotSpeed_ = NAN;
 		}
 		else
 		{
-			rotSpeed_ = glm::distance(rot_, moveData_.targetRot) * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
+			rotSpeed_ = rotDistance * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
 		}
 
 		return makeMovePacket();
