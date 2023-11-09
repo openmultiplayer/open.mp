@@ -36,7 +36,7 @@ private:
 				return false;
 			}
 
-			if (onPlayerDamageActorRPC.Damage <= 0.0f)
+			if (onPlayerDamageActorRPC.Damage < 0.0f)
 			{
 				return false;
 			}
