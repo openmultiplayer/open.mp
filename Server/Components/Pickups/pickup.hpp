@@ -156,6 +156,7 @@ public:
 	void setVirtualWorld(int vw) override
 	{
 		virtualWorld = vw;
+		restream();
 	}
 
 	int getID() const override

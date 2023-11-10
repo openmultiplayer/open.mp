@@ -9,6 +9,7 @@
 #include "legacy_network_impl.hpp"
 #include "Query/query.hpp"
 #include "raknet/../../SAMPRakNet.hpp"
+#include <sstream>
 #include <netcode.hpp>
 #include <raknet/PacketEnumerations.h>
 #include <raknet/RakPeer.h>
@@ -790,13 +791,14 @@ void RakNetLegacyNetwork::start()
 	bool allow037 = *config.getBool("network.allow_037_clients");
 
 	query.setCore(core);
-	query.setRuleValue<false>("version", !allow037 ? "0.3.DL-R1" : "0.3.7-R2");
-	query.setRuleValue<false>("artwork", artwork ? "Yes" : "No");
 
-	if (allow037)
-	{
-		query.setRuleValue<false>("allow_DL", "Yes");
-	}
+	std::stringstream version;
+	version << "omp " << OMP_VERSION_MAJOR << "." << OMP_VERSION_MINOR << "." << OMP_VERSION_PATCH << "." << BUILD_NUMBER;
+	query.setRuleValue<false>("version", version.str());
+	// Send as a rule to announce which clients are allowed to join
+	query.setRuleValue<false>("allowed_clients", !allow037 ? "0.3.DL" : "0.3.7, 0.3.DL");
+
+	query.setRuleValue<false>("artwork", artwork ? "Yes" : "No");
 
 	query.setMaxPlayers(maxPlayers);
 	query.buildPlayerDependentBuffers();
