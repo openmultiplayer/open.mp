@@ -824,11 +824,13 @@ private:
 class HTTPAsyncIO
 {
 public:
-	HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data)
+	HTTPAsyncIO(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data, bool force_v4 = false, StringView bindAddr = "")
 		: handler(handler)
 		, type(type)
 		, url(url)
 		, data(data)
+		, force_v4(force_v4)
+		, bindAddr(bindAddr)
 		, finished(false)
 		, response(0)
 	{
@@ -903,6 +905,12 @@ private:
 		request.set_write_timeout(Seconds(5));
 		request.set_keep_alive(true);
 
+		if (params->force_v4)
+			request.set_address_family(AF_INET);
+
+		if (!params->bindAddr.empty())
+			request.set_interface(params->bindAddr);
+
 		// Run request
 		httplib::Result res(nullptr, httplib::Error::Canceled);
 		switch (type)
@@ -936,6 +944,9 @@ private:
 	HTTPRequestType type;
 	String url;
 	String data;
+
+	bool force_v4;
+	String bindAddr;
 
 	std::atomic_bool finished;
 	int response;
@@ -2090,5 +2101,11 @@ public:
 			}
 		}
 		return false;
+	}
+
+	void requestHTTP4(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data) override
+	{
+		HTTPAsyncIO* httpIO = new HTTPAsyncIO(handler, type, url, data, true, config.getString("network.bind"));
+		httpFutures.emplace(httpIO);
 	}
 };

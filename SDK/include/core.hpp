@@ -344,6 +344,13 @@ struct ICore : public IExtensible, public ILogger
 			network->update();
 		}
 	}
+
+	/// Launch an HTTP request (IPV4) and read the response
+	/// @param handler The handler that will handle the response
+	/// @param type The request type
+	/// @param url The URL
+	/// @param[opt] data The POST data
+	virtual void requestHTTP4(HTTPResponseHandler* handler, HTTPRequestType type, StringView url, StringView data = StringView()) = 0;
 };
 
 /// Helper class to get streamer config properties
