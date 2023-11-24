@@ -586,12 +586,35 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 #endif
 }
 
+void RakNetLegacyNetwork::synchronizeBans()
+{
+	char addr[22] = { 0 };
+	unsigned short port;
+	for (IPlayer* player : core->getPlayers().entries())
+	{
+		const PeerNetworkData& netData = player->getNetworkData();
+		if (netData.network != this)
+		{
+			continue;
+		}
+
+		const PeerNetworkData::NetworkID& nid = netData.networkID;
+		const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
+		rakNetServer.GetPlayerIPFromID(rid, addr, &port);
+		if (rakNetServer.IsBanned(addr))
+		{
+			player->kick();
+		}
+	}
+}
+
 void RakNetLegacyNetwork::ban(const BanEntry& entry, Milliseconds expire)
 {
 	// Only support ipv4
 	if (entry.address != StringView("127.0.0.1"))
 	{
 		rakNetServer.AddToBanList(entry.address.data(), expire.count());
+		synchronizeBans();
 	}
 }
 

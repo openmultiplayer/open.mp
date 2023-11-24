@@ -357,6 +357,9 @@ public:
 
 	void handlePreConnectPacketData(int playerIndex);
 
+	/// Synchronize players after banning an IP, kicking any that match the banned IP
+	void synchronizeBans();
+
 	NetworkStats getStatistics(IPlayer* player = nullptr) override;
 
 	unsigned getPing(const IPlayer& peer) override
