@@ -859,7 +859,7 @@ void RakNetLegacyNetwork::start()
 		if (*config.getBool("announce"))
 		{
 			const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
-			core->requestHTTP(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
+			core->requestHTTP4(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
 		}
 	}
 
