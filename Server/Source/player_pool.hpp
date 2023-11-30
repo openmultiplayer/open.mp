@@ -41,6 +41,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	float* markersLimitRadius;
 	int* gameTimeUpdateRate;
 	bool* useAllAnimations_;
+	bool* validateAnimations_;
 	bool* allowInteriorWeapons_;
 	int* maxBots;
 	StaticArray<bool, 256> allowNickCharacter;
@@ -1634,7 +1635,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, allowInteriorWeapons_, fixesComponent_);
+		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
@@ -1692,20 +1693,24 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		}
 
 		// Set player's time & weather to global ones.
-		static int* hour = core.getConfig().getInt("game.time");
-		static int* weather = core.getConfig().getInt("game.weather");
+		IConfig& config = core.getConfig();
+		static int* hour = config.getInt("game.time");
+		static int* weather = config.getInt("game.weather");
 
 		player.time_ = duration_cast<Minutes>(Hours(*hour));
 		player.weather_ = *weather;
 		player.gravity_ = core.getGravity();
 
-		core.logLn(
-			LogLevel::Message,
-			"[%sjoin] %.*s has joined the server (%d:%s)",
-			player.isBot_ ? "npc:" : "",
-			PRINT_VIEW(player.name_),
-			player.poolID,
-			addressString.data());
+		if (config.getBool("logging.log_connection_messages"))
+		{
+			core.logLn(
+				LogLevel::Message,
+				"[%sjoin] %.*s has joined the server (%d:%s)",
+				player.isBot_ ? "npc:" : "",
+				PRINT_VIEW(player.name_),
+				player.poolID,
+				addressString.data());
+		}
 
 		NetCode::RPC::SendGameTimeUpdate RPC;
 		RPC.Time = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count();
@@ -1756,13 +1761,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		packet.Reason = reason;
 		PacketHelper::broadcast(packet, *this);
 
-		core.logLn(
-			LogLevel::Message,
-			"[%spart] %.*s has left the server (%d:%d)",
-			player.isBot_ ? "npc:" : "",
-			PRINT_VIEW(player.name_),
-			player.poolID,
-			reason);
+		if (core.getConfig().getBool("logging.log_connection_messages"))
+		{
+			core.logLn(
+				LogLevel::Message,
+				"[%spart] %.*s has left the server (%d:%d)",
+				player.isBot_ ? "npc:" : "",
+				PRINT_VIEW(player.name_),
+				player.poolID,
+				reason);
+		}
 
 		auto& secondaryPool = player.isBot_ ? botList : playerList;
 		secondaryPool.erase(&player);
@@ -1969,6 +1977,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		markersUpdateRate = config.getInt("network.player_marker_sync_rate");
 		gameTimeUpdateRate = config.getInt("network.time_sync_rate");
 		useAllAnimations_ = config.getBool("game.use_all_animations");
+		validateAnimations_ = config.getBool("game.validate_animations");
 		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
 		maxBots = config.getInt("max_bots");
 

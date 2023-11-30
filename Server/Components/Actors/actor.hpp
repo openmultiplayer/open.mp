@@ -45,6 +45,7 @@ private:
 	AnimationData animation_;
 	ActorSpawnData spawnData_;
 	bool* allAnimationLibraries_;
+	bool* validateAnimations_;
 	ICustomModelsComponent*& modelsComponent_;
 	IFixesComponent* fixesComponent_;
 
@@ -102,7 +103,7 @@ public:
 		}
 	}
 
-	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, ICustomModelsComponent*& modelsComponent, IFixesComponent* fixesComponent)
+	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, bool* validateAnimations, ICustomModelsComponent*& modelsComponent, IFixesComponent* fixesComponent)
 		: virtualWorld_(0)
 		, skin_(skin)
 		, invulnerable_(true)
@@ -112,6 +113,7 @@ public:
 		, health_(100.f)
 		, spawnData_ { pos, angle, skin }
 		, allAnimationLibraries_(allAnimationLibraries)
+		, validateAnimations_(validateAnimations)
 		, modelsComponent_(modelsComponent)
 		, fixesComponent_(fixesComponent)
 	{
@@ -144,7 +146,7 @@ public:
 
 	void applyAnimation(const AnimationData& animation) override
 	{
-		if (!animationLibraryValid(animation.lib, *allAnimationLibraries_))
+		if ((!validateAnimations_ || *validateAnimations_) && !animationLibraryValid(animation.lib, *allAnimationLibraries_))
 		{
 			return;
 		}

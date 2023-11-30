@@ -135,6 +135,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	TimePoint lastScoresAndPings_;
 	bool kicked_;
 	bool* allAnimationLibraries_;
+	bool* validateAnimations_;
 	bool* allowInteriorWeapons_;
 
 	IFixesComponent* fixesComponent_;
@@ -202,7 +203,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
-	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, bool* allowInteriorWeapons, IFixesComponent* fixesComponent)
+	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, bool* validateAnimations, bool* allowInteriorWeapons, IFixesComponent* fixesComponent)
 		: pool_(pool)
 		, netData_(netData)
 		, version_(params.version)
@@ -259,6 +260,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, lastScoresAndPings_(Time::now())
 		, kicked_(false)
 		, allAnimationLibraries_(allAnimationLibraries)
+		, validateAnimations_(validateAnimations)
 		, allowInteriorWeapons_(allowInteriorWeapons)
 		, fixesComponent_(fixesComponent)
 	{
@@ -751,7 +753,7 @@ private:
 public:
 	void applyAnimation(const AnimationData& animation, PlayerAnimationSyncType syncType) override
 	{
-		if (!animationLibraryValid(animation.lib, *allAnimationLibraries_))
+		if ((!validateAnimations_ || *validateAnimations_) && !animationLibraryValid(animation.lib, *allAnimationLibraries_))
 		{
 			return;
 		}
