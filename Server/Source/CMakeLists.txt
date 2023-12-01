@@ -43,7 +43,7 @@ else()
 endif()
 
 if(UNIX AND NOT SHARED_OPENSSL)
-	target_compile_definitions(SERVER PRIVATE OMP_STATIC_OPENSSL)
+	target_compile_definitions(Server PRIVATE OMP_STATIC_OPENSSL)
 endif()
 
 target_compile_definitions(Server PRIVATE
