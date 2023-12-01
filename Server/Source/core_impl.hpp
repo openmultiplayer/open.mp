@@ -1514,6 +1514,10 @@ public:
 
 		printLn("Starting open.mp server (%u.%u.%u.%u) from commit %.*s", getVersion().major, getVersion().minor, getVersion().patch, getVersion().prerel, PRINT_VIEW(getVersionHash()));
 
+#ifdef OMP_STATIC_OPENSSL
+		logLn(LogLevel::Warning, "Running static OpenSSL build - plugins that use OpenSSL might crash (discord-connector, pawn-requests). It's recommended to use the dynssl build.");
+#endif
+
 		// Try to load components from the current directory
 		loadComponents("components");
 
