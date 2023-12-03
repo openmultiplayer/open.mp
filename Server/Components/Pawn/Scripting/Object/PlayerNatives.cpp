@@ -243,7 +243,7 @@ SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object,
 	{
 		textureLibrary = data->textOrTXD;
 		textureName = data->fontOrTexture;
-		materialColour = data->materialColour.RGBA();
+		materialColour = data->materialColour.ARGB();
 	}
 	return result;
 }
@@ -259,8 +259,8 @@ SCRIPT_API(GetPlayerObjectMaterialText, bool(IPlayer& player, IPlayerObject& obj
 		fontFace = data->fontOrTexture;
 		fontSize = data->fontSize;
 		bold = data->bold;
-		fontColour = data->fontColour.RGBA();
-		backgroundColour = data->backgroundColour.RGBA();
+		fontColour = data->fontColour.ARGB();
+		backgroundColour = data->backgroundColour.ARGB();
 		textAlignment = data->alignment;
 	}
 	return result;
