@@ -20,6 +20,7 @@ class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandl
 {
 private:
 	ICore* core = nullptr;
+	IPlayerPool* players = nullptr;
 	MarkedPoolStorage<Vehicle, IVehicle, 1, VEHICLE_POOL_SIZE> storage;
 	DefaultEventDispatcher<VehicleEventHandler> eventDispatcher;
 	StaticArray<uint8_t, MAX_VEHICLE_MODELS> preloadModels;
@@ -246,7 +247,7 @@ private:
 				enterExitRPC.EventType = VehicleSCMEvent_EnterExitModShop;
 				enterExitRPC.Arg1 = scmEvent.Arg1;
 				enterExitRPC.Arg2 = scmEvent.Arg2;
-				PacketHelper::broadcastToSome(enterExitRPC, vehicle.streamedForPlayers(), &peer);
+				PacketHelper::broadcastToSome(enterExitRPC, self.core->getPlayers(), vehicle.streamedForPlayers(), &peer);
 				break;
 			}
 			}
@@ -294,7 +295,7 @@ private:
 public:
 	IPlayerPool& getPlayers()
 	{
-		return core->getPlayers();
+		return *players;
 	}
 
 	IEventDispatcher<VehicleEventHandler>& getEventDispatcher() override
@@ -331,10 +332,10 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
-			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
-			core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
-			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
+			getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
+			getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
+			getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
+			getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerEnterVehicle::removeEventHandler(*core, &playerEnterVehicleHandler);
 			NetCode::RPC::OnPlayerExitVehicle::removeEventHandler(*core, &playerExitVehicleHandler);
 			NetCode::RPC::SetVehicleDamageStatus::removeEventHandler(*core, &vehicleDamageStatusHandler);
@@ -346,11 +347,12 @@ public:
 	void onLoad(ICore* core) override
 	{
 		this->core = core;
+		this->players = &core->getPlayers();
 		core->getEventDispatcher().addEventHandler(this);
-		core->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
-		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
-		core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
-		core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
+		getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
+		getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+		getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
+		getPlayers().getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);
 		NetCode::RPC::OnPlayerExitVehicle::addEventHandler(*core, &playerExitVehicleHandler);
 		NetCode::RPC::SetVehicleDamageStatus::addEventHandler(*core, &vehicleDamageStatusHandler);

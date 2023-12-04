@@ -48,6 +48,7 @@ private:
 	bool* validateAnimations_;
 	ICustomModelsComponent*& modelsComponent_;
 	IFixesComponent* fixesComponent_;
+	IPlayerPool& players_;
 
 	void restream()
 	{
@@ -103,7 +104,7 @@ public:
 		}
 	}
 
-	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, bool* validateAnimations, ICustomModelsComponent*& modelsComponent, IFixesComponent* fixesComponent)
+	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, bool* validateAnimations, ICustomModelsComponent*& modelsComponent, IFixesComponent* fixesComponent, IPlayerPool& players)
 		: virtualWorld_(0)
 		, skin_(skin)
 		, invulnerable_(true)
@@ -116,6 +117,7 @@ public:
 		, validateAnimations_(validateAnimations)
 		, modelsComponent_(modelsComponent)
 		, fixesComponent_(fixesComponent)
+		, players_(players)
 	{
 	}
 
@@ -125,7 +127,7 @@ public:
 		NetCode::RPC::SetActorHealthForPlayer RPC;
 		RPC.ActorID = poolID;
 		RPC.Health = health_;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+		PacketHelper::broadcastToSome(RPC, players_, streamedFor_.entries());
 	}
 
 	float getHealth() const override
@@ -196,7 +198,7 @@ public:
 
 		NetCode::RPC::ClearActorAnimationsForPlayer RPC;
 		RPC.ActorID = poolID;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+		PacketHelper::broadcastToSome(RPC, players_, streamedFor_.entries());
 	}
 
 	bool isStreamedInForPlayer(const IPlayer& player) const override
@@ -264,7 +266,7 @@ public:
 		NetCode::RPC::SetActorPosForPlayer RPC;
 		RPC.ActorID = poolID;
 		RPC.Pos = position;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+		PacketHelper::broadcastToSome(RPC, players_, streamedFor_.entries());
 	}
 
 	GTAQuat getRotation() const override
@@ -279,7 +281,7 @@ public:
 		NetCode::RPC::SetActorFacingAngleForPlayer RPC;
 		RPC.ActorID = poolID;
 		RPC.Angle = angle_;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+		PacketHelper::broadcastToSome(RPC, players_, streamedFor_.entries());
 	}
 
 	void setSkin(int id) override

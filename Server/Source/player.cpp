@@ -374,3 +374,13 @@ void Player::ban(StringView reason)
 	pool_.core.getConfig().writeBans();
 	kick();
 }
+
+void Player::broadcastRPCToStreamed(int id, Span<uint8_t> data, int channel, bool skipFrom) const
+{
+	pool_.broadcastRPC(id, data, channel, streamedForPlayers(), skipFrom ? this : nullptr);
+}
+
+void Player::broadcastPacketToStreamed(Span<uint8_t> data, int channel, bool skipFrom) const
+{
+	pool_.broadcastPacket(data, channel, streamedForPlayers(), skipFrom ? this : nullptr);
+}
