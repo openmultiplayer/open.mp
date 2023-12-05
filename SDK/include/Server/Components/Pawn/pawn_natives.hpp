@@ -344,7 +344,7 @@ using OutputOnlyString = std::variant<bool, StringView, Impl::String>;
 		ParamCast(AMX* amx, cell* params, int idx, int& error = ParamCastErrorCode_None)          \
 		{                                                                                         \
 			value_ = ParamLookup<type>::Val(params[idx]);                                         \
-			if (value_)                                                                           \
+			if (value_ == nullptr)                                                                \
 			{                                                                                     \
 				error = ParamCastErrorCode_Fail;                                                  \
 			}                                                                                     \
