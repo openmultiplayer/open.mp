@@ -23,7 +23,7 @@ template <>
 class ParamCast<PawnScript&>
 {
 public:
-	ParamCast(AMX* amx, cell* params, int idx, int& error = ParamCastErrorCode_None)
+	ParamCast(AMX* amx, cell* params, int idx)
 		: value_(PawnManager::Get()->amxToScript_.find(amx)->second)
 	{
 	}
@@ -38,6 +38,11 @@ public:
 	operator PawnScript&()
 	{
 		return *value_;
+	}
+
+	bool Error() const
+	{
+		return false;
 	}
 
 	static constexpr int Size = 0;
