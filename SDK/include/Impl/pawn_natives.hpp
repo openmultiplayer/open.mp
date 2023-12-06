@@ -11,7 +11,7 @@
 #include <variant>
 #include <pawn-natives/NativeFunc.hpp>
 
-#include "pawn.hpp"
+#include <Server/Components/Pawn/pawn.hpp>
 
 /// The bool is used because variant is initialised to index 0 by default
 using OutputOnlyString = std::variant<bool, StringView, Impl::String>;

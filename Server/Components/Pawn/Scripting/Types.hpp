@@ -15,7 +15,7 @@
 #include "../Manager/Manager.hpp"
 #include "Impl.hpp"
 #include "sdk.hpp"
-#include <Server/Components/Pawn/pawn_natives.hpp>
+#include <Impl/pawn_natives.hpp>
 
 namespace pawn_natives
 {
