@@ -1,7 +1,7 @@
 #pragma once
 
 // This file should only be included in one place.
-#include "pawn.hpp"
+#include <Server/Components/Pawn/pawn.hpp>
 
 #if defined PAWN_NATIVES_HAS_FUNC
 #include <pawn-natives/NativesMain.hpp>
