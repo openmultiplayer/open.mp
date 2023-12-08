@@ -15,7 +15,7 @@
 #include "../Manager/Manager.hpp"
 #include "Impl.hpp"
 #include "sdk.hpp"
-#include <Server/Components/Pawn/pawn_natives.hpp>
+#include <Server/Components/Pawn/Impl/pawn_natives.hpp>
 
 namespace pawn_natives
 {
@@ -38,6 +38,11 @@ public:
 	operator PawnScript&()
 	{
 		return *value_;
+	}
+
+	bool Error() const
+	{
+		return false;
 	}
 
 	static constexpr int Size = 0;
