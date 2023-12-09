@@ -657,6 +657,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			Player& player = static_cast<Player&>(peer);
 
+			uint8_t slot = WeaponSlotData(footSync.Weapon).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				return false;
+			}
+
 			footSync.PlayerID = player.poolID;
 			footSync.Rotation *= player.rotTransform_;
 
@@ -1091,6 +1097,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false;
 			}
+
+			uint8_t slot = WeaponSlotData(vehicleSync.WeaponID).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				return false;
+			}
+
 			IVehicle& vehicle = *vehiclePtr;
 			Player& player = static_cast<Player&>(peer);
 			player.pos_ = vehicleSync.Position;
@@ -1335,9 +1348,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false;
 			}
-			IVehicle& vehicle = *vehiclePtr;
 
+			uint8_t slot = WeaponSlotData(passengerSync.WeaponID).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				return false;
+			}
+
+			IVehicle& vehicle = *vehiclePtr;
 			Player& player = static_cast<Player&>(peer);
+
 			if (vehicle.isRespawning())
 				return false;
 
