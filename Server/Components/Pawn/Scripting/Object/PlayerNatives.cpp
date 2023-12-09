@@ -241,6 +241,7 @@ SCRIPT_API(GetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object,
 	bool result = object.getMaterialData(materialIndex, data);
 	if (result)
 	{
+		modelid = data->model;
 		textureLibrary = data->textOrTXD;
 		textureName = data->fontOrTexture;
 		materialColour = data->materialColour.ARGB();
