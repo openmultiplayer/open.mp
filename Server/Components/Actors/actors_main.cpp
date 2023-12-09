@@ -41,6 +41,15 @@ private:
 				return false;
 			}
 
+			auto slot = WeaponSlotData(onPlayerDamageActorRPC.WeaponID).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				if (onPlayerDamageActorRPC.WeaponID < 49 || onPlayerDamageActorRPC.WeaponID > 54)
+				{
+					return false;
+				}
+			}
+
 			if (onPlayerDamageActorRPC.Bodypart < BodyPart_Torso || onPlayerDamageActorRPC.Bodypart > BodyPart_Head)
 			{
 				return false;
