@@ -213,7 +213,17 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					{
 						return false;
 					}
-					if (!from->areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+
+					auto slot = WeaponSlotData(onPlayerGiveTakeDamageRPC.WeaponID).slot();
+					if (slot == INVALID_WEAPON_SLOT)
+					{
+						if (onPlayerGiveTakeDamageRPC.WeaponID < 49 || onPlayerGiveTakeDamageRPC.WeaponID > 54)
+						{
+							return false;
+						}
+					}
+
+					if (!from->areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 54)
 					{
 						// They were shooting and shouldn't be.
 						return false;
@@ -247,7 +257,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					return false;
 				}
-				if (!peer.areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+
+				auto slot = WeaponSlotData(onPlayerGiveTakeDamageRPC.WeaponID).slot();
+				if (slot == INVALID_WEAPON_SLOT)
+				{
+					return false;
+				}
+
+				if (!peer.areWeaponsAllowed() && (0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 46))
 				{
 					// They were shooting and shouldn't be.
 					return false;
