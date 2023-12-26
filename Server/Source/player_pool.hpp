@@ -10,6 +10,7 @@
 
 #include "player_impl.hpp"
 #include <Server/Components/Console/console.hpp>
+#include <utils.hpp>
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
 {
@@ -213,7 +214,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					{
 						return false;
 					}
-					if (!from->areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+
+					if (!IsWeaponForTakenDamageValid(onPlayerGiveTakeDamageRPC.WeaponID))
+					{
+						return false;
+					}
+
+					if (!from->areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 54)
 					{
 						// They were shooting and shouldn't be.
 						return false;
@@ -247,7 +254,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				{
 					return false;
 				}
-				if (!peer.areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 47)
+
+				auto slot = WeaponSlotData(onPlayerGiveTakeDamageRPC.WeaponID).slot();
+				if (slot == INVALID_WEAPON_SLOT)
+				{
+					return false;
+				}
+
+				if (!peer.areWeaponsAllowed() && (0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 46))
 				{
 					// They were shooting and shouldn't be.
 					return false;
@@ -656,6 +670,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
+
+			uint8_t slot = WeaponSlotData(footSync.Weapon).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				return false;
+			}
 
 			footSync.PlayerID = player.poolID;
 			footSync.Rotation *= player.rotTransform_;
@@ -1091,6 +1111,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false;
 			}
+
+			uint8_t slot = WeaponSlotData(vehicleSync.WeaponID).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				return false;
+			}
+
 			IVehicle& vehicle = *vehiclePtr;
 			Player& player = static_cast<Player&>(peer);
 			player.pos_ = vehicleSync.Position;
@@ -1335,9 +1362,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false;
 			}
-			IVehicle& vehicle = *vehiclePtr;
 
+			uint8_t slot = WeaponSlotData(passengerSync.WeaponID).slot();
+			if (slot == INVALID_WEAPON_SLOT)
+			{
+				return false;
+			}
+
+			IVehicle& vehicle = *vehiclePtr;
 			Player& player = static_cast<Player&>(peer);
+
 			if (vehicle.isRespawning())
 				return false;
 

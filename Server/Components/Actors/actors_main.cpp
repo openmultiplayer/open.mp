@@ -8,6 +8,7 @@
 
 #include "actor.hpp"
 #include <Server/Components/Fixes/fixes.hpp>
+#include <utils.hpp>
 
 class ActorsComponent final : public IActorsComponent, public PlayerConnectEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
@@ -37,6 +38,11 @@ private:
 			}
 
 			if (onPlayerDamageActorRPC.Damage < 0.0f)
+			{
+				return false;
+			}
+
+			if (!IsWeaponForTakenDamageValid(onPlayerDamageActorRPC.WeaponID))
 			{
 				return false;
 			}
