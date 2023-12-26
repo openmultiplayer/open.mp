@@ -54,7 +54,14 @@ SCRIPT_API(atan2, float(float y, float x))
 
 SCRIPT_API(floatstr, float(std::string const& string))
 {
-	return std::stof(string);
+	try
+	{
+		return std::stof(string);
+	}
+	catch (std::exception e)
+	{
+		return 0.0f;
+	}
 }
 
 SCRIPT_API(GetPlayerPoolSize, int())
