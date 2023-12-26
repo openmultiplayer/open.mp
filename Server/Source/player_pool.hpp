@@ -10,6 +10,7 @@
 
 #include "player_impl.hpp"
 #include <Server/Components/Console/console.hpp>
+#include <utils.hpp>
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
 {
@@ -214,13 +215,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 						return false;
 					}
 
-					auto slot = WeaponSlotData(onPlayerGiveTakeDamageRPC.WeaponID).slot();
-					if (slot == INVALID_WEAPON_SLOT)
+					if (!IsWeaponForTakenDamageValid(onPlayerGiveTakeDamageRPC.WeaponID))
 					{
-						if (onPlayerGiveTakeDamageRPC.WeaponID < 49 || onPlayerGiveTakeDamageRPC.WeaponID > 54)
-						{
-							return false;
-						}
+						return false;
 					}
 
 					if (!from->areWeaponsAllowed() && 0 < onPlayerGiveTakeDamageRPC.WeaponID && onPlayerGiveTakeDamageRPC.WeaponID <= 54)

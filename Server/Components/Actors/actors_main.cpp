@@ -8,6 +8,7 @@
 
 #include "actor.hpp"
 #include <Server/Components/Fixes/fixes.hpp>
+#include <utils.hpp>
 
 class ActorsComponent final : public IActorsComponent, public PlayerConnectEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
 {
@@ -41,13 +42,9 @@ private:
 				return false;
 			}
 
-			auto slot = WeaponSlotData(onPlayerDamageActorRPC.WeaponID).slot();
-			if (slot == INVALID_WEAPON_SLOT)
+			if (!IsWeaponForTakenDamageValid(onPlayerDamageActorRPC.WeaponID))
 			{
-				if (onPlayerDamageActorRPC.WeaponID < 49 || onPlayerDamageActorRPC.WeaponID > 54)
-				{
-					return false;
-				}
+				return false;
 			}
 
 			if (onPlayerDamageActorRPC.Bodypart < BodyPart_Torso || onPlayerDamageActorRPC.Bodypart > BodyPart_Head)
