@@ -473,6 +473,11 @@ int AMXAPI amx_Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
 
 	if (amx->stk < amx->hea + cells * sizeof(cell))
 	{
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Unable to find enough memory for your data.");
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Size: %d bytes, Available space: %d bytes, Need extra size: %d bytes",
+			amx->hea + cells * sizeof(cell), amx->stk, amx->hea + cells * sizeof(cell) - amx->stk);
+		PawnManager::Get()->core->logLn(LogLevel::Error, "You can increase your available memory size by using `#pragma dynamic %d`.",
+			amx->hea / sizeof(cell) + cells);
 		return AMX_ERR_MEMORY;
 	}
 
