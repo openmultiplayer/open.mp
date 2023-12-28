@@ -12,6 +12,7 @@
 */
 
 #define _Static_assert static_assert
+#define STKMARGIN ((cell)(16 * sizeof(cell))) // from amx.c
 
 #include <assert.h>
 #include <stdarg.h>
@@ -452,4 +453,42 @@ int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 	if (err == AMX_ERR_NONE)
 		amx->flags |= AMX_FLAG_NTVREG;
 	return err;
+}
+
+int AMXAPI amx_Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
+{
+	AMX_HEADER* hdr;
+	unsigned char* data;
+
+	assert(amx != NULL);
+	hdr = (AMX_HEADER*)amx->base;
+	assert(hdr != NULL);
+	assert(hdr->magic == AMX_MAGIC);
+	data = (amx->data != NULL) ? amx->data : amx->base + (uintptr_t)hdr->dat;
+
+	if (amx->stk - amx->hea - cells * sizeof(cell) < STKMARGIN)
+	{
+		return AMX_ERR_MEMORY;
+	}
+
+	if (amx->stk < amx->hea + cells * sizeof(cell))
+	{
+		return AMX_ERR_MEMORY;
+	}
+
+	assert(amx_addr != NULL);
+	assert(phys_addr != NULL);
+	*amx_addr = amx->hea;
+	*phys_addr = (cell*)(data + (uintptr_t)amx->hea);
+	amx->hea += cells * sizeof(cell);
+	return AMX_ERR_NONE;
+}
+
+int AMXAPI amx_Release(AMX* amx, cell amx_addr)
+{
+	if (amx->hea > amx_addr)
+	{
+		amx->hea = amx_addr;
+	}
+	return AMX_ERR_NONE;
 }
