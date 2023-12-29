@@ -12,7 +12,6 @@
 */
 
 #define _Static_assert static_assert
-#define STKMARGIN ((cell)(16 * sizeof(cell))) // from amx.c
 
 #include <assert.h>
 #include <stdarg.h>
