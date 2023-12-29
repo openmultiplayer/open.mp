@@ -61,7 +61,9 @@ if(BUILD_SERVER)
 				-DAMX_FILENO_CHECKS
 
 				# Disable default amx_FindPublic implementation because we want our own more performant one
-				AMX_ALIGN AMX_ALLOT AMX_CLEANUP AMX_CLONE AMX_DEFCALLBACK AMX_EXEC AMX_FLAGS AMX_GETADDR
+				# Also disable amx_Allot because we want to check if we have enough memory when we are passing data
+				# Which is more than available memory, so instead of a crash, we let user know about it.
+				AMX_ALIGN AMX_CLEANUP AMX_CLONE AMX_DEFCALLBACK AMX_FLAGS AMX_GETADDR
 				AMX_INIT AMX_MEMINFO AMX_NAMELENGTH AMX_NATIVEINFO AMX_PUSHXXX
 				AMX_RAISEERROR AMX_REGISTER AMX_SETCALLBACK AMX_SETDEBUGHOOK
 				AMX_XXXNATIVES AMX_XXXPUBVARS AMX_XXXSTRING AMX_XXXTAGS AMX_XXXUSERDATA AMX_UTF8XXX
