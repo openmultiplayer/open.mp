@@ -117,114 +117,6 @@ PawnScript::~PawnScript()
 	tryLoad("");
 }
 
-int AMXAPI amx_NumPublics(AMX* amx, int* number)
-{
-	AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
-	assert(hdr != NULL);
-	assert(hdr->magic == AMX_MAGIC);
-	assert(hdr->publics <= hdr->natives);
-	*number = NUMENTRIES(hdr, publics, natives);
-	return AMX_ERR_NONE;
-}
-
-int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
-{
-	AMX_HEADER* hdr;
-	AMX_FUNCPART* func;
-
-	hdr = (AMX_HEADER*)amx->base;
-	assert(hdr != NULL);
-	assert(hdr->magic == AMX_MAGIC);
-	assert(hdr->publics <= hdr->natives);
-	if (index >= (cell)NUMENTRIES(hdr, publics, natives))
-		return AMX_ERR_INDEX;
-
-	func = GETENTRY(hdr, publics, index);
-	strcpy(funcname, GETENTRYNAME(hdr, func));
-	return AMX_ERR_NONE;
-}
-
-__attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, int* index)
-{
-	AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
-	char* pname;
-	AMX_FUNCPART* func;
-
-	// Attempt to find index in publics cache
-	auto amxIter = cache.find(amx);
-	const bool cacheExists = amxIter != cache.end();
-	if (cacheExists)
-	{
-		const AMXCache& amxCache = *amxIter->second;
-		if (amxCache.inited)
-		{
-			auto lookupIter = amxCache.publics.find(name);
-			if (lookupIter != amxCache.publics.end())
-			{
-				// https://github.com/IllidanS4/pawn-conventions/blob/master/guidelines.md#do-not-rely-on-consistency
-				if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives))
-				{
-					func = GETENTRY(hdr, publics, lookupIter->second);
-					pname = GETENTRYNAME(hdr, func);
-					if (!strcmp(name, pname))
-					{
-						*index = lookupIter->second;
-						return AMX_ERR_NONE;
-					}
-				}
-			}
-		}
-	}
-
-	// Cache miss; do the heavy search
-	int first, last, mid, result;
-
-	amx_NumPublics(amx, &last);
-	last--; /* last valid index is 1 less than the number of functions */
-	first = 0;
-	/* binary search */
-	while (first <= last)
-	{
-		mid = (first + last) / 2;
-		func = GETENTRY(hdr, publics, mid);
-		pname = GETENTRYNAME(hdr, func);
-		result = strcmp(pname, name);
-		if (result > 0)
-		{
-			last = mid - 1;
-		}
-		else if (result < 0)
-		{
-			first = mid + 1;
-		}
-		else
-		{
-			*index = mid;
-			// Cache public index
-			if (cacheExists)
-			{
-				AMXCache& amxCache = *amxIter->second;
-				if (amxCache.inited)
-				{
-					amxCache.publics[name] = mid;
-				}
-			}
-			return AMX_ERR_NONE;
-		} /* if */
-	} /* while */
-	/* not found, set to an invalid index, so amx_Exec() will fail */
-	*index = INT_MAX;
-	return AMX_ERR_NOTFOUND;
-}
-
-/// Pass-through to a noinline function to avoid adding complex instructions to the prologue that sampgdk can't handle
-/// This should work in every case as both JMP and CALL are at least 5 bytes in size;
-/// even in the minimal case it's guaranteed to contain a single JMP which is what sampgdk needs for a hook
-__attribute__((optnone)) int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
-{
-	return amx_FindPublic_impl(amx, name, index);
-}
-
 int AMXAPI amx_GetNativeByIndex(AMX const* amx, int index, AMX_NATIVE_INFO* ret)
 {
 	AMX_HEADER*
@@ -388,7 +280,107 @@ static AMX_NATIVE findfunction(const char* name, const AMX_NATIVE_INFO* list, in
 	return NULL;
 }
 
-int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
+__attribute__((noinline)) int AMXAPI amx_NumPublics_impl(AMX* amx, int* number)
+{
+	AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
+	assert(hdr != NULL);
+	assert(hdr->magic == AMX_MAGIC);
+	assert(hdr->publics <= hdr->natives);
+	*number = NUMENTRIES(hdr, publics, natives);
+	return AMX_ERR_NONE;
+}
+
+__attribute__((noinline)) int AMXAPI amx_GetPublic_impl(AMX* amx, int index, char* funcname)
+{
+	AMX_HEADER* hdr;
+	AMX_FUNCPART* func;
+
+	hdr = (AMX_HEADER*)amx->base;
+	assert(hdr != NULL);
+	assert(hdr->magic == AMX_MAGIC);
+	assert(hdr->publics <= hdr->natives);
+	if (index >= (cell)NUMENTRIES(hdr, publics, natives))
+		return AMX_ERR_INDEX;
+
+	func = GETENTRY(hdr, publics, index);
+	strcpy(funcname, GETENTRYNAME(hdr, func));
+	return AMX_ERR_NONE;
+}
+
+__attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, int* index)
+{
+	AMX_HEADER* hdr = (AMX_HEADER*)amx->base;
+	char* pname;
+	AMX_FUNCPART* func;
+
+	// Attempt to find index in publics cache
+	auto amxIter = cache.find(amx);
+	const bool cacheExists = amxIter != cache.end();
+	if (cacheExists)
+	{
+		const AMXCache& amxCache = *amxIter->second;
+		if (amxCache.inited)
+		{
+			auto lookupIter = amxCache.publics.find(name);
+			if (lookupIter != amxCache.publics.end())
+			{
+				// https://github.com/IllidanS4/pawn-conventions/blob/master/guidelines.md#do-not-rely-on-consistency
+				if (lookupIter->second < (cell)NUMENTRIES(hdr, publics, natives))
+				{
+					func = GETENTRY(hdr, publics, lookupIter->second);
+					pname = GETENTRYNAME(hdr, func);
+					if (!strcmp(name, pname))
+					{
+						*index = lookupIter->second;
+						return AMX_ERR_NONE;
+					}
+				}
+			}
+		}
+	}
+
+	// Cache miss; do the heavy search
+	int first, last, mid, result;
+
+	amx_NumPublics(amx, &last);
+	last--; /* last valid index is 1 less than the number of functions */
+	first = 0;
+	/* binary search */
+	while (first <= last)
+	{
+		mid = (first + last) / 2;
+		func = GETENTRY(hdr, publics, mid);
+		pname = GETENTRYNAME(hdr, func);
+		result = strcmp(pname, name);
+		if (result > 0)
+		{
+			last = mid - 1;
+		}
+		else if (result < 0)
+		{
+			first = mid + 1;
+		}
+		else
+		{
+			*index = mid;
+			// Cache public index
+			if (cacheExists)
+			{
+				AMXCache& amxCache = *amxIter->second;
+				if (amxCache.inited)
+				{
+					amxCache.publics[name] = mid;
+				}
+			}
+			return AMX_ERR_NONE;
+		} /* if */
+	} /* while */
+	/* not found, set to an invalid index, so amx_Exec() will fail */
+	*index = INT_MAX;
+	return AMX_ERR_NOTFOUND;
+}
+
+__attribute__((noinline)) int AMXAPI amx_Register_impl(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 {
 	AMX_FUNCPART* func;
 	AMX_HEADER* hdr;
@@ -455,7 +447,7 @@ int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 	return err;
 }
 
-int AMXAPI amx_Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
+__attribute__((noinline)) int AMXAPI amx_Allot_impl(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
 {
 	AMX_HEADER* hdr;
 	unsigned char* data;
@@ -489,11 +481,46 @@ int AMXAPI amx_Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
 	return AMX_ERR_NONE;
 }
 
-int AMXAPI amx_Release(AMX* amx, cell amx_addr)
+__attribute__((noinline)) int AMXAPI amx_Release_impl(AMX* amx, cell amx_addr)
 {
 	if (amx->hea > amx_addr)
 	{
 		amx->hea = amx_addr;
 	}
 	return AMX_ERR_NONE;
+}
+
+
+/// Pass-through to a noinline function to avoid adding complex instructions to the prologue that sampgdk can't handle
+/// This should work in every case as both JMP and CALL are at least 5 bytes in size;
+/// even in the minimal case it's guaranteed to contain a single JMP which is what sampgdk needs for a hook
+/// This applies to all functions below.
+__attribute__((optnone)) int AMXAPI amx_NumPublics(AMX* amx, int* number)
+{
+	return amx_NumPublics_impl(amx, number);
+}
+
+__attribute__((optnone)) int AMXAPI amx_GetPublic(AMX* amx, int index, char* funcname)
+{
+	return amx_GetPublic_impl(amx, index, funcname);
+}
+
+__attribute__((optnone)) int AMXAPI amx_FindPublic(AMX* amx, const char* name, int* index)
+{
+	return amx_FindPublic_impl(amx, name, index);
+}
+
+__attribute__((optnone)) int AMXAPI amx_Release(AMX* amx, cell amx_addr)
+{
+	return amx_Release_impl(amx, amx_addr);
+}
+
+__attribute__((optnone)) int AMXAPI amx_Allot(AMX* amx, int cells, cell* amx_addr, cell** phys_addr)
+{
+	return amx_Allot_impl(amx, cells, amx_addr, phys_addr);
+}
+
+__attribute__((optnone)) int AMXAPI amx_Register(AMX* amx, const AMX_NATIVE_INFO* list, int number)
+{
+	return amx_Register_impl(amx, list, number);
 }
