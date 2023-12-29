@@ -370,13 +370,6 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
 	playerFromRakIndex[rpcParams->senderIndex] = newConnectionResult.second;
 
-	// Handle pre-connect received custom packets here, now that player is initialized
-	if (hasUnprocessedPreConnectPackets[rpcParams->senderIndex])
-	{
-		handlePreConnectPacketData(rpcParams->senderIndex);
-		hasUnprocessedPreConnectPackets[rpcParams->senderIndex] = false;
-	}
-
 	return newConnectionResult.second;
 }
 
@@ -522,12 +515,6 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason)
 {
 	IPlayer* player = playerFromRakIndex[rid];
-
-	for (RakNet::Packet* customPkt : preConnectPackets[rid])
-	{
-		rakNetServer.DeallocatePacket(customPkt);
-	}
-	preConnectPackets[rid].clear();
 
 	if (!player)
 	{
@@ -874,108 +861,51 @@ void RakNetLegacyNetwork::start()
 	}
 }
 
-void RakNetLegacyNetwork::handlePreConnectPacketData(int playerIndex)
-{
-	IPlayer* player = playerFromRakIndex[playerIndex];
-
-	for (RakNet::Packet* customPkt : preConnectPackets[playerIndex])
-	{
-		NetworkBitStream bs(customPkt->data, customPkt->length, false);
-		uint8_t type;
-
-		if (bs.readUINT8(type))
-		{
-			const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler)
-				{
-					bs.SetReadOffset(8); // Ignore packet ID
-					return handler->onReceivePacket(*player, type, bs);
-				});
-
-			if (res)
-			{
-				packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler)
-					{
-						bs.SetReadOffset(8); // Ignore packet ID
-						return handler->onReceive(*player, bs);
-					});
-			}
-		}
-
-		rakNetServer.DeallocatePacket(customPkt);
-	}
-
-	preConnectPackets[playerIndex].clear();
-}
-
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 {
 	for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive())
 	{
-
-		bool mustDeallocatePacket = true;
-
 		if (pkt->playerIndex >= playerFromRakIndex.size())
 		{
 			rakNetServer.DeallocatePacket(pkt);
 			continue;
 		}
 
-		NetworkBitStream bs(pkt->data, pkt->length, false);
-		uint8_t type;
-
-		if (bs.readUINT8(type))
+		IPlayer* player = playerFromRakIndex[pkt->playerIndex];
+		if (player)
 		{
-			if (type == RakNet::ID_DISCONNECTION_NOTIFICATION)
+			NetworkBitStream bs(pkt->data, pkt->length, false);
+			uint8_t type;
+			if (bs.readUINT8(type))
 			{
-				OnRakNetDisconnect(pkt->playerIndex, PeerDisconnectReason_Quit);
-			}
-			else if (type == RakNet::ID_CONNECTION_LOST)
-			{
-				OnRakNetDisconnect(pkt->playerIndex, PeerDisconnectReason_Timeout);
-			}
-			else
-			{
-				IPlayer* player = playerFromRakIndex[pkt->playerIndex];
-				if (!player)
-				{
-					// Here we collect custom packets sent before player is fully initialized
-					preConnectPackets[pkt->playerIndex].push_back(pkt);
-					hasUnprocessedPreConnectPackets[pkt->playerIndex] = true;
-					mustDeallocatePacket = false;
-				}
-				else if (player)
-				{
-					// It usually shouldn't even go through this part,
-					// Because RakNetLegacyNetwork::OnPeerConnect will handle it before this stage
-					if (hasUnprocessedPreConnectPackets[pkt->playerIndex])
+				// Call event handlers for packet receive
+				const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler)
 					{
-						handlePreConnectPacketData(pkt->playerIndex);
-						hasUnprocessedPreConnectPackets[pkt->playerIndex] = false;
-					}
+						bs.SetReadOffset(8); // Ignore packet ID
+						return handler->onReceivePacket(*player, type, bs);
+					});
 
-					// Call event handlers for packet receive
-					const bool res = inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler)
+				if (res)
+				{
+					packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler)
 						{
 							bs.SetReadOffset(8); // Ignore packet ID
-							return handler->onReceivePacket(*player, type, bs);
+							return handler->onReceive(*player, bs);
 						});
+				}
 
-					if (res)
-					{
-						packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler)
-							{
-								bs.SetReadOffset(8); // Ignore packet ID
-								return handler->onReceive(*player, bs);
-							});
-					}
+				if (type == RakNet::ID_DISCONNECTION_NOTIFICATION)
+				{
+					OnRakNetDisconnect(pkt->playerIndex, PeerDisconnectReason_Quit);
+				}
+				else if (type == RakNet::ID_CONNECTION_LOST)
+				{
+					OnRakNetDisconnect(pkt->playerIndex, PeerDisconnectReason_Timeout);
 				}
 			}
 		}
 
-		if (mustDeallocatePacket)
-		{
-			rakNetServer.DeallocatePacket(pkt);
-		}
+		rakNetServer.DeallocatePacket(pkt);
 	}
 
 	if (now - lastCookieSeed > cookieSeedTime)

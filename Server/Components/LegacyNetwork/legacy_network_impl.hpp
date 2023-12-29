@@ -38,8 +38,6 @@ private:
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
 	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
-	std::array<bool, PLAYER_POOL_SIZE> hasUnprocessedPreConnectPackets;
-	FlatHashMap<int, DynamicArray<RakNet::Packet*>> preConnectPackets;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
 
@@ -354,8 +352,6 @@ public:
 		}
 		return false;
 	}
-
-	void handlePreConnectPacketData(int playerIndex);
 
 	/// Synchronize players after banning an IP, kicking any that match the banned IP
 	void synchronizeBans();
