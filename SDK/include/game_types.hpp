@@ -445,4 +445,3 @@ enum EPlayerNameStatus
 	Taken, ///< The name is already taken by another player
 	Invalid ///< The name is invalid
 };
-
