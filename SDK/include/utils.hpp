@@ -7,7 +7,7 @@
  */
 
 #pragma once
-#include "player.hpp"
+#include "game_types.hpp"
 
 #define STRINGIFY(s) _STRINGIFY(s)
 #define _STRINGIFY(s) #s
