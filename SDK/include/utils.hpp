@@ -21,6 +21,10 @@ inline bool IsWeaponForTakenDamageValid(int weapon)
 	auto slot = WeaponSlotData(weapon).slot();
 	if (slot == INVALID_WEAPON_SLOT)
 	{
+		// 52 is a valid damage reason, though not a valid death reason.  It is given by the police boat gun.
+		//
+		//   https://github.com/openmultiplayer/open.mp/issues/600#issuecomment-1377236916
+		//
 		if (weapon < 49 || weapon > 54)
 		{
 			return false;
