@@ -35,6 +35,7 @@ class RakNetLegacyNetwork final : public Network, public CoreEventHandler, publi
 {
 private:
 	ICore* core = nullptr;
+	IPlayerReserveExtension* reservePlayers = nullptr;
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
 	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;

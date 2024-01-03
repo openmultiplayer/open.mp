@@ -53,18 +53,40 @@ enum SecondarySyncUpdateType
 	SecondarySyncUpdateType_Trailer = (1 << 2),
 };
 
+struct ClientParams
+{
+	HybridString<16> versionName;
+	HybridString<MAX_PLAYER_NAME + 1> name;
+	HybridString<16> serial;
+	ClientVersion version;
+	bool isBot;
+	bool isUsingOfficialClient;
+
+	ClientParams()
+		: version(ClientVersion::ClientVersion_none)
+	{
+	}
+
+	ClientParams(const PeerRequestParams& params)
+		: versionName(params.versionName)
+		, name(params.name)
+		, serial(params.serial)
+		, version(params.version)
+		, isBot(params.bot)
+		, isUsingOfficialClient(params.isUsingOfficialClient)
+	{
+	}
+};
+
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 {
 	PlayerPool& pool_;
 	PeerNetworkData netData_;
-	ClientVersion version_;
-	HybridString<16> versionName_;
+	ClientParams clientParams_;
 	Vector3 pos_;
 	Vector3 cameraPos_;
 	Vector3 cameraLookAt_;
 	GTAQuat rot_;
-	HybridString<MAX_PLAYER_NAME + 1> name_;
-	HybridString<16> serial_;
 	WeaponSlots weapons_;
 	Colour colour_;
 	FlatHashMap<int, Colour> othersColours_;
@@ -107,7 +129,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int targetPlayer_, targetActor_;
 	TimePoint chatBubbleExpiration_;
 	PlayerChatBubble chatBubble_;
-	const bool isBot_;
 	bool toSpawn_;
 	TimePoint lastGameTimeUpdate_;
 	PlayerSpectateData spectateData_;
@@ -116,7 +137,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	int defaultObjectsRemoved_;
 	bool allowWeapons_;
 	bool allowTeleport_;
-	bool isUsingOfficialClient_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -203,16 +223,12 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		IExtensible::resetExtensions();
 	}
 
-	Player(PlayerPool& pool, const PeerNetworkData& netData, const PeerRequestParams& params, bool* allAnimationLibraries, bool* validateAnimations, bool* allowInteriorWeapons, IFixesComponent* fixesComponent)
+	Player(PlayerPool& pool, const PeerNetworkData& netData, bool* allAnimationLibraries, bool* validateAnimations, bool* allowInteriorWeapons, IFixesComponent* fixesComponent)
 		: pool_(pool)
 		, netData_(netData)
-		, version_(params.version)
-		, versionName_(params.versionName)
 		, pos_(0.0f, 0.0f, 0.0f)
 		, cameraPos_(0.f, 0.f, 0.f)
 		, cameraLookAt_(0.f, 0.f, 0.f)
-		, name_(params.name)
-		, serial_(params.serial)
 		, virtualWorld_(0)
 		, score_(0)
 		, fightingStyle_(PlayerFightingStyle_Normal)
@@ -245,7 +261,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, targetPlayer_(INVALID_PLAYER_ID)
 		, targetActor_(INVALID_ACTOR_ID)
 		, chatBubbleExpiration_(Time::now())
-		, isBot_(params.bot)
 		, toSpawn_(false)
 		, lastGameTimeUpdate_()
 		, spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
@@ -254,7 +269,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, defaultObjectsRemoved_(0)
 		, allowWeapons_(true)
 		, allowTeleport_(false)
-		, isUsingOfficialClient_(params.isUsingOfficialClient)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -299,22 +313,22 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 
 	ClientVersion getClientVersion() const override
 	{
-		return version_;
+		return clientParams_.version;
 	}
 
 	StringView getClientVersionName() const override
 	{
-		return versionName_;
+		return clientParams_.versionName;
 	}
 
 	bool isBot() const override
 	{
-		return isBot_;
+		return clientParams_.isBot;
 	}
 
 	bool isUsingOfficialClient() const override
 	{
-		return isUsingOfficialClient_;
+		return clientParams_.isUsingOfficialClient;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
@@ -1091,12 +1105,12 @@ public:
 
 	StringView getName() const override
 	{
-		return name_;
+		return clientParams_.name;
 	}
 
 	StringView getSerial() const override
 	{
-		return serial_;
+		return clientParams_.serial;
 	}
 
 	int getID() const override
@@ -1548,7 +1562,7 @@ removeWeapon_has_weapon:
 
 		virtualWorld_ = vw;
 
-		if (version_ == ClientVersion::ClientVersion_SAMP_037)
+		if (clientParams_.version == ClientVersion::ClientVersion_SAMP_037)
 			return;
 
 		NetCode::RPC::SetPlayerVirtualWorld setWorld;

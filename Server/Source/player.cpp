@@ -40,13 +40,13 @@ EPlayerNameStatus Player::setName(StringView name)
 		return EPlayerNameStatus::Taken;
 	}
 
-	const auto oldName = name_;
-	name_ = name;
+	const auto oldName = clientParams_.name;
+	clientParams_.name = name;
 	pool_.playerChangeDispatcher.dispatch(&PlayerChangeEventHandler::onPlayerNameChange, *this, oldName);
 
 	NetCode::RPC::SetPlayerName setPlayerNameRPC;
 	setPlayerNameRPC.PlayerID = poolID;
-	setPlayerNameRPC.Name = StringView(name_);
+	setPlayerNameRPC.Name = StringView(clientParams_.name);
 	setPlayerNameRPC.Success = true;
 	PacketHelper::broadcast(setPlayerNameRPC, pool_);
 	return EPlayerNameStatus::Updated;
@@ -365,7 +365,7 @@ void Player::ban(StringView reason)
 {
 	PeerAddress::AddressString address;
 	PeerAddress::ToString(netData_.networkID.address, address);
-	const BanEntry entry(address, name_, reason);
+	const BanEntry entry(address, clientParams_.name, reason);
 	for (INetwork* network : pool_.core.getNetworks())
 	{
 		network->ban(entry);

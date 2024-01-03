@@ -78,7 +78,9 @@ enum class ClientVersion : uint8_t
 {
 	ClientVersion_SAMP_037,
 	ClientVersion_SAMP_03DL,
-	ClientVersion_openmp
+	ClientVersion_openmp,
+
+	ClientVersion_none = 255
 };
 
 struct PeerRequestParams
