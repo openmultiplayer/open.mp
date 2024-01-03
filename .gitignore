@@ -294,3 +294,11 @@ __pycache__/
 /docker/conan/
 /docker/data/
 /buildlinux/*
+**/CMakeFiles/*
+CMakeFiles/*
+CMakeCache.txt
+conan.lock
+conanbuildinfo*.*
+conanfile.txt
+conaninfo.txt
+graph_info.json
