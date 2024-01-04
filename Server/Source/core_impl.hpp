@@ -59,6 +59,9 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "sleep", 5.0f },
 	{ "use_dyn_ticks", true },
 	{ "website", String("open.mp") },
+	{ "banner_light", String("") },
+	{ "banner_dark", String("") },
+	{ "discord", String("") },
 	// game
 	{ "game.allow_interior_weapons", true },
 	{ "game.chat_radius", 200.0f },

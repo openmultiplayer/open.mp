@@ -755,6 +755,24 @@ void RakNetLegacyNetwork::update()
 		query.setRuleValue<false>("weburl", String(website));
 	}
 
+	StringView discordLink = config.getString("discord");
+	if (!discordLink.empty())
+	{
+		query.setDiscordLink(discordLink);
+	}
+
+	StringView bannerUrl = config.getString("banner_light");
+	if (!bannerUrl.empty())
+	{
+		query.setLightBannerUrl(bannerUrl);
+	}
+
+	bannerUrl = config.getString("banner_dark");
+	if (!bannerUrl.empty())
+	{
+		query.setDarkBannerUrl(bannerUrl);
+	}
+
 	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");

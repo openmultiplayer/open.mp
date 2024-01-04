@@ -12,6 +12,8 @@
 const size_t MAX_ACCEPTABLE_HOSTNAME_SIZE = 63;
 const size_t MAX_ACCEPTABLE_LANGUAGE_SIZE = 39;
 const size_t MAX_ACCEPTABLE_GMTEXT_SIZE = 39;
+const size_t MAX_ACCEPTABLE_DISCORD_LINK_SIZE = 50;
+const size_t MAX_ACCEPTABLE_BANNER_URL_SIZE = 120;
 
 template <typename T>
 void writeToBuffer(char* output, size_t& offset, T value)
@@ -120,6 +122,38 @@ void Query::buildServerInfoBuffer()
 	// Write language name (since 0.3.7, it was map name before that)
 	writeToBuffer(output, offset, languageLength);
 	writeToBuffer(output, language.c_str(), offset, languageLength);
+}
+
+void Query::buildExtraServerInfoBuffer()
+{
+	if (core == nullptr)
+	{
+		return;
+	}
+
+	uint32_t discordLinkLength = std::min(discordLink.length(), MAX_ACCEPTABLE_DISCORD_LINK_SIZE);
+	uint32_t lightBannerUrlLength = std::min(lightBannerUrl.length(), MAX_ACCEPTABLE_BANNER_URL_SIZE);
+	uint32_t darkBannerUrlLength = std::min(darkBannerUrl.length(), MAX_ACCEPTABLE_BANNER_URL_SIZE);
+
+	extraInfoBufferLength = BASE_QUERY_SIZE + sizeof(discordLinkLength) + discordLinkLength + sizeof(lightBannerUrlLength) + lightBannerUrlLength + sizeof(darkBannerUrlLength) + darkBannerUrlLength;
+	extraInfoBuffer.reset(new char[extraInfoBufferLength]);
+
+	size_t offset = QUERY_TYPE_INDEX;
+	char* output = extraInfoBuffer.get();
+
+	writeToBuffer(output, offset, static_cast<uint8_t>('o'));
+
+	// Write discord server invite link
+	writeToBuffer(output, offset, discordLinkLength);
+	writeToBuffer(output, discordLink.c_str(), offset, discordLinkLength);
+
+	// Write light banner url
+	writeToBuffer(output, offset, lightBannerUrlLength);
+	writeToBuffer(output, lightBannerUrl.c_str(), offset, lightBannerUrlLength);
+
+	// Write dark banner url
+	writeToBuffer(output, offset, darkBannerUrlLength);
+	writeToBuffer(output, darkBannerUrl.c_str(), offset, darkBannerUrlLength);
 }
 
 void Query::updateServerInfoBufferPlayerCount(IPlayer* except)
@@ -260,16 +294,6 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, cons
 		PeerAddress::ToString(addr, addrString);
 		core->printLn("[query:%c] from %.*s", buffer[QUERY_TYPE_INDEX], PRINT_VIEW(addrString));
 	}
-
-	// This is how we detect open.mp, just resend the buffer
-	if (buffer[QUERY_TYPE_INDEX] == 'o')
-	{
-		if (buffer.size() != BASE_QUERY_SIZE + sizeof(uint32_t))
-		{
-			return Span<char>();
-		}
-		return buffer;
-	}
 	// Ping
 	else if (buffer[QUERY_TYPE_INDEX] == 'p')
 	{
@@ -281,8 +305,14 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, cons
 	}
 	else if (buffer.size() == BASE_QUERY_SIZE)
 	{
+		// This is how we detect open.mp, but also let's send some extra data
+		if (buffer[QUERY_TYPE_INDEX] == 'o')
+		{
+			return getBuffer(buffer, extraInfoBuffer, extraInfoBufferLength);
+		}
+
 		// Server info
-		if (buffer[QUERY_TYPE_INDEX] == 'i')
+		else if (buffer[QUERY_TYPE_INDEX] == 'i')
 		{
 			return getBuffer(buffer, serverInfoBuffer, serverInfoBufferLength);
 		}
