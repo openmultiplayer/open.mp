@@ -755,19 +755,19 @@ void RakNetLegacyNetwork::update()
 		query.setRuleValue<false>("weburl", String(website));
 	}
 
-	StringView discordLink = config.getString("discord");
+	StringView discordLink = config.getString("discord.invite");
 	if (!discordLink.empty())
 	{
 		query.setDiscordLink(discordLink);
 	}
 
-	StringView bannerUrl = config.getString("banner_light");
+	StringView bannerUrl = config.getString("banners.light");
 	if (!bannerUrl.empty())
 	{
 		query.setLightBannerUrl(bannerUrl);
 	}
 
-	bannerUrl = config.getString("banner_dark");
+	bannerUrl = config.getString("banners.dark");
 	if (!bannerUrl.empty())
 	{
 		query.setDarkBannerUrl(bannerUrl);
