@@ -111,7 +111,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool toSpawn_;
 	TimePoint lastGameTimeUpdate_;
 	PlayerSpectateData spectateData_;
-	int gravity_;
+	float gravity_;
 	bool ghostMode_;
 	int defaultObjectsRemoved_;
 	bool allowWeapons_;
@@ -194,7 +194,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		toSpawn_ = false;
 		lastGameTimeUpdate_ = TimePoint();
 		spectateData_ = { false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
-		gravity_ = 0;
+		gravity_ = 0.0f;
 		ghostMode_ = false;
 		defaultObjectsRemoved_ = 0;
 		primarySyncUpdateType_ = PrimarySyncUpdateType::None;
@@ -249,7 +249,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, toSpawn_(false)
 		, lastGameTimeUpdate_()
 		, spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
-		, gravity_(0)
+		, gravity_(0.0f)
 		, ghostMode_(false)
 		, defaultObjectsRemoved_(0)
 		, allowWeapons_(true)
