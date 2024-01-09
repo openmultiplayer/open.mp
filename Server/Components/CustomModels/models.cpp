@@ -589,7 +589,7 @@ public:
 			return false;
 		}
 
-		if (type == ModelType::Skin && !(id >= 20000 && id <= 30000))
+		if (type == ModelType::Skin && !(id > 20000 && id <= 30000))
 			return false;
 		else if (type == ModelType::Object && !(id >= -30000 && id <= -1000))
 			return false;
