@@ -59,6 +59,10 @@ constexpr float MIN_WORLD_BOUNDS = -20000.0f;
 constexpr int MAX_TEXTDRAW_STR_LENGTH = 800;
 constexpr int MAX_VEHICLE_CARRIAGES = 3;
 constexpr int MAX_GAMETEXT_STYLES = 16;
+constexpr int MIN_CUSTOM_SKIN_ID = 20001;
+constexpr int MAX_CUSTOM_SKIN_ID = 30000;
+constexpr int MIN_CUSTOM_OBJECT_ID = -30000;
+constexpr int MAX_CUSTOM_OBJECT_ID = -1000;
 
 enum Key
 {

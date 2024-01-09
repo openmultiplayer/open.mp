@@ -589,9 +589,9 @@ public:
 			return false;
 		}
 
-		if (type == ModelType::Skin && !(id > 20000 && id <= 30000))
+		if (type == ModelType::Skin && !(id >= MIN_CUSTOM_SKIN_ID && id <= MAX_CUSTOM_SKIN_ID))
 			return false;
-		else if (type == ModelType::Object && !(id >= -30000 && id <= -1000))
+		else if (type == ModelType::Object && !(id >= MIN_CUSTOM_OBJECT_ID && id <= MAX_CUSTOM_OBJECT_ID))
 			return false;
 		else if (baseModels.find(id) != baseModels.end())
 		{
@@ -648,7 +648,7 @@ public:
 	{
 		// Check if model is default one (base).
 		// If so, there's no custom model to be returned.
-		if (baseModelIdOrInput >= 0 && baseModelIdOrInput <= 20000)
+		if (baseModelIdOrInput >= 0 && baseModelIdOrInput < MIN_CUSTOM_SKIN_ID)
 			return false;
 
 		// Check if input is valid custom model.
