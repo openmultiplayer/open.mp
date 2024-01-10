@@ -131,7 +131,8 @@ void Query::buildExtraServerInfoBuffer()
 		return;
 	}
 
-	uint32_t discordLinkLength = std::min(discordLink.length(), MAX_ACCEPTABLE_DISCORD_LINK_SIZE);
+	// Set discord link length to 0 if it's over acceptable length (max size defined by discord itself)
+	uint32_t discordLinkLength = MAX_ACCEPTABLE_DISCORD_LINK_SIZE < discordLink.length() ? 0 : discordLink.length();
 	uint32_t lightBannerUrlLength = std::min(lightBannerUrl.length(), MAX_ACCEPTABLE_BANNER_URL_SIZE);
 	uint32_t darkBannerUrlLength = std::min(darkBannerUrl.length(), MAX_ACCEPTABLE_BANNER_URL_SIZE);
 
