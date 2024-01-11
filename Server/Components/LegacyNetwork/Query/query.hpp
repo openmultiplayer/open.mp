@@ -49,6 +49,7 @@ public:
 	{
 		buildServerInfoBuffer();
 		buildRulesBuffer();
+		buildExtraServerInfoBuffer();
 	}
 
 	void setMaxPlayers(uint16_t value)
@@ -143,6 +144,21 @@ public:
 		language = String(value);
 	}
 
+	void setDiscordLink(StringView value)
+	{
+		discordLink = String(value);
+	}
+
+	void setLightBannerUrl(StringView value)
+	{
+		lightBannerUrl = String(value);
+	}
+
+	void setDarkBannerUrl(StringView value)
+	{
+		darkBannerUrl = String(value);
+	}
+
 private:
 	ICore* core = nullptr;
 	IConsoleComponent* console = nullptr;
@@ -151,6 +167,9 @@ private:
 	String gameModeName = "Unknown";
 	String language = "EN";
 	String rconPassword;
+	String discordLink = "";
+	String lightBannerUrl = "";
+	String darkBannerUrl = "";
 	bool passworded = false;
 	bool logQueries = false;
 	bool rconEnabled = false;
@@ -167,7 +186,11 @@ private:
 	std::unique_ptr<char[]> rulesBuffer;
 	size_t rulesBufferLength = 0;
 
+	std::unique_ptr<char[]> extraInfoBuffer;
+	size_t extraInfoBufferLength = 0;
+
 	void buildPlayerInfoBuffer(IPlayer* except = nullptr);
 	void updateServerInfoBufferPlayerCount(IPlayer* except = nullptr);
 	void buildServerInfoBuffer();
+	void buildExtraServerInfoBuffer();
 };
