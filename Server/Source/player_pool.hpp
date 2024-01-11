@@ -1663,8 +1663,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				addressString.data(),
 				port,
 				player.poolID);
-			playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onIncomingConnection, peer, addressString, port);
 		}
+		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onIncomingConnection, peer, addressString, port);
 		// Don't process player, about to be disconnected
 		if (player.kicked_)
 		{
