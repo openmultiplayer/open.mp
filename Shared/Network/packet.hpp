@@ -67,19 +67,18 @@ struct PacketHelper {
     /// @param players The list of peers to send the packet to
     /// @param skipFrom The player to skip in the list of peers
     template <typename Packet, typename E = std::enable_if_t<is_network_packet<Packet>::value>>
-    static void broadcastToSome(const Packet& packet, const FlatPtrHashSet<IPlayer>& players, const IPlayer* skipFrom = nullptr)
+	static void broadcastToSome(const Packet& packet, IPlayerPool& pool, const FlatPtrHashSet<IPlayer>& players, const IPlayer* skipFrom = nullptr)
     {
         NetworkBitStream bs;
         packet.write(bs);
-        for (IPlayer* peer : players) {
-            if (peer != skipFrom) {
-                if constexpr (Packet::PacketType == NetworkPacketType::RPC) {
-                    peer->sendRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
-                } else if constexpr (Packet::PacketType == NetworkPacketType::Packet) {
-                    peer->sendPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel);
-                }
-            }
-        }
+		if constexpr (Packet::PacketType == NetworkPacketType::RPC)
+		{
+			pool.broadcastRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, players, skipFrom);
+		}
+		else if constexpr (Packet::PacketType == NetworkPacketType::Packet)
+		{
+			pool.broadcastPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, players, skipFrom);
+		}
     }
 
     /// Attempt to send a packet derived from NetworkPacketBase to the players that a player is streamed for

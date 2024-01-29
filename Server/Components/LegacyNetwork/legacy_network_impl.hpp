@@ -137,6 +137,85 @@ public:
 		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
 	}
 
+	bool broadcastPacket(Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
+	{
+		{
+			int playersSize = players.size();
+			if (players.size() == 2)
+			{
+				IPlayer* first = *players.begin();
+				IPlayer* second = *(players.begin()++);
+				if (first == exceptPeer || second == exceptPeer)
+				{
+					--playersSize;
+				}
+			}
+			if (playersSize == 1)
+			{
+				IPlayer* player = *players.begin();
+				if (player == exceptPeer)
+				{
+					return false;
+				}
+			}
+		}
+
+		// Don't use constructor because it takes bytes; we want bits
+		NetworkBitStream bs;
+		bs.SetData(data.data());
+		bs.SetWriteOffset(data.size());
+		bs.SetReadOffset(0);
+
+		if (dispatchEvents)
+		{
+			uint8_t type;
+			if (bs.readUINT8(type))
+			{
+				if (!outEventDispatcher.stopAtFalse([type, &bs](NetworkOutEventHandler* handler)
+						{
+							bs.SetReadOffset(8); // Ignore packet ID
+							return handler->onSendPacket(nullptr, type, bs);
+						}))
+				{
+					return false;
+				}
+
+				if (!packetOutEventDispatcher.stopAtFalse(type, [&bs](SingleNetworkOutEventHandler* handler)
+						{
+							bs.SetReadOffset(8); // Ignore packet ID
+							return handler->onSend(nullptr, bs);
+						}))
+				{
+					return false;
+				}
+			}
+		}
+
+		RakNet::PlayerID* playerIds = new RakNet::PlayerID[players.size()];
+		int currentId = 0;
+		for (IPlayer* player : players)
+		{
+			if (player != exceptPeer)
+			{
+				const PeerNetworkData& netData = player->getNetworkData();
+				if (netData.network == this)
+				{
+					const PeerNetworkData::NetworkID& nid = netData.networkID;
+					const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
+					playerIds[currentId++] = rid;
+				}
+			}
+		}
+
+		const RakNet::PacketReliability reliability = (channel == OrderingChannel_Reliable) ? RakNet::RELIABLE : ((channel == OrderingChannel_Unordered) ? RakNet::UNRELIABLE : RakNet::UNRELIABLE_SEQUENCED);
+		const bool res = rakNetServer.SendToList((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, reliability, channel, playerIds, currentId);
+		if (!res)
+		{
+			delete[] playerIds;
+		}
+		return res;
+	}
+
 	bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents) override
 	{
 		const PeerNetworkData& netData = peer.getNetworkData();
@@ -230,6 +309,86 @@ public:
 		}
 
 		return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+	}
+
+	bool broadcastRPC(int id, Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
+	{
+		if (id == INVALID_PACKET_ID)
+		{
+			return false;
+		}
+
+		{
+			int playersSize = players.size();
+			if (players.size() == 2)
+			{
+				IPlayer* first = *players.begin();
+				IPlayer* second = *(players.begin()++);
+				if (first == exceptPeer || second == exceptPeer)
+				{
+					--playersSize;
+				}
+			}
+			if (playersSize == 1)
+			{
+				IPlayer* player = *players.begin();
+				if (player == exceptPeer)
+				{
+					return false;
+				}
+			}
+		}
+
+		// Don't use constructor because it takes bytes; we want bits
+		NetworkBitStream bs;
+		bs.SetData(data.data());
+		bs.SetWriteOffset(data.size());
+		bs.SetReadOffset(0);
+
+		if (dispatchEvents)
+		{
+			if (!outEventDispatcher.stopAtFalse([id, &bs](NetworkOutEventHandler* handler)
+					{
+						bs.resetReadPointer();
+						return handler->onSendRPC(nullptr, id, bs);
+					}))
+			{
+				return false;
+			}
+
+			if (!rpcOutEventDispatcher.stopAtFalse(id, [&bs](SingleNetworkOutEventHandler* handler)
+					{
+						bs.resetReadPointer();
+						return handler->onSend(nullptr, bs);
+					}))
+			{
+				return false;
+			}
+		}
+
+		RakNet::PlayerID* playerIds = new RakNet::PlayerID[players.size()];
+		int currentId = 0;
+		for (IPlayer* player : players)
+		{
+			if (player != exceptPeer)
+			{
+				const PeerNetworkData& netData = player->getNetworkData();
+				if (netData.network == this)
+				{
+					const PeerNetworkData::NetworkID& nid = netData.networkID;
+					const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
+					playerIds[currentId++] = rid;
+				}
+			}
+		}
+
+		const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
+		const bool res = rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, playerIds, currentId, false, RakNet::UNASSIGNED_NETWORK_ID);
+		if (!res)
+		{
+			delete[] playerIds;
+		}
+		return res;
 	}
 
 	bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel, bool dispatchEvents) override

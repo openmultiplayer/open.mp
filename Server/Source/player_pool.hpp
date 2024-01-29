@@ -1649,6 +1649,22 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		}
 	}
 
+	void broadcastRPC(int id, Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
+	{
+		for (INetwork* network : networks)
+		{
+			network->broadcastRPC(id, data, channel, players, skipFrom, dispatchEvents);
+		}
+	}
+
+	void broadcastPacket(Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
+	{
+		for (INetwork* network : networks)
+		{
+			network->broadcastPacket(data, channel, players, skipFrom, dispatchEvents);
+		}
+	}
+
 	void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) override
 	{
 		for (INetwork* network : networks)
@@ -1708,7 +1724,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		playerJoinPacket.Col = player.colour_;
 		playerJoinPacket.IsNPC = player.isBot_;
 		playerJoinPacket.Name = StringView(player.name_);
-		PacketHelper::broadcastToSome(playerJoinPacket, storage.entries(), &peer);
+		PacketHelper::broadcastToSome(playerJoinPacket, *this, storage.entries(), &peer);
 
 		for (IPlayer* other : storage.entries())
 		{
@@ -2187,7 +2203,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
 					if (vehicle)
 					{
-						PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						PacketHelper::broadcastToSome(player->unoccupiedSync_, *this, vehicle->streamedForPlayers(), player);
 					}
 				}
 			}

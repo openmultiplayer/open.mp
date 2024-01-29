@@ -1068,6 +1068,19 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer>
 	/// @param dispatchEvents dispatch RPC related events
 	virtual void broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) = 0;
 
+	/// Attempt to broadcast an packet derived from NetworkPacketBase to all peers
+	/// @param data The data span with the length in BITS
+	/// @param skipFrom send packet to everyone except this player
+	/// @param dispatchEvents dispatch packet related events
+	virtual void broadcastPacket(Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) = 0;
+
+	/// Attempt to broadcast an RPC derived from NetworkPacketBase to all peers
+	/// @param id The RPC ID for the current network
+	/// @param data The data span with the length in BITS
+	/// @param skipFrom send RPC to everyone except this peer
+	/// @param dispatchEvents dispatch RPC related events
+	virtual void broadcastRPC(int id, Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* skipFrom = nullptr, bool dispatchEvents = true) = 0;
+
 	/// Check if player name is valid.
 	virtual bool isNameValid(StringView name) const = 0;
 
