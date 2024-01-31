@@ -2295,7 +2295,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return NewConnectionResult_BadName;
 		}
 
-		auto& secondaryPool = player->clientParams_.isBot ? botList : playerList;
+		auto& secondaryPool = params.bot ? botList : playerList;
 		secondaryPool.emplace(player);
 
 		initPlayer(*player, params);

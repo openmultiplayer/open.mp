@@ -915,6 +915,7 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 				rakNetServer.Kick(pkt->playerId);
 			}
 		}
+
 		if (player)
 		{
 			NetworkBitStream bs(pkt->data, pkt->length, false);
