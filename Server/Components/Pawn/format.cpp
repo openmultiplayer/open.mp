@@ -34,17 +34,27 @@
 #define to_digit(c) ((c) - '0')
 #define is_digit(c) ((unsigned)to_digit(c) <= 9)
 #define to_char(n) ((n) + '0')
-#define CHECK_ARGS(n)                                                                                                                            \
-	if ((arg + n) > args)                                                                                                                        \
-	{                                                                                                                                            \
-		PawnManager::Get()->core->logLn(LogLevel::Error, "String formatted incorrectly - parameter: %d, total: %d, format: %s", arg, args, fmt); \
-		return 0;                                                                                                                                \
+#define CHECK_ARGS(n)                                                                                                                                  \
+	if ((arg + n) > args)                                                                                                                              \
+	{                                                                                                                                                  \
+		char* formatStr;                                                                                                                               \
+		int formatLength;                                                                                                                              \
+                                                                                                                                                       \
+		amx_StrLen(format, &formatLength);                                                                                                             \
+		if (formatLength > 0 && (formatStr = reinterpret_cast<char*>(alloca(formatLength + 1))))                                                       \
+		{                                                                                                                                              \
+			amx_GetString(formatStr, format, false, formatLength + 1);                                                                                 \
+		}                                                                                                                                              \
+		else                                                                                                                                           \
+		{                                                                                                                                              \
+			formatStr = const_cast<char*>("");                                                                                                         \
+		}                                                                                                                                              \
+		PawnManager::Get()->core->logLn(LogLevel::Error, "String formatted incorrectly - parameter: %d, total: %d, format: %s", arg, args, formatStr); \
+		return 0;                                                                                                                                      \
 	}
 
 template size_t atcprintf<cell, cell>(cell*, size_t, const cell*, AMX*, const cell*, int*);
 template size_t atcprintf<char, cell>(char*, size_t, const cell*, AMX*, const cell*, int*);
-template size_t atcprintf<cell, char>(cell*, size_t, const char*, AMX*, const cell*, int*);
-template size_t atcprintf<char, char>(char*, size_t, const char*, AMX*, const cell*, int*);
 
 template <typename U, typename S>
 void AddString(U** buf_p, size_t& maxlen, const S* string, int width, int prec, int flags)
@@ -829,14 +839,10 @@ done:
  */
 void __WHOA_DONT_CALL_ME_PLZ_K_lol_o_O()
 {
-	// acsprintf
-	atcprintf((cell*)NULL, 0, (char const*)NULL, NULL, NULL, NULL);
 	// accprintf
 	atcprintf((cell*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL);
 	// ascprintf
 	atcprintf((char*)NULL, 0, (cell const*)NULL, NULL, NULL, NULL);
-	// ascprintf
-	atcprintf((char*)NULL, 0, (char const*)NULL, NULL, NULL, NULL);
 }
 
 // StringView printf.
