@@ -1,3 +1,13 @@
+/*
+ *  This Source Code Form is subject to the terms of the Mozilla Public License,
+ *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ *  obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ *  The original code is copyright (c) 2022, open.mp team and contributors.
+ */
+
+#pragma once
+
 // This class maps one set of IDs to another set.  For example the gang zones internal pool is
 // infinite, but the external Pawn API has two separate finite pools - a global pool and a per-
 // player pool (technically that's `MAX_PLAYERS + 1` pools, not two).  The SDK can simply create as
