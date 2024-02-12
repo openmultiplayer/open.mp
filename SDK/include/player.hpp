@@ -326,9 +326,9 @@ struct WeaponSlotData
 	{
 	}
 
-	uint8_t slot()
+	int8_t slot()
 	{
-		static const uint8_t slots[] = {
+		static const int8_t slots[] = {
 			0, // 0 - Fist
 			0, // 1 - Brass Knuckles
 			1, // 2 - Golf Club
