@@ -1287,7 +1287,7 @@ public:
 
 	void giveWeapon(WeaponSlotData weapon) override
 	{
-		uint8_t slot = weapon.slot();
+		auto slot = weapon.slot();
 		if (slot == INVALID_WEAPON_SLOT)
 		{
 			// Fail.
@@ -1343,7 +1343,7 @@ removeWeapon_has_weapon:
 	void setWeaponAmmo(WeaponSlotData weapon) override
 	{
 		// Set from sync
-		uint8_t slot = weapon.slot();
+		auto slot = weapon.slot();
 		if (slot == INVALID_WEAPON_SLOT)
 		{
 			// Fail.

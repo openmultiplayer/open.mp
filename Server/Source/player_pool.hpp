@@ -671,7 +671,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			Player& player = static_cast<Player&>(peer);
 
-			uint8_t slot = WeaponSlotData(footSync.Weapon).slot();
+			auto slot = WeaponSlotData(footSync.Weapon).slot();
 			if (slot == INVALID_WEAPON_SLOT)
 			{
 				return false;
@@ -1112,7 +1112,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			uint8_t slot = WeaponSlotData(vehicleSync.WeaponID).slot();
+			auto slot = WeaponSlotData(vehicleSync.WeaponID).slot();
 			if (slot == INVALID_WEAPON_SLOT)
 			{
 				return false;
@@ -1363,7 +1363,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			uint8_t slot = WeaponSlotData(passengerSync.WeaponID).slot();
+			auto slot = WeaponSlotData(passengerSync.WeaponID).slot();
 			if (slot == INVALID_WEAPON_SLOT)
 			{
 				return false;
