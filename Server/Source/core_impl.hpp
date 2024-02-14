@@ -87,6 +87,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "game.use_all_animations", true },
 	{ "game.lag_compensation_mode", LagCompMode_Enabled },
 	{ "game.group_player_objects", false },
+	{ "game.use_filterscript_load_events", true },
 	// logging
 	{ "logging.enable", true },
 	{ "logging.file", String("log.txt") },
