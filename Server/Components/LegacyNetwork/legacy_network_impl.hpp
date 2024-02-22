@@ -38,6 +38,7 @@ private:
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
 	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+	std::array<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
 
@@ -360,15 +361,20 @@ public:
 
 	unsigned getPing(const IPlayer& peer) override
 	{
-		const PeerNetworkData& netData = peer.getNetworkData();
-		if (netData.network != this)
+		auto remoteSystem = playerRemoteSystem[peer.getID()];
+		if (remoteSystem == nullptr)
 		{
-			return 0;
+			return -1;
 		}
 
-		const PeerNetworkData::NetworkID& nid = netData.networkID;
-		const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-		return rakNetServer.GetLastPing(rid);
+		if (remoteSystem->pingAndClockDifferentialWriteIndex == 0)
+		{
+			return remoteSystem->pingAndClockDifferential[RakNet::PING_TIMES_ARRAY_SIZE - 1].pingTime;
+		}
+		else
+		{
+			return remoteSystem->pingAndClockDifferential[remoteSystem->pingAndClockDifferentialWriteIndex - 1].pingTime;
+		}
 	}
 
 	void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
