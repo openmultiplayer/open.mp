@@ -365,7 +365,7 @@ void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 	if (nextRestart_ != TimePoint::min() && nextRestart_ <= now)
 	{
 		// Reloading a script.  Restart is in the past, load the next GM.
-		Load(mainName_, true);
+		Load(mainName_, true, true);
 		nextRestart_ = TimePoint::min();
 	}
 	if (mainScript_ && nextSleep_ != TimePoint::min() && nextSleep_ <= now)
@@ -441,7 +441,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 	return Load("gamemodes/" + gamemodes_[0], true);
 }
 
-void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
+void PawnManager::openAMX(PawnScript& script, bool isEntryScript, bool restarting)
 {
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
 	script.Register("Script_CallByIndex", &utils::pawn_Script_CallByIndex);
@@ -521,11 +521,6 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 			// If there's no `main` ignore it for now.
 			core->logLn(LogLevel::Error, "%s", aux_StrError(err));
 		}
-
-		for (auto const p : players->entries())
-		{
-			script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
-		}
 		// TODO: `AMX_EXEC_CONT` support.
 	}
 	else
@@ -534,17 +529,20 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 		script.cache_.inited = true;
 	}
 
-	// Assume that all initialisation and header mangling is now complete, and that it is safe to
-	// cache public pointers.
-
-	// Call `OnScriptLoadPlayer` (can be after caching).
 	for (auto const p : players->entries())
 	{
-		script.Call("OnScriptLoadPlayer", DefaultReturnValue_True, p->getID());
+
+		// If it's entry script and it's restarting, after loading we call OnPlayerConnect in all scripts
+		// Regardless of their types, as if players have rejoined the server. This is also what SA-MP does.
+		if (isEntryScript && restarting)
+		{
+			script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
+			CallInSides("OnPlayerConnect", DefaultReturnValue_True, p->getID());
+		}
 	}
 }
 
-bool PawnManager::Load(std::string const& name, bool isEntryScript)
+bool PawnManager::Load(std::string const& name, bool isEntryScript, bool restarting)
 {
 	std::string normal_script_name;
 	utils::NormaliseScriptName(name, normal_script_name);
