@@ -531,6 +531,11 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript, bool restartin
 
 	for (auto const p : players->entries())
 	{
+		// Call OnScriptUnloadPlayer for any pawn script that is being loaded, this way people can
+		// Make use of this callback for resetting variables, or initializing anything player related.
+		// First paramter is obviously player ID, and second parameter is a boolean determining whether it's
+		// An entry script (main script) or a side script
+		script.Call("OnScriptLoadPlayer", DefaultReturnValue_True, p->getID(), isEntryScript);
 
 		// If it's entry script and it's restarting, after loading we call OnPlayerConnect in all scripts
 		// Regardless of their types, as if players have rejoined the server. This is also what SA-MP does.
@@ -604,9 +609,14 @@ void PawnManager::closeAMX(PawnScript& script, bool isEntryScript)
 			PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_Quit);
 		}
 	}
+
+	// Call OnScriptUnloadPlayer for any pawn script that is being unloaded, this way people can
+	// Make use of this callback for resetting variables, or uninitializing anything player related.
+	// First paramter is obviously player ID, and second parameter is a boolean determining whether it's
+	// An entry script (main script) or a side script
 	for (auto const p : players->entries())
 	{
-		script.Call("OnScriptUnloadPlayer", DefaultReturnValue_True, p->getID());
+		script.Call("OnScriptUnloadPlayer", DefaultReturnValue_True, p->getID(), isEntryScript);
 	}
 
 	if (isEntryScript)
