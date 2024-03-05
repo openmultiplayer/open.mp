@@ -368,7 +368,7 @@ namespace RPC
 		}
 	};
 
-	struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		HybridString<128> Message;
 		Colour Col;
@@ -385,7 +385,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 
 		HybridString<128> message;
@@ -399,7 +399,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		int PlayerID;
 		HybridString<128> message;
@@ -415,7 +415,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 
 		HybridString<128> message;
@@ -448,7 +448,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		HybridString<128> message;
 
@@ -463,7 +463,7 @@ namespace RPC
 		}
 	};
 
-	struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		bool HasKiller;
 		int KillerID;
