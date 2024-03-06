@@ -89,7 +89,7 @@ private:
 			});
 	}
 
-	void openAMX(PawnScript& script, bool isEntryScript, bool restarting = false);
+	void openAMX(PawnScript& script, bool isEntryScript);
 	void closeAMX(PawnScript& script, bool isEntryScript);
 
 public:
@@ -104,7 +104,7 @@ public:
 	void SetBasePath(std::string const& path);
 	void SetScriptPath(std::string const& path);
 
-	bool Load(std::string const& name, bool primary = false, bool restarting = false);
+	bool Load(std::string const& name, bool primary = false);
 	bool Load(DynamicArray<StringView> const& mainScripts);
 	bool Reload(std::string const& name);
 	bool Unload(std::string const& name);
