@@ -295,8 +295,9 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, cons
 		PeerAddress::ToString(addr, addrString);
 		core->printLn("[query:%c] from %.*s", buffer[QUERY_TYPE_INDEX], PRINT_VIEW(addrString));
 	}
+	
 	// Ping
-	else if (buffer[QUERY_TYPE_INDEX] == 'p')
+	if (buffer[QUERY_TYPE_INDEX] == 'p')
 	{
 		if (buffer.size() != BASE_QUERY_SIZE + sizeof(uint32_t))
 		{
