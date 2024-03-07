@@ -31,7 +31,6 @@ elseif(UNIX)
 		set(TARGET_BUILD_ARCH "x86" CACHE STRING "The architecture to build for.")
 		set(SHARED_OPENSSL TRUE CACHE BOOL "Whether to dynamically link the OpenSSL library")
 		set(STATIC_STDCXX FALSE CACHE BOOL "Whether to statically link against libc++.")
-  		add_compile_definitions("_FILE_OFFSET_BITS=64")
 	# Apple Clang
 	else()
 		set(CMAKE_CXX_STDLIB "libc++" CACHE STRING "The standard library to use.")
