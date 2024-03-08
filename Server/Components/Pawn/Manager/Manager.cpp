@@ -365,7 +365,7 @@ void PawnManager::ProcessTick(Microseconds elapsed, TimePoint now)
 	if (nextRestart_ != TimePoint::min() && nextRestart_ <= now)
 	{
 		// Reloading a script.  Restart is in the past, load the next GM.
-		Load(mainName_, true, true);
+		Load(mainName_, true);
 		nextRestart_ = TimePoint::min();
 	}
 	if (mainScript_ && nextSleep_ != TimePoint::min() && nextSleep_ <= now)
@@ -441,7 +441,7 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 	return Load("gamemodes/" + gamemodes_[0], true);
 }
 
-void PawnManager::openAMX(PawnScript& script, bool isEntryScript, bool restarting)
+void PawnManager::openAMX(PawnScript& script, bool isEntryScript)
 {
 	script.Register("CallLocalFunction", &utils::pawn_Script_Call);
 	script.Register("Script_CallByIndex", &utils::pawn_Script_CallByIndex);
@@ -529,25 +529,17 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript, bool restartin
 		script.cache_.inited = true;
 	}
 
-	for (auto const p : players->entries())
-	{
-		// Call OnScriptUnloadPlayer for any pawn script that is being loaded, this way people can
-		// Make use of this callback for resetting variables, or initializing anything player related.
-		// First paramter is obviously player ID, and second parameter is a boolean determining whether it's
-		// An entry script (main script) or a side script
-		script.Call("OnScriptLoadPlayer", DefaultReturnValue_True, p->getID(), isEntryScript);
+	// Assume that all initialisation and header mangling is now complete, and that it is safe to
+	// cache public pointers.
 
-		// If it's entry script and it's restarting, after loading we call OnPlayerConnect in all scripts
-		// Regardless of their types, as if players have rejoined the server. This is also what SA-MP does.
-		if (isEntryScript && restarting)
-		{
-			script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
-			CallInSides("OnPlayerConnect", DefaultReturnValue_True, p->getID());
-		}
+	// Call `OnPlayerConnect` (can be after caching).
+	for (auto p : players->entries())
+	{
+		script.Call("OnPlayerConnect", DefaultReturnValue_True, p->getID());
 	}
 }
 
-bool PawnManager::Load(std::string const& name, bool isEntryScript, bool restarting)
+bool PawnManager::Load(std::string const& name, bool isEntryScript)
 {
 	std::string normal_script_name;
 	utils::NormaliseScriptName(name, normal_script_name);
@@ -601,24 +593,40 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript, bool restart
 
 void PawnManager::closeAMX(PawnScript& script, bool isEntryScript)
 {
-	// Call OnPlayerDisconnect on entry script close first, then we proceed to do unload player callback
-	if (isEntryScript)
+	AMX* amx = script.GetAMX();
+	int idx;
+	bool once = true;
+	// Reason 4, to match fixes.inc.  Why was it not 3?  I don't know.
+	if (amx_FindPublic(amx, "OnPlayerDisconnect", &idx) == AMX_ERR_NONE)
 	{
 		for (auto const p : players->entries())
 		{
-			PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_Quit);
+			cell ret = 1;
+			int err = script.CallChecked(idx, ret, p->getID(), PeerDisconnectReason_ModeEnd);
+			switch (err)
+			{
+			case AMX_ERR_NONE:
+				break;
+			case AMX_ERR_BOUNDS:
+				// Test the `OP_BOUNDS` parameter and the current index.
+				if (once && (*(cell*)((uintptr_t)amx->base + (((AMX_HEADER*)amx->base)->cod + amx->cip - sizeof(cell)))) == 2) // && amx->pri == 4)
+				{
+					core->printLn(R"(
+Array out-of-bounds encountered during `OnPlayerDisconnect` with reason `4`
+(script exit).  This may be due to old code assuming the highest possible reason
+is `2`.
+)");
+					// Only show the error once, don't spam it.
+					once = false;
+					break;
+				}
+				// Fallthrough
+			default:
+				core->logLn(LogLevel::Error, "%s", aux_StrError(err));
+				break;
+			}
 		}
 	}
-
-	// Call OnScriptUnloadPlayer for any pawn script that is being unloaded, this way people can
-	// Make use of this callback for resetting variables, or uninitializing anything player related.
-	// First paramter is obviously player ID, and second parameter is a boolean determining whether it's
-	// An entry script (main script) or a side script
-	for (auto const p : players->entries())
-	{
-		script.Call("OnScriptUnloadPlayer", DefaultReturnValue_True, p->getID(), isEntryScript);
-	}
-
 	if (isEntryScript)
 	{
 		script.Call("OnGameModeExit", DefaultReturnValue_False);
