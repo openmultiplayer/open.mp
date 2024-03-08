@@ -595,7 +595,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript, bool restart
 		scripts_.push_back(ptr);
 		amxToScript_.emplace(script.GetAMX(), ptr);
 	}
-	openAMX(script, isEntryScript);
+	openAMX(script, isEntryScript, restarting);
 	return true;
 }
 
