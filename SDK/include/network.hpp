@@ -29,10 +29,6 @@ enum PeerDisconnectReason
 	PeerDisconnectReason_Timeout,
 	PeerDisconnectReason_Quit,
 	PeerDisconnectReason_Kicked,
-	// Never used by us, reserved for some existing libraries.
-	_PeerDisconnectReason_Custom,
-	// 4 to match fixes.inc, which wasn't 3 because some other libraries already used it.
-	PeerDisconnectReason_ModeEnd
 };
 
 enum OrderingChannel
