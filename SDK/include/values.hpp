@@ -4,7 +4,7 @@
 
 constexpr int MAX_SEATS = 4;
 constexpr int PLAYER_POOL_SIZE = 1000;
-constexpr int VEHICLE_POOL_SIZE = 3000;
+constexpr int VEHICLE_POOL_SIZE = 2000;
 constexpr int CLASS_POOL_SIZE = 320;
 constexpr int OBJECT_POOL_SIZE = 2000;
 constexpr int OBJECT_POOL_SIZE_037 = 1000;
