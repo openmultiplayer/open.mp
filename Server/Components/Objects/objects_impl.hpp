@@ -330,14 +330,7 @@ public:
 
 			freeIdx = storage.findFreeIndex(freeIdx + 1);
 		}
-
-		// The server accepts connections from 0.3.7 clients.
-		// We can't create more than 1000 objects.
-		if (compatModeEnabled && freeIdx >= OBJECT_POOL_SIZE_037)
-		{
-			return nullptr;
-		}
-
+		
 		if (freeIdx < storage.Lower)
 		{
 			// No free index
@@ -550,14 +543,7 @@ public:
 				return nullptr;
 			}
 		}
-
-		// The server accepts connections from 0.3.7 clients.
-		// We can't create more than 1000 objects.
-		if (component_.is037CompatModeEnabled() && freeIdx >= OBJECT_POOL_SIZE_037)
-		{
-			return nullptr;
-		}
-
+		
 		int objid = storage.claimHint(freeIdx, *this, modelID, position, rotation, drawDist, component_.getDefaultCameraCollision());
 		if (objid < storage.Lower)
 		{
