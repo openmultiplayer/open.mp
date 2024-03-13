@@ -1079,4 +1079,7 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer>
 
 	/// Get the colour assigned to a player ID when it first connects.
 	virtual Colour getDefaultColour(int pid) const = 0;
+
+	/// Request a new player with the given network parameters and proposed player ID
+	virtual Pair<NewConnectionResult, IPlayer*> requestPlayer(int playerId, const PeerNetworkData& netData, const PeerRequestParams& params) = 0;
 };

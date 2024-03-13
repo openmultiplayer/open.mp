@@ -1682,6 +1682,38 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		return { NewConnectionResult_Success, result };
 	}
 
+	Pair<NewConnectionResult, IPlayer*> requestPlayer(int playerId, const PeerNetworkData& netData, const PeerRequestParams& params) override
+	{
+		if (params.bot && botList.size() >= *maxBots)
+		{
+			return { NewConnectionResult_NoPlayerSlot, nullptr };
+		}
+
+		if (!isNameValid(params.name) || isNameTaken(params.name, nullptr))
+		{
+			return { NewConnectionResult_BadName, nullptr };
+		}
+
+		auto poolID = storage.claimHint(playerId, *this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		if (poolID < storage.Lower)
+		{
+			// ID is not available in pool, for example it's already taken
+			return { NewConnectionResult_NoPlayerSlot, nullptr };
+		}
+
+		Player* result = storage.get(poolID);
+		if (!result)
+		{
+			return { NewConnectionResult_NoPlayerSlot, nullptr };
+		}
+
+		auto& secondaryPool = result->isBot_ ? botList : playerList;
+		secondaryPool.emplace(result);
+
+		initPlayer(*result);
+		return { NewConnectionResult_Success, result };
+	}
+
 	void onPeerConnect(IPlayer& peer) override
 	{
 		Player& player = static_cast<Player&>(peer);

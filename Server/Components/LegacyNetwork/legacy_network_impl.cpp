@@ -345,7 +345,14 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 		params.bot = isNPC;
 		params.serial = serial;
 		params.isUsingOfficialClient = isUsingOfficialClient;
-		newConnectionResult = core->getPlayers().requestPlayer(netData, params);
+
+		int playerId = rakNetServer.GetIndexFromPlayerID(rid);
+		if (playerId == -1)
+		{
+			return nullptr;
+		}
+
+		newConnectionResult = core->getPlayers().requestPlayer(/*playerId, */ netData, params);
 	}
 	else
 	{
