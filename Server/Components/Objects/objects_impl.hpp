@@ -353,7 +353,8 @@ public:
 		Object* obj = storage.get(objid);
 		for (IPlayer* player : players->entries())
 		{
-			obj->createForPlayer(*player);
+			if(player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL && < freeIdx < OBJECT_POOL_SIZE_037)
+				obj->createForPlayer(*player);
 		}
 
 		return obj;
@@ -555,6 +556,10 @@ public:
 		{
 			return nullptr;
 		}*/
+		if(player_.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL && freeIdx >= OBJECT_POOL_SIZE_037)
+		{
+			return nullptr;
+		}
 
 		int objid = storage.claimHint(freeIdx, *this, modelID, position, rotation, drawDist, component_.getDefaultCameraCollision());
 		if (objid < storage.Lower)
