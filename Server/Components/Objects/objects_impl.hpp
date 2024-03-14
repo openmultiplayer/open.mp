@@ -353,7 +353,7 @@ public:
 		Object* obj = storage.get(objid);
 		for (IPlayer* player : players->entries())
 		{
-			if(*player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL && < freeIdx < OBJECT_POOL_SIZE_037)
+			if(players->getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL && < freeIdx < OBJECT_POOL_SIZE_037)
 				obj->createForPlayer(*player);
 		}
 
