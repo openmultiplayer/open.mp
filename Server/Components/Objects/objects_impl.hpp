@@ -352,9 +352,8 @@ public:
 
 		Object* obj = storage.get(objid);
 		for (IPlayer* player : players->entries())
-		{
-			if(players->getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL && < freeIdx < OBJECT_POOL_SIZE_037)
-				obj->createForPlayer(*player);
+		{			
+			obj->createForPlayer(*player);
 		}
 
 		return obj;
@@ -417,6 +416,11 @@ public:
 		return storage._entries();
 	}
 
+	ClientVersion getClientVersion() const override
+	{
+		return version_;
+	}
+	
 	void onPoolEntryDestroyed(IPlayer& player) override;
 
 	void onPoolEntryCreated(IPlayer& player) override;
