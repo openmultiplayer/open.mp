@@ -416,11 +416,6 @@ public:
 		return storage._entries();
 	}
 
-	ClientVersion getClientVersion() const override
-	{
-		return version_;
-	}
-	
 	void onPoolEntryDestroyed(IPlayer& player) override;
 
 	void onPoolEntryCreated(IPlayer& player) override;
