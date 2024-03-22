@@ -23,6 +23,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork()
 	, rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface())
 {
 	rakNetServer.SetMTUSize(512);
+	playerRemoteSystem.fill(nullptr);
 
 	RPCHOOK(0);
 	RPCHOOK(1);
@@ -449,6 +450,8 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 				}
 
 				network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
+
+				network->playerRemoteSystem[newPeer->getID()] = remoteSystem;
 				return;
 			}
 		}
@@ -522,6 +525,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDiscon
 	}
 
 	playerFromRakIndex[rid] = nullptr;
+	playerRemoteSystem[player->getID()] = nullptr;
 	networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
