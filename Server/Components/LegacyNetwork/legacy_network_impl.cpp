@@ -777,7 +777,7 @@ void RakNetLegacyNetwork::update()
 		query.setDarkBannerUrl(bannerUrl);
 	}
 
-	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
+	query.setRuleValue<false>("worldtime", String(std::to_string(abs(*config.getInt("game.time")) % 24) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");
 	query.setRconPassword(rconPassword);
