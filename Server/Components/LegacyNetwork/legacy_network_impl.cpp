@@ -867,8 +867,11 @@ void RakNetLegacyNetwork::start()
 		// Do the request after network is started.
 		if (*config.getBool("announce"))
 		{
-			const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
-			core->requestHTTP4(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
+			if(*config.getBool("enable_query"))
+			{
+				const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
+				core->requestHTTP4(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
+			} else core->logLn(LogLevel::Warning, "The 'enable_query' option is disabled, so executing 'announce' will not succeed");
 		}
 	}
 
