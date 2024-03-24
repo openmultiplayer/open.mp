@@ -876,7 +876,7 @@ void RakNetLegacyNetwork::start()
 	}
 
 	if(*config.getInt("max_bots") >= maxPlayers)
-		core->logLn(LogLevel::Warning, "The 'max_bots' option more or equal how 'max_players' option. Server work can be unpredictable");
+		core->logLn(LogLevel::Warning, "The 'max_bots' option more or equal than 'max_players' option. Server work can be unpredictable");
 	
 	rakNetServer.StartOccasionalPing();
 	SAMPRakNet::SetPort(port);
