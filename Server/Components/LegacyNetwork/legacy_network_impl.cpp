@@ -704,7 +704,7 @@ void RakNetLegacyNetwork::update()
 {
 	IConfig& config = core->getConfig();
 
-	cookieSeedTime = Milliseconds(*config.getInt("network.cookie_reseed_time"));
+	cookieSeedTime = Milliseconds(abs(*config.getInt("network.cookie_reseed_time")));
 
 	SAMPRakNet::SetTimeout(*config.getInt("network.player_timeout"));
 	SAMPRakNet::SetMinConnectionTime(*config.getInt("network.minimum_connection_time"));
