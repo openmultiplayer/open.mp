@@ -751,7 +751,7 @@ void RakNetLegacyNetwork::update()
 		query.setRuleValue<false>("mapname", "San Andreas");
 	}
 
-	query.setRuleValue<false>("weather", std::to_string(*config.getInt("game.weather")));
+	query.setRuleValue<false>("weather", std::to_string(abs(*config.getInt("game.weather"))));
 
 	StringView website = config.getString("website");
 	if (!website.empty())
