@@ -706,12 +706,12 @@ void RakNetLegacyNetwork::update()
 
 	cookieSeedTime = Milliseconds(abs(*config.getInt("network.cookie_reseed_time")));
 
-	SAMPRakNet::SetTimeout(*config.getInt("network.player_timeout"));
-	SAMPRakNet::SetMinConnectionTime(*config.getInt("network.minimum_connection_time"));
-	SAMPRakNet::SetMessagesLimit(*config.getInt("network.messages_limit"));
-	SAMPRakNet::SetMessageHoleLimit(*config.getInt("network.message_hole_limit"));
-	SAMPRakNet::SetAcksLimit(*config.getInt("network.acks_limit"));
-	SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network.limits_ban_time"));
+	SAMPRakNet::SetTimeout(abs(*config.getInt("network.player_timeout")));
+	SAMPRakNet::SetMinConnectionTime(abs(*config.getInt("network.minimum_connection_time")));
+	SAMPRakNet::SetMessagesLimit(abs(*config.getInt("network.messages_limit")));
+	SAMPRakNet::SetMessageHoleLimit(abs(*config.getInt("network.message_hole_limit")));
+	SAMPRakNet::SetAcksLimit(abs(*config.getInt("network.acks_limit")));
+	SAMPRakNet::SetNetworkLimitsBanTime(abs(*config.getInt("network.limits_ban_time")));
 
 	SAMPRakNet::SetLogCookies(*config.getBool("logging.log_cookies"));
 
