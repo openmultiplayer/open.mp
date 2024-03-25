@@ -1080,3 +1080,13 @@ struct IPlayerPool : public IExtensible, public IReadOnlyPool<IPlayer>
 	/// Get the colour assigned to a player ID when it first connects.
 	virtual Colour getDefaultColour(int pid) const = 0;
 };
+
+static const UID IPlayerReserveExtension_UID = UID(0x7DEF26D24A04F2FD);
+struct IPlayerReserveExtension : public IExtension
+{
+	PROVIDE_EXT_UID(IPlayerReserveExtension_UID)
+
+	/// Request a new player with the given network parameters
+	virtual Pair<NewConnectionResult, IPlayer*> reservePlayer(const PeerNetworkData& netData) = 0;
+	virtual NewConnectionResult finalizePlayer(IPlayer* peer, const PeerRequestParams& params) = 0;
+};

@@ -318,18 +318,6 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 {
 	const RakNet::PlayerID rid = rpcParams->sender;
 
-	if (playerFromRakIndex[rpcParams->senderIndex])
-	{
-		// Connection already exists
-		return nullptr;
-	}
-
-	PeerNetworkData netData {};
-	netData.networkID.address.ipv6 = false;
-	netData.networkID.address.v4 = rid.binaryAddress;
-	netData.networkID.port = rid.port;
-	netData.network = this;
-
 	Pair<NewConnectionResult, IPlayer*> newConnectionResult { NewConnectionResult_Ignore, nullptr };
 
 	const bool isDL = version == LegacyClientVersion_03DL && (SAMPRakNet::GetToken() == (challenge ^ LegacyClientVersion_03DL));
@@ -345,7 +333,35 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 		params.bot = isNPC;
 		params.serial = serial;
 		params.isUsingOfficialClient = isUsingOfficialClient;
-		newConnectionResult = core->getPlayers().requestPlayer(netData, params);
+
+		if (reservePlayers)
+		{
+			if (!playerFromRakIndex[rpcParams->senderIndex])
+			{
+				// Player not reserved
+				rakNetServer.Kick(rid);
+				return nullptr;
+			}
+
+			newConnectionResult.second = playerFromRakIndex[rpcParams->senderIndex];
+			newConnectionResult.first = reservePlayers->finalizePlayer(newConnectionResult.second, params);
+		}
+		else
+		{
+			if (playerFromRakIndex[rpcParams->senderIndex])
+			{
+				// Connection already exists
+				return nullptr;
+			}
+
+			PeerNetworkData netData {};
+			netData.networkID.address.ipv6 = false;
+			netData.networkID.address.v4 = rid.binaryAddress;
+			netData.networkID.port = rid.port;
+			netData.network = this;
+
+			newConnectionResult = core->getPlayers().requestPlayer(netData, params);
+		}
 	}
 	else
 	{
@@ -363,7 +379,15 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 
 			if (newConnectionResult.first != NewConnectionResult_VersionMismatch)
 			{
-				rakNetServer.Kick(rid);
+				if (reservePlayers)
+				{
+					// Player is reserved, kick them
+					newConnectionResult.second->kick();
+				}
+				else
+				{
+					rakNetServer.Kick(rid);
+				}
 			}
 		}
 		return nullptr;
@@ -796,6 +820,7 @@ void RakNetLegacyNetwork::update()
 void RakNetLegacyNetwork::init(ICore* c)
 {
 	core = c;
+	reservePlayers = queryExtension<IPlayerReserveExtension>(core->getPlayers());
 
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
@@ -894,6 +919,25 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 		}
 
 		IPlayer* player = playerFromRakIndex[pkt->playerIndex];
+		if (!player && reservePlayers)
+		{
+			PeerNetworkData netData {};
+			netData.networkID.address.ipv6 = false;
+			netData.networkID.address.v4 = pkt->playerId.binaryAddress;
+			netData.networkID.port = pkt->playerId.port;
+			netData.network = this;
+
+			Pair<NewConnectionResult, IPlayer*> newConnectionResult = reservePlayers->reservePlayer(netData);
+			if (newConnectionResult.first == NewConnectionResult_Success)
+			{
+				playerFromRakIndex[pkt->playerIndex] = newConnectionResult.second;
+			}
+			else
+			{
+				rakNetServer.Kick(pkt->playerId);
+			}
+		}
+
 		if (player)
 		{
 			NetworkBitStream bs(pkt->data, pkt->length, false);

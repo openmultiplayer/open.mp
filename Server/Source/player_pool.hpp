@@ -12,7 +12,7 @@
 #include <Server/Components/Console/console.hpp>
 #include <utils.hpp>
 
-struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
+struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler, public IPlayerReserveExtension
 {
 	ICore& core;
 	const FlatPtrHashSet<INetwork>& networks;
@@ -382,7 +382,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					self.core.logLn(
 						LogLevel::Message,
 						"[death] %.*s died %d",
-						PRINT_VIEW(player.name_),
+						PRINT_VIEW(player.clientParams_.name),
 						reason);
 				}
 				else
@@ -391,7 +391,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 						LogLevel::Message,
 						"[kill] %.*s killed %.*s %.*s",
 						PRINT_VIEW(killer->getName()),
-						PRINT_VIEW(player.name_),
+						PRINT_VIEW(player.clientParams_.name),
 						PRINT_VIEW(self.core.getWeaponName(PlayerWeapon(reason))));
 				}
 			}
@@ -447,7 +447,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
 			Player& player = static_cast<Player&>(peer);
-			if (player.toSpawn_ || player.isBot_)
+			if (player.toSpawn_ || player.clientParams_.isBot)
 			{
 				player.setState(PlayerState_Spawned);
 				player.controllable_ = true;
@@ -1328,8 +1328,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		return Colour::FromRGBA(colours[pid % GLM_COUNTOF(colours)]);
 	}
 
-	void initPlayer(Player& player)
+	void initPlayer(Player& player, const PeerRequestParams& params)
 	{
+		player.clientParams_ = params;
 		player.streamedFor_.add(player.poolID, player);
 		player.colour_ = getDefaultColour(player.poolID);
 	}
@@ -1669,16 +1670,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		Player* result = storage.emplace(*this, netData, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
 		}
 
-		auto& secondaryPool = result->isBot_ ? botList : playerList;
+		auto& secondaryPool = result->clientParams_.isBot ? botList : playerList;
 		secondaryPool.emplace(result);
 
-		initPlayer(*result);
+		initPlayer(*result, params);
 		return { NewConnectionResult_Success, result };
 	}
 
@@ -1706,8 +1707,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		NetCode::RPC::PlayerJoin playerJoinPacket;
 		playerJoinPacket.PlayerID = player.poolID;
 		playerJoinPacket.Col = player.colour_;
-		playerJoinPacket.IsNPC = player.isBot_;
-		playerJoinPacket.Name = StringView(player.name_);
+		playerJoinPacket.IsNPC = player.clientParams_.isBot;
+		playerJoinPacket.Name = StringView(player.clientParams_.name);
 		PacketHelper::broadcastToSome(playerJoinPacket, storage.entries(), &peer);
 
 		for (IPlayer* other : storage.entries())
@@ -1721,8 +1722,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			NetCode::RPC::PlayerJoin otherJoinPacket;
 			otherJoinPacket.PlayerID = otherPlayer->poolID;
 			otherJoinPacket.Col = otherPlayer->colour_;
-			otherJoinPacket.IsNPC = otherPlayer->isBot_;
-			otherJoinPacket.Name = StringView(otherPlayer->name_);
+			otherJoinPacket.IsNPC = otherPlayer->clientParams_.isBot;
+			otherJoinPacket.Name = StringView(otherPlayer->clientParams_.name);
 			PacketHelper::send(otherJoinPacket, peer);
 		}
 
@@ -1740,8 +1741,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			core.logLn(
 				LogLevel::Message,
 				"[%sjoin] %.*s has joined the server (%d:%s)",
-				player.isBot_ ? "npc:" : "",
-				PRINT_VIEW(player.name_),
+				player.clientParams_.isBot ? "npc:" : "",
+				PRINT_VIEW(player.clientParams_.name),
 				player.poolID,
 				addressString.data());
 		}
@@ -1755,6 +1756,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 	void clearPlayer(Player& player, PeerDisconnectReason reason)
 	{
+		// Player not finalized, nothing to do
+		if (static_cast<Player&>(player).clientParams_.version == ClientVersion::ClientVersion_none)
+		{
+			return;
+		}
+
 		for (IPlayer* p : storage.entries())
 		{
 			if (p == &player)
@@ -1800,13 +1807,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			core.logLn(
 				LogLevel::Message,
 				"[%spart] %.*s has left the server (%d:%d)",
-				player.isBot_ ? "npc:" : "",
-				PRINT_VIEW(player.name_),
+				player.clientParams_.isBot ? "npc:" : "",
+				PRINT_VIEW(player.clientParams_.name),
 				player.poolID,
 				reason);
 		}
 
-		auto& secondaryPool = player.isBot_ ? botList : playerList;
+		auto& secondaryPool = player.clientParams_.isBot ? botList : playerList;
 		secondaryPool.erase(&player);
 	}
 
@@ -2247,5 +2254,51 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		core.removeNetworkEventHandler(this);
 		core.getEventDispatcher().removeEventHandler(this);
+	}
+
+	IExtension* getExtension(UID id) override
+	{
+		if (id == IPlayerReserveExtension::ExtensionIID)
+		{
+			return static_cast<IPlayerReserveExtension*>(this);
+		}
+		return nullptr;
+	}
+
+	// From IExtension
+	void reset() override { }
+
+	// From IPlayerReserveExtension_UID
+	Pair<NewConnectionResult, IPlayer*> reservePlayer(const PeerNetworkData& netData) override
+	{
+		Player* result = storage.emplace(*this, netData, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		if (!result)
+		{
+			return { NewConnectionResult_NoPlayerSlot, nullptr };
+		}
+
+		return { NewConnectionResult_Success, result };
+	}
+
+	// From IPlayerReserveExtension_UID
+	NewConnectionResult finalizePlayer(IPlayer* peer, const PeerRequestParams& params) override
+	{
+		Player* player = static_cast<Player*>(peer);
+
+		if (params.bot && botList.size() >= *maxBots)
+		{
+			return NewConnectionResult_NoPlayerSlot;
+		}
+
+		if (!isNameValid(params.name) || isNameTaken(params.name, nullptr))
+		{
+			return NewConnectionResult_BadName;
+		}
+
+		auto& secondaryPool = params.bot ? botList : playerList;
+		secondaryPool.emplace(player);
+
+		initPlayer(*player, params);
+		return NewConnectionResult_Success;
 	}
 };
