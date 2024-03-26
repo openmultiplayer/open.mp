@@ -144,21 +144,29 @@ private:
 		{
 			NetCode::RPC::OnPlayerDialogResponse sendDialogResponse;
 			if (!sendDialogResponse.read(bs))
-			{
 				return false;
-			}
 
 			// If the dialog id doesn't match what the server is expecting, ignore it
 			PlayerDialogData* data = queryExtension<PlayerDialogData>(peer);
 			if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID)
-			{
 				return false;
-			}
 
-			// If dialog type is one of the lists and list item is invalid, ignore it
-			if (sendDialogResponse.ListItem < 0 && (data->style_ == DialogStyle_LIST || data->style_ == DialogStyle_TABLIST || data->style_ == DialogStyle_TABLIST_HEADERS))
-			{
+			if((data->style_ == DialogStyle_PASSWORD || data->style_ == DialogStyle_INPUT || data->style_ == DialogStyle_MSGBOX) && sendDialogResponse.ListItem != -1)
 				return false;
+
+			if((data->style_ == DialogStyle_LIST || data->style_ == DialogStyle_TABLIST || data->style_ == DialogStyle_TABLIST_HEADERS) && data->body_.length() > 0)
+			{
+				unsigned int lines = 0;
+
+				for(unsigned int i = 0 ; i < data->body_.length(); i++)
+					if(data->body_[i] == '\n' && data->body_[i + 1] != '\0')
+						lines++;
+				
+				if(data->style_ == DialogStyle_TABLIST_HEADERS && lines > 0)
+					lines--;
+
+				if(sendDialogResponse.ListItem < 0 || sendDialogResponse.ListItem > lines)
+					return false;
 			}
 
 			data->activeId = INVALID_DIALOG_ID;
