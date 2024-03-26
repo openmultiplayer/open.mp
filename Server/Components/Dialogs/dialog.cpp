@@ -175,7 +175,7 @@ private:
 				&PlayerDialogEventHandler::onDialogResponse,
 				peer,
 				sendDialogResponse.ID,
-				static_cast<DialogResponse>(sendDialogResponse.Response),
+				static_cast<DialogResponse>(sendDialogResponse.Response % 2),
 				sendDialogResponse.ListItem,
 				sendDialogResponse.Text);
 
