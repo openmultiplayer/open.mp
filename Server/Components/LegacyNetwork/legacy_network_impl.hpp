@@ -361,7 +361,10 @@ public:
 
 	unsigned getPing(const IPlayer& peer) override
 	{
-		auto remoteSystem = playerRemoteSystem[peer.getID()];
+		auto poolID = peer.getID();
+		if(poolID < 0 || poolID >= PLAYER_POOL_SIZE) return -1;
+		
+		auto remoteSystem = playerRemoteSystem[poolID];
 		if (remoteSystem == nullptr)
 		{
 			return -1;

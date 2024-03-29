@@ -317,8 +317,9 @@ enum LegacyClientVersion
 IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient)
 {
 	const RakNet::PlayerID rid = rpcParams->sender;
+	const RakNet::PlayerIndex senderId = rpcParams->senderIndex;
 
-	if (playerFromRakIndex[rpcParams->senderIndex])
+	if (senderId < 0 || senderId >= PLAYER_POOL_SIZE || playerFromRakIndex[senderId])
 	{
 		// Connection already exists
 		return nullptr;
@@ -369,7 +370,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 		return nullptr;
 	}
 
-	playerFromRakIndex[rpcParams->senderIndex] = newConnectionResult.second;
+	playerFromRakIndex[senderId] = newConnectionResult.second;
 
 	return newConnectionResult.second;
 }
@@ -451,7 +452,9 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 
 				network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
 
-				network->playerRemoteSystem[newPeer->getID()] = remoteSystem;
+				auto poolID = newPeer->getID();
+				if(poolID >= 0 && poolID < PLAYER_POOL_SIZE) network->playerRemoteSystem[poolID] = remoteSystem;
+				
 				return;
 			}
 		}
@@ -517,15 +520,19 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason)
 {
+	if(rid < 0 || rid >= PLAYER_POOL_SIZE) return;
+	
 	IPlayer* player = playerFromRakIndex[rid];
+	playerFromRakIndex[rid] = nullptr;
 
 	if (!player)
 	{
 		return;
 	}
 
-	playerFromRakIndex[rid] = nullptr;
-	playerRemoteSystem[player->getID()] = nullptr;
+	auto poolID = player->getID();
+	if(poolID >= 0 && poolID < PLAYER_POOL_SIZE) playerRemoteSystem[poolID] = nullptr;
+	
 	networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
@@ -535,7 +542,7 @@ void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 	RakNetLegacyNetwork* network = reinterpret_cast<RakNetLegacyNetwork*>(extra);
 	const RakNet::PlayerIndex senderId = rpcParams->senderIndex;
 
-	if (senderId >= network->playerFromRakIndex.size())
+	if (senderId < 0 || senderId >= PLAYER_POOL_SIZE)
 	{
 		return;
 	}
@@ -887,7 +894,7 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 {
 	for (RakNet::Packet* pkt = rakNetServer.Receive(); pkt; pkt = rakNetServer.Receive())
 	{
-		if (pkt->playerIndex >= playerFromRakIndex.size())
+		if (pkt->playerIndex < 0 || pkt->playerIndex >= PLAYER_POOL_SIZE)
 		{
 			rakNetServer.DeallocatePacket(pkt);
 			continue;
