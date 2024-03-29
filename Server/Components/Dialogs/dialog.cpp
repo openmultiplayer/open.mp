@@ -144,11 +144,16 @@ private:
 		{
 			NetCode::RPC::OnPlayerDialogResponse sendDialogResponse;
 			if (!sendDialogResponse.read(bs))
+			{
 				return false;
+			}
 
 			// If the dialog id doesn't match what the server is expecting, ignore it
 			PlayerDialogData* data = queryExtension<PlayerDialogData>(peer);
 			if (!data || data->getActiveID() == INVALID_DIALOG_ID || data->getActiveID() != sendDialogResponse.ID)
+				return false;
+
+			if(sendDialogResponse.Response < 0 || sendDialogResponse.Response > 1)
 				return false;
 
 			if((data->style_ == DialogStyle_PASSWORD || data->style_ == DialogStyle_INPUT || data->style_ == DialogStyle_MSGBOX) && sendDialogResponse.ListItem != -1)
@@ -158,8 +163,8 @@ private:
 			{
 				unsigned int lines = 0;
 
-				for(unsigned int i = 0 ; i < data->body_.length(); i++)
-					if(data->body_[i] == '\n' && data->body_[i + 1] != '\0')
+				for(unsigned int i = 0 ; i < data->body_.length() - 1; i++)
+					if(data->body_[i] == '\n')
 						lines++;
 				
 				if(data->style_ == DialogStyle_TABLIST_HEADERS && lines > 0)
@@ -175,7 +180,7 @@ private:
 				&PlayerDialogEventHandler::onDialogResponse,
 				peer,
 				sendDialogResponse.ID,
-				static_cast<DialogResponse>(sendDialogResponse.Response % 2),
+				static_cast<DialogResponse>(sendDialogResponse.Response),
 				sendDialogResponse.ListItem,
 				sendDialogResponse.Text);
 
