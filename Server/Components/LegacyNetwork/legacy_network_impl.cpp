@@ -835,6 +835,42 @@ void RakNetLegacyNetwork::start()
 	query.setMaxPlayers(maxPlayers);
 	query.buildPlayerDependentBuffers();
 
+	if(*config.getInt("network.player_timeout") < 0)
+		core->logLn(LogLevel::Warning, "The 'player_timeout' option cannot have a negative value");
+
+	if(*config.getInt("network.minimum_connection_time") < 0)
+		core->logLn(LogLevel::Warning, "The 'minimum_connection_time' option cannot have a negative value");
+
+	if(*config.getInt("network.messages_limit") < 0)
+		core->logLn(LogLevel::Warning, "The 'messages_limit' option cannot have a negative value");
+
+	if(*config.getInt("network.message_hole_limit") < 0)
+		core->logLn(LogLevel::Warning, "The 'message_hole_limit' option cannot have a negative value");
+
+	if(*config.getInt("network.acks_limit") < 0)
+		core->logLn(LogLevel::Warning, "The 'acks_limit' option cannot have a negative value");
+
+	if(*config.getInt("network.limits_ban_time") < 0)
+		core->logLn(LogLevel::Warning, "The 'limits_ban_time' option cannot have a negative value");
+
+	if(*config.getInt("network.on_foot_sync_rate") < 0)
+		core->logLn(LogLevel::Warning, "The 'on_foot_sync_rate' option cannot have a negative value");
+
+	if(*config.getInt("network.in_vehicle_sync_rate") < 0)
+		core->logLn(LogLevel::Warning, "The 'in_vehicle_sync_rate' option cannot have a negative value");
+
+	if(*config.getInt("network.aiming_sync_rate") < 0)
+		core->logLn(LogLevel::Warning, "The 'aiming_sync_rate' option cannot have a negative value");
+
+	if(*config.getInt("network.cookie_reseed_time") < 0)
+		core->logLn(LogLevel::Warning, "The 'cookie_reseed_time' option cannot have a negative value");
+
+	if(*config.getInt("game.weather") < 0)
+		core->logLn(LogLevel::Warning, "The 'weather' option cannot have a negative value");
+
+	if(*config.getInt("game.time") < 0)
+		core->logLn(LogLevel::Warning, "The 'time' option cannot have a negative value");
+
 	update();
 
 	for (size_t i = 0; i < config.getBansCount(); ++i)
