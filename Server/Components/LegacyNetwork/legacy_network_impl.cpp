@@ -529,6 +529,12 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDiscon
 	networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
+void RakNetLegacyNetwork::OnCloseConnection(RakNet::RakPeerInterface* peer, RakNet::PlayerID playerId)
+{
+	auto playerIndex = peer->GetIndexFromPlayerID(playerId);
+	OnRakNetDisconnect(playerIndex, PeerDisconnectReason_Kicked);
+}
+
 template <size_t ID>
 void RakNetLegacyNetwork::RPCHook(RakNet::RPCParameters* rpcParams, void* extra)
 {
@@ -870,6 +876,8 @@ void RakNetLegacyNetwork::start()
 			const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
 			core->requestHTTP4(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
 		}
+
+		rakNetServer.AttachPlugin(this);
 	}
 
 	rakNetServer.StartOccasionalPing();

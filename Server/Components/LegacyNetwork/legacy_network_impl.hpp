@@ -19,6 +19,7 @@
 #include <raknet/GetTime.h>
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
+#include <raknet/PluginInterface.h>
 #include <raknet/StringCompressor.h>
 
 using namespace Impl;
@@ -31,7 +32,7 @@ static const StaticArray<StringView, 2> ProtectedRules = {
 
 class Core;
 
-class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension, public RakNet::PluginInterface
 {
 private:
 	ICore* core = nullptr;
@@ -290,6 +291,7 @@ public:
 	void start();
 
 	void OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason);
+	void OnCloseConnection(RakNet::RakPeerInterface* peer, RakNet::PlayerID playerId) override;
 
 	void onPlayerScoreChange(IPlayer& player, int score) override
 	{
