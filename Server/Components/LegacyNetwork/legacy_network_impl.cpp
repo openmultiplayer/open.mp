@@ -384,7 +384,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 		network->rakNetServer.Kick(rpcParams->sender);
 		return;
 	}
-	
+
 	NetworkBitStream bs = GetBitStream(*rpcParams);
 	NetCode::RPC::PlayerConnect playerConnectRPC;
 	if (!playerConnectRPC.read(bs))
