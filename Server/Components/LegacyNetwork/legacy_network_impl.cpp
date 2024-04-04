@@ -360,11 +360,6 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 			RakNet::BitStream bss;
 			bss.Write(uint8_t(newConnectionResult.first));
 			rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
-
-			if (newConnectionResult.first != NewConnectionResult_VersionMismatch)
-			{
-				rakNetServer.Kick(rid);
-			}
 		}
 		return nullptr;
 	}
@@ -384,85 +379,84 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 		return;
 	}
 
-	if (remoteSystem->sampData.authType == SAMPRakNet::AuthType_Player)
+	if (remoteSystem->sampData.authType != SAMPRakNet::AuthType_Player)
 	{
-		NetworkBitStream bs = GetBitStream(*rpcParams);
-		NetCode::RPC::PlayerConnect playerConnectRPC;
-		if (playerConnectRPC.read(bs))
-		{
-
-			bool serialIsInvalid = true;
-			String serial;
-			ttmath::UInt<100> serialNumber;
-			ttmath::uint remainder = 0;
-
-			serialNumber.FromString(String(StringView(playerConnectRPC.Key)), 16);
-			serialNumber.DivInt(1001, remainder);
-
-			if (remainder == 0)
-			{
-				serial = serialNumber.ToString(16);
-				if (serial.size() != 0 && serial.size() < 50)
-				{
-					serialIsInvalid = false;
-				}
-			}
-
-			const bool versionIsInvalid = (playerConnectRPC.VersionString.length() > 24);
-
-			if (serialIsInvalid || versionIsInvalid)
-			{
-				PeerAddress address;
-				address.v4 = rpcParams->sender.binaryAddress;
-				address.ipv6 = false;
-
-				PeerAddress::AddressString addressString;
-				PeerAddress::ToString(address, addressString);
-
-				network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
-				network->rakNetServer.Kick(rpcParams->sender);
-				return;
-			}
-
-			remoteSystem->isLogon = true;
-			IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name, playerConnectRPC.IsUsingOfficialClient);
-			if (newPeer)
-			{
-				if (!network->inEventDispatcher.stopAtFalse(
-						[newPeer, &bs](NetworkInEventHandler* handler)
-						{
-							bs.resetReadPointer();
-							return handler->onReceiveRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
-						}))
-				{
-					return;
-				}
-
-				if (!network->rpcInEventDispatcher.stopAtFalse(
-						NetCode::RPC::PlayerConnect::PacketID,
-						[newPeer, &bs](SingleNetworkInEventHandler* handler)
-						{
-							bs.resetReadPointer();
-							return handler->onReceive(*newPeer, bs);
-						}))
-				{
-					return;
-				}
-
-				network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
-
-				network->playerRemoteSystem[newPeer->getID()] = remoteSystem;
-				return;
-			}
-		}
-		else
-		{
-			network->rakNetServer.Kick(rpcParams->sender);
-		}
+		network->rakNetServer.Kick(rpcParams->sender);
 		return;
 	}
 
-	network->rakNetServer.Kick(rpcParams->sender);
+	NetworkBitStream bs = GetBitStream(*rpcParams);
+	NetCode::RPC::PlayerConnect playerConnectRPC;
+	if (!playerConnectRPC.read(bs))
+	{
+		network->rakNetServer.Kick(rpcParams->sender);
+		return;
+	}
+
+	bool serialIsInvalid = true;
+	String serial;
+	ttmath::UInt<100> serialNumber;
+	ttmath::uint remainder = 0;
+
+	serialNumber.FromString(String(StringView(playerConnectRPC.Key)), 16);
+	serialNumber.DivInt(1001, remainder);
+
+	if (remainder == 0)
+	{
+		serial = serialNumber.ToString(16);
+		if (serial.size() != 0 && serial.size() < 50)
+		{
+			serialIsInvalid = false;
+		}
+	}
+
+	const bool versionIsInvalid = (playerConnectRPC.VersionString.length() > 24);
+
+	if (serialIsInvalid || versionIsInvalid)
+	{
+		PeerAddress address;
+		address.v4 = rpcParams->sender.binaryAddress;
+		address.ipv6 = false;
+
+		PeerAddress::AddressString addressString;
+		PeerAddress::ToString(address, addressString);
+
+		network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
+		network->rakNetServer.Kick(rpcParams->sender);
+		return;
+	}
+
+	IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name, playerConnectRPC.IsUsingOfficialClient);
+	if (!newPeer)
+	{
+		network->rakNetServer.Kick(rpcParams->sender);
+		return;
+	}
+
+	if (!network->inEventDispatcher.stopAtFalse(
+			[newPeer, &bs](NetworkInEventHandler* handler)
+			{
+				bs.resetReadPointer();
+				return handler->onReceiveRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
+			}))
+	{
+		return;
+	}
+
+	if (!network->rpcInEventDispatcher.stopAtFalse(
+			NetCode::RPC::PlayerConnect::PacketID,
+			[newPeer, &bs](SingleNetworkInEventHandler* handler)
+			{
+				bs.resetReadPointer();
+				return handler->onReceive(*newPeer, bs);
+			}))
+	{
+		return;
+	}
+
+	network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
+	network->playerRemoteSystem[newPeer->getID()] = remoteSystem;
+	remoteSystem->isLogon = true;
 }
 
 void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra)
@@ -481,7 +475,6 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 		NetCode::RPC::NPCConnect NPCConnectRPC;
 		if (NPCConnectRPC.read(bs))
 		{
-			remoteSystem->isLogon = true;
 			IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
 			if (newPeer)
 			{
@@ -507,12 +500,10 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 				}
 
 				network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
-				return;
+				remoteSystem->isLogon = true;
 			}
 		}
 	}
-
-	network->rakNetServer.Kick(rpcParams->sender);
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason)
