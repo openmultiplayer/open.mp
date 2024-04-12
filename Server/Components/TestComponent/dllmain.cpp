@@ -21,11 +21,12 @@
 #include <Server/Components/Timers/timers.hpp>
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Vehicles/vehicle_models.hpp>
 #include <sdk.hpp>
 
-#include "absl/strings/str_format.h"
+using namespace Impl;
 
-struct TestComponent : public IComponent, public PlayerEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler, public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler, public PlayerUpdateEventHandler, public PlayerDialogEventHandler, public ConsoleEventHandler
+struct TestComponent : public IComponent, public PlayerDamageEventHandler, public PlayerShotEventHandler, public PlayerChangeEventHandler, public PlayerConnectEventHandler, public PlayerTextEventHandler, public PlayerSpawnEventHandler, public ObjectEventHandler, public PlayerCheckpointEventHandler, public PickupEventHandler, public TextDrawEventHandler, public MenuEventHandler, public ActorEventHandler, public PlayerUpdateEventHandler, public PlayerDialogEventHandler, public ConsoleEventHandler
 {
 	ICore* c = nullptr;
 	ICheckpointsComponent* checkpoints = nullptr;
@@ -76,16 +77,20 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		/// Print a message 5 times every 5 seconds and destroy the timer
 		void timeout(ITimer& timer) override
 		{
-			if (count++ < 5 && players.valid(playerID))
+			IPlayer* player = players.get(playerID);
+			if (count++ < 5 && player)
 			{
-				IPlayer& player = players.get(playerID);
-				player.sendClientMessage(Colour::Cyan(), message);
+				player->sendClientMessage(Colour::Cyan(), message);
 			}
 			else
 			{
-				delete this;
 				timer.kill();
 			}
+		}
+
+		void free(ITimer& timer) override
+		{
+			delete this;
 		}
 	};
 
@@ -149,10 +154,12 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	void onPlayerConnect(IPlayer& player) override
 	{
 		// preload actor animation
-		Animation anim("DANCING");
+		AnimationData anim;
+		anim.lib = "DANCING";
+		anim.name = "NULL";
 		player.applyAnimation(anim, PlayerAnimationSyncType_NoSync);
 		player.useCameraTargeting(true);
-		IPlayerTextDrawData* data = player.queryExtension<IPlayerTextDrawData>();
+		IPlayerTextDrawData* data = queryExtension<IPlayerTextDrawData>(player);
 		if (data)
 		{
 			IPlayerTextDraw* textdraw = data->create(Vector2(20.f, 420.f), "Welcome to the test omp server");
@@ -356,7 +363,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (message == "/vehreset")
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -371,7 +378,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (message == "/myvehicle")
 		{
-			IPlayerVehicleData* data = player.queryExtension<IPlayerVehicleData>();
+			IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 			int id = data ? (data->getVehicle() ? data->getVehicle()->getID() : INVALID_VEHICLE_ID) : INVALID_VEHICLE_ID;
 			int seat = data ? data->getSeat() : -1;
 			std::string str = "Your vehicle ID is " + std::to_string(id) + " and your seat is " + std::to_string(seat);
@@ -380,7 +387,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		}
 		else if (!message.find("/plate"))
 		{
-			IPlayerVehicleData* data = player.queryExtension<IPlayerVehicleData>();
+			IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle())
 			{
 				int plate_space = message.find_first_of(" ");
@@ -393,7 +400,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		}
 		else if (message == "/teststatus" && vehicles)
 		{
-			IVehicle* vehicle = &vehicles->get(1); // sue me
+			IVehicle* vehicle = vehicles->get(1); // sue me
 			if (vehicle)
 			{
 				// Destroys everything, don't ask me to explain look at the wiki and cry like I did.
@@ -403,7 +410,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		}
 		else if (!message.find("/paintjob") && vehicles)
 		{
-			IPlayerVehicleData* data = player.queryExtension<IPlayerVehicleData>();
+			IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle())
 			{
 				int plate_space = message.find_first_of(" ");
@@ -424,13 +431,13 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		else if (message == "/removeplayer" && vehicle)
 		{
 			player.sendClientMessage(Colour::White(), "Removing from vehicle.");
-			vehicle->removePlayer(player);
+			player.removeFromVehicle(true);
 			return true;
 		}
 
 		else if (message == "/getvehhp" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -443,7 +450,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		else if (message == "/setvehzangle" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -459,7 +466,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		else if (message == "/linktointerior" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -475,7 +482,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		else if (message == "/setvehparams" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -504,7 +511,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		else if (message == "/setvehhp" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -520,7 +527,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		else if (message == "/repair" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -534,7 +541,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		else if (message == "/setvehpos" && vehicle)
 		{
-			auto* data = player.queryExtension<IPlayerVehicleData>();
+			auto* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() == nullptr)
 			{
 				player.sendClientMessage(Colour::White(), "You're not in a vehicle. You're trying to fool me.");
@@ -575,21 +582,21 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		{
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
-			vehicles->create(411, pos);
+			vehicles->create(false, 411, pos);
 			return true;
 		}
 		else if (message == "/sultan" && vehicles)
 		{
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
-			vehicles->create(560, pos)->setColour(1, 1);
+			vehicles->create(false, 560, pos)->setColour(1, 1);
 			return true;
 		}
 		else if (message == "/bus" && vehicles)
 		{
 			Vector3 pos = player.getPosition();
 			pos.x -= 3.0f;
-			vehicles->create(437, pos);
+			vehicles->create(false, 437, pos);
 			return true;
 		}
 		else if (message == "/carrespawn" && vehicles)
@@ -618,7 +625,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 				int model = std::atoi(message.substr(plate_space + 1).data());
 				Vector3 pos = player.getPosition();
 				pos.x -= 3.0f;
-				vehicles->create(model, pos);
+				vehicles->create(false, model, pos);
 			}
 			return true;
 		}
@@ -647,7 +654,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		}
 		else if (message == "/sbin")
 		{
-			IPlayerVehicleData* data = player.queryExtension<IPlayerVehicleData>();
+			IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() && player.getState() == PlayerState_Driver)
 			{
 				data->getVehicle()->setAngularVelocity(Vector3(0.0f, 0.0f, 2.0f));
@@ -679,12 +686,12 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		}
 		else if (message == "/siren")
 		{
-			IPlayerVehicleData* data = player.queryExtension<IPlayerVehicleData>();
+			IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle() && player.getState() == PlayerState_Driver)
 			{
 				Vector3 pos, size;
-				vehicles->getModelInfo(data->getVehicle()->getModel(), VehicleModelInfo_FrontSeat, pos);
-				vehicles->getModelInfo(data->getVehicle()->getModel(), VehicleModelInfo_Size, size);
+				Impl::getVehicleModelInfo(data->getVehicle()->getModel(), VehicleModelInfo_FrontSeat, pos);
+				Impl::getVehicleModelInfo(data->getVehicle()->getModel(), VehicleModelInfo_Size, size);
 				pos.z = size.z - 0.65f;
 				objects->create(18646, data->getVehicle()->getPosition(), Vector3(0.0f, 0.0f, 0.0f))->attachToVehicle(*data->getVehicle(), pos, Vector3(0.0f, 0.0f, 0.0f));
 			}
@@ -694,11 +701,11 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		{
 			if (!moved)
 			{
-				obj->startMoving(ObjectMoveData { Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
+				obj->move(ObjectMoveData { Vector3(113.3198f, 2.5066f, 2.7850f), Vector3(0.f, 90.f, 0.f), 0.3f });
 			}
 			else
 			{
-				obj->startMoving(ObjectMoveData { Vector3(14.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f), 0.3f });
+				obj->move(ObjectMoveData { Vector3(14.57550f, 5.25715f, 2.78500f), Vector3(0.f, 90.f, 0.f), 0.3f });
 			}
 			return true;
 		}
@@ -717,7 +724,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (message == "/spec")
 		{
-			IPlayer* target = &c->getPlayers().get(1);
+			IPlayer* target = c->getPlayers().get(1);
 			if (target)
 			{
 				player.spectatePlayer(*target, PlayerSpectateMode_Normal);
@@ -727,7 +734,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (message == "/specveh" && vehicles)
 		{
-			IVehicle* target = &vehicles->get(1);
+			IVehicle* target = vehicles->get(1);
 			if (target)
 			{
 				player.spectateVehicle(*target, PlayerSpectateMode_Normal);
@@ -735,7 +742,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 			return true;
 		}
 
-		IPlayerObjectData* objectData = player.queryExtension<IPlayerObjectData>();
+		IPlayerObjectData* objectData = queryExtension<IPlayerObjectData>(player);
 		if (objectData)
 		{
 			if (message == "/calf")
@@ -760,14 +767,14 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 			if (message == "/editobj")
 			{
-				objectData->beginObjectSelection();
+				objectData->beginSelecting();
 				return true;
 			}
 		}
 
 		if (recordings)
 		{
-			IPlayerRecordingData* recData = player.queryExtension<IPlayerRecordingData>();
+			IPlayerRecordingData* recData = queryExtension<IPlayerRecordingData>(player);
 
 			if (recData)
 			{
@@ -833,27 +840,32 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (message == "/playerlabelattachtovehicle" && vehicle)
 		{
-			IPlayerTextLabelData* labelData = player.queryExtension<IPlayerTextLabelData>();
-			if (labelData && labelData->valid(0))
+			IPlayerTextLabelData* labelData = queryExtension<IPlayerTextLabelData>(player);
+			if (labelData)
 			{
-				labelData->get(0).attachToVehicle(*vehicle, Vector3(0.f, 0.f, 3.f));
+				auto label = labelData->get(0);
+				if (label)
+				{
+					label->attachToVehicle(*vehicle, Vector3(0.f, 0.f, 3.f));
+				}
 			}
 			return true;
 		}
 
-		IPlayerTextDrawData* tdData = player.queryExtension<IPlayerTextDrawData>();
-		if (tdData && tdData->valid(0))
+		IPlayerTextDrawData* tdData = queryExtension<IPlayerTextDrawData>(player);
+		if (tdData)
 		{
+			auto td = tdData->get(0);
 			if (message.find("/settextdraw") == 0)
 			{
 				StringView text = message.substr(message.find_first_of(' '));
-				tdData->get(0).setText(text);
+				td->setText(text);
 				return true;
 			}
 
 			if (message == "/hidetextdraw")
 			{
-				tdData->get(0).hide();
+				td->hide();
 				return true;
 			}
 
@@ -885,7 +897,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		{
 			if (message == "/dialog")
 			{
-				IPlayerDialogData* playerDialog = player.queryExtension<IPlayerDialogData>();
+				IPlayerDialogData* playerDialog = queryExtension<IPlayerDialogData>(player);
 				playerDialog->show(player, 1, DialogStyle_MSGBOX, "Oben.mb", "It's coming online", "Ok", "Alright");
 				return true;
 			}
@@ -894,7 +906,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		if (message == "/lastcptype")
 		{
 			String type;
-			auto pvars = player.queryExtension<IPlayerVariableData>();
+			auto pvars = queryExtension<IPlayerVariableData>(player);
 			if (pvars)
 			{
 				if (pvars->getType("LASTCPTYPE") == VariableType_String)
@@ -914,18 +926,33 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		return false;
 	}
 
-	const char* componentName() override
+	StringView componentName() const override
 	{
 		return "TestComponent";
 	}
 
-	bool onUpdate(IPlayer& player, TimePoint now) override
+	SemanticVersion componentVersion() const override
 	{
-		IPlayerTextDrawData* tdData = player.queryExtension<IPlayerTextDrawData>();
-		if (tdData && tdData->valid(1))
+		return SemanticVersion(1, 0, 0, 0);
+	}
+
+	void reset() override
+	{
+	}
+
+	void free() override
+	{
+		delete this;
+	}
+
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
+	{
+		IPlayerTextDrawData* tdData = queryExtension<IPlayerTextDrawData>(player);
+		if (tdData)
 		{
 			String text;
 
+			auto td = tdData->get(1);
 			String lookAt = "Looking at";
 			IPlayer* lookatPlayer = player.getCameraTargetPlayer();
 			if (lookatPlayer)
@@ -970,7 +997,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 				text += aimAt + "~n~";
 			}
 
-			tdData->get(1).setText(text);
+			td->setText(text);
 		}
 		return true;
 	}
@@ -981,20 +1008,24 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (vehicles)
 		{
-			IPlayerVehicleData* data = player.queryExtension<IPlayerVehicleData>();
+			IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(player);
 			if (data->getVehicle())
 			{
 				data->getVehicle()->respawn();
 			}
 		}
-		IPlayerCheckpointData* cp = player.queryExtension<IPlayerCheckpointData>();
-		cp->disable(player);
-		cp->setType(CheckpointType::RACE_NORMAL);
-		cp->setPosition(Vector3(2.6746f, -12.7014f, 5.1172f));
-		cp->setNextPosition(Vector3(19.8583f, -15.1157f, 5.1172f));
-		cp->setSize(6.0f);
-		cp->enable(player);
-		auto pvars = player.queryExtension<IPlayerVariableData>();
+
+		IPlayerCheckpointData* cpData = queryExtension<IPlayerCheckpointData>(player);
+		IRaceCheckpointData& cp = cpData->getRaceCheckpoint();
+
+		cp.disable();
+		cp.setType(RaceCheckpointType::RACE_NORMAL);
+		cp.setPosition(Vector3(2.6746f, -12.7014f, 5.1172f));
+		cp.setNextPosition(Vector3(19.8583f, -15.1157f, 5.1172f));
+		cp.setRadius(6.0f);
+		cp.enable();
+
+		auto pvars = queryExtension<IPlayerVariableData>(player);
 		if (pvars)
 		{
 			pvars->setString("LASTCPTYPE", "Normal");
@@ -1009,7 +1040,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	void onPlayerEnterRaceCheckpoint(IPlayer& player) override
 	{
 		player.sendClientMessage(Colour::White(), "You have entered race checkpoint");
-		auto pvars = player.queryExtension<IPlayerVariableData>();
+		auto pvars = queryExtension<IPlayerVariableData>(player);
 		if (pvars)
 		{
 			pvars->setString("LASTCPTYPE", "Race");
@@ -1019,11 +1050,12 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	void onPlayerLeaveRaceCheckpoint(IPlayer& player) override
 	{
 		player.sendClientMessage(Colour::White(), "You have left race checkpoint");
-		IPlayerCheckpointData* cp = player.queryExtension<IPlayerCheckpointData>();
-		cp->disable(player);
+		IPlayerCheckpointData* cpData = queryExtension<IPlayerCheckpointData>(player);
+		IRaceCheckpointData& cp = cpData->getRaceCheckpoint();
+		cp.disable();
 	}
 
-	void onPlayerDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override
+	void onPlayerGiveDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override
 	{
 		float newHP = actor.getHealth() - amount;
 		actor.setHealth(newHP);
@@ -1058,23 +1090,20 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 
 		if (classes)
 		{
-			auto classid = classes->claim();
-			PlayerClass& testclass = classes->get(classid);
-
-			testclass.spawn = Vector3(0.0f, 0.0f, 3.1279f);
-			testclass.team = 255;
-			testclass.weapons[2] = { 24, 9999 }; // Deagle
-			testclass.weapons[5] = { 31, 9999 }; // M4
+			WeaponSlots weapons;
+			weapons[2] = { 24, 9999 }; // Deagle
+			weapons[5] = { 31, 9999 }; // M4
+			classes->create(0, 255, Vector3(0.0f, 0.0f, 3.1279f), 0.0f, weapons);
 		}
 
 		if (vehicles)
 		{
-			vehicle = vehicles->create(411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
-			vehicles->create(488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
-			tower = vehicles->create(583, Vector3(15.0209f, 1.4806f, 3.1172f));
-			trailer = vehicles->create(606, Vector3(12.0209f, 5.4806f, 3.1172f));
+			vehicle = vehicles->create(false, 411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
+			vehicles->create(false, 488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
+			tower = vehicles->create(false, 583, Vector3(15.0209f, 1.4806f, 3.1172f));
+			trailer = vehicles->create(false, 606, Vector3(12.0209f, 5.4806f, 3.1172f));
 			tower->attachTrailer(*trailer);
-			train = vehicles->create(537, Vector3(-1943.2583f, 163.6151f, 25.8754f));
+			train = vehicles->create(false, 537, Vector3(-1943.2583f, 163.6151f, 25.8754f));
 			vehicles->getEventDispatcher().addEventHandler(&vehicleEventWatcher);
 		}
 
@@ -1092,7 +1121,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 			{
 				IObject* obj = objects->create(19353, Vector3(0.f, 0.f, 10.f), Vector3(90.f, 0.f, 0.f));
 				obj->attachToVehicle(*vehicle, Vector3(0.f, 0.f, 2.f), Vector3(90.f, 0.f, 0.f));
-				obj->setMaterialText(0, "Hello {008500}omp", 90, "Arial", 28, false, Colour(0xFF, 0x82, 0x00), Colour::Black(), ObjectMaterialTextAlign_Center);
+				obj->setMaterialText(0, "Hello {008500}omp", ObjectMaterialSize_256x128, "Arial", 28, false, Colour(0xFF, 0x82, 0x00), Colour::Black(), ObjectMaterialTextAlign_Center);
 			}
 		}
 
@@ -1114,7 +1143,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 			vehiclePreview = tds->create(Vector2(560.f, 360.f), 411);
 			if (vehiclePreview)
 			{
-				vehiclePreview->useBox(true).setBoxColour(Colour::Cyan()).setTextSize(Vector2(80.f)).setPreviewRotation(GTAQuat(-30.f, 0.f, -45.f)).setPreviewZoom(0.5f).setPreviewVehicleColour(6, 126);
+				vehiclePreview->useBox(true).setBoxColour(Colour::Cyan()).setTextSize(Vector2(80.f)).setPreviewRotation(GTAQuat(-30.f, 0.f, -45.f).ToEuler()).setPreviewZoom(0.5f).setPreviewVehicleColour(6, 126);
 			}
 			sprite = tds->create(Vector2(360.f, 360.f), "ld_tatt:10ls");
 			if (sprite)
@@ -1127,9 +1156,9 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		{
 			menus->getEventDispatcher().addEventHandler(this);
 			menu = menus->create("Who's the goat????", { 200.0, 100.0 }, 0, 300.0, 300.0);
-			menu->addMenuItem("eminem", 0);
-			menu->addMenuItem("mj", 0);
-			menu->addMenuItem("snoop", 0);
+			menu->addCell("eminem", 0);
+			menu->addCell("mj", 0);
+			menu->addCell("snoop", 0);
 		}
 
 		if (actors)
@@ -1138,15 +1167,15 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 			actor = actors->create(10, Vector3(-5.f, -5.f, 3.4f), 90.f);
 			actor->setInvulnerable(false);
 			actor->setHealth(75.f);
-			Animation anim;
+			AnimationData anim;
 			anim.lib = "DANCING";
 			anim.name = "dance_loop";
-			anim.timeData.delta = 4.1;
-			anim.timeData.loop = true;
-			anim.timeData.lockX = false;
-			anim.timeData.lockY = false;
-			anim.timeData.freeze = false;
-			anim.timeData.time = 0;
+			anim.delta = 4.1;
+			anim.loop = true;
+			anim.lockX = false;
+			anim.lockY = false;
+			anim.freeze = false;
+			anim.time = 0;
 			actor->applyAnimation(anim);
 		}
 
@@ -1177,22 +1206,28 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	void onLoad(ICore* core) override
 	{
 		c = core;
-		c->getPlayers().getEventDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerShotDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerTextDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+		c->getPlayers().getPlayerSpawnDispatcher().addEventHandler(this);
 		c->getPlayers().getPlayerUpdateDispatcher().addEventHandler(this);
 	}
 
-	void onSpawn(IPlayer& player) override
+	void onPlayerSpawn(IPlayer& player) override
 	{
 		if (checkpoints)
 		{
-			IPlayerCheckpointData* cp = player.queryExtension<IPlayerCheckpointData>();
-			cp->setType(CheckpointType::STANDARD);
-			cp->setPosition(Vector3(10.6290f, 4.7860f, 3.1096f));
-			cp->setSize(5.0f);
-			cp->enable(player);
+			IPlayerCheckpointData* cpData = queryExtension<IPlayerCheckpointData>(player);
+			ICheckpointData& cp = cpData->getCheckpoint();
+
+			cp.setPosition(Vector3(10.6290f, 4.7860f, 3.1096f));
+			cp.setRadius(5.0f);
+			cp.enable();
 		}
 
-		IPlayerObjectData* objectData = player.queryExtension<IPlayerObjectData>();
+		IPlayerObjectData* objectData = queryExtension<IPlayerObjectData>(player);
 		if (objectData)
 		{
 			IPlayerObject* obj = objectData->create(19371, Vector3(10.f), Vector3(0.f));
@@ -1203,17 +1238,22 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 			}
 		}
 
-		IPlayerTextLabelData* labelData = player.queryExtension<IPlayerTextLabelData>();
+		IPlayerTextLabelData* labelData = queryExtension<IPlayerTextLabelData>(player);
 		if (labelData)
 		{
 			labelData->create("Player Text", Colour::Cyan(), Vector3(-5.f, 0.f, 3.f), 20.f, false);
 		}
 
-		IPlayerTextDrawData* tdData = player.queryExtension<IPlayerTextDrawData>();
-		if (tdData && tdData->valid(0))
+		IPlayerTextDrawData* tdData = queryExtension<IPlayerTextDrawData>(player);
+		if (tdData)
 		{
-			tdData->get(0).show();
-			tdData->get(1).show();
+			auto td0 = tdData->get(0);
+			auto td1 = tdData->get(1);
+			if (td0 && td1)
+			{
+				td0->show();
+				td1->show();
+			}
 		}
 
 		if (skinPreview)
@@ -1243,9 +1283,10 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		}
 	}
 
-	void onPlayerCancelTextDrawSelection(IPlayer& player) override
+	bool onPlayerCancelTextDrawSelection(IPlayer& player) override
 	{
 		player.sendClientMessage(Colour::White(), "Canceled textdraw selection");
+		return true;
 	}
 
 	void onPlayerClickTextDraw(IPlayer& player, ITextDraw& td) override
@@ -1268,13 +1309,13 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	void onObjectSelected(IPlayer& player, IObject& object, int model, Vector3 position) override
 	{
 		player.sendClientMessage(Colour::White(), "Selected object " + std::to_string(object.getID()) + " with model " + std::to_string(model) + "at position (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
-		player.queryExtension<IPlayerObjectData>()->editObject(object);
+		queryExtension<IPlayerObjectData>(player)->beginEditing(object);
 	}
 
 	void onPlayerObjectSelected(IPlayer& player, IPlayerObject& object, int model, Vector3 position) override
 	{
 		player.sendClientMessage(Colour::White(), "Selected player object " + std::to_string(object.getID()) + " with model " + std::to_string(model) + "at position (" + std::to_string(position.x) + ", " + std::to_string(position.y) + ", " + std::to_string(position.z) + ")");
-		player.queryExtension<IPlayerObjectData>()->endObjectEdit();
+		queryExtension<IPlayerObjectData>(player)->beginEditing(object);
 	}
 
 	void onObjectEdited(IPlayer& player, IObject& object, ObjectEditResponse response, Vector3 offset, Vector3 rotation) override
@@ -1295,11 +1336,11 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	{
 		if (saved)
 		{
-			player.queryExtension<IPlayerObjectData>()->setAttachedObject(index, data);
+			queryExtension<IPlayerObjectData>(player)->setAttachedObject(index, data);
 		}
 		else
 		{
-			IPlayerObjectData* data = player.queryExtension<IPlayerObjectData>();
+			IPlayerObjectData* data = queryExtension<IPlayerObjectData>(player);
 			data->setAttachedObject(index, data->getAttachedObject(index));
 		}
 	}
@@ -1310,9 +1351,9 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 		player.giveMoney(10000);
 	}
 
-	bool onPlayerSelectedMenuRow(IPlayer& player, MenuRow row) override
+	void onPlayerSelectedMenuRow(IPlayer& player, MenuRow row) override
 	{
-		IPlayerMenuData* data = player.queryExtension<IPlayerMenuData>();
+		IPlayerMenuData* data = queryExtension<IPlayerMenuData>(player);
 		if (data->getMenuID() == menu->getID())
 		{
 			if (row == 1)
@@ -1326,12 +1367,12 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 				player.giveMoney(-10000);
 			}
 		}
-		return true;
+		return;
 	}
 
-	void onDialogResponse(IPlayer& player, uint16_t dialogId, DialogResponse response, uint16_t listItem, StringView inputText) override
+	void onDialogResponse(IPlayer& player, int dialogId, DialogResponse response, int listItem, StringView inputText) override
 	{
-		player.sendClientMessage(Colour::White(), absl::StrFormat("Dialog response: %i", response));
+		player.sendClientMessage(Colour::White(), String("Dialog response: ") + std::to_string(response));
 	}
 
 	void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override
@@ -1362,7 +1403,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	bool onPlayerShotPlayerObject(IPlayer& player, IPlayerObject& target, const PlayerBulletData& bulletData) override
 	{
 		player.sendClientMessage(Colour::White(), "shot player object id " + std::to_string(target.getID()));
-		player.queryExtension<IPlayerObjectData>()->release(target.getID());
+		queryExtension<IPlayerObjectData>(player)->release(target.getID());
 		return true;
 	}
 
@@ -1370,7 +1411,7 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	{
 		if (player.getState() == PlayerState_Driver)
 		{
-			IVehicle* vehicle = player.queryExtension<IPlayerVehicleData>()->getVehicle();
+			IVehicle* vehicle = queryExtension<IPlayerVehicleData>(player)->getVehicle();
 			if ((newKeys & 1) && !(oldKeys & 1))
 			{
 				Vector3 vel = vehicle->getVelocity();
@@ -1390,7 +1431,12 @@ struct TestComponent : public IComponent, public PlayerEventHandler, public Obje
 	}
 	~TestComponent()
 	{
-		c->getPlayers().getEventDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerShotDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerTextDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
+		c->getPlayers().getPlayerSpawnDispatcher().removeEventHandler(this);
 		c->getPlayers().getPlayerUpdateDispatcher().removeEventHandler(this);
 		if (checkpoints)
 		{
