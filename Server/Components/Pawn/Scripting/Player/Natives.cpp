@@ -964,7 +964,7 @@ SCRIPT_API(HasGameText, bool(IPlayer& player, int style))
 	return player.hasGameText(style);
 }
 
-SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& message, int time, int remaining))
+SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& message, int& time, int& remaining))
 {
 	Milliseconds mt;
 	Milliseconds mr;
