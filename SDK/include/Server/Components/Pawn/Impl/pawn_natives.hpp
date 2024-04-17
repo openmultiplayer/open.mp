@@ -541,6 +541,7 @@ POOL_PARAM(IObject, objects);
 POOL_PARAM(ITextDraw, textdraws);
 POOL_PARAM(ITextLabel, textlabels);
 POOL_PARAM(IVehicle, vehicles);
+POOL_PARAM(INPC, npcs);
 
 PLAYER_POOL_PARAM(IPlayerObject, IPlayerObjectData);
 PLAYER_POOL_PARAM(IPlayerTextDraw, IPlayerTextDrawData);
