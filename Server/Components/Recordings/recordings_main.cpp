@@ -85,16 +85,16 @@ private:
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
-			NetCode::Packet::PlayerFootSync footSync;
-			if (!footSync.read(bs))
-			{
-				return false;
-			}
-
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
 			if (!data)
 			{
-				return false;
+				return true;
+			}
+
+			NetCode::Packet::PlayerFootSync footSync;
+			if (!footSync.read(bs))
+			{
+				return true;
 			}
 
 			// Write on foot recording data
@@ -135,16 +135,16 @@ private:
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
-			NetCode::Packet::PlayerVehicleSync vehicleSync;
-			if (!vehicleSync.read(bs))
-			{
-				return false;
-			}
-
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
 			if (!data)
 			{
-				return false;
+				return true;
+			}
+
+			NetCode::Packet::PlayerVehicleSync vehicleSync;
+			if (!vehicleSync.read(bs))
+			{
+				return true;
 			}
 
 			// Write driver recording data
