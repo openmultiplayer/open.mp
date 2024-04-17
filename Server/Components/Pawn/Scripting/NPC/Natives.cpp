@@ -80,6 +80,11 @@ SCRIPT_API(NPC_GetVirtualWorld, bool(INPC& npc, int& virtualWorld))
 
 SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType))
 {
-	npc.move(targetPos, NPCMoveType(moveType));
+	return npc.move(targetPos, NPCMoveType(moveType));
+}
+
+SCRIPT_API(NPC_StopMove, bool(INPC& npc))
+{
+	npc.stopMove();
 	return true;
 }

@@ -35,6 +35,8 @@ public:
 
 	bool move(Vector3 position, NPCMoveType moveType) override;
 
+	void stopMove() override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);

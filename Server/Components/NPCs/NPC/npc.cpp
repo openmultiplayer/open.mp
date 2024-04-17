@@ -165,6 +165,19 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	return true;
 }
 
+void NPC::stopMove()
+{
+	moving = false;
+	moveSpeed = 0.0f;
+	targetPosition = { 0.0f, 0.0f, 0.0f };
+	velocity = { 0.0f, 0.0f, 0.0f };
+	moveType = NPCMoveType_None;
+
+	footSync.Keys &= Key::SPRINT;
+	footSync.Keys &= Key::WALK;
+	footSync.UpDown = 0;
+}
+
 void NPC::sendFootSync()
 {
 	NetworkBitStream bs;
