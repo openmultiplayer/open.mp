@@ -50,30 +50,30 @@ public:
 
 	IPlayer* getPlayer() override
 	{
-		return player;
+		return player_;
 	}
 
-	void setPlayer(IPlayer* plyr)
+	void setPlayer(IPlayer* player)
 	{
-		player = plyr;
+		player_ = player;
 	}
 
 private:
 	// The NPC's player pointer.
-	IPlayer* player;
-	TimePoint lastUpdate;
+	IPlayer* player_;
+	TimePoint lastUpdate_;
 
 	// Movements
-	NPCMoveType moveType;
-	TimePoint lastMove;
-	TimePoint moveStart;
-	float moveSpeed;
-	Vector3 targetPosition;
-	Vector3 velocity;
-	bool moving;
+	NPCMoveType moveType_;
+	TimePoint lastMove_;
+	TimePoint moveStart_;
+	float moveSpeed_;
+	Vector3 targetPosition_;
+	Vector3 velocity_;
+	bool moving_;
 
 	// Packets
-	NetCode::Packet::PlayerFootSync footSync;
+	NetCode::Packet::PlayerFootSync footSync_;
 
-	NPCComponent* npcComponent;
+	NPCComponent* npcComponent_;
 };

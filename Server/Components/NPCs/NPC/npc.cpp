@@ -32,78 +32,78 @@ float getAngleOfLine(float x, float y)
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 {
 	// Keep a handle of NPC copmonent instance internally
-	npcComponent = component;
+	npcComponent_ = component;
 	// We created a player instance for it, let's keep a handle of it internally
-	player = playerPtr;
+	player_ = playerPtr;
 
 	// Initial entity values
 	Vector3 initialPosition = { 0.0f, 0.0f, 3.5f };
 	GTAQuat initialRotation = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
-	moving = false;
-	velocity = { 0.0f, 0.0f, 0.0f };
-	moveType = NPCMoveType_None;
+	moving_ = false;
+	velocity_ = { 0.0f, 0.0f, 0.0f };
+	moveType_ = NPCMoveType_None;
 
 	// Initial values for foot sync values
-	footSync.LeftRight = 0;
-	footSync.UpDown = 0;
-	footSync.Keys = 0;
-	footSync.Position = initialPosition;
-	footSync.Velocity = velocity;
-	footSync.Rotation = initialRotation;
-	footSync.WeaponAdditionalKey = 0;
-	footSync.HealthArmour = { 100.0f, 0.0f };
-	footSync.SpecialAction = 0;
-	footSync.AnimationID = 0;
-	footSync.AnimationFlags = 0;
-	footSync.SurfingData.type = PlayerSurfingData::Type::None;
-	footSync.SurfingData.ID = 0;
-	footSync.SurfingData.offset = { 0.0f, 0.0f, 0.0f };
+	footSync_.LeftRight = 0;
+	footSync_.UpDown = 0;
+	footSync_.Keys = 0;
+	footSync_.Position = initialPosition;
+	footSync_.Velocity = velocity_;
+	footSync_.Rotation = initialRotation;
+	footSync_.WeaponAdditionalKey = 0;
+	footSync_.HealthArmour = { 100.0f, 0.0f };
+	footSync_.SpecialAction = 0;
+	footSync_.AnimationID = 0;
+	footSync_.AnimationFlags = 0;
+	footSync_.SurfingData.type = PlayerSurfingData::Type::None;
+	footSync_.SurfingData.ID = 0;
+	footSync_.SurfingData.offset = { 0.0f, 0.0f, 0.0f };
 }
 
 Vector3 NPC::getPosition() const
 {
-	return player->getPosition();
+	return player_->getPosition();
 }
 
 void NPC::setPosition(Vector3 pos)
 {
-	footSync.Position = pos;
+	footSync_.Position = pos;
 
 	// Let it update for all players and internally in open.mp
 	sendFootSync();
 
-	if (moving)
+	if (moving_)
 	{
-		move(targetPosition, moveType);
+		move(targetPosition_, moveType_);
 	}
 }
 
 GTAQuat NPC::getRotation() const
 {
-	return player->getRotation();
+	return player_->getRotation();
 }
 
 void NPC::setRotation(GTAQuat rot)
 {
-	footSync.Rotation = rot;
+	footSync_.Rotation = rot;
 
 	// Let it update for all players and internally in open.mp
 	sendFootSync();
 
-	if (moving)
+	if (moving_)
 	{
-		move(targetPosition, moveType);
+		move(targetPosition_, moveType_);
 	}
 }
 
 int NPC::getVirtualWorld() const
 {
-	return player->getVirtualWorld();
+	return player_->getVirtualWorld();
 }
 
 void NPC::setVirtualWorld(int vw)
 {
-	player->setVirtualWorld(vw);
+	player_->setVirtualWorld(vw);
 }
 
 void NPC::spawn()
@@ -112,15 +112,15 @@ void NPC::spawn()
 	NetworkBitStream emptyBS;
 
 	requestClassBS.writeUINT16(0);
-	npcComponent->emulateRPCIn(this, NetCode::RPC::PlayerRequestClass::PacketID, requestClassBS);
+	npcComponent_->emulateRPCIn(this, NetCode::RPC::PlayerRequestClass::PacketID, requestClassBS);
 
-	npcComponent->emulateRPCIn(this, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
-	npcComponent->emulateRPCIn(this, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
+	npcComponent_->emulateRPCIn(this, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
+	npcComponent_->emulateRPCIn(this, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
 }
 
 bool NPC::move(Vector3 pos, NPCMoveType moveType)
 {
-	if (moveType_ == NPCMoveType_None)
+	if (moveType == NPCMoveType_None)
 	{
 		return false;
 	}
@@ -137,29 +137,26 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 
 	// Determine which speed to use based on moving type
 	float speed = 0.0f;
-	if (moveType != NPCMoveType_None)
+	if (moveType == NPCMoveType_Sprint)
 	{
-		if (moveType == NPCMoveType_Sprint)
-		{
-			speed = NPC_MOVE_SPEED_SPRINT;
-			footSync.Keys |= Key::SPRINT;
-		}
-		else if (moveType == NPCMoveType_Jog)
-		{
-			speed = NPC_MOVE_SPEED_JOG;
-		}
-		else
-		{
-			speed = NPC_MOVE_SPEED_WALK;
-			footSync.Keys |= Key::WALK;
-		}
-
-		footSync.UpDown = static_cast<uint16_t>(Key::ANALOG_UP);
+		speed = NPC_MOVE_SPEED_SPRINT;
+		footSync_.Keys |= Key::SPRINT;
 	}
+	else if (moveType == NPCMoveType_Jog)
+	{
+		speed = NPC_MOVE_SPEED_JOG;
+	}
+	else
+	{
+		speed = NPC_MOVE_SPEED_WALK;
+		footSync_.Keys |= Key::WALK;
+	}
+
+	footSync_.UpDown = static_cast<uint16_t>(Key::ANALOG_UP);
 
 	// Calculate velocity to use on tick
 	newVelocity *= (speed / 100.0f);
-	velocity = newVelocity;
+	velocity_ = newVelocity;
 
 	// Calculate front vector and player's facing angle:
 	Vector3 front;
@@ -170,97 +167,98 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 
 	auto rotation = getRotation().ToEuler();
 	rotation.z = utils::getAngleOfLine(front.x, front.y);
-	footSync.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
+	footSync_.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 	// Set internal variables
-	moveSpeed = speed;
-	targetPosition = pos;
-	moving = true;
-	lastMove = Time::now();
+	moveSpeed_ = speed;
+	targetPosition_ = pos;
+	moving_ = true;
+	moveType_ = moveType;
+	lastMove_ = Time::now();
 	return true;
 }
 
 void NPC::stopMove()
 {
-	moving = false;
-	moveSpeed = 0.0f;
-	targetPosition = { 0.0f, 0.0f, 0.0f };
-	velocity = { 0.0f, 0.0f, 0.0f };
-	moveType = NPCMoveType_None;
+	moving_ = false;
+	moveSpeed_ = 0.0f;
+	targetPosition_ = { 0.0f, 0.0f, 0.0f };
+	velocity_ = { 0.0f, 0.0f, 0.0f };
+	moveType_ = NPCMoveType_None;
 
-	footSync.Keys &= Key::SPRINT;
-	footSync.Keys &= Key::WALK;
-	footSync.UpDown = 0;
+	footSync_.Keys &= Key::SPRINT;
+	footSync_.Keys &= Key::WALK;
+	footSync_.UpDown = 0;
 }
 
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned
-	if (!(player->getState() == PlayerState_OnFoot || player->getState() == PlayerState_Driver || player->getState() == PlayerState_Passenger || player->getState() == PlayerState_Spawned))
+	if (!(player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
 	{
 		return;
 	}
 
 	NetworkBitStream bs;
 
-	auto& quat = footSync.Rotation.q;
+	auto& quat = footSync_.Rotation.q;
 
-	bs.writeUINT16(footSync.LeftRight);
-	bs.writeUINT16(footSync.UpDown);
-	bs.writeUINT16(footSync.Keys);
-	bs.writeVEC3(footSync.Position);
+	bs.writeUINT16(footSync_.LeftRight);
+	bs.writeUINT16(footSync_.UpDown);
+	bs.writeUINT16(footSync_.Keys);
+	bs.writeVEC3(footSync_.Position);
 	bs.writeVEC4(Vector4(quat.w, quat.x, quat.y, quat.z));
-	bs.writeUINT8(uint8_t(footSync.HealthArmour.x));
-	bs.writeUINT8(uint8_t(footSync.HealthArmour.y));
-	bs.writeUINT8(footSync.WeaponAdditionalKey);
-	bs.writeUINT8(footSync.SpecialAction);
-	bs.writeVEC3(footSync.Velocity);
-	bs.writeVEC3(footSync.SurfingData.offset);
-	bs.writeUINT16(footSync.SurfingData.ID);
-	bs.writeUINT16(footSync.AnimationID);
-	bs.writeUINT16(footSync.AnimationFlags);
+	bs.writeUINT8(uint8_t(footSync_.HealthArmour.x));
+	bs.writeUINT8(uint8_t(footSync_.HealthArmour.y));
+	bs.writeUINT8(footSync_.WeaponAdditionalKey);
+	bs.writeUINT8(footSync_.SpecialAction);
+	bs.writeVEC3(footSync_.Velocity);
+	bs.writeVEC3(footSync_.SurfingData.offset);
+	bs.writeUINT16(footSync_.SurfingData.ID);
+	bs.writeUINT16(footSync_.AnimationID);
+	bs.writeUINT16(footSync_.AnimationFlags);
 
-	npcComponent->emulatePacketIn(this, footSync.PacketID, bs);
+	npcComponent_->emulatePacketIn(this, footSync_.PacketID, bs);
 }
 
 void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
-	Milliseconds difference = duration_cast<Milliseconds>(now.time_since_epoch()) - duration_cast<Milliseconds>(lastMove.time_since_epoch());
-	float remainingDistance = glm::distance(position, targetPosition);
-	Vector3 travelled = velocity * static_cast<float>(difference.count());
+	Milliseconds difference = duration_cast<Milliseconds>(now.time_since_epoch()) - duration_cast<Milliseconds>(lastMove_.time_since_epoch());
+	float remainingDistance = glm::distance(position, targetPosition_);
+	Vector3 travelled = velocity_ * static_cast<float>(difference.count());
 
 	if (glm::length(travelled) >= remainingDistance)
 	{
 		stopMove();
-		npcComponent->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 	}
 	else
 	{
 		position += travelled;
-		footSync.Velocity = velocity;
+		footSync_.Velocity = velocity_;
 	}
 
-	lastMove = Time::now();
-	footSync.Position = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
+	lastMove_ = Time::now();
+	footSync_.Position = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
 {
-	static auto footSyncRate = npcComponent->getCore()->getConfig().getInt("network.on_foot_sync_rate");
+	static auto footSyncRate = npcComponent_->getCore()->getConfig().getInt("network.on_foot_sync_rate");
 
 	// Only process the NPC if it is spawned
-	if (player && (player->getState() == PlayerState_OnFoot || player->getState() == PlayerState_Driver || player->getState() == PlayerState_Passenger || player->getState() == PlayerState_Spawned))
+	if (player_ && (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
 	{
-		if (moving)
+		if (moving_)
 		{
 			advance(now);
 		}
 
-		if ((now - lastUpdate).count() > *footSyncRate)
+		if ((now - lastUpdate_).count() > *footSyncRate)
 		{
 			sendFootSync();
-			lastUpdate = now;
+			lastUpdate_ = now;
 		}
 	}
 }
