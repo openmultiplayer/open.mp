@@ -195,6 +195,12 @@ void NPC::stopMove()
 
 void NPC::sendFootSync()
 {
+	// Only send foot sync if player is spawned
+	if (!(player->getState() == PlayerState_OnFoot || player->getState() == PlayerState_Driver || player->getState() == PlayerState_Passenger || player->getState() == PlayerState_Spawned))
+	{
+		return;
+	}
+
 	NetworkBitStream bs;
 
 	auto& quat = footSync.Rotation.q;
