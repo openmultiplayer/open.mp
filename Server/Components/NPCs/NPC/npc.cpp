@@ -226,13 +226,7 @@ void NPC::advance(TimePoint now)
 
 	if (glm::length(travelled) >= remainingDistance)
 	{
-		moving = false;
-		moveSpeed = 0.0f;
-		targetPosition = { 0.0f, 0.0f, 0.0f };
-
-		footSync.Keys &= Key::SPRINT;
-		footSync.Keys &= Key::WALK;
-		footSync.UpDown = 0;
+		stopMove();
 		npcComponent->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 	}
 	else
