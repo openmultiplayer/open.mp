@@ -24,25 +24,25 @@ struct NPCNetwork : public Impl::Network
 
 	bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents = true) override
 	{
-		//core->logLn(LogLevel::Error, "[npc network] sendPacket(\"%.*s\", data, %i, %i)\n", peer.getName().length(), peer.getName().data(), channel, dispatchEvents);
+		// core->logLn(LogLevel::Error, "[npc network] sendPacket(\"%.*s\", data, %i, %i)\n", peer.getName().length(), peer.getName().data(), channel, dispatchEvents);
 		return true;
 	}
 
 	bool broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* exceptPeer = nullptr, bool dispatchEvents = true) override
 	{
-		//core->logLn(LogLevel::Error, "[npc network] broadcastPacket(data, %i, \"%.*s\", %i)\n", channel, exceptPeer == nullptr ? 0 : exceptPeer->getName().length(), exceptPeer == nullptr ? "" : exceptPeer->getName().data(), dispatchEvents);
+		// core->logLn(LogLevel::Error, "[npc network] broadcastPacket(data, %i, \"%.*s\", %i)\n", channel, exceptPeer == nullptr ? 0 : exceptPeer->getName().length(), exceptPeer == nullptr ? "" : exceptPeer->getName().data(), dispatchEvents);
 		return true;
 	}
 
 	bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel, bool dispatchEvents = true) override
 	{
-		//core->logLn(LogLevel::Error, "[npc network] sendRpc(\"%.*s\", %i, data, %i, %i)\n", peer.getName().length(), peer.getName().data(), id, channel, dispatchEvents);
+		// core->logLn(LogLevel::Error, "[npc network] sendRpc(\"%.*s\", %i, data, %i, %i)\n", peer.getName().length(), peer.getName().data(), id, channel, dispatchEvents);
 		return true;
 	}
 
 	bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer = nullptr, bool dispatchEvents = true) override
 	{
-		//core->logLn(LogLevel::Error, "[npc network] broadcastRPC(%i, data, %i, \"%.*s\", %i)\n", id, channel, exceptPeer == nullptr ? 0 : exceptPeer->getName().length(), exceptPeer == nullptr ? "" : exceptPeer->getName().data(), dispatchEvents);
+		// core->logLn(LogLevel::Error, "[npc network] broadcastRPC(%i, data, %i, \"%.*s\", %i)\n", id, channel, exceptPeer == nullptr ? 0 : exceptPeer->getName().length(), exceptPeer == nullptr ? "" : exceptPeer->getName().data(), dispatchEvents);
 		return true;
 	}
 
