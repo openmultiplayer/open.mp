@@ -193,10 +193,10 @@ void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
 	Milliseconds difference = duration_cast<Milliseconds>(now.time_since_epoch()) - duration_cast<Milliseconds>(lastMove.time_since_epoch());
-	const float remainingDistance = glm::distance(position, targetPosition);
-	const float travelledDistance = glm::length(velocity * static_cast<float>(difference.count()));
+	float remainingDistance = glm::distance(position, targetPosition);
+	Vector3 travelled = velocity * static_cast<float>(difference.count());
 
-	if (travelledDistance >= remainingDistance)
+	if (glm::length(travelled) >= remainingDistance)
 	{
 		moving = false;
 		moveSpeed = 0.0f;
@@ -209,7 +209,7 @@ void NPC::advance(TimePoint now)
 	}
 	else
 	{
-		position += velocity * static_cast<float>(difference.count());
+		position += travelled;
 		footSync.Velocity = velocity;
 	}
 
