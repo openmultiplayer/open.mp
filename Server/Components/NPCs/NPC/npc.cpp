@@ -170,7 +170,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 
 	auto rotation = getRotation().ToEuler();
 	rotation.z = utils::getAngleOfLine(front.x, front.y);
-	setRotation(rotation);
+	footSync.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 	// Set internal variables
 	moveSpeed = speed;
@@ -242,7 +242,7 @@ void NPC::advance(TimePoint now)
 	}
 
 	lastMove = Time::now();
-	setPosition(position);
+	footSync.Position = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
