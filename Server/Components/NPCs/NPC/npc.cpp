@@ -120,6 +120,11 @@ void NPC::spawn()
 
 bool NPC::move(Vector3 pos, NPCMoveType moveType)
 {
+	if (moveType_ == NPCMoveType_None)
+	{
+		return false;
+	}
+
 	// Set up everything to start moving in next tick
 	auto position = getPosition();
 	float distance = glm::distance(position, pos);
