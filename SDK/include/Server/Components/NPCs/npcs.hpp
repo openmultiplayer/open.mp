@@ -12,14 +12,17 @@ enum NPCMoveType
 
 struct INPC : public IExtensible, public IEntity
 {
-	/// Gets player instance of NPC
+	/// Get player instance of NPC.
 	virtual IPlayer* getPlayer() = 0;
 
-	/// Spawn NPC
+	/// Spawn NPC.
 	virtual void spawn() = 0;
 
-	/// Moves the NPC to a specified location.
+	/// Move NPC to a specified location.
 	virtual bool move(Vector3 position, NPCMoveType moveType) = 0;
+
+	/// Stop NPC from moving.
+	virtual void stopMove() = 0;
 };
 
 struct NPCEventHandler
