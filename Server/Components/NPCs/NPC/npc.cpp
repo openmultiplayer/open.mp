@@ -71,6 +71,11 @@ void NPC::setPosition(Vector3 pos)
 
 	// Let it update for all players and internally in open.mp
 	sendFootSync();
+
+	if (moving)
+	{
+		move(targetPosition, moveType);
+	}
 }
 
 GTAQuat NPC::getRotation() const
@@ -84,6 +89,11 @@ void NPC::setRotation(GTAQuat rot)
 
 	// Let it update for all players and internally in open.mp
 	sendFootSync();
+
+	if (moving)
+	{
+		move(targetPosition, moveType);
+	}
 }
 
 int NPC::getVirtualWorld() const
