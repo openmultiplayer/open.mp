@@ -27,7 +27,7 @@ SCRIPT_API(NPC_Create, int(const String& name))
 
 SCRIPT_API(NPC_Destroy, bool(INPC& npc))
 {
-	PawnManager::Get()->npcs->release(npc.getID());
+	PawnManager::Get()->npcs->destroy(npc);
 	return true;
 }
 
