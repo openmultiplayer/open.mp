@@ -66,8 +66,13 @@ void NPCComponent::release(int index)
 	if (ptr)
 	{
 		// Call disconnect events for both NPC and player. This way NPC's player instance is going to be handled and cleared properly.
-		eventDispatcher.dispatch(&NPCEventHandler::onNPCDisconnect, *ptr);
-		npcNetwork.networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *ptr->getPlayer(), PeerDisconnectReason_Quit);
+		ScopedPoolReleaseLock lock(*this, ptr->getID());
+		if (lock.entry)
+		{
+			eventDispatcher.dispatch(&NPCEventHandler::onNPCDestroy, *lock.entry);
+			npcNetwork.networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *lock.entry->getPlayer(), PeerDisconnectReason_Quit);
+		}
+
 		storage.release(index, false);
 	}
 }
@@ -129,8 +134,12 @@ INPC* NPCComponent::create(StringView name)
 	if (npc)
 	{
 		// Call connect events for both NPC and player, this way it can get initialized properly in player pool too
-		eventDispatcher.dispatch(&NPCEventHandler::onNPCConnect, *npc);
-		npcNetwork.networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *npc->getPlayer());
+		ScopedPoolReleaseLock lock(*this, npc->getID());
+		if (lock.entry)
+		{
+			eventDispatcher.dispatch(&NPCEventHandler::onNPCCreate, *lock.entry);
+			npcNetwork.networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *lock.entry->getPlayer());
+		}
 	}
 
 	return npc;

@@ -18,13 +18,13 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCFinishMove", DefaultReturnValue_True, npc.getID());
 	}
 
-	void onNPCConnect(INPC& npc) override
+	void onNPCCreate(INPC& npc) override
 	{
-		PawnManager::Get()->CallAllInEntryFirst("OnNPCConnect", DefaultReturnValue_True, npc.getID());
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCCreate", DefaultReturnValue_True, npc.getID());
 	}
 
-	void onNPCDisconnect(INPC& npc) override
+	void onNPCDestroy(INPC& npc) override
 	{
-		PawnManager::Get()->CallAllInEntryFirst("OnNPCDisconnect", DefaultReturnValue_True, npc.getID());
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCDestroy", DefaultReturnValue_True, npc.getID());
 	}
 };

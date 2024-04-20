@@ -28,8 +28,8 @@ struct INPC : public IExtensible, public IEntity
 struct NPCEventHandler
 {
 	virtual void onNPCFinishMove(INPC& npc) {};
-	virtual void onNPCConnect(INPC& npc) {};
-	virtual void onNPCDisconnect(INPC& npc) {};
+	virtual void onNPCCreate(INPC& npc) {};
+	virtual void onNPCDestroy(INPC& npc) {};
 };
 
 static const UID NPCComponent_UID = UID(0x3D0E59E87F4E90BC);
