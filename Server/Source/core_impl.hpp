@@ -1141,7 +1141,7 @@ private:
 		}
 
 		std::string absPath = ghc::filesystem::canonical(path).string();
-		printLnU8("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
+		printLn("Loaded %i component(s) from %.*s", components.size(), PRINT_VIEW(StringView(absPath)));
 	}
 
 	void playerInit(IPlayer& player)
