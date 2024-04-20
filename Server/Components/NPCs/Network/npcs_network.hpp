@@ -7,14 +7,28 @@
  */
 
 #include <sdk.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 #include <Impl/network_impl.hpp>
 
-struct NPCNetwork : public Impl::Network
+using namespace Impl;
+
+class NPCNetwork : public Impl::Network
 {
+private:
 	ICore* core;
-	void init(ICore* core)
+	INPCComponent* npcComponent;
+	DynamicArray<int> markedToBeKicked;
+
+public:
+	void init(ICore* c, INPCComponent* comp)
 	{
-		this->core = core;
+		core = c;
+		npcComponent = comp;
+	}
+
+	DynamicArray<int>& getMarkedForKickNPCs()
+	{
+		return markedToBeKicked;
 	}
 
 	ENetworkType getNetworkType() const override
@@ -58,6 +72,12 @@ struct NPCNetwork : public Impl::Network
 
 	void disconnect(const IPlayer& peer) override
 	{
+		auto id = peer.getID();
+		auto npc = npcComponent->get(id);
+		if (npc)
+		{
+			markedToBeKicked.push_back(npc->getID());
+		}
 	}
 
 	void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override
@@ -76,5 +96,6 @@ struct NPCNetwork : public Impl::Network
 		: Network(256, 256)
 	{
 	}
+
 	~NPCNetwork() { }
 };
