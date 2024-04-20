@@ -40,6 +40,9 @@ struct INPCComponent : public IPool<INPC>, public INetworkComponent
 	/// Get the npc event dispatcher
 	virtual IEventDispatcher<NPCEventHandler>& getEventDispatcher() = 0;
 
-	// Create a controllable NPC
+	/// Create a controllable NPC
 	virtual INPC* create(StringView name) = 0;
+
+	/// Destroy an NPC. We need this because it's more than just an entity removal from a pool
+	virtual void destroy(INPC& npc) = 0;
 };

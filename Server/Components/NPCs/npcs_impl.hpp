@@ -63,7 +63,8 @@ public:
 
 	INPC* create(StringView name) override;
 
-	void emulateRPCIn(INPC* npc, int rpcId, NetworkBitStream& bs);
+	void destroy(INPC& npc) override;
+
 
 	void emulatePacketIn(INPC* npc, int type, NetworkBitStream& bs);
 

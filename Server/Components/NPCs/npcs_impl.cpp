@@ -89,6 +89,16 @@ bool NPCComponent::unlock(int index)
 
 void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 {
+	// Go through NPCs ready to be destroyed/kicked
+	auto markedForKick = npcNetwork.getMarkedForKickNPCs();
+	for (auto& npc : markedForKick)
+	{
+		release(npc);
+	}
+
+	// Clean this pool because it is now processed
+	markedForKick.clear();
+
 	for (auto& npc : storage)
 	{
 		static_cast<NPC*>(npc)->tick(elapsed, now);
@@ -145,7 +155,11 @@ INPC* NPCComponent::create(StringView name)
 	return npc;
 }
 
-void NPCComponent::emulateRPCIn(INPC* npc, int rpcId, NetworkBitStream& bs)
+void NPCComponent::destroy(INPC& npc)
+{
+	npcNetwork.disconnect(*npc.getPlayer());
+}
+
 {
 	auto player = npc->getPlayer();
 
