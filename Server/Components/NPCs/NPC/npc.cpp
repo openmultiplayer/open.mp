@@ -112,10 +112,10 @@ void NPC::spawn()
 	NetworkBitStream emptyBS;
 
 	requestClassBS.writeUINT16(0);
-	npcComponent_->emulateRPCIn(this, NetCode::RPC::PlayerRequestClass::PacketID, requestClassBS);
+	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerRequestClass::PacketID, requestClassBS);
 
-	npcComponent_->emulateRPCIn(this, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
-	npcComponent_->emulateRPCIn(this, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
+	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
+	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
 }
 
 bool NPC::move(Vector3 pos, NPCMoveType moveType)
@@ -218,7 +218,7 @@ void NPC::sendFootSync()
 	bs.writeUINT16(footSync_.AnimationID);
 	bs.writeUINT16(footSync_.AnimationFlags);
 
-	npcComponent_->emulatePacketIn(this, footSync_.PacketID, bs);
+	npcComponent_->emulatePacketIn(*this, footSync_.PacketID, bs);
 }
 
 void NPC::advance(TimePoint now)
