@@ -65,8 +65,9 @@ public:
 
 	void destroy(INPC& npc) override;
 
+	void emulateRPCIn(INPC& npc, int rpcId, NetworkBitStream& bs);
 
-	void emulatePacketIn(INPC* npc, int type, NetworkBitStream& bs);
+	void emulatePacketIn(INPC& npc, int type, NetworkBitStream& bs);
 
 	ICore* getCore()
 	{

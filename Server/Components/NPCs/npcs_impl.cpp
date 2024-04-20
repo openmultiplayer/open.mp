@@ -16,7 +16,7 @@ void NPCComponent::onLoad(ICore* c)
 
 void NPCComponent::onInit(IComponentList* components)
 {
-	npcNetwork.init(core);
+	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
 }
 
@@ -160,8 +160,9 @@ void NPCComponent::destroy(INPC& npc)
 	npcNetwork.disconnect(*npc.getPlayer());
 }
 
+void NPCComponent::emulateRPCIn(INPC& npc, int rpcId, NetworkBitStream& bs)
 {
-	auto player = npc->getPlayer();
+	auto player = npc.getPlayer();
 
 	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([player, rpcId, &bs](NetworkInEventHandler* handler)
 		{
@@ -178,9 +179,9 @@ void NPCComponent::destroy(INPC& npc)
 	}
 }
 
-void NPCComponent::emulatePacketIn(INPC* npc, int type, NetworkBitStream& bs)
+void NPCComponent::emulatePacketIn(INPC& npc, int type, NetworkBitStream& bs)
 {
-	auto player = npc->getPlayer();
+	auto player = npc.getPlayer();
 
 	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([player, type, &bs](NetworkInEventHandler* handler)
 		{
