@@ -1079,7 +1079,7 @@ private:
 		auto excludeCfg = config.getStrings("exclude");
 		if (!componentsCfg || componentsCfg->empty())
 		{
-			for (auto& de : ghc::filesystem::directory_iterator(path))
+			for (auto& de : ghc::filesystem::recursive_directory_iterator(path))
 			{
 				ghc::filesystem::path p = de.path();
 				if (p.extension() == LIBRARY_EXT)
