@@ -66,6 +66,20 @@ SCRIPT_API(NPC_GetRot, bool(INPC& npc, Vector3& rotation))
 	return true;
 }
 
+SCRIPT_API(NPC_SetFacingAngle, bool(INPC& npc, float angle))
+{
+	auto rotation = npc.getRotation().ToEuler();
+	rotation.z = angle;
+	return true;
+}
+
+SCRIPT_API(NPC_GetFacingAngle, bool(INPC& npc, float& angle))
+{
+	auto rotation = npc.getRotation().ToEuler();
+	angle = rotation.z;
+	return true;
+}
+
 SCRIPT_API(NPC_SetVirtualWorld, bool(INPC& npc, int virtualWorld))
 {
 	npc.setVirtualWorld(virtualWorld);
