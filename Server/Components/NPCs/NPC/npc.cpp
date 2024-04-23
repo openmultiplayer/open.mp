@@ -128,12 +128,6 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	// Set up everything to start moving in next tick
 	auto position = getPosition();
 	float distance = glm::distance(position, pos);
-	Vector3 newVelocity;
-
-	if (!(distance <= 0.0f))
-	{
-		newVelocity = (pos - position) / distance;
-	}
 
 	// Determine which speed to use based on moving type
 	float speed = 0.0f;
@@ -154,10 +148,6 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 
 	footSync_.UpDown = static_cast<uint16_t>(Key::ANALOG_UP);
 
-	// Calculate velocity to use on tick
-	newVelocity *= (speed / 100.0f);
-	velocity_ = newVelocity;
-
 	// Calculate front vector and player's facing angle:
 	Vector3 front;
 	if (!(std::fabs(distance) < DBL_EPSILON))
@@ -168,6 +158,18 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	auto rotation = getRotation().ToEuler();
 	rotation.z = utils::getAngleOfLine(front.x, front.y);
 	footSync_.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
+
+	// Calculate velocity to use on tick
+	velocity_ *= (speed / 100.0f);
+
+	if (glm::length(velocity_) != 0.0f)
+	{
+		estimatedArrivalTimeNS_ = Time::now().time_since_epoch().count() + (static_cast<long long>(distance / glm::length(velocity_)) * ((npcComponent_->getFootSyncRate() * 10000) + 1000000));
+	}
+	else
+	{
+		estimatedArrivalTimeNS_ = 0;
+	}
 
 	// Set internal variables
 	moveSpeed_ = speed;
@@ -185,6 +187,7 @@ void NPC::stopMove()
 	targetPosition_ = { 0.0f, 0.0f, 0.0f };
 	velocity_ = { 0.0f, 0.0f, 0.0f };
 	moveType_ = NPCMoveType_None;
+	estimatedArrivalTimeNS_ = 0;
 
 	footSync_.Keys &= Key::SPRINT;
 	footSync_.Keys &= Key::WALK;
@@ -224,29 +227,28 @@ void NPC::sendFootSync()
 void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
-	Milliseconds difference = duration_cast<Milliseconds>(now.time_since_epoch()) - duration_cast<Milliseconds>(lastMove_.time_since_epoch());
-	float remainingDistance = glm::distance(position, targetPosition_);
-	Vector3 travelled = velocity_ * static_cast<float>(difference.count());
 
-	if (glm::length(travelled) >= remainingDistance)
+	if (estimatedArrivalTimeNS_ <= Time::now().time_since_epoch().count())
 	{
+		footSync_.Position = targetPosition_;
 		stopMove();
 		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 	}
 	else
 	{
+		Milliseconds difference = duration_cast<Milliseconds>(now.time_since_epoch()) - duration_cast<Milliseconds>(lastMove_.time_since_epoch());
+		Vector3 travelled = velocity_ * static_cast<float>(difference.count());
+
 		position += travelled;
 		footSync_.Velocity = velocity_;
+		footSync_.Position = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
 	}
 
 	lastMove_ = Time::now();
-	footSync_.Position = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
 {
-	static auto footSyncRate = npcComponent_->getCore()->getConfig().getInt("network.on_foot_sync_rate");
-
 	// Only process the NPC if it is spawned
 	if (player_ && (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
 	{

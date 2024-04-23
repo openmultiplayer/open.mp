@@ -66,6 +66,7 @@ private:
 	// Movements
 	NPCMoveType moveType_;
 	TimePoint lastMove_;
+	long long estimatedArrivalTimeNS_;
 	TimePoint moveStart_;
 	float moveSpeed_;
 	Vector3 targetPosition_;
