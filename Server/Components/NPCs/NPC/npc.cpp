@@ -255,7 +255,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			advance(now);
 		}
 
-		if ((now - lastUpdate_).count() > *footSyncRate)
+		if ((now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
 		{
 			sendFootSync();
 			lastUpdate_ = now;
