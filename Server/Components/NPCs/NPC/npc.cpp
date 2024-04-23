@@ -160,9 +160,9 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	footSync_.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 	// Calculate velocity to use on tick
-	velocity_ *= (speed / 100.0f);
+	velocity_ = front * (speed / 100.0f);
 
-	if (glm::length(velocity_) != 0.0f)
+	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
 	{
 		estimatedArrivalTimeNS_ = Time::now().time_since_epoch().count() + (static_cast<long long>(distance / glm::length(velocity_)) * ((npcComponent_->getFootSyncRate() * 10000) + 1000000));
 	}
