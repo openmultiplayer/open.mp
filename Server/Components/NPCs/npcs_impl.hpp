@@ -79,7 +79,7 @@ public:
 		return eventDispatcher;
 	}
 
-	int getFootSyncRate() const 
+	int getFootSyncRate() const
 	{
 		return *footSyncRate;
 	}
