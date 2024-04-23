@@ -12,6 +12,7 @@
 void NPCComponent::onLoad(ICore* c)
 {
 	core = c;
+	footSyncRate = c->getConfig().getInt("network.on_foot_sync_rate");
 }
 
 void NPCComponent::onInit(IComponentList* components)

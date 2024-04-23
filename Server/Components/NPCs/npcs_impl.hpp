@@ -79,9 +79,15 @@ public:
 		return eventDispatcher;
 	}
 
+	int getFootSyncRate() const 
+	{
+		return *footSyncRate;
+	}
+
 private:
 	ICore* core = nullptr;
 	NPCNetwork npcNetwork;
 	DefaultEventDispatcher<NPCEventHandler> eventDispatcher;
 	MarkedDynamicPoolStorage<NPC, INPC, 0, NPC_POOL_SIZE> storage;
+	int* footSyncRate = nullptr;
 };
