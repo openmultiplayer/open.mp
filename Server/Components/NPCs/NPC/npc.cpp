@@ -164,7 +164,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 
 	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
 	{
-		estimatedArrivalTimeNS_ = Time::now().time_since_epoch().count() + (static_cast<long long>(distance / glm::length(velocity_)) * ((npcComponent_->getFootSyncRate() * 10000) + 1000000));
+		estimatedArrivalTimeNS_ = Time::now().time_since_epoch().count() + (static_cast<long long>(distance / glm::length(velocity_)) * (/* (npcComponent_->getFootSyncRate() * 10000) +*/ 1000000));
 	}
 	else
 	{
@@ -228,10 +228,11 @@ void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
 
-	if (estimatedArrivalTimeNS_ <= Time::now().time_since_epoch().count())
+	if (estimatedArrivalTimeNS_ <= Time::now().time_since_epoch().count() || glm::distance(position, targetPosition_) <= 0.1f)
 	{
-		footSync_.Position = targetPosition_;
+		auto pos = targetPosition_;
 		stopMove();
+		setPosition(pos);
 		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 	}
 	else
