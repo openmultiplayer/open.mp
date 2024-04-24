@@ -90,7 +90,7 @@ struct PacketHelper
 			{
 				if (network)
 				{
-					network->broadcastRPC(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, players, skipFrom, true);
+					network->broadcastRPCToSome(Packet::PacketID, Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, players, skipFrom, true);
 				}
 			}
 		}
@@ -100,7 +100,7 @@ struct PacketHelper
 			{
 				if (network)
 				{
-					network->broadcastPacket(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, players, skipFrom, true);
+					network->broadcastPacketToSome(Span<uint8_t>(bs.GetData(), bs.GetNumberOfBitsUsed()), Packet::PacketChannel, players, skipFrom, true);
 				}
 			}
 		}

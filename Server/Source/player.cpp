@@ -381,7 +381,7 @@ void Player::broadcastRPCToStreamed(int id, Span<uint8_t> data, int channel, boo
 	{
 		if (network)
 		{
-			network->broadcastRPC(id, data, channel, streamedFor_.entries(), skipFrom ? this : nullptr, true);
+			network->broadcastRPCToSome(id, data, channel, streamedFor_.entries(), skipFrom ? this : nullptr, true);
 		}
 	}
 }
@@ -392,7 +392,7 @@ void Player::broadcastPacketToStreamed(Span<uint8_t> data, int channel, bool ski
 	{
 		if (network)
 		{
-			network->broadcastPacket(data, channel, streamedFor_.entries(), skipFrom ? this : nullptr, true);
+			network->broadcastPacketToSome(data, channel, streamedFor_.entries(), skipFrom ? this : nullptr, true);
 		}
 	}
 }
@@ -418,7 +418,7 @@ void Player::broadcastSyncPacket(Span<uint8_t> data, int channel) const
 	{
 		if (network)
 		{
-			network->broadcastPacket(data, channel, broadcastList, nullptr, true);
+			network->broadcastPacketToSome(data, channel, broadcastList, nullptr, true);
 		}
 	}
 }

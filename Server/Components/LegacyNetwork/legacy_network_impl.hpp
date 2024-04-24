@@ -138,7 +138,7 @@ public:
 		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
 	}
 
-	bool broadcastPacket(Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
+	bool broadcastPacketToSome(Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
 	{
 		// Don't use constructor because it takes bytes; we want bits
 		NetworkBitStream bs;
@@ -292,7 +292,7 @@ public:
 		return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
 	}
 
-	bool broadcastRPC(int id, Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
+	bool broadcastRPCToSome(int id, Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
 	{
 		if (id == INVALID_PACKET_ID)
 		{
