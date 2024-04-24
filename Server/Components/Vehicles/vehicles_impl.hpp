@@ -246,7 +246,7 @@ private:
 				enterExitRPC.EventType = VehicleSCMEvent_EnterExitModShop;
 				enterExitRPC.Arg1 = scmEvent.Arg1;
 				enterExitRPC.Arg2 = scmEvent.Arg2;
-				PacketHelper::broadcastToSome(enterExitRPC, vehicle.streamedForPlayers(), &peer);
+				PacketHelper::broadcastToSome(enterExitRPC, self.getNetworks(), vehicle.streamedForPlayers(), &peer);
 				break;
 			}
 			}
@@ -292,6 +292,16 @@ private:
 	} vehicleDeathHandler;
 
 public:
+	ICore* getCore()
+	{
+		return core;
+	}
+
+	const FlatPtrHashSet<INetwork>& getNetworks()
+	{
+		return core->getNetworks();
+	}
+
 	IPlayerPool& getPlayers()
 	{
 		return core->getPlayers();

@@ -374,3 +374,51 @@ void Player::ban(StringView reason)
 	pool_.core.getConfig().writeBans();
 	kick();
 }
+
+void Player::broadcastRPCToStreamed(int id, Span<uint8_t> data, int channel, bool skipFrom) const
+{
+	for (auto network : pool_.core.getNetworks())
+	{
+		if (network)
+		{
+			network->broadcastRPC(id, data, channel, streamedFor_.entries(), skipFrom ? this : nullptr, true);
+		}
+	}
+}
+
+void Player::broadcastPacketToStreamed(Span<uint8_t> data, int channel, bool skipFrom) const
+{
+	for (auto network : pool_.core.getNetworks())
+	{
+		if (network)
+		{
+			network->broadcastPacket(data, channel, streamedFor_.entries(), skipFrom ? this : nullptr, true);
+		}
+	}
+}
+
+void Player::broadcastSyncPacket(Span<uint8_t> data, int channel) const
+{
+	FlatPtrHashSet<IPlayer> broadcastList;
+	for (IPlayer* p : streamedFor_.entries())
+	{
+		Player* player = static_cast<Player*>(p);
+		if (player == this)
+		{
+			continue;
+		}
+
+		if (shouldSendSyncPacket(player))
+		{
+			broadcastList.emplace(p);
+		}
+	}
+
+	for (auto network : pool_.core.getNetworks())
+	{
+		if (network)
+		{
+			network->broadcastPacket(data, channel, broadcastList, nullptr, true);
+		}
+	}
+}

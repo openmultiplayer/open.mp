@@ -386,32 +386,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 
 	/// Attempt to broadcast an RPC derived from NetworkPacketBase to the player's streamed peers
 	/// @param packet The packet to send
-	void broadcastRPCToStreamed(int id, Span<uint8_t> data, int channel, bool skipFrom = false) const override
-	{
-		for (IPlayer* player : streamedForPlayers())
-		{
-			if (skipFrom && player == this)
-			{
-				continue;
-			}
-			player->sendRPC(id, data, channel);
-		}
-	}
-
-	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
-	/// @param packet The packet to send
-	void broadcastPacketToStreamed(Span<uint8_t> data, int channel, bool skipFrom = true) const override
-	{
-		for (IPlayer* p : streamedFor_.entries())
-		{
-			Player* player = static_cast<Player*>(p);
-			if (skipFrom && player == this)
-			{
-				continue;
-			}
-			player->sendPacket(data, channel);
-		}
-	}
+	void broadcastRPCToStreamed(int id, Span<uint8_t> data, int channel, bool skipFrom = false) const override;
 
 	inline bool shouldSendSyncPacket(Player* other) const
 	{
@@ -430,21 +405,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 
 	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
 	/// @param packet The packet to send
-	void broadcastSyncPacket(Span<uint8_t> data, int channel) const override
-	{
-		for (IPlayer* p : streamedFor_.entries())
-		{
-			Player* player = static_cast<Player*>(p);
-			if (player == this)
-			{
-				continue;
-			}
-			if (shouldSendSyncPacket(player))
-			{
-				player->sendPacket(data, channel);
-			}
-		}
-	}
+	void broadcastPacketToStreamed(Span<uint8_t> data, int channel, bool skipFrom = true) const override;
+
+	/// Attempt to broadcast a packet derived from NetworkPacketBase to the player's streamed peers
+	/// @param packet The packet to send
+	void broadcastSyncPacket(Span<uint8_t> data, int channel) const override;
 
 	void createExplosion(Vector3 vec, int type, float radius) override
 	{

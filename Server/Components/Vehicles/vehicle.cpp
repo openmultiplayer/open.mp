@@ -415,7 +415,7 @@ void Vehicle::setPlate(StringView plate)
 	NetCode::RPC::SetVehiclePlate plateRPC;
 	plateRPC.VehicleID = poolID;
 	plateRPC.plate = numberPlate;
-	PacketHelper::broadcastToSome(plateRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(plateRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 const StringView Vehicle::getPlate()
@@ -434,7 +434,7 @@ void Vehicle::setColour(int col1, int col2)
 	colourRPC.EventType = VehicleSCMEvent_SetColour;
 	colourRPC.Arg1 = col1;
 	colourRPC.Arg2 = col2;
-	PacketHelper::broadcastToSome(colourRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(colourRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 Pair<int, int> Vehicle::getColour() const
@@ -462,7 +462,7 @@ void Vehicle::setDamageStatus(int PanelStatus, int DoorStatus, uint8_t LightStat
 		static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).dispatch(&VehicleEventHandler::onVehicleDamageStatusUpdate, *lock.entry, *vehicleUpdater);
 	}
 
-	PacketHelper::broadcastToSome(damageStatus, streamedFor_.entries(), vehicleUpdater);
+	PacketHelper::broadcastToSome(damageStatus, pool->getNetworks(), streamedFor_.entries(), vehicleUpdater);
 }
 
 void Vehicle::getDamageStatus(int& PanelStatus, int& DoorStatus, int& LightStatus, int& TyreStatus)
@@ -481,7 +481,7 @@ void Vehicle::setPaintJob(int paintjob)
 	paintRPC.EventType = VehicleSCMEvent_SetPaintjob;
 	paintRPC.VehicleID = poolID;
 	paintRPC.Arg1 = paintjob;
-	PacketHelper::broadcastToSome(paintRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(paintRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 int Vehicle::getPaintJob()
@@ -510,7 +510,7 @@ void Vehicle::addComponent(int component)
 	modRPC.EventType = VehicleSCMEvent_AddComponent;
 	modRPC.VehicleID = poolID;
 	modRPC.Arg1 = component;
-	PacketHelper::broadcastToSome(modRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(modRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 int Vehicle::getComponentInSlot(int slot)
@@ -538,7 +538,7 @@ void Vehicle::removeComponent(int component)
 	NetCode::RPC::RemoveVehicleComponent modRPC;
 	modRPC.VehicleID = poolID;
 	modRPC.Component = component;
-	PacketHelper::broadcastToSome(modRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(modRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 void Vehicle::putPlayer(IPlayer& player, int SeatID)
@@ -588,7 +588,7 @@ void Vehicle::setHealth(float Health)
 	NetCode::RPC::SetVehicleHealth setVehicleHealthRPC;
 	setVehicleHealthRPC.VehicleID = poolID;
 	setVehicleHealthRPC.health = Health;
-	PacketHelper::broadcastToSome(setVehicleHealthRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(setVehicleHealthRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 void Vehicle::setInterior(int InteriorID)
@@ -597,7 +597,7 @@ void Vehicle::setInterior(int InteriorID)
 	NetCode::RPC::LinkVehicleToInterior linkVehicleToInteriorRPC;
 	linkVehicleToInteriorRPC.VehicleID = poolID;
 	linkVehicleToInteriorRPC.InteriorID = InteriorID;
-	PacketHelper::broadcastToSome(linkVehicleToInteriorRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(linkVehicleToInteriorRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 int Vehicle::getInterior()
@@ -612,7 +612,7 @@ void Vehicle::setZAngle(float angle)
 	NetCode::RPC::SetVehicleZAngle setVehicleZAngleRPC;
 	setVehicleZAngleRPC.VehicleID = poolID;
 	setVehicleZAngleRPC.angle = angle;
-	PacketHelper::broadcastToSome(setVehicleZAngleRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(setVehicleZAngleRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 float Vehicle::getZAngle()
@@ -627,7 +627,7 @@ void Vehicle::setParams(const VehicleParams& params)
 	NetCode::RPC::SetVehicleParams vehicleRPC;
 	vehicleRPC.VehicleID = poolID;
 	vehicleRPC.params = params;
-	PacketHelper::broadcastToSome(vehicleRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(vehicleRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 // Set the vehicle's parameters for a specific player.
@@ -655,7 +655,7 @@ void Vehicle::setPosition(Vector3 position)
 	NetCode::RPC::SetVehiclePosition setVehiclePosition;
 	setVehiclePosition.VehicleID = poolID;
 	setVehiclePosition.position = position;
-	PacketHelper::broadcastToSome(setVehiclePosition, streamedFor_.entries());
+	PacketHelper::broadcastToSome(setVehiclePosition, pool->getNetworks(), streamedFor_.entries());
 }
 
 Vector3 Vehicle::getPosition() const
@@ -741,7 +741,7 @@ void Vehicle::attachTrailer(IVehicle& trailer)
 	NetCode::RPC::AttachTrailer trailerRPC;
 	trailerRPC.TrailerID = this->trailer->poolID;
 	trailerRPC.VehicleID = poolID;
-	PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries());
+	PacketHelper::broadcastToSome(trailerRPC, pool->getNetworks(), streamedFor_.entries());
 }
 
 void Vehicle::detachTrailer()
@@ -750,7 +750,7 @@ void Vehicle::detachTrailer()
 	{
 		NetCode::RPC::DetachTrailer trailerRPC;
 		trailerRPC.VehicleID = poolID;
-		PacketHelper::broadcastToSome(trailerRPC, streamedFor_.entries());
+		PacketHelper::broadcastToSome(trailerRPC, pool->getNetworks(), streamedFor_.entries());
 		trailer->setCab(nullptr);
 		trailer = nullptr;
 		detaching = true;
