@@ -15,10 +15,12 @@
 #include "crc32.hpp"
 #include <regex>
 #include <shared_mutex>
+#include "utils.hpp"
 
 static auto rAddCharModel = std::regex(R"(AddCharModel\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rAddSimpleModelTimed = std::regex(R"(AddSimpleModelTimed\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*;*)");
+static auto rUri = std::regex("[A-Za-z0-9-._~:/?#\\[\\]@!$&'()*+,;=]+"); // very loose interpretation of rfc3986
 
 using namespace Impl;
 
@@ -459,8 +461,8 @@ public:
 		players->getPlayerConnectDispatcher().addEventHandler(this);
 
 		enabled = *core->getConfig().getBool("artwork.enable");
-		modelsPath = String(core->getConfig().getString("artwork.models_path"));
-		cdn = String(core->getConfig().getString("artwork.cdn"));
+		modelsPath = String(trim(core->getConfig().getString("artwork.models_path")));
+		cdn = String(trim(core->getConfig().getString("artwork.cdn")));
 		httpThreads = *core->getConfig().getInt("network.http_threads");
 		webServerBindAddress = String(core->getConfig().getString("artwork.web_server_bind"));
 
@@ -488,11 +490,17 @@ public:
 
 		if (!cdn.empty())
 		{
+			if (!std::regex_match(cdn, rUri))
+			{
+				core->logLn(LogLevel::Warning, "[artwork:warn] CDN URL '%.*s' seems to be invalid, the CDN feature has been disabled.", PRINT_VIEW(cdn));
+				return;
+			}
+
 			if (cdn.back() != '/')
 			{
 				cdn.push_back('/');
 			}
-			core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
+			core->logLn(LogLevel::Message, "[artwork:info] Using CDN '%.*s'", PRINT_VIEW(cdn));
 			usingCdn = true;
 		}
 	}
