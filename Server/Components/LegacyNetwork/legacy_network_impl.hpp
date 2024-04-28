@@ -193,8 +193,17 @@ public:
 			}
 		}
 
-		const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
-		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, Span<RakNet::PlayerIndex>(broadcastList, broadcastListSize));
+		if (broadcastListSize)
+		{
+			const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
+			return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, broadcastList, broadcastListSize);
+		}
+		else
+		{
+			delete[] broadcastList;
+		}
+
+		return true;
 	}
 
 	bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents) override
@@ -347,8 +356,17 @@ public:
 			}
 		}
 
-		const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
-		return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, Span<RakNet::PlayerIndex>(broadcastList, broadcastListSize));
+		if (broadcastListSize)
+		{
+			const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
+			return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, broadcastList, broadcastListSize);
+		}
+		else
+		{
+			delete[] broadcastList;
+		}
+
+		return true;
 	}
 
 	bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel, bool dispatchEvents) override
