@@ -48,6 +48,9 @@ private:
 					data->setMenuID(INVALID_MENU_ID);
 					return false;
 				}
+				
+				Menu* menuData = self.storage.get(data->getMenuID());
+				if(onPlayerSelectedMenuRow.MenuRow >= menuData->getRowCount(0)) return false;
 			}
 
 			self.eventDispatcher.dispatch(
