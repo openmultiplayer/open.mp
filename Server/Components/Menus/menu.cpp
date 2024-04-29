@@ -43,14 +43,18 @@ private:
 			IPlayerMenuData* data = queryExtension<IPlayerMenuData>(peer);
 			if (data)
 			{
-				if (!self.storage.get(data->getMenuID()))
+				Menu* menuData = self.storage.get(data->getMenuID());
+
+				if (!menuData)
 				{
 					data->setMenuID(INVALID_MENU_ID);
 					return false;
 				}
 				
-				Menu* menuData = self.storage.get(data->getMenuID());
-				if(onPlayerSelectedMenuRow.MenuRow >= menuData->getRowCount(0)) return false;
+				if(onPlayerSelectedMenuRow.MenuRow >= menuData->getRowCount(0)) 
+				{
+					return false;
+				}
 			}
 
 			self.eventDispatcher.dispatch(
