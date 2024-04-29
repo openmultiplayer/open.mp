@@ -119,9 +119,8 @@ public:
 		// Set AMXFILE environment variable to "{current_dir}/scriptfiles"
 		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles");
 		if (!ghc::filesystem::exists(scriptfilesPath) || !ghc::filesystem::is_directory(scriptfilesPath))
-		{
-			ghc::filesystem::create_directory(scriptfilesPath);
-		}
+			if(!ghc::filesystem::create_directory(scriptfilesPath))
+				core->logLn(LogLevel::Error, "Cannot access 'scriptfiles' folder");
 
 #if defined(GHC_USE_WCHAR_T)
 		std::wstring wstr_path = scriptfilesPath.wstring();

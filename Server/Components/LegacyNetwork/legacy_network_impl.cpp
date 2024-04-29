@@ -695,14 +695,14 @@ void RakNetLegacyNetwork::update()
 {
 	IConfig& config = core->getConfig();
 
-	cookieSeedTime = Milliseconds(*config.getInt("network.cookie_reseed_time"));
+	cookieSeedTime = Milliseconds(abs(*config.getInt("network.cookie_reseed_time")));
 
-	SAMPRakNet::SetTimeout(*config.getInt("network.player_timeout"));
-	SAMPRakNet::SetMinConnectionTime(*config.getInt("network.minimum_connection_time"));
-	SAMPRakNet::SetMessagesLimit(*config.getInt("network.messages_limit"));
-	SAMPRakNet::SetMessageHoleLimit(*config.getInt("network.message_hole_limit"));
-	SAMPRakNet::SetAcksLimit(*config.getInt("network.acks_limit"));
-	SAMPRakNet::SetNetworkLimitsBanTime(*config.getInt("network.limits_ban_time"));
+	SAMPRakNet::SetTimeout(abs(*config.getInt("network.player_timeout")));
+	SAMPRakNet::SetMinConnectionTime(abs(*config.getInt("network.minimum_connection_time")));
+	SAMPRakNet::SetMessagesLimit(abs(*config.getInt("network.messages_limit")));
+	SAMPRakNet::SetMessageHoleLimit(abs(*config.getInt("network.message_hole_limit")));
+	SAMPRakNet::SetAcksLimit(abs(*config.getInt("network.acks_limit")));
+	SAMPRakNet::SetNetworkLimitsBanTime(abs(*config.getInt("network.limits_ban_time")));
 
 	SAMPRakNet::SetLogCookies(*config.getBool("logging.log_cookies"));
 
@@ -742,7 +742,7 @@ void RakNetLegacyNetwork::update()
 		query.setRuleValue<false>("mapname", "San Andreas");
 	}
 
-	query.setRuleValue<false>("weather", std::to_string(*config.getInt("game.weather")));
+	query.setRuleValue<false>("weather", std::to_string(abs(*config.getInt("game.weather"))));
 
 	StringView website = config.getString("website");
 	if (!website.empty())
@@ -768,7 +768,7 @@ void RakNetLegacyNetwork::update()
 		query.setDarkBannerUrl(bannerUrl);
 	}
 
-	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
+	query.setRuleValue<false>("worldtime", String(std::to_string(abs(*config.getInt("game.time")) % 24) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");
 	query.setRconPassword(rconPassword);
@@ -826,6 +826,42 @@ void RakNetLegacyNetwork::start()
 	query.setMaxPlayers(maxPlayers);
 	query.buildPlayerDependentBuffers();
 
+	if(*config.getInt("network.player_timeout") < 0)
+		core->logLn(LogLevel::Warning, "The 'player_timeout' option cannot have a negative value");
+
+	if(*config.getInt("network.minimum_connection_time") < 0)
+		core->logLn(LogLevel::Warning, "The 'minimum_connection_time' option cannot have a negative value");
+
+	if(*config.getInt("network.messages_limit") < 0)
+		core->logLn(LogLevel::Warning, "The 'messages_limit' option cannot have a negative value");
+
+	if(*config.getInt("network.message_hole_limit") < 0)
+		core->logLn(LogLevel::Warning, "The 'message_hole_limit' option cannot have a negative value");
+
+	if(*config.getInt("network.acks_limit") < 0)
+		core->logLn(LogLevel::Warning, "The 'acks_limit' option cannot have a negative value");
+
+	if(*config.getInt("network.limits_ban_time") < 0)
+		core->logLn(LogLevel::Warning, "The 'limits_ban_time' option cannot have a negative value");
+
+	if(*config.getInt("network.on_foot_sync_rate") < 0)
+		core->logLn(LogLevel::Warning, "The 'on_foot_sync_rate' option cannot have a negative value");
+
+	if(*config.getInt("network.in_vehicle_sync_rate") < 0)
+		core->logLn(LogLevel::Warning, "The 'in_vehicle_sync_rate' option cannot have a negative value");
+
+	if(*config.getInt("network.aiming_sync_rate") < 0)
+		core->logLn(LogLevel::Warning, "The 'aiming_sync_rate' option cannot have a negative value");
+
+	if(*config.getInt("network.cookie_reseed_time") < 0)
+		core->logLn(LogLevel::Warning, "The 'cookie_reseed_time' option cannot have a negative value");
+
+	if(*config.getInt("game.weather") < 0)
+		core->logLn(LogLevel::Warning, "The 'weather' option cannot have a negative value");
+
+	if(*config.getInt("game.time") < 0)
+		core->logLn(LogLevel::Warning, "The 'time' option cannot have a negative value");
+
 	update();
 
 	for (size_t i = 0; i < config.getBansCount(); ++i)
@@ -858,11 +894,17 @@ void RakNetLegacyNetwork::start()
 		// Do the request after network is started.
 		if (*config.getBool("announce"))
 		{
-			const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
-			core->requestHTTP4(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
+			if(*config.getBool("enable_query"))
+			{
+				const String get = "https://api.open.mp/0.3.7/announce/" + std::to_string(port);
+				core->requestHTTP4(new AnnounceHTTPResponseHandler(core), HTTPRequestType::HTTPRequestType_Get, get.data());
+			} else core->logLn(LogLevel::Warning, "The 'enable_query' option is disabled, so executing 'announce' will not succeed");
 		}
 	}
 
+	if(*config.getInt("max_bots") >= maxPlayers)
+		core->logLn(LogLevel::Warning, "The 'max_bots' option more or equal than 'max_players' option. Server work can be unpredictable");
+	
 	rakNetServer.StartOccasionalPing();
 	SAMPRakNet::SetPort(port);
 
