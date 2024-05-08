@@ -37,6 +37,8 @@ public:
 
 	void stopMove() override;
 
+	void setSkin(int model) override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);

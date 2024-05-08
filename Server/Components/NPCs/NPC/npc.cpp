@@ -194,6 +194,11 @@ void NPC::stopMove()
 	footSync_.UpDown = 0;
 }
 
+void NPC::setSkin(int model)
+{
+	player_->setSkin(model);
+}
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned
