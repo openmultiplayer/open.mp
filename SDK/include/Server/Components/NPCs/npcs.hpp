@@ -23,6 +23,9 @@ struct INPC : public IExtensible, public IEntity
 
 	/// Stop NPC from moving.
 	virtual void stopMove() = 0;
+
+	/// Set NPC skin
+	virtual void setSkin(int model) = 0;
 };
 
 struct NPCEventHandler

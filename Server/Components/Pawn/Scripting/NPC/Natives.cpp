@@ -102,3 +102,9 @@ SCRIPT_API(NPC_StopMove, bool(INPC& npc))
 	npc.stopMove();
 	return true;
 }
+
+SCRIPT_API(NPC_SetSkin, bool(INPC& npc, int model))
+{
+	npc.setSkin(model);
+	return true;
+}
