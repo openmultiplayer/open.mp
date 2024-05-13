@@ -26,6 +26,12 @@ struct INPC : public IExtensible, public IEntity
 
 	/// Set NPC skin
 	virtual void setSkin(int model) = 0;
+
+	/// Check if a player is streamed in for the current NPC
+	virtual bool isStreamedInForPlayer(const IPlayer& other) const = 0;
+
+	/// Get the NPC which are streamed in for this player
+	virtual const FlatPtrHashSet<IPlayer>& streamedForPlayers() const = 0;
 };
 
 struct NPCEventHandler
