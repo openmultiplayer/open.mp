@@ -199,6 +199,21 @@ void NPC::setSkin(int model)
 	player_->setSkin(model);
 }
 
+bool NPC::isStreamedInForPlayer(const IPlayer& other) const
+{
+	if (player_)
+	{
+		return player_->isStreamedInForPlayer(other);
+	}
+
+	return false;
+}
+
+const FlatPtrHashSet<IPlayer>& NPC::streamedForPlayers() const
+{
+	return player_->streamedForPlayers();
+}
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned

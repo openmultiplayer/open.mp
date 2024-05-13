@@ -39,6 +39,10 @@ public:
 
 	void setSkin(int model) override;
 
+	bool isStreamedInForPlayer(const IPlayer& other) const override;
+
+	const FlatPtrHashSet<IPlayer>& streamedForPlayers() const override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
