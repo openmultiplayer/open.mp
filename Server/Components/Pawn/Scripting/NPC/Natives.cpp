@@ -108,3 +108,41 @@ SCRIPT_API(NPC_SetSkin, bool(INPC& npc, int model))
 	npc.setSkin(model);
 	return true;
 }
+
+SCRIPT_API(NPC_IsStreamedIn, bool(INPC& npc, IPlayer& player))
+{
+	return npc.isStreamedInForPlayer(player);
+}
+
+SCRIPT_API(NPC_IsAnyStreamedIn, bool(INPC& npc))
+{
+	auto streamedIn = npc.streamedForPlayers();
+	return streamedIn.size() > 0;
+}
+
+SCRIPT_API(NPC_GetAll, int(DynamicArray<int>& outputNPCs))
+{
+	int index = -1;
+	auto npcs = PawnManager::Get()->npcs;
+	if (npcs)
+	{
+		if (outputNPCs.size() < npcs->count())
+		{
+			PawnManager::Get()->core->printLn(
+				"There are %zu NPCs in your server but array size used in `NPC_GetAll` is %zu; Use a bigger size in your script.",
+				npcs->count(),
+				outputNPCs.size());
+		}
+
+		for (INPC* npc : *npcs)
+		{
+			index++;
+			if (index >= outputNPCs.size())
+			{
+				break;
+			}
+			outputNPCs[index] = npc->getID();
+		}
+	}
+	return index + 1;
+}
