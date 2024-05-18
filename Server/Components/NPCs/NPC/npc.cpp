@@ -30,6 +30,12 @@ float getAngleOfLine(float x, float y)
 }
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
+	: moveType_(NPCMoveType_None)
+	, estimatedArrivalTimeNS_(0)
+	, moveSpeed_(0.0f)
+	, targetPosition_({ 0.0f, 0.0f, 0.0f })
+	, velocity_({ 0.0f, 0.0f, 0.0f })
+	, moving_(false)
 {
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -39,9 +45,6 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	// Initial entity values
 	Vector3 initialPosition = { 0.0f, 0.0f, 3.5f };
 	GTAQuat initialRotation = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
-	moving_ = false;
-	velocity_ = { 0.0f, 0.0f, 0.0f };
-	moveType_ = NPCMoveType_None;
 
 	// Initial values for foot sync values
 	footSync_.LeftRight = 0;
