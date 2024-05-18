@@ -43,6 +43,10 @@ public:
 
 	const FlatPtrHashSet<IPlayer>& streamedForPlayers() const override;
 
+	void setInterior(unsigned int interior) override;
+
+	unsigned int getInterior() const override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);

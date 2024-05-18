@@ -214,6 +214,24 @@ const FlatPtrHashSet<IPlayer>& NPC::streamedForPlayers() const
 	return player_->streamedForPlayers();
 }
 
+void NPC::setInterior(unsigned int interior)
+{
+	if (player_)
+	{
+		player_->setInterior(interior);
+	}
+}
+
+unsigned int NPC::getInterior() const
+{
+	if (player_)
+	{
+		return player_->getInterior();
+	}
+
+	return 0;
+}
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned

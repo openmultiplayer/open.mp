@@ -86,10 +86,9 @@ SCRIPT_API(NPC_SetVirtualWorld, bool(INPC& npc, int virtualWorld))
 	return true;
 }
 
-SCRIPT_API(NPC_GetVirtualWorld, bool(INPC& npc, int& virtualWorld))
+SCRIPT_API(NPC_GetVirtualWorld, int(INPC& npc))
 {
-	virtualWorld = npc.getVirtualWorld();
-	return true;
+	return npc.getVirtualWorld();
 }
 
 SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType))
@@ -145,4 +144,15 @@ SCRIPT_API(NPC_GetAll, int(DynamicArray<int>& outputNPCs))
 		}
 	}
 	return index + 1;
+}
+
+SCRIPT_API(NPC_SetInterior, bool(INPC& npc, int interior))
+{
+	npc.setInterior(interior);
+	return true;
+}
+
+SCRIPT_API(NPC_GetInterior, int(INPC& npc))
+{
+	return npc.getInterior();
 }
