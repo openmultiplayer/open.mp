@@ -47,6 +47,10 @@ public:
 
 	unsigned int getInterior() const override;
 
+	Vector3 getVelocity() const override;
+
+	void setVelocity(Vector3 position, bool update = false) override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
@@ -82,7 +86,7 @@ private:
 	Vector3 targetPosition_;
 	Vector3 velocity_;
 	bool moving_;
-
+	bool needsVelocityUpdate_;
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;
 

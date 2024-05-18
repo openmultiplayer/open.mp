@@ -36,6 +36,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, targetPosition_({ 0.0f, 0.0f, 0.0f })
 	, velocity_({ 0.0f, 0.0f, 0.0f })
 	, moving_(false)
+	, needsVelocityUpdate_(false)
 {
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -235,6 +236,22 @@ unsigned int NPC::getInterior() const
 	return 0;
 }
 
+Vector3 NPC::getVelocity() const
+{
+	return player_->getPosition();
+}
+
+void NPC::setVelocity(Vector3 velocity, bool update)
+{
+	if (moving_ && !update)
+	{
+		velocity_ = velocity;
+		footSync_.Velocity = velocity;
+	}
+
+	needsVelocityUpdate_ = update;
+}
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned
@@ -294,6 +311,12 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 	// Only process the NPC if it is spawned
 	if (player_ && (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
 	{
+		if (needsVelocityUpdate_)
+		{
+			setPosition(getPosition() + velocity_);
+			setVelocity({ 0.0f, 0.0f, 0.0f }, false);
+		}
+
 		if (moving_)
 		{
 			advance(now);
