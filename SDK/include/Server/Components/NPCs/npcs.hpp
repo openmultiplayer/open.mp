@@ -38,6 +38,12 @@ struct INPC : public IExtensible, public IEntity
 
 	/// Get NPC interior, just the value that is stored internally
 	virtual unsigned int getInterior() const;
+
+	/// Get NPC velocity
+	virtual Vector3 getVelocity() const = 0;
+
+	/// Set NPC velocity
+	virtual void setVelocity(Vector3 position, bool update = false) = 0;
 };
 
 struct NPCEventHandler
