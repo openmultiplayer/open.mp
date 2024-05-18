@@ -32,6 +32,12 @@ struct INPC : public IExtensible, public IEntity
 
 	/// Get the NPC which are streamed in for this player
 	virtual const FlatPtrHashSet<IPlayer>& streamedForPlayers() const = 0;
+
+	/// Set NPC interior, it doesn't do much but keeps a record internally to use getter functions later
+	virtual void setInterior(unsigned int interior);
+
+	/// Get NPC interior, just the value that is stored internally
+	virtual unsigned int getInterior() const;
 };
 
 struct NPCEventHandler
