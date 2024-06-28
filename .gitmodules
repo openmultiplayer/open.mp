@@ -15,4 +15,4 @@
 	url = https://github.com/openmultiplayer/cmake-conan.git
 [submodule "lib/cpp-httplib"]
 	path = lib/cpp-httplib
-	url = https://github.com/ksenonadv/cpp-httplib.git
+	url = https://github.com/openmultiplayer/cpp-httplib.git

@@ -942,6 +942,10 @@ private:
 		else
 		{
 			params->response = int(res.error());
+			if (params->response < 100)
+			{
+				params->body = httplib::detail::internal_error_to_string(res.error());
+			}
 		}
 
 		params->finished.store(true);

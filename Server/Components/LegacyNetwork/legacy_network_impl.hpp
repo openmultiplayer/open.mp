@@ -399,15 +399,8 @@ struct AnnounceHTTPResponseHandler final : HTTPResponseHandler
 		if (status != 200)
 		{
 			core->printLn("Couldn't announce legacy network to open.mp list.");
-			if (status < 100)
-			{
-				core->printLn("\t[HTTP Client Error] Status: %d", status);
-			}
-			else
-			{
-				core->printLn("\t[Server Error] Status: %d", status);
-				core->printLn("\t[Server Error] Message: %.*s", PRINT_VIEW(body));
-			}
+			core->printLn("\t[Server Error] Status: %d", status);
+			core->printLn("\t[Server Error] Message: %.*s", PRINT_VIEW(body));
 			core->printLn("This won't affect the server's behaviour.");
 		}
 		delete this;
