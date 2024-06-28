@@ -57,11 +57,6 @@ private:
 				}
 			}
 
-			if (onPlayerSelectedMenuRow.MenuRow < 0 || onPlayerSelectedMenuRow.MenuRow > 12)
-			{
-				return false;
-			}
-
 			self.eventDispatcher.dispatch(
 				&MenuEventHandler::onPlayerSelectedMenuRow,
 				peer,
