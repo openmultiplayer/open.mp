@@ -130,6 +130,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	// banners
 	{ "banners.light", String("") },
 	{ "banners.dark", String("") },
+	{ "logo", String("") },
 	// discord
 	{ "discord.invite", String("") },
 };
