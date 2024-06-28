@@ -13,7 +13,7 @@ const size_t MAX_ACCEPTABLE_HOSTNAME_SIZE = 63;
 const size_t MAX_ACCEPTABLE_LANGUAGE_SIZE = 39;
 const size_t MAX_ACCEPTABLE_GMTEXT_SIZE = 39;
 const size_t MAX_ACCEPTABLE_DISCORD_LINK_SIZE = 50;
-const size_t MAX_ACCEPTABLE_IMAGE_URL_SIZE = 120;
+const size_t MAX_ACCEPTABLE_IMAGE_URL_SIZE = 160;
 
 template <typename T>
 void writeToBuffer(char* output, size_t& offset, T value)
