@@ -768,6 +768,12 @@ void RakNetLegacyNetwork::update()
 		query.setDarkBannerUrl(bannerUrl);
 	}
 
+	StringView logoUrl = config.getString("logo");
+	if (!logoUrl.empty())
+	{
+		query.setLogoUrl(logoUrl);
+	}
+
 	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");

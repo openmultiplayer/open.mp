@@ -50,8 +50,8 @@ private:
 					data->setMenuID(INVALID_MENU_ID);
 					return false;
 				}
-				
-				if(onPlayerSelectedMenuRow.MenuRow >= menuData->getRowCount(0)) 
+
+				if (onPlayerSelectedMenuRow.MenuRow >= menuData->getRowCount(0))
 				{
 					return false;
 				}
