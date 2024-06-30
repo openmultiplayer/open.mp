@@ -1,6 +1,6 @@
 # Conan third-party libraries
-include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan.cmake)
-include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan-omp.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan-omp.cmake)
 
 if(BUILD_SERVER)
 	if(BUILD_PAWN_COMPONENT)
