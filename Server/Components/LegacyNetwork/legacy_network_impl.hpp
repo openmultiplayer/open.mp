@@ -138,6 +138,74 @@ public:
 		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
 	}
 
+	bool broadcastPacketToSome(Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
+	{
+		// Don't use constructor because it takes bytes; we want bits
+		NetworkBitStream bs;
+		bs.SetData(data.data());
+		bs.SetWriteOffset(data.size());
+		bs.SetReadOffset(0);
+
+		// Store packet type here, we're gonna use it later
+		uint8_t type;
+		bs.readUINT8(type);
+		bs.SetReadOffset(0);
+
+		// Now go through all players to see if we need to send packet to, based on various checks and event results.
+		RakNet::PlayerIndex* broadcastList = new RakNet::PlayerIndex[players.size()];
+		int broadcastListSize = 0;
+		for (auto player : players)
+		{
+			if (player && player != exceptPeer && player->getNetworkData().network == this)
+			{
+				auto remoteSystem = playerRemoteSystem[player->getID()];
+				if (remoteSystem && remoteSystem->isActive)
+				{
+					int index = rakNetServer.GetIndexFromPlayerID(remoteSystem->playerId);
+					if (index != -1)
+					{
+						bool mustSend = true;
+						if (dispatchEvents)
+						{
+							mustSend = outEventDispatcher.stopAtFalse([type, &bs, player](NetworkOutEventHandler* handler)
+								{
+									bs.SetReadOffset(8); // Ignore packet ID
+									return handler->onSendPacket(player, type, bs);
+								});
+
+							if (mustSend)
+							{
+								mustSend = packetOutEventDispatcher.stopAtFalse(type, [&bs, player](SingleNetworkOutEventHandler* handler)
+									{
+										bs.SetReadOffset(8); // Ignore packet ID
+										return handler->onSend(player, bs);
+									});
+							}
+						}
+
+						if (mustSend)
+						{
+							broadcastList[broadcastListSize] = index;
+							broadcastListSize++;
+						}
+					}
+				}
+			}
+		}
+
+		if (broadcastListSize)
+		{
+			const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
+			return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, broadcastList, broadcastListSize);
+		}
+		else
+		{
+			delete[] broadcastList;
+		}
+
+		return true;
+	}
+
 	bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents) override
 	{
 		const PeerNetworkData& netData = peer.getNetworkData();
@@ -231,6 +299,74 @@ public:
 		}
 
 		return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+	}
+
+	bool broadcastRPCToSome(int id, Span<uint8_t> data, int channel, const FlatPtrHashSet<IPlayer>& players, const IPlayer* exceptPeer, bool dispatchEvents) override
+	{
+		if (id == INVALID_PACKET_ID)
+		{
+			return false;
+		}
+
+		// Don't use constructor because it takes bytes; we want bits
+		NetworkBitStream bs;
+		bs.SetData(data.data());
+		bs.SetWriteOffset(data.size());
+		bs.SetReadOffset(0);
+
+		// Now go through all players to see if we need to send RPC to, based on various checks and event results.
+		RakNet::PlayerIndex* broadcastList = new RakNet::PlayerIndex[players.size()];
+		int broadcastListSize = 0;
+		for (auto player : players)
+		{
+			if (player && player != exceptPeer && player->getNetworkData().network == this)
+			{
+				auto remoteSystem = playerRemoteSystem[player->getID()];
+				if (remoteSystem && remoteSystem->isActive)
+				{
+					int index = rakNetServer.GetIndexFromPlayerID(remoteSystem->playerId);
+					if (index != -1)
+					{
+						bool mustSend = true;
+						if (dispatchEvents)
+						{
+							mustSend = outEventDispatcher.stopAtFalse([id, &bs, player](NetworkOutEventHandler* handler)
+								{
+									bs.resetReadPointer();
+									return handler->onSendRPC(player, id, bs);
+								});
+
+							if (mustSend)
+							{
+								mustSend = rpcOutEventDispatcher.stopAtFalse(id, [&bs, player](SingleNetworkOutEventHandler* handler)
+									{
+										bs.resetReadPointer();
+										return handler->onSend(player, bs);
+									});
+							}
+						}
+
+						if (mustSend)
+						{
+							broadcastList[broadcastListSize] = index;
+							broadcastListSize++;
+						}
+					}
+				}
+			}
+		}
+
+		if (broadcastListSize)
+		{
+			const RakNet::PacketReliability reliability = (channel == OrderingChannel_Unordered) ? RakNet::RELIABLE : RakNet::RELIABLE_ORDERED;
+			return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, broadcastList, broadcastListSize);
+		}
+		else
+		{
+			delete[] broadcastList;
+		}
+
+		return true;
 	}
 
 	bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel, bool dispatchEvents) override
