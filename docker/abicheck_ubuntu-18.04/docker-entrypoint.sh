@@ -7,9 +7,9 @@
 
 set -e
 
-cmake \
-    -S . \
-    -B build \
+cd build \
+&&
+cmake .. \
     -G Ninja \
     -DCMAKE_C_FLAGS=-m32 \
     -DCMAKE_CXX_FLAGS=-m32 \
@@ -20,7 +20,7 @@ cmake \
     -DBUILD_ABI_CHECK_TOOL=$build_tools \
 &&
 cmake \
-    --build build \
+    --build . \
     --config $config \
     --parallel $(nproc)
 
