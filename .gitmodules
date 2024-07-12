@@ -16,3 +16,6 @@
 [submodule "lib/cmake-conan"]
 	path = lib/cmake-conan
 	url = https://github.com/openmultiplayer/cmake-conan.git
+[submodule "SDK"]
+	path = SDK
+	url = https://github.com/openmultiplayer/open.mp-sdk
