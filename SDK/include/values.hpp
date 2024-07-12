@@ -4,6 +4,7 @@
 
 constexpr int MAX_SEATS = 4;
 constexpr int PLAYER_POOL_SIZE = 1000;
+constexpr int NPC_POOL_SIZE = 1000;
 constexpr int VEHICLE_POOL_SIZE = 2000;
 constexpr int CLASS_POOL_SIZE = 320;
 constexpr int OBJECT_POOL_SIZE = 2000;
@@ -96,3 +97,8 @@ enum Key
 
 constexpr uint16_t INVALID_MODEL_ID = 65535u;
 constexpr int32_t QUESTION_MARK_MODEL_ID = 18631;
+
+constexpr float NPC_MOVE_SPEED_AUTO = -1.0f;
+constexpr float NPC_MOVE_SPEED_WALK = 0.1552086f;
+constexpr float NPC_MOVE_SPEED_JOG = 0.56444f;
+constexpr float NPC_MOVE_SPEED_SPRINT = 0.926784f;

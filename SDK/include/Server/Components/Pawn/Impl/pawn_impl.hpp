@@ -32,6 +32,7 @@ void setAmxLookups()
 		lookups_.vars = components_->queryComponent<IVariablesComponent>();
 		lookups_.vehicles = components_->queryComponent<IVehiclesComponent>();
 		lookups_.models = components_->queryComponent<ICustomModelsComponent>();
+		lookups_.npcs = components_->queryComponent<INPCComponent>();
 	}
 }
 

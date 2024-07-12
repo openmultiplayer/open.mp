@@ -24,6 +24,7 @@
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 
 #define SCRIPT_API(name, prototype) PAWN_NATIVE(openmp_scripting, name, prototype)
 #define SCRIPT_API_FAILRET(name, failret, prototype) PAWN_NATIVE_FAILRET(openmp_scripting, failret, name, prototype)
@@ -64,6 +65,7 @@ struct PawnLookup
 	IVariablesComponent* vars = nullptr;
 	IVehiclesComponent* vehicles = nullptr;
 	ICustomModelsComponent* models = nullptr;
+	INPCComponent* npcs = nullptr;
 };
 
 PawnLookup* getAmxLookups();
