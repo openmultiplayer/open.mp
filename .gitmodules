@@ -16,15 +16,3 @@
 [submodule "lib/cmake-conan"]
 	path = lib/cmake-conan
 	url = https://github.com/openmultiplayer/cmake-conan.git
-[submodule "SDK/lib/glm"]
-	path = SDK/lib/glm
-	url = https://github.com/g-truc/glm
-[submodule "SDK/lib/robin-hood-hashing"]
-	path = SDK/lib/robin-hood-hashing
-	url = https://github.com/martinus/robin-hood-hashing
-[submodule "SDK/lib/span-lite"]
-	path = SDK/lib/span-lite
-	url = https://github.com/martinmoene/span-lite
-[submodule "SDK/lib/string-view-lite"]
-	path = SDK/lib/string-view-lite
-	url = https://github.com/martinmoene/string-view-lite
