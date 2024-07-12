@@ -24,7 +24,7 @@ cmake \
     --config $config \
     --parallel $(nproc)
 
-cd build/Output/*/Tools
+cd Output/*/Tools
 echo "Fetching ref artifacts"
 url=$(curl "https://nightly.link/$NIGHTLY_REPO/workflows/build/master" | grep -oP "(?<=\")https://nightly.link/$NIGHTLY_REPO/workflows/build/master/open.mp-linux-x86-dynssl.*\.zip(?=\")")
 curl -L $url -o master.zip
