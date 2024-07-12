@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(open-mp LANGUAGES C CXX VERSION 1.2.0)
+project(open-mp LANGUAGES C CXX VERSION 1.3.1)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -130,7 +130,7 @@ endfunction()
 
 set(BUILD_SERVER TRUE CACHE BOOL "Whether to build the open.mp server")
 set(BUILD_PAWN_COMPONENT TRUE CACHE BOOL "Whether to build the PAWN component")
-set(BUILD_UNICODE_COMPONENT TRUE CACHE BOOL "Whether to build the Unicode component")
+set(BUILD_UNICODE_COMPONENT FALSE CACHE BOOL "Whether to build the Unicode component")
 set(BUILD_LEGACY_COMPONENTS TRUE CACHE BOOL "Whether to build the legacy components")
 set(BUILD_TEST_COMPONENTS FALSE CACHE BOOL "Whether to build the test component")
 set(BUILD_SQLITE_COMPONENT TRUE CACHE BOOL "Whether to build the SQLite component")
