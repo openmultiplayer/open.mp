@@ -114,7 +114,8 @@ struct PawnTimerHandler final : TimerTimeOutHandler, PoolIDProvider
 			if ((err = amx_Allot(amx, data.size(), &out, &in)) != AMX_ERR_NONE)
 			{
 				PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimer(Ex): Not enough space in heap for %.*s timer: %s", PRINT_VIEW(callback), aux_StrError(err));
-				amx_RaiseError(amx, err);
+				// Raising an error here will cause the entire mode to stop executing in some cases.
+				// amx_RaiseError(amx, err);
 				return;
 			}
 			if (data.data())
