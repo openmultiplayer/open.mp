@@ -2116,82 +2116,87 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				continue;
 			}
 
-			switch (player->primarySyncUpdateType_)
+			if (!player->spectateData_.spectating)
 			{
-			case PrimarySyncUpdateType::OnFoot:
-			{
-				if (!player->controllable_)
+				switch (player->primarySyncUpdateType_)
 				{
-					player->footSync_.Keys = 0;
-					player->footSync_.UpDown = 0;
-					player->footSync_.LeftRight = 0;
-				}
-
-				// Setting player's special action to enter vehicle
-				if (player->ghostMode_)
+				case PrimarySyncUpdateType::OnFoot:
 				{
-					player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
-				}
-
-				PacketHelper::broadcastSyncPacket(player->footSync_, *player);
-				break;
-			}
-			case PrimarySyncUpdateType::Driver:
-			{
-				if (!player->controllable_)
-				{
-					player->vehicleSync_.Keys = 0;
-					player->vehicleSync_.UpDown = 0;
-					player->vehicleSync_.LeftRight = 0;
-				}
-
-				PacketHelper::broadcastSyncPacket(player->vehicleSync_, *player);
-				break;
-			}
-			case PrimarySyncUpdateType::Passenger:
-			{
-				if (!player->controllable_)
-				{
-					player->passengerSync_.Keys = 0;
-					player->passengerSync_.UpDown = 0;
-					player->passengerSync_.LeftRight = 0;
-				}
-
-				uint16_t keys = player->passengerSync_.Keys;
-				if (player->passengerSync_.WeaponID == 43 /* camera */)
-				{
-					player->passengerSync_.Keys &= 0xFB;
-				}
-				PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
-				player->passengerSync_.Keys = keys;
-
-				break;
-			}
-			default:
-				break;
-			}
-			player->primarySyncUpdateType_ = PrimarySyncUpdateType::None;
-
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Aim)
-			{
-				PacketHelper::broadcastSyncPacket(player->aimSync_, *player);
-			}
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Trailer)
-			{
-				PacketHelper::broadcastSyncPacket(player->trailerSync_, *player);
-			}
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Unoccupied)
-			{
-				if (vehiclesComponent)
-				{
-					IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
-					if (vehicle)
+					if (!player->controllable_)
 					{
-						PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						player->footSync_.Keys = 0;
+						player->footSync_.UpDown = 0;
+						player->footSync_.LeftRight = 0;
+					}
+
+					// Setting player's special action to enter vehicle
+					if (player->ghostMode_)
+					{
+						player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
+					}
+
+					PacketHelper::broadcastSyncPacket(player->footSync_, *player);
+					break;
+				}
+				case PrimarySyncUpdateType::Driver:
+				{
+					if (!player->controllable_)
+					{
+						player->vehicleSync_.Keys = 0;
+						player->vehicleSync_.UpDown = 0;
+						player->vehicleSync_.LeftRight = 0;
+					}
+
+					PacketHelper::broadcastSyncPacket(player->vehicleSync_, *player);
+					break;
+				}
+				case PrimarySyncUpdateType::Passenger:
+				{
+					if (!player->controllable_)
+					{
+						player->passengerSync_.Keys = 0;
+						player->passengerSync_.UpDown = 0;
+						player->passengerSync_.LeftRight = 0;
+					}
+
+					uint16_t keys = player->passengerSync_.Keys;
+					if (player->passengerSync_.WeaponID == 43 /* camera */)
+					{
+						player->passengerSync_.Keys &= 0xFB;
+					}
+					PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
+					player->passengerSync_.Keys = keys;
+
+					break;
+				}
+				default:
+					break;
+				}
+				player->primarySyncUpdateType_ = PrimarySyncUpdateType::None;
+
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Aim)
+				{
+					PacketHelper::broadcastSyncPacket(player->aimSync_, *player);
+				}
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Trailer)
+				{
+					PacketHelper::broadcastSyncPacket(player->trailerSync_, *player);
+				}
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Unoccupied)
+				{
+					if (vehiclesComponent)
+					{
+						IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
+						if (vehicle)
+						{
+							PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						}
 					}
 				}
+
+				player->secondarySyncUpdateType_ = 0;
 			}
-			player->secondarySyncUpdateType_ = 0;
+
 			++it;
 		}
 
