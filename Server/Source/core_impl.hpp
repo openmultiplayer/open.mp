@@ -1778,7 +1778,7 @@ public:
 #ifdef BUILD_WINDOWS
 		_lock_locales();
 		UINT oldCP = 0;
-		char oldLocale[64] = { 0 };
+		wchar_t oldLocale[64] = { 0 };
 		bool oldLocaleSaved = false;
 		if (utf8)
 		{
@@ -1786,10 +1786,10 @@ public:
 			SetConsoleOutputCP(CP_UTF8);
 
 			/* Getting current locale */
-			const char* old_locale_ptr = std::setlocale(LC_CTYPE, nullptr);
+			const wchar_t* old_locale_ptr = _wsetlocale(LC_CTYPE, nullptr);
 			if (old_locale_ptr != nullptr)
 			{
-				strcpy_s(oldLocale, old_locale_ptr);
+				wcscpy_s(oldLocale, old_locale_ptr);
 				oldLocaleSaved = true;
 
 				std::setlocale(LC_CTYPE, ".UTF-8");
@@ -1867,7 +1867,7 @@ public:
 		{
 			if (oldLocaleSaved)
 			{
-				std::setlocale(LC_CTYPE, oldLocale);
+				_wsetlocale(LC_CTYPE, oldLocale);
 			}
 			SetConsoleOutputCP(oldCP);
 		}
