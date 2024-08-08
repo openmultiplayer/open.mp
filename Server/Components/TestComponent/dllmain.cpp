@@ -185,9 +185,7 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 		static const String reasonStr[] = {
 			"Timed out",
 			"Quit",
-			"Kicked",
-			"Custom",
-			"Server Restart"
+			"Kicked"
 		};
 
 		for (IPlayer* other : c->getPlayers().entries())
