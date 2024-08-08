@@ -86,6 +86,7 @@ public:
 		{
 			playerFromRakIndex[playerIndex] = nullptr;
 		}
+		playerRemoteSystem[peer.getID()] = nullptr;
 		rakNetServer.Kick(rid);
 	}
 
