@@ -174,7 +174,7 @@ public:
 
 	T& setStyle(TextDrawStyle s) override
 	{
-		if (static_cast<int>(s) >= 16 || static_cast<int>(s) < 0)
+		if (static_cast<int>(s) != 100 && (static_cast<int>(s) >= 16 || static_cast<int>(s) < 0))
 		{
 			style = TextDrawStyle_FontBeckettRegular;
 			return *this;
