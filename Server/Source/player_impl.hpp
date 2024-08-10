@@ -158,6 +158,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		fightingStyle_ = PlayerFightingStyle_Normal;
 		controllable_ = true;
 		clockToggled_ = false;
+		health_ = 100.0f;
+		armour_ = 0.0f;
 		keys_ = { 0u, 0, 0 };
 		velocity_ = Vector3(0.0f, 0.0f, 0.0f);
 		surfing_ = { PlayerSurfingData::Type::None };
@@ -219,6 +221,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, state_(PlayerState_None)
 		, controllable_(true)
 		, clockToggled_(false)
+		, health_(100.0f)
+		, armour_(0.0f)
 		, keys_ { 0u, 0, 0 }
 		, velocity_(0.0f, 0.0f, 0.0f)
 		, surfing_ { PlayerSurfingData::Type::None }
