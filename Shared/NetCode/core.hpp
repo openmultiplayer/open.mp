@@ -1123,9 +1123,11 @@ namespace RPC
 	struct SendPlayerScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		const FlatPtrHashSet<IPlayer>& Players;
+		const Nanoseconds LastCachedTickDiff;
 
-		SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players)
+		SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players, Nanoseconds lastCachedTickDiff)
 			: Players(players)
+			, LastCachedTickDiff(lastCachedTickDiff)
 		{
 		}
 
@@ -1136,12 +1138,21 @@ namespace RPC
 
 		void write(NetworkBitStream& bs) const
 		{
-			for (IPlayer* player : Players)
+			// This is added to make sure we have a global cache and we don't recalculate and regenerate for every player and every request of theirs
+			// So instead it keeps a cache of our bitstream to use, which won't loop through player pool and gathering data
+			static NetworkBitStream cache;
+			if (LastCachedTickDiff >= Seconds(2))
 			{
-				bs.writeUINT16(player->getID());
-				bs.writeINT32(player->getScore());
-				bs.writeUINT32(player->getPing());
+				cache.reset();
+				for (IPlayer* player : Players)
+				{
+					cache.writeUINT16(player->getID());
+					cache.writeINT32(player->getScore());
+					cache.writeUINT32(player->getPing());
+				}
 			}
+
+			bs.WriteBits(cache.GetData(), cache.GetNumberOfBitsUsed());
 		}
 	};
 
