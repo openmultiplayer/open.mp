@@ -46,6 +46,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	bool* allowInteriorWeapons_;
 	int* maxBots;
 	StaticArray<bool, 256> allowNickCharacter;
+	TimePoint lastScoresAndPingsCached;
 
 	struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler
 	{
@@ -95,9 +96,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			const TimePoint now = Time::now();
 
 			// SA:MP client is nice and makes this request every 3 seconds.
-			if (now - player.lastScoresAndPings_ >= Seconds(2))
+			// But not every client is the official one... so I guess we need a hard limit for player here as well
+			if (now - player.lastScoresAndPings_ >= Seconds(3))
 			{
-				NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries());
+				// There is also a cache tick diff we are sending to SendPlayerScoresAndPings constructor to use in SendPlayerScoresAndPings::write
+				// This is added to make sure we have a global cache and we don't recalculate and regenerate for every player and every request of theirs
+				// So instead it keeps a cache of our bitstream to use, which won't loop through player pool and gathering data
+				NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries(), now - self.lastScoresAndPingsCached);
 				PacketHelper::send(sendPlayerScoresAndPingsRPC, peer);
 				player.lastScoresAndPings_ = now;
 			}
@@ -1820,6 +1825,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	PlayerPool(ICore& core)
 		: core(core)
 		, networks(core.getNetworks())
+		, lastScoresAndPingsCached(Time::now())
 		, playerRequestSpawnRPCHandler(*this)
 		, playerRequestScoresAndPingsRPCHandler(*this)
 		, onPlayerClickMapRPCHandler(*this)
