@@ -24,7 +24,7 @@ jobs:
         shell: bash
         run: |
           cd SDK
-          git rebase dev
+          git rebase origin/dev
           git push || true
 
   update-network:
@@ -45,5 +45,5 @@ jobs:
         shell: bash
         run: |
           cd Network
-          git rebase dev
+          git rebase origin/dev
           git push || true
