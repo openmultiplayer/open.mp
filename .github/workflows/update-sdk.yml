@@ -24,6 +24,7 @@ jobs:
         shell: bash
         run: |
           cd SDK
+          git fetch
           git rebase origin/dev
           git push || true
 
@@ -45,5 +46,6 @@ jobs:
         shell: bash
         run: |
           cd Network
+          git fetch
           git rebase origin/dev
           git push || true
