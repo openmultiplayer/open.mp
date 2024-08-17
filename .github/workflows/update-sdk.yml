@@ -23,6 +23,7 @@ jobs:
         if: always()
         shell: bash
         run: |
+          cd SDK
           git rebase dev
           git push || true
 
@@ -43,5 +44,6 @@ jobs:
         if: always()
         shell: bash
         run: |
+          cd Network
           git rebase dev
           git push || true
