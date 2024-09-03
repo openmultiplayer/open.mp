@@ -202,7 +202,7 @@ private:
 					}
 				}
 
-				if (listItem < 0 || listItem > count)
+				if (sendDialogResponse.ListItem < 0 || sendDialogResponse.ListItem > count)
 				{
 					return false;
 				}
