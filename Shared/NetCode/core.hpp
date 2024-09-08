@@ -748,7 +748,9 @@ namespace RPC
 
 			bs.writeUINT16(PlayerID);
 			bs.writeUINT32(Skin);
-			bs.writeUINT32(CustomSkin);
+
+			if (isDL)
+				bs.writeUINT32(CustomSkin);
 		}
 	};
 
