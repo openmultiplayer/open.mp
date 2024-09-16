@@ -56,7 +56,7 @@ public:
 		{
 			return;
 		}
-		if(!title.length()) return;
+		if(!title.length()) title = " ";
 		// Limit list item length to prevent client from crashing
 		if (style == DialogStyle_LIST)
 		{
