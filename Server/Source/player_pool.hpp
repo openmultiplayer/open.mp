@@ -1128,7 +1128,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			IVehicle& vehicle = *vehiclePtr;
+			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
+			IVehicle& vehicle = *lock.entry;
+
 			Player& player = static_cast<Player&>(peer);
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
@@ -1379,7 +1381,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			IVehicle& vehicle = *vehiclePtr;
+			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
+			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
 			if (vehicle.isRespawning())
