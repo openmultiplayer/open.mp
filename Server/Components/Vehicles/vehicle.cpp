@@ -159,7 +159,7 @@ void Vehicle::streamOutForClient(IPlayer& player)
 
 bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, IPlayer& player)
 {
-	if (respawning)
+	if (respawning || !streamedFor_.valid(player.getID()))
 	{
 		return false;
 	}
@@ -381,6 +381,11 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 
 bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player)
 {
+	if (!streamedFor_.valid(player.getID()))
+	{
+		return false;
+	}
+
 	PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
 	if (!data)
 	{
