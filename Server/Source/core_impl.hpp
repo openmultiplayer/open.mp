@@ -553,11 +553,12 @@ public:
 
 	void setStrings(StringView key, Span<const StringView> value) override
 	{
-		auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
+		DynamicArray<String> newStrings;
 		for (const StringView v : value)
 		{
-			vec.emplace_back(String(v));
+			newStrings.emplace_back(String(v));
 		}
+		processed[String(key)].emplace<DynamicArray<String>>(std::move(newStrings));
 	}
 
 	void addBan(const BanEntry& entry) override
