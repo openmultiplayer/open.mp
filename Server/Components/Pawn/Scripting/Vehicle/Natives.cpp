@@ -346,7 +346,7 @@ SCRIPT_API(GetVehicleVirtualWorld, int(IVehicle& vehicle))
 
 SCRIPT_API(GetVehicleLandingGearState, int(IVehicle& vehicle))
 {
-	return !vehicle.getLandingGearState();
+	return vehicle.getLandingGearState();
 }
 
 SCRIPT_API(IsValidVehicle, bool(IVehicle* vehicle))

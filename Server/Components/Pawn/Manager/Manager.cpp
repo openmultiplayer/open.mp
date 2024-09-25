@@ -14,6 +14,7 @@
 #include "Manager.hpp"
 #include "../PluginManager/PluginManager.hpp"
 #include "../utils.hpp"
+#include <utils.hpp>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -416,25 +417,26 @@ bool PawnManager::Load(DynamicArray<StringView> const& mainScripts)
 	}
 	gamemodes_.clear();
 	gamemodeIndex_ = 0;
-	for (auto const& i : mainScripts)
+	for (StringView script : mainScripts)
 	{
+		script = trim(script);
 		// Split the mode name and count.
-		auto space = i.find_last_of(' ');
+		auto space = script.find_last_of(' ');
 		if (space == std::string::npos)
 		{
 			repeats_.push_back(1);
-			gamemodes_.push_back(String(i));
+			gamemodes_.push_back(String(script));
 		}
 		else
 		{
 			int count = 0;
-			auto conv = std::from_chars(i.data() + space + 1, i.data() + i.size(), count, 10);
+			auto conv = std::from_chars(script.data() + space + 1, script.data() + script.size(), count, 10);
 			if (conv.ec == std::errc::invalid_argument || conv.ec == std::errc::result_out_of_range || count < 1)
 			{
 				count = 1;
 			}
 			repeats_.push_back(count);
-			gamemodes_.push_back(String(i.substr(0, space)));
+			gamemodes_.push_back(String(trim(script.substr(0, space))));
 		}
 	}
 	gamemodeRepeat_ = repeats_[0];
