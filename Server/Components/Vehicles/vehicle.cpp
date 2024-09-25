@@ -381,11 +381,6 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 
 bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passengerSync, IPlayer& player)
 {
-	if (!streamedFor_.valid(player.getID()))
-	{
-		return false;
-	}
-
 	PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
 	if (!data)
 	{
