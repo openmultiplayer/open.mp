@@ -46,6 +46,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	bool* allowInteriorWeapons_;
 	int* maxBots;
 	StaticArray<bool, 256> allowNickCharacter;
+	TimePoint lastScoresAndPingsCached;
 
 	struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler
 	{
@@ -95,9 +96,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			const TimePoint now = Time::now();
 
 			// SA:MP client is nice and makes this request every 3 seconds.
-			if (now - player.lastScoresAndPings_ >= Seconds(2))
+			// But not every client is the official one... so I guess we need a hard limit for player here as well
+			if (now - player.lastScoresAndPings_ >= Seconds(3))
 			{
-				NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries());
+				// There is also a cache tick diff we are sending to SendPlayerScoresAndPings constructor to use in SendPlayerScoresAndPings::write
+				// This is added to make sure we have a global cache and we don't recalculate and regenerate for every player and every request of theirs
+				// So instead it keeps a cache of our bitstream to use, which won't loop through player pool and gathering data
+				NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries(), now - self.lastScoresAndPingsCached);
 				PacketHelper::send(sendPlayerScoresAndPingsRPC, peer);
 				player.lastScoresAndPings_ = now;
 			}
@@ -864,8 +869,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				player.aimingData_.weaponState = PlayerWeaponState(aimSync.WeaponState);
 				player.aimingData_.aspectRatio = (aimSync.AspectRatio * 1.f / 255) + 1.f;
 
-				// Fix for camera shaking hack, i think there are more bugged ids
-				if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u || aimSync.CamMode == 49u)
+				// Check for invalid camera modes
+				if (aimSync.CamMode < 0u || aimSync.CamMode > 65u)
+					aimSync.CamMode = 4u;
+
+				// Fix for camera shaking hack
+				// https://gtag.sannybuilder.com/sanandreas/camera-modes/
+				if (aimSync.CamMode == 5u || aimSync.CamMode == 34u || (aimSync.CamMode >= 39u && aimSync.CamMode <= 43u) || aimSync.CamMode == 45u || aimSync.CamMode == 49u || aimSync.CamMode == 52u)
 					aimSync.CamMode = 4u;
 
 				aimSync.PlayerID = player.poolID;
@@ -1118,7 +1128,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			IVehicle& vehicle = *vehiclePtr;
+			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
+			IVehicle& vehicle = *lock.entry;
+
 			Player& player = static_cast<Player&>(peer);
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
@@ -1369,7 +1381,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			IVehicle& vehicle = *vehiclePtr;
+			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
+			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
 			if (vehicle.isRespawning())
@@ -1820,6 +1833,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	PlayerPool(ICore& core)
 		: core(core)
 		, networks(core.getNetworks())
+		, lastScoresAndPingsCached(Time::now())
 		, playerRequestSpawnRPCHandler(*this)
 		, playerRequestScoresAndPingsRPCHandler(*this)
 		, onPlayerClickMapRPCHandler(*this)
@@ -2116,82 +2130,87 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				continue;
 			}
 
-			switch (player->primarySyncUpdateType_)
+			if (!player->spectateData_.spectating)
 			{
-			case PrimarySyncUpdateType::OnFoot:
-			{
-				if (!player->controllable_)
+				switch (player->primarySyncUpdateType_)
 				{
-					player->footSync_.Keys = 0;
-					player->footSync_.UpDown = 0;
-					player->footSync_.LeftRight = 0;
-				}
-
-				// Setting player's special action to enter vehicle
-				if (player->ghostMode_)
+				case PrimarySyncUpdateType::OnFoot:
 				{
-					player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
-				}
-
-				PacketHelper::broadcastSyncPacket(player->footSync_, *player);
-				break;
-			}
-			case PrimarySyncUpdateType::Driver:
-			{
-				if (!player->controllable_)
-				{
-					player->vehicleSync_.Keys = 0;
-					player->vehicleSync_.UpDown = 0;
-					player->vehicleSync_.LeftRight = 0;
-				}
-
-				PacketHelper::broadcastSyncPacket(player->vehicleSync_, *player);
-				break;
-			}
-			case PrimarySyncUpdateType::Passenger:
-			{
-				if (!player->controllable_)
-				{
-					player->passengerSync_.Keys = 0;
-					player->passengerSync_.UpDown = 0;
-					player->passengerSync_.LeftRight = 0;
-				}
-
-				uint16_t keys = player->passengerSync_.Keys;
-				if (player->passengerSync_.WeaponID == 43 /* camera */)
-				{
-					player->passengerSync_.Keys &= 0xFB;
-				}
-				PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
-				player->passengerSync_.Keys = keys;
-
-				break;
-			}
-			default:
-				break;
-			}
-			player->primarySyncUpdateType_ = PrimarySyncUpdateType::None;
-
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Aim)
-			{
-				PacketHelper::broadcastSyncPacket(player->aimSync_, *player);
-			}
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Trailer)
-			{
-				PacketHelper::broadcastSyncPacket(player->trailerSync_, *player);
-			}
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Unoccupied)
-			{
-				if (vehiclesComponent)
-				{
-					IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
-					if (vehicle)
+					if (!player->controllable_)
 					{
-						PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						player->footSync_.Keys = 0;
+						player->footSync_.UpDown = 0;
+						player->footSync_.LeftRight = 0;
+					}
+
+					// Setting player's special action to enter vehicle
+					if (player->ghostMode_)
+					{
+						player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
+					}
+
+					PacketHelper::broadcastSyncPacket(player->footSync_, *player);
+					break;
+				}
+				case PrimarySyncUpdateType::Driver:
+				{
+					if (!player->controllable_)
+					{
+						player->vehicleSync_.Keys = 0;
+						player->vehicleSync_.UpDown = 0;
+						player->vehicleSync_.LeftRight = 0;
+					}
+
+					PacketHelper::broadcastSyncPacket(player->vehicleSync_, *player);
+					break;
+				}
+				case PrimarySyncUpdateType::Passenger:
+				{
+					if (!player->controllable_)
+					{
+						player->passengerSync_.Keys = 0;
+						player->passengerSync_.UpDown = 0;
+						player->passengerSync_.LeftRight = 0;
+					}
+
+					uint16_t keys = player->passengerSync_.Keys;
+					if (player->passengerSync_.WeaponID == 43 /* camera */)
+					{
+						player->passengerSync_.Keys &= 0xFB;
+					}
+					PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
+					player->passengerSync_.Keys = keys;
+
+					break;
+				}
+				default:
+					break;
+				}
+				player->primarySyncUpdateType_ = PrimarySyncUpdateType::None;
+
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Aim)
+				{
+					PacketHelper::broadcastSyncPacket(player->aimSync_, *player);
+				}
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Trailer)
+				{
+					PacketHelper::broadcastSyncPacket(player->trailerSync_, *player);
+				}
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Unoccupied)
+				{
+					if (vehiclesComponent)
+					{
+						IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
+						if (vehicle)
+						{
+							PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						}
 					}
 				}
+
+				player->secondarySyncUpdateType_ = 0;
 			}
-			player->secondarySyncUpdateType_ = 0;
+
 			++it;
 		}
 

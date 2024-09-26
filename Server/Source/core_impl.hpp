@@ -130,6 +130,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	// banners
 	{ "banners.light", String("") },
 	{ "banners.dark", String("") },
+	{ "logo", String("") },
 	// discord
 	{ "discord.invite", String("") },
 };
@@ -552,11 +553,12 @@ public:
 
 	void setStrings(StringView key, Span<const StringView> value) override
 	{
-		auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
+		DynamicArray<String> newStrings;
 		for (const StringView v : value)
 		{
-			vec.emplace_back(String(v));
+			newStrings.emplace_back(String(v));
 		}
+		processed[String(key)].emplace<DynamicArray<String>>(std::move(newStrings));
 	}
 
 	void addBan(const BanEntry& entry) override
@@ -941,6 +943,10 @@ private:
 		else
 		{
 			params->response = int(res.error());
+			if (params->response < 100)
+			{
+				params->body = httplib::detail::internal_error_to_string(res.error());
+			}
 		}
 
 		params->finished.store(true);
@@ -1773,7 +1779,7 @@ public:
 #ifdef BUILD_WINDOWS
 		_lock_locales();
 		UINT oldCP = 0;
-		char oldLocale[64] = { 0 };
+		wchar_t oldLocale[64] = { 0 };
 		bool oldLocaleSaved = false;
 		if (utf8)
 		{
@@ -1781,10 +1787,10 @@ public:
 			SetConsoleOutputCP(CP_UTF8);
 
 			/* Getting current locale */
-			const char* old_locale_ptr = std::setlocale(LC_CTYPE, nullptr);
+			const wchar_t* old_locale_ptr = _wsetlocale(LC_CTYPE, nullptr);
 			if (old_locale_ptr != nullptr)
 			{
-				strcpy_s(oldLocale, old_locale_ptr);
+				wcscpy_s(oldLocale, old_locale_ptr);
 				oldLocaleSaved = true;
 
 				std::setlocale(LC_CTYPE, ".UTF-8");
@@ -1862,7 +1868,7 @@ public:
 		{
 			if (oldLocaleSaved)
 			{
-				std::setlocale(LC_CTYPE, oldLocale);
+				_wsetlocale(LC_CTYPE, oldLocale);
 			}
 			SetConsoleOutputCP(oldCP);
 		}

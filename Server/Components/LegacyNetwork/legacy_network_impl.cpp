@@ -768,6 +768,12 @@ void RakNetLegacyNetwork::update()
 		query.setDarkBannerUrl(bannerUrl);
 	}
 
+	StringView logoUrl = config.getString("logo");
+	if (!logoUrl.empty())
+	{
+		query.setLogoUrl(logoUrl);
+	}
+
 	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");
@@ -885,6 +891,19 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 		}
 
 		IPlayer* player = playerFromRakIndex[pkt->playerIndex];
+
+		// We shouldn't be needing this, it's only here IF somehow this is happening again
+		// So users can report it to us
+		if (player && player->getID() == -1)
+		{
+			rakNetServer.Kick(pkt->playerId);
+			playerFromRakIndex[pkt->playerIndex] = nullptr;
+			core->logLn(LogLevel::Warning, "RakNet player %d with open.mp player pool id -1  was found and deleted. Packet ID: %d", pkt->playerIndex, pkt->data[0]);
+			core->logLn(LogLevel::Warning, "Please contact us by creating an issue in our repository at https://github.com/openmultiplayer/open.mp");
+			rakNetServer.DeallocatePacket(pkt);
+			continue;
+		}
+
 		if (player)
 		{
 			NetworkBitStream bs(pkt->data, pkt->length, false);

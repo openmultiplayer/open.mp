@@ -1,6 +1,6 @@
 # Conan third-party libraries
-include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan.cmake)
-include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan-omp.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan-omp.cmake)
 
 if(BUILD_SERVER)
 	if(BUILD_PAWN_COMPONENT)
@@ -59,6 +59,7 @@ if(BUILD_SERVER)
 				-DsNAMEMAX=63
 				-DPAWN_CELL_SIZE=32
 				-DAMX_FILENO_CHECKS
+				-DAMX_NODYNALOAD
 
 				# Disable default amx_FindPublic implementation because we want our own more performant one
 				# Also disable amx_Allot because we want to check if we have enough memory when we are passing data

@@ -487,17 +487,15 @@ private:
 					processFallback(logger, config, typeIt->second, name, line.substr(idx + 1));
 				}
 			}
-			size_t gmcount = 0;
 			DynamicArray<StringView> list;
 			for (int i = 0; i < gamemodes_.size(); ++i)
 			{
 				if (gamemodes_[i] != "")
 				{
-					++gmcount;
 					list.emplace_back(gamemodes_[i]);
 				}
 			}
-			if (gmcount != 0)
+			if (!list.empty())
 			{
 				config.setStrings("pawn.main_scripts", list);
 			}
