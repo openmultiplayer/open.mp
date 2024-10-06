@@ -297,15 +297,14 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
 
 static NetworkBitStream GetBitStream(RakNet::RPCParameters& rpcParams)
 {
-	unsigned int
+	const unsigned int
 		bits
 		= rpcParams.numberOfBitsOfData;
 	if (bits == 0)
 		return NetworkBitStream();
-	unsigned int
-		bytes
-		= (bits - 1) / 8 + 1;
-	return NetworkBitStream(rpcParams.input, bytes, false);
+	NetworkBitStream bs(rpcParams.input, bitsToBytes(bits), false /* copyData */);
+	bs.SetWriteOffset(bits);
+	return bs;
 }
 
 enum LegacyClientVersion
@@ -906,7 +905,9 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 
 		if (player)
 		{
-			NetworkBitStream bs(pkt->data, pkt->length, false);
+			const unsigned int bits = pkt->bitSize;
+			NetworkBitStream bs(pkt->data, bitsToBytes(bits), false);
+			bs.SetWriteOffset(bits);
 			uint8_t type;
 			if (bs.readUINT8(type))
 			{
