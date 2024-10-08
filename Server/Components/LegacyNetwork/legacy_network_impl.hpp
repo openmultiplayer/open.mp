@@ -92,11 +92,9 @@ public:
 
 	bool broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* exceptPeer, bool dispatchEvents) override
 	{
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -147,11 +145,9 @@ public:
 			return false;
 		}
 
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -191,11 +187,9 @@ public:
 			return false;
 		}
 
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -247,11 +241,9 @@ public:
 			return false;
 		}
 
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
