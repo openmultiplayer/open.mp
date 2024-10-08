@@ -1532,6 +1532,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			if (trailerSync.TurnVelocity.x < -1.0f || trailerSync.TurnVelocity.x > 1.0f || trailerSync.TurnVelocity.y < -1.0f || trailerSync.TurnVelocity.y > 1.0f || trailerSync.TurnVelocity.z < -1.0f || trailerSync.TurnVelocity.z > 1.0f)
+			{
+				return false;
+			}
+
 			IVehicle* vehiclePtr = self.vehiclesComponent->get(trailerSync.VehicleID);
 			if (!vehiclePtr)
 			{

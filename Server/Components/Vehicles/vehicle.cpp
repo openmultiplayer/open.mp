@@ -159,7 +159,7 @@ void Vehicle::streamOutForClient(IPlayer& player)
 
 bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, IPlayer& player)
 {
-	if (respawning)
+	if (respawning || !streamedFor_.valid(player.getID()))
 	{
 		return false;
 	}
@@ -233,7 +233,15 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 			trailer = static_cast<Vehicle*>(pool->get(vehicleSync.TrailerID));
 			if (trailer)
 			{
-				trailer->cab = this;
+				const bool isStreamedIn = trailer->isStreamedInForPlayer(player);
+				if (!isStreamedIn)
+				{
+					trailer = nullptr;
+				}
+				else
+				{
+					trailer->cab = this;
+				}
 			}
 		}
 	}
