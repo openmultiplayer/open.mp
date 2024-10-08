@@ -1092,13 +1092,18 @@ private:
 				{
 					if (excludeCfg && !excludeCfg->empty())
 					{
-						p.replace_extension("");
+						ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
+						rel.replace_extension();
 						// Is this in the "don't load" list?
-						if (std::find(excludeCfg->begin(), excludeCfg->end(), p.filename().string()) != excludeCfg->end())
+						const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+						{
+							return ghc::filesystem::path(exclude) == rel;
+						};
+						if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+							!= excludeCfg->end())
 						{
 							continue;
 						}
-						p.replace_extension(LIBRARY_EXT);
 					}
 
 					IComponent* component = loadComponent(p);
@@ -1121,8 +1126,15 @@ private:
 
 				if (excludeCfg && !excludeCfg->empty())
 				{
+					ghc::filesystem::path rel = ghc::filesystem::relative(file, path);
+					rel.replace_extension();
 					// Is this in the "don't load" list?
-					if (std::find(excludeCfg->begin(), excludeCfg->end(), file.filename().string()) != excludeCfg->end())
+					const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+					{
+						return ghc::filesystem::path(exclude) == rel;
+					};
+					if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+						!= excludeCfg->end())
 					{
 						continue;
 					}
