@@ -1342,6 +1342,16 @@ removeWeapon_has_weapon:
 				PacketHelper::send(givePlayerWeaponRPC, *this);
 			}
 		}
+		NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+		if (weaponid != armedWeapon_)
+		{
+			setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+		}
+		else
+		{
+			setPlayerArmedWeaponRPC.Weapon = 0;
+		}
+		PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 	}
 
 	void setWeaponAmmo(WeaponSlotData weapon) override
@@ -1716,7 +1726,7 @@ removeWeapon_has_weapon:
 		{
 			if (!allowWeapons_)
 			{
-				// Give the player all their weapons back.  Don't worry about the armed weapon.
+				// Give the player all their weapons back.
 				allowWeapons_ = true;
 				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 				PacketHelper::send(resetWeaponsRPC, *this);
@@ -1730,6 +1740,9 @@ removeWeapon_has_weapon:
 						PacketHelper::send(givePlayerWeaponRPC, *this);
 					}
 				}
+				NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+				setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+				PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 			}
 		}
 		else
