@@ -1726,7 +1726,7 @@ removeWeapon_has_weapon:
 		{
 			if (!allowWeapons_)
 			{
-				// Give the player all their weapons back.  Don't worry about the armed weapon.
+				// Give the player all their weapons back.
 				allowWeapons_ = true;
 				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 				PacketHelper::send(resetWeaponsRPC, *this);
@@ -1740,6 +1740,9 @@ removeWeapon_has_weapon:
 						PacketHelper::send(givePlayerWeaponRPC, *this);
 					}
 				}
+				NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+				setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+				PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 			}
 		}
 		else
