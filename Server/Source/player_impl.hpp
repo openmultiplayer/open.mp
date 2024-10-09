@@ -1342,6 +1342,16 @@ removeWeapon_has_weapon:
 				PacketHelper::send(givePlayerWeaponRPC, *this);
 			}
 		}
+		NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+		if (weaponid != armedWeapon_)
+		{
+			setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+		}
+		else
+		{
+			setPlayerArmedWeaponRPC.Weapon = 0;
+		}
+		PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 	}
 
 	void setWeaponAmmo(WeaponSlotData weapon) override
