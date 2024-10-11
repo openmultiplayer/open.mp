@@ -795,7 +795,7 @@ void RakNetLegacyNetwork::init(ICore* c)
 
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
-	core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this, EventPriority_Lowest);
 }
 
 void RakNetLegacyNetwork::start()
