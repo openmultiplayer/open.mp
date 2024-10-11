@@ -762,7 +762,8 @@ SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 
 SCRIPT_API(SetTeamCount, bool(int count))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTeamCount() function is removed.");
+	return true;
 }
 
 SCRIPT_API(SetWeather, bool(int weatherid))
