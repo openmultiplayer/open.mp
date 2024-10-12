@@ -871,14 +871,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 				// Check for invalid camera modes
 				// https://gtag.sannybuilder.com/sanandreas/camera-modes/
-				if (aimSync.CamMode < 3u || aimSync.CamMode == 5u || aimSync.CamMode == 6u ||
-					(aimSync.CamMode >= 9u && aimSync.CamMode <= 13u) || aimSync.CamMode == 17u ||
-					(aimSync.CamMode >= 19u && aimSync.CamMode <= 21u) ||
-					(aimSync.CamMode >= 23u && aimSync.CamMode <= 28u) ||
-					(aimSync.CamMode >= 30u && aimSync.CamMode <= 45u) ||
-					(aimSync.CamMode >= 48u && aimSync.CamMode <= 50u) ||
-					aimSync.CamMode == 52u || aimSync.CamMode == 54u ||
-					aimSync.CamMode == 60u || aimSync.CamMode == 61u || aimSync.CamMode > 64u)
+				if (aimSync.CamMode < 3u || aimSync.CamMode == 5u || aimSync.CamMode == 6u
+					|| (aimSync.CamMode >= 9u && aimSync.CamMode <= 13u) || aimSync.CamMode == 17u
+					|| (aimSync.CamMode >= 19u && aimSync.CamMode <= 21u)
+					|| (aimSync.CamMode >= 23u && aimSync.CamMode <= 28u)
+					|| (aimSync.CamMode >= 30u && aimSync.CamMode <= 45u)
+					|| (aimSync.CamMode >= 48u && aimSync.CamMode <= 50u)
+					|| aimSync.CamMode == 52u || aimSync.CamMode == 54u
+					|| aimSync.CamMode == 60u || aimSync.CamMode == 61u || aimSync.CamMode > 64u)
 					aimSync.CamMode = 4u;
 
 				aimSync.PlayerID = player.poolID;
