@@ -879,15 +879,15 @@ SCRIPT_API(GetPlayerMarkerForPlayer, int(IPlayer& player, IPlayer& other))
 	return colour.RGBA();
 }
 
-SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
+SCRIPT_API(AllowPlayerTeleport, bool(IPlayer& player, bool allow))
 {
-	player->allowTeleport(allow);
+	player.allowTeleport(allow);
 	return true;
 }
 
-SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer* player))
+SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer& player))
 {
-	return player->isTeleportAllowed();
+	return player.isTeleportAllowed();
 }
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
