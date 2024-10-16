@@ -73,6 +73,12 @@ public:
 			}
 			else
 			{
+				if(timer->pausing())
+				{
+					++it;
+					continue;
+				}
+
 				const TimePoint now = Time::now();
 				const Milliseconds diff = duration_cast<Milliseconds>(now - timer->getTimeout());
 				if (diff.count() >= 0)
