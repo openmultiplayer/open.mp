@@ -39,7 +39,7 @@ public:
 	{
 		paused_ = paused;
 
-		if(paused)
+		if (paused)
 		{
 			pausedTime_ = Time::now();
 		}
