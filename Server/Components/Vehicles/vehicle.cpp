@@ -241,6 +241,11 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 				else
 				{
 					trailer->cab = this;
+
+					static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
+					{
+						return handler->onVehicleTrailerAttach(player, *this, *trailer);
+					});
 				}
 			}
 		}
@@ -253,6 +258,11 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 		// Client is reporting no trailer (probably lost it) but server thinks there's still one. Detaching it server side.
 		if (trailer && Time::now() - trailer->trailerUpdateTime > Seconds(0))
 		{
+			static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
+			{
+				return handler->onVehicleTrailerDetach(player, *this, *trailer);
+			});
+			
 			trailer->cab = nullptr;
 			trailer = nullptr;
 		}
