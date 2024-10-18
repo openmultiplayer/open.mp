@@ -70,6 +70,7 @@ SCRIPT_API(NPC_SetFacingAngle, bool(INPC& npc, float angle))
 {
 	auto rotation = npc.getRotation().ToEuler();
 	rotation.z = angle;
+	npc.setRotation(rotation);
 	return true;
 }
 
