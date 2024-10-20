@@ -252,6 +252,26 @@ void NPC::setVelocity(Vector3 velocity, bool update)
 	needsVelocityUpdate_ = update;
 }
 
+void NPC::setHealth(float health)
+{
+	footSync_.HealthArmour.x = health;
+}
+
+float NPC::getHealth() const
+{
+	return footSync_.HealthArmour.x;
+}
+
+void NPC::setArmour(float armour)
+{
+	footSync_.HealthArmour.y = armour;
+}
+
+float NPC::getArmour() const
+{
+	return footSync_.HealthArmour.y;
+}
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned

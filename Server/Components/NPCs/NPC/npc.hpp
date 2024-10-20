@@ -51,6 +51,14 @@ public:
 
 	void setVelocity(Vector3 position, bool update = false) override;
 
+	void setHealth(float health) override;
+
+	float getHealth() const override;
+
+	void setArmour(float armour) override;
+
+	float getArmour() const override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);

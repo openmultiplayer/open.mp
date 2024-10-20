@@ -157,3 +157,32 @@ SCRIPT_API(NPC_GetInterior, int(INPC& npc))
 {
 	return npc.getInterior();
 }
+
+SCRIPT_API(NPC_SetHealth, bool(INPC& npc, float health))
+{
+	npc.setHealth(health);
+	return true;
+}
+
+SCRIPT_API(NPC_GetHealth, float(INPC& npc))
+{
+	return npc.getHealth();
+}
+
+SCRIPT_API(NPC_SetArmour, bool(INPC& npc, float armour))
+{
+	npc.setArmour(armour);
+	return true;
+}
+
+SCRIPT_API(NPC_GetArmour, float(INPC& npc))
+{
+	return npc.getArmour();
+}
+
+SCRIPT_API(NPC_ApplyAnimation, bool(INPC& npc, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
+{
+	const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
+	npc.getPlayer()->applyAnimation(animationData, PlayerAnimationSyncType_SyncOthers);
+	return true;
+}
