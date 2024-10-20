@@ -254,7 +254,14 @@ void NPC::setVelocity(Vector3 velocity, bool update)
 
 void NPC::setHealth(float health)
 {
-	footSync_.HealthArmour.x = health;
+	if (health < 0.0f)
+	{
+		footSync_.HealthArmour.x = 0.0f;
+	}
+	else
+	{
+		footSync_.HealthArmour.x = health;
+	}
 }
 
 float NPC::getHealth() const
@@ -264,7 +271,14 @@ float NPC::getHealth() const
 
 void NPC::setArmour(float armour)
 {
-	footSync_.HealthArmour.y = armour;
+	if (armour < 0.0f)
+	{
+		footSync_.HealthArmour.y = 0.0f;
+	}
+	else
+	{
+		footSync_.HealthArmour.y = armour;
+	}
 }
 
 float NPC::getArmour() const
