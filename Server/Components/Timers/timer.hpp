@@ -53,6 +53,7 @@ public:
 
 	Timer(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count)
 		: running_(true)
+		, paused_(false)
 		, count_(count)
 		, interval_(interval)
 		, timeout_(Time::now() + initial)
