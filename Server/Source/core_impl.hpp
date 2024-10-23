@@ -1997,9 +1997,7 @@ public:
 
 	bool isWeaponValid(PlayerWeapon weapon) override
 	{
-		int index = int(weapon);
-
-		if (weapon < 0 || weapon > PlayerWeapon_End)
+		if ((weapon >= 19 && weapon <= 21) || (weapon < 0 || weapon > PlayerWeapon_End))
 			return false;
 
 		return true;
