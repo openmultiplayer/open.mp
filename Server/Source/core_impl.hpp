@@ -1995,6 +1995,16 @@ public:
 		return PlayerWeaponNames[index];
 	}
 
+	bool isWeaponValid(PlayerWeapon weapon) override
+	{
+		int index = int(weapon);
+
+		if (weapon < 0 || weapon > PlayerWeapon_End)
+			return false;
+
+		return true;
+	}
+
 	void onPlayerConnect(IPlayer& player) override
 	{
 		playerInit(player);
