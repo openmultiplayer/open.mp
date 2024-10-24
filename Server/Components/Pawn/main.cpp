@@ -167,6 +167,7 @@ public:
 		mgr->vars = components->queryComponent<IVariablesComponent>();
 		mgr->vehicles = components->queryComponent<IVehiclesComponent>();
 		mgr->models = components->queryComponent<ICustomModelsComponent>();
+		mgr->npcs = components->queryComponent<INPCComponent>();
 
 		scriptingInstance.addEvents();
 
