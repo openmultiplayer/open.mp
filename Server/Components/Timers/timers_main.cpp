@@ -73,7 +73,7 @@ public:
 			}
 			else
 			{
-				if(timer->pausing())
+				if (timer->paused())
 				{
 					++it;
 					continue;

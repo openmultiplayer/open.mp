@@ -211,7 +211,7 @@ inline cell AMX_NATIVE_CALL pawn_IsTimerPaused(AMX* amx, cell const* params)
 		return false;
 	}
 
-	if(!timer->pausing())
+	if (!timer->paused())
 	{
 		return false;
 	}

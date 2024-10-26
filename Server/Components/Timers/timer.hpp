@@ -12,11 +12,11 @@ class Timer final : public ITimer
 {
 private:
 	bool running_;
-	bool pausing_;
+	bool paused_;
 	unsigned int count_;
-	const Milliseconds interval_;
+	Milliseconds interval_;
 	TimePoint timeout_;
-	TimePoint pauseTime_;
+	TimePoint pausedTime_;
 	TimerTimeOutHandler* const handler_;
 
 public:
@@ -30,34 +30,30 @@ public:
 		timeout_ = timeout;
 	}
 
-	TimePoint getPauseTime() const
+	TimePoint getPausedTime() const
 	{
-		return pauseTime_;
+		return pausedTime_;
 	}
 
-	void setPauseTime(TimePoint pauseTime)
+	void togglePause(bool paused) override
 	{
-		pauseTime_ = pauseTime;
-	}
+		paused_ = paused;
 
-	void togglePause(bool pausing) override
-	{
-		pausing_ = pausing;
-
-		if(pausing)
+		if (paused)
 		{
-			pauseTime_ = Time::now();
+			pausedTime_ = Time::now();
 		}
 		else
 		{
 			TimePoint now = Time::now();
-			Milliseconds pauseDuration = duration_cast<Milliseconds>(now - pauseTime_);
+			Milliseconds pauseDuration = duration_cast<Milliseconds>(now - pausedTime_);
 			timeout_ += pauseDuration;
 		}
 	}
 
 	Timer(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count)
 		: running_(true)
+		, paused_(false)
 		, count_(count)
 		, interval_(interval)
 		, timeout_(Time::now() + initial)
@@ -70,9 +66,9 @@ public:
 		return running_;
 	}
 
-	bool pausing() const override
+	bool paused() const override
 	{
-		return pausing_;
+		return paused_;
 	}
 
 	Milliseconds remaining() const override
@@ -90,6 +86,12 @@ public:
 		return interval_;
 	}
 
+	void setInterval(Milliseconds interval) override
+	{
+		interval_ = interval;
+		timeout_ = Time::now() + interval_;
+	}
+
 	TimerTimeOutHandler* handler() const override
 	{
 		return handler_;
@@ -98,7 +100,7 @@ public:
 	void kill() override
 	{
 		running_ = false;
-		pausing_ = false;
+		paused_ = false;
 	}
 
 	bool trigger() override
