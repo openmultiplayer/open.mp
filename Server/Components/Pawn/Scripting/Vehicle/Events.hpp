@@ -121,4 +121,24 @@ struct VehicleEvents : public VehicleEventHandler, public Singleton<VehicleEvent
 		}
 		return !!ret;
 	}
+
+	bool onVehicleTrailerAttach(IPlayer& player, IVehicle& vehicle, IVehicle& trailer) override
+	{
+		cell ret = PawnManager::Get()->CallInSides("OnVehicleTrailerAttach", DefaultReturnValue_False, player.getID(), vehicle.getID(), trailer.getID());
+		if (!ret)
+		{
+			ret = PawnManager::Get()->CallInEntry("OnVehicleTrailerAttach", DefaultReturnValue_True, player.getID(), vehicle.getID(), trailer.getID());
+		}
+		return !!ret;
+	}
+
+	bool onVehicleTrailerDetach(IPlayer& player, IVehicle& vehicle, IVehicle& trailer) override
+	{
+		cell ret = PawnManager::Get()->CallInSides("OnVehicleTrailerDetach", DefaultReturnValue_False, player.getID(), vehicle.getID(), trailer.getID());
+		if (!ret)
+		{
+			ret = PawnManager::Get()->CallInEntry("OnVehicleTrailerDetach", DefaultReturnValue_True, player.getID(), vehicle.getID(), trailer.getID());
+		}
+		return !!ret;
+	}
 };

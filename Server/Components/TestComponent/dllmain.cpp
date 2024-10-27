@@ -149,6 +149,16 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 			player.sendClientMessage(Colour::White(), "onVehicleSirenStateChange(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string((int)sirenState) + ")");
 			return true;
 		}
+		bool onVehicleTrailerAttach(IPlayer& player, IVehicle& vehicle, IVehicle& trailer) override
+		{
+   			player.sendClientMessage(Colour::White(), "onVehicleTrailerAttach(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(vehicle.getTrailer()->getID()) + ")");
+			return true;
+		}
+		bool onVehicleTrailerDetach(IPlayer& player, IVehicle& vehicle, IVehicle& trailer) override
+		{
+   			player.sendClientMessage(Colour::White(), "onVehicleTrailerDetach(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(vehicle.getTrailer()->getID()) + ")");
+			return true;
+		}
 	} vehicleEventWatcher;
 
 	void onPlayerConnect(IPlayer& player) override
