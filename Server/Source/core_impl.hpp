@@ -553,11 +553,12 @@ public:
 
 	void setStrings(StringView key, Span<const StringView> value) override
 	{
-		auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
+		DynamicArray<String> newStrings;
 		for (const StringView v : value)
 		{
-			vec.emplace_back(String(v));
+			newStrings.emplace_back(String(v));
 		}
+		processed[String(key)].emplace<DynamicArray<String>>(std::move(newStrings));
 	}
 
 	void addBan(const BanEntry& entry) override
@@ -1084,20 +1085,25 @@ private:
 		auto excludeCfg = config.getStrings("exclude");
 		if (!componentsCfg || componentsCfg->empty())
 		{
-			for (auto& de : ghc::filesystem::directory_iterator(path))
+			for (auto& de : ghc::filesystem::recursive_directory_iterator(path))
 			{
 				ghc::filesystem::path p = de.path();
 				if (p.extension() == LIBRARY_EXT)
 				{
 					if (excludeCfg && !excludeCfg->empty())
 					{
-						p.replace_extension("");
+						ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
+						rel.replace_extension();
 						// Is this in the "don't load" list?
-						if (std::find(excludeCfg->begin(), excludeCfg->end(), p.filename().string()) != excludeCfg->end())
+						const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+						{
+							return ghc::filesystem::path(exclude) == rel;
+						};
+						if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+							!= excludeCfg->end())
 						{
 							continue;
 						}
-						p.replace_extension(LIBRARY_EXT);
 					}
 
 					IComponent* component = loadComponent(p);
@@ -1120,8 +1126,15 @@ private:
 
 				if (excludeCfg && !excludeCfg->empty())
 				{
+					ghc::filesystem::path rel = ghc::filesystem::relative(file, path);
+					rel.replace_extension();
 					// Is this in the "don't load" list?
-					if (std::find(excludeCfg->begin(), excludeCfg->end(), file.filename().string()) != excludeCfg->end())
+					const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+					{
+						return ghc::filesystem::path(exclude) == rel;
+					};
+					if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+						!= excludeCfg->end())
 					{
 						continue;
 					}

@@ -22,6 +22,7 @@ struct IUnknown;
 #define LIBRARY_OPEN(path) LoadLibrary(path)
 #define LIBRARY_GET_ADDR GetProcAddress
 #define LIBRARY_FREE FreeLibrary
+static LARGE_INTEGER initialTime;
 static LARGE_INTEGER yo;
 #define BUILD_WINDOWS
 #else
@@ -118,6 +119,7 @@ unsigned GetTickCount()
 	{
 #ifdef BUILD_WINDOWS
 		QueryPerformanceFrequency(&yo);
+		QueryPerformanceCounter(&initialTime);
 #else
 		gettimeofday(&initialTime, 0);
 #endif
@@ -129,7 +131,7 @@ unsigned GetTickCount()
 
 	QueryPerformanceCounter(&PerfVal);
 
-	return (unsigned)(PerfVal.QuadPart * 1000 / yo.QuadPart);
+	return (unsigned)((PerfVal.QuadPart - initialTime.QuadPart) * 1000 / yo.QuadPart);
 #else
 	struct timeval tp;
 	gettimeofday(&tp, 0);

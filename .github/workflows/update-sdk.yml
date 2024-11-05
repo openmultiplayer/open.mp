@@ -23,7 +23,9 @@ jobs:
         if: always()
         shell: bash
         run: |
-          git rebase dev
+          cd SDK
+          git fetch
+          git rebase origin/dev
           git push || true
 
   update-network:
@@ -43,5 +45,7 @@ jobs:
         if: always()
         shell: bash
         run: |
-          git rebase dev
+          cd Network
+          git fetch
+          git rebase origin/dev
           git push || true
