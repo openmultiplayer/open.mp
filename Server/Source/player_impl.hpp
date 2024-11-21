@@ -857,6 +857,7 @@ public:
 	{
 		// Set from sync
 		NetCode::RPC::SetPlayerHealth setPlayerHealthRPC;
+		if(health <= 0.1) health = 0.1;
 		setPlayerHealthRPC.Health = health;
 		PacketHelper::send(setPlayerHealthRPC, *this);
 	}
