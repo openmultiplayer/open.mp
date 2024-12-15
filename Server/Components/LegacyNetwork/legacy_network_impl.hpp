@@ -37,8 +37,8 @@ private:
 	ICore* core = nullptr;
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
-	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
-	std::array<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
+	StaticArray<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+	StaticArray<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
 
@@ -275,7 +275,7 @@ public:
 	static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
 	static void OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra);
 
-	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient = false);
+	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOmp, bool isUsingOfficialClient = false);
 	template <size_t ID>
 	static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 	void onTick(Microseconds elapsed, TimePoint now) override;
