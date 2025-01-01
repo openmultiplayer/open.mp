@@ -15,8 +15,17 @@ struct ActorEvents : public ActorEventHandler, public Singleton<ActorEvents>
 {
 	void onPlayerGiveDamageActor(IPlayer& player, IActor& actor, float amount, unsigned weapon, BodyPart part) override
 	{
-		PawnManager::Get()->CallInSidesWhile0("OnPlayerGiveDamageActor", player.getID(), actor.getID(), amount, weapon, int(part));
-		PawnManager::Get()->CallInEntry("OnPlayerGiveDamageActor", DefaultReturnValue_False, player.getID(), actor.getID(), amount, weapon, int(part));
+		auto pawn = PawnManager::Get();
+		if (actor.getLegacyPlayer() == nullptr)
+		{
+			pawn->CallInSidesWhile0("OnPlayerGiveDamageActor", player.getID(), pawn->actors->toLegacyID(actor.getID()), amount, weapon, int(part));
+			pawn->CallInEntry("OnPlayerGiveDamageActor", DefaultReturnValue_False, player.getID(), pawn->actors->toLegacyID(actor.getID()), amount, weapon, int(part));
+		}
+		else if (auto data = queryExtension<IPlayerActorData>(player))
+		{
+			pawn->CallInSidesWhile0("OnPlayerGiveDamagePlayerActor", player.getID(), data->toLegacyID(actor.getID()), amount, weapon, int(part));
+			pawn->CallInEntry("OnPlayerGiveDamagePlayerActor", DefaultReturnValue_False, player.getID(), data->toLegacyID(actor.getID()), amount, weapon, int(part));
+		}
 	}
 
 	void onActorStreamIn(IActor& actor, IPlayer& forPlayer) override

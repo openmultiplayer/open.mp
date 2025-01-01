@@ -15,22 +15,6 @@
 
 using namespace Impl;
 
-struct PlayerActorData final : IExtension
-{
-	PROVIDE_EXT_UID(0xd1bb1d1f96c7e572)
-	uint8_t numStreamed = 0;
-
-	void freeExtension() override
-	{
-		delete this;
-	}
-
-	void reset() override
-	{
-		numStreamed = 0;
-	}
-};
-
 class Actor final : public IActor, public PoolIDProvider, public NoCopy
 {
 private:
@@ -42,7 +26,9 @@ private:
 	float angle_;
 	float health_;
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
+	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> hiddenFor_;
 	AnimationData animation_;
+	IPlayer* legacyPerPlayer_ = nullptr;
 	ActorSpawnData spawnData_;
 	bool* allAnimationLibraries_;
 	bool* validateAnimations_;
@@ -58,40 +44,68 @@ private:
 		}
 	}
 
+	void restreamPlayer(IPlayer& player)
+	{
+		streamOutForClient(player);
+		streamInForClient(player);
+	}
+
 	void streamInForClient(IPlayer& player)
 	{
-		NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC(player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
-		showActorForPlayerRPC.ActorID = poolID;
-		showActorForPlayerRPC.Angle = angle_;
-		showActorForPlayerRPC.Health = health_;
-		showActorForPlayerRPC.Invulnerable = invulnerable_;
-		showActorForPlayerRPC.Position = pos_;
-		showActorForPlayerRPC.SkinID = skin_;
-
-		if (modelsComponent_)
+		auto data = queryExtension<IPlayerActorData>(player);
+		if (data)
 		{
-			modelsComponent_->getBaseModel(showActorForPlayerRPC.SkinID, showActorForPlayerRPC.CustomSkin);
-		}
-
-		PacketHelper::send(showActorForPlayerRPC, player);
-
-		if (animationLoop_)
-		{
-			NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
-			RPC.ActorID = poolID;
-			PacketHelper::send(RPC, player);
-			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(player))
+			int id = data->toClientID(poolID);
+			if (id == INVALID_LEGACY_ACTOR_ID)
 			{
-				data->applyAnimation(nullptr, this, &animation_);
+				id = data->reserveClientID();
+			}
+			if (id != INVALID_LEGACY_ACTOR_ID)
+			{
+				data->setClientID(id, poolID);
+				NetCode::RPC::ShowActorForPlayer showActorForPlayerRPC(player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
+				showActorForPlayerRPC.ActorID = id;
+				showActorForPlayerRPC.Angle = angle_;
+				showActorForPlayerRPC.Health = health_;
+				showActorForPlayerRPC.Invulnerable = invulnerable_;
+				showActorForPlayerRPC.Position = pos_;
+				showActorForPlayerRPC.SkinID = skin_;
+
+				if (modelsComponent_)
+				{
+					modelsComponent_->getBaseModel(showActorForPlayerRPC.SkinID, showActorForPlayerRPC.CustomSkin);
+				}
+
+				PacketHelper::send(showActorForPlayerRPC, player);
+
+				if (animationLoop_)
+				{
+					NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation_);
+					RPC.ActorID = id;
+					PacketHelper::send(RPC, player);
+					if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(player))
+					{
+						data->applyAnimation(nullptr, this, &animation_);
+					}
+				}
 			}
 		}
 	}
 
 	void streamOutForClient(IPlayer& player)
 	{
-		NetCode::RPC::HideActorForPlayer RPC;
-		RPC.ActorID = poolID;
-		PacketHelper::send(RPC, player);
+		auto data = queryExtension<IPlayerActorData>(player);
+		if (data)
+		{
+			int id = data->toClientID(poolID);
+			if (id != INVALID_LEGACY_ACTOR_ID)
+			{
+				data->releaseClientID(id);
+				NetCode::RPC::HideActorForPlayer RPC;
+				RPC.ActorID = id;
+				PacketHelper::send(RPC, player);
+			}
+		}
 	}
 
 public:
@@ -104,7 +118,7 @@ public:
 	}
 
 	Actor(int skin, Vector3 pos, float angle, bool* allAnimationLibraries, bool* validateAnimations, ICustomModelsComponent*& modelsComponent, IFixesComponent* fixesComponent)
-		: virtualWorld_(0)
+		: virtualWorld_(-1)
 		, skin_(skin)
 		, invulnerable_(true)
 		, animationLoop_(false)
@@ -122,10 +136,23 @@ public:
 	void setHealth(float health) override
 	{
 		health_ = health;
+
 		NetCode::RPC::SetActorHealthForPlayer RPC;
-		RPC.ActorID = poolID;
-		RPC.Health = health_;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+
+		for (IPlayer* peer : streamedFor_.entries())
+		{
+			auto data = queryExtension<IPlayerActorData>(*peer);
+			if (data)
+			{
+				int id = data->toClientID(poolID);
+				if (id != INVALID_LEGACY_ACTOR_ID)
+				{
+					RPC.ActorID = id;
+					RPC.Health = health_;
+					PacketHelper::send(RPC, *peer);
+				}
+			}
+		}
 	}
 
 	float getHealth() const override
@@ -168,15 +195,25 @@ public:
 		}
 
 		NetCode::RPC::ApplyActorAnimationForPlayer RPC(animation);
-		RPC.ActorID = poolID;
+
 		for (IPlayer* peer : streamedFor_.entries())
 		{
-			if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*peer))
+			auto data = queryExtension<IPlayerActorData>(*peer);
+			if (data)
 			{
-				data->applyAnimation(nullptr, this, &animation);
+				int id = data->toClientID(poolID);
+				if (id != INVALID_LEGACY_ACTOR_ID)
+				{
+					RPC.ActorID = id;
+					if (IPlayerFixesData* data = queryExtension<IPlayerFixesData>(*peer))
+					{
+						data->applyAnimation(nullptr, this, &animation);
+					}
+					PacketHelper::send(RPC, *peer);
+				}
 			}
-			PacketHelper::send(RPC, *peer);
 		}
+
 	}
 
 	const AnimationData& getAnimation() const override
@@ -195,8 +232,20 @@ public:
 		animationLoop_ = false;
 
 		NetCode::RPC::ClearActorAnimationsForPlayer RPC;
-		RPC.ActorID = poolID;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+
+		for (IPlayer* peer : streamedFor_.entries())
+		{
+			auto data = queryExtension<IPlayerActorData>(*peer);
+			if (data)
+			{
+				int id = data->toClientID(poolID);
+				if (id != INVALID_LEGACY_ACTOR_ID)
+				{
+					RPC.ActorID = id;
+					PacketHelper::send(RPC, *peer);
+				}
+			}
+		}
 	}
 
 	bool isStreamedInForPlayer(const IPlayer& player) const override
@@ -206,34 +255,48 @@ public:
 
 	void streamInForPlayer(IPlayer& player) override
 	{
-		const int pid = player.getID();
-		if (!streamedFor_.valid(pid))
-		{
-			auto actor_data = queryExtension<PlayerActorData>(player);
-			if (actor_data)
-			{
-				if (actor_data->numStreamed <= MAX_STREAMED_ACTORS)
-				{
-					++actor_data->numStreamed;
-					streamedFor_.add(pid, player);
-					streamInForClient(player);
-				}
-			}
-		}
+		streamedFor_.add(player.getID(), player);
+		streamInForClient(player);
 	}
 
 	void streamOutForPlayer(IPlayer& player) override
 	{
-		const int pid = player.getID();
-		if (streamedFor_.valid(pid))
+		streamedFor_.remove(player.getID(), player);
+		streamOutForClient(player);
+	}
+
+	bool isActorHiddenForPlayer(IPlayer& player) const override
+	{
+		if (legacyPerPlayer_ == nullptr)
 		{
-			auto actor_data = queryExtension<PlayerActorData>(player);
-			if (actor_data)
+			return hiddenFor_.valid(player.getID());
+		}
+		else
+		{
+			// Hidden if this isn't the legacy player.
+			return legacyPerPlayer_ != &player;
+		}
+	}
+
+	void setActorHiddenForPlayer(IPlayer& player, bool hidden) override
+	{
+		if (legacyPerPlayer_ != nullptr)
+		{
+			// Doesn't matter if this is the right player or not.  Do nothing.
+		}
+		else if (hidden)
+		{
+			if (!isActorHiddenForPlayer(player))
 			{
-				--actor_data->numStreamed;
+				hiddenFor_.add(player.getID(), player);
 			}
-			streamedFor_.remove(pid, player);
-			streamOutForClient(player);
+		}
+		else
+		{
+			if (isActorHiddenForPlayer(player))
+			{
+				hiddenFor_.remove(player.getID(), player);
+			}
 		}
 	}
 
@@ -262,9 +325,21 @@ public:
 		pos_ = position;
 
 		NetCode::RPC::SetActorPosForPlayer RPC;
-		RPC.ActorID = poolID;
-		RPC.Pos = position;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+
+		for (IPlayer* peer : streamedFor_.entries())
+		{
+			auto data = queryExtension<IPlayerActorData>(*peer);
+			if (data)
+			{
+				int id = data->toClientID(poolID);
+				if (id != INVALID_LEGACY_ACTOR_ID)
+				{
+					RPC.ActorID = id;
+					RPC.Pos = position;
+					PacketHelper::send(RPC, *peer);
+				}
+			}
+		}
 	}
 
 	GTAQuat getRotation() const override
@@ -277,9 +352,24 @@ public:
 		angle_ = rotation.ToEuler().z;
 
 		NetCode::RPC::SetActorFacingAngleForPlayer RPC;
-		RPC.ActorID = poolID;
-		RPC.Angle = angle_;
-		PacketHelper::broadcastToSome(RPC, streamedFor_.entries());
+
+		for (IPlayer* peer : streamedFor_.entries())
+		{
+			auto data = queryExtension<IPlayerActorData>(*peer);
+			if (data)
+			{
+				int id = data->toClientID(poolID);
+				if (id != INVALID_LEGACY_ACTOR_ID)
+				{
+					RPC.ActorID = id;
+					RPC.Angle = angle_;
+					PacketHelper::send(RPC, *peer);
+					restreamPlayer(*peer); 
+					// I added this function to fix an existing bug that updates the actor's rotation angle. 
+					// Otherwise, the player needs to restream this actor. It is a bug in the client, but I'm not sure if this method is necessary here.
+				}
+			}
+		}
 	}
 
 	void setSkin(int id) override
@@ -306,12 +396,17 @@ public:
 	{
 		for (IPlayer* player : streamedFor_.entries())
 		{
-			auto actor_data = queryExtension<PlayerActorData>(player);
-			if (actor_data)
-			{
-				--actor_data->numStreamed;
-			}
 			streamOutForClient(*player);
 		}
+	}
+
+	virtual void setLegacyPlayer(IPlayer* player) override
+	{
+		legacyPerPlayer_ = player;
+	}
+
+	virtual IPlayer* getLegacyPlayer() const override
+	{
+		return legacyPerPlayer_;
 	}
 };

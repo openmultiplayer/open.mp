@@ -15,18 +15,39 @@ SCRIPT_API(CreateActor, int(int skin, Vector3 position, float angle))
 	IActorsComponent* component = PawnManager::Get()->actors;
 	if (component)
 	{
+		int id = component->reserveLegacyID();
+		if (id == INVALID_ACTOR_ID)
+		{
+			return INVALID_ACTOR_ID;
+		}
+
 		IActor* actor = component->create(skin, position, angle);
 		if (actor)
 		{
-			return actor->getID();
+			component->setLegacyID(id, actor->getID());
+			return id;
+		}
+		else
+		{
+			component->releaseLegacyID(id);
 		}
 	}
 	return INVALID_ACTOR_ID;
 }
 
-SCRIPT_API(DestroyActor, bool(IActor& actor))
+SCRIPT_API(DestroyActor, bool(int actorid))
 {
-	PawnManager::Get()->actors->release(actor.getID());
+	IActorsComponent* component = PawnManager::Get()->actors;
+	if (component)
+	{
+		int realid = component->fromLegacyID(actorid);
+		if (realid)
+		{
+			component->release(realid);
+			component->releaseLegacyID(actorid);
+			return true;
+		}
+	}
 	return true;
 }
 
@@ -146,4 +167,21 @@ SCRIPT_API(GetActorSpawnInfo, bool(IActor& actor, int& skin, Vector3& position, 
 	angle = spawnData.facingAngle;
 	skin = spawnData.skin;
 	return true;
+}
+
+SCRIPT_API(ShowActorForPlayer, bool(IPlayer& player, IActor& actor))
+{
+	actor.setActorHiddenForPlayer(player, false);
+	return true;
+}
+
+SCRIPT_API(HideActorForPlayer, bool(IPlayer& player, IActor& actor))
+{
+	actor.setActorHiddenForPlayer(player, true);
+	return true;
+}
+
+SCRIPT_API(IsActorHiddenForPlayer, bool(IPlayer& player, IActor& actor))
+{
+	return actor.isActorHiddenForPlayer(player);
 }
