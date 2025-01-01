@@ -1030,10 +1030,10 @@ private:
 		}
 	}
 
-	IComponent* loadComponent(const ghc::filesystem::path& path)
+	IComponent* loadComponent(const ghc::filesystem::path& path, bool highPriority = false)
 	{
 		printLn("Loading component %s", path.filename().u8string().c_str());
-		auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
+		auto componentLib = highPriority ? LIBRARY_OPEN_GLOBAL(path.u8string().c_str()) : LIBRARY_OPEN(path.u8string().c_str());
 		if (componentLib == nullptr)
 		{
 			printLn("\tFailed to load component: %s.", utils::GetLastErrorAsString().c_str());
@@ -1083,27 +1083,69 @@ private:
 
 		auto componentsCfg = config.getStrings("components");
 		auto excludeCfg = config.getStrings("exclude");
+
+		Impl::DynamicArray<ghc::filesystem::path> highPriorityComponents;
+		Impl::DynamicArray<ghc::filesystem::path> normalComponents;
+
+		const auto shouldLoad = [&](const ghc::filesystem::path& p)
+		{
+			if (excludeCfg && !excludeCfg->empty())
+			{
+				ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
+				rel.replace_extension();
+				// Is this in the "don't load" list?
+				const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+				{
+					return ghc::filesystem::path(exclude) == rel;
+				};
+				if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+					!= excludeCfg->end())
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+
 		if (!componentsCfg || componentsCfg->empty())
 		{
 			for (auto& de : ghc::filesystem::recursive_directory_iterator(path))
 			{
 				ghc::filesystem::path p = de.path();
+				if (p.filename().string().at(0) == '$')
+				{
+					highPriorityComponents.push_back(p);
+				}
+				else
+				{
+					normalComponents.push_back(p);
+				}
+			}
+
+			for (auto& p : highPriorityComponents)
+			{
 				if (p.extension() == LIBRARY_EXT)
 				{
-					if (excludeCfg && !excludeCfg->empty())
+					if (!shouldLoad(p))
 					{
-						ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
-						rel.replace_extension();
-						// Is this in the "don't load" list?
-						const auto isExcluded = [rel = std::move(rel)](const String& exclude)
-						{
-							return ghc::filesystem::path(exclude) == rel;
-						};
-						if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
-							!= excludeCfg->end())
-						{
-							continue;
-						}
+						continue;
+					}
+
+					IComponent* component = loadComponent(p, true);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+			}
+
+			for (auto& p : normalComponents)
+			{
+				if (p.extension() == LIBRARY_EXT)
+				{
+					if (!shouldLoad(p))
+					{
+						continue;
 					}
 
 					IComponent* component = loadComponent(p);
@@ -1124,27 +1166,28 @@ private:
 					file.replace_extension("");
 				}
 
-				if (excludeCfg && !excludeCfg->empty())
+				if (file.filename().string().at(0) == '$')
 				{
-					ghc::filesystem::path rel = ghc::filesystem::relative(file, path);
-					rel.replace_extension();
-					// Is this in the "don't load" list?
-					const auto isExcluded = [rel = std::move(rel)](const String& exclude)
-					{
-						return ghc::filesystem::path(exclude) == rel;
-					};
-					if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
-						!= excludeCfg->end())
-					{
-						continue;
-					}
+					highPriorityComponents.push_back(file);
+				}
+				else
+				{
+					normalComponents.push_back(file);
+				}
+			}
+
+			for (auto& p : highPriorityComponents)
+			{
+				if (!shouldLoad(p))
+				{
+					continue;
 				}
 
 				// Now load it.
-				file.replace_extension(LIBRARY_EXT);
-				if (ghc::filesystem::exists(file))
+				p.replace_extension(LIBRARY_EXT);
+				if (ghc::filesystem::exists(p))
 				{
-					IComponent* component = loadComponent(file);
+					IComponent* component = loadComponent(p, true);
 					if (component)
 					{
 						addComponent(component);
@@ -1152,7 +1195,31 @@ private:
 				}
 				else
 				{
-					printLn("Loading component %s", file.filename().u8string().c_str());
+					printLn("Loading component %s", p.filename().u8string().c_str());
+					printLn("\tCould not find component");
+				}
+			}
+
+			for (auto& p : normalComponents)
+			{
+				if (!shouldLoad(p))
+				{
+					continue;
+				}
+
+				// Now load it.
+				p.replace_extension(LIBRARY_EXT);
+				if (ghc::filesystem::exists(p))
+				{
+					IComponent* component = loadComponent(p);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+				else
+				{
+					printLn("Loading component %s", p.filename().u8string().c_str());
 					printLn("\tCould not find component");
 				}
 			}
