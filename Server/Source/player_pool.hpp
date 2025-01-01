@@ -375,7 +375,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
-			player.setState(PlayerState_Wasted);
+
+			// Keep a record of current state before changing it to wasted, and do not dispatch state change event
+			// We're doing this so state change event listeners don't reset player data (like removing the link between player and the vehicle they're in when dead)
+			// Then dispatch the event manually later, after onPlayerDeath event dispatch.
+			PlayerState oldState = player.getState();
+			player.setState(PlayerState_Wasted, /* dispatchEvents = */ false);
 
 			IPlayer* killer = self.storage.get(onPlayerDeathRPC.KillerID);
 			uint8_t reason = onPlayerDeathRPC.Reason;
@@ -406,6 +411,14 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				peer,
 				killer,
 				reason);
+
+			// Dispatch state change event manually after onPlayerDeath, so reset player data after listeners already handled death event.
+			// Use stored state from above as old state and newly stored state in player data as new one.
+			self.playerChangeDispatcher.dispatch(
+				&PlayerChangeEventHandler::onPlayerStateChange,
+				peer,
+				peer.getState(),
+				oldState);
 
 			NetCode::RPC::PlayerDeath playerDeathRPC;
 			playerDeathRPC.PlayerID = player.poolID;

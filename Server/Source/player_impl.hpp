@@ -785,34 +785,6 @@ public:
 		{
 			PacketHelper::broadcastToStreamed(clearPlayerTasksRPC, *this, false /* skipFrom */);
 		}
-
-		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
-		if (!data || !data->getVehicle())
-		{
-			// TODO: This must be fixed on client side
-			// *
-			// *     <problem>
-			// *         ClearAnimations doesn't do anything when the animation ends if we
-			// *         pass 1 for the freeze parameter in ApplyAnimation.
-			// *     </problem>
-			// *     <solution>
-			// *         Apply an idle animation for stop and then use ClearAnimation.
-			// *     </solution>
-			// *     <see>FIXES_ClearAnimations</see>
-			// *     <author    href="https://github.com/simonepri/" >simonepri</author>
-			// *
-			AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
-
-			animationData.lib = "PED";
-			animationData.name = "IDLE_STANCE";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "IDLE_CHAT";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "WALK_PLAYER";
-			applyAnimationImpl(animationData, syncType);
-		}
 	}
 
 	void clearAnimations(PlayerAnimationSyncType syncType) override
