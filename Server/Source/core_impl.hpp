@@ -2074,6 +2074,14 @@ public:
 		return PlayerWeaponNames[index];
 	}
 
+	bool isWeaponValid(PlayerWeapon weapon) override
+	{
+		if ((weapon >= 19 && weapon <= 21) || (weapon < 0 || weapon > PlayerWeapon_End))
+			return false;
+
+		return true;
+	}
+
 	void onPlayerConnect(IPlayer& player) override
 	{
 		playerInit(player);
