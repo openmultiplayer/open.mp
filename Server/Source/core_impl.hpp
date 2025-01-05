@@ -123,6 +123,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "network.use_lan_mode", false },
 	{ "network.allow_037_clients", true },
 	{ "network.grace_period", 5000 },
+	{ "network.use_omp_encryption", false },
 	// rcon
 	{ "rcon.allow_teleport", false },
 	{ "rcon.enable", false },

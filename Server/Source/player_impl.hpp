@@ -117,6 +117,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool allowWeapons_;
 	bool allowTeleport_;
 	bool isUsingOfficialClient_;
+	bool isUsingOmp_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -259,6 +260,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, allowWeapons_(true)
 		, allowTeleport_(false)
 		, isUsingOfficialClient_(params.isUsingOfficialClient)
+		, isUsingOmp_(params.isUsingOmp)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -319,6 +321,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isUsingOfficialClient() const override
 	{
 		return isUsingOfficialClient_;
+	}
+
+	bool isUsingOmp() const override
+	{
+		return isUsingOmp_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
