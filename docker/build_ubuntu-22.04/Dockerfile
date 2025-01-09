@@ -11,6 +11,7 @@ RUN \
     tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
     echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ jammy main' | \
     tee /etc/apt/sources.list.d/kitware.list >/dev/null && \
+    apt-get update && \
     apt-get install -y \
         cmake \
         ninja-build \
