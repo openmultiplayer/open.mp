@@ -2,6 +2,7 @@ FROM ubuntu:22.04
 RUN \
     dpkg --add-architecture i386 && \
     apt-get update && \
+    apt-get install -y --only-upgrade ca-certificates && \
     apt-get install -y \
         cmake \
         ninja-build \
