@@ -1,8 +1,8 @@
 FROM ubuntu:18.04
 RUN \
-    apt-get install --only-upgrade ca-certificates && \
     dpkg --add-architecture i386 && \
     apt-get update && \
+    apt-get install -y --only-upgrade ca-certificates && \
     apt-get install -y \
         gpg \
         wget \
