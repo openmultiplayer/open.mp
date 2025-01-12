@@ -37,8 +37,8 @@ private:
 	ICore* core = nullptr;
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
-	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
-	std::array<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
+	StaticArray<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+	StaticArray<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
 
@@ -130,11 +130,11 @@ public:
 				const PeerNetworkData::NetworkID& nid = netData.networkID;
 				const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 
-				return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true);
+				return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true);
 			}
 		}
 
-		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
+		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
 	}
 
 	bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents) override
@@ -177,7 +177,7 @@ public:
 		const PeerNetworkData::NetworkID& nid = netData.networkID;
 		const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 		const RakNet::PacketReliability reliability = (channel == OrderingChannel_Reliable) ? RakNet::RELIABLE : ((channel == OrderingChannel_Unordered) ? RakNet::UNRELIABLE : RakNet::UNRELIABLE_SEQUENCED);
-		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false);
+		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false);
 	}
 
 	bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer, bool dispatchEvents) override
@@ -275,7 +275,7 @@ public:
 	static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
 	static void OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra);
 
-	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient = false);
+	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOmp, bool isUsingOfficialClient = false);
 	template <size_t ID>
 	static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 	void onTick(Microseconds elapsed, TimePoint now) override;

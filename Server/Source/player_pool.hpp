@@ -375,7 +375,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
-			player.setState(PlayerState_Wasted);
+
+			player.setState(PlayerState_Wasted, /* dispatchEvents = */ true);
 
 			IPlayer* killer = self.storage.get(onPlayerDeathRPC.KillerID);
 			uint8_t reason = onPlayerDeathRPC.Reason;

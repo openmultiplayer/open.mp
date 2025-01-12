@@ -6,14 +6,7 @@ RUN \
         gpg \
         wget \
     && \
-    wget -O- https://apt.kitware.com/keys/kitware-archive-latest.asc 2>/dev/null | \
-    gpg --dearmor - | \
-    tee /usr/share/keyrings/kitware-archive-keyring.gpg >/dev/null && \
-    echo 'deb [signed-by=/usr/share/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ bionic main' | \
-    tee /etc/apt/sources.list.d/kitware.list >/dev/null && \
-    apt-get update && \
     apt-get install -y \
-        cmake \
         ninja-build \
         clang-10 \
         python3-pip \
@@ -22,6 +15,10 @@ RUN \
         libstdc++6:i386 \
         libc6:i386 \
     && \
+    wget https://cmake.org/files/v3.20/cmake-3.20.6-linux-x86_64.tar.gz  && \
+    tar zxvf cmake-3.20.6-linux-x86_64.tar.gz && \
+    mv cmake-3.20.6-linux-x86_64       /opt/cmake-3.20.6 && \
+    ln -sf  /opt/cmake-3.20.6/bin/*    /usr/bin/ && \
     useradd -m user && \
     su user -c 'pip3 install --user -v "conan==1.57.0"'
 
