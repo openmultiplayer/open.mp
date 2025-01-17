@@ -39,9 +39,9 @@ Visual Studio needs the `Desktop development with C++` workload with the `C++ Cl
 
 ```bash
 # With HTTPS:
-git clone --recursive https://github.com/openmultiplayer/open.mp
+git clone --recursive https://github.com/it-alexei-andreev/open.mp
 # With SSH:
-git clone --recursive git@github.com:openmultiplayer/open.mp
+git clone --recursive git@github.com:it-alexei-andreev/open.mp.git
 ```
 
 Note the use of the `--recursive` argument, because this repository contains submodules.
@@ -70,6 +70,13 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
+## Building with Docker
 
+Need to install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
-
+```bash
+mkdir build
+cd docker/build_ubuntu-22.04
+docker build -t open.mp/build:ubuntu-22.04 .
+docker run --rm -ti -v /path/to/omp/sources:/omp -w /omp open.mp/build:ubuntu-22.04
+```

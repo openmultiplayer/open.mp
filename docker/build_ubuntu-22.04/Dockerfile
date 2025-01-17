@@ -21,4 +21,4 @@ ENV CC=/usr/bin/clang-11 \
     PATH=~/.local/bin:${PATH}
 
 COPY docker-entrypoint.sh /
-CMD /docker-entrypoint.sh
+CMD ["/bin/sh", "/docker-entrypoint.sh"]
