@@ -12,6 +12,8 @@
 #include <player.hpp>
 #include <types.hpp>
 
+#define CUSTOM_PACKET		251
+
 namespace NetCode
 {
 namespace RPC
@@ -308,6 +310,7 @@ namespace RPC
 		uint8_t FightingStyle;
 		StaticArray<uint16_t, NUM_SKILL_LEVELS> SkillLevel;
 		bool isDL;
+		uint8_t Tag;
 
 		PlayerStreamIn(bool isDL)
 			: isDL(isDL)
@@ -332,7 +335,8 @@ namespace RPC
 			bs.writeFLOAT(Angle);
 			bs.writeUINT32(Col.RGBA());
 			bs.writeUINT8(FightingStyle);
-			bs.writeArray(Span<const uint16_t>(SkillLevel));
+			// bs.writeArray(Span<const uint16_t>(SkillLevel));
+			bs.writeUINT8(Tag);
 		}
 	};
 
@@ -1578,6 +1582,25 @@ namespace RPC
 		void write(NetworkBitStream& bs) const
 		{
 			bs.writeINT32(worldId);
+		}
+	};
+
+	// CustomPacket RPCs
+	struct SetPlayerTag : NetworkPacketBase<CUSTOM_PACKET, NetworkPacketType::Packet, OrderingChannel_SyncRPC>
+	{
+		int PlayerID;
+		uint8_t Tag;
+
+		bool read(NetworkBitStream& bs)
+		{
+			return false;
+		}
+
+		void write(NetworkBitStream& bs) const
+		{
+			bs.writeUINT32(300);
+			bs.writeUINT16(PlayerID);
+			bs.writeUINT8(Tag);
 		}
 	};
 }

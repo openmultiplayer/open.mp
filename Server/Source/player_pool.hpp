@@ -1708,12 +1708,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		PeerAddress::AddressString addressString;
 		PeerAddress::ToString(player.netData_.networkID.address, addressString);
 		uint16_t port = player.netData_.networkID.port;
-		core.logLn(
-			LogLevel::Message,
-			"[connection] incoming connection: %s:%d id: %d",
-			addressString.data(),
-			port,
-			player.poolID);
+		// core.logLn(
+		// 	LogLevel::Message,
+		// 	"[connection] incoming connection: %s:%d id: %d",
+		// 	addressString.data(),
+		// 	port,
+		// 	player.poolID);
 		playerConnectDispatcher.dispatch(&PlayerConnectEventHandler::onIncomingConnection, peer, addressString, port);
 
 		// Don't process player, about to be disconnected

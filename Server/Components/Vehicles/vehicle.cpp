@@ -387,16 +387,16 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 		return false;
 	}
 	// Only do heavy processing if switching vehicle or switching between driver and passenger
-	int passengerSeats = Impl::getVehiclePassengerSeats(getModel());
+	// int passengerSeats = Impl::getVehiclePassengerSeats(getModel());
 	// TODO: Deal with two players in the same seat.
 	// TODO: Detect fast switching cheats.
-	if (passengerSeats == 0xFF || passengerSync.SeatID < 1 || passengerSync.SeatID > passengerSeats)
-	{
-		// Can't be a passenger there.  NOT an OBOE.
-		// Just ignore the packet for now.
-		return false;
-	}
-	else if ((data->getVehicle() != this || driver == &player) && passengers.insert(&player).second)
+	// if (passengerSeats == 0xFF || passengerSync.SeatID < 1 || passengerSync.SeatID > passengerSeats)
+	// {
+	// 	// Can't be a passenger there.  NOT an OBOE.
+	// 	// Just ignore the packet for now.
+	// 	return false;
+	// }
+	if ((data->getVehicle() != this || driver == &player) && passengers.insert(&player).second)
 	{
 		if (data->getVehicle())
 		{

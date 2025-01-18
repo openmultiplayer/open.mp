@@ -263,6 +263,18 @@ SCRIPT_API(GetPlayerName, int(IPlayer& player, OutputOnlyString& name))
 	return std::get<StringView>(name).length();
 }
 
+SCRIPT_API(SetPlayerTag, bool(IPlayer& player, uint8_t tag))
+{
+	player.setTag(tag);
+	return true;
+}
+
+SCRIPT_API(GetPlayerTag, int(IPlayer& player))
+{
+	return player.getTag();
+}
+
+
 SCRIPT_API(GetPlayerState, int(IPlayer& player))
 {
 	return player.getState();

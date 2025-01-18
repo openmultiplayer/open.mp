@@ -258,6 +258,7 @@ void Player::streamInForPlayer(IPlayer& other)
 			playerStreamInRPC.Angle = rot_.ToEuler().z;
 			playerStreamInRPC.FightingStyle = fightingStyle_;
 			playerStreamInRPC.SkillLevel = skillLevels_;
+			playerStreamInRPC.Tag = tag_;
 			PacketHelper::send(playerStreamInRPC, other);
 
 			const Milliseconds expire = duration_cast<Milliseconds>(chatBubbleExpiration_ - Time::now());

@@ -65,6 +65,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	GTAQuat rot_;
 	HybridString<MAX_PLAYER_NAME + 1> name_;
 	HybridString<16> serial_;
+	uint8_t tag_;
 	WeaponSlots weapons_;
 	Colour colour_;
 	FlatHashMap<int, Colour> othersColours_;
@@ -156,6 +157,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		cameraLookAt_ = Vector3(0.0f, 0.0f, 0.0f);
 		virtualWorld_ = 0;
 		score_ = 0;
+		tag_ = 0;
 		fightingStyle_ = PlayerFightingStyle_Normal;
 		controllable_ = true;
 		clockToggled_ = false;
@@ -216,6 +218,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, cameraLookAt_(0.f, 0.f, 0.f)
 		, name_(params.name)
 		, serial_(params.serial)
+		, tag_(0)
 		, virtualWorld_(0)
 		, score_(0)
 		, fightingStyle_(PlayerFightingStyle_Normal)
@@ -1075,6 +1078,21 @@ public:
 	StringView getName() const override
 	{
 		return name_;
+	}
+
+	void setTag(uint8_t tag) override
+	{
+		tag_ = tag;
+
+		NetCode::RPC::SetPlayerTag setPlayerTagRPC;
+		setPlayerTagRPC.PlayerID = poolID;
+		setPlayerTagRPC.Tag = tag;	
+		PacketHelper::broadcastToStreamed(setPlayerTagRPC, *this, false);
+	}
+
+	uint8_t getTag() const override
+	{
+		return tag_;
 	}
 
 	StringView getSerial() const override
