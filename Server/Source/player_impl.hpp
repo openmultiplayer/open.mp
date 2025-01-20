@@ -1369,10 +1369,6 @@ removeWeapon_has_weapon:
 			return ret;
 		}
 		WeaponSlotData ret = weapons_[slot];
-		if (ret.ammo == 0)
-		{
-			ret.id = 0;
-		}
 		return ret;
 	}
 
