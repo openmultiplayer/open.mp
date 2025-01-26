@@ -1376,6 +1376,11 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+		    if (!vehiclePtr->isStreamedInForPlayer(peer))
+		    {
+		        return false;
+		    }
+
 			auto slot = WeaponSlotData(passengerSync.WeaponID).slot();
 			if (slot == INVALID_WEAPON_SLOT)
 			{
