@@ -37,6 +37,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, velocity_({ 0.0f, 0.0f, 0.0f })
 	, moving_(false)
 	, needsVelocityUpdate_(false)
+	, weapon_(0)
 {
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -54,7 +55,8 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	footSync_.Position = initialPosition;
 	footSync_.Velocity = velocity_;
 	footSync_.Rotation = initialRotation;
-	footSync_.WeaponAdditionalKey = 0;
+	footSync_.AdditionalKey = 0;
+	footSync_.Weapon = weapon_;
 	footSync_.HealthArmour = { 100.0f, 0.0f };
 	footSync_.SpecialAction = 0;
 	footSync_.AnimationID = 0;
@@ -286,6 +288,20 @@ float NPC::getArmour() const
 	return footSync_.HealthArmour.y;
 }
 
+void NPC::setWeapon(uint8_t weapon)
+{
+	auto slot = WeaponSlotData(weapon).slot();
+	if (slot != INVALID_WEAPON_SLOT)
+	{
+		weapon_ = weapon;
+	}
+}
+
+uint8_t NPC::getWeapon() const
+{
+	return weapon_;
+}
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned
@@ -358,6 +374,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 		if ((now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
 		{
+			footSync_.Weapon = weapon_;
 			sendFootSync();
 			lastUpdate_ = now;
 		}

@@ -59,6 +59,10 @@ public:
 
 	float getArmour() const override;
 
+	void setWeapon(uint8_t weapon) override;
+
+	uint8_t getWeapon() const override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
@@ -95,8 +99,14 @@ private:
 	Vector3 velocity_;
 	bool moving_;
 	bool needsVelocityUpdate_;
+
+	// Data
+	uint8_t weapon_;
+
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;
+	NetCode::Packet::PlayerVehicleSync driverSync_;
+	NetCode::Packet::PlayerPassengerSync passengerSync_;
 
 	NPCComponent* npcComponent_;
 };
