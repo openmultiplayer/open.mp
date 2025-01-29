@@ -208,3 +208,14 @@ SCRIPT_API(NPC_GetAmmo, int(INPC& npc))
 {
 	return npc.getAmmo();
 }
+
+SCRIPT_API(NPC_SetWeaponSkillLevel, bool(INPC& npc, uint8_t skill, int level))
+{
+	npc.setWepaonSkillLevel(PlayerWeaponSkill(skill), level);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponSkillLevel, int(INPC& npc, int skill))
+{
+	return npc.getWepaonSkillLevel(PlayerWeaponSkill(skill));
+}

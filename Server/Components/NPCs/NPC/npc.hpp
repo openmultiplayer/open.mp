@@ -67,6 +67,10 @@ public:
 
 	int getAmmo() const override;
 
+	void setWepaonSkillLevel(PlayerWeaponSkill weaponSkill, int level) override;
+
+	int getWepaonSkillLevel(PlayerWeaponSkill weaponSkill) const override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
@@ -107,6 +111,7 @@ private:
 	// Weapon data
 	uint8_t weapon_;
 	int ammo_;
+	int ammoInClip_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;

@@ -11,6 +11,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "../npcs_impl.hpp"
+#include "../utils.hpp"
 
 namespace utils
 {
@@ -39,6 +40,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, needsVelocityUpdate_(false)
 	, weapon_(0)
 	, ammo_(0)
+	, ammoInClip_(0)
 {
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -311,6 +313,42 @@ void NPC::setAmmo(int ammo)
 int NPC::getAmmo() const
 {
 	return ammo_;
+}
+
+void NPC::setWepaonSkillLevel(PlayerWeaponSkill weaponSkill, int level)
+{
+	if (weaponSkill >= 11 || weaponSkill < 0)
+	{
+		auto slot = WeaponSlotData(weapon_).slot();
+		if (slot != INVALID_WEAPON_SLOT)
+		{
+			auto currentWeaponClipSize = WeaponInfoList[weapon_].clipSize;
+			if (weaponSkill == getWeaponSkillID(weapon_) && canWeaponBeDoubleHanded(weapon_) && getWepaonSkillLevel(getWeaponSkillID(weapon_)) && level < 999 && ammoInClip_ > currentWeaponClipSize)
+			{
+				if (ammo_ < ammoInClip_)
+				{
+					ammoInClip_ = ammo_;
+				}
+
+				if (ammoInClip_ > currentWeaponClipSize)
+				{
+					ammoInClip_ = currentWeaponClipSize;
+				}
+			}
+
+			player_->setSkillLevel(weaponSkill, level);
+		}
+	}
+}
+
+int NPC::getWepaonSkillLevel(PlayerWeaponSkill weaponSkill) const
+{
+	auto skills = player_->getSkillLevels();
+	if (weaponSkill >= 11 || weaponSkill < 0)
+	{
+		return 0;
+	}
+	return skills[weaponSkill];
 }
 
 void NPC::sendFootSync()
