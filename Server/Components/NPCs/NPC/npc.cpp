@@ -38,6 +38,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, moving_(false)
 	, needsVelocityUpdate_(false)
 	, weapon_(0)
+	, ammo_(0)
 {
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -300,6 +301,16 @@ void NPC::setWeapon(uint8_t weapon)
 uint8_t NPC::getWeapon() const
 {
 	return weapon_;
+}
+
+void NPC::setAmmo(int ammo)
+{
+	ammo_ = ammo;
+}
+
+int NPC::getAmmo() const
+{
+	return ammo_;
 }
 
 void NPC::sendFootSync()

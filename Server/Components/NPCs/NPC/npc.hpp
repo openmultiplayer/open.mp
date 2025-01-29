@@ -63,6 +63,10 @@ public:
 
 	uint8_t getWeapon() const override;
 
+	void setAmmo(int ammo) override;
+
+	int getAmmo() const override;
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
@@ -100,8 +104,9 @@ private:
 	bool moving_;
 	bool needsVelocityUpdate_;
 
-	// Data
+	// Weapon data
 	uint8_t weapon_;
+	int ammo_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;

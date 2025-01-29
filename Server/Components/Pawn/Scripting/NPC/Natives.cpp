@@ -186,3 +186,25 @@ SCRIPT_API(NPC_ApplyAnimation, bool(INPC& npc, const std::string& animlib, const
 	npc.getPlayer()->applyAnimation(animationData, PlayerAnimationSyncType_SyncOthers);
 	return true;
 }
+
+SCRIPT_API(NPC_SetWeapon, bool(INPC& npc, uint8_t weapon))
+{
+	npc.setWeapon(weapon);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeapon, uint8_t(INPC& npc))
+{
+	return npc.getWeapon();
+}
+
+SCRIPT_API(NPC_SetAmmo, bool(INPC& npc, int ammo))
+{
+	npc.setAmmo(ammo);
+	return true;
+}
+
+SCRIPT_API(NPC_GetAmmo, int(INPC& npc))
+{
+	return npc.getAmmo();
+}
