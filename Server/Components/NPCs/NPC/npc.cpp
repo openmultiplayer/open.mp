@@ -315,7 +315,7 @@ int NPC::getAmmo() const
 	return ammo_;
 }
 
-void NPC::setWepaonSkillLevel(PlayerWeaponSkill weaponSkill, int level)
+void NPC::setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 {
 	if (weaponSkill >= 11 || weaponSkill < 0)
 	{
@@ -323,7 +323,7 @@ void NPC::setWepaonSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 		if (slot != INVALID_WEAPON_SLOT)
 		{
 			auto currentWeaponClipSize = WeaponInfoList[weapon_].clipSize;
-			if (weaponSkill == getWeaponSkillID(weapon_) && canWeaponBeDoubleHanded(weapon_) && getWepaonSkillLevel(getWeaponSkillID(weapon_)) && level < 999 && ammoInClip_ > currentWeaponClipSize)
+			if (weaponSkill == getWeaponSkillID(weapon_) && canWeaponBeDoubleHanded(weapon_) && getWeaponSkillLevel(getWeaponSkillID(weapon_)) && level < 999 && ammoInClip_ > currentWeaponClipSize)
 			{
 				if (ammo_ < ammoInClip_)
 				{
@@ -341,7 +341,7 @@ void NPC::setWepaonSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 	}
 }
 
-int NPC::getWepaonSkillLevel(PlayerWeaponSkill weaponSkill) const
+int NPC::getWeaponSkillLevel(PlayerWeaponSkill weaponSkill) const
 {
 	auto skills = player_->getSkillLevels();
 	if (weaponSkill >= 11 || weaponSkill < 0)

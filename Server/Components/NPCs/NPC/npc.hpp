@@ -67,9 +67,9 @@ public:
 
 	int getAmmo() const override;
 
-	void setWepaonSkillLevel(PlayerWeaponSkill weaponSkill, int level) override;
+	void setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level) override;
 
-	int getWepaonSkillLevel(PlayerWeaponSkill weaponSkill) const override;
+	int getWeaponSkillLevel(PlayerWeaponSkill weaponSkill) const override;
 
 	void sendFootSync();
 
