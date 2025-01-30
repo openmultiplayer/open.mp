@@ -433,7 +433,7 @@ void NPC::setWeaponState(PlayerWeaponState state)
 	case PlayerWeaponState_Reloading:
 		if (!reloading_)
 		{
-			reloadingTickCount_ = GetTickCount();
+			reloadingTickCount_ = npcComponent_->getCore()->getTickCount();
 			reloading_ = true;
 			shooting_ = false;
 		}
