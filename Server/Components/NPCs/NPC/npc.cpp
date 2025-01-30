@@ -611,7 +611,7 @@ void NPC::sendFootSync()
 	uint16_t keys;
 
 	getKeys(upAndDown, leftAndDown, keys);
-	
+
 	footSync_.LeftRight = leftAndDown;
 	footSync_.UpDown = upAndDown;
 	footSync_.Keys = keys;
