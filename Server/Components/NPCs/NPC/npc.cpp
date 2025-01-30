@@ -31,7 +31,10 @@ float getAngleOfLine(float x, float y)
 }
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
-	: moveType_(NPCMoveType_None)
+	, keys_(0)
+	, upAndDown_(0)
+	, leftAndRight_(0)
+	, moveType_(NPCMoveType_None)
 	, estimatedArrivalTimeNS_(0)
 	, moveSpeed_(0.0f)
 	, targetPosition_({ 0.0f, 0.0f, 0.0f })
@@ -143,7 +146,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	if (moveType == NPCMoveType_Sprint)
 	{
 		speed = NPC_MOVE_SPEED_SPRINT;
-		footSync_.Keys |= Key::SPRINT;
+		applyKey(Key::SPRINT);
 	}
 	else if (moveType == NPCMoveType_Jog)
 	{
@@ -152,10 +155,10 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	else
 	{
 		speed = NPC_MOVE_SPEED_WALK;
-		footSync_.Keys |= Key::WALK;
+		applyKey(Key::WALK);
 	}
 
-	footSync_.UpDown = static_cast<uint16_t>(Key::ANALOG_UP);
+	upAndDown_ = static_cast<uint16_t>(Key::ANALOG_UP);
 
 	// Calculate front vector and player's facing angle:
 	Vector3 front;
@@ -198,8 +201,8 @@ void NPC::stopMove()
 	moveType_ = NPCMoveType_None;
 	estimatedArrivalTimeNS_ = 0;
 
-	footSync_.Keys &= Key::SPRINT;
-	footSync_.Keys &= Key::WALK;
+	removeKey(Key::SPRINT);
+	removeKey(Key::WALK);
 	footSync_.UpDown = 0;
 }
 
@@ -351,6 +354,21 @@ int NPC::getWeaponSkillLevel(PlayerWeaponSkill weaponSkill) const
 	return skills[weaponSkill];
 }
 
+void NPC::setKeys(uint16_t upAndDown, uint16_t leftAndRight, uint16_t keys)
+{
+	upAndDown_ = upAndDown;
+	leftAndRight_ = leftAndRight;
+	keys_ = keys;
+}
+
+void NPC::getKeys(uint16_t& upAndDown, uint16_t& leftAndRight, uint16_t& keys) const
+{
+	upAndDown = upAndDown_;
+	leftAndRight = leftAndRight_;
+	keys = keys_;
+}
+
+
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned
@@ -362,6 +380,16 @@ void NPC::sendFootSync()
 	NetworkBitStream bs;
 
 	auto& quat = footSync_.Rotation.q;
+	uint16_t upAndDown;
+	uint16_t leftAndDown;
+	uint16_t keys;
+
+	getKeys(upAndDown, leftAndDown, keys);
+	
+	footSync_.LeftRight = leftAndDown;
+	footSync_.UpDown = upAndDown;
+	footSync_.Keys = keys;
+	footSync_.Weapon = weapon_;
 
 	bs.writeUINT16(footSync_.LeftRight);
 	bs.writeUINT16(footSync_.UpDown);

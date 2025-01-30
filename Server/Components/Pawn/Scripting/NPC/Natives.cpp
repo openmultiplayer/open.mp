@@ -219,3 +219,15 @@ SCRIPT_API(NPC_GetWeaponSkillLevel, int(INPC& npc, int skill))
 {
 	return npc.getWeaponSkillLevel(PlayerWeaponSkill(skill));
 }
+
+SCRIPT_API(NPC_SetKeys, bool(INPC& npc, uint16_t upAndDown, uint16_t leftAndDown, uint16_t keys))
+{
+	npc.setKeys(upAndDown, leftAndDown, keys);
+	return true;
+}
+
+SCRIPT_API(NPC_GetKeys, bool(INPC& npc, uint16_t& upAndDown, uint16_t& leftAndDown, uint16_t& keys))
+{
+	npc.getKeys(upAndDown, leftAndDown, keys);
+	return true;
+}

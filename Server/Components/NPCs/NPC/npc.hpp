@@ -71,6 +71,11 @@ public:
 
 	int getWeaponSkillLevel(PlayerWeaponSkill weaponSkill) const override;
 
+	void setKeys(uint16_t upAndDown, uint16_t leftAndRight, uint16_t keys) override;
+
+	void getKeys(uint16_t& upAndDown, uint16_t& leftAndRight, uint16_t& keys) const override;
+
+
 	void sendFootSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
@@ -92,10 +97,30 @@ public:
 		player_ = player;
 	}
 
+	void applyKey(Key key)
+	{
+		keys_ |= key;
+	}
+
+	void removeKey(Key key)
+	{
+		keys_ &= key;
+	}
+
+	void resetKeys()
+	{
+		keys_ = 0;
+		upAndDown_ = 0;
+		leftAndRight_ = 0;
+	}
+
 private:
 	// The NPC's player pointer.
 	IPlayer* player_;
 	TimePoint lastUpdate_;
+	uint16_t keys_;
+	uint16_t upAndDown_;
+	uint16_t leftAndRight_;
 
 	// Movements
 	NPCMoveType moveType_;
