@@ -106,6 +106,15 @@ void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 	}
 }
 
+void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part)
+{
+	auto npc = static_cast<NPC*>(get(to.getID()));
+	if (npc->getPlayer()->getID() == to.getID())
+	{
+		static_cast<NPC*>(npc)->processDamage(player, amount, weapon, part);
+	}
+}
+
 INPC* NPCComponent::create(StringView name)
 {
 	// Reserve a random ephemeral port for our NPC client

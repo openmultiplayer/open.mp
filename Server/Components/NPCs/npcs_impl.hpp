@@ -16,7 +16,7 @@
 
 using namespace Impl;
 
-class NPCComponent final : public INPCComponent, public CoreEventHandler
+class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler
 {
 public:
 	StringView componentName() const override
@@ -60,6 +60,8 @@ public:
 	bool unlock(int index) override;
 
 	void onTick(Microseconds elapsed, TimePoint now) override;
+
+	void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) override;
 
 	INPC* create(StringView name) override;
 

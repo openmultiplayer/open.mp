@@ -31,6 +31,8 @@ float getAngleOfLine(float x, float y)
 }
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
+	: skin_(0)
+	, dead_(false)
 	, keys_(0)
 	, upAndDown_(0)
 	, leftAndRight_(0)
@@ -44,6 +46,13 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, weapon_(0)
 	, ammo_(0)
 	, ammoInClip_(0)
+	, infiniteAmmo_(false)
+	, reloading_(false)
+	, reloadingTickCount_(0)
+	, shooting_(false)
+	, weaponState_(PlayerWeaponState_Unknown)
+	, lastDamager(nullptr)
+	, lastDamagerWeapon(PlayerWeapon_End)
 {
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -128,6 +137,22 @@ void NPC::spawn()
 
 	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
 	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
+
+	// Make sure we resend this again, at spawn
+	player_->setSkin(player_->getSkin());
+
+	// Set the player stats
+	setHealth(100.0f);
+	setArmour(0.0f);
+	setWeapon(PlayerWeapon_Fist);
+	setAmmo(0);
+
+	dead_ = false;
+
+	lastDamager = nullptr;
+	lastDamagerWeapon = PlayerWeapon_End;
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
 
 bool NPC::move(Vector3 pos, NPCMoveType moveType)
@@ -311,6 +336,11 @@ uint8_t NPC::getWeapon() const
 void NPC::setAmmo(int ammo)
 {
 	ammo_ = ammo;
+
+	if (ammo_ < ammoInClip_)
+	{
+		ammoInClip_ = ammo_;
+	}
 }
 
 int NPC::getAmmo() const
@@ -322,11 +352,11 @@ void NPC::setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 {
 	if (weaponSkill >= 11 || weaponSkill < 0)
 	{
-		auto slot = WeaponSlotData(weapon_).slot();
-		if (slot != INVALID_WEAPON_SLOT)
+		auto weaponData = WeaponSlotData(weapon_);
+		if (weaponData.slot() != INVALID_WEAPON_SLOT)
 		{
-			auto currentWeaponClipSize = WeaponInfoList[weapon_].clipSize;
-			if (weaponSkill == getWeaponSkillID(weapon_) && canWeaponBeDoubleHanded(weapon_) && getWeaponSkillLevel(getWeaponSkillID(weapon_)) && level < 999 && ammoInClip_ > currentWeaponClipSize)
+			auto currentWeaponClipSize = weaponData.clipSize();
+			if (weaponSkill == getWeaponSkillID(weapon_) && isWeaponDoubleHanded(weapon_, getWeaponSkillLevel(getWeaponSkillID(weapon_))) && level < 999 && ammoInClip_ > currentWeaponClipSize)
 			{
 				if (ammo_ < ammoInClip_)
 				{
@@ -347,7 +377,7 @@ void NPC::setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 int NPC::getWeaponSkillLevel(PlayerWeaponSkill weaponSkill) const
 {
 	auto skills = player_->getSkillLevels();
-	if (weaponSkill >= 11 || weaponSkill < 0)
+	if (weaponSkill >= PlayerWeaponSkill(11) || weaponSkill < PlayerWeaponSkill(0))
 	{
 		return 0;
 	}
@@ -368,6 +398,202 @@ void NPC::getKeys(uint16_t& upAndDown, uint16_t& leftAndRight, uint16_t& keys) c
 	keys = keys_;
 }
 
+PlayerWeaponState NPC::getWeaponState() const
+{
+	return weaponState_;
+}
+
+void NPC::setWeaponState(PlayerWeaponState state)
+{
+	if (state == PlayerWeaponState_Unknown)
+	{
+		return;
+	}
+
+	PlayerWeaponState oldState = weaponState_;
+	weaponState_ = state;
+
+	switch (state)
+	{
+	case PlayerWeaponState_LastBullet:
+		if (ammo_ > 0)
+		{
+			ammoInClip_ = 1;
+		}
+		break;
+	case PlayerWeaponState_MoreBullets:
+		if (ammo_ > 1 && ammoInClip_ <= 1)
+		{
+			ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
+		}
+		break;
+	case PlayerWeaponState_NoBullets:
+		ammoInClip_ = 0;
+		break;
+	case PlayerWeaponState_Reloading:
+		if (!reloading_)
+		{
+			reloadingTickCount_ = GetTickCount();
+			reloading_ = true;
+			shooting_ = false;
+		}
+		break;
+	default:
+		break;
+	}
+
+	if (oldState != state)
+	{
+		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCWeaponStateChange, *this, state, oldState);
+	}
+}
+
+void NPC::updateWeaponState()
+{
+	switch (weapon_)
+	{
+	case 0:
+	case PlayerWeapon_BrassKnuckle:
+	case PlayerWeapon_GolfClub:
+	case PlayerWeapon_NiteStick:
+	case PlayerWeapon_Knife:
+	case PlayerWeapon_Bat:
+	case PlayerWeapon_Shovel:
+	case PlayerWeapon_PoolStick:
+	case PlayerWeapon_Katana:
+	case PlayerWeapon_Chainsaw:
+	case PlayerWeapon_Dildo:
+	case PlayerWeapon_Dildo2:
+	case PlayerWeapon_Vibrator:
+	case PlayerWeapon_Vibrator2:
+	case PlayerWeapon_Flower:
+	case PlayerWeapon_Cane:
+	case PlayerWeapon_Bomb:
+	case PlayerWeapon_Camera:
+	case PlayerWeapon_Night_Vis_Goggles:
+	case PlayerWeapon_Thermal_Goggles:
+	case PlayerWeapon_Parachute:
+		weaponState_ = PlayerWeaponState_NoBullets;
+		break;
+
+	case PlayerWeapon_Grenade:
+	case PlayerWeapon_Teargas:
+	case PlayerWeapon_Moltov:
+	case PlayerWeapon_Rifle:
+	case PlayerWeapon_Sniper:
+	case PlayerWeapon_RocketLauncher:
+	case PlayerWeapon_HeatSeeker:
+	case PlayerWeapon_Satchel:
+		weaponState_ = PlayerWeaponState_LastBullet;
+		break;
+
+	case PlayerWeapon_Colt45:
+	case PlayerWeapon_Silenced:
+	case PlayerWeapon_Deagle:
+	case PlayerWeapon_Sawedoff:
+	case PlayerWeapon_Shotgspa:
+	case PlayerWeapon_UZI:
+	case PlayerWeapon_MP5:
+	case PlayerWeapon_AK47:
+	case PlayerWeapon_M4:
+	case PlayerWeapon_TEC9:
+	case PlayerWeapon_FlameThrower:
+	case PlayerWeapon_Minigun:
+	case PlayerWeapon_SprayCan:
+	case PlayerWeapon_FireExtinguisher:
+		if (reloading_)
+		{
+			weaponState_ = PlayerWeaponState_Reloading;
+		}
+		else if (ammoInClip_ == 1)
+		{
+			weaponState_ = PlayerWeaponState_LastBullet;
+		}
+		else if (ammo_ == 0 && !infiniteAmmo_)
+		{
+			weaponState_ = PlayerWeaponState_NoBullets;
+		}
+		else if (ammoInClip_ > 1)
+		{
+			weaponState_ = PlayerWeaponState_MoreBullets;
+		}
+		break;
+
+	case PlayerWeapon_Shotgun:
+		if (reloading_)
+		{
+			weaponState_ = PlayerWeaponState_Reloading;
+		}
+		else if (ammo_ == 0 && !infiniteAmmo_)
+		{
+			weaponState_ = PlayerWeaponState_NoBullets;
+		}
+		else if (ammoInClip_ == 1)
+		{
+			weaponState_ = PlayerWeaponState_LastBullet;
+		}
+		break;
+
+	default:
+		weaponState_ = PlayerWeaponState_NoBullets;
+		break;
+	}
+}
+
+void NPC::kill(IPlayer* killer, uint8_t weapon)
+{
+	if (dead_)
+	{
+		return;
+	}
+
+	stopMove();
+	resetKeys();
+	dead_ = true;
+
+	// Emulate death rpc
+	NetworkBitStream bs;
+
+	bs.writeUINT8(weapon);
+	bs.writeUINT16(killer ? killer->getID() : INVALID_PLAYER_ID);
+	npcComponent_->emulateRPCIn(*this, NetCode::RPC::OnPlayerDeath::PacketID, bs);
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCDeath, *this, killer, weapon);
+}
+
+void NPC::processDamage(IPlayer& damagerId, float damage, uint8_t weapon, BodyPart bodyPart)
+{
+	// Call the on take damage event
+	auto eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+		{
+			return handler->onNPCTakeDamage(*this, damagerId, weapon, damage, bodyPart);
+		});
+
+	// Check the returned value
+	if (eventResult)
+	{
+		// Check the armour
+		if (getArmour() > 0.0f)
+		{
+			// Save the old armour
+			float armour = getArmour();
+			// Decrease the armor
+			setArmour(armour - damage);
+			// If the damage is bigger than the armour then decrease the health aswell
+			if (armour - damage < 0.0f)
+			{
+				setHealth(getHealth() - (damage - armour));
+			}
+		}
+		else
+		{
+			setHealth(getHealth() - damage);
+		}
+	}
+	// Save the last damager
+	lastDamager = &damagerId;
+	lastDamagerWeapon = weapon;
+}
 
 void NPC::sendFootSync()
 {
@@ -435,25 +661,42 @@ void NPC::advance(TimePoint now)
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
 {
-	// Only process the NPC if it is spawned
-	if (player_ && (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
+	if (player_)
 	{
-		if (needsVelocityUpdate_)
-		{
-			setPosition(getPosition() + velocity_);
-			setVelocity({ 0.0f, 0.0f, 0.0f }, false);
-		}
+		auto state = player_->getState();
 
-		if (moving_)
+		// Only process the NPC if it is spawned
+		if (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned)
 		{
-			advance(now);
-		}
+			if (getHealth() <= 0.0f && state != PlayerState_Wasted && state != PlayerState_Spawned)
+			{
+				// check on vehicle
+				if (state == PlayerState_Driver || state == PlayerState_Passenger)
+				{
+					// TODO: Handle NPC driver/passenger death
+				}
 
-		if ((now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
-		{
-			footSync_.Weapon = weapon_;
-			sendFootSync();
-			lastUpdate_ = now;
+				// Kill the player
+				kill(lastDamager, lastDamagerWeapon);
+			}
+
+			if (needsVelocityUpdate_)
+			{
+				setPosition(getPosition() + velocity_);
+				setVelocity({ 0.0f, 0.0f, 0.0f }, false);
+			}
+
+			if (moving_)
+			{
+				advance(now);
+			}
+
+			if ((now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
+			{
+				footSync_.Weapon = weapon_;
+				sendFootSync();
+				lastUpdate_ = now;
+			}
 		}
 	}
 }

@@ -75,6 +75,15 @@ public:
 
 	void getKeys(uint16_t& upAndDown, uint16_t& leftAndRight, uint16_t& keys) const override;
 
+	PlayerWeaponState getWeaponState() const override;
+
+	void setWeaponState(PlayerWeaponState state);
+
+	void updateWeaponState();
+
+	void kill(IPlayer* killer, uint8_t weapon);
+
+	void processDamage(IPlayer& damagerId, float damage, uint8_t weapon, BodyPart bodyPart);
 
 	void sendFootSync();
 
@@ -118,6 +127,10 @@ private:
 	// The NPC's player pointer.
 	IPlayer* player_;
 	TimePoint lastUpdate_;
+
+	// General data
+	int skin_;
+	bool dead_;
 	uint16_t keys_;
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
@@ -137,6 +150,15 @@ private:
 	uint8_t weapon_;
 	int ammo_;
 	int ammoInClip_;
+	bool infiniteAmmo_;
+	bool reloading_;
+	uint32_t reloadingTickCount_;
+	bool shooting_;
+	PlayerWeaponState weaponState_;
+
+	// Damage data
+	IPlayer* lastDamager;
+	uint8_t lastDamagerWeapon;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;

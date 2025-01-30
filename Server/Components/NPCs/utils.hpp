@@ -15,6 +15,11 @@ inline bool canWeaponBeDoubleHanded(uint8_t weapon)
 	return false;
 }
 
+inline bool isWeaponDoubleHanded(uint8_t weapon, int skillLevel)
+{
+	return canWeaponBeDoubleHanded(weapon) && skillLevel > 999;
+}
+
 inline PlayerWeaponSkill getWeaponSkillID(uint8_t weapon)
 {
 	static PlayerWeaponSkill skills[] = {
@@ -39,4 +44,25 @@ inline PlayerWeaponSkill getWeaponSkillID(uint8_t weapon)
 	}
 
 	return skills[weapon - 22];
+}
+
+inline int getWeaponActualClipSize(uint8_t weapon, int currentAmmo, int weaponSkillLevel, bool hasInfiniteAmmo)
+{
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() != INVALID_WEAPON_SLOT)
+	{
+		int size = data.clipSize();
+		if (isWeaponDoubleHanded(weapon, weaponSkillLevel))
+		{
+			size *= 2;
+		}
+
+		if (currentAmmo < size && !hasInfiniteAmmo)
+		{
+			size = currentAmmo;
+		}
+
+		return size;
+	}
+	return 0;
 }
