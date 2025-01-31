@@ -209,17 +209,6 @@ SCRIPT_API(NPC_GetAmmo, int(INPC& npc))
 	return npc.getAmmo();
 }
 
-SCRIPT_API(NPC_SetWeaponSkillLevel, bool(INPC& npc, uint8_t skill, int level))
-{
-	npc.setWeaponSkillLevel(PlayerWeaponSkill(skill), level);
-	return true;
-}
-
-SCRIPT_API(NPC_GetWeaponSkillLevel, int(INPC& npc, int skill))
-{
-	return npc.getWeaponSkillLevel(PlayerWeaponSkill(skill));
-}
-
 SCRIPT_API(NPC_SetKeys, bool(INPC& npc, uint16_t upAndDown, uint16_t leftAndDown, uint16_t keys))
 {
 	npc.setKeys(upAndDown, leftAndDown, keys);
@@ -230,4 +219,15 @@ SCRIPT_API(NPC_GetKeys, bool(INPC& npc, uint16_t& upAndDown, uint16_t& leftAndDo
 {
 	npc.getKeys(upAndDown, leftAndDown, keys);
 	return true;
+}
+
+SCRIPT_API(NPC_SetWeaponSkillLevel, bool(INPC& npc, uint8_t skill, int level))
+{
+	npc.setWeaponSkillLevel(PlayerWeaponSkill(skill), level);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponSkillLevel, int(INPC& npc, int skill))
+{
+	return npc.getWeaponSkillLevel(PlayerWeaponSkill(skill));
 }

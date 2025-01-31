@@ -19,6 +19,7 @@ void NPCComponent::onInit(IComponentList* components)
 {
 	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
 }
 
 void NPCComponent::free()

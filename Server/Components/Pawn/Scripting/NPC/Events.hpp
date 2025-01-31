@@ -27,4 +27,20 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCDestroy", DefaultReturnValue_True, npc.getID());
 	}
+
+	void onNPCWeaponStateChange(INPC& npc, PlayerWeaponState newState, PlayerWeaponState oldState) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCWeaponStateChange", DefaultReturnValue_True, npc.getID(), int(newState), int(oldState));
+	}
+
+	bool onNPCTakeDamage(INPC& npc, IPlayer& damager, float damage, uint8_t weapon, BodyPart bodyPart) override
+	{
+		auto result = !!PawnManager::Get()->CallAllInEntryFirst("OnNPCTakeDamage", DefaultReturnValue_True, npc.getID(), damager.getID(), damage, weapon, int(bodyPart));
+		return result;
+	}
+
+	void onNPCDeath(INPC& npc, IPlayer* killer, int reason) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCDeath", DefaultReturnValue_True, npc.getID(), killer ? killer->getID() : INVALID_PLAYER_ID, reason);
+	}
 };
