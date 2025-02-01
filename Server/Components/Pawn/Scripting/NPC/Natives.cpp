@@ -231,3 +231,20 @@ SCRIPT_API(NPC_GetWeaponSkillLevel, int(INPC& npc, int skill))
 {
 	return npc.getWeaponSkillLevel(PlayerWeaponSkill(skill));
 }
+
+SCRIPT_API(NPC_MeleeAttack, bool(INPC& npc, int time, bool secondaryAttack))
+{
+	npc.meleeAttack(time, secondaryAttack);
+	return true;
+}
+
+SCRIPT_API(NPC_StopMeleeAttack, bool(INPC& npc))
+{
+	npc.stopMeleeAttack();
+	return true;
+}
+
+SCRIPT_API(NPC_IsMeleeAttacking, bool(INPC& npc))
+{
+	return npc.isMeleeAttacking();
+}

@@ -48,10 +48,10 @@ inline PlayerWeaponSkill getWeaponSkillID(uint8_t weapon)
 
 inline int getWeaponActualClipSize(uint8_t weapon, int currentAmmo, int weaponSkillLevel, bool hasInfiniteAmmo)
 {
-	auto data = WeaponSlotData(weapon);
-	if (data.slot() != INVALID_WEAPON_SLOT)
+	auto data = WeaponInfo::get(weapon);
+	if (data.type != PlayerWeaponType_None)
 	{
-		int size = data.clipSize();
+		int size = data.clipSize;
 		if (isWeaponDoubleHanded(weapon, weaponSkillLevel))
 		{
 			size *= 2;

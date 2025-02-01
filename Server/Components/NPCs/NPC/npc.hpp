@@ -77,6 +77,16 @@ public:
 
 	PlayerWeaponState getWeaponState() const override;
 
+	void setAmmoInClip(int ammo) override;
+
+	int getAmmoInClip() const override;
+
+	void meleeAttack(int time, bool secondaryMeleeAttack = false) override;
+
+	void stopMeleeAttack() override;
+
+	bool isMeleeAttacking() const override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -135,10 +145,16 @@ private:
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
 
+	// Attack data
+	bool meleeAttacking_;
+	Milliseconds meleeAttackDelay_;
+	bool meleeSecondaryAttack_;
+	TimePoint shootUpdateTime_;
+
 	// Movements
 	NPCMoveType moveType_;
 	TimePoint lastMove_;
-	long long estimatedArrivalTimeNS_;
+	long long estimatedArrivalTimeMS_;
 	TimePoint moveStart_;
 	float moveSpeed_;
 	Vector3 targetPosition_;
@@ -152,7 +168,7 @@ private:
 	int ammoInClip_;
 	bool infiniteAmmo_;
 	bool reloading_;
-	uint32_t reloadingTickCount_;
+	TimePoint reloadingUpdateTime_;
 	bool shooting_;
 	PlayerWeaponState weaponState_;
 

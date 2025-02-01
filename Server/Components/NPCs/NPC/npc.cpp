@@ -36,8 +36,11 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, keys_(0)
 	, upAndDown_(0)
 	, leftAndRight_(0)
+	, meleeAttacking_(false)
+	, meleeAttackDelay_(0)
+	, meleeSecondaryAttack_(false)
 	, moveType_(NPCMoveType_None)
-	, estimatedArrivalTimeNS_(0)
+	, estimatedArrivalTimeMS_(0)
 	, moveSpeed_(0.0f)
 	, targetPosition_({ 0.0f, 0.0f, 0.0f })
 	, velocity_({ 0.0f, 0.0f, 0.0f })
@@ -48,7 +51,6 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, ammoInClip_(0)
 	, infiniteAmmo_(false)
 	, reloading_(false)
-	, reloadingTickCount_(0)
 	, shooting_(false)
 	, weaponState_(PlayerWeaponState_Unknown)
 	, lastDamager(nullptr)
@@ -201,11 +203,11 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 
 	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
 	{
-		estimatedArrivalTimeNS_ = Time::now().time_since_epoch().count() + (static_cast<long long>(distance / glm::length(velocity_)) * (/* (npcComponent_->getFootSyncRate() * 10000) +*/ 1000000));
+		estimatedArrivalTimeMS_ = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count() + (static_cast<long long>(distance / glm::length(velocity_)) * (/* (npcComponent_->getFootSyncRate() * 10000) +*/ 1000));
 	}
 	else
 	{
-		estimatedArrivalTimeNS_ = 0;
+		estimatedArrivalTimeMS_ = 0;
 	}
 
 	// Set internal variables
@@ -224,7 +226,7 @@ void NPC::stopMove()
 	targetPosition_ = { 0.0f, 0.0f, 0.0f };
 	velocity_ = { 0.0f, 0.0f, 0.0f };
 	moveType_ = NPCMoveType_None;
-	estimatedArrivalTimeNS_ = 0;
+	estimatedArrivalTimeMS_ = 0;
 
 	removeKey(Key::SPRINT);
 	removeKey(Key::WALK);
@@ -352,10 +354,10 @@ void NPC::setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 {
 	if (weaponSkill >= 11 || weaponSkill < 0)
 	{
-		auto weaponData = WeaponSlotData(weapon_);
-		if (weaponData.slot() != INVALID_WEAPON_SLOT)
+		auto weaponData = WeaponInfo::get(weapon_);
+		if (weaponData.type != PlayerWeaponType_None)
 		{
-			auto currentWeaponClipSize = weaponData.clipSize();
+			auto currentWeaponClipSize = weaponData.clipSize;
 			if (weaponSkill == getWeaponSkillID(weapon_) && isWeaponDoubleHanded(weapon_, getWeaponSkillLevel(getWeaponSkillID(weapon_))) && level < 999 && ammoInClip_ > currentWeaponClipSize)
 			{
 				if (ammo_ < ammoInClip_)
@@ -403,6 +405,92 @@ PlayerWeaponState NPC::getWeaponState() const
 	return weaponState_;
 }
 
+void NPC::setAmmoInClip(int ammo)
+{
+	auto clipSize = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
+
+	ammoInClip_ = ammo_ < clipSize ? ammo_ : clipSize;
+}
+
+int NPC::getAmmoInClip() const
+{
+	return ammoInClip_;
+}
+
+void NPC::meleeAttack(int time, bool secondaryMeleeAttack)
+{
+	if (meleeAttacking_)
+	{
+		return;
+	}
+
+	if (player_->getState() != PlayerState_OnFoot || dead_)
+	{
+		return;
+	}
+
+	auto weaponData = WeaponInfo::get(weapon_);
+	if (weaponData.type != PlayerWeaponType_Melee)
+	{
+		return;
+	}
+
+	if (time == -1)
+	{
+		meleeAttackDelay_ = Milliseconds(weaponData.shootTime);
+	}
+	else
+	{
+		meleeAttackDelay_ = Milliseconds(time);
+	}
+
+	if (meleeAttackDelay_ <= Milliseconds(npcComponent_->getFootSyncRate()))
+	{
+		meleeAttackDelay_ = Milliseconds(npcComponent_->getFootSyncRate() + 5);
+	}
+
+	shootUpdateTime_ = lastUpdate_;
+	meleeAttacking_ = true;
+	meleeSecondaryAttack_ = secondaryMeleeAttack;
+
+	// Apply appropiate keys for melee attack
+	if (meleeSecondaryAttack_)
+	{
+		applyKey(Key::AIM);
+		applyKey(Key::SECONDARY_ATTACK);
+	}
+	else
+	{
+		applyKey(Key::FIRE);
+	}
+}
+
+void NPC::stopMeleeAttack()
+{
+	if (!meleeAttacking_)
+	{
+		return;
+	}
+
+	if (meleeSecondaryAttack_)
+	{
+		removeKey(Key::AIM);
+		removeKey(Key::SECONDARY_ATTACK);
+	}
+	else
+	{
+		removeKey(Key::FIRE);
+	}
+
+	meleeAttacking_ = false;
+	meleeSecondaryAttack_ = false;
+}
+
+bool NPC::isMeleeAttacking() const
+{
+	return meleeAttacking_;
+}
+
 void NPC::setWeaponState(PlayerWeaponState state)
 {
 	if (state == PlayerWeaponState_Unknown)
@@ -433,7 +521,7 @@ void NPC::setWeaponState(PlayerWeaponState state)
 	case PlayerWeaponState_Reloading:
 		if (!reloading_)
 		{
-			reloadingTickCount_ = npcComponent_->getCore()->getTickCount();
+			reloadingUpdateTime_ = lastUpdate_;
 			reloading_ = true;
 			shooting_ = false;
 		}
@@ -640,7 +728,7 @@ void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
 
-	if (estimatedArrivalTimeNS_ <= Time::now().time_since_epoch().count() || glm::distance(position, targetPosition_) <= 0.1f)
+	if (estimatedArrivalTimeMS_ <= duration_cast<Milliseconds>(now.time_since_epoch()).count() || glm::distance(position, targetPosition_) <= 0.1f)
 	{
 		auto pos = targetPosition_;
 		stopMove();
@@ -649,7 +737,7 @@ void NPC::advance(TimePoint now)
 	}
 	else
 	{
-		Milliseconds difference = duration_cast<Milliseconds>(now.time_since_epoch()) - duration_cast<Milliseconds>(lastMove_.time_since_epoch());
+		Milliseconds difference = duration_cast<Milliseconds>(now - lastMove_);
 		Vector3 travelled = velocity_ * static_cast<float>(difference.count());
 
 		position += travelled;
@@ -692,9 +780,35 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 				advance(now);
 			}
 
-			if ((now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
+			if (meleeAttacking_)
 			{
-				footSync_.Weapon = weapon_;
+				if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
+				{
+					if (meleeSecondaryAttack_)
+					{
+						applyKey(Key::SECONDARY_ATTACK);
+					}
+					else
+					{
+						applyKey(Key::FIRE);
+					}
+					shootUpdateTime_ = lastUpdate_;
+				}
+				else if (lastUpdate_ > shootUpdateTime_)
+				{
+					if (meleeSecondaryAttack_)
+					{
+						removeKey(Key::SECONDARY_ATTACK);
+					}
+					else
+					{
+						removeKey(Key::FIRE);
+					}
+				}
+			}
+
+			if (duration_cast<Milliseconds>(now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
+			{
 				sendFootSync();
 				lastUpdate_ = now;
 			}
