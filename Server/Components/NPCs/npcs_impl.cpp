@@ -196,7 +196,7 @@ void NPCComponent::emulatePacketIn(INPC& npc, int type, NetworkBitStream& bs)
 
 	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([player, type, &bs](NetworkInEventHandler* handler)
 		{
-			bs.resetReadPointer();
+			bs.SetReadOffset(8); // Ignore packet ID
 			return handler->onReceivePacket(*player, type, bs);
 		});
 
@@ -204,7 +204,7 @@ void NPCComponent::emulatePacketIn(INPC& npc, int type, NetworkBitStream& bs)
 	{
 		npcNetwork.packetInEventDispatcher.stopAtFalse(type, [player, &bs](SingleNetworkInEventHandler* handler)
 			{
-				bs.resetReadPointer();
+				bs.SetReadOffset(8); // Ignore packet ID
 				return handler->onReceive(*player, bs);
 			});
 	}

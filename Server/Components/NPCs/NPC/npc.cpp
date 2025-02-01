@@ -617,6 +617,7 @@ void NPC::sendFootSync()
 	footSync_.Keys = keys;
 	footSync_.Weapon = weapon_;
 
+	bs.writeUINT8(footSync_.PacketID);
 	bs.writeUINT16(footSync_.LeftRight);
 	bs.writeUINT16(footSync_.UpDown);
 	bs.writeUINT16(footSync_.Keys);
