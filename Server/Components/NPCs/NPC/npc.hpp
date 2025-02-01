@@ -123,7 +123,7 @@ public:
 
 	void removeKey(Key key)
 	{
-		keys_ &= key;
+		keys_ &= ~key;
 	}
 
 	void resetKeys()
