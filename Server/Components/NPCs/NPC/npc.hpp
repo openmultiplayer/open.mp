@@ -87,6 +87,10 @@ public:
 
 	bool isMeleeAttacking() const override;
 
+	void setFightingStyle(PlayerFightingStyle style) override;
+
+	PlayerFightingStyle getFightingStyle() const override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();

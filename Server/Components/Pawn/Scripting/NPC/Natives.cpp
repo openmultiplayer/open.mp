@@ -248,3 +248,14 @@ SCRIPT_API(NPC_IsMeleeAttacking, bool(INPC& npc))
 {
 	return npc.isMeleeAttacking();
 }
+
+SCRIPT_API(NPC_SetFightingStyle, bool(INPC& npc, int style))
+{
+	npc.setFightingStyle(PlayerFightingStyle(style));
+	return true;
+}
+
+SCRIPT_API(NPC_GetFightingStyle, int(INPC& npc))
+{
+	return int(npc.getFightingStyle());
+}

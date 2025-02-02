@@ -491,6 +491,23 @@ bool NPC::isMeleeAttacking() const
 	return meleeAttacking_;
 }
 
+void NPC::setFightingStyle(PlayerFightingStyle style)
+{
+	if (player_)
+	{
+		player_->setFightingStyle(style);
+	}
+}
+
+PlayerFightingStyle NPC::getFightingStyle() const
+{
+	if (player_)
+	{
+		return player_->getFightingStyle();
+	}
+	return PlayerFightingStyle_Normal;
+}
+
 void NPC::setWeaponState(PlayerWeaponState state)
 {
 	if (state == PlayerWeaponState_Unknown)
