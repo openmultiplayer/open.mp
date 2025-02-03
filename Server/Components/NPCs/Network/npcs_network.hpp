@@ -6,6 +6,7 @@
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
 
+#pragma once
 #include <sdk.hpp>
 #include <Server/Components/NPCs/npcs.hpp>
 #include <Impl/network_impl.hpp>

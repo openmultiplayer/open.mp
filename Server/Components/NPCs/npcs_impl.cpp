@@ -20,6 +20,13 @@ void NPCComponent::onInit(IComponentList* components)
 	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
+
+	if (components)
+	{
+		vehicles = components->queryComponent<IVehiclesComponent>();
+		objects = components->queryComponent<IObjectsComponent>();
+		actors = components->queryComponent<IActorsComponent>();
+	}
 }
 
 void NPCComponent::free()
@@ -109,11 +116,83 @@ void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part)
 {
-	auto npc = static_cast<NPC*>(get(to.getID()));
-	if (npc->getPlayer()->getID() == to.getID())
+	if (shouldCallCustomEvents)
 	{
-		static_cast<NPC*>(npc)->processDamage(player, amount, weapon, part);
+		auto npc = static_cast<NPC*>(get(to.getID()));
+		if (npc->getPlayer()->getID() == to.getID())
+		{
+			bool eventResult = emulatePlayerGiveDamageToNPCEvent(player, *npc, amount, weapon, part, false);
+			npc->processDamage(&player, amount, weapon, part, eventResult);
+		}
+		shouldCallCustomEvents = false;
 	}
+}
+
+void NPCComponent::onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part)
+{
+	if (shouldCallCustomEvents)
+	{
+		if (from)
+		{
+			auto npc = static_cast<NPC*>(get(from->getID()));
+			if (npc->getPlayer()->getID() == from->getID())
+			{
+				emulatePlayerTakeDamageFromNPCEvent(player, *npc, amount, weapon, part, false);
+			}
+		}
+	}
+}
+
+bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
+{
+	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)
+		{
+			return handler->onNPCTakeDamage(npc, player, amount, weapon, part);
+		});
+
+	if (eventResult && callOriginalEvents)
+	{
+		shouldCallCustomEvents = false;
+
+		// Emulate receiving damage rpc
+		NetworkBitStream bs;
+		bs.writeBIT(false); // Taking
+		bs.writeUINT16(npc.getID());
+		bs.writeFLOAT(amount);
+		bs.writeUINT32(weapon);
+		bs.writeUINT32(int(part));
+		emulateRPCIn(player, NetCode::RPC::OnPlayerGiveTakeDamage::PacketID, bs);
+
+		shouldCallCustomEvents = true;
+	}
+
+	return eventResult;
+}
+
+bool NPCComponent::emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
+{
+	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)
+		{
+			return handler->onNPCGiveDamage(npc, player, amount, weapon, part);
+		});
+
+	if (eventResult && callOriginalEvents)
+	{
+		shouldCallCustomEvents = false;
+
+		// Emulate receiving damage rpc
+		NetworkBitStream bs;
+		bs.writeBIT(true); // Taking
+		bs.writeUINT16(npc.getID());
+		bs.writeFLOAT(amount);
+		bs.writeUINT32(weapon);
+		bs.writeUINT32(int(part));
+		emulateRPCIn(player, NetCode::RPC::OnPlayerGiveTakeDamage::PacketID, bs);
+
+		shouldCallCustomEvents = true;
+	}
+
+	return eventResult;
 }
 
 INPC* NPCComponent::create(StringView name)
@@ -171,41 +250,37 @@ void NPCComponent::destroy(INPC& npc)
 	npcNetwork.disconnect(*npc.getPlayer());
 }
 
-void NPCComponent::emulateRPCIn(INPC& npc, int rpcId, NetworkBitStream& bs)
+void NPCComponent::emulateRPCIn(IPlayer& player, int rpcId, NetworkBitStream& bs)
 {
-	auto player = npc.getPlayer();
-
-	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([player, rpcId, &bs](NetworkInEventHandler* handler)
+	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([&player, rpcId, &bs](NetworkInEventHandler* handler)
 		{
-			return handler->onReceiveRPC(*player, rpcId, bs);
+			return handler->onReceiveRPC(player, rpcId, bs);
 		});
 
 	if (res)
 	{
-		npcNetwork.rpcInEventDispatcher.stopAtFalse(rpcId, [player, &bs](SingleNetworkInEventHandler* handler)
+		npcNetwork.rpcInEventDispatcher.stopAtFalse(rpcId, [&player, &bs](SingleNetworkInEventHandler* handler)
 			{
 				bs.resetReadPointer();
-				return handler->onReceive(*player, bs);
+				return handler->onReceive(player, bs);
 			});
 	}
 }
 
-void NPCComponent::emulatePacketIn(INPC& npc, int type, NetworkBitStream& bs)
+void NPCComponent::emulatePacketIn(IPlayer& player, int type, NetworkBitStream& bs)
 {
-	auto player = npc.getPlayer();
-
-	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([player, type, &bs](NetworkInEventHandler* handler)
+	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([&player, type, &bs](NetworkInEventHandler* handler)
 		{
 			bs.SetReadOffset(8); // Ignore packet ID
-			return handler->onReceivePacket(*player, type, bs);
+			return handler->onReceivePacket(player, type, bs);
 		});
 
 	if (res)
 	{
-		npcNetwork.packetInEventDispatcher.stopAtFalse(type, [player, &bs](SingleNetworkInEventHandler* handler)
+		npcNetwork.packetInEventDispatcher.stopAtFalse(type, [&player, &bs](SingleNetworkInEventHandler* handler)
 			{
 				bs.SetReadOffset(8); // Ignore packet ID
-				return handler->onReceive(*player, bs);
+				return handler->onReceive(player, bs);
 			});
 	}
 }

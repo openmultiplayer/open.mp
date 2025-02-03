@@ -50,12 +50,17 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, ammo_(0)
 	, ammoInClip_(0)
 	, infiniteAmmo_(false)
+	, hasReloading_(false)
 	, reloading_(false)
 	, shooting_(false)
+	, shootDelay_(0)
 	, weaponState_(PlayerWeaponState_Unknown)
-	, lastDamager(nullptr)
-	, lastDamagerWeapon(PlayerWeapon_End)
+	, lastDamager_(nullptr)
+	, lastDamagerWeapon_(PlayerWeapon_End)
 {
+	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
+	weaponAccuracy.fill(1.0f);
+
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
 	// We created a player instance for it, let's keep a handle of it internally
@@ -135,10 +140,10 @@ void NPC::spawn()
 	NetworkBitStream emptyBS;
 
 	requestClassBS.writeUINT16(0);
-	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerRequestClass::PacketID, requestClassBS);
+	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::PlayerRequestClass::PacketID, requestClassBS);
 
-	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
-	npcComponent_->emulateRPCIn(*this, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
+	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
+	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
 
 	// Make sure we resend this again, at spawn
 	player_->setSkin(player_->getSkin());
@@ -151,8 +156,8 @@ void NPC::spawn()
 
 	dead_ = false;
 
-	lastDamager = nullptr;
-	lastDamagerWeapon = PlayerWeapon_End;
+	lastDamager_ = nullptr;
+	lastDamagerWeapon_ = PlayerWeapon_End;
 
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
@@ -491,6 +496,26 @@ bool NPC::isMeleeAttacking() const
 	return meleeAttacking_;
 }
 
+void NPC::enableReloading(bool toggle)
+{
+	hasReloading_ = toggle;
+}
+
+bool NPC::isReloadEnabled() const
+{
+	return hasReloading_;
+}
+
+void NPC::enableInfiniteAmmo(bool enable)
+{
+	infiniteAmmo_ = enable;
+}
+
+bool NPC::isInfiniteAmmoEnabled() const
+{
+	return infiniteAmmo_;
+}
+
 void NPC::setFightingStyle(PlayerFightingStyle style)
 {
 	if (player_)
@@ -661,21 +686,20 @@ void NPC::kill(IPlayer* killer, uint8_t weapon)
 
 	bs.writeUINT8(weapon);
 	bs.writeUINT16(killer ? killer->getID() : INVALID_PLAYER_ID);
-	npcComponent_->emulateRPCIn(*this, NetCode::RPC::OnPlayerDeath::PacketID, bs);
+	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::OnPlayerDeath::PacketID, bs);
 
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCDeath, *this, killer, weapon);
 }
 
-void NPC::processDamage(IPlayer& damagerId, float damage, uint8_t weapon, BodyPart bodyPart)
+void NPC::processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart bodyPart, bool handleHealthAndArmour)
 {
-	// Call the on take damage event
-	auto eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-		{
-			return handler->onNPCTakeDamage(*this, damagerId, weapon, damage, bodyPart);
-		});
+	if (!damager)
+	{
+		return;
+	}
 
 	// Check the returned value
-	if (eventResult)
+	if (handleHealthAndArmour)
 	{
 		// Check the armour
 		if (getArmour() > 0.0f)
@@ -695,9 +719,170 @@ void NPC::processDamage(IPlayer& damagerId, float damage, uint8_t weapon, BodyPa
 			setHealth(getHealth() - damage);
 		}
 	}
+
 	// Save the last damager
-	lastDamager = &damagerId;
-	lastDamagerWeapon = weapon;
+	lastDamager_ = damager;
+	lastDamagerWeapon_ = weapon;
+}
+
+void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags)
+{
+	auto weaponData = WeaponInfo::get(weapon);
+	if (weaponData.type != PlayerWeaponType_Bullet)
+	{
+		return;
+	}
+
+	auto originPoint = getPosition();
+	originPoint += offset;
+
+	PlayerBulletData bulletData;
+	bulletData.weapon = weapon;
+	bulletData.origin = originPoint;
+	bulletData.hitPos = bulletData.offset = endPoint;
+	bulletData.hitID = hitId;
+	bulletData.hitType = hitType;
+
+	if (!isHit)
+	{
+		bulletData.hitID = INVALID_PLAYER_ID; // Using INVALID_PLAYER_ID but it's for all invalid entity IDs
+		bulletData.hitType = PlayerBulletHitType_None;
+	}
+
+	float targetDistance = glm::distance(bulletData.origin, bulletData.hitPos);
+	if (targetDistance > weaponData.range)
+	{
+		bulletData.hitID = INVALID_PLAYER_ID; // Using INVALID_PLAYER_ID but it's for all invalid entity IDs
+		bulletData.hitType = PlayerBulletHitType_None;
+	}
+
+	// If something is in between the origin and the target (we currently don't handle checking beyond the target, even when missing with leftover range)
+	uint8_t closestEntityType = EntityCheckType_None;
+	int playerObjectOwnerId = INVALID_PLAYER_ID;
+	Vector3 hitMapPos = bulletData.hitPos;
+	float range = weaponData.range;
+	Pair<Vector3, Vector3> results = { bulletData.hitPos, bulletData.hitPos };
+	bool eventResult = true;
+
+	// Pass original hit ID to correctly handle missed or out of range shots!
+	void* closestEntity = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos, results);
+
+	bulletData.hitPos = results.first;
+	bulletData.offset = results.second;
+
+	switch (EntityCheckType(closestEntityType))
+	{
+	case EntityCheckType_Player:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Player;
+			auto player = static_cast<IPlayer*>(closestEntity);
+			bulletData.hitID = player->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotPlayer(*this, *player, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_NPC:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Player;
+			auto npc = static_cast<INPC*>(closestEntity);
+			bulletData.hitID = npc->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotNPC(*this, *npc, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_Actor:
+	{
+		bulletData.hitType = PlayerBulletHitType_None;
+		bulletData.hitID = INVALID_PLAYER_ID;
+		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+			{
+				return handler->onNPCShotMissed(*this, bulletData);
+			});
+		break;
+	}
+	case EntityCheckType_Vehicle:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Vehicle;
+			auto vehicle = static_cast<IVehicle*>(closestEntity);
+			bulletData.hitID = vehicle->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_Object:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Object;
+			auto object = static_cast<IObject*>(closestEntity);
+			bulletData.hitID = object->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotObject(*this, *object, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_ProjectOrig:
+	case EntityCheckType_ProjectTarg:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_PlayerObject;
+			auto playerObject = static_cast<IPlayerObject*>(closestEntity);
+			bulletData.hitID = playerObject->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_Map:
+	default:
+	{
+		bulletData.hitType = PlayerBulletHitType_None;
+		bulletData.hitID = INVALID_PLAYER_ID;
+		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+			{
+				return handler->onNPCShotMissed(*this, bulletData);
+			});
+		break;
+	}
+	}
+
+	if (eventResult)
+	{
+		if (bulletData.hitType == PlayerBulletHitType_Player)
+		{
+			auto npc = static_cast<NPC*>(npcComponent_->get(bulletData.hitID));
+			if (npc)
+			{
+				if (!dead_)
+				{
+					bool eventResult = npcComponent_->emulatePlayerGiveDamageToNPCEvent(*player_, *npc, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
+					npc->processDamage(player_, WeaponDamages[bulletData.weapon], bulletData.weapon, BodyPart_Torso, eventResult);
+
+					npcComponent_->emulatePlayerTakeDamageFromNPCEvent(*npc->getPlayer(), *this, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
+				}
+			}
+		}
+	}
 }
 
 void NPC::sendFootSync()
@@ -738,7 +923,7 @@ void NPC::sendFootSync()
 	bs.writeUINT16(footSync_.AnimationID);
 	bs.writeUINT16(footSync_.AnimationFlags);
 
-	npcComponent_->emulatePacketIn(*this, footSync_.PacketID, bs);
+	npcComponent_->emulatePacketIn(*player_, footSync_.PacketID, bs);
 }
 
 void NPC::advance(TimePoint now)
@@ -783,7 +968,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 				}
 
 				// Kill the player
-				kill(lastDamager, lastDamagerWeapon);
+				kill(lastDamager_, lastDamagerWeapon_);
 			}
 
 			if (needsVelocityUpdate_)
@@ -797,29 +982,108 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 				advance(now);
 			}
 
-			if (meleeAttacking_)
+			if (state == PlayerState_OnFoot)
 			{
-				if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
+				if (reloading_)
 				{
-					if (meleeSecondaryAttack_)
+					int weaponSkill = getWeaponSkillLevel(getWeaponSkillID(weapon_));
+					uint32_t reloadTime = getWeaponActualReloadTime(weapon_, weaponSkill);
+					bool reloadFinished = reloadTime != -1 && duration_cast<Milliseconds>(lastUpdate_ - reloadingUpdateTime_) >= Milliseconds(reloadTime);
+
+					if (reloadFinished)
 					{
-						applyKey(Key::SECONDARY_ATTACK);
-					}
-					else
-					{
-						applyKey(Key::FIRE);
-					}
-					shootUpdateTime_ = lastUpdate_;
-				}
-				else if (lastUpdate_ > shootUpdateTime_)
-				{
-					if (meleeSecondaryAttack_)
-					{
-						removeKey(Key::SECONDARY_ATTACK);
+						shootUpdateTime_ = lastUpdate_;
+						reloading_ = false;
+						shooting_ = true;
+						ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, weaponSkill, infiniteAmmo_);
 					}
 					else
 					{
 						removeKey(Key::FIRE);
+						applyKey(Key::AIM);
+					}
+				}
+				else if (shooting_)
+				{
+					if (ammo_ == 0 && !infiniteAmmo_)
+					{
+						shooting_ = false;
+						removeKey(Key::FIRE);
+						applyKey(Key::AIM);
+					}
+					else
+					{
+						int shootTime = getWeaponActualShootTime(weapon_);
+						if (shootTime != -1 && Milliseconds(shootTime) < shootDelay_)
+						{
+							shootTime = shootDelay_.count();
+						}
+
+						Milliseconds lastShootTime = duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_);
+						if (lastShootTime >= shootDelay_)
+						{
+							removeKey(Key::FIRE);
+							applyKey(Key::AIM);
+						}
+
+						if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
+						{
+							if (ammoInClip_ != 0)
+							{
+								auto weaponData = WeaponInfo::get(weapon_);
+								if (weaponData.type == PlayerWeaponType_Bullet)
+								{
+									bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy[weapon_] * 100.0f);
+								}
+
+								applyKey(Key::AIM);
+								applyKey(Key::FIRE);
+
+								if (!infiniteAmmo_)
+								{
+									ammo_--;
+								}
+
+								ammoInClip_--;
+
+								bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
+								if (needsReloading)
+								{
+									reloadingUpdateTime_ = lastUpdate_;
+									reloading_ = true;
+									shooting_ = false;
+								}
+
+								shootUpdateTime_ = lastUpdate_;
+							}
+						}
+					}
+				}
+				else if (meleeAttacking_)
+				{
+					if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
+					{
+						if (meleeSecondaryAttack_)
+						{
+							applyKey(Key::AIM);
+							applyKey(Key::SECONDARY_ATTACK);
+						}
+						else
+						{
+							applyKey(Key::FIRE);
+						}
+						shootUpdateTime_ = lastUpdate_;
+					}
+					else if (lastUpdate_ > shootUpdateTime_)
+					{
+						if (meleeSecondaryAttack_)
+						{
+							removeKey(Key::SECONDARY_ATTACK);
+						}
+						else
+						{
+							removeKey(Key::FIRE);
+						}
 					}
 				}
 			}

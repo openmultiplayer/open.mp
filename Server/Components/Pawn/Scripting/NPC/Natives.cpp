@@ -259,3 +259,47 @@ SCRIPT_API(NPC_GetFightingStyle, int(INPC& npc))
 {
 	return int(npc.getFightingStyle());
 }
+
+SCRIPT_API(NPC_EnableReloading, bool(INPC& npc, bool enable))
+{
+	npc.enableReloading(enable);
+	return true;
+}
+
+SCRIPT_API(NPC_IsReloadEnabled, bool(INPC& npc))
+{
+	return npc.isReloadEnabled();
+}
+
+SCRIPT_API(NPC_EnableInfiniteAmmo, bool(INPC& npc, bool enable))
+{
+	npc.enableInfiniteAmmo(enable);
+	return true;
+}
+
+SCRIPT_API(NPC_IsInfiniteAmmoEnabled, bool(INPC& npc))
+{
+	return npc.isInfiniteAmmoEnabled();
+}
+
+SCRIPT_API(NPC_GetWeaponState, int(INPC& npc))
+{
+	return int(npc.getWeaponState());
+}
+
+SCRIPT_API(NPC_SetAmmoInClip, bool(INPC& npc, int ammo))
+{
+	npc.setAmmoInClip(ammo);
+	return true;
+}
+
+SCRIPT_API(NPC_GetAmmoInClip, int(INPC& npc))
+{
+	return npc.getAmmoInClip();
+}
+
+SCRIPT_API(NPC_Shoot, bool(INPC& npc, uint8_t weapon, int hitId, int hitType, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t checkInBetweenFlags))
+{
+	npc.shoot(hitId, PlayerBulletHitType(hitType), weapon, endPoint, offset, isHit, checkInBetweenFlags);
+	return true;
+}

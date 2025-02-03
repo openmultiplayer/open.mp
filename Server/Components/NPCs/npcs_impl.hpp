@@ -5,8 +5,10 @@
  *
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
-
+#pragma once
 #include <sdk.hpp>
+#include <Server/Components/Actors/actors.hpp>
+
 #include <Server/Components/NPCs/npcs.hpp>
 #include <Impl/pool_impl.hpp>
 #include <Impl/events_impl.hpp>
@@ -63,17 +65,38 @@ public:
 
 	void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) override;
 
+	void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override;
+
 	INPC* create(StringView name) override;
 
 	void destroy(INPC& npc) override;
 
-	void emulateRPCIn(INPC& npc, int rpcId, NetworkBitStream& bs);
+	bool emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 
-	void emulatePacketIn(INPC& npc, int type, NetworkBitStream& bs);
+	bool emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
+
+	void emulateRPCIn(IPlayer& npc, int rpcId, NetworkBitStream& bs);
+
+	void emulatePacketIn(IPlayer& npc, int type, NetworkBitStream& bs);
 
 	ICore* getCore()
 	{
 		return core;
+	}
+
+	IVehiclesComponent* getVehiclesPool()
+	{
+		return vehicles;
+	}
+
+	IObjectsComponent* getObjectsPool()
+	{
+		return objects;
+	}
+
+	IActorsComponent* getActorsPool()
+	{
+		return actors;
 	}
 
 	DefaultEventDispatcher<NPCEventHandler>& getEventDispatcher_internal()
@@ -92,4 +115,10 @@ private:
 	DefaultEventDispatcher<NPCEventHandler> eventDispatcher;
 	MarkedDynamicPoolStorage<NPC, INPC, 0, NPC_POOL_SIZE> storage;
 	int* footSyncRate = nullptr;
+	bool shouldCallCustomEvents = true;
+
+	// Components
+	IVehiclesComponent* vehicles = nullptr;
+	IObjectsComponent* objects = nullptr;
+	IActorsComponent* actors = nullptr;
 };

@@ -75,12 +75,6 @@ public:
 
 	void getKeys(uint16_t& upAndDown, uint16_t& leftAndRight, uint16_t& keys) const override;
 
-	PlayerWeaponState getWeaponState() const override;
-
-	void setAmmoInClip(int ammo) override;
-
-	int getAmmoInClip() const override;
-
 	void meleeAttack(int time, bool secondaryMeleeAttack = false) override;
 
 	void stopMeleeAttack() override;
@@ -91,13 +85,29 @@ public:
 
 	PlayerFightingStyle getFightingStyle() const override;
 
+	void enableReloading(bool toggle) override;
+
+	bool isReloadEnabled() const override;
+
+	void enableInfiniteAmmo(bool toggle) override;
+
+	bool isInfiniteAmmoEnabled() const override;
+
+	PlayerWeaponState getWeaponState() const override;
+
+	void setAmmoInClip(int ammo) override;
+
+	int getAmmoInClip() const override;
+
+	void shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags) override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
 
 	void kill(IPlayer* killer, uint8_t weapon);
 
-	void processDamage(IPlayer& damagerId, float damage, uint8_t weapon, BodyPart bodyPart);
+	void processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart bodyPart, bool handleHealthAndArmour);
 
 	void sendFootSync();
 
@@ -153,7 +163,6 @@ private:
 	bool meleeAttacking_;
 	Milliseconds meleeAttackDelay_;
 	bool meleeSecondaryAttack_;
-	TimePoint shootUpdateTime_;
 
 	// Movements
 	NPCMoveType moveType_;
@@ -171,14 +180,18 @@ private:
 	int ammo_;
 	int ammoInClip_;
 	bool infiniteAmmo_;
+	bool hasReloading_;
 	bool reloading_;
 	TimePoint reloadingUpdateTime_;
 	bool shooting_;
+	TimePoint shootUpdateTime_;
+	Milliseconds shootDelay_;
 	PlayerWeaponState weaponState_;
+	std::array<float, MAX_WEAPON_ID> weaponAccuracy;
 
-	// Damage data
-	IPlayer* lastDamager;
-	uint8_t lastDamagerWeapon;
+	// Damager data
+	IPlayer* lastDamager_;
+	uint8_t lastDamagerWeapon_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;
