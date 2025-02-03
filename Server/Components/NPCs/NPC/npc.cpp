@@ -326,6 +326,11 @@ float NPC::getArmour() const
 	return footSync_.HealthArmour.y;
 }
 
+bool NPC::isDead() const
+{
+	return dead_;
+}
+
 void NPC::setWeapon(uint8_t weapon)
 {
 	auto slot = WeaponSlotData(weapon).slot();

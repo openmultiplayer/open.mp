@@ -59,6 +59,8 @@ public:
 
 	float getArmour() const override;
 
+	bool isDead() const override;
+
 	void setWeapon(uint8_t weapon) override;
 
 	uint8_t getWeapon() const override;

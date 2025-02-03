@@ -180,6 +180,11 @@ SCRIPT_API(NPC_GetArmour, float(INPC& npc))
 	return npc.getArmour();
 }
 
+SCRIPT_API(NPC_IsDead, bool(INPC& npc))
+{
+	return npc.isDead();
+}
+
 SCRIPT_API(NPC_ApplyAnimation, bool(INPC& npc, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
 {
 	const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
