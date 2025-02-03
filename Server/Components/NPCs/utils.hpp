@@ -324,7 +324,8 @@ inline IVehicle* getClosestVehicleInBetween(IVehiclesComponent* vehicles, const 
 
 		// Is the vehicle on the ray
 		if (getDistanceFromRayToPoint(hitOrigin, hitTarget, pos) > MAX_HIT_RADIUS_VEHICLE)
-		{ //Don't use MAX_HIT_RADIUS
+		{
+			// Don't use MAX_HIT_RADIUS
 			continue;
 		}
 
