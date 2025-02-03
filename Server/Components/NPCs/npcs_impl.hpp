@@ -75,9 +75,9 @@ public:
 
 	bool emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 
-	void emulateRPCIn(IPlayer& npc, int rpcId, NetworkBitStream& bs);
+	void emulateRPCIn(IPlayer& player, int rpcId, NetworkBitStream& bs);
 
-	void emulatePacketIn(IPlayer& npc, int type, NetworkBitStream& bs);
+	void emulatePacketIn(IPlayer& player, int type, NetworkBitStream& bs);
 
 	ICore* getCore()
 	{

@@ -873,6 +873,16 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 
 	if (eventResult)
 	{
+		NetworkBitStream bs;
+		bs.writeUINT8(NetCode::Packet::PlayerBulletSync::PacketID);
+		bs.writeUINT8(uint8_t(bulletData.hitType));
+		bs.writeUINT16(bulletData.hitID);
+		bs.writeVEC3(bulletData.origin);
+		bs.writeVEC3(bulletData.hitPos);
+		bs.writeVEC3(bulletData.offset);
+		bs.writeUINT8(bulletData.weapon);
+		npcComponent_->emulatePacketIn(*player_, NetCode::Packet::PlayerBulletSync::PacketID, bs);
+
 		if (bulletData.hitType == PlayerBulletHitType_Player)
 		{
 			auto npc = static_cast<NPC*>(npcComponent_->get(bulletData.hitID));
