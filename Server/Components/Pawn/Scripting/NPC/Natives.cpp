@@ -303,7 +303,7 @@ SCRIPT_API(NPC_GetAmmoInClip, int(INPC& npc))
 	return npc.getAmmoInClip();
 }
 
-SCRIPT_API(NPC_Shoot, bool(INPC& npc, uint8_t weapon, int hitId, int hitType, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t checkInBetweenFlags))
+SCRIPT_API(NPC_Shoot, bool(INPC& npc, uint8_t weapon, int hitId, int hitType, Vector3 endPoint, Vector3 offset, bool isHit, uint8_t checkInBetweenFlags))
 {
 	npc.shoot(hitId, PlayerBulletHitType(hitType), weapon, endPoint, offset, isHit, checkInBetweenFlags);
 	return true;
