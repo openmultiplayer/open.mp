@@ -233,6 +233,7 @@ void NPC::stopMove()
 	moveType_ = NPCMoveType_None;
 	estimatedArrivalTimeMS_ = 0;
 
+	upAndDown_ &= ~Key::UP;
 	removeKey(Key::SPRINT);
 	removeKey(Key::WALK);
 	footSync_.UpDown = 0;
