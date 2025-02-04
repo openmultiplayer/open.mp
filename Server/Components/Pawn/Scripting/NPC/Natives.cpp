@@ -276,6 +276,11 @@ SCRIPT_API(NPC_IsReloadEnabled, bool(INPC& npc))
 	return npc.isReloadEnabled();
 }
 
+SCRIPT_API(NPC_IsReloading, bool(INPC& npc))
+{
+	return npc.isReloading();
+}
+
 SCRIPT_API(NPC_EnableInfiniteAmmo, bool(INPC& npc, bool enable))
 {
 	npc.enableInfiniteAmmo(enable);
@@ -307,4 +312,9 @@ SCRIPT_API(NPC_Shoot, bool(INPC& npc, uint8_t weapon, int hitId, int hitType, Ve
 {
 	npc.shoot(hitId, PlayerBulletHitType(hitType), weapon, endPoint, offset, isHit, checkInBetweenFlags);
 	return true;
+}
+
+SCRIPT_API(NPC_IsShooting, bool(INPC& npc))
+{
+	return npc.isShooting();
 }

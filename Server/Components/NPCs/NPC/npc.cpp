@@ -512,6 +512,11 @@ bool NPC::isReloadEnabled() const
 	return hasReloading_;
 }
 
+bool NPC::isReloading() const
+{
+	return reloading_;
+}
+
 void NPC::enableInfiniteAmmo(bool enable)
 {
 	infiniteAmmo_ = enable;
@@ -538,6 +543,182 @@ PlayerFightingStyle NPC::getFightingStyle() const
 	}
 	return PlayerFightingStyle_Normal;
 }
+
+void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags)
+{
+	auto weaponData = WeaponInfo::get(weapon);
+	if (weaponData.type != PlayerWeaponType_Bullet)
+	{
+		return;
+	}
+
+	auto originPoint = getPosition();
+	originPoint += offset;
+
+	PlayerBulletData bulletData;
+	bulletData.weapon = weapon;
+	bulletData.origin = originPoint;
+	bulletData.hitPos = bulletData.offset = endPoint;
+	bulletData.hitID = hitId;
+	bulletData.hitType = hitType;
+
+	if (!isHit)
+	{
+		bulletData.hitID = INVALID_PLAYER_ID; // Using INVALID_PLAYER_ID but it's for all invalid entity IDs
+		bulletData.hitType = PlayerBulletHitType_None;
+	}
+
+	float targetDistance = glm::distance(bulletData.origin, bulletData.hitPos);
+	if (targetDistance > weaponData.range)
+	{
+		bulletData.hitID = INVALID_PLAYER_ID; // Using INVALID_PLAYER_ID but it's for all invalid entity IDs
+		bulletData.hitType = PlayerBulletHitType_None;
+	}
+
+	// If something is in between the origin and the target (we currently don't handle checking beyond the target, even when missing with leftover range)
+	uint8_t closestEntityType = EntityCheckType_None;
+	int playerObjectOwnerId = INVALID_PLAYER_ID;
+	Vector3 hitMapPos = bulletData.hitPos;
+	float range = weaponData.range;
+	Pair<Vector3, Vector3> results = { bulletData.hitPos, bulletData.hitPos };
+	bool eventResult = true;
+
+	// Pass original hit ID to correctly handle missed or out of range shots!
+	void* closestEntity = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos, results);
+
+	bulletData.hitPos = results.first;
+	bulletData.offset = results.second;
+
+	switch (EntityCheckType(closestEntityType))
+	{
+	case EntityCheckType_Player:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Player;
+			auto player = static_cast<IPlayer*>(closestEntity);
+			bulletData.hitID = player->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotPlayer(*this, *player, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_NPC:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Player;
+			auto npc = static_cast<INPC*>(closestEntity);
+			bulletData.hitID = npc->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotNPC(*this, *npc, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_Actor:
+	{
+		bulletData.hitType = PlayerBulletHitType_None;
+		bulletData.hitID = INVALID_PLAYER_ID;
+		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+			{
+				return handler->onNPCShotMissed(*this, bulletData);
+			});
+		break;
+	}
+	case EntityCheckType_Vehicle:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Vehicle;
+			auto vehicle = static_cast<IVehicle*>(closestEntity);
+			bulletData.hitID = vehicle->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_Object:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_Object;
+			auto object = static_cast<IObject*>(closestEntity);
+			bulletData.hitID = object->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotObject(*this, *object, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_ProjectOrig:
+	case EntityCheckType_ProjectTarg:
+	{
+		if (closestEntity)
+		{
+			bulletData.hitType = PlayerBulletHitType_PlayerObject;
+			auto playerObject = static_cast<IPlayerObject*>(closestEntity);
+			bulletData.hitID = playerObject->getID();
+			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+				{
+					return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
+				});
+		}
+		break;
+	}
+	case EntityCheckType_Map:
+	default:
+	{
+		bulletData.hitType = PlayerBulletHitType_None;
+		bulletData.hitID = INVALID_PLAYER_ID;
+		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+			{
+				return handler->onNPCShotMissed(*this, bulletData);
+			});
+		break;
+	}
+	}
+
+	if (eventResult)
+	{
+		NetworkBitStream bs;
+		bs.writeUINT8(NetCode::Packet::PlayerBulletSync::PacketID);
+		bs.writeUINT8(uint8_t(bulletData.hitType));
+		bs.writeUINT16(bulletData.hitID);
+		bs.writeVEC3(bulletData.origin);
+		bs.writeVEC3(bulletData.hitPos);
+		bs.writeVEC3(bulletData.offset);
+		bs.writeUINT8(bulletData.weapon);
+		npcComponent_->emulatePacketIn(*player_, NetCode::Packet::PlayerBulletSync::PacketID, bs);
+
+		if (bulletData.hitType == PlayerBulletHitType_Player)
+		{
+			auto npc = static_cast<NPC*>(npcComponent_->get(bulletData.hitID));
+			if (npc)
+			{
+				if (!dead_)
+				{
+					bool eventResult = npcComponent_->emulatePlayerGiveDamageToNPCEvent(*player_, *npc, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
+					npc->processDamage(player_, WeaponDamages[bulletData.weapon], bulletData.weapon, BodyPart_Torso, eventResult);
+
+					npcComponent_->emulatePlayerTakeDamageFromNPCEvent(*npc->getPlayer(), *this, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
+				}
+			}
+		}
+	}
+}
+
+bool NPC::isShooting() const
+{
+	return aiming_ && shooting_;
+}
+
 
 void NPC::setWeaponState(PlayerWeaponState state)
 {

@@ -91,6 +91,8 @@ public:
 
 	bool isReloadEnabled() const override;
 
+	bool isReloading() const override;
+
 	void enableInfiniteAmmo(bool toggle) override;
 
 	bool isInfiniteAmmoEnabled() const override;
@@ -102,6 +104,9 @@ public:
 	int getAmmoInClip() const override;
 
 	void shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags) override;
+
+	bool isShooting() const override;
+
 
 	void setWeaponState(PlayerWeaponState state);
 
