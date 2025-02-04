@@ -318,3 +318,31 @@ SCRIPT_API(NPC_IsShooting, bool(INPC& npc))
 {
 	return npc.isShooting();
 }
+
+SCRIPT_API(NPC_AimAt, bool(INPC& npc, Vector3 point, bool shoot, int shootDelay, bool updateAngle, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
+{
+	npc.aimAt(point, shoot, shootDelay, updateAngle, offsetFrom, checkInBetweenFlags);
+	return true;
+}
+
+SCRIPT_API(NPC_AimAtPlayer, bool(INPC& npc, IPlayer& atPlayer, Vector3 point, bool shoot, int shootDelay, bool updateAngle, Vector3 offset, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
+{
+	npc.aimAtPlayer(atPlayer, shoot, shootDelay, updateAngle, offset, offsetFrom, checkInBetweenFlags);
+	return true;
+}
+
+SCRIPT_API(NPC_StopAim, bool(INPC& npc))
+{
+	npc.stopAim();
+	return true;
+}
+
+SCRIPT_API(NPC_IsAiming, bool(INPC& npc))
+{
+	return npc.isAiming();
+}
+
+SCRIPT_API(NPC_IsAimingAtPlayer, bool(INPC& npc, IPlayer& atPlayer))
+{
+	return npc.isAimingAtPlayer(atPlayer);
+}
