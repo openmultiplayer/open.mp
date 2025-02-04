@@ -55,6 +55,14 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, shooting_(false)
 	, shootDelay_(0)
 	, weaponState_(PlayerWeaponState_Unknown)
+	, aiming_(false)
+	, aimAt_({ 0.0f, 0.0f, 0.0f })
+	, aimOffsetFrom_({ 0.0f, 0.0f, 0.0f })
+	, aimOffset_({ 0.0f, 0.0f, 0.0f })
+	, updateAimAngle_(false)
+	, betweenCheckFlags_(0)
+	, hitId_(0)
+	, hitType_(PlayerBulletHitType_None)
 	, lastDamager_(nullptr)
 	, lastDamagerWeapon_(PlayerWeapon_End)
 {
@@ -67,7 +75,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	player_ = playerPtr;
 
 	// Initial entity values
-	Vector3 initialPosition = { 0.0f, 0.0f, 3.5f };
+	Vector3 initialPosition = position_ = { 0.0f, 0.0f, 3.5f };
 	GTAQuat initialRotation = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
 
 	// Initial values for foot sync values
@@ -90,12 +98,12 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 
 Vector3 NPC::getPosition() const
 {
-	return player_->getPosition();
+	return position_;
 }
 
 void NPC::setPosition(Vector3 pos)
 {
-	footSync_.Position = pos;
+	position_ = pos;
 
 	// Let it update for all players and internally in open.mp
 	sendFootSync();
@@ -167,6 +175,11 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	if (moveType == NPCMoveType_None)
 	{
 		return false;
+	}
+
+	if (moveType == NPCMoveType_Sprint && aiming_)
+	{
+		stopAim();
 	}
 
 	// Set up everything to start moving in next tick
@@ -719,6 +732,94 @@ bool NPC::isShooting() const
 	return aiming_ && shooting_;
 }
 
+void NPC::aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle, const Vector3& offsetFrom, uint8_t betweenCheckFlags)
+{
+	if (moving_ && moveType_ == NPCMoveType_Sprint)
+	{
+		return;
+	}
+
+	// Set the aiming flag
+	if (!aiming_)
+	{
+		// Get the shooting start tick
+		shootUpdateTime_ = lastUpdate_;
+		reloading_ = false;
+	}
+
+	// Update aiming data
+	aimOffsetFrom_ = offsetFrom;
+	updateAimData(point, setAngle);
+
+	// Set keys
+	if (!aiming_)
+	{
+		aiming_ = true;
+		applyKey(Key::AIM);
+	}
+
+	// Set the shoot delay
+	auto updateRate = npcComponent_->getGeneralNPCUpdateRate();
+	if (shootDelay <= updateRate)
+	{
+		shootDelay_ = Milliseconds(updateRate + 5);
+	}
+	else
+	{
+		shootDelay_ = Milliseconds(shootDelay);
+	}
+
+	// Set the shooting flag
+	shooting_ = shoot;
+
+	// Set the inBetween mode and flags
+	betweenCheckFlags_ = betweenCheckFlags;
+}
+
+void NPC::aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAngle, const Vector3& offset, const Vector3& offsetFrom, uint8_t betweenCheckFlags)
+{
+	aimAt(atPlayer.getPosition() + offset, shoot, shootDelay, setAngle, offsetFrom, betweenCheckFlags);
+	hitId_ = atPlayer.getID();
+	hitType_ = PlayerBulletHitType_Player;
+	aimOffset_ = offset;
+}
+
+void NPC::stopAim()
+{
+	// Make sure the player is aiming
+	if (!aiming_)
+	{
+		return;
+	}
+
+	if (reloading_)
+	{
+		ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
+	}
+
+	// Reset aiming flags
+	aiming_ = false;
+	reloading_ = false;
+	shooting_ = false;
+	hitId_ = INVALID_PLAYER_ID;
+	hitType_ = PlayerBulletHitType_None;
+	updateAimAngle_ = false;
+	betweenCheckFlags_ = EntityCheckType_None;
+
+	// Reset keys
+	removeKey(Key::AIM);
+	removeKey(Key::FIRE);
+}
+
+bool NPC::isAiming() const
+{
+	return aiming_;
+}
+
+bool NPC::isAimingAtPlayer(IPlayer& player) const
+{
+	return aiming_ && hitType_ == PlayerBulletHitType_Player && hitId_ == player.getID();
+}
 
 void NPC::setWeaponState(PlayerWeaponState state)
 {
@@ -912,174 +1013,58 @@ void NPC::processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart
 	lastDamagerWeapon_ = weapon;
 }
 
-void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags)
+void NPC::updateAimData(const Vector3& point, bool setAngle)
 {
-	auto weaponData = WeaponInfo::get(weapon);
-	if (weaponData.type != PlayerWeaponType_Bullet)
+	// Adjust the player position
+	auto camPosition = getPosition() + aimOffsetFrom_;
+
+	// Get the aiming distance
+	auto camFronVector = point - camPosition;
+
+	// Get the distance to the destination point
+	float distance = glm::distance(camPosition, point);
+
+	// Calculate the aiming Z angle
+	float xyLength = glm::length(glm::vec2(camFronVector.x, camFronVector.y)); // XY-plane distance
+	float totalLength = glm::length(camFronVector); // 3D distance
+
+	float aimZ = xyLength / totalLength;
+	if (aimZ > 1.0f)
 	{
-		return;
+		aimZ = 1.0f;
+	}
+	else if (aimZ < -1.0f)
+	{
+		aimZ = -1.0f;
 	}
 
-	auto originPoint = getPosition();
-	originPoint += offset;
-
-	PlayerBulletData bulletData;
-	bulletData.weapon = weapon;
-	bulletData.origin = originPoint;
-	bulletData.hitPos = bulletData.offset = endPoint;
-	bulletData.hitID = hitId;
-	bulletData.hitType = hitType;
-
-	if (!isHit)
+	if (camFronVector.z < 0.0f)
 	{
-		bulletData.hitID = INVALID_PLAYER_ID; // Using INVALID_PLAYER_ID but it's for all invalid entity IDs
-		bulletData.hitType = PlayerBulletHitType_None;
+		aimZ = glm::acos(aimZ);
+	}
+	else
+	{
+		aimZ = -glm::acos(aimZ);
 	}
 
-	float targetDistance = glm::distance(bulletData.origin, bulletData.hitPos);
-	if (targetDistance > weaponData.range)
+	// Get the destination angle
+	auto unitVec = camFronVector / distance;
+
+	if (setAngle)
 	{
-		bulletData.hitID = INVALID_PLAYER_ID; // Using INVALID_PLAYER_ID but it's for all invalid entity IDs
-		bulletData.hitType = PlayerBulletHitType_None;
+		auto rotation = getRotation().ToEuler();
+		rotation.z = glm::degrees(glm::atan(unitVec.y, unitVec.x));
+		setRotation(rotation);
 	}
 
-	// If something is in between the origin and the target (we currently don't handle checking beyond the target, even when missing with leftover range)
-	uint8_t closestEntityType = EntityCheckType_None;
-	int playerObjectOwnerId = INVALID_PLAYER_ID;
-	Vector3 hitMapPos = bulletData.hitPos;
-	float range = weaponData.range;
-	Pair<Vector3, Vector3> results = { bulletData.hitPos, bulletData.hitPos };
-	bool eventResult = true;
+	// Set the aim sync data
+	aimSync_.AimZ = aimZ;
+	aimSync_.CamFrontVector = camFronVector;
+	aimSync_.CamPos = camPosition;
 
-	// Pass original hit ID to correctly handle missed or out of range shots!
-	void* closestEntity = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos, results);
-
-	bulletData.hitPos = results.first;
-	bulletData.offset = results.second;
-
-	switch (EntityCheckType(closestEntityType))
-	{
-	case EntityCheckType_Player:
-	{
-		if (closestEntity)
-		{
-			bulletData.hitType = PlayerBulletHitType_Player;
-			auto player = static_cast<IPlayer*>(closestEntity);
-			bulletData.hitID = player->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotPlayer(*this, *player, bulletData);
-				});
-		}
-		break;
-	}
-	case EntityCheckType_NPC:
-	{
-		if (closestEntity)
-		{
-			bulletData.hitType = PlayerBulletHitType_Player;
-			auto npc = static_cast<INPC*>(closestEntity);
-			bulletData.hitID = npc->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotNPC(*this, *npc, bulletData);
-				});
-		}
-		break;
-	}
-	case EntityCheckType_Actor:
-	{
-		bulletData.hitType = PlayerBulletHitType_None;
-		bulletData.hitID = INVALID_PLAYER_ID;
-		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-			{
-				return handler->onNPCShotMissed(*this, bulletData);
-			});
-		break;
-	}
-	case EntityCheckType_Vehicle:
-	{
-		if (closestEntity)
-		{
-			bulletData.hitType = PlayerBulletHitType_Vehicle;
-			auto vehicle = static_cast<IVehicle*>(closestEntity);
-			bulletData.hitID = vehicle->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
-				});
-		}
-		break;
-	}
-	case EntityCheckType_Object:
-	{
-		if (closestEntity)
-		{
-			bulletData.hitType = PlayerBulletHitType_Object;
-			auto object = static_cast<IObject*>(closestEntity);
-			bulletData.hitID = object->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotObject(*this, *object, bulletData);
-				});
-		}
-		break;
-	}
-	case EntityCheckType_ProjectOrig:
-	case EntityCheckType_ProjectTarg:
-	{
-		if (closestEntity)
-		{
-			bulletData.hitType = PlayerBulletHitType_PlayerObject;
-			auto playerObject = static_cast<IPlayerObject*>(closestEntity);
-			bulletData.hitID = playerObject->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
-				});
-		}
-		break;
-	}
-	case EntityCheckType_Map:
-	default:
-	{
-		bulletData.hitType = PlayerBulletHitType_None;
-		bulletData.hitID = INVALID_PLAYER_ID;
-		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-			{
-				return handler->onNPCShotMissed(*this, bulletData);
-			});
-		break;
-	}
-	}
-
-	if (eventResult)
-	{
-		NetworkBitStream bs;
-		bs.writeUINT8(NetCode::Packet::PlayerBulletSync::PacketID);
-		bs.writeUINT8(uint8_t(bulletData.hitType));
-		bs.writeUINT16(bulletData.hitID);
-		bs.writeVEC3(bulletData.origin);
-		bs.writeVEC3(bulletData.hitPos);
-		bs.writeVEC3(bulletData.offset);
-		bs.writeUINT8(bulletData.weapon);
-		npcComponent_->emulatePacketIn(*player_, NetCode::Packet::PlayerBulletSync::PacketID, bs);
-
-		if (bulletData.hitType == PlayerBulletHitType_Player)
-		{
-			auto npc = static_cast<NPC*>(npcComponent_->get(bulletData.hitID));
-			if (npc)
-			{
-				if (!dead_)
-				{
-					bool eventResult = npcComponent_->emulatePlayerGiveDamageToNPCEvent(*player_, *npc, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
-					npc->processDamage(player_, WeaponDamages[bulletData.weapon], bulletData.weapon, BodyPart_Torso, eventResult);
-
-					npcComponent_->emulatePlayerTakeDamageFromNPCEvent(*npc->getPlayer(), *this, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
-				}
-			}
-		}
-	}
+	// set the flags
+	aimAt_ = point;
+	updateAimAngle_ = setAngle;
 }
 
 void NPC::sendFootSync()
@@ -1099,6 +1084,7 @@ void NPC::sendFootSync()
 
 	getKeys(upAndDown, leftAndDown, keys);
 
+	footSync_.Position = position_;
 	footSync_.LeftRight = leftAndDown;
 	footSync_.UpDown = upAndDown;
 	footSync_.Keys = keys;
@@ -1141,7 +1127,7 @@ void NPC::advance(TimePoint now)
 
 		position += travelled;
 		footSync_.Velocity = velocity_;
-		footSync_.Position = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
+		position_ = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
 	}
 
 	lastMove_ = Time::now();
@@ -1181,6 +1167,26 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 			if (state == PlayerState_OnFoot)
 			{
+				if (aiming_)
+				{
+					auto player = npcComponent_->getCore()->getPlayers().get(hitId_);
+					if (player && hitType_ == PlayerBulletHitType_Player)
+					{
+						if (isAimingAtPlayer(*player))
+						{
+							auto point = player->getPosition() + aimOffset_;
+							if (aimAt_ != point)
+							{
+								updateAimData(point, updateAimAngle_);
+							}
+						}
+					}
+					else
+					{
+						stopAim();
+					}
+				}
+
 				if (reloading_)
 				{
 					int weaponSkill = getWeaponSkillLevel(getWeaponSkillID(weapon_));
@@ -1231,6 +1237,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 								if (weaponData.type == PlayerWeaponType_Bullet)
 								{
 									bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy[weapon_] * 100.0f);
+									shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
 								}
 
 								applyKey(Key::AIM);
@@ -1285,11 +1292,13 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 				}
 			}
 
-			if (duration_cast<Milliseconds>(now - lastUpdate_).count() > npcComponent_->getFootSyncRate())
+			if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
 			{
 				sendFootSync();
-				lastUpdate_ = now;
+				lastFootSyncUpdate_ = now;
 			}
+
+			lastUpdate_ = now;
 		}
 	}
 }

@@ -107,6 +107,15 @@ public:
 
 	bool isShooting() const override;
 
+	void aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle, const Vector3& offsetFrom, uint8_t betweenCheckFlags) override;
+
+	void aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAngle, const Vector3& offset, const Vector3& offsetFrom, uint8_t betweenCheckFlags) override;
+
+	void stopAim() override;
+
+	bool isAiming() const override;
+
+	bool isAimingAtPlayer(IPlayer& player) const override;
 
 	void setWeaponState(PlayerWeaponState state);
 
@@ -115,6 +124,8 @@ public:
 	void kill(IPlayer* killer, uint8_t weapon);
 
 	void processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart bodyPart, bool handleHealthAndArmour);
+
+	void updateAimData(const Vector3& point, bool setAngle);
 
 	void sendFootSync();
 
@@ -158,6 +169,7 @@ private:
 	// The NPC's player pointer.
 	IPlayer* player_;
 	TimePoint lastUpdate_;
+	TimePoint lastFootSyncUpdate_;
 
 	// General data
 	int skin_;
@@ -165,6 +177,8 @@ private:
 	uint16_t keys_;
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
+	Vector3 position_;
+
 
 	// Attack data
 	bool meleeAttacking_;
@@ -196,6 +210,19 @@ private:
 	PlayerWeaponState weaponState_;
 	std::array<float, MAX_WEAPON_ID> weaponAccuracy;
 
+	// Aim data
+	bool aiming_;
+	Vector3 aimAt_;
+	Vector3 aimOffsetFrom_;
+	Vector3 aimOffset_;
+	bool updateAimAngle_;
+
+	// Weapon raycast/shot checks data
+	int betweenCheckFlags_;
+	int hitId_;
+	PlayerBulletHitType hitType_;
+
+
 	// Damager data
 	IPlayer* lastDamager_;
 	uint8_t lastDamagerWeapon_;
@@ -204,6 +231,7 @@ private:
 	NetCode::Packet::PlayerFootSync footSync_;
 	NetCode::Packet::PlayerVehicleSync driverSync_;
 	NetCode::Packet::PlayerPassengerSync passengerSync_;
+	NetCode::Packet::PlayerAimSync aimSync_;
 
 	NPCComponent* npcComponent_;
 };
