@@ -179,7 +179,6 @@ private:
 	uint16_t leftAndRight_;
 	Vector3 position_;
 
-
 	// Attack data
 	bool meleeAttacking_;
 	Milliseconds meleeAttackDelay_;
@@ -221,7 +220,6 @@ private:
 	int betweenCheckFlags_;
 	int hitId_;
 	PlayerBulletHitType hitType_;
-
 
 	// Damager data
 	IPlayer* lastDamager_;
