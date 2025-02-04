@@ -109,13 +109,41 @@ public:
 		return *footSyncRate;
 	}
 
+	int getGeneralNPCUpdateRate() const
+	{
+		return *generalNPCUpdateRateMS;
+	}
+
+	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
+	{
+		int defaultGeneralNPCUpdateRateMS = 50;
+		if (defaults)
+		{
+			config.setInt("npc.globalUpdareRate", defaultGeneralNPCUpdateRateMS);
+		}
+		else
+		{
+			// Set default values if options are not set.
+			if (config.getType("npc.globalUpdareRate") == ConfigOptionType_None)
+			{
+				config.setInt("npc.globalUpdareRate", defaultGeneralNPCUpdateRateMS);
+			}
+		}
+
+		generalNPCUpdateRateMS = config.getInt("npc.globalUpdareRate");
+	}
+
 private:
 	ICore* core = nullptr;
 	NPCNetwork npcNetwork;
 	DefaultEventDispatcher<NPCEventHandler> eventDispatcher;
 	MarkedDynamicPoolStorage<NPC, INPC, 0, NPC_POOL_SIZE> storage;
-	int* footSyncRate = nullptr;
 	bool shouldCallCustomEvents = true;
+	TimePoint lastUpdate;
+
+	// Update rates
+	int* generalNPCUpdateRateMS = nullptr;
+	int* footSyncRate = nullptr;
 
 	// Components
 	IVehiclesComponent* vehicles = nullptr;
