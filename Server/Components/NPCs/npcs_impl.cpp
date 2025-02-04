@@ -215,6 +215,7 @@ INPC* NPCComponent::create(StringView name)
 	PeerNetworkData data;
 	data.network = getNetwork();
 	data.networkID.address.v4 = 16777343; // Set ipv4 to 127.0.0.1
+	data.networkID.address.ipv6 = false;
 	data.networkID.port = port; // Set our randomly generated port
 
 	PeerRequestParams request;
