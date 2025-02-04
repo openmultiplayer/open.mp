@@ -118,6 +118,8 @@ void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 	{
 		static_cast<NPC*>(npc)->tick(elapsed, now);
 	}
+
+	lastUpdate = now;
 }
 
 void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part)

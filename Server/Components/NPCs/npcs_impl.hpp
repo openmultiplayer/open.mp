@@ -119,18 +119,18 @@ public:
 		int defaultGeneralNPCUpdateRateMS = 50;
 		if (defaults)
 		{
-			config.setInt("npc.globalUpdareRate", defaultGeneralNPCUpdateRateMS);
+			config.setInt("npc.globalUpdateRate", defaultGeneralNPCUpdateRateMS);
 		}
 		else
 		{
 			// Set default values if options are not set.
-			if (config.getType("npc.globalUpdareRate") == ConfigOptionType_None)
+			if (config.getType("npc.globalUpdateRate") == ConfigOptionType_None)
 			{
-				config.setInt("npc.globalUpdareRate", defaultGeneralNPCUpdateRateMS);
+				config.setInt("npc.globalUpdateRate", defaultGeneralNPCUpdateRateMS);
 			}
 		}
 
-		generalNPCUpdateRateMS = config.getInt("npc.globalUpdareRate");
+		generalNPCUpdateRateMS = config.getInt("npc.globalUpdateRate");
 	}
 
 private:
