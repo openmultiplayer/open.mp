@@ -49,4 +49,9 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCDeath", DefaultReturnValue_True, npc.getID(), killer ? killer->getID() : INVALID_PLAYER_ID, reason);
 	}
+
+	void onNPCSpawn(INPC& npc) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCSpawn", DefaultReturnValue_True, npc.getID());
+	}
 };
