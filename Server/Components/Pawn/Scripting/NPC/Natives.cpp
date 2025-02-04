@@ -325,7 +325,7 @@ SCRIPT_API(NPC_AimAt, bool(INPC& npc, Vector3 point, bool shoot, int shootDelay,
 	return true;
 }
 
-SCRIPT_API(NPC_AimAtPlayer, bool(INPC& npc, IPlayer& atPlayer, Vector3 point, bool shoot, int shootDelay, bool updateAngle, Vector3 offset, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
+SCRIPT_API(NPC_AimAtPlayer, bool(INPC& npc, IPlayer& atPlayer, bool shoot, int shootDelay, bool updateAngle, Vector3 offset, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
 {
 	npc.aimAtPlayer(atPlayer, shoot, shootDelay, updateAngle, offset, offsetFrom, checkInBetweenFlags);
 	return true;
