@@ -170,7 +170,7 @@ void NPC::spawn()
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
 
-bool NPC::move(Vector3 pos, NPCMoveType moveType)
+bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 {
 	if (moveType == NPCMoveType_None)
 	{
@@ -187,19 +187,49 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	float distance = glm::distance(position, pos);
 
 	// Determine which speed to use based on moving type
-	float speed = 0.0f;
-	if (moveType == NPCMoveType_Sprint)
+	float moveSpeed_ = 0.0f;
+	moveType_ = moveType;
+
+	if (isEqualFloat(moveSpeed, NPC_MOVE_SPEED_AUTO))
 	{
-		speed = NPC_MOVE_SPEED_SPRINT;
-		applyKey(Key::SPRINT);
-	}
-	else if (moveType == NPCMoveType_Jog)
-	{
-		speed = NPC_MOVE_SPEED_JOG;
+		if (moveType_ == NPCMoveType_Sprint)
+		{
+			moveSpeed_ = NPC_MOVE_SPEED_SPRINT;
+		}
+		else if (moveType_ == NPCMoveType_Jog)
+		{
+			moveSpeed_ = NPC_MOVE_SPEED_JOG;
+		}
+		else
+		{
+			moveSpeed_ = NPC_MOVE_SPEED_WALK;
+		}
 	}
 	else
 	{
-		speed = NPC_MOVE_SPEED_WALK;
+		DynamicArray<float> speedValues = { NPC_MOVE_SPEED_WALK, NPC_MOVE_SPEED_JOG, NPC_MOVE_SPEED_SPRINT };
+		float nearestSpeed = getNearestFloatValue(moveSpeed_, speedValues);
+
+		if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_SPRINT))
+		{
+			moveType_ = NPCMoveType_Sprint;
+		}
+		else if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_JOG))
+		{
+			moveType_ = NPCMoveType_Jog;
+		}
+		else if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_WALK))
+		{
+			moveType_ = NPCMoveType_Walk;
+		}
+	}
+
+	if (moveType == NPCMoveType_Sprint)
+	{
+		applyKey(Key::SPRINT);
+	}
+	else if (moveType == NPCMoveType_Walk)
+	{
 		applyKey(Key::WALK);
 	}
 
@@ -217,7 +247,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	footSync_.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 	// Calculate velocity to use on tick
-	velocity_ = front * (speed / 100.0f);
+	velocity_ = front * (moveSpeed_ / 100.0f);
 
 	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
 	{
@@ -229,7 +259,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType)
 	}
 
 	// Set internal variables
-	moveSpeed_ = speed;
+	moveSpeed_ = moveSpeed_;
 	targetPosition_ = pos;
 	moving_ = true;
 	moveType_ = moveType;

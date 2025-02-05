@@ -569,3 +569,23 @@ inline void* getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOri
 
 	return closestEntity;
 }
+
+inline float getNearestFloatValue(float value, const DynamicArray<float>& floatArray)
+{
+	float nearest = floatArray[0];
+
+	for (auto f : floatArray)
+	{
+		if (std::abs(f - value) < std::abs(nearest - value))
+		{
+			nearest = f;
+		}
+	}
+
+	return nearest;
+}
+
+inline bool isEqualFloat(float a, float b)
+{
+	return glm::epsilonEqual(a, b, glm::epsilon<float>());
+}

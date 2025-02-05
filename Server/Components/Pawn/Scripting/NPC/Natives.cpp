@@ -92,9 +92,9 @@ SCRIPT_API(NPC_GetVirtualWorld, int(INPC& npc))
 	return npc.getVirtualWorld();
 }
 
-SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType))
+SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType, float moveSpeed))
 {
-	return npc.move(targetPos, NPCMoveType(moveType));
+	return npc.move(targetPos, NPCMoveType(moveType), moveSpeed);
 }
 
 SCRIPT_API(NPC_StopMove, bool(INPC& npc))
