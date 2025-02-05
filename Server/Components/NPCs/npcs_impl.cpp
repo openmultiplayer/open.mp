@@ -127,7 +127,7 @@ void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount
 	if (shouldCallCustomEvents)
 	{
 		auto npc = static_cast<NPC*>(get(to.getID()));
-		if (npc->getPlayer()->getID() == to.getID())
+		if (npc && npc->getPlayer()->getID() == to.getID())
 		{
 			bool eventResult = emulatePlayerGiveDamageToNPCEvent(player, *npc, amount, weapon, part, false);
 			npc->processDamage(&player, amount, weapon, part, eventResult);
@@ -143,7 +143,7 @@ void NPCComponent::onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amou
 		if (from)
 		{
 			auto npc = static_cast<NPC*>(get(from->getID()));
-			if (npc->getPlayer()->getID() == from->getID())
+			if (npc && npc->getPlayer()->getID() == from->getID())
 			{
 				emulatePlayerTakeDamageFromNPCEvent(player, *npc, amount, weapon, part, false);
 			}
