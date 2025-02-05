@@ -821,6 +821,27 @@ bool NPC::isAimingAtPlayer(IPlayer& player) const
 	return aiming_ && hitType_ == PlayerBulletHitType_Player && hitId_ == player.getID();
 }
 
+void NPC::setWeaponAccuracy(uint8_t weapon, float accuracy)
+{
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() != INVALID_WEAPON_SLOT && weapon < weaponAccuracy.size())
+	{
+		weaponAccuracy[weapon] = accuracy;
+	}
+}
+
+float NPC::getWeaponAccuracy(uint8_t weapon) const
+{
+	float ret = 0.0f;
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() != INVALID_WEAPON_SLOT && weapon < weaponAccuracy.size())
+	{
+		ret = weaponAccuracy[weapon];
+	}
+
+	return ret;
+}
+
 void NPC::setWeaponState(PlayerWeaponState state)
 {
 	if (state == PlayerWeaponState_Unknown)

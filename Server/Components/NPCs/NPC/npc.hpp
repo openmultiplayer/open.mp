@@ -117,6 +117,10 @@ public:
 
 	bool isAimingAtPlayer(IPlayer& player) const override;
 
+	void setWeaponAccuracy(uint8_t weapon, float accuracy) override;
+
+	float getWeaponAccuracy(uint8_t weapon) const override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();

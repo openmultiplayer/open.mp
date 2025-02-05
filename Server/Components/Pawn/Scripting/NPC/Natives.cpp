@@ -346,3 +346,14 @@ SCRIPT_API(NPC_IsAimingAtPlayer, bool(INPC& npc, IPlayer& atPlayer))
 {
 	return npc.isAimingAtPlayer(atPlayer);
 }
+
+SCRIPT_API(NPC_SetWeaponAccuracy, bool(INPC& npc, int weapon, float accuracy))
+{
+	npc.setWeaponAccuracy(weapon, accuracy);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponAccuracy, float(INPC& npc, int weapon))
+{
+	return npc.getWeaponAccuracy(weapon);
+}
