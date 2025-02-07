@@ -70,6 +70,16 @@ cmake -DCMAKE_BUILD_TYPE=Release ..
 make
 ```
 
+## Building on Linux (with Docker)
 
+Replace `/home/user/open.mp` with your actual path in the last command `docker run`
 
+```bash
+cd open.mp
+mkdir build
+cd docker/build_ubuntu-18.04
+docker build -t openmp .
+docker run --rm -ti -v /home/user/open.mp:/omp -w /omp openmp
+```
 
+After that, in `./open.mp/build/Output/Release/Server`, you will find the `omp-server` file and the `components/` folder.
