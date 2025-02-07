@@ -121,6 +121,10 @@ public:
 
 	float getWeaponAccuracy(uint8_t weapon) const override;
 
+	void enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType) override;
+
+	void exitVehicle() override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -228,6 +232,13 @@ private:
 	// Damager data
 	IPlayer* lastDamager_;
 	uint8_t lastDamagerWeapon_;
+
+	// Vehicle data
+	IVehicle* vehicleToEnter_;
+	int vehicleSeatToEnter_;
+	bool enteringVehicle_;
+	bool jackingVehicle_;
+	TimePoint vehicleEnterExitUpdateTime_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;

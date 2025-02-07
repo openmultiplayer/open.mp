@@ -1,6 +1,7 @@
 #pragma once
 #include <sdk.hpp>
 #include "npcs_impl.hpp"
+#include <Server/Components/Vehicles/vehicle_models.hpp>
 
 #define MAX_HIT_RADIUS 0.4f
 #define MAX_HIT_RADIUS_VEHICLE 1.0f
@@ -588,4 +589,51 @@ inline float getNearestFloatValue(float value, const DynamicArray<float>& floatA
 inline bool isEqualFloat(float a, float b)
 {
 	return glm::epsilonEqual(a, b, glm::epsilon<float>());
+}
+
+inline float getAngleOfLine(float x, float y)
+{
+	float angle = atan2(y, x) * (180.0f / M_PI) + 270.0f;
+	if (angle >= 360.0f)
+	{
+		angle -= 360.0f;
+	}
+	else if (angle < 0.0f)
+	{
+		angle += 360.0f;
+	}
+	return angle;
+}
+
+inline Vector3 getVehicleSeatPos(IVehicle& vehicle, int seatId)
+{
+	// Get the seat position
+	Vector3 seatPosFromModelInfo;
+
+	if (seatId == 0 || seatId == 1)
+	{
+		Impl::getVehicleModelInfo(vehicle.getModel(), VehicleModelInfo_FrontSeat, seatPosFromModelInfo);
+	}
+	else
+	{
+		Impl::getVehicleModelInfo(vehicle.getModel(), VehicleModelInfo_RearSeat, seatPosFromModelInfo);
+	}
+
+	// Adjust the seat vector
+	Vector3 seatPosNoAngle(seatPosFromModelInfo.x + 1.3f, seatPosFromModelInfo.y - 0.6f, seatPosFromModelInfo.z);
+
+	if (seatId == 0 || seatId == 2)
+	{
+		seatPosNoAngle.x = -seatPosNoAngle.x;
+	}
+
+	// Get vehicle angle
+	float angle = vehicle.getZAngle();
+	float _angle = angle * 0.01570796326794897f;
+
+	Vector3 seatPos(seatPosNoAngle.x * cos(_angle) - seatPosNoAngle.y * sin(_angle),
+		seatPosNoAngle.x * sin(_angle) + seatPosNoAngle.y * cos(_angle),
+		seatPosNoAngle.z);
+
+	return seatPos + vehicle.getPosition();
 }

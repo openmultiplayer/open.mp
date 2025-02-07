@@ -12,23 +12,7 @@
 #include <math.h>
 #include "../npcs_impl.hpp"
 #include "../utils.hpp"
-
-namespace utils
-{
-float getAngleOfLine(float x, float y)
-{
-	float angle = atan2(y, x) * (180.0f / M_PI) + 270.0f;
-	if (angle >= 360.0f)
-	{
-		angle -= 360.0f;
-	}
-	else if (angle < 0.0f)
-	{
-		angle += 360.0f;
-	}
-	return angle;
-}
-}
+#include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	: skin_(0)
@@ -65,6 +49,10 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, hitType_(PlayerBulletHitType_None)
 	, lastDamager_(nullptr)
 	, lastDamagerWeapon_(PlayerWeapon_End)
+	, vehicleToEnter_(nullptr)
+	, vehicleSeatToEnter_(SEAT_NONE)
+	, enteringVehicle_(false)
+	, jackingVehicle_(false)
 {
 	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
 	weaponAccuracy.fill(1.0f);
@@ -243,7 +231,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	}
 
 	auto rotation = getRotation().ToEuler();
-	rotation.z = utils::getAngleOfLine(front.x, front.y);
+	rotation.z = getAngleOfLine(front.x, front.y);
 	footSync_.Rotation = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 	// Calculate velocity to use on tick
@@ -259,7 +247,6 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	}
 
 	// Set internal variables
-	moveSpeed_ = moveSpeed_;
 	targetPosition_ = pos;
 	moving_ = true;
 	moveType_ = moveType;
@@ -870,6 +857,100 @@ float NPC::getWeaponAccuracy(uint8_t weapon) const
 	}
 
 	return ret;
+}
+
+void NPC::enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType)
+{
+	if (player_->getState() != PlayerState_OnFoot)
+	{
+		return;
+	}
+
+	if (int(moveType) > int(NPCMoveType_Sprint) || int(moveType) < int(NPCMoveType_Walk))
+	{
+		moveType = NPCMoveType_Jog;
+	}
+
+	int passengerSeats = Impl::getVehiclePassengerSeats(vehicle.getModel());
+	if (passengerSeats == 0xFF || seatId < 1 || seatId > passengerSeats)
+	{
+		return;
+	}
+
+	auto destination = getVehicleSeatPos(vehicle, seatId);
+	float distance = glm::distance(getPosition(), destination);
+	if (distance > MAX_DISTANCE_TO_ENTER_VEHICLE)
+	{
+		return;
+	}
+
+	// Save the entering stats
+	vehicleToEnter_ = &vehicle;
+	vehicleSeatToEnter_ = seatId;
+
+	// Check distance
+	if (distance < MIN_VEHICLE_GO_TO_DISTANCE)
+	{
+		// Wait until the entry animation is finished
+		vehicleEnterExitUpdateTime_ = lastUpdate_;
+		enteringVehicle_ = true;
+
+		// Check whether the player is jacking the vehicle or not
+		if (seatId == 0)
+		{
+			IPlayer* driver = vehicle.getDriver();
+			if (driver && driver->getID() != player_->getID())
+			{
+				jackingVehicle_ = true;
+			}
+		}
+		else
+		{
+			const FlatHashSet<IPlayer*>& passengers = vehicle.getPassengers();
+			for (auto passenger : passengers)
+			{
+				if (passenger && passenger->getID() != player_->getID())
+				{
+					IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(passenger);
+					if (data && data->getSeat() == seatId)
+					{
+						jackingVehicle_ = true;
+					}
+				}
+			}
+		}
+
+		// Call the SAMP enter vehicle function
+		NetworkBitStream bs;
+		bs.writeUINT16(vehicle.getID());
+		bs.writeUINT8(vehicleSeatToEnter_);
+		npcComponent_->emulateRPCIn(*player_, NetCode::RPC::OnPlayerEnterVehicle::PacketID, bs);
+	}
+	else
+	{
+		// Go to the vehicle
+		move(destination, moveType);
+	}
+}
+
+void NPC::exitVehicle()
+{
+	if (player_->getState() != PlayerState_Driver && player_->getState() != PlayerState_Passenger)
+	{
+		return;
+	}
+
+	IPlayerVehicleData* vehicleData = queryExtension<IPlayerVehicleData>(player_);
+	if (!vehicleData || vehicleData->getVehicle() == nullptr)
+	{
+		return;
+	}
+
+	NetworkBitStream bs;
+	bs.writeUINT16(vehicleData->getVehicle()->getID());
+	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::OnPlayerExitVehicle::PacketID, bs);
+
+	vehicleEnterExitUpdateTime_ = lastUpdate_;
 }
 
 void NPC::setWeaponState(PlayerWeaponState state)

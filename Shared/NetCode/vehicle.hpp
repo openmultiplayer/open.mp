@@ -214,7 +214,6 @@ namespace RPC
 		bool read(NetworkBitStream& bs)
 		{
 			return bs.readUINT16(VehicleID);
-			;
 		}
 
 		void write(NetworkBitStream& bs) const
