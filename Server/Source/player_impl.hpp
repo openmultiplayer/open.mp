@@ -928,7 +928,7 @@ public:
 
 	void setSkillLevel(PlayerWeaponSkill skill, int level) override
 	{
-		if (skill < skillLevels_.size())
+		if (skill != PlayerWeaponSkill_Invalid && skill < skillLevels_.size())
 		{
 			skillLevels_[skill] = level;
 			NetCode::RPC::SetPlayerSkillLevel setPlayerSkillLevelRPC;
