@@ -37,6 +37,8 @@ public:
 
 	void stopMove() override;
 
+	bool isMoving() const override;
+
 	void setSkin(int model) override;
 
 	bool isStreamedInForPlayer(const IPlayer& other) const override;

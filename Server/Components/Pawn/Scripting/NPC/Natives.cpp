@@ -103,6 +103,11 @@ SCRIPT_API(NPC_StopMove, bool(INPC& npc))
 	return true;
 }
 
+SCRIPT_API(NPC_IsMoving, bool(INPC& npc))
+{
+	return npc.isMoving();
+}
+
 SCRIPT_API(NPC_SetSkin, bool(INPC& npc, int model))
 {
 	npc.setSkin(model);
@@ -356,4 +361,16 @@ SCRIPT_API(NPC_SetWeaponAccuracy, bool(INPC& npc, int weapon, float accuracy))
 SCRIPT_API(NPC_GetWeaponAccuracy, float(INPC& npc, int weapon))
 {
 	return npc.getWeaponAccuracy(weapon);
+}
+
+SCRIPT_API(NPC_EnterVehicle, bool(INPC& npc, IVehicle& vehicle, int seatId, int moveType))
+{
+	npc.enterVehicle(vehicle, seatId, NPCMoveType(moveType));
+	return true;
+}
+
+SCRIPT_API(NPC_ExitVehicle, bool(INPC& npc))
+{
+	npc.exitVehicle();
+	return true;
 }

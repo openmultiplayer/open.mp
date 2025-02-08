@@ -269,6 +269,11 @@ void NPC::stopMove()
 	footSync_.UpDown = 0;
 }
 
+bool NPC::isMoving() const
+{
+	return moving_;
+}
+
 void NPC::setSkin(int model)
 {
 	player_->setSkin(model);
