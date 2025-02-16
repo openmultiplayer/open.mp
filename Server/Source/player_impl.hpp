@@ -53,7 +53,7 @@ enum SecondarySyncUpdateType
 	SecondarySyncUpdateType_Trailer = (1 << 2),
 };
 
-struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
+struct Player final : public IPlayer, public PoolIDProvider, public WeakRefGenerator<IPlayer>, public NoCopy
 {
 	PlayerPool& pool_;
 	PeerNetworkData netData_;
@@ -326,6 +326,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isUsingOmp() const override
 	{
 		return isUsingOmp_;
+	}
+
+	WeakRef<IPlayer> weakRef() override
+	{
+		return weakRefFromThis(*this);
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
