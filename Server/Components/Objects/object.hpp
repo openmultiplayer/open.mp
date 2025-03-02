@@ -34,6 +34,7 @@ private:
 	bool anyDelayedProcessing_;
 	bool cameraCol_;
 	bool moving_;
+	int virtualWorld;
 
 public:
 	BaseObject(int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
@@ -46,8 +47,11 @@ public:
 		, anyDelayedProcessing_(false)
 		, cameraCol_(cameraCollision)
 		, moving_(false)
+		, virtualWorld(0)
 	{
 	}
+
+	virtual void restream() = 0;
 
 	bool isMoving() const override
 	{
@@ -92,7 +96,7 @@ public:
 
 	int getVirtualWorld() const override
 	{
-		return 0;
+		return virtualWorld;
 	}
 
 	float getDrawDistance() const override
@@ -112,6 +116,8 @@ public:
 
 	void setVirtualWorld(int vw) override
 	{
+		virtualWorld = vw;
+		restream();
 	}
 
 	void resetAttachment() override
@@ -188,10 +194,10 @@ protected:
 		attachmentData_.syncRotation = sync;
 	}
 
-	void createObjectForClient(IPlayer& player)
+	void createObjectForClient(IPlayer& player, int objectId)
 	{
 		NetCode::RPC::CreateObject createObjectRPC(materials_, materialsCount_, player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL);
-		createObjectRPC.ObjectID = poolID;
+		createObjectRPC.ObjectID = objectId;
 		createObjectRPC.ModelID = model_;
 		createObjectRPC.Position = pos_;
 		createObjectRPC.Rotation = rot_;
@@ -201,14 +207,14 @@ protected:
 		PacketHelper::send(createObjectRPC, player);
 	}
 
-	void destroyObjectForClient(IPlayer& player)
+	void destroyObjectForClient(IPlayer& player, int objectId)
 	{
 		NetCode::RPC::DestroyObject destroyObjectRPC;
-		destroyObjectRPC.ObjectID = poolID;
+		destroyObjectRPC.ObjectID = objectId;
 		PacketHelper::send(destroyObjectRPC, player);
 	}
 
-	NetCode::RPC::MoveObject moveRPC(const ObjectMoveData& data)
+	NetCode::RPC::MoveObject moveRPC(const ObjectMoveData& data, int objectId = INVALID_OBJECT_ID)
 	{
 		moving_ = true;
 		moveData_ = data;
@@ -239,23 +245,23 @@ protected:
 			rotSpeed_ = rotDistance * moveData_.speed / glm::distance(pos_, moveData_.targetPos);
 		}
 
-		return makeMovePacket();
+		return makeMovePacket(objectId);
 	}
 
-	NetCode::RPC::MoveObject makeMovePacket() const
+	NetCode::RPC::MoveObject makeMovePacket(int objectId = INVALID_OBJECT_ID) const
 	{
 		NetCode::RPC::MoveObject moveObjectRPC;
-		moveObjectRPC.ObjectID = poolID;
+		moveObjectRPC.ObjectID = objectId == INVALID_OBJECT_ID ? poolID : objectId;
 		moveObjectRPC.CurrentPosition = pos_;
 		moveObjectRPC.MoveData = moveData_;
 		return moveObjectRPC;
 	}
 
-	NetCode::RPC::StopObject stopMove()
+	NetCode::RPC::StopObject stopMove(int objectId = INVALID_OBJECT_ID)
 	{
 		moving_ = false;
 		NetCode::RPC::StopObject stopObjectRPC;
-		stopObjectRPC.ObjectID = poolID;
+		stopObjectRPC.ObjectID = objectId == INVALID_OBJECT_ID ? poolID : objectId;
 		return stopObjectRPC;
 	}
 
@@ -324,8 +330,30 @@ private:
 	StaticBitset<PLAYER_POOL_SIZE> delayedProcessing_;
 	StaticArray<TimePoint, PLAYER_POOL_SIZE> delayedProcessingTime_;
 	ObjectComponent& objects_;
+	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
 
 	void restream();
+	void streamInForClient(IPlayer& player);
+	void streamOutForClient(IPlayer& player);
+
+	template <typename Packet>
+	inline void broadcastToStreamed(Packet packet)
+	{
+		for (IPlayer* player : streamedFor_.entries())
+		{
+			auto data = queryExtension<IPlayerObjectData>(player);
+			if (!data)
+				continue;
+
+			int objid = data->toClientID(packet.ObjectID);
+			if (objid == INVALID_OBJECT_ID)
+				continue;
+
+			packet.ObjectID = objid;
+
+			PacketHelper::send(packet, *player);
+		}
+	}
 
 	void addToProcessed();
 	void eraseFromProcessed(bool force);
@@ -333,32 +361,27 @@ private:
 public:
 	bool advance(Microseconds elapsed, TimePoint now);
 
-	void createForPlayer(IPlayer& player)
-	{
-		createObjectForClient(player);
-
-		if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player)
-		{
-			const int pid = player.getID();
-			delayedProcessing_.set(pid);
-			delayedProcessingTime_[pid] = Time::now() + Seconds(1);
-			enableDelayedProcessing();
-			addToProcessed();
-		}
-	}
-
-	void destroyForPlayer(IPlayer& player)
-	{
-		const int pid = player.getID();
-		delayedProcessing_.reset(pid);
-
-		destroyObjectForClient(player);
-	}
-
 	Object(ObjectComponent& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
 		: BaseObject(modelID, position, rotation, drawDist, cameraCollision)
 		, objects_(objects)
 	{
+	}
+
+	bool isStreamedInForPlayer(const IPlayer& player) const override
+	{
+		return streamedFor_.valid(player.getID());
+	}
+
+	void streamInForPlayer(IPlayer& player) override
+	{
+		streamedFor_.add(player.getID(), player);
+		streamInForClient(player);
+	}
+
+	void streamOutForPlayer(IPlayer& player) override
+	{
+		streamedFor_.remove(player.getID(), player);
+		streamOutForClient(player);
 	}
 
 	virtual void setMaterial(uint32_t index, int model, StringView textureLibrary, StringView textureName, Colour colour) override

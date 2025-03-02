@@ -33,22 +33,6 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
-	// If client is using 0.3.7 or artwork isn't enabled we can create objects right on connect.
-	// If not we need to wait for client to download custom models before creating objects.
-	static bool artwork = (core->getConfig().getBool("artwork.enable")) ? (*core->getConfig().getBool("artwork.enable")) : false;
-	if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
-		return;
-
-	auto playerData = reinterpret_cast<PlayerObjectData*>(queryExtension<IPlayerObjectData>(player));
-	if (playerData)
-	{
-		playerData->setStreamedGlobalObjects(true);
-		for (IObject* o : storage)
-		{
-			Object* obj = static_cast<Object*>(o);
-			obj->createForPlayer(player);
-		}
-	}
 }
 
 void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
@@ -66,11 +50,6 @@ void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
 	}
 
 	player_data->setStreamedGlobalObjects(true);
-	for (IObject* o : storage)
-	{
-		Object* obj = static_cast<Object*>(o);
-		obj->createForPlayer(player);
-	}
 }
 
 void ObjectComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
@@ -134,6 +113,45 @@ void ObjectComponent::onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer)
 			}
 		}
 	}
+}
+
+bool ObjectComponent::onPlayerUpdate(IPlayer& player, TimePoint now)
+{
+	auto player_data = queryExtension<PlayerObjectData>(player);
+	if (!player_data)
+	{
+		return true;
+	}
+
+	const float maxDist = streamConfigHelper.getDistanceSqr();
+	if (streamConfigHelper.shouldStream(player.getID(), now))
+	{
+		const PlayerState state = player.getState();
+		if (state == PlayerState_None)
+		{
+			return true;
+		}
+		Vector3 pos = player.getPosition();
+		for (IObject* p : storage)
+		{
+			Object* object = static_cast<Object*>(p);
+
+			const Vector3 dist3D = object->getPosition() - pos;
+			const bool shouldBeStreamedIn = player_data->getStreamedGlobalObjects() && (player.getVirtualWorld() == object->getVirtualWorld() || object->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
+
+			const bool isStreamedIn = object->isStreamedInForPlayer(player);
+			if (!isStreamedIn && shouldBeStreamedIn)
+			{
+				object->streamInForPlayer(player);
+			}
+			else if (isStreamedIn && !shouldBeStreamedIn)
+			{
+				object->streamOutForPlayer(player);
+			}
+		}
+	}
+
+	return true;
 }
 
 void ObjectComponent::onPoolEntryDestroyed(IPlayer& player)

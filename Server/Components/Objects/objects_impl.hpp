@@ -9,22 +9,27 @@
 #pragma once
 
 #include "object.hpp"
+#include <legacy_id_mapper.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
 #include <netcode.hpp>
 
-class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerStreamEventHandler, public PlayerSpawnEventHandler, public PoolEventHandler<IPlayer>, public PlayerModelsEventHandler
+class ObjectComponent final : public IObjectsComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerStreamEventHandler, public PlayerSpawnEventHandler, public PoolEventHandler<IPlayer>, public PlayerModelsEventHandler, public PlayerUpdateEventHandler
 {
 private:
 	ICore* core = nullptr;
 	IPlayerPool* players = nullptr;
-	MarkedDynamicPoolStorage<Object, IObject, 1, OBJECT_POOL_SIZE> storage;
+	constexpr static const size_t Lower = 1;
+	constexpr static const size_t Upper = OBJECT_POOL_SIZE * (PLAYER_POOL_SIZE + 1) + Lower;
+
+	MarkedDynamicPoolStorage<Object, IObject, Lower, Upper> storage;
 	DefaultEventDispatcher<ObjectEventHandler> eventDispatcher;
-	StaticArray<int, OBJECT_POOL_SIZE> isPlayerObject;
+	StaticArray<int, Upper> isPlayerObject;
 	std::list<uint16_t> slotsUsedByPlayerObjects;
 	FlatPtrHashSet<PlayerObject> processedPlayerObjects;
 	FlatPtrHashSet<Object> processedObjects;
 	FlatPtrHashSet<Object> attachedToPlayer;
+	StreamConfigHelper streamConfigHelper;
 	bool defCameraCollision = true;
 
 	ICustomModelsComponent* models = nullptr;
@@ -50,7 +55,11 @@ private:
 			IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
 			if (data && data->selectingObject())
 			{
-				IObject* obj = self.get(onPlayerSelectObjectRPC.ObjectID);
+				int objid = data->fromClientID(onPlayerSelectObjectRPC.ObjectID);
+				if (objid == INVALID_OBJECT_ID)
+					return false;
+
+				IObject* obj = self.get(objid);
 				if (obj && obj->getModel() == onPlayerSelectObjectRPC.Model)
 				{
 					ScopedPoolReleaseLock lock(self, *obj);
@@ -63,7 +72,7 @@ private:
 				}
 				else
 				{
-					IPlayerObject* playerObj = data->get(onPlayerSelectObjectRPC.ObjectID);
+					IPlayerObject* playerObj = data->get(objid);
 					if (playerObj && playerObj->getModel() == onPlayerSelectObjectRPC.Model)
 					{
 						ScopedPoolReleaseLock lock(*data, *playerObj);
@@ -113,9 +122,14 @@ private:
 					return false;
 				}
 
+				int objid = data->fromClientID(onPlayerEditObjectRPC.ObjectID);
+				if (objid == INVALID_OBJECT_ID)
+					return false;
+
 				if (onPlayerEditObjectRPC.PlayerObject)
 				{
-					ScopedPoolReleaseLock lock(*data, onPlayerEditObjectRPC.ObjectID);
+
+					ScopedPoolReleaseLock lock(*data, objid);
 					if (lock.entry)
 					{
 						self.eventDispatcher.dispatch(
@@ -129,7 +143,7 @@ private:
 				}
 				else
 				{
-					ScopedPoolReleaseLock lock(self, onPlayerEditObjectRPC.ObjectID);
+					ScopedPoolReleaseLock lock(self, objid);
 					if (lock.entry)
 					{
 						self.eventDispatcher.dispatch(
@@ -203,6 +217,7 @@ public:
 		if (objid < isPlayerObject.size())
 		{
 			assert(isPlayerObject[objid] != 0);
+
 			if (--isPlayerObject[objid] == 0)
 			{
 				slotsUsedByPlayerObjects.remove(objid);
@@ -243,6 +258,7 @@ public:
 		players->getPlayerSpawnDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyHigh + 1 /* want this to be called before Pawn */);
 		players->getPlayerStreamDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
 		players->getPlayerConnectDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyLow - 1 /* want this to be called after Pawn but before Core */);
+		players->getPlayerUpdateDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyHigh + 1 /* want this to be called before Pawn */);
 		players->getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerSelectObject::addEventHandler(*core, &playerSelectObjectEventHandler);
 		NetCode::RPC::OnPlayerEditObject::addEventHandler(*core, &playerEditObjectEventHandler);
@@ -251,6 +267,8 @@ public:
 		bool* artwork = core->getConfig().getBool("artwork.enable");
 		compatModeEnabled = (!artwork || !*artwork || (*artwork && *core->getConfig().getBool("network.allow_037_clients")));
 		groupPlayerObjects = core->getConfig().getBool("game.group_player_objects");
+
+		streamConfigHelper = StreamConfigHelper(core->getConfig());
 	}
 
 	void onInit(IComponentList* components) override
@@ -259,7 +277,7 @@ public:
 
 		if (models)
 		{
-			models->getEventDispatcher().addEventHandler(this);
+			models->getEventDispatcher().addEventHandler(this, EventPriority::EventPriority_FairlyHigh + 1 /* want this to be called before Pawn */);
 		}
 	}
 
@@ -289,6 +307,7 @@ public:
 			players->getPlayerConnectDispatcher().removeEventHandler(this);
 			players->getPlayerStreamDispatcher().removeEventHandler(this);
 			players->getPlayerSpawnDispatcher().removeEventHandler(this);
+			players->getPlayerUpdateDispatcher().removeEventHandler(this);
 			players->getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerSelectObject::removeEventHandler(*core, &playerSelectObjectEventHandler);
 			NetCode::RPC::OnPlayerEditObject::removeEventHandler(*core, &playerEditObjectEventHandler);
@@ -321,6 +340,7 @@ public:
 	IObject* create(int modelID, Vector3 position, Vector3 rotation, float drawDist) override
 	{
 		int freeIdx = storage.findFreeIndex();
+
 		while (freeIdx >= storage.Lower)
 		{
 			if (!isPlayerObject.at(freeIdx))
@@ -329,13 +349,6 @@ public:
 			}
 
 			freeIdx = storage.findFreeIndex(freeIdx + 1);
-		}
-
-		// The server accepts connections from 0.3.7 clients.
-		// We can't create more than 1000 objects.
-		if (compatModeEnabled && freeIdx >= OBJECT_POOL_SIZE_037)
-		{
-			return nullptr;
 		}
 
 		if (freeIdx < storage.Lower)
@@ -351,13 +364,7 @@ public:
 			return nullptr;
 		}
 
-		Object* obj = storage.get(objid);
-		for (IPlayer* player : players->entries())
-		{
-			obj->createForPlayer(*player);
-		}
-
-		return obj;
+		return storage.get(objid);
 	}
 
 	void free() override
@@ -423,6 +430,8 @@ public:
 
 	void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) override;
 
+	bool onPlayerUpdate(IPlayer& player, TimePoint now) override;
+
 	// Pre-spawn so you can safely attach onPlayerSpawn
 	void onPlayerSpawn(IPlayer& player) override
 	{
@@ -481,6 +490,7 @@ private:
 	StaticArray<ObjectAttachmentSlotData, MAX_ATTACHED_OBJECT_SLOTS> slots_;
 	MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, 1, OBJECT_POOL_SIZE> storage;
 	FlatPtrHashSet<PlayerObject> attachedToPlayer_;
+	FiniteLegacyIDMapper<OBJECT_POOL_SIZE_037> clientIDs_;
 	bool inObjectSelection_;
 	bool inObjectEdit_;
 	bool streamedGlobalObjects_;
@@ -551,23 +561,27 @@ public:
 			}
 		}
 
-		// The server accepts connections from 0.3.7 clients.
-		// We can't create more than 1000 objects.
-		if (component_.is037CompatModeEnabled() && freeIdx >= OBJECT_POOL_SIZE_037)
-		{
-			return nullptr;
-		}
-
-		int objid = storage.claimHint(freeIdx, *this, modelID, position, rotation, drawDist, component_.getDefaultCameraCollision());
-		if (objid < storage.Lower)
+		int poolID = storage.claimHint(freeIdx, *this, modelID, position, rotation, drawDist, component_.getDefaultCameraCollision());
+		if (poolID < storage.Lower)
 		{
 			// No free index
 			return nullptr;
 		}
 
-		component_.incrementPlayerCounter(objid);
+		int id = toClientID(poolID);
+		if (id == INVALID_OBJECT_ID)
+		{
+			id = reserveClientID();
+		}
 
-		PlayerObject* obj = storage.get(objid);
+		if (id == INVALID_OBJECT_ID)
+			return nullptr;
+
+		setClientID(id, poolID);
+
+		component_.incrementPlayerCounter(poolID);
+
+		PlayerObject* obj = storage.get(poolID);
 		obj->createForPlayer();
 
 		return obj;
@@ -647,6 +661,36 @@ public:
 		slotsOccupied_.reset();
 		storage.clear();
 		attachedToPlayer_.clear();
+
+		for (int i = 0; i != clientIDs_.MAX; ++i)
+		{
+			clientIDs_.release(i);
+		}
+	}
+
+	virtual int toClientID(int objectid) const override
+	{
+		return clientIDs_.toLegacy(objectid);
+	}
+
+	virtual int fromClientID(int client) const override
+	{
+		return clientIDs_.fromLegacy(client);
+	}
+
+	virtual int reserveClientID() override
+	{
+		return clientIDs_.reserve();
+	}
+
+	virtual void releaseClientID(int client) override
+	{
+		clientIDs_.release(client);
+	}
+
+	virtual void setClientID(int client, int objectid) override
+	{
+		return clientIDs_.set(client, objectid);
 	}
 
 	void beginSelecting() override
@@ -677,23 +721,31 @@ public:
 
 	void beginEditing(IObject& object) override
 	{
+		int objid = toClientID(static_cast<Object&>(object).poolID);
+		if (objid == INVALID_OBJECT_ID)
+			return;
+
 		inObjectSelection_ = false;
 		inObjectEdit_ = true;
 
 		NetCode::RPC::PlayerBeginObjectEdit playerBeginObjectEditRPC;
 		playerBeginObjectEditRPC.PlayerObject = false;
-		playerBeginObjectEditRPC.ObjectID = static_cast<Object&>(object).poolID;
+		playerBeginObjectEditRPC.ObjectID = objid;
 		PacketHelper::send(playerBeginObjectEditRPC, player_);
 	}
 
 	void beginEditing(IPlayerObject& object) override
 	{
+		int objid = toClientID(static_cast<PlayerObject&>(object).poolID);
+		if (objid == INVALID_OBJECT_ID)
+			return;
+
 		inObjectSelection_ = false;
 		inObjectEdit_ = true;
 
 		NetCode::RPC::PlayerBeginObjectEdit playerBeginObjectEditRPC;
 		playerBeginObjectEditRPC.PlayerObject = true;
-		playerBeginObjectEditRPC.ObjectID = static_cast<PlayerObject&>(object).poolID;
+		playerBeginObjectEditRPC.ObjectID = objid;
 		PacketHelper::send(playerBeginObjectEditRPC, player_);
 	}
 

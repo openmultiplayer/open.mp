@@ -17,17 +17,63 @@ Object::~Object()
 
 void Object::destream()
 {
-	for (IPlayer* player : objects_.getPlayers().entries())
+	for (IPlayer* player : streamedFor_.entries())
 	{
-		destroyForPlayer(*player);
+		streamOutForClient(*player);
 	}
 }
 
 void Object::restream()
 {
-	for (IPlayer* player : objects_.getPlayers().entries())
+	for (IPlayer* player : streamedFor_.entries())
 	{
-		createObjectForClient(*player);
+		streamOutForClient(*player);
+		streamInForClient(*player);
+	}
+}
+
+void Object::streamInForClient(IPlayer& player)
+{
+	auto data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		int id = data->toClientID(poolID);
+		if (id == INVALID_OBJECT_ID)
+		{
+			id = data->reserveClientID();
+		}
+		if (id != INVALID_OBJECT_ID)
+		{
+			data->setClientID(id, poolID);
+			createObjectForClient(player, id);
+
+			if (isMoving() || getAttachmentData().type == ObjectAttachmentData::Type::Player)
+			{
+				const int pid = player.getID();
+				delayedProcessing_.set(pid);
+				delayedProcessingTime_[pid] = Time::now() + Seconds(1);
+				enableDelayedProcessing();
+				addToProcessed();
+			}
+		}
+	}
+}
+
+void Object::streamOutForClient(IPlayer& player)
+{
+	auto data = queryExtension<IPlayerObjectData>(player);
+	if (data)
+	{
+		int id = data->toClientID(poolID);
+		if (id != INVALID_OBJECT_ID)
+		{
+			data->releaseClientID(id);
+
+			const int pid = player.getID();
+			delayedProcessing_.reset(pid);
+
+			createObjectForClient(player, id);
+		}
 	}
 }
 
@@ -39,7 +85,8 @@ void Object::move(const ObjectMoveData& data)
 	}
 
 	addToProcessed();
-	PacketHelper::broadcast(moveRPC(data), objects_.getPlayers());
+
+	broadcastToStreamed(moveRPC(data));
 }
 
 void Object::addToProcessed()
@@ -67,7 +114,8 @@ void Object::eraseFromProcessed(bool force)
 
 void Object::stop()
 {
-	PacketHelper::broadcast(stopMove(), objects_.getPlayers());
+	broadcastToStreamed(stopMove());
+
 	eraseFromProcessed(false /* force */);
 }
 
@@ -77,6 +125,14 @@ bool Object::advance(Microseconds elapsed, TimePoint now)
 	{
 		for (IPlayer* player : objects_.getPlayers().entries())
 		{
+			auto data = queryExtension<IPlayerObjectData>(player);
+			if (!data)
+				continue;
+
+			int objid = data->toClientID(poolID);
+			if (objid == INVALID_OBJECT_ID)
+				continue;
+
 			const int pid = player->getID();
 			if (delayedProcessing_.test(pid) && now >= delayedProcessingTime_[pid])
 			{
@@ -94,7 +150,7 @@ bool Object::advance(Microseconds elapsed, TimePoint now)
 
 				if (isMoving())
 				{
-					PacketHelper::send(makeMovePacket(), *player);
+					PacketHelper::send(makeMovePacket(objid), *player);
 				}
 
 				const ObjectAttachmentData& attachment = getAttachmentData();
@@ -105,7 +161,7 @@ bool Object::advance(Microseconds elapsed, TimePoint now)
 					if (other && other->isStreamedInForPlayer(*player))
 					{
 						NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-						attachObjectToPlayerRPC.ObjectID = poolID;
+						attachObjectToPlayerRPC.ObjectID = objid;
 						attachObjectToPlayerRPC.PlayerID = attachment.ID;
 						attachObjectToPlayerRPC.Offset = attachment.offset;
 						attachObjectToPlayerRPC.Rotation = attachment.rotation;
@@ -131,7 +187,7 @@ void Object::setPosition(Vector3 position)
 	NetCode::RPC::SetObjectPosition setObjectPositionRPC;
 	setObjectPositionRPC.ObjectID = poolID;
 	setObjectPositionRPC.Position = position;
-	PacketHelper::broadcast(setObjectPositionRPC, objects_.getPlayers());
+	broadcastToStreamed(stopMove());
 }
 
 void Object::setRotation(GTAQuat rotation)
@@ -141,19 +197,22 @@ void Object::setRotation(GTAQuat rotation)
 	NetCode::RPC::SetObjectRotation setObjectRotationRPC;
 	setObjectRotationRPC.ObjectID = poolID;
 	setObjectRotationRPC.Rotation = rotation.ToEuler();
-	PacketHelper::broadcast(setObjectRotationRPC, objects_.getPlayers());
+
+	broadcastToStreamed(setObjectRotationRPC);
 }
 
 void Object::attachToPlayer(IPlayer& player, Vector3 offset, Vector3 rotation)
 {
 	const int id = player.getID();
 	setAttachmentData(ObjectAttachmentData::Type::Player, id, offset, rotation, true);
+
 	NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
 	attachObjectToPlayerRPC.ObjectID = poolID;
 	attachObjectToPlayerRPC.PlayerID = id;
 	attachObjectToPlayerRPC.Offset = offset;
 	attachObjectToPlayerRPC.Rotation = rotation;
-	PacketHelper::broadcastToStreamed(attachObjectToPlayerRPC, player);
+
+	broadcastToStreamed(attachObjectToPlayerRPC);
 
 	objects_.getAttachedToPlayers().insert(this);
 }
@@ -176,8 +235,13 @@ void PlayerObject::setMaterial(uint32_t index, int model, StringView textureLibr
 	if (getMaterialData(index, mtl))
 	{
 		setMtl(index, model, textureLibrary, textureName, colour);
+
+		int objid = objects_.toClientID(poolID);
+		if (objid == INVALID_OBJECT_ID)
+			return;
+
 		NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
-		setPlayerObjectMaterialRPC.ObjectID = poolID;
+		setPlayerObjectMaterialRPC.ObjectID = objid;
 		setPlayerObjectMaterialRPC.MaterialID = index;
 		PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
 	}
@@ -189,8 +253,13 @@ void PlayerObject::setMaterialText(uint32_t materialIndex, StringView text, Obje
 	if (getMaterialData(materialIndex, mtl))
 	{
 		setMtlText(materialIndex, text, materialSize, fontFace, fontSize, bold, fontColour, backgroundColour, align);
+
+		int objid = objects_.toClientID(poolID);
+		if (objid == INVALID_OBJECT_ID)
+			return;
+
 		NetCode::RPC::SetPlayerObjectMaterial setPlayerObjectMaterialRPC(*mtl);
-		setPlayerObjectMaterialRPC.ObjectID = poolID;
+		setPlayerObjectMaterialRPC.ObjectID = objid;
 		setPlayerObjectMaterialRPC.MaterialID = materialIndex;
 		PacketHelper::send(setPlayerObjectMaterialRPC, objects_.getPlayer());
 	}
@@ -227,17 +296,30 @@ void PlayerObject::move(const ObjectMoveData& data)
 	}
 
 	addToProcessed();
-	PacketHelper::send(moveRPC(data), objects_.getPlayer());
+
+	int objid = objects_.toClientID(poolID);
+	if (objid == INVALID_OBJECT_ID)
+		return;
+
+	PacketHelper::send(moveRPC(data, objid), objects_.getPlayer());
 }
 
 void PlayerObject::stop()
 {
-	PacketHelper::send(stopMove(), objects_.getPlayer());
+	int objid = objects_.toClientID(poolID);
+	if (objid == INVALID_OBJECT_ID)
+		return;
+
+	PacketHelper::send(stopMove(objid), objects_.getPlayer());
 	eraseFromProcessed(false /* force */);
 }
 
 bool PlayerObject::advance(Microseconds elapsed, TimePoint now)
 {
+	int objid = objects_.toClientID(poolID);
+	if (objid == INVALID_OBJECT_ID)
+		return false;
+
 	if (getDelayedProcessing())
 	{
 		if (now >= delayedProcessingTime_)
@@ -246,7 +328,7 @@ bool PlayerObject::advance(Microseconds elapsed, TimePoint now)
 
 			if (isMoving())
 			{
-				PacketHelper::send(makeMovePacket(), objects_.getPlayer());
+				PacketHelper::send(makeMovePacket(objid), objects_.getPlayer());
 			}
 		}
 	}
@@ -274,15 +356,26 @@ void PlayerObject::createForPlayer()
 void PlayerObject::destroyForPlayer()
 {
 	disableDelayedProcessing();
-	destroyObjectForClient(objects_.getPlayer());
+
+	int id = objects_.toClientID(poolID);
+	if (id != INVALID_OBJECT_ID)
+	{
+		objects_.releaseClientID(id);
+
+		destroyObjectForClient(objects_.getPlayer(), id);
+	}
 }
 
 void PlayerObject::setPosition(Vector3 position)
 {
 	this->BaseObject<IPlayerObject>::setPosition(position);
 
+	int objid = objects_.toClientID(poolID);
+	if (objid == INVALID_OBJECT_ID)
+		return;
+
 	NetCode::RPC::SetObjectPosition setObjectPositionRPC;
-	setObjectPositionRPC.ObjectID = poolID;
+	setObjectPositionRPC.ObjectID = objid;
 	setObjectPositionRPC.Position = position;
 	PacketHelper::send(setObjectPositionRPC, objects_.getPlayer());
 }
@@ -291,8 +384,12 @@ void PlayerObject::setRotation(GTAQuat rotation)
 {
 	this->BaseObject<IPlayerObject>::setRotation(rotation);
 
+	int objid = objects_.toClientID(poolID);
+	if (objid == INVALID_OBJECT_ID)
+		return;
+
 	NetCode::RPC::SetObjectRotation setObjectRotationRPC;
-	setObjectRotationRPC.ObjectID = poolID;
+	setObjectRotationRPC.ObjectID = objid;
 	setObjectRotationRPC.Rotation = rotation.ToEuler();
 	PacketHelper::send(setObjectRotationRPC, objects_.getPlayer());
 }
@@ -339,12 +436,16 @@ void PlayerObject::createObjectForClient(IPlayer& player)
 			return;
 		}
 
+		int objid = objects_.toClientID(poolID);
+		if (objid == INVALID_OBJECT_ID)
+			return;
+
 		// Create object.
-		this->BaseObject<IPlayerObject>::createObjectForClient(player);
+		this->BaseObject<IPlayerObject>::createObjectForClient(player, objid);
 
 		// Attach object.
 		NetCode::RPC::AttachObjectToPlayer attachObjectToPlayerRPC;
-		attachObjectToPlayerRPC.ObjectID = poolID;
+		attachObjectToPlayerRPC.ObjectID = objid;
 		attachObjectToPlayerRPC.PlayerID = attach.ID;
 		attachObjectToPlayerRPC.Offset = attach.offset;
 		attachObjectToPlayerRPC.Rotation = attach.rotation;
@@ -352,6 +453,10 @@ void PlayerObject::createObjectForClient(IPlayer& player)
 		return;
 	}
 
+	int objid = objects_.toClientID(poolID);
+	if (objid == INVALID_OBJECT_ID)
+		return;
+
 	// Create object.
-	this->BaseObject<IPlayerObject>::createObjectForClient(player);
+	this->BaseObject<IPlayerObject>::createObjectForClient(player, objid);
 }
