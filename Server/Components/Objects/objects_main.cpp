@@ -33,6 +33,25 @@ void ObjectComponent::onTick(Microseconds elapsed, TimePoint now)
 
 void ObjectComponent::onPlayerConnect(IPlayer& player)
 {
+	// If client is using 0.3.7 or artwork isn't enabled we can create objects right on connect.
+	// If not we need to wait for client to download custom models before creating objects.
+	static bool artwork = (core->getConfig().getBool("artwork.enable")) ? (*core->getConfig().getBool("artwork.enable")) : false;
+
+	if (artwork && player.getClientVersion() == ClientVersion::ClientVersion_SAMP_03DL)
+		return;
+
+	auto playerData = reinterpret_cast<PlayerObjectData*>(queryExtension<IPlayerObjectData>(player));
+
+	if (playerData)
+	{
+		playerData->setStreamedGlobalObjects(true);
+
+		for (IObject* o : storage)
+		{
+			if (o->isAlwaysStreamedIn())
+				o->streamInForPlayer(player);
+		}
+	}
 }
 
 void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
@@ -50,6 +69,12 @@ void ObjectComponent::onPlayerFinishedDownloading(IPlayer& player)
 	}
 
 	player_data->setStreamedGlobalObjects(true);
+
+	for (IObject* p : storage)
+	{
+		if (p->isAlwaysStreamedIn())
+			p->streamInForPlayer(player);
+	}
 }
 
 void ObjectComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
@@ -137,7 +162,7 @@ bool ObjectComponent::onPlayerUpdate(IPlayer& player, TimePoint now)
 			Object* object = static_cast<Object*>(p);
 
 			const Vector3 dist3D = object->getPosition() - pos;
-			const bool shouldBeStreamedIn = player_data->getStreamedGlobalObjects() && (player.getVirtualWorld() == object->getVirtualWorld() || object->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
+			const bool shouldBeStreamedIn = object->isAlwaysStreamedIn() || player_data->getStreamedGlobalObjects() && (player.getVirtualWorld() == object->getVirtualWorld() || object->getVirtualWorld() == -1) && glm::dot(dist3D, dist3D) < maxDist;
 
 			const bool isStreamedIn = object->isStreamedInForPlayer(player);
 			if (!isStreamedIn && shouldBeStreamedIn)

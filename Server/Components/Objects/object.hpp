@@ -331,6 +331,7 @@ private:
 	StaticArray<TimePoint, PLAYER_POOL_SIZE> delayedProcessingTime_;
 	ObjectComponent& objects_;
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> streamedFor_;
+	bool alwaysStreamedIn_;
 
 	void restream();
 	void streamInForClient(IPlayer& player);
@@ -364,6 +365,7 @@ public:
 	Object(ObjectComponent& objects, int modelID, Vector3 position, Vector3 rotation, float drawDist, bool cameraCollision)
 		: BaseObject(modelID, position, rotation, drawDist, cameraCollision)
 		, objects_(objects)
+		, alwaysStreamedIn_()
 	{
 	}
 
@@ -382,6 +384,16 @@ public:
 	{
 		streamedFor_.remove(player.getID(), player);
 		streamOutForClient(player);
+	}
+
+	bool isAlwaysStreamedIn() const override
+	{
+		return alwaysStreamedIn_;
+	}
+
+	void setAlwaysStreamedIn(bool alwaysStreamedIn) override
+	{
+		alwaysStreamedIn_ = alwaysStreamedIn;
 	}
 
 	virtual void setMaterial(uint32_t index, int model, StringView textureLibrary, StringView textureName, Colour colour) override
