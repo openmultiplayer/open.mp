@@ -1028,7 +1028,7 @@ void NPC::updateWeaponState()
 	case PlayerWeapon_Night_Vis_Goggles:
 	case PlayerWeapon_Thermal_Goggles:
 	case PlayerWeapon_Parachute:
-		weaponState_ = PlayerWeaponState_NoBullets;
+		setWeaponState(PlayerWeaponState_NoBullets);
 		break;
 
 	case PlayerWeapon_Grenade:
@@ -1039,7 +1039,7 @@ void NPC::updateWeaponState()
 	case PlayerWeapon_RocketLauncher:
 	case PlayerWeapon_HeatSeeker:
 	case PlayerWeapon_Satchel:
-		weaponState_ = PlayerWeaponState_LastBullet;
+		setWeaponState(PlayerWeaponState_LastBullet);
 		break;
 
 	case PlayerWeapon_Colt45:
@@ -1058,39 +1058,39 @@ void NPC::updateWeaponState()
 	case PlayerWeapon_FireExtinguisher:
 		if (reloading_)
 		{
-			weaponState_ = PlayerWeaponState_Reloading;
+			setWeaponState(PlayerWeaponState_Reloading);
 		}
 		else if (ammoInClip_ == 1)
 		{
-			weaponState_ = PlayerWeaponState_LastBullet;
+			setWeaponState(PlayerWeaponState_LastBullet);
 		}
 		else if (ammo_ == 0 && !infiniteAmmo_)
 		{
-			weaponState_ = PlayerWeaponState_NoBullets;
+			setWeaponState(PlayerWeaponState_NoBullets);
 		}
 		else if (ammoInClip_ > 1)
 		{
-			weaponState_ = PlayerWeaponState_MoreBullets;
+			setWeaponState(PlayerWeaponState_MoreBullets);
 		}
 		break;
 
 	case PlayerWeapon_Shotgun:
 		if (reloading_)
 		{
-			weaponState_ = PlayerWeaponState_Reloading;
+			setWeaponState(PlayerWeaponState_Reloading);
 		}
 		else if (ammo_ == 0 && !infiniteAmmo_)
 		{
-			weaponState_ = PlayerWeaponState_NoBullets;
+			setWeaponState(PlayerWeaponState_NoBullets);
 		}
 		else if (ammoInClip_ == 1)
 		{
-			weaponState_ = PlayerWeaponState_LastBullet;
+			setWeaponState(PlayerWeaponState_LastBullet);
 		}
 		break;
 
 	default:
-		weaponState_ = PlayerWeaponState_NoBullets;
+		setWeaponState(PlayerWeaponState_NoBullets);
 		break;
 	}
 }
