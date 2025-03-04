@@ -1190,13 +1190,23 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 	if (setAngle)
 	{
 		auto rotation = getRotation().ToEuler();
-		rotation.z = glm::degrees(glm::atan(unitVec.y, unitVec.x));
+		auto angle = glm::degrees(glm::atan(unitVec.y, unitVec.x)) + 270.0f;
+		if (angle >= 360.0f)
+		{
+			angle -= 360.0f;
+		}
+		else if (angle < 0.0f)
+		{
+			angle += 360.0f;
+		}
+
+		rotation.z = angle;
 		setRotation(rotation);
 	}
 
 	// Set the aim sync data
 	aimSync_.AimZ = aimZ;
-	aimSync_.CamFrontVector = camFronVector;
+	aimSync_.CamFrontVector = unitVec;
 	aimSync_.CamPos = camPosition;
 
 	// set the flags
