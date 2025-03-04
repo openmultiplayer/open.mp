@@ -99,7 +99,7 @@ bool NPCComponent::unlock(int index)
 void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 {
 	// Go through NPCs ready to be destroyed/kicked
-	auto markedForKick = npcNetwork.getMarkedForKickNPCs();
+	auto& markedForKick = npcNetwork.getMarkedForKickNPCs();
 	for (auto& npc : markedForKick)
 	{
 		release(npc);
