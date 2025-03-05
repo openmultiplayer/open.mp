@@ -34,7 +34,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, ammo_(0)
 	, ammoInClip_(0)
 	, infiniteAmmo_(false)
-	, hasReloading_(false)
+	, hasReloading_(true)
 	, reloading_(false)
 	, shooting_(false)
 	, shootDelay_(0)
@@ -44,7 +44,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, aimOffsetFrom_({ 0.0f, 0.0f, 0.0f })
 	, aimOffset_({ 0.0f, 0.0f, 0.0f })
 	, updateAimAngle_(false)
-	, betweenCheckFlags_(0)
+	, betweenCheckFlags_(EntityCheckType::None)
 	, hitId_(0)
 	, hitType_(PlayerBulletHitType_None)
 	, lastDamager_(nullptr)
@@ -374,6 +374,7 @@ void NPC::setWeapon(uint8_t weapon)
 	{
 		weapon_ = weapon;
 	}
+	updateWeaponState();
 }
 
 uint8_t NPC::getWeapon() const
@@ -389,6 +390,8 @@ void NPC::setAmmo(int ammo)
 	{
 		ammoInClip_ = ammo_;
 	}
+	updateWeaponState();
+	setAmmoInClip(ammo);
 }
 
 int NPC::getAmmo() const
@@ -455,7 +458,7 @@ void NPC::setAmmoInClip(int ammo)
 {
 	auto clipSize = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
 
-	ammoInClip_ = ammo_ < clipSize ? ammo_ : clipSize;
+	ammoInClip_ = ammo < clipSize ? ammo : clipSize;
 }
 
 int NPC::getAmmoInClip() const
@@ -579,7 +582,7 @@ PlayerFightingStyle NPC::getFightingStyle() const
 	return PlayerFightingStyle_Normal;
 }
 
-void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags)
+void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, EntityCheckType betweenCheckFlags)
 {
 	auto weaponData = WeaponInfo::get(weapon);
 	if (weaponData.type != PlayerWeaponType_Bullet)
@@ -611,7 +614,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 	}
 
 	// If something is in between the origin and the target (we currently don't handle checking beyond the target, even when missing with leftover range)
-	uint8_t closestEntityType = EntityCheckType_None;
+	EntityCheckType closestEntityType = EntityCheckType::None;
 	int playerObjectOwnerId = INVALID_PLAYER_ID;
 	Vector3 hitMapPos = bulletData.hitPos;
 	float range = weaponData.range;
@@ -626,7 +629,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 
 	switch (EntityCheckType(closestEntityType))
 	{
-	case EntityCheckType_Player:
+	case EntityCheckType::Player:
 	{
 		if (closestEntity)
 		{
@@ -640,7 +643,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType_NPC:
+	case EntityCheckType::NPC:
 	{
 		if (closestEntity)
 		{
@@ -654,7 +657,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType_Actor:
+	case EntityCheckType::Actor:
 	{
 		bulletData.hitType = PlayerBulletHitType_None;
 		bulletData.hitID = INVALID_PLAYER_ID;
@@ -664,7 +667,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 			});
 		break;
 	}
-	case EntityCheckType_Vehicle:
+	case EntityCheckType::Vehicle:
 	{
 		if (closestEntity)
 		{
@@ -678,7 +681,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType_Object:
+	case EntityCheckType::Object:
 	{
 		if (closestEntity)
 		{
@@ -692,8 +695,8 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType_ProjectOrig:
-	case EntityCheckType_ProjectTarg:
+	case EntityCheckType::ProjectOrig:
+	case EntityCheckType::ProjectTarg:
 	{
 		if (closestEntity)
 		{
@@ -707,7 +710,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType_Map:
+	case EntityCheckType::Map:
 	default:
 	{
 		bulletData.hitType = PlayerBulletHitType_None;
@@ -754,7 +757,7 @@ bool NPC::isShooting() const
 	return aiming_ && shooting_;
 }
 
-void NPC::aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle, const Vector3& offsetFrom, uint8_t betweenCheckFlags)
+void NPC::aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle, const Vector3& offsetFrom, EntityCheckType betweenCheckFlags)
 {
 	if (moving_ && moveType_ == NPCMoveType_Sprint)
 	{
@@ -798,7 +801,7 @@ void NPC::aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle,
 	betweenCheckFlags_ = betweenCheckFlags;
 }
 
-void NPC::aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAngle, const Vector3& offset, const Vector3& offsetFrom, uint8_t betweenCheckFlags)
+void NPC::aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAngle, const Vector3& offset, const Vector3& offsetFrom, EntityCheckType betweenCheckFlags)
 {
 	aimAt(atPlayer.getPosition() + offset, shoot, shootDelay, setAngle, offsetFrom, betweenCheckFlags);
 	hitId_ = atPlayer.getID();
@@ -826,7 +829,7 @@ void NPC::stopAim()
 	hitId_ = INVALID_PLAYER_ID;
 	hitType_ = PlayerBulletHitType_None;
 	updateAimAngle_ = false;
-	betweenCheckFlags_ = EntityCheckType_None;
+	betweenCheckFlags_ = EntityCheckType::None;
 
 	// Reset keys
 	removeKey(Key::AIM);
@@ -1150,6 +1153,60 @@ void NPC::processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart
 	lastDamagerWeapon_ = weapon;
 }
 
+void NPC::updateAim()
+{
+	if (aiming_)
+	{
+		PlayerWeaponType weaponType = WeaponInfo::get(weapon_).type;
+
+		// Set the camera mode
+		if (weaponType == PlayerWeaponType_Melee)
+		{
+			aimSync_.CamMode = 4;
+		}
+		else if (weapon_ == PlayerWeapon_Sniper)
+		{
+			aimSync_.CamMode = 7;
+		}
+		else if (weapon_ == PlayerWeapon_Camera)
+		{
+			aimSync_.CamMode = 46;
+		}
+		else if (weapon_ == PlayerWeapon_RocketLauncher)
+		{
+			aimSync_.CamMode = 8;
+		}
+		else if (weapon_ == PlayerWeapon_HeatSeeker)
+		{
+			aimSync_.CamMode = 51;
+		}
+		else
+		{
+			aimSync_.CamMode = 53;
+		}
+	}
+	else
+	{
+		// Set the camera mode and weapon state
+		aimSync_.CamMode = 0;
+		// Convert the player angle to radians
+
+		float angle = glm::radians(player_->getRotation().ToEuler().z);
+		// Calculate the camera target
+		Vector3 vecTarget(aimSync_.CamPos.x - glm::sin(angle) * 0.2f,
+			aimSync_.CamPos.z + glm::cos(angle) * 0.2f,
+			aimSync_.CamPos.z);
+
+		// Calculate the camera front vector
+		aimSync_.CamFrontVector = vecTarget - aimSync_.CamPos;
+	}
+
+	// Update the weapon state
+	updateWeaponState();
+	// Set the aim sync flag
+	// m_pPlayer->bHasAimSync = true;
+}
+
 void NPC::updateAimData(const Vector3& point, bool setAngle)
 {
 	// Adjust the player position
@@ -1442,6 +1499,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
 			{
 				sendFootSync();
+				updateAim();
 				lastFootSyncUpdate_ = now;
 			}
 

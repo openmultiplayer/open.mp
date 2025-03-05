@@ -8,20 +8,6 @@
 #define MAX_DISTANCE_TO_ENTER_VEHICLE 30.0f
 #define MIN_VEHICLE_GO_TO_DISTANCE 1.0f
 
-enum EntityCheckType
-{
-	EntityCheckType_None,
-	EntityCheckType_Player,
-	EntityCheckType_NPC,
-	EntityCheckType_Actor,
-	EntityCheckType_Vehicle,
-	EntityCheckType_Object,
-	EntityCheckType_ProjectOrig,
-	EntityCheckType_ProjectTarg,
-	EntityCheckType_Map,
-	EntityCheckType_All
-};
-
 static const float WeaponDamages[MAX_WEAPON_ID] = {
 	5.0f, // fists (0)
 	5.0f, // WEAPON_BRASSKNUCKLE (1)
@@ -441,88 +427,88 @@ inline IPlayerObject* getClosestPlayerObjectInBetween(IPlayerPool* players, cons
 	return closestPlayerObject;
 }
 
-inline void* getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOrigin, const Vector3& hitTarget, float range, uint8_t betweenCheckFlags, int playerId, int targetId, uint8_t& entityType, int& playerObjectOwnerId, Vector3& hitMap, std::pair<Vector3, Vector3>& results)
+inline void* getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOrigin, const Vector3& hitTarget, float range, EntityCheckType betweenCheckFlags, int playerId, int targetId, EntityCheckType& entityType, int& playerObjectOwnerId, Vector3& hitMap, std::pair<Vector3, Vector3>& results)
 {
 	void* closestEntity = nullptr;
 	float closestEntityDistance = 0.0f;
-	entityType = EntityCheckType_None;
+	entityType = EntityCheckType::None;
 
 	IPlayer* closestPlayer = nullptr;
-	if (betweenCheckFlags & EntityCheckType_Player)
+	if (int(betweenCheckFlags) & int(EntityCheckType::Player))
 	{
 		float closestPlayerDistance = 0.0f;
 		closestPlayer = getClosestPlayerInBetween(&npcs->getCore()->getPlayers(), hitOrigin, hitTarget, range, closestPlayerDistance, playerId, targetId, results);
 		if (closestPlayer != nullptr && (closestEntity == nullptr || closestPlayerDistance < closestEntityDistance))
 		{
-			entityType = EntityCheckType_Player;
+			entityType = EntityCheckType::Player;
 			closestEntityDistance = closestPlayerDistance;
 			closestEntity = static_cast<void*>(closestPlayer);
 		}
 	}
 
 	INPC* closestNPC = nullptr;
-	if (betweenCheckFlags & EntityCheckType_NPC)
+	if (int(betweenCheckFlags) & int(EntityCheckType::NPC))
 	{
 		float closestNPCDistance = 0.0f;
 		closestNPC = getClosestNpcInBetween(npcs, hitOrigin, hitTarget, range, closestNPCDistance, playerId, targetId, results);
 		if (closestNPC != nullptr && (closestEntity == nullptr || closestNPCDistance < closestEntityDistance))
 		{
-			entityType = EntityCheckType_NPC;
+			entityType = EntityCheckType::NPC;
 			closestEntityDistance = closestNPCDistance;
 			closestEntity = static_cast<void*>(closestNPC);
 		}
 	}
 
-	if (betweenCheckFlags & EntityCheckType_Actor)
+	if (int(betweenCheckFlags) & int(EntityCheckType::Actor))
 	{
 		float closestActorDistance = 0.0f;
 		IActor* closestActor = getClosestActorInBetween(npcs->getActorsPool(), hitOrigin, hitTarget, range, closestActorDistance, results);
 		if (closestActor != nullptr && (closestEntity == nullptr || closestActorDistance < closestEntityDistance))
 		{
-			entityType = EntityCheckType_Actor;
+			entityType = EntityCheckType::Actor;
 			closestEntityDistance = closestActorDistance;
 			closestEntity = static_cast<void*>(closestActor);
 		}
 	}
 
-	if (betweenCheckFlags & EntityCheckType_Vehicle)
+	if (int(betweenCheckFlags) & int(EntityCheckType::Vehicle))
 	{
 		float closestVehicleDistance = 0.0f;
 		IVehicle* closestVehicle = getClosestVehicleInBetween(npcs->getVehiclesPool(), hitOrigin, hitTarget, range, closestVehicleDistance, results);
 		if (closestVehicle != nullptr && (closestEntity == nullptr || closestVehicleDistance < closestEntityDistance))
 		{
-			entityType = EntityCheckType_Vehicle;
+			entityType = EntityCheckType::Vehicle;
 			closestEntityDistance = closestVehicleDistance;
 			closestEntity = static_cast<void*>(closestVehicle);
 		}
 	}
 
-	if (betweenCheckFlags & EntityCheckType_Object)
+	if (int(betweenCheckFlags) & int(EntityCheckType::Object))
 	{
 		float closestObjectDistance = 0.0f;
 		IObject* closestObject = getClosestObjectInBetween(npcs->getObjectsPool(), hitOrigin, hitTarget, range, closestObjectDistance, results);
 		if (closestObject != nullptr && (closestEntity == nullptr || closestObjectDistance < closestEntityDistance))
 		{
-			entityType = EntityCheckType_Object;
+			entityType = EntityCheckType::Object;
 			closestEntityDistance = closestObjectDistance;
 			closestEntity = static_cast<void*>(closestObject);
 		}
 	}
 
-	if (betweenCheckFlags & EntityCheckType_ProjectOrig)
+	if (int(betweenCheckFlags) & int(EntityCheckType::ProjectOrig))
 	{
 		float closestPlayerObjectDistance = 0.0f;
 		IPlayerObject* closestPlayerObject = getClosestPlayerObjectInBetween(&npcs->getCore()->getPlayers(), hitOrigin, hitTarget, range, closestPlayerObjectDistance, playerId, results);
 		if (closestPlayerObject != nullptr && (closestEntity == nullptr || closestPlayerObjectDistance < closestEntityDistance))
 		{
-			entityType = EntityCheckType_ProjectOrig;
+			entityType = EntityCheckType::ProjectOrig;
 			playerObjectOwnerId = playerId;
 			closestEntityDistance = closestPlayerObjectDistance;
 			closestEntity = static_cast<void*>(closestPlayerObject);
 		}
 	}
 
-	if (betweenCheckFlags & EntityCheckType_ProjectTarg)
+	if (int(betweenCheckFlags) & int(EntityCheckType::ProjectTarg))
 	{
 		// One flag for 3 checks
 		// Check if a player object of the target is in between the origin and the target
@@ -532,7 +518,7 @@ inline void* getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOri
 			IPlayerObject* closestPlayerObject = getClosestPlayerObjectInBetween(&npcs->getCore()->getPlayers(), hitOrigin, hitTarget, range, closestPlayerObjectDistance, targetId, results);
 			if (closestPlayerObject != nullptr && (closestEntity == nullptr || closestPlayerObjectDistance < closestEntityDistance))
 			{
-				entityType = EntityCheckType_ProjectTarg;
+				entityType = EntityCheckType::ProjectTarg;
 				playerObjectOwnerId = targetId;
 				closestEntityDistance = closestPlayerObjectDistance;
 				closestEntity = static_cast<void*>(closestPlayerObject);
@@ -546,7 +532,7 @@ inline void* getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOri
 			IPlayerObject* closestPlayerObject = getClosestPlayerObjectInBetween(&npcs->getCore()->getPlayers(), hitOrigin, hitTarget, range, closestPlayerObjectDistance, closestPlayer->getID(), results);
 			if (closestPlayerObject != nullptr && (closestEntity == nullptr || closestPlayerObjectDistance < closestEntityDistance))
 			{
-				entityType = EntityCheckType_ProjectTarg;
+				entityType = EntityCheckType::ProjectTarg;
 				playerObjectOwnerId = closestPlayer->getID();
 				closestEntityDistance = closestPlayerObjectDistance;
 				closestEntity = static_cast<void*>(closestPlayerObject);
@@ -560,7 +546,7 @@ inline void* getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOri
 			IPlayerObject* closestPlayerObject = getClosestPlayerObjectInBetween(&npcs->getCore()->getPlayers(), hitOrigin, hitTarget, range, closestPlayerObjectDistance, closestNPC->getID(), results);
 			if (closestPlayerObject != nullptr && (closestEntity == nullptr || closestPlayerObjectDistance < closestEntityDistance))
 			{
-				entityType = EntityCheckType_ProjectTarg;
+				entityType = EntityCheckType::ProjectTarg;
 				playerObjectOwnerId = closestNPC->getID();
 				// closestEntityDistance = closestPlayerObjectDistance;
 				closestEntity = static_cast<void*>(closestPlayerObject);

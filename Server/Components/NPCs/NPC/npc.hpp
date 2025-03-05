@@ -105,13 +105,13 @@ public:
 
 	int getAmmoInClip() const override;
 
-	void shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, uint8_t betweenCheckFlags) override;
+	void shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Vector3& endPoint, const Vector3& offset, bool isHit, EntityCheckType betweenCheckFlags) override;
 
 	bool isShooting() const override;
 
-	void aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle, const Vector3& offsetFrom, uint8_t betweenCheckFlags) override;
+	void aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle, const Vector3& offsetFrom, EntityCheckType betweenCheckFlags) override;
 
-	void aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAngle, const Vector3& offset, const Vector3& offsetFrom, uint8_t betweenCheckFlags) override;
+	void aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAngle, const Vector3& offset, const Vector3& offsetFrom, EntityCheckType betweenCheckFlags) override;
 
 	void stopAim() override;
 
@@ -134,6 +134,8 @@ public:
 	void kill(IPlayer* killer, uint8_t weapon);
 
 	void processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart bodyPart, bool handleHealthAndArmour);
+
+	void updateAim();
 
 	void updateAimData(const Vector3& point, bool setAngle);
 
@@ -227,7 +229,7 @@ private:
 	bool updateAimAngle_;
 
 	// Weapon raycast/shot checks data
-	int betweenCheckFlags_;
+	EntityCheckType betweenCheckFlags_;
 	int hitId_;
 	PlayerBulletHitType hitType_;
 

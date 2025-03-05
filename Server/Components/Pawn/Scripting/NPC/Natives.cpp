@@ -315,7 +315,7 @@ SCRIPT_API(NPC_GetAmmoInClip, int(INPC& npc))
 
 SCRIPT_API(NPC_Shoot, bool(INPC& npc, uint8_t weapon, int hitId, int hitType, Vector3 endPoint, Vector3 offset, bool isHit, uint8_t checkInBetweenFlags))
 {
-	npc.shoot(hitId, PlayerBulletHitType(hitType), weapon, endPoint, offset, isHit, checkInBetweenFlags);
+	npc.shoot(hitId, PlayerBulletHitType(hitType), weapon, endPoint, offset, isHit, EntityCheckType(checkInBetweenFlags));
 	return true;
 }
 
@@ -326,13 +326,13 @@ SCRIPT_API(NPC_IsShooting, bool(INPC& npc))
 
 SCRIPT_API(NPC_AimAt, bool(INPC& npc, Vector3 point, bool shoot, int shootDelay, bool updateAngle, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
 {
-	npc.aimAt(point, shoot, shootDelay, updateAngle, offsetFrom, checkInBetweenFlags);
+	npc.aimAt(point, shoot, shootDelay, updateAngle, offsetFrom, EntityCheckType(checkInBetweenFlags));
 	return true;
 }
 
 SCRIPT_API(NPC_AimAtPlayer, bool(INPC& npc, IPlayer& atPlayer, bool shoot, int shootDelay, bool updateAngle, Vector3 offset, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
 {
-	npc.aimAtPlayer(atPlayer, shoot, shootDelay, updateAngle, offset, offsetFrom, checkInBetweenFlags);
+	npc.aimAtPlayer(atPlayer, shoot, shootDelay, updateAngle, offset, offsetFrom, EntityCheckType(checkInBetweenFlags));
 	return true;
 }
 
