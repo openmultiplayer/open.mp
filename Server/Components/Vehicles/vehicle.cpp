@@ -390,7 +390,7 @@ bool Vehicle::updateFromPassengerSync(const VehiclePassengerSyncPacket& passenge
 	int passengerSeats = Impl::getVehiclePassengerSeats(getModel());
 	// TODO: Deal with two players in the same seat.
 	// TODO: Detect fast switching cheats.
-	if (passengerSeats == 0xFF || passengerSync.SeatID < 1 || passengerSync.SeatID > passengerSeats)
+	if (passengerSeats == 0xFF || passengerSync.SeatID < 1)
 	{
 		// Can't be a passenger there.  NOT an OBOE.
 		// Just ignore the packet for now.
