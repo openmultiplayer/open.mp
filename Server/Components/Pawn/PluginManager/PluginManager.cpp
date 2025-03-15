@@ -16,7 +16,7 @@ struct BrokenPluginMessageData
 	StringView message;
 };
 
-static const StaticArray<BrokenPluginMessageData, 23> BrokenPlugins = {
+static const StaticArray<BrokenPluginMessageData, 24> BrokenPlugins = {
 	{
 		{ "YSF", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
 		{ "YSF_DL", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
@@ -38,6 +38,7 @@ static const StaticArray<BrokenPluginMessageData, 23> BrokenPlugins = {
 		{ "pawncmd", "There is an open.mp compatible version you can find here: https://github.com/katursis/Pawn.CMD/releases , make sure to download x.x.x-omp version." },
 		{ "sampvoice", "There is an open.mp compatible version you can find here: https://github.com/AmyrAhmady/sampvoice/releases , make sure to download x.x.x-omp version." },
 
+		{ "fmt", "It is not needed anymore since open.mp has support for formatted strings in various natives" },
 		{ "nativechecker", "It is not needed anymore since open.mp has built in native checking mechanism when a script is being loaded" },
 		{ "samp-compat", "It is not needed anymore since open.mp has built in compat mechanism between 0.3.7 and 0.3DL versions" },
 		{ "LFN", "It is not needed anymore since open.mp has support for longer function names, just compile your scripts with our compiler" },
