@@ -270,6 +270,10 @@ SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 
 SCRIPT_API(UnBlockIpAddress, bool(std::string const& ipAddress))
 {
+	if (ipAddress.empty())
+	{
+		return false;
+	}
 	BanEntry entry(ipAddress);
 	for (INetwork* network : PawnManager::Get()->core->getNetworks())
 	{
@@ -698,6 +702,10 @@ SCRIPT_API(SendRconCommand, bool(cell const* format))
 	if (console)
 	{
 		AmxStringFormatter command(format, GetAMX(), GetParams(), 1);
+		if (command.empty())
+		{
+			return false;
+		}
 		console->send(command);
 	}
 	return true;
@@ -709,6 +717,10 @@ SCRIPT_API(SendRconCommandf, bool(cell const* format))
 	if (console)
 	{
 		AmxStringFormatter command(format, GetAMX(), GetParams(), 1);
+		if (command.empty())
+		{
+			return false;
+		}
 		console->send(command);
 	}
 	return true;
@@ -723,6 +735,10 @@ SCRIPT_API(SetDeathDropAmount, bool(int amount))
 SCRIPT_API(SetGameModeText, bool(cell const* format))
 {
 	AmxStringFormatter string(format, GetAMX(), GetParams(), 1);
+	if (string.empty())
+	{
+		return false;
+	}
 	PawnManager::Get()->core->setData(SettableCoreDataType::ModeText, string);
 	return true;
 }
@@ -746,7 +762,8 @@ SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 
 SCRIPT_API(SetTeamCount, bool(int count))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTeamCount() function is removed.");
+	return true;
 }
 
 SCRIPT_API(SetWeather, bool(int weatherid))
