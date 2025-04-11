@@ -1313,6 +1313,26 @@ void NPC::sendFootSync()
 	npcComponent_->emulatePacketIn(*player_, footSync_.PacketID, bs);
 }
 
+void NPC::sendAimSync()
+{
+	// Only send aim sync if player is on foot
+	if (player_->getState() != PlayerState_OnFoot)
+	{
+		return;
+	}
+
+	NetworkBitStream bs;
+
+	bs.writeUINT8(aimSync_.CamMode);
+	bs.writeVEC3(aimSync_.CamFrontVector);
+	bs.writeVEC3(aimSync_.CamPos);
+	bs.writeFLOAT(aimSync_.AimZ);
+	bs.writeUINT8(aimSync_.ZoomWepState);
+	bs.writeUINT8(aimSync_.AspectRatio);
+
+	npcComponent_->emulatePacketIn(*player_, aimSync_.PacketID, bs);
+}
+
 void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
@@ -1343,167 +1363,172 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 	{
 		auto state = player_->getState();
 
-		// Only process the NPC if it is spawned
-		if (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned)
+		// Only process if it's needed based on update rate
+		if (duration_cast<Milliseconds>(now - lastUpdate_).count() > npcComponent_->getGeneralNPCUpdateRate())
 		{
-			if (getHealth() <= 0.0f && state != PlayerState_Wasted && state != PlayerState_Spawned)
+			// Only process the NPC if it is spawned
+			if (player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned)
 			{
-				// check on vehicle
-				if (state == PlayerState_Driver || state == PlayerState_Passenger)
+				if (getHealth() <= 0.0f && state != PlayerState_Wasted && state != PlayerState_Spawned)
 				{
-					// TODO: Handle NPC driver/passenger death
+					// check on vehicle
+					if (state == PlayerState_Driver || state == PlayerState_Passenger)
+					{
+						// TODO: Handle NPC driver/passenger death
+					}
+
+					// Kill the player
+					kill(lastDamager_, lastDamagerWeapon_);
 				}
 
-				// Kill the player
-				kill(lastDamager_, lastDamagerWeapon_);
-			}
-
-			if (needsVelocityUpdate_)
-			{
-				setPosition(getPosition() + velocity_);
-				setVelocity({ 0.0f, 0.0f, 0.0f }, false);
-			}
-
-			if (moving_)
-			{
-				advance(now);
-			}
-
-			if (state == PlayerState_OnFoot)
-			{
-				if (aiming_)
+				if (needsVelocityUpdate_)
 				{
-					auto player = npcComponent_->getCore()->getPlayers().get(hitId_);
-					if (player && hitType_ == PlayerBulletHitType_Player)
+					setPosition(getPosition() + velocity_);
+					setVelocity({ 0.0f, 0.0f, 0.0f }, false);
+				}
+
+				if (moving_)
+				{
+					advance(now);
+				}
+
+				if (state == PlayerState_OnFoot)
+				{
+					if (aiming_)
 					{
-						if (isAimingAtPlayer(*player))
+						auto player = npcComponent_->getCore()->getPlayers().get(hitId_);
+						if (player && hitType_ == PlayerBulletHitType_Player)
 						{
-							auto point = player->getPosition() + aimOffset_;
-							if (aimAt_ != point)
+							if (isAimingAtPlayer(*player))
 							{
-								updateAimData(point, updateAimAngle_);
+								auto point = player->getPosition() + aimOffset_;
+								if (aimAt_ != point)
+								{
+									updateAimData(point, updateAimAngle_);
+								}
 							}
 						}
-					}
-					else
-					{
-						stopAim();
-					}
-				}
-
-				if (reloading_)
-				{
-					int weaponSkill = getWeaponSkillLevel(getWeaponSkillID(weapon_));
-					uint32_t reloadTime = getWeaponActualReloadTime(weapon_, weaponSkill);
-					bool reloadFinished = reloadTime != -1 && duration_cast<Milliseconds>(lastUpdate_ - reloadingUpdateTime_) >= Milliseconds(reloadTime);
-
-					if (reloadFinished)
-					{
-						shootUpdateTime_ = lastUpdate_;
-						reloading_ = false;
-						shooting_ = true;
-						ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, weaponSkill, infiniteAmmo_);
-					}
-					else
-					{
-						removeKey(Key::FIRE);
-						applyKey(Key::AIM);
-					}
-				}
-				else if (shooting_)
-				{
-					if (ammo_ == 0 && !infiniteAmmo_)
-					{
-						shooting_ = false;
-						removeKey(Key::FIRE);
-						applyKey(Key::AIM);
-					}
-					else
-					{
-						int shootTime = getWeaponActualShootTime(weapon_);
-						if (shootTime != -1 && Milliseconds(shootTime) < shootDelay_)
+						else
 						{
-							shootTime = shootDelay_.count();
+							stopAim();
 						}
+					}
 
-						Milliseconds lastShootTime = duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_);
-						if (lastShootTime >= shootDelay_)
+					if (reloading_)
+					{
+						int weaponSkill = getWeaponSkillLevel(getWeaponSkillID(weapon_));
+						uint32_t reloadTime = getWeaponActualReloadTime(weapon_, weaponSkill);
+						bool reloadFinished = reloadTime != -1 && duration_cast<Milliseconds>(lastUpdate_ - reloadingUpdateTime_) >= Milliseconds(reloadTime);
+
+						if (reloadFinished)
+						{
+							shootUpdateTime_ = lastUpdate_;
+							reloading_ = false;
+							shooting_ = true;
+							ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, weaponSkill, infiniteAmmo_);
+						}
+						else
 						{
 							removeKey(Key::FIRE);
 							applyKey(Key::AIM);
 						}
-
-						if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
+					}
+					else if (shooting_)
+					{
+						if (ammo_ == 0 && !infiniteAmmo_)
 						{
-							if (ammoInClip_ != 0)
+							shooting_ = false;
+							removeKey(Key::FIRE);
+							applyKey(Key::AIM);
+						}
+						else
+						{
+							int shootTime = getWeaponActualShootTime(weapon_);
+							if (shootTime != -1 && Milliseconds(shootTime) < shootDelay_)
 							{
-								auto weaponData = WeaponInfo::get(weapon_);
-								if (weaponData.type == PlayerWeaponType_Bullet)
-								{
-									bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy[weapon_] * 100.0f);
-									shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
-								}
+								shootTime = shootDelay_.count();
+							}
 
+							Milliseconds lastShootTime = duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_);
+							if (lastShootTime >= shootDelay_)
+							{
+								removeKey(Key::FIRE);
 								applyKey(Key::AIM);
+							}
+
+							if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
+							{
+								if (ammoInClip_ != 0)
+								{
+									auto weaponData = WeaponInfo::get(weapon_);
+									if (weaponData.type == PlayerWeaponType_Bullet)
+									{
+										bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy[weapon_] * 100.0f);
+										shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
+									}
+
+									applyKey(Key::AIM);
+									applyKey(Key::FIRE);
+
+									if (!infiniteAmmo_)
+									{
+										ammo_--;
+									}
+
+									ammoInClip_--;
+
+									bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
+									if (needsReloading)
+									{
+										reloadingUpdateTime_ = lastUpdate_;
+										reloading_ = true;
+										shooting_ = false;
+									}
+
+									shootUpdateTime_ = lastUpdate_;
+								}
+							}
+						}
+					}
+					else if (meleeAttacking_)
+					{
+						if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
+						{
+							if (meleeSecondaryAttack_)
+							{
+								applyKey(Key::AIM);
+								applyKey(Key::SECONDARY_ATTACK);
+							}
+							else
+							{
 								applyKey(Key::FIRE);
-
-								if (!infiniteAmmo_)
-								{
-									ammo_--;
-								}
-
-								ammoInClip_--;
-
-								bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
-								if (needsReloading)
-								{
-									reloadingUpdateTime_ = lastUpdate_;
-									reloading_ = true;
-									shooting_ = false;
-								}
-
-								shootUpdateTime_ = lastUpdate_;
+							}
+							shootUpdateTime_ = lastUpdate_;
+						}
+						else if (lastUpdate_ > shootUpdateTime_)
+						{
+							if (meleeSecondaryAttack_)
+							{
+								removeKey(Key::SECONDARY_ATTACK);
+							}
+							else
+							{
+								removeKey(Key::FIRE);
 							}
 						}
 					}
 				}
-				else if (meleeAttacking_)
-				{
-					if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
-					{
-						if (meleeSecondaryAttack_)
-						{
-							applyKey(Key::AIM);
-							applyKey(Key::SECONDARY_ATTACK);
-						}
-						else
-						{
-							applyKey(Key::FIRE);
-						}
-						shootUpdateTime_ = lastUpdate_;
-					}
-					else if (lastUpdate_ > shootUpdateTime_)
-					{
-						if (meleeSecondaryAttack_)
-						{
-							removeKey(Key::SECONDARY_ATTACK);
-						}
-						else
-						{
-							removeKey(Key::FIRE);
-						}
-					}
-				}
-			}
 
-			if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
-			{
-				sendFootSync();
-				updateAim();
-				lastFootSyncUpdate_ = now;
+				lastUpdate_ = now;
 			}
+		}
 
-			lastUpdate_ = now;
+		if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
+		{
+			sendFootSync();
+			sendAimSync();
+			updateAim();
+			lastFootSyncUpdate_ = now;
 		}
 	}
 }

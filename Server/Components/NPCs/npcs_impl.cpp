@@ -108,18 +108,10 @@ void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 	// Clean this pool because it is now processed
 	markedForKick.clear();
 
-	// Stop further processings if update rate is smaller than elapsed time
-	if (duration_cast<Milliseconds>(now - lastUpdate).count() <= getGeneralNPCUpdateRate())
-	{
-		return;
-	}
-
 	for (auto& npc : storage)
 	{
 		static_cast<NPC*>(npc)->tick(elapsed, now);
 	}
-
-	lastUpdate = now;
 }
 
 void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part)

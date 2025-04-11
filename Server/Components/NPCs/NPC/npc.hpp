@@ -141,6 +141,8 @@ public:
 
 	void sendFootSync();
 
+	void sendAimSync();
+
 	void tick(Microseconds elapsed, TimePoint now);
 
 	void advance(TimePoint now);

@@ -139,7 +139,6 @@ private:
 	DefaultEventDispatcher<NPCEventHandler> eventDispatcher;
 	MarkedDynamicPoolStorage<NPC, INPC, 0, NPC_POOL_SIZE> storage;
 	bool shouldCallCustomEvents = true;
-	TimePoint lastUpdate;
 
 	// Update rates
 	int* generalNPCUpdateRateMS = nullptr;
