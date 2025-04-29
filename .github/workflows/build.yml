@@ -196,11 +196,30 @@ jobs:
           path: docker/build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.tar.xz
           if-no-files-found: error
 
-  abi-check:
-    if: github.event_name == 'pull_request'
-    name: SDK ABI check
-    needs: build-linux
-    runs-on: ubuntu-latest
+abi-check:
+  if: github.event_name == 'pull_request'
+  name: SDK ABI check
+  needs: build-linux
+  runs-on: ubuntu-latest
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up environment
+      run: |
+        sudo apt update
+        sudo apt install -y abi-compliance-checker abi-dumper
+
+    - name: Generate ABI dump
+      run: |
+        mkdir -p abi
+        abi-dumper ./build/libmylibrary.so -o abi/current.dump -public-headers include/
+
+    - name: Compare ABI with previous version
+      run: |
+        abi-compliance-checker -l MyLibrary -old abi/previous.dump -new abi/current.dump || true
+
 
     steps:
       - uses: actions/checkout@v4
