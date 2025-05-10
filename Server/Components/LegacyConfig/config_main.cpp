@@ -212,13 +212,13 @@ private:
 		if (name.find("chatlogging") == 0)
 		{
 			auto it = dictionary.find("chatlogging");
-			
+
 			Impl::String lower(right);
 			std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c)
 				{
 					return std::tolower(c);
 				});
-			
+
 			if (lower == "true" || lower == "1")
 			{
 				config.setBool(it->second, true);
@@ -229,7 +229,7 @@ private:
 				config.setBool(it->second, false);
 				config.setBool("logging.log_deaths", false);
 			}
-			
+
 			return true;
 		}
 
