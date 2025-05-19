@@ -1695,7 +1695,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		if (params.bot)
 		{
-			for (auto index = storage.Capacity - 1; index >= 0; --index)
+			const auto maxPlayers = core.getConfig().getInt("max_players");
+			for (auto index = *maxPlayers - 1; index >= 0; --index)
 			{
 				if (storage.get(index) == nullptr)
 				{
