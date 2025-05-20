@@ -33,7 +33,11 @@ public:
 
 	void spawn() override;
 
+	void respawn() override;
+
 	bool move(Vector3 position, NPCMoveType moveType, float moveSpeed = NPC_MOVE_SPEED_AUTO) override;
+
+	bool moveToPlayer(IPlayer& player, NPCMoveType moveType, float moveSpeed = NPC_MOVE_SPEED_AUTO) override;
 
 	void stopMove() override;
 
