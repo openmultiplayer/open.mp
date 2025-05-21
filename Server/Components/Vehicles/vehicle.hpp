@@ -48,14 +48,15 @@ private:
 	uint8_t landingGear = 1;
 	bool respawning = false;
 	bool detaching = false;
+	bool beenOccupied = false;
 	FlatHashSet<IPlayer*> passengers;
 	HybridString<16> numberPlate = StringView("XYZSR998");
 	uint8_t objective;
 	uint8_t doorsLocked;
+	uint8_t sirenState = 0;
 	VehicleDeathData deathData;
 	TimePoint timeOfSpawn;
 	TimePoint lastOccupiedChange;
-	bool beenOccupied = false;
 	Vector3 velocity = Vector3(0.0f, 0.0f, 0.0f);
 	Vector3 angularVelocity = Vector3(0.0f, 0.0f, 0.0f);
 	TimePoint trailerUpdateTime;
@@ -63,7 +64,6 @@ private:
 	Vehicle* cab = nullptr;
 	StaticArray<IVehicle*, MAX_VEHICLE_CARRIAGES> carriages;
 	VehicleParams params;
-	uint8_t sirenState = 0;
 	uint32_t hydraThrustAngle = 0;
 	float trainSpeed = 0.0f;
 	int lastDriverPoolID = INVALID_PLAYER_ID;

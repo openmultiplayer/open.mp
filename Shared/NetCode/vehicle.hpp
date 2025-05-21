@@ -111,15 +111,15 @@ namespace RPC
 		float Angle;
 		uint8_t Colour1;
 		uint8_t Colour2;
-		float Health;
 		uint8_t Interior;
+		uint8_t Paintjob;
+		float Health;
 		uint32_t DoorDamage;
 		uint32_t PanelDamage;
 		uint8_t LightDamage;
 		uint8_t TyreDamage;
 		uint8_t Siren;
 		StaticArray<int, MAX_VEHICLE_COMPONENT_SLOT_IN_RPC> Mods;
-		uint8_t Paintjob;
 		int32_t BodyColour1;
 		int32_t BodyColour2;
 
