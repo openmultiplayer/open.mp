@@ -39,6 +39,7 @@ namespace RPC
 		HybridString<16> Key;
 		HybridString<16> VersionString;
 		bool IsUsingOfficialClient;
+		uint32_t OmpVersion;
 
 		bool read(NetworkBitStream& bs)
 		{
@@ -51,6 +52,7 @@ namespace RPC
 
 			uint32_t dummyVar = 0;
 			IsUsingOfficialClient = bs.readUINT32(dummyVar);
+			OmpVersion = dummyVar;
 
 			return readFailed;
 		}

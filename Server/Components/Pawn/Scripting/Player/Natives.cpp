@@ -1158,7 +1158,7 @@ SCRIPT_API(ArePlayerWeaponsAllowed, bool(IPlayer& player))
 	return player.areWeaponsAllowed();
 }
 
-SCRIPT_API(IsPlayerUsingOfficialClient, int(IPlayer& player))
+SCRIPT_API(IsPlayerUsingOfficialClient, bool(IPlayer& player))
 {
 	return player.isUsingOfficialClient();
 }
@@ -1194,4 +1194,9 @@ SCRIPT_API(IsPlayerCuffed, bool(IPlayer& player))
 		}
 	}
 	return false;
+}
+
+SCRIPT_API(IsPlayerUsingOmp, bool(IPlayer& player))
+{
+	return player.isUsingOmp();
 }

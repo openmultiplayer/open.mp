@@ -955,6 +955,58 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 
 	bool onPlayerUpdate(IPlayer& player, TimePoint now) override
 	{
+		IPlayerTextDrawData* tdData = queryExtension<IPlayerTextDrawData>(player);
+		if (tdData)
+		{
+			String text;
+
+			auto td = tdData->get(1);
+			String lookAt = "Looking at";
+			IPlayer* lookatPlayer = player.getCameraTargetPlayer();
+			if (lookatPlayer)
+			{
+				lookAt += "~n~Player " + String(lookatPlayer->getName());
+			}
+			IVehicle* lookAtVehicle = player.getCameraTargetVehicle();
+			if (lookAtVehicle)
+			{
+				lookAt += "~n~Vehicle " + std::to_string(lookAtVehicle->getID());
+			}
+			IObject* lookAtObject = player.getCameraTargetObject();
+			if (lookAtObject)
+			{
+				lookAt += "~n~Object " + std::to_string(lookAtObject->getID());
+			}
+			IActor* lookAtActor = player.getCameraTargetActor();
+			if (lookAtActor)
+			{
+				lookAt += "~n~Actor " + std::to_string(lookAtActor->getID());
+			}
+
+			String aimAt = "Aiming at";
+			IPlayer* targetPlayer = player.getTargetPlayer();
+			if (targetPlayer)
+			{
+				aimAt += "~n~Player " + String(targetPlayer->getName());
+			}
+			IActor* targetActor = player.getTargetActor();
+			if (targetActor)
+			{
+				aimAt += "~n~Actor " + std::to_string(targetActor->getID());
+			}
+
+			if (lookatPlayer || lookAtVehicle || lookAtObject || lookAtActor)
+			{
+				text += lookAt + "~n~";
+			}
+
+			if (targetPlayer || targetActor)
+			{
+				text += aimAt + "~n~";
+			}
+
+			td->setText(text);
+		}
 		return true;
 	}
 

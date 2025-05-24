@@ -16,7 +16,7 @@
 
 using namespace Impl;
 
-class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public PlayerUpdateEventHandler, public PlayerDamageEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -335,6 +335,7 @@ public:
 			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 			core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerEnterVehicle::removeEventHandler(*core, &playerEnterVehicleHandler);
 			NetCode::RPC::OnPlayerExitVehicle::removeEventHandler(*core, &playerExitVehicleHandler);
 			NetCode::RPC::SetVehicleDamageStatus::removeEventHandler(*core, &vehicleDamageStatusHandler);
@@ -351,6 +352,7 @@ public:
 		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 		core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
 		core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this, EventPriority_Lowest);
 		NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);
 		NetCode::RPC::OnPlayerExitVehicle::addEventHandler(*core, &playerExitVehicleHandler);
 		NetCode::RPC::SetVehicleDamageStatus::addEventHandler(*core, &vehicleDamageStatusHandler);
@@ -539,9 +541,25 @@ public:
 		storage.clear();
 	}
 
+	void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) override
+	{
+		PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
+		if (!data)
+		{
+			return;
+		}
+
+		auto vehicle = static_cast<Vehicle*>(data->getVehicle());
+		if (vehicle)
+		{
+			vehicle->unoccupy(player);
+		}
+		data->setVehicle(nullptr, SEAT_NONE);
+	}
+
 	void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
 	{
-		if (newState != PlayerState_Driver && newState != PlayerState_Passenger)
+		if (newState != PlayerState_Driver && newState != PlayerState_Passenger && newState != PlayerState_Wasted)
 		{
 			PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
 			if (!data)

@@ -117,6 +117,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool allowWeapons_;
 	bool allowTeleport_;
 	bool isUsingOfficialClient_;
+	bool isUsingOmp_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -259,6 +260,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, allowWeapons_(true)
 		, allowTeleport_(false)
 		, isUsingOfficialClient_(params.isUsingOfficialClient)
+		, isUsingOmp_(params.isUsingOmp)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -319,6 +321,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isUsingOfficialClient() const override
 	{
 		return isUsingOfficialClient_;
+	}
+
+	bool isUsingOmp() const override
+	{
+		return isUsingOmp_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
@@ -784,34 +791,6 @@ public:
 		else
 		{
 			PacketHelper::broadcastToStreamed(clearPlayerTasksRPC, *this, false /* skipFrom */);
-		}
-
-		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
-		if (!data || !data->getVehicle())
-		{
-			// TODO: This must be fixed on client side
-			// *
-			// *     <problem>
-			// *         ClearAnimations doesn't do anything when the animation ends if we
-			// *         pass 1 for the freeze parameter in ApplyAnimation.
-			// *     </problem>
-			// *     <solution>
-			// *         Apply an idle animation for stop and then use ClearAnimation.
-			// *     </solution>
-			// *     <see>FIXES_ClearAnimations</see>
-			// *     <author    href="https://github.com/simonepri/" >simonepri</author>
-			// *
-			AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
-
-			animationData.lib = "PED";
-			animationData.name = "IDLE_STANCE";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "IDLE_CHAT";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "WALK_PLAYER";
-			applyAnimationImpl(animationData, syncType);
 		}
 	}
 
@@ -1342,6 +1321,16 @@ removeWeapon_has_weapon:
 				PacketHelper::send(givePlayerWeaponRPC, *this);
 			}
 		}
+		NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+		if (weaponid != armedWeapon_)
+		{
+			setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+		}
+		else
+		{
+			setPlayerArmedWeaponRPC.Weapon = 0;
+		}
+		PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 	}
 
 	void setWeaponAmmo(WeaponSlotData weapon) override
@@ -1380,10 +1369,6 @@ removeWeapon_has_weapon:
 			return ret;
 		}
 		WeaponSlotData ret = weapons_[slot];
-		if (ret.ammo == 0)
-		{
-			ret.id = 0;
-		}
 		return ret;
 	}
 
@@ -1716,7 +1701,7 @@ removeWeapon_has_weapon:
 		{
 			if (!allowWeapons_)
 			{
-				// Give the player all their weapons back.  Don't worry about the armed weapon.
+				// Give the player all their weapons back.
 				allowWeapons_ = true;
 				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 				PacketHelper::send(resetWeaponsRPC, *this);
@@ -1730,6 +1715,9 @@ removeWeapon_has_weapon:
 						PacketHelper::send(givePlayerWeaponRPC, *this);
 					}
 				}
+				NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+				setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+				PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 			}
 		}
 		else
