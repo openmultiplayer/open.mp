@@ -244,7 +244,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
 					static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
 					{
-						return handler->onVehicleTrailerAttach(player, *this, *trailer);
+						return handler->onTrailerAttach(player, *this, *trailer);
 					});
 				}
 			}
@@ -260,7 +260,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 		{
 			static_cast<DefaultEventDispatcher<VehicleEventHandler>&>(pool->getEventDispatcher()).stopAtFalse([&player, this](VehicleEventHandler* handler)
 			{
-				return handler->onVehicleTrailerDetach(player, *this, *trailer);
+				return handler->onTrailerDetach(player, *this, *trailer);
 			});
 			
 			trailer->cab = nullptr;
