@@ -201,6 +201,8 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 		stopAim();
 	}
 
+	resetKeys();
+
 	// Set up everything to start moving in next tick
 	auto position = getPosition();
 	float distance = glm::distance(position, pos);
@@ -270,7 +272,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 
 	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
 	{
-		estimatedArrivalTimeMS_ = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count() + (static_cast<long long>(distance / glm::length(velocity_)) /* * (npcComponent_->getFootSyncRate() * 10000)*/);
+		estimatedArrivalTimeMS_ = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count() + (static_cast<long long>(distance / glm::length(velocity_))/* * (npcComponent_->getFootSyncRate() * 10000)*/);
 	}
 	else
 	{
