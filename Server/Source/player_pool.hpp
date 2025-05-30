@@ -44,6 +44,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	bool* useAllAnimations_;
 	bool* validateAnimations_;
 	bool* allowInteriorWeapons_;
+	bool* logConnectionMessages_;
 	int* maxBots;
 	StaticArray<bool, 256> allowNickCharacter;
 	TimePoint lastScoresAndPingsCached;
@@ -1757,7 +1758,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		player.weather_ = *weather;
 		player.gravity_ = core.getGravity();
 
-		if (config.getBool("logging.log_connection_messages"))
+		if (logConnectionMessages_ && *logConnectionMessages_)
 		{
 			core.logLn(
 				LogLevel::Message,
@@ -1817,7 +1818,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		packet.Reason = reason;
 		PacketHelper::broadcast(packet, *this);
 
-		if (core.getConfig().getBool("logging.log_connection_messages"))
+		if (logConnectionMessages_ && *logConnectionMessages_)
 		{
 			core.logLn(
 				LogLevel::Message,
@@ -2036,6 +2037,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		useAllAnimations_ = config.getBool("game.use_all_animations");
 		validateAnimations_ = config.getBool("game.validate_animations");
 		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
+		logConnectionMessages_ = config.getBool("logging.log_connection_messages");
 		maxBots = config.getInt("max_bots");
 
 		playerUpdateDispatcher.addEventHandler(this);
