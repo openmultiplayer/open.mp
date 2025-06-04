@@ -35,7 +35,7 @@ if(MSVC)
 		winmm
 	)
 else()
-	target_link_libraries(Server PRIVATE dl)
+	target_link_libraries(Server PRIVATE dl atomic)
 
 	if(SHARED_STDCXXFS)
 		target_link_libraries(Server PRIVATE stdc++fs)

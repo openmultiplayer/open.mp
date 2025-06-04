@@ -118,10 +118,10 @@ conan_omp_add_lib(nlohmann_json 3.9.1)
 # -------
 	if(SHARED_OPENSSL)
 		message("Using shared OpenSSL")
-	conan_omp_add_lib_opt(openssl 1.1.1q "openssl:shared=True")
+	conan_omp_add_lib_opt(openssl 3.0.13 "openssl:shared=True")
 else()
 		message("Using static OpenSSL")
-	conan_omp_add_lib(openssl 1.1.1q)
+	conan_omp_add_lib(openssl 3.0.13)
 endif()
 
 # ghc-filesystem
