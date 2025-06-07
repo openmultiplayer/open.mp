@@ -816,6 +816,89 @@ void RakNetLegacyNetwork::start()
 
 	IConfig& config = core->getConfig();
 	int maxPlayers = *config.getInt("max_players");
+	int maxBots = *config.getInt("max_bots");
+	
+	// Sanity checks for config options
+	if (maxBots >= maxPlayers)
+	{
+		core->logLn(LogLevel::Warning, "The 'max_bots' option is greater than or equal to 'max_players' option. Players may not be able to join.");
+	}
+	
+	if (!*config.getBool("enable_query") && *config.getBool("announce"))
+	{
+		core->logLn(LogLevel::Warning, "Query is disabled but announce is enabled. The server will not be visible in the master list.");
+	}
+	
+	// Check for negative values that should not be negative
+	int playerTimeout = *config.getInt("network.player_timeout");
+	if (playerTimeout < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.player_timeout' (%d) has been corrected to positive.", playerTimeout);
+		config.setInt("network.player_timeout", -playerTimeout);
+	}
+	
+	int minConnectionTime = *config.getInt("network.minimum_connection_time");
+	if (minConnectionTime < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.minimum_connection_time' (%d) has been corrected to positive.", minConnectionTime);
+		config.setInt("network.minimum_connection_time", -minConnectionTime);
+	}
+	
+	int messagesLimit = *config.getInt("network.messages_limit");
+	if (messagesLimit < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.messages_limit' (%d) has been corrected to positive.", messagesLimit);
+		config.setInt("network.messages_limit", -messagesLimit);
+	}
+	
+	int messageHoleLimit = *config.getInt("network.message_hole_limit");
+	if (messageHoleLimit < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.message_hole_limit' (%d) has been corrected to positive.", messageHoleLimit);
+		config.setInt("network.message_hole_limit", -messageHoleLimit);
+	}
+	
+	int acksLimit = *config.getInt("network.acks_limit");
+	if (acksLimit < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.acks_limit' (%d) has been corrected to positive.", acksLimit);
+		config.setInt("network.acks_limit", -acksLimit);
+	}
+	
+	int limitsBanTime = *config.getInt("network.limits_ban_time");
+	if (limitsBanTime < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.limits_ban_time' (%d) has been corrected to positive.", limitsBanTime);
+		config.setInt("network.limits_ban_time", -limitsBanTime);
+	}
+	
+	int gameWeather = *config.getInt("game.weather");
+	if (gameWeather < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'game.weather' (%d) has been corrected to positive.", gameWeather);
+		config.setInt("game.weather", -gameWeather);
+	}
+	
+	int gameTime = *config.getInt("game.time");
+	if (gameTime < 0)
+	{
+		int correctedTime = (-gameTime) % 24;
+		core->logLn(LogLevel::Warning, "Negative value for 'game.time' (%d) has been corrected to %d.", gameTime, correctedTime);
+		config.setInt("game.time", correctedTime);
+	}
+	else if (gameTime >= 24)
+	{
+		int correctedTime = gameTime % 24;
+		core->logLn(LogLevel::Warning, "Value for 'game.time' (%d) exceeds 24 hours, has been corrected to %d.", gameTime, correctedTime);
+		config.setInt("game.time", correctedTime);
+	}
+	
+	int cookieReseedTime = *config.getInt("network.cookie_reseed_time");
+	if (cookieReseedTime < 0)
+	{
+		core->logLn(LogLevel::Warning, "Negative value for 'network.cookie_reseed_time' (%d) has been corrected to positive.", cookieReseedTime);
+		config.setInt("network.cookie_reseed_time", -cookieReseedTime);
+	}
 
 	int port = *config.getInt("network.port");
 	int sleep = static_cast<int>(*config.getFloat("sleep"));
