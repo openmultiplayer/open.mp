@@ -618,62 +618,137 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 	int playerObjectOwnerId = INVALID_PLAYER_ID;
 	Vector3 hitMapPos = bulletData.hitPos;
 	float range = weaponData.range;
-	Pair<Vector3, Vector3> results = { bulletData.hitPos, bulletData.hitPos };
 	bool eventResult = true;
+	bool playerIsNPC = false;
 
 	// Pass original hit ID to correctly handle missed or out of range shots!
-	void* closestEntity = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos, results);
+	int closestEntityId = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos);
 
-	bulletData.hitPos = results.first;
-	bulletData.offset = results.second;
-
-	switch (EntityCheckType(closestEntityType))
+	// Just invalid anything, but INVALID_PLAYER_ID holds the value we want.
+	if (closestEntityId != INVALID_PLAYER_ID)
 	{
-	case EntityCheckType::Player:
-	{
-		if (closestEntity)
+		bulletData.hitID = closestEntityId;
+		switch (EntityCheckType(closestEntityType))
+		{
+		case EntityCheckType::Player:
 		{
 			bulletData.hitType = PlayerBulletHitType_Player;
-			auto player = static_cast<IPlayer*>(closestEntity);
-			bulletData.hitID = player->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotPlayer(*this, *player, bulletData);
-				});
+			break;
 		}
-		break;
-	}
-	case EntityCheckType::NPC:
-	{
-		if (closestEntity)
+		case EntityCheckType::NPC:
 		{
 			bulletData.hitType = PlayerBulletHitType_Player;
-			auto npc = static_cast<INPC*>(closestEntity);
-			bulletData.hitID = npc->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotNPC(*this, *npc, bulletData);
-				});
+			playerIsNPC = true;
+			break;
 		}
-		break;
+		case EntityCheckType::Actor:
+		{
+			bulletData.hitType = PlayerBulletHitType_None;
+			bulletData.hitID = INVALID_PLAYER_ID;
+			break;
+		}
+		case EntityCheckType::Vehicle:
+		{
+			bulletData.hitType = PlayerBulletHitType_Vehicle;
+			break;
+		}
+		case EntityCheckType::Object:
+		{
+			bulletData.hitType = PlayerBulletHitType_Object;
+			break;
+		}
+		case EntityCheckType::ProjectOrig:
+		case EntityCheckType::ProjectTarg:
+		{
+			bulletData.hitType = PlayerBulletHitType_PlayerObject;
+			break;
+		}
+		case EntityCheckType::Map:
+		default:
+		{
+			bulletData.hitType = PlayerBulletHitType_None;
+			bulletData.hitID = INVALID_PLAYER_ID;
+			break;
+		}
+		}
 	}
-	case EntityCheckType::Actor:
+
+	switch (bulletData.hitType)
 	{
-		bulletData.hitType = PlayerBulletHitType_None;
-		bulletData.hitID = INVALID_PLAYER_ID;
+	case PlayerBulletHitType_None:
+	{
+		if (bulletData.hitID >= 0 && bulletData.hitID < ACTOR_POOL_SIZE)
+		{
+			// Actors don't have a hit type
+			auto actor = npcComponent_->getActorsPool()->get(bulletData.hitID);
+			if (actor)
+			{
+				auto pos = actor->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos; // When actor is hit use the actor collision position
+			}
+		}
+		else if (bulletData.hitID == ACTOR_POOL_SIZE + 1)
+		{
+			// Hit map
+			bulletData.offset = hitMapPos; // When map is hit use the object collision position
+		}
+		else
+		{
+			// Hit nothing (nothing ever happens)
+			bulletData.offset = glm::vec3(0.0f, 0.0f, 0.0f); // When nothing is hit use 0.0
+		}
+
 		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 			{
 				return handler->onNPCShotMissed(*this, bulletData);
 			});
 		break;
 	}
-	case EntityCheckType::Vehicle:
+	case PlayerBulletHitType_Player:
 	{
-		if (closestEntity)
+		if (playerIsNPC)
 		{
-			bulletData.hitType = PlayerBulletHitType_Vehicle;
-			auto vehicle = static_cast<IVehicle*>(closestEntity);
-			bulletData.hitID = vehicle->getID();
+			auto npc = npcComponent_->get(bulletData.hitID);
+			if (npc)
+			{
+				auto pos = npc->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos - pos;
+
+				bulletData.hitID = npc->getID();
+				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+					{
+						return handler->onNPCShotNPC(*this, *npc, bulletData);
+					});
+			}
+		}
+		else
+		{
+			auto player = npcComponent_->getCore()->getPlayers().get(bulletData.hitID);
+			if (player)
+			{
+				auto pos = player->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos - pos;
+
+				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+					{
+						return handler->onNPCShotPlayer(*this, *player, bulletData);
+					});
+			}
+		}
+		break;
+	}
+	case PlayerBulletHitType_Vehicle:
+	{
+		auto vehicle = npcComponent_->getVehiclesPool()->get(bulletData.hitID);
+		if (vehicle)
+		{
+			auto pos = vehicle->getPosition();
+			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+			bulletData.offset = bulletData.hitPos - pos;
+
 			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 				{
 					return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
@@ -681,13 +756,15 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType::Object:
+	case PlayerBulletHitType_Object:
 	{
-		if (closestEntity)
+		auto object = npcComponent_->getObjectsPool()->get(bulletData.hitID);
+		if (object)
 		{
-			bulletData.hitType = PlayerBulletHitType_Object;
-			auto object = static_cast<IObject*>(closestEntity);
-			bulletData.hitID = object->getID();
+			auto pos = object->getPosition();
+			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+			bulletData.offset = bulletData.hitPos - pos;
+
 			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 				{
 					return handler->onNPCShotObject(*this, *object, bulletData);
@@ -695,32 +772,103 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		}
 		break;
 	}
-	case EntityCheckType::ProjectOrig:
-	case EntityCheckType::ProjectTarg:
+	case PlayerBulletHitType_PlayerObject:
 	{
-		if (closestEntity)
+		if (bulletData.hitID >= 1 && bulletData.hitID < OBJECT_POOL_SIZE_037)
 		{
-			bulletData.hitType = PlayerBulletHitType_PlayerObject;
-			auto playerObject = static_cast<IPlayerObject*>(closestEntity);
-			bulletData.hitID = playerObject->getID();
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+			// Player object IDs start at 1
+			if (playerObjectOwnerId == poolID)
+			{
+				// Handles player objects of the shooter (NPC)
+				auto playerObjects = queryExtension<IPlayerObjectData>(player_);
+				if (playerObjects)
 				{
-					return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
-				});
+					auto playerObject = playerObjects->get(bulletData.hitID);
+					if (playerObject)
+					{
+						auto pos = playerObject->getPosition();
+						bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+						bulletData.offset = bulletData.hitPos - pos;
+
+						eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+							{
+								return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
+							});
+					}
+				}
+			}
+			else if (playerObjectOwnerId == hitId)
+			{
+				// Handles player objects of the shooter (target player)
+				auto player = npcComponent_->getCore()->getPlayers().get(playerObjectOwnerId);
+				if (player)
+				{
+					auto playerObjects = queryExtension<IPlayerObjectData>(player);
+					if (playerObjects)
+					{
+						auto playerObject = playerObjects->get(bulletData.hitID);
+						if (playerObject)
+						{
+							auto pos = playerObject->getPosition();
+							bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+							bulletData.offset = bulletData.hitPos - pos;
+
+							eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+								{
+									return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
+								});
+						}
+					}
+				}
+			}
+			else if (auto player = npcComponent_->getCore()->getPlayers().get(playerObjectOwnerId))
+			{
+				if (player != player_)
+				{
+					// Handles player objects of the closest player (real one)
+					auto playerObjects = queryExtension<IPlayerObjectData>(player);
+					if (playerObjects)
+					{
+						auto playerObject = playerObjects->get(bulletData.hitID);
+						if (playerObject)
+						{
+							auto pos = playerObject->getPosition();
+							bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+							bulletData.offset = bulletData.hitPos - pos;
+
+							eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+								{
+									return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
+								});
+						}
+					}
+				}
+				else
+				{
+					// Handles player objects of the closest player (NPC)
+					auto playerObjects = queryExtension<IPlayerObjectData>(player_);
+					if (playerObjects)
+					{
+						auto playerObject = playerObjects->get(bulletData.hitID);
+						if (playerObject)
+						{
+							auto pos = playerObject->getPosition();
+							bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+							bulletData.offset = bulletData.hitPos - pos;
+
+							eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+								{
+									return handler->onNPCShotPlayerObject(*this, *playerObject, bulletData);
+								});
+						}
+					}
+				}
+			}
 		}
 		break;
 	}
-	case EntityCheckType::Map:
 	default:
-	{
-		bulletData.hitType = PlayerBulletHitType_None;
-		bulletData.hitID = INVALID_PLAYER_ID;
-		eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-			{
-				return handler->onNPCShotMissed(*this, bulletData);
-			});
 		break;
-	}
 	}
 
 	if (eventResult)
@@ -1210,61 +1358,62 @@ void NPC::updateAim()
 void NPC::updateAimData(const Vector3& point, bool setAngle)
 {
 	// Adjust the player position
-	auto camPosition = getPosition() + aimOffsetFrom_;
+	auto camPos = getPosition() + aimOffsetFrom_;
 
 	// Get the aiming distance
-	auto camFronVector = point - camPosition;
+	auto camVecDistance = point - camPos;
 
 	// Get the distance to the destination point
-	float distance = glm::distance(camPosition, point);
+	float camDistance = glm::distance(camPos, point);
 
 	// Calculate the aiming Z angle
-	float xyLength = glm::length(glm::vec2(camFronVector.x, camFronVector.y)); // XY-plane distance
-	float totalLength = glm::length(camFronVector); // 3D distance
+	float xSqr = camVecDistance.x * camVecDistance.x;
+	float ySqr = camVecDistance.y * camVecDistance.y;
+	float zSqr = camVecDistance.z * camVecDistance.z;
 
-	float aimZ = xyLength / totalLength;
-	if (aimZ > 1.0f)
+	float zAngle = (xSqr + ySqr) / (sqrt(xSqr + ySqr + zSqr) * sqrt(xSqr + ySqr));
+	if (zAngle > 1.0)
 	{
-		aimZ = 1.0f;
+		zAngle = 1.0;
 	}
-	else if (aimZ < -1.0f)
+	else if (zAngle < -1.0)
 	{
-		aimZ = -1.0f;
+		zAngle = -1.0;
 	}
-
-	if (camFronVector.z < 0.0f)
+	if (camVecDistance.z < 0)
 	{
-		aimZ = glm::acos(aimZ);
+		zAngle = acos(zAngle);
 	}
 	else
 	{
-		aimZ = -glm::acos(aimZ);
+		zAngle = -acos(zAngle);
 	}
 
 	// Get the destination angle
-	auto unitVec = camFronVector / distance;
+	camVecDistance /= camDistance;
 
 	if (setAngle)
 	{
 		auto rotation = getRotation().ToEuler();
-		auto angle = glm::degrees(glm::atan(unitVec.y, unitVec.x)) + 270.0f;
-		if (angle >= 360.0f)
+
+		float facingAngle = atan2(camVecDistance.y, camVecDistance.x) * (180.0f / M_PI) + 270.0f;
+		if (facingAngle >= 360.0f)
 		{
-			angle -= 360.0f;
+			facingAngle -= 360.0f;
 		}
-		else if (angle < 0.0f)
+		else if (facingAngle < 0.0f)
 		{
-			angle += 360.0f;
+			facingAngle += 360.0f;
 		}
 
-		rotation.z = angle;
+		rotation.z = facingAngle;
 		setRotation(rotation);
 	}
 
 	// Set the aim sync data
-	aimSync_.AimZ = aimZ;
-	aimSync_.CamFrontVector = unitVec;
-	aimSync_.CamPos = camPosition;
+	aimSync_.AimZ = zAngle;
+	aimSync_.CamFrontVector = camVecDistance;
+	aimSync_.CamPos = camPos;
 
 	// set the flags
 	aimAt_ = point;
