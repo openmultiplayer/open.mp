@@ -141,8 +141,7 @@ void NPC::spawn()
 	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::PlayerRequestSpawn::PacketID, emptyBS);
 	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
 
-	// Make sure we resend this again, at spawn
-	player_->setSkin(player_->getSkin());
+	setSkin(skin_);
 
 	// Set the player stats
 	setHealth(100.0f);
@@ -158,6 +157,38 @@ void NPC::spawn()
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
 
+void NPC::respawn()
+{
+	//npcComponent_->getCore()->getPlayers().sendClientMessageToAll(Colour::White(), String("State: " + player_->getState()));
+	if (!(player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
+	{
+		npcComponent_->getCore()->printLn("NPC is not in a valid state to respawn");
+		return;
+	}
+
+	setSkin(skin_);
+	setPosition(position_);
+	setRotation(getRotation());
+
+	if (isEqualFloat(getHealth(), 0.0f)) {
+		setHealth(100.0f);
+		setArmour(0.0f);
+	} else {
+		setHealth(getHealth());
+		setArmour(getArmour());
+	}
+
+	setWeapon(weapon_);
+	setAmmo(ammo_);
+
+	dead_ = false;
+
+	lastDamager_ = nullptr;
+	lastDamagerWeapon_ = PlayerWeapon_End;
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCRespawn, *this);
+}
+
 bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 {
 	if (moveType == NPCMoveType_None)
@@ -169,6 +200,8 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	{
 		stopAim();
 	}
+
+	resetKeys();
 
 	// Set up everything to start moving in next tick
 	auto position = getPosition();
@@ -239,7 +272,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 
 	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
 	{
-		estimatedArrivalTimeMS_ = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count() + (static_cast<long long>(distance / glm::length(velocity_)) * (/* (npcComponent_->getFootSyncRate() * 10000) +*/ 1000));
+		estimatedArrivalTimeMS_ = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count() + (static_cast<long long>(distance / glm::length(velocity_))/* * (npcComponent_->getFootSyncRate() * 10000)*/);
 	}
 	else
 	{
@@ -252,6 +285,12 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	moveType_ = moveType;
 	lastMove_ = Time::now();
 	return true;
+}
+
+bool NPC::moveToPlayer(IPlayer& player, NPCMoveType moveType, float moveSpeed)
+{	
+	auto pos = player.getPosition();
+	return move(pos, moveType, moveSpeed);
 }
 
 void NPC::stopMove()
@@ -276,6 +315,7 @@ bool NPC::isMoving() const
 
 void NPC::setSkin(int model)
 {
+	skin_ = model;
 	player_->setSkin(model);
 }
 

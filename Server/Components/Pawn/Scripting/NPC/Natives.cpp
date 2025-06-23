@@ -42,6 +42,12 @@ SCRIPT_API(NPC_Spawn, bool(INPC& npc))
 	return true;
 }
 
+SCRIPT_API(NPC_Respawn, bool(INPC& npc))
+{
+	npc.respawn();
+	return true;
+}
+
 SCRIPT_API(NPC_SetPos, bool(INPC& npc, Vector3 position))
 {
 	npc.setPosition(position);
@@ -95,6 +101,11 @@ SCRIPT_API(NPC_GetVirtualWorld, int(INPC& npc))
 SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType, float moveSpeed))
 {
 	return npc.move(targetPos, NPCMoveType(moveType), moveSpeed);
+}
+
+SCRIPT_API(NPC_MoveToPlayer, bool(INPC& npc, IPlayer& player, int moveType, float moveSpeed))
+{
+	return npc.moveToPlayer(player, NPCMoveType(moveType), moveSpeed);
 }
 
 SCRIPT_API(NPC_StopMove, bool(INPC& npc))
