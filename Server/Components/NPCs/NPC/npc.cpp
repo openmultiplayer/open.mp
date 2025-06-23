@@ -1472,6 +1472,7 @@ void NPC::sendAimSync()
 
 	NetworkBitStream bs;
 
+	bs.writeUINT8(aimSync_.PacketID);
 	bs.writeUINT8(aimSync_.CamMode);
 	bs.writeVEC3(aimSync_.CamFrontVector);
 	bs.writeVEC3(aimSync_.CamPos);
