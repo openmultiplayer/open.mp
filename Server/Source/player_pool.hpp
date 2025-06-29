@@ -1389,9 +1389,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
-			if (vehicle.isRespawning())
-				return false;
-
 			const bool vehicleOk = vehicle.updateFromPassengerSync(passengerSync, peer);
 
 			if (!vehicleOk)
