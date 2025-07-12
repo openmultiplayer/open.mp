@@ -394,14 +394,7 @@ public:
 	bool isTrainCarriage()
 	{
 		const int model = getModel();
-		if (model == 569 || model == 570)
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		return (model == 569 || model == 570);
 	}
 
 	/// Sets the velocity of the vehicle.
