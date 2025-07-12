@@ -33,7 +33,7 @@ on:
 jobs:
   build-windows:
     name: Windows build
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     strategy:
       matrix:
