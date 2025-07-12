@@ -1076,7 +1076,7 @@ void NPC::enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType)
 			}
 		}
 
-		// Call the SAMP enter vehicle function
+		// Emulate enter vehicle rpc
 		NetworkBitStream bs;
 		bs.writeUINT16(vehicle.getID());
 		bs.writeUINT8(vehicleSeatToEnter_);
