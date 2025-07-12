@@ -48,7 +48,8 @@ private:
 				return false;
 			}
 
-			if (!lock.entry->isStreamedInForPlayer(peer) || peer.getState() != PlayerState_OnFoot)
+			Vehicle* lockedVehicle = static_cast<Vehicle*>(lock.entry);
+			if ((!lockedVehicle->isStreamedInForPlayer(peer) && !lockedVehicle->isTrainCarriage()) || peer.getState() != PlayerState_OnFoot)
 			{
 				return false;
 			}
@@ -90,8 +91,9 @@ private:
 				return false;
 			}
 
+			Vehicle* lockedVehicle = static_cast<Vehicle*>(lock.entry);
 			IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
-			if (vehData == nullptr || !lock.entry->isStreamedInForPlayer(peer) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry)
+			if (vehData == nullptr || (!lockedVehicle->isStreamedInForPlayer(peer) && !lockedVehicle->isTrainCarriage()) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry)
 			{
 				return false;
 			}

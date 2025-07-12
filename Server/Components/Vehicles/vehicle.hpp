@@ -391,6 +391,12 @@ public:
 		return carriages;
 	}
 
+	bool isTrainCarriage()
+	{
+		const int model = getModel();
+		return (model == 569 || model == 570);
+	}
+
 	/// Sets the velocity of the vehicle.
 	void setVelocity(Vector3 velocity) override;
 
