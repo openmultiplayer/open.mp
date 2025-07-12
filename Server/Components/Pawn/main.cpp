@@ -120,7 +120,11 @@ public:
 		ghc::filesystem::path scriptfilesPath = ghc::filesystem::absolute("scriptfiles");
 		if (!ghc::filesystem::exists(scriptfilesPath) || !ghc::filesystem::is_directory(scriptfilesPath))
 		{
-			ghc::filesystem::create_directory(scriptfilesPath);
+			core->logLn(LogLevel::Warning, "Cannot access 'scriptfiles' directory. Attempting to create one.");
+			if (!ghc::filesystem::create_directory(scriptfilesPath))
+			{
+				core->logLn(LogLevel::Error, "Cannot create 'scriptfiles' directory. Some scripts may not work correctly.");
+			}
 		}
 
 #if defined(GHC_USE_WCHAR_T)
