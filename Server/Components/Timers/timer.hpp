@@ -12,9 +12,11 @@ class Timer final : public ITimer
 {
 private:
 	bool running_;
+	bool paused_;
 	unsigned int count_;
-	const Milliseconds interval_;
+	Milliseconds interval_;
 	TimePoint timeout_;
+	TimePoint pausedTime_;
 	TimerTimeOutHandler* const handler_;
 
 public:
@@ -26,6 +28,27 @@ public:
 	inline void setTimeout(TimePoint timeout)
 	{
 		timeout_ = timeout;
+	}
+
+	TimePoint getPausedTime() const
+	{
+		return pausedTime_;
+	}
+
+	void togglePause(bool paused) override
+	{
+		paused_ = paused;
+
+		if (paused)
+		{
+			pausedTime_ = Time::now();
+		}
+		else
+		{
+			TimePoint now = Time::now();
+			Milliseconds pauseDuration = duration_cast<Milliseconds>(now - pausedTime_);
+			timeout_ += pauseDuration;
+		}
 	}
 
 	Timer(TimerTimeOutHandler* handler, Milliseconds initial, Milliseconds interval, unsigned int count)
@@ -42,6 +65,11 @@ public:
 		return running_;
 	}
 
+	bool paused() const override
+	{
+		return paused_;
+	}
+
 	Milliseconds remaining() const override
 	{
 		return duration_cast<Milliseconds>(timeout_ - Time::now());
@@ -55,6 +83,12 @@ public:
 	Milliseconds interval() const override
 	{
 		return interval_;
+	}
+
+	void setInterval(Milliseconds interval) override
+	{
+		interval_ = interval;
+		timeout_ = Time::now() + interval_;
 	}
 
 	TimerTimeOutHandler* handler() const override
