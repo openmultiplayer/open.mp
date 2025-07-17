@@ -74,6 +74,11 @@ IDatabaseConnection* DatabasesComponent::open(StringView path, int flags)
 			sqlite3_close_v2(database_connection_handle);
 		}
 	}
+	else
+	{
+		this->log(LogLevel::Error, "[log_sqlite]: Cannot open database '%s'. %s", path.data(), sqlite3_errmsg(database_connection_handle));
+        sqlite3_close_v2(database_connection_handle);
+	}
 	return ret;
 }
 
