@@ -28,6 +28,7 @@ void DatabasesComponent::onLoad(ICore* c)
 	core_ = c;
 	logSQLite_ = core_->getConfig().getBool("logging.log_sqlite");
 	logSQLiteQueries_ = core_->getConfig().getBool("logging.log_sqlite_queries");
+	SQLiteTimeout_ = core_->getConfig().getInt("sqlite_timeout");
 }
 
 /// To optionally log things from connections.
@@ -68,6 +69,10 @@ IDatabaseConnection* DatabasesComponent::open(StringView path, int flags)
 	sqlite3* database_connection_handle(nullptr);
 	if (sqlite3_open_v2(path.data(), &database_connection_handle, flags, nullptr) == SQLITE_OK)
 	{
+		if(SQLiteTimeout_ && *SQLiteTimeout_)
+		{
+		    sqlite3_busy_timeout(database_connection_handle, reinterpret_cast<int>(SQLiteTimeout_));
+		}
 		ret = databaseConnections.emplace(this, database_connection_handle);
 		if (!ret)
 		{
