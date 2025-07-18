@@ -182,8 +182,15 @@ public:
 private:
 	// The NPC's player pointer.
 	IPlayer* player_;
+
+	// Update related variables
 	TimePoint lastUpdate_;
 	TimePoint lastFootSyncUpdate_;
+
+	// Update skipper counters
+	// base value is 0, and it is incremented to 5 and then we send the update
+	int footSyncSkipUpdate_;
+	int aimSyncSkipUpdate_;
 
 	// General data
 	int skin_;
@@ -254,6 +261,7 @@ private:
 	NetCode::Packet::PlayerVehicleSync driverSync_;
 	NetCode::Packet::PlayerPassengerSync passengerSync_;
 	NetCode::Packet::PlayerAimSync aimSync_;
+	NetCode::Packet::PlayerAimSync prevAimSync_; // keeping record of previous packet data so we compare and see if it needs an update
 
 	NPCComponent* npcComponent_;
 };

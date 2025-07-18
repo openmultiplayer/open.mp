@@ -15,7 +15,9 @@
 #include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
-	: skin_(0)
+	: footSyncSkipUpdate_(0)
+	, aimSyncSkipUpdate_(0)
+	, skin_(0)
 	, dead_(false)
 	, keys_(0)
 	, upAndDown_(0)
@@ -1434,19 +1436,13 @@ void NPC::sendFootSync()
 		return;
 	}
 
-	uint16_t upAndDown;
-	uint16_t leftAndRight;
-	uint16_t keys;
-	bool needsImmediateUpdate = false;
-
+	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys == keys || footSync_.Position == position_ || footSync_.Rotation.q == quaternion_.q || footSync_.HealthArmour.x == health_ || footSync_.HealthArmour.y == armour_ || footSync_.Weapon == weapon_ || footSync_.Velocity == velocity_;
+	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys == keys || footSync_.Position == position_ || footSync_.Rotation.q == quaternion_.q || footSync_.HealthArmour.x == health_ || footSync_.HealthArmour.y == armour_ || footSync_.Weapon == weapon_ || footSync_.Velocity == velocity_;
 
-	// if (needsImmediateUpdate)
+	auto generateFootSyncBitStream = [&](NetworkBitStream& bs)
 	{
-		NetworkBitStream bs;
-
 		footSync_.LeftRight = leftAndRight;
 		footSync_.UpDown = upAndDown;
 		footSync_.Keys = keys;
@@ -1472,11 +1468,27 @@ void NPC::sendFootSync()
 		bs.writeUINT16(footSync_.SurfingData.ID);
 		bs.writeUINT16(footSync_.AnimationID);
 		bs.writeUINT16(footSync_.AnimationFlags);
+	};
 
+	if (needsImmediateUpdate)
+	{
+		NetworkBitStream bs;
+		generateFootSyncBitStream(bs);
 		npcComponent_->emulatePacketIn(*player_, footSync_.PacketID, bs);
 	}
-	// else
+	else
 	{
+		if (footSyncSkipUpdate_ < 5)
+		{
+			footSyncSkipUpdate_++;
+		}
+		else
+		{
+			NetworkBitStream bs;
+			generateFootSyncBitStream(bs);
+			npcComponent_->emulatePacketIn(*player_, footSync_.PacketID, bs);
+			footSyncSkipUpdate_ = 0;
+		}
 	}
 }
 
@@ -1488,17 +1500,40 @@ void NPC::sendAimSync()
 		return;
 	}
 
-	NetworkBitStream bs;
+	bool needsImmediateUpdate = prevAimSync_.CamMode == aimSync_.CamMode || prevAimSync_.CamFrontVector == aimSync_.CamFrontVector || prevAimSync_.CamPos == aimSync_.CamPos || prevAimSync_.AimZ == aimSync_.AimZ || prevAimSync_.ZoomWepState == aimSync_.ZoomWepState || prevAimSync_.AspectRatio == aimSync_.AspectRatio;
 
-	bs.writeUINT8(aimSync_.PacketID);
-	bs.writeUINT8(aimSync_.CamMode);
-	bs.writeVEC3(aimSync_.CamFrontVector);
-	bs.writeVEC3(aimSync_.CamPos);
-	bs.writeFLOAT(aimSync_.AimZ);
-	bs.writeUINT8(aimSync_.ZoomWepState);
-	bs.writeUINT8(aimSync_.AspectRatio);
+	auto generateAimSyncBitStream = [&](NetworkBitStream& bs)
+	{
+		bs.writeUINT8(aimSync_.PacketID);
+		bs.writeUINT8(aimSync_.CamMode);
+		bs.writeVEC3(aimSync_.CamFrontVector);
+		bs.writeVEC3(aimSync_.CamPos);
+		bs.writeFLOAT(aimSync_.AimZ);
+		bs.writeUINT8(aimSync_.ZoomWepState);
+		bs.writeUINT8(aimSync_.AspectRatio);
+	};
 
-	npcComponent_->emulatePacketIn(*player_, aimSync_.PacketID, bs);
+	if (needsImmediateUpdate)
+	{
+		NetworkBitStream bs;
+		generateAimSyncBitStream(bs);
+		npcComponent_->emulatePacketIn(*player_, aimSync_.PacketID, bs);
+	}
+	else
+	{
+		if (aimSyncSkipUpdate_ < 5)
+		{
+			aimSyncSkipUpdate_++;
+		}
+		else
+		{
+			NetworkBitStream bs;
+			generateAimSyncBitStream(bs);
+			npcComponent_->emulatePacketIn(*player_, aimSync_.PacketID, bs);
+			aimSyncSkipUpdate_ = 0;
+		}
+	}
+	
 }
 
 void NPC::advance(TimePoint now)
