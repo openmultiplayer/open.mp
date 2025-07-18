@@ -685,7 +685,11 @@ bool Vehicle::isDead()
 
 void Vehicle::_respawn()
 {
-	respawning = true;
+	if (!isTrainCarriage())
+	{
+		respawning = true;
+	}
+
 	const auto& entries = streamedFor_.entries();
 	for (IPlayer* player : entries)
 	{
