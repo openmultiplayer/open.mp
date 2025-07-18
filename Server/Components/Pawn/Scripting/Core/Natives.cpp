@@ -598,10 +598,10 @@ SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, OutputOnlyString& 
 	return getConfigOptionAsString(cvar, buffer);
 }
 
-SCRIPT_API(GetWeaponName, bool(int weaponid, OutputOnlyString& weapon))
+SCRIPT_API(GetWeaponName, int(int weaponid, OutputOnlyString& weapon))
 {
 	weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
-	return true;
+	return std::get<StringView>(weapon).length();
 }
 
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
@@ -642,7 +642,7 @@ SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 	return stats.connectionElapsedTime;
 }
 
-SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
+SCRIPT_API_FAILRET(NetStats_GetIpPort, -1, int(IPlayer& player, OutputOnlyString& output))
 {
 	PeerNetworkData data = player.getNetworkData();
 	PeerAddress::AddressString addressString;
@@ -653,9 +653,9 @@ SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
 		ip_port += std::to_string(data.networkID.port);
 		// Scope-allocated string, copy it
 		output = ip_port;
-		return true;
+		return std::get<String>(output).length();
 	}
-	return false;
+	return FailRet;
 }
 
 SCRIPT_API(NetStats_MessagesReceived, int(IPlayer& player))
