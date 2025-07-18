@@ -188,7 +188,7 @@ private:
 	TimePoint lastFootSyncUpdate_;
 
 	// Update skipper counters
-	// base value is 0, and it is incremented to 5 and then we send the update
+	// base value is 0, and it is incremented to 10 and then we send the update
 	int footSyncSkipUpdate_;
 	int aimSyncSkipUpdate_;
 

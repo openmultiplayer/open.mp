@@ -1429,9 +1429,9 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 
 void NPC::sendFootSync()
 {
-	// Only send foot sync if player is spawned
+	// Only send foot sync if player is spawned and on foot
 	auto state = player_->getState();
-	if (!(state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger || state == PlayerState_Spawned))
+	if (state != PlayerState_OnFoot && state != PlayerState_Spawned)
 	{
 		return;
 	}
@@ -1439,7 +1439,7 @@ void NPC::sendFootSync()
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys == keys || footSync_.Position == position_ || footSync_.Rotation.q == quaternion_.q || footSync_.HealthArmour.x == health_ || footSync_.HealthArmour.y == armour_ || footSync_.Weapon == weapon_ || footSync_.Velocity == velocity_;
+	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != quaternion_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_;
 
 	auto generateFootSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -1478,7 +1478,7 @@ void NPC::sendFootSync()
 	}
 	else
 	{
-		if (footSyncSkipUpdate_ < 5)
+		if (footSyncSkipUpdate_ < 10)
 		{
 			footSyncSkipUpdate_++;
 		}
@@ -1500,7 +1500,7 @@ void NPC::sendAimSync()
 		return;
 	}
 
-	bool needsImmediateUpdate = prevAimSync_.CamMode == aimSync_.CamMode || prevAimSync_.CamFrontVector == aimSync_.CamFrontVector || prevAimSync_.CamPos == aimSync_.CamPos || prevAimSync_.AimZ == aimSync_.AimZ || prevAimSync_.ZoomWepState == aimSync_.ZoomWepState || prevAimSync_.AspectRatio == aimSync_.AspectRatio;
+	bool needsImmediateUpdate = prevAimSync_.CamMode != aimSync_.CamMode || prevAimSync_.CamFrontVector != aimSync_.CamFrontVector || prevAimSync_.CamPos != aimSync_.CamPos || prevAimSync_.AimZ != aimSync_.AimZ || prevAimSync_.ZoomWepState != aimSync_.ZoomWepState || prevAimSync_.AspectRatio != aimSync_.AspectRatio;
 
 	auto generateAimSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -1518,10 +1518,11 @@ void NPC::sendAimSync()
 		NetworkBitStream bs;
 		generateAimSyncBitStream(bs);
 		npcComponent_->emulatePacketIn(*player_, aimSync_.PacketID, bs);
+		prevAimSync_ = aimSync_;
 	}
 	else
 	{
-		if (aimSyncSkipUpdate_ < 5)
+		if (aimSyncSkipUpdate_ < 10)
 		{
 			aimSyncSkipUpdate_++;
 		}
