@@ -67,7 +67,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 
 	// Initial entity values
 	Vector3 initialPosition = position_ = { 0.0f, 0.0f, 3.5f };
-	GTAQuat initialRotation = quaternion_ = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
+	GTAQuat initialRotation = rotation_ = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
 
 	// Initial values for foot sync values
 	footSync_.LeftRight = 0;
@@ -112,9 +112,9 @@ GTAQuat NPC::getRotation() const
 	return player_->getRotation();
 }
 
-void NPC::setRotation(const GTAQuat& pos, bool immediateUpdate)
+void NPC::setRotation(const GTAQuat& rot, bool immediateUpdate)
 {
-	quaternion_ = pos;
+	rotation_ = rot;
 
 	if (immediateUpdate)
 	{
@@ -182,7 +182,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	float distance = glm::distance(position, pos);
 
 	// Determine which speed to use based on moving type
-	float moveSpeed_ = 0.0f;
+	float moveSpeed_ = moveSpeed;
 	moveType_ = moveType;
 
 	if (isEqualFloat(moveSpeed, NPC_MOVE_SPEED_AUTO))
@@ -239,7 +239,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 
 	auto rotation = getRotation().ToEuler();
 	rotation.z = getAngleOfLine(front.x, front.y);
-	quaternion_ = rotation; // Do this directly, if you use NPC::setRotation it's going to cause recursion
+	rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 	// Calculate velocity to use on tick
 	velocity_ = front * (moveSpeed_ / 100.0f);
@@ -1428,7 +1428,7 @@ void NPC::sendFootSync()
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != quaternion_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_;
+	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_;
 
 	auto generateFootSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -1436,7 +1436,7 @@ void NPC::sendFootSync()
 		footSync_.UpDown = upAndDown;
 		footSync_.Keys = keys;
 		footSync_.Position = position_;
-		footSync_.Rotation = quaternion_;
+		footSync_.Rotation = rotation_;
 		footSync_.HealthArmour.x = health_;
 		footSync_.HealthArmour.y = armour_;
 		footSync_.Weapon = weapon_;

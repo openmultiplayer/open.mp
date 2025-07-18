@@ -199,7 +199,7 @@ private:
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
 	Vector3 position_;
-	GTAQuat quaternion_;
+	GTAQuat rotation_;
 	float health_;
 	float armour_;
 
