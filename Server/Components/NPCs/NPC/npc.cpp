@@ -1543,8 +1543,9 @@ void NPC::advance(TimePoint now)
 	if (distanceToTarget <= 0.001f || maxTravel >= distanceToTarget)
 	{
 		// Reached or about to overshoot target
-		setPosition(targetPosition_, false);
+		auto targetPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
 		stopMove();
+		setPosition(targetPos, false);
 		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 	}
 	else
