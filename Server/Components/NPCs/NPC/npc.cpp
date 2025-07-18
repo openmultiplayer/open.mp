@@ -28,7 +28,6 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, meleeAttackDelay_(0)
 	, meleeSecondaryAttack_(false)
 	, moveType_(NPCMoveType_None)
-	, estimatedArrivalTimeMS_(0)
 	, moveSpeed_(0.0f)
 	, targetPosition_({ 0.0f, 0.0f, 0.0f })
 	, velocity_({ 0.0f, 0.0f, 0.0f })
@@ -245,15 +244,6 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	// Calculate velocity to use on tick
 	velocity_ = front * (moveSpeed_ / 100.0f);
 
-	if (!(std::fabs(glm::length(velocity_)) < DBL_EPSILON))
-	{
-		estimatedArrivalTimeMS_ = duration_cast<Milliseconds>(Time::now().time_since_epoch()).count() + (static_cast<long long>(distance / glm::length(velocity_)) * (/* (npcComponent_->getFootSyncRate() * 10000) +*/ 1000));
-	}
-	else
-	{
-		estimatedArrivalTimeMS_ = 0;
-	}
-
 	// Set internal variables
 	targetPosition_ = pos;
 	moving_ = true;
@@ -269,7 +259,6 @@ void NPC::stopMove()
 	targetPosition_ = { 0.0f, 0.0f, 0.0f };
 	velocity_ = { 0.0f, 0.0f, 0.0f };
 	moveType_ = NPCMoveType_None;
-	estimatedArrivalTimeMS_ = 0;
 
 	upAndDown_ &= ~Key::UP;
 	removeKey(Key::SPRINT);
@@ -1534,30 +1523,39 @@ void NPC::sendAimSync()
 			aimSyncSkipUpdate_ = 0;
 		}
 	}
-	
 }
 
 void NPC::advance(TimePoint now)
 {
 	auto position = getPosition();
+	auto deltaTimeMS = static_cast<float>(duration_cast<Milliseconds>(now - lastMove_).count());
+	auto deltaTimeSEC = deltaTimeMS / 1000.0f;
 
-	if (estimatedArrivalTimeMS_ <= duration_cast<Milliseconds>(now.time_since_epoch()).count() || glm::distance(position, targetPosition_) <= 0.1f)
+	if (deltaTimeSEC <= 0.0f)
 	{
-		auto pos = targetPosition_;
+		return;
+	}
+
+	auto toTarget = targetPosition_ - position;
+	auto distanceToTarget = glm::length(toTarget);
+	auto maxTravel = glm::length(velocity_) * deltaTimeMS;
+
+	if (distanceToTarget <= 0.001f || maxTravel >= distanceToTarget)
+	{
+		// Reached or about to overshoot target
+		setPosition(targetPosition_, false);
 		stopMove();
-		setPosition(pos, false);
 		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 	}
 	else
 	{
-		Milliseconds difference = duration_cast<Milliseconds>(now - lastMove_);
-		Vector3 travelled = velocity_ * static_cast<float>(difference.count());
-
-		position += travelled;
-		position_ = position; // Do this directly, if you use NPC::setPosition it's going to cause recursion
+		// Normalize direction and move by velocity * delta
+		auto direction = glm::normalize(toTarget);
+		auto travelled = direction * glm::length(velocity_) * deltaTimeMS;
+		position_ = position + travelled;
 	}
 
-	lastMove_ = Time::now();
+	lastMove_ = now;
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
