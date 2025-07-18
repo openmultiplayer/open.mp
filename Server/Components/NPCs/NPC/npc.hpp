@@ -21,11 +21,11 @@ public:
 
 	Vector3 getPosition() const override;
 
-	void setPosition(Vector3 position) override;
+	void setPosition(const Vector3& position, bool immediateUpdate) override;
 
 	GTAQuat getRotation() const override;
 
-	void setRotation(GTAQuat rotation) override;
+	void setRotation(const GTAQuat& rotation, bool immediateUpdate) override;
 
 	int getVirtualWorld() const override;
 
@@ -192,6 +192,9 @@ private:
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
 	Vector3 position_;
+	GTAQuat quaternion_;
+	float health_;
+	float armour_;
 
 	// Attack data
 	bool meleeAttacking_;

@@ -44,7 +44,7 @@ SCRIPT_API(NPC_Spawn, bool(INPC& npc))
 
 SCRIPT_API(NPC_SetPos, bool(INPC& npc, Vector3 position))
 {
-	npc.setPosition(position);
+	npc.setPosition(position, true);
 	return true;
 }
 
@@ -56,7 +56,7 @@ SCRIPT_API(NPC_GetPos, bool(INPC& npc, Vector3& position))
 
 SCRIPT_API(NPC_SetRot, bool(INPC& npc, Vector3 rotation))
 {
-	npc.setRotation(rotation);
+	npc.setRotation(rotation, true);
 	return true;
 }
 
@@ -70,7 +70,7 @@ SCRIPT_API(NPC_SetFacingAngle, bool(INPC& npc, float angle))
 {
 	auto rotation = npc.getRotation().ToEuler();
 	rotation.z = angle;
-	npc.setRotation(rotation);
+	npc.setRotation(rotation, true);
 	return true;
 }
 
