@@ -1390,7 +1390,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			Player& player = static_cast<Player&>(peer);
 
 			if (vehicle.isRespawning())
+			{
 				return false;
+			}
 
 			const bool vehicleOk = vehicle.updateFromPassengerSync(passengerSync, peer);
 
@@ -1695,7 +1697,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 		if (params.bot)
 		{
-			for (auto index = storage.Capacity - 1; index >= 0; --index)
+			static const auto maxPlayers = core.getConfig().getInt("max_players");
+			for (auto index = *maxPlayers - 1; index >= 0; --index)
 			{
 				if (storage.get(index) == nullptr)
 				{
