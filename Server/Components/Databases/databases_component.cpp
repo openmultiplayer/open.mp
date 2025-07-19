@@ -71,7 +71,7 @@ IDatabaseConnection* DatabasesComponent::open(StringView path, int flags)
 	{
 		if(SQLiteTimeout_ && *SQLiteTimeout_)
 		{
-		    sqlite3_busy_timeout(database_connection_handle, reinterpret_cast<int>(SQLiteTimeout_));
+		    sqlite3_busy_timeout(database_connection_handle, *SQLiteTimeout_);
 		}
 		ret = databaseConnections.emplace(this, database_connection_handle);
 		if (!ret)
