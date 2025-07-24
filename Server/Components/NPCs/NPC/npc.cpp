@@ -176,10 +176,13 @@ void NPC::respawn()
 	setPosition(position_, true);
 	setRotation(getRotation(), true);
 
-	if (isEqualFloat(getHealth(), 0.0f)) {
+	if (isEqualFloat(getHealth(), 0.0f)) 
+	{
 		setHealth(100.0f);
 		setArmour(0.0f);
-	} else {
+	} 
+	else 
+	{
 		setHealth(getHealth());
 		setArmour(getArmour());
 	}
