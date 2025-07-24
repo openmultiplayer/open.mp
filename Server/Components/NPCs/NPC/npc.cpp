@@ -165,6 +165,36 @@ void NPC::spawn()
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
 
+void NPC::respawn()
+{
+	if (!(player_->getState() == PlayerState_OnFoot || player_->getState() == PlayerState_Driver || player_->getState() == PlayerState_Passenger || player_->getState() == PlayerState_Spawned))
+	{
+		return;
+	}
+
+	setSkin(skin_);
+	setPosition(position_, true);
+	setRotation(getRotation(), true);
+
+	if (isEqualFloat(getHealth(), 0.0f)) {
+		setHealth(100.0f);
+		setArmour(0.0f);
+	} else {
+		setHealth(getHealth());
+		setArmour(getArmour());
+	}
+
+	setWeapon(weapon_);
+	setAmmo(ammo_);
+
+	dead_ = false;
+
+	lastDamager_ = nullptr;
+	lastDamagerWeapon_ = PlayerWeapon_End;
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCRespawn, *this);
+}
+
 bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 {
 	if (moveType == NPCMoveType_None)
@@ -250,6 +280,12 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	moveType_ = moveType;
 	lastMove_ = Time::now();
 	return true;
+}
+
+bool NPC::moveToPlayer(IPlayer& player, NPCMoveType moveType, float moveSpeed)
+{	
+	auto pos = player.getPosition();
+	return move(pos, moveType, moveSpeed);
 }
 
 void NPC::stopMove()
