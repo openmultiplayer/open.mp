@@ -286,7 +286,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 }
 
 bool NPC::moveToPlayer(IPlayer& player, NPCMoveType moveType, float moveSpeed)
-{	
+{
 	auto pos = player.getPosition();
 	return move(pos, moveType, moveSpeed);
 }
