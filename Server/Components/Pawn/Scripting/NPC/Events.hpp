@@ -33,6 +33,11 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCWeaponStateChange", DefaultReturnValue_True, npc.getID(), int(newState), int(oldState));
 	}
 
+	void onNPCRespawn(INPC& npc) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCRespawn", DefaultReturnValue_True, npc.getID());
+	}
+
 	bool onNPCTakeDamage(INPC& npc, IPlayer& damager, float damage, uint8_t weapon, BodyPart bodyPart) override
 	{
 		auto result = !!PawnManager::Get()->CallAllInEntryFirst("OnNPCTakeDamage", DefaultReturnValue_True, npc.getID(), damager.getID(), damage, weapon, int(bodyPart));
