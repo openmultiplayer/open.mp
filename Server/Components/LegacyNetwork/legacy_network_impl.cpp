@@ -793,6 +793,18 @@ void RakNetLegacyNetwork::update()
 	query.buildConfigDependentBuffers();
 
 	int mtu = *config.getInt("network.mtu");
+
+	static const auto maxMTU = *core->getConfig().getBool("network.allow_037_clients") ? MAX_MTU_037 : MAX_MTU_DL;
+
+	// Check if provided MTU is larger than the maximum allowed size for current targeted client(s).
+	// Example: 0.3.7 clients have a maximum MTU of 576 bytes, while 0.3DL clients have a maximum MTU of 1500 bytes.
+	// If that is the case, we will log a warning and set the MTU to the maximum allowed size so client won't experience packet loss/disconnects.
+	if (mtu > maxMTU)
+	{
+		core->logLn(LogLevel::Warning, "MTU %d is larger than the maximum allowed size %d for current targeted client(s).", mtu, maxMTU);
+		mtu = maxMTU;
+	}
+
 	rakNetServer.SetMTUSize(mtu);
 }
 
