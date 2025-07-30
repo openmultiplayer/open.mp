@@ -25,6 +25,9 @@ using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
 
+#define MAX_MTU_037 576
+#define MAX_MTU_DL MAXIMUM_MTU_SIZE
+
 static const StaticArray<StringView, 2> ProtectedRules = {
 	"version", "allowed_clients"
 };
