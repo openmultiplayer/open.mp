@@ -149,6 +149,16 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 			player.sendClientMessage(Colour::White(), "onVehicleSirenStateChange(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string((int)sirenState) + ")");
 			return true;
 		}
+		bool onTrailerAttach(IPlayer& player, IVehicle& vehicle, IVehicle& trailer) override
+		{
+   			player.sendClientMessage(Colour::White(), "onTrailerAttach(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(vehicle.getTrailer()->getID()) + ")");
+			return true;
+		}
+		bool onTrailerDetach(IPlayer& player, IVehicle& vehicle, IVehicle& trailer) override
+		{
+   			player.sendClientMessage(Colour::White(), "onTrailerDetach(" + std::to_string(player.getID()) + ", " + std::to_string(vehicle.getID()) + ", " + std::to_string(vehicle.getTrailer()->getID()) + ")");
+			return true;
+		}
 	} vehicleEventWatcher;
 
 	void onPlayerConnect(IPlayer& player) override
@@ -1098,8 +1108,8 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 		{
 			vehicle = vehicles->create(false, 411, Vector3(0.0f, 5.0f, 3.5f)); // Create infernus
 			vehicles->create(false, 488, Vector3(-12.0209f, 1.4806f, 3.1172f)); // Create news maverick
-			tower = vehicles->create(false, 583, Vector3(15.0209f, 1.4806f, 3.1172f));
-			trailer = vehicles->create(false, 606, Vector3(12.0209f, 5.4806f, 3.1172f));
+			tower = vehicles->create(false, 403, Vector3(15.0209f, 1.4806f, 3.1172f));
+			trailer = vehicles->create(false, 435, Vector3(0.0209f, 5.4806f, 3.1172f));
 			tower->attachTrailer(*trailer);
 			train = vehicles->create(false, 537, Vector3(-1943.2583f, 163.6151f, 25.8754f));
 			vehicles->getEventDispatcher().addEventHandler(&vehicleEventWatcher);
