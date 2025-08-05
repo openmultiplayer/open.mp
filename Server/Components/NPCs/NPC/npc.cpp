@@ -52,10 +52,12 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, hitType_(PlayerBulletHitType_None)
 	, lastDamager_(nullptr)
 	, lastDamagerWeapon_(PlayerWeapon_End)
+	, vehicle_(nullptr)
 	, vehicleToEnter_(nullptr)
 	, vehicleSeatToEnter_(SEAT_NONE)
 	, enteringVehicle_(false)
 	, jackingVehicle_(false)
+	, killPlayerFromVehicleNextTick_(false)
 {
 	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
 	weaponAccuracy.fill(1.0f);
@@ -172,6 +174,16 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 		return false;
 	}
 
+	if (moveType == NPCMoveType_Auto && player_->getState() == PlayerState_Driver)
+	{
+		moveType_ = NPCMoveType_Drive;
+	}
+
+	if (moveType != NPCMoveType_Auto && moveType != NPCMoveType_Walk && moveType != NPCMoveType_Jog && moveType != NPCMoveType_Sprint && moveType != NPCMoveType_Drive)
+	{
+		return false;
+	}
+
 	if (moveType == NPCMoveType_Sprint && aiming_)
 	{
 		stopAim();
@@ -181,54 +193,75 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 	auto position = getPosition();
 	float distance = glm::distance(position, pos);
 
+	// Reset player keys so there's no conflict when we need to use one and not the other for an already moving NPC
+	removeKey(Key::SPRINT);
+	removeKey(Key::WALK);
+
 	// Determine which speed to use based on moving type
 	float moveSpeed_ = moveSpeed;
 	moveType_ = moveType;
 
-	if (isEqualFloat(moveSpeed, NPC_MOVE_SPEED_AUTO))
+	if (moveType_ == NPCMoveType_Drive)
 	{
-		if (moveType_ == NPCMoveType_Sprint)
+		applyKey(Key::SPRINT);
+
+		if (isEqualFloat(moveSpeed_, NPC_MOVE_SPEED_AUTO))
 		{
-			moveSpeed_ = NPC_MOVE_SPEED_SPRINT;
-		}
-		else if (moveType_ == NPCMoveType_Jog)
-		{
-			moveSpeed_ = NPC_MOVE_SPEED_JOG;
-		}
-		else
-		{
-			moveSpeed_ = NPC_MOVE_SPEED_WALK;
+			moveSpeed_ = 1.0f;
 		}
 	}
 	else
 	{
-		DynamicArray<float> speedValues = { NPC_MOVE_SPEED_WALK, NPC_MOVE_SPEED_JOG, NPC_MOVE_SPEED_SPRINT };
-		float nearestSpeed = getNearestFloatValue(moveSpeed_, speedValues);
+		upAndDown_ = static_cast<uint16_t>(Key::ANALOG_UP);
 
-		if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_SPRINT))
-		{
-			moveType_ = NPCMoveType_Sprint;
-		}
-		else if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_JOG))
+		if (moveType_ == NPCMoveType_Auto && isEqualFloat(moveSpeed_, NPC_MOVE_SPEED_AUTO))
 		{
 			moveType_ = NPCMoveType_Jog;
 		}
-		else if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_WALK))
+
+		if (isEqualFloat(moveSpeed, NPC_MOVE_SPEED_AUTO))
 		{
-			moveType_ = NPCMoveType_Walk;
+			if (moveType_ == NPCMoveType_Sprint)
+			{
+				moveSpeed_ = NPC_MOVE_SPEED_SPRINT;
+			}
+			else if (moveType_ == NPCMoveType_Jog)
+			{
+				moveSpeed_ = NPC_MOVE_SPEED_JOG;
+			}
+			else
+			{
+				moveSpeed_ = NPC_MOVE_SPEED_WALK;
+			}
+		}
+		else if (moveType_ == NPCMoveType_Auto)
+		{
+			DynamicArray<float> speedValues = { NPC_MOVE_SPEED_WALK, NPC_MOVE_SPEED_JOG, NPC_MOVE_SPEED_SPRINT };
+			float nearestSpeed = getNearestFloatValue(moveSpeed_, speedValues);
+
+			if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_SPRINT))
+			{
+				moveType_ = NPCMoveType_Sprint;
+			}
+			else if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_JOG))
+			{
+				moveType_ = NPCMoveType_Jog;
+			}
+			else if (isEqualFloat(nearestSpeed, NPC_MOVE_SPEED_WALK))
+			{
+				moveType_ = NPCMoveType_Walk;
+			}
+		}
+
+		if (moveType_ == NPCMoveType_Sprint)
+		{
+			applyKey(Key::SPRINT);
+		}
+		else if (moveType_ == NPCMoveType_Walk)
+		{
+			applyKey(Key::WALK);
 		}
 	}
-
-	if (moveType == NPCMoveType_Sprint)
-	{
-		applyKey(Key::SPRINT);
-	}
-	else if (moveType == NPCMoveType_Walk)
-	{
-		applyKey(Key::WALK);
-	}
-
-	upAndDown_ = static_cast<uint16_t>(Key::ANALOG_UP);
 
 	// Calculate front vector and player's facing angle:
 	Vector3 front;
@@ -1105,6 +1138,50 @@ void NPC::exitVehicle()
 	vehicleEnterExitUpdateTime_ = lastUpdate_;
 }
 
+bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
+{
+	if (player_->getState() != PlayerState_OnFoot)
+	{
+		spawn();
+	}
+
+	auto maxPassengerSeats = getVehiclePassengerSeats(vehicle.getModel());
+	if (seat > maxPassengerSeats || maxPassengerSeats == 0xFF)
+	{
+		return false;
+	}
+
+	setPosition(vehicle.getPosition(), true);
+	vehicle.putPlayer(*player_, seat);
+	
+	auto angle = vehicle.getRotation().ToEuler().z;
+	auto rotation = getRotation().ToEuler();
+	rotation.z = angle;
+	setRotation(rotation, true);
+
+	return true;
+}
+
+bool NPC::removeFromVehicle()
+{
+	// Validate the player vehicle
+	if (!vehicle_)
+	{
+		return false;
+	}
+
+	auto vehicleData = queryExtension<IPlayerVehicleData>(player_);
+	if (vehicleData)
+	{
+		// Set his position
+		setPosition(getVehicleSeatPos(*vehicle_, vehicleData->getSeat()), true);
+		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
+		return true;
+	}
+
+	return false;
+}
+
 void NPC::setWeaponState(PlayerWeaponState state)
 {
 	if (state == PlayerWeaponState_Unknown)
@@ -1573,14 +1650,24 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			{
 				if (getHealth() <= 0.0f && state != PlayerState_Wasted && state != PlayerState_Spawned)
 				{
-					// check on vehicle
-					if (state == PlayerState_Driver || state == PlayerState_Passenger)
+					if (killPlayerFromVehicleNextTick_)
 					{
-						// TODO: Handle NPC driver/passenger death
+						kill(lastDamager_, lastDamagerWeapon_);
+						killPlayerFromVehicleNextTick_ = false;
 					}
-
-					// Kill the player
-					kill(lastDamager_, lastDamagerWeapon_);
+					else
+					{
+						// Check if player is in vehicle, if so, kill them next tick.
+						if (state == PlayerState_Driver || state == PlayerState_Passenger)
+						{
+							removeFromVehicle();
+							killPlayerFromVehicleNextTick_ = true;
+						}
+						else
+						{
+							kill(lastDamager_, lastDamagerWeapon_);
+						}
+					}
 				}
 
 				if (needsVelocityUpdate_)
