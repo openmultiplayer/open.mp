@@ -131,6 +131,10 @@ public:
 
 	void exitVehicle() override;
 
+	bool putInVehicle(IVehicle& vehicle, uint8_t seat) override;
+
+	bool removeFromVehicle() override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -253,11 +257,13 @@ private:
 	uint8_t lastDamagerWeapon_;
 
 	// Vehicle data
+	IVehicle* vehicle_;
 	IVehicle* vehicleToEnter_;
 	int vehicleSeatToEnter_;
 	bool enteringVehicle_;
 	bool jackingVehicle_;
 	TimePoint vehicleEnterExitUpdateTime_;
+	bool killPlayerFromVehicleNextTick_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;
