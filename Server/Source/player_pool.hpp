@@ -1404,10 +1404,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			player.pos_ = vehicle.getPosition();
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? passengerSync.WeaponID : 0;
-			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
 			switch (passengerSync.AdditionalKey)
