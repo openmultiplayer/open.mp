@@ -1392,7 +1392,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
-			if (vehicle.isRespawning())
+			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !vehicle.isTrainCarriage()))
 			{
 				return false;
 			}
