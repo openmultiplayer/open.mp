@@ -109,6 +109,31 @@ public:
 		return *footSyncRate;
 	}
 
+	int getVehicleSyncRate() const
+	{
+		return *vehicleSyncRate;
+	}
+
+	int getAimSyncRate() const
+	{
+		return *aimSyncRate;
+	}
+
+	int getFootSyncSkipUpdateLimit() const
+	{
+		return *footSyncSkipUpdateLimit;
+	}
+
+	int getVehicleSyncSkipUpdateLimit() const
+	{
+		return *vehicleSyncSkipUpdateLimit;
+	}
+
+	int getAimSyncSkipUpdateLimit() const
+	{
+		return *aimSyncSkipUpdateLimit;
+	}
+
 	int getGeneralNPCUpdateRate() const
 	{
 		return *generalNPCUpdateRateMS;
@@ -117,20 +142,66 @@ public:
 	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
 	{
 		int defaultGeneralNPCUpdateRateMS = 50;
+		int defaultFootSyncSkipUpdateLimit = 15;
+		int defaultDriverSyncSkipUpdateLimit = 15;
+		int defaultAimSyncSkipUpdateLimit = 15;
+
 		if (defaults)
 		{
-			config.setInt("npc.globalUpdateRate", defaultGeneralNPCUpdateRateMS);
+			config.setInt("npc.process_update_rate", defaultGeneralNPCUpdateRateMS);
+			config.setInt("npc.on_foot_sync_rate", *config.getInt("network.on_foot_sync_rate"));
+			config.setInt("npc.in_vehicle_sync_rate", *config.getInt("network.in_vehicle_sync_rate"));
+			config.setInt("npc.aiming_sync_rate", *config.getInt("network.aiming_sync_rate"));
+			config.setInt("npc.on_foot_sync_skip_update_limit", defaultFootSyncSkipUpdateLimit);
+			config.setInt("npc.in_vehicle_sync_skip_update_limit", defaultDriverSyncSkipUpdateLimit);
+			config.setInt("npc.aim_sync_skip_update_limit", defaultAimSyncSkipUpdateLimit);
 		}
 		else
 		{
 			// Set default values if options are not set.
-			if (config.getType("npc.globalUpdateRate") == ConfigOptionType_None)
+			if (config.getType("npc.process_update_rate") == ConfigOptionType_None)
 			{
-				config.setInt("npc.globalUpdateRate", defaultGeneralNPCUpdateRateMS);
+				config.setInt("npc.process_update_rate", defaultGeneralNPCUpdateRateMS);
+			}
+
+			if (config.getType("npc.on_foot_sync_rate") == ConfigOptionType_None)
+			{
+				config.setInt("npc.on_foot_sync_rate", *config.getInt("network.on_foot_sync_rate"));
+			}
+
+			if (config.getType("npc.in_vehicle_sync_rate") == ConfigOptionType_None)
+			{
+				config.setInt("npc.in_vehicle_sync_rate", *config.getInt("network.in_vehicle_sync_rate"));
+			}
+
+			if (config.getType("npc.aiming_sync_rate") == ConfigOptionType_None)
+			{
+				config.setInt("npc.aiming_sync_rate", *config.getInt("network.aiming_sync_rate"));
+			}
+
+			if (config.getType("npc.on_foot_sync_skip_update_limit") == ConfigOptionType_None)
+			{
+				config.setInt("npc.on_foot_sync_skip_update_limit", defaultFootSyncSkipUpdateLimit);
+			}
+
+			if (config.getType("npc.in_vehicle_sync_skip_update_limit") == ConfigOptionType_None)
+			{
+				config.setInt("npc.in_vehicle_sync_skip_update_limit", defaultDriverSyncSkipUpdateLimit);
+			}
+
+			if (config.getType("npc.aim_sync_skip_update_limit") == ConfigOptionType_None)
+			{
+				config.setInt("npc.aim_sync_skip_update_limit", defaultAimSyncSkipUpdateLimit);
 			}
 		}
 
-		generalNPCUpdateRateMS = config.getInt("npc.globalUpdateRate");
+		generalNPCUpdateRateMS = config.getInt("npc.process_update_rate");
+		footSyncRate = config.getInt("npc.on_foot_sync_rate");
+		vehicleSyncRate = config.getInt("npc.in_vehicle_sync_rate");
+		aimSyncRate = config.getInt("npc.aiming_sync_rate");
+		footSyncSkipUpdateLimit = config.getInt("npc.on_foot_sync_skip_update_limit");
+		vehicleSyncSkipUpdateLimit = config.getInt("npc.in_vehicle_sync_skip_update_limit");
+		aimSyncSkipUpdateLimit = config.getInt("npc.aim_sync_skip_update_limit");
 	}
 
 private:
@@ -143,6 +214,13 @@ private:
 	// Update rates
 	int* generalNPCUpdateRateMS = nullptr;
 	int* footSyncRate = nullptr;
+	int* vehicleSyncRate = nullptr;
+	int* aimSyncRate = nullptr;
+
+	// Update skip limit (for idle NPCs)
+	int* footSyncSkipUpdateLimit = nullptr;
+	int* vehicleSyncSkipUpdateLimit = nullptr;
+	int* aimSyncSkipUpdateLimit = nullptr;
 
 	// Components
 	IVehiclesComponent* vehicles = nullptr;
