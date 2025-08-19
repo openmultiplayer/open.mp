@@ -1552,7 +1552,7 @@ void NPC::sendFootSync()
 	}
 	else
 	{
-		if (footSyncSkipUpdate_ < 10)
+		if (footSyncSkipUpdate_ < npcComponent_->getFootSyncSkipUpdateLimit())
 		{
 			footSyncSkipUpdate_++;
 		}
@@ -1822,10 +1822,37 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 		if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
 		{
-			sendFootSync();
+			if (vehicleId_ == INVALID_VEHICLE_ID && vehicleSeat_ == SEAT_NONE)
+			{
+				sendFootSync();
+			}
+
+			lastFootSyncUpdate_ = now;
+		}
+
+		if (duration_cast<Milliseconds>(now - lastVehicleSyncUpdate_).count() > npcComponent_->getVehicleSyncRate())
+		{
+			if (vehicleId_ != INVALID_VEHICLE_ID && vehicleSeat_ != SEAT_NONE)
+			{
+				if (vehicleSeat_ == 0) // driver
+				{
+					sendDriverSync();
+				}
+				else
+				{
+					sendPassengerSync();
+				}
+			}
+
+			lastVehicleSyncUpdate_ = now;
+		}
+
+		if (duration_cast<Milliseconds>(now - lastAimSyncUpdate_).count() > npcComponent_->getAimSyncRate())
+		{
 			sendAimSync();
 			updateAim();
-			lastFootSyncUpdate_ = now;
+
+			lastAimSyncUpdate_ = now;
 		}
 	}
 }
