@@ -1153,7 +1153,9 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 
 	setPosition(vehicle.getPosition(), true);
 	vehicle.putPlayer(*player_, seat);
-	
+	vehicleId_ = vehicle.getID();
+	vehicleSeat_ = seat;
+
 	auto angle = vehicle.getRotation().ToEuler().z;
 	auto rotation = getRotation().ToEuler();
 	rotation.z = angle;
@@ -1165,7 +1167,8 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 bool NPC::removeFromVehicle()
 {
 	// Validate the player vehicle
-	if (!vehicle_)
+	auto vehicle = npcComponent_->getVehiclesPool()->get(vehicleId_);
+	if (!vehicle)
 	{
 		return false;
 	}
@@ -1173,13 +1176,15 @@ bool NPC::removeFromVehicle()
 	auto vehicleData = queryExtension<IPlayerVehicleData>(player_);
 	if (vehicleData)
 	{
-		// Set his position
-		setPosition(getVehicleSeatPos(*vehicle_, vehicleData->getSeat()), true);
+		setPosition(getVehicleSeatPos(*vehicle, vehicleData->getSeat()), true);
 		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
-		return true;
+		player_->removeFromVehicle(true);
 	}
 
-	return false;
+	vehicleId_ = INVALID_VEHICLE_ID;
+	vehicleSeat_ = SEAT_NONE;
+
+	return true;
 }
 
 void NPC::setWeaponState(PlayerWeaponState state)
