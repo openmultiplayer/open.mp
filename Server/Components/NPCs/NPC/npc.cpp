@@ -1631,7 +1631,30 @@ void NPC::advance(TimePoint now)
 		auto targetPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
 		stopMove();
 		setPosition(targetPos, false);
-		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+
+		// Check if the movement was triggered for entering a vehicle
+		IVehicle* vehicle = NULL;
+		float distanceToVehicle = 0.0f;
+
+		if (vehicleIdToEnter_ != INVALID_VEHICLE_ID)
+		{
+			vehicle = npcComponent_->getVehiclesPool()->get(vehicleIdToEnter_);
+			if (vehicle)
+			{
+				auto vecDestination = getVehicleSeatPos(*vehicle, vehicleSeatToEnter_);
+				distanceToVehicle = glm::distance(getPosition(), vecDestination);
+			}
+		}
+
+		// Validate the vehicle and check distance
+		if (vehicle && distanceToVehicle < MIN_VEHICLE_GO_TO_DISTANCE)
+		{
+			enterVehicle(*vehicle, vehicleSeatToEnter_, NPCMoveType_Jog);
+		}
+		else
+		{
+			npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+		}
 	}
 	else
 	{
@@ -1691,6 +1714,23 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 				if (state == PlayerState_OnFoot)
 				{
+					if (enteringVehicle_)
+					{
+						if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
+						{
+							auto vehicle = npcComponent_->getVehiclesPool()->get(vehicleIdToEnter_);
+							if (vehicle)
+							{
+								putInVehicle(*vehicle, vehicleSeatToEnter_);
+							}
+
+							enteringVehicle_ = false;
+							jackingVehicle_ = false;
+							vehicleIdToEnter_ = INVALID_VEHICLE_ID;
+							vehicleSeatToEnter_ = SEAT_NONE;
+						}
+					}
+
 					if (aiming_)
 					{
 						auto player = npcComponent_->getCore()->getPlayers().get(hitId_);
