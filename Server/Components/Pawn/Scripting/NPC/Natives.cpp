@@ -374,3 +374,15 @@ SCRIPT_API(NPC_ExitVehicle, bool(INPC& npc))
 	npc.exitVehicle();
 	return true;
 }
+
+SCRIPT_API(NPC_PutInVehicle, bool(INPC& npc, IVehicle& vehicle, int seatId))
+{
+	npc.putInVehicle(vehicle, seatId);
+	return true;
+}
+
+SCRIPT_API(NPC_RemoveFromVehicle, bool(INPC& npc))
+{
+	npc.removeFromVehicle();
+	return true;
+}
