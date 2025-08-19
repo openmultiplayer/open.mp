@@ -1392,7 +1392,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
-			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !vehicle.isTrainCarriage()))
+			int vehicleModel = vehicle.getModel();
+			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !(vehicleModel == 569 || vehicleModel == 570))) // Check if vehicle is a train carriage (TODO: Move Vehicle::isTrainCarriage to SDK/Components/Vehicles/Impl/vehicle_models.hpp)
 			{
 				return false;
 			}
