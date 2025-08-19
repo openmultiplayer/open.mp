@@ -145,6 +145,10 @@ public:
 
 	void sendFootSync();
 
+	void sendDriverSync();
+
+	void sendPassengerSync();
+
 	void sendAimSync();
 
 	void tick(Microseconds elapsed, TimePoint now);
@@ -190,14 +194,17 @@ private:
 	// Update related variables
 	TimePoint lastUpdate_;
 	TimePoint lastFootSyncUpdate_;
+	TimePoint lastVehicleSyncUpdate_;
+	TimePoint lastAimSyncUpdate_;
 
 	// Update skipper counters
-	// base value is 0, and it is incremented to 10 and then we send the update
+	// base value is 0, and it is incremented to the config value and then we send the update
 	int footSyncSkipUpdate_;
+	int driverSyncSkipUpdate_;
+	int passengerSyncSkipUpdate_;
 	int aimSyncSkipUpdate_;
 
 	// General data
-	int skin_;
 	bool dead_;
 	uint16_t keys_;
 	uint16_t upAndDown_;
@@ -253,8 +260,9 @@ private:
 	uint8_t lastDamagerWeapon_;
 
 	// Vehicle data
-	IVehicle* vehicle_;
-	IVehicle* vehicleToEnter_;
+	int vehicleId_;
+	int vehicleSeat_;
+	int vehicleIdToEnter_;
 	int vehicleSeatToEnter_;
 	bool enteringVehicle_;
 	bool jackingVehicle_;

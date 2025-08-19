@@ -16,8 +16,9 @@
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	: footSyncSkipUpdate_(0)
+	, driverSyncSkipUpdate_(0)
+	, passengerSyncSkipUpdate_(0)
 	, aimSyncSkipUpdate_(0)
-	, skin_(0)
 	, dead_(false)
 	, keys_(0)
 	, upAndDown_(0)
@@ -52,8 +53,9 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, hitType_(PlayerBulletHitType_None)
 	, lastDamager_(nullptr)
 	, lastDamagerWeapon_(PlayerWeapon_End)
-	, vehicle_(nullptr)
-	, vehicleToEnter_(nullptr)
+	, vehicleId_(INVALID_VEHICLE_ID)
+	, vehicleSeat_(SEAT_NONE)
+	, vehicleIdToEnter_(INVALID_VEHICLE_ID)
 	, vehicleSeatToEnter_(SEAT_NONE)
 	, enteringVehicle_(false)
 	, jackingVehicle_(false)
@@ -87,6 +89,34 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	footSync_.SurfingData.type = PlayerSurfingData::Type::None;
 	footSync_.SurfingData.ID = 0;
 	footSync_.SurfingData.offset = { 0.0f, 0.0f, 0.0f };
+
+	// Initial values for driver sync values
+	driverSync_.PlayerID = 0;
+	driverSync_.VehicleID = 0;
+	driverSync_.LeftRight = 0;
+	driverSync_.UpDown = 0;
+	driverSync_.Keys = 0;
+	driverSync_.Position = initialPosition;
+	driverSync_.Velocity = velocity_;
+	driverSync_.Rotation = initialRotation;
+	driverSync_.Health = 1000.0f;
+	driverSync_.PlayerHealthArmour = { 100.0f, 0.0f };
+	driverSync_.Siren = 0;
+	driverSync_.LandingGear = 0;
+	driverSync_.TrailerID = 0;
+	driverSync_.HasTrailer = false;
+	driverSync_.AdditionalKeyWeapon = weapon_;
+	driverSync_.HydraThrustAngle = 0;
+
+	// Initial values for passenger sync values
+	passengerSync_.PlayerID = 0;
+	passengerSync_.VehicleID = 0;
+	passengerSync_.LeftRight = 0;
+	passengerSync_.UpDown = 0;
+	passengerSync_.Keys = 0;
+	passengerSync_.Position = initialPosition;
+	passengerSync_.HealthArmour = { 100.0f, 0.0f };
+	passengerSync_.DriveBySeatAdditionalKeyWeapon = 0;
 }
 
 Vector3 NPC::getPosition() const
@@ -160,6 +190,13 @@ void NPC::spawn()
 	setAmmo(0);
 
 	dead_ = false;
+	vehicleId_ = INVALID_VEHICLE_ID;
+	vehicleSeat_ = SEAT_NONE;
+	enteringVehicle_ = false;
+	vehicleIdToEnter_ = INVALID_VEHICLE_ID;
+	vehicleSeatToEnter_ = SEAT_NONE;
+	jackingVehicle_ = false;
+	vehicleEnterExitUpdateTime_ = TimePoint();
 
 	lastDamager_ = nullptr;
 	lastDamagerWeapon_ = PlayerWeapon_End;
@@ -1070,7 +1107,7 @@ void NPC::enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType)
 	}
 
 	// Save the entering stats
-	vehicleToEnter_ = &vehicle;
+	vehicleIdToEnter_ = vehicle.getID();
 	vehicleSeatToEnter_ = seatId;
 
 	// Check distance
@@ -1566,6 +1603,154 @@ void NPC::sendFootSync()
 	}
 }
 
+void NPC::sendDriverSync()
+{
+	// Get vehicle
+	IVehicle* vehicle = nullptr;
+	if (vehicleId_ != INVALID_VEHICLE_ID)
+	{
+		vehicle = npcComponent_->getVehiclesPool()->get(vehicleId_);
+		if (!vehicle)
+		{
+			return;
+		}
+	}
+
+	uint16_t upAndDown, leftAndRight, keys;
+	getKeys(upAndDown, leftAndRight, keys);
+
+	uint16_t vehicleID = vehicle->getID();
+
+	// Check if immediate update is needed (basic comparison for now)
+	bool needsImmediateUpdate = driverSync_.LeftRight != leftAndRight || driverSync_.UpDown != upAndDown || driverSync_.Keys != keys || driverSync_.Position != position_ || driverSync_.Rotation.q != rotation_.q || driverSync_.PlayerHealthArmour.x != health_ || driverSync_.PlayerHealthArmour.y != armour_ || driverSync_.VehicleID != vehicleID || driverSync_.Velocity != velocity_;
+
+	auto generateDriverSyncBitStream = [&](NetworkBitStream& bs)
+	{
+		driverSync_.VehicleID = vehicleID;
+		driverSync_.LeftRight = leftAndRight;
+		driverSync_.UpDown = upAndDown;
+		driverSync_.Keys = keys;
+		driverSync_.Position = position_;
+		driverSync_.Rotation = rotation_;
+		driverSync_.PlayerHealthArmour.x = health_;
+		driverSync_.PlayerHealthArmour.y = armour_;
+		driverSync_.Velocity = velocity_;
+		driverSync_.Health = vehicle->getHealth();
+
+		// TODO: Probably can implement these too
+		driverSync_.Siren = 0;
+		driverSync_.LandingGear = 0;
+		driverSync_.HydraThrustAngle = 0;
+		driverSync_.TrailerID = INVALID_VEHICLE_ID;
+		driverSync_.HasTrailer = false;
+		driverSync_.AdditionalKeyWeapon = weapon_;
+
+		bs.writeUINT8(driverSync_.PacketID);
+		bs.writeUINT16(driverSync_.VehicleID);
+		bs.writeUINT16(driverSync_.LeftRight);
+		bs.writeUINT16(driverSync_.UpDown);
+		bs.writeUINT16(driverSync_.Keys);
+		bs.writeVEC4(Vector4(driverSync_.Rotation.q.w, driverSync_.Rotation.q.x, driverSync_.Rotation.q.y, driverSync_.Rotation.q.z));
+		bs.writeVEC3(driverSync_.Position);
+		bs.writeVEC3(driverSync_.Velocity);
+		bs.writeFLOAT(driverSync_.Health);
+		bs.writeUINT8(uint8_t(driverSync_.PlayerHealthArmour.x));
+		bs.writeUINT8(uint8_t(driverSync_.PlayerHealthArmour.y));
+		bs.writeUINT8(driverSync_.AdditionalKeyWeapon);
+		bs.writeUINT8(driverSync_.Siren);
+		bs.writeUINT8(driverSync_.LandingGear);
+		bs.writeUINT16(driverSync_.TrailerID);
+		bs.writeUINT32(driverSync_.HydraThrustAngle);
+	};
+
+	if (needsImmediateUpdate)
+	{
+		NetworkBitStream bs;
+		generateDriverSyncBitStream(bs);
+		npcComponent_->emulatePacketIn(*player_, driverSync_.PacketID, bs);
+	}
+	else
+	{
+		if (driverSyncSkipUpdate_ < npcComponent_->getVehicleSyncSkipUpdateLimit())
+		{
+			driverSyncSkipUpdate_++;
+		}
+		else
+		{
+			NetworkBitStream bs;
+			generateDriverSyncBitStream(bs);
+			npcComponent_->emulatePacketIn(*player_, driverSync_.PacketID, bs);
+			driverSyncSkipUpdate_ = 0;
+		}
+	}
+}
+
+void NPC::sendPassengerSync()
+{
+	// Get vehicle
+	IVehicle* vehicle = nullptr;
+	if (vehicleId_ != INVALID_VEHICLE_ID)
+	{
+		vehicle = npcComponent_->getVehiclesPool()->get(vehicleId_);
+		if (!vehicle)
+		{
+			return;
+		}
+	}
+
+	uint16_t upAndDown, leftAndRight, keys;
+	getKeys(upAndDown, leftAndRight, keys);
+
+	uint16_t vehicleID = vehicle->getID();
+
+	// Check if immediate update is needed (basic comparison for now)
+	bool needsImmediateUpdate = passengerSync_.LeftRight != leftAndRight || passengerSync_.UpDown != upAndDown || passengerSync_.Keys != keys || passengerSync_.Position != position_ || passengerSync_.HealthArmour.x != health_ || passengerSync_.HealthArmour.y != armour_ || passengerSync_.VehicleID != vehicleID || passengerSync_.SeatID != vehicleSeat_ || passengerSync_.WeaponID != weapon_;
+
+	auto generatePassengerSyncBitStream = [&](NetworkBitStream& bs)
+	{
+		passengerSync_.VehicleID = vehicleID;
+		passengerSync_.LeftRight = leftAndRight;
+		passengerSync_.UpDown = upAndDown;
+		passengerSync_.Keys = keys;
+		passengerSync_.Position = position_;
+		passengerSync_.HealthArmour.x = health_;
+		passengerSync_.HealthArmour.y = armour_;
+		passengerSync_.SeatID = vehicleSeat_;
+		passengerSync_.WeaponID = weapon_;
+
+		bs.writeUINT8(passengerSync_.PacketID);
+		bs.writeUINT16(passengerSync_.VehicleID);
+		bs.writeUINT16(passengerSync_.DriveBySeatAdditionalKeyWeapon);
+		bs.writeUINT8(uint8_t(passengerSync_.HealthArmour.x));
+		bs.writeUINT8(uint8_t(passengerSync_.HealthArmour.y));
+		bs.writeUINT16(passengerSync_.LeftRight);
+		bs.writeUINT16(passengerSync_.UpDown);
+		bs.writeUINT16(passengerSync_.Keys);
+		bs.writeVEC3(passengerSync_.Position);
+	};
+
+	if (needsImmediateUpdate)
+	{
+		NetworkBitStream bs;
+		generatePassengerSyncBitStream(bs);
+		npcComponent_->emulatePacketIn(*player_, passengerSync_.PacketID, bs);
+	}
+	else
+	{
+		if (passengerSyncSkipUpdate_ < npcComponent_->getVehicleSyncSkipUpdateLimit())
+		{
+			passengerSyncSkipUpdate_++;
+		}
+		else
+		{
+			NetworkBitStream bs;
+			generatePassengerSyncBitStream(bs);
+			npcComponent_->emulatePacketIn(*player_, passengerSync_.PacketID, bs);
+			passengerSyncSkipUpdate_ = 0;
+		}
+	}
+}
+
 void NPC::sendAimSync()
 {
 	// Only send aim sync if player is on foot
@@ -1596,7 +1781,7 @@ void NPC::sendAimSync()
 	}
 	else
 	{
-		if (aimSyncSkipUpdate_ < 10)
+		if (aimSyncSkipUpdate_ < npcComponent_->getAimSyncSkipUpdateLimit())
 		{
 			aimSyncSkipUpdate_++;
 		}
