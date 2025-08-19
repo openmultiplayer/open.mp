@@ -1501,10 +1501,13 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned and on foot
-	auto state = player_->getState();
-	if (state != PlayerState_OnFoot && state != PlayerState_Spawned)
+	if (vehicleId_ == INVALID_VEHICLE_ID)
 	{
-		return;
+		auto state = player_->getState();
+		if (state != PlayerState_OnFoot && state != PlayerState_Spawned)
+		{
+			return;
+		}
 	}
 
 	uint16_t upAndDown, leftAndRight, keys;
