@@ -143,56 +143,43 @@ void NPCComponent::onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amou
 	}
 }
 
-bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
+void NPCComponent::onPoolEntryDestroyed(IPlayer& player)
 {
-	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)
-		{
-			return handler->onNPCTakeDamage(npc, player, amount, weapon, part);
-		});
-
-	if (eventResult && callOriginalEvents)
+	for (auto& _npc : storage)
 	{
-		shouldCallCustomEvents = false;
+		auto npc = static_cast<NPC*>(_npc);
+		auto lastDamager = npc->getLastDamager();
+		if (lastDamager && lastDamager->getID() == player.getID())
+		{
+			npc->resetLastDamager();
+		}
 
-		// Emulate receiving damage rpc
-		NetworkBitStream bs;
-		bs.writeBIT(false); // Taking
-		bs.writeUINT16(npc.getID());
-		bs.writeFLOAT(amount);
-		bs.writeUINT32(weapon);
-		bs.writeUINT32(int(part));
-		emulateRPCIn(player, NetCode::RPC::OnPlayerGiveTakeDamage::PacketID, bs);
-
-		shouldCallCustomEvents = true;
+		auto followingPlayer = npc->getFollowingPlayer();
+		if (followingPlayer && followingPlayer->getID() == player.getID())
+		{
+			npc->stopMove();
+			npc->resetFollowingPlayer();
+		}
 	}
-
-	return eventResult;
 }
 
-bool NPCComponent::emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
+void NPCComponent::onPoolEntryDestroyed(IVehicle& vehicle)
 {
-	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)
-		{
-			return handler->onNPCGiveDamage(npc, player, amount, weapon, part);
-		});
-
-	if (eventResult && callOriginalEvents)
+	for (auto& _npc : storage)
 	{
-		shouldCallCustomEvents = false;
+		auto npc = static_cast<NPC*>(_npc);
+		auto npcVehicle = npc->getVehicle();
+		if (npcVehicle && npcVehicle->getID() == vehicle.getID())
+		{
+			npc->removeFromVehicle();
+		}
 
-		// Emulate receiving damage rpc
-		NetworkBitStream bs;
-		bs.writeBIT(true); // Taking
-		bs.writeUINT16(npc.getID());
-		bs.writeFLOAT(amount);
-		bs.writeUINT32(weapon);
-		bs.writeUINT32(int(part));
-		emulateRPCIn(player, NetCode::RPC::OnPlayerGiveTakeDamage::PacketID, bs);
-
-		shouldCallCustomEvents = true;
+		auto enteringVehicle = npc->getEnteringVehicle();
+		if (enteringVehicle && enteringVehicle->getID() == vehicle.getID())
+		{
+			npc->resetEnteringVehicle();
+		}
 	}
-
-	return eventResult;
 }
 
 INPC* NPCComponent::create(StringView name)
@@ -385,6 +372,58 @@ bool NPCComponent::getNextPoint(int pathId, Vector3& position, float& stopRange)
 		}
 	}
 	return false;
+}
+
+bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
+{
+	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)
+		{
+			return handler->onNPCTakeDamage(npc, player, amount, weapon, part);
+		});
+
+	if (eventResult && callOriginalEvents)
+	{
+		shouldCallCustomEvents = false;
+
+		// Emulate receiving damage rpc
+		NetworkBitStream bs;
+		bs.writeBIT(false); // Taking
+		bs.writeUINT16(npc.getID());
+		bs.writeFLOAT(amount);
+		bs.writeUINT32(weapon);
+		bs.writeUINT32(int(part));
+		emulateRPCIn(player, NetCode::RPC::OnPlayerGiveTakeDamage::PacketID, bs);
+
+		shouldCallCustomEvents = true;
+	}
+
+	return eventResult;
+}
+
+bool NPCComponent::emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
+{
+	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)
+		{
+			return handler->onNPCGiveDamage(npc, player, amount, weapon, part);
+		});
+
+	if (eventResult && callOriginalEvents)
+	{
+		shouldCallCustomEvents = false;
+
+		// Emulate receiving damage rpc
+		NetworkBitStream bs;
+		bs.writeBIT(true); // Taking
+		bs.writeUINT16(npc.getID());
+		bs.writeFLOAT(amount);
+		bs.writeUINT32(weapon);
+		bs.writeUINT32(int(part));
+		emulateRPCIn(player, NetCode::RPC::OnPlayerGiveTakeDamage::PacketID, bs);
+
+		shouldCallCustomEvents = true;
+	}
+
+	return eventResult;
 }
 
 void NPCComponent::emulateRPCIn(IPlayer& player, int rpcId, NetworkBitStream& bs)

@@ -36,6 +36,12 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, velocity_({ 0.0f, 0.0f, 0.0f })
 	, moving_(false)
 	, needsVelocityUpdate_(false)
+	, followingPlayer_(nullptr)
+	, followMoveType_(NPCMoveType_Auto)
+	, followMoveSpeed_(NPC_MOVE_SPEED_AUTO)
+	, followStopRange_(0.2f)
+	, followPosCheckDelay_(Milliseconds(500))
+	, followAutoRestart_(true)
 	, currentPath_(nullptr)
 	, pathMoveType_(NPCMoveType_Auto)
 	, pathMoveSpeed_(NPC_MOVE_SPEED_AUTO)
@@ -60,9 +66,9 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, hitType_(PlayerBulletHitType_None)
 	, lastDamager_(nullptr)
 	, lastDamagerWeapon_(PlayerWeapon_End)
-	, vehicleId_(INVALID_VEHICLE_ID)
+	, vehicle_(nullptr)
 	, vehicleSeat_(SEAT_NONE)
-	, vehicleIdToEnter_(INVALID_VEHICLE_ID)
+	, vehicleToEnter_(nullptr)
 	, vehicleSeatToEnter_(SEAT_NONE)
 	, enteringVehicle_(false)
 	, jackingVehicle_(false)
@@ -197,10 +203,10 @@ void NPC::spawn()
 	setAmmo(0);
 
 	dead_ = false;
-	vehicleId_ = INVALID_VEHICLE_ID;
+	vehicle_ = nullptr;
 	vehicleSeat_ = SEAT_NONE;
 	enteringVehicle_ = false;
-	vehicleIdToEnter_ = INVALID_VEHICLE_ID;
+	vehicleToEnter_ = nullptr;
 	vehicleSeatToEnter_ = SEAT_NONE;
 	jackingVehicle_ = false;
 	vehicleEnterExitUpdateTime_ = TimePoint();
@@ -225,7 +231,7 @@ void NPC::respawn()
 	auto rotation = getRotation();
 	float health = getHealth();
 	float armour = getArmour();
-	int vehicleId = vehicleId_;
+	auto vehicle = vehicle_;
 	int vehicleSeat = vehicleSeat_;
 	int skin = player_->getSkin();
 
@@ -256,13 +262,9 @@ void NPC::respawn()
 	setRotation(rotation, false);
 	setSkin(skin);
 
-	if (vehicleId != INVALID_VEHICLE_ID)
+	if (vehicle)
 	{
-		auto vehicle = npcComponent_->getVehiclesPool()->get(vehicleId);
-		if (vehicle)
-		{
-			putInVehicle(*vehicle, vehicleSeat);
-		}
+		putInVehicle(*vehicle, vehicleSeat);
 	}
 
 	if (isPathPaused())
@@ -395,6 +397,20 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 	return true;
 }
 
+bool NPC::moveToPlayer(IPlayer& targetPlayer, NPCMoveType moveType, float moveSpeed, float stopRange, Milliseconds posCheckUpdateDelay, bool autoRestart)
+{
+	followingPlayer_ = &targetPlayer;
+	followMoveType_ = moveType;
+	followMoveSpeed_ = moveSpeed;
+	followStopRange_ = stopRange;
+	followPosCheckDelay_ = posCheckUpdateDelay;
+	followAutoRestart_ = autoRestart;
+	lastFollowPosCheck_ = Time::now();
+
+	Vector3 targetPos = targetPlayer.getPosition();
+	return move(targetPos, moveType, moveSpeed, stopRange);
+}
+
 void NPC::stopMove()
 {
 	moving_ = false;
@@ -403,6 +419,7 @@ void NPC::stopMove()
 	velocity_ = { 0.0f, 0.0f, 0.0f };
 	moveType_ = NPCMoveType_None;
 	stopRange_ = 0.2f;
+	followingPlayer_ = nullptr;
 
 	upAndDown_ &= ~Key::UP;
 	removeKey(Key::SPRINT);
@@ -1181,7 +1198,7 @@ void NPC::enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType)
 	}
 
 	// Save the entering stats
-	vehicleIdToEnter_ = vehicle.getID();
+	vehicleToEnter_ = &vehicle;
 	vehicleSeatToEnter_ = seatId;
 
 	// Check distance
@@ -1264,7 +1281,7 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 
 	setPosition(vehicle.getPosition(), true);
 	vehicle.putPlayer(*player_, seat);
-	vehicleId_ = vehicle.getID();
+	vehicle_ = &vehicle;
 	vehicleSeat_ = seat;
 
 	auto angle = vehicle.getRotation().ToEuler().z;
@@ -1278,8 +1295,7 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 bool NPC::removeFromVehicle()
 {
 	// Validate the player vehicle
-	auto vehicle = npcComponent_->getVehiclesPool()->get(vehicleId_);
-	if (!vehicle)
+	if (!vehicle_)
 	{
 		return false;
 	}
@@ -1287,12 +1303,12 @@ bool NPC::removeFromVehicle()
 	auto vehicleData = queryExtension<IPlayerVehicleData>(player_);
 	if (vehicleData)
 	{
-		setPosition(getVehicleSeatPos(*vehicle, vehicleData->getSeat()), true);
+		setPosition(getVehicleSeatPos(*vehicle_, vehicleData->getSeat()), true);
 		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
 		player_->removeFromVehicle(true);
 	}
 
-	vehicleId_ = INVALID_VEHICLE_ID;
+	vehicle_ = nullptr;
 	vehicleSeat_ = SEAT_NONE;
 
 	return true;
@@ -1612,7 +1628,7 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 void NPC::sendFootSync()
 {
 	// Only send foot sync if player is spawned and on foot
-	if (vehicleId_ == INVALID_VEHICLE_ID)
+	if (!vehicle_)
 	{
 		auto state = player_->getState();
 		if (state != PlayerState_OnFoot && state != PlayerState_Spawned)
@@ -1679,21 +1695,15 @@ void NPC::sendFootSync()
 
 void NPC::sendDriverSync()
 {
-	// Get vehicle
-	IVehicle* vehicle = nullptr;
-	if (vehicleId_ != INVALID_VEHICLE_ID)
+	if (!vehicle_)
 	{
-		vehicle = npcComponent_->getVehiclesPool()->get(vehicleId_);
-		if (!vehicle)
-		{
-			return;
-		}
+		return;
 	}
 
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	uint16_t vehicleID = vehicle->getID();
+	uint16_t vehicleID = vehicle_->getID();
 
 	// Check if immediate update is needed (basic comparison for now)
 	bool needsImmediateUpdate = driverSync_.LeftRight != leftAndRight || driverSync_.UpDown != upAndDown || driverSync_.Keys != keys || driverSync_.Position != position_ || driverSync_.Rotation.q != rotation_.q || driverSync_.PlayerHealthArmour.x != health_ || driverSync_.PlayerHealthArmour.y != armour_ || driverSync_.VehicleID != vehicleID || driverSync_.Velocity != velocity_;
@@ -1709,7 +1719,7 @@ void NPC::sendDriverSync()
 		driverSync_.PlayerHealthArmour.x = health_;
 		driverSync_.PlayerHealthArmour.y = armour_;
 		driverSync_.Velocity = velocity_;
-		driverSync_.Health = vehicle->getHealth();
+		driverSync_.Health = vehicle_->getHealth();
 
 		// TODO: Probably can implement these too
 		driverSync_.Siren = 0;
@@ -1761,21 +1771,15 @@ void NPC::sendDriverSync()
 
 void NPC::sendPassengerSync()
 {
-	// Get vehicle
-	IVehicle* vehicle = nullptr;
-	if (vehicleId_ != INVALID_VEHICLE_ID)
+	if (!vehicle_)
 	{
-		vehicle = npcComponent_->getVehiclesPool()->get(vehicleId_);
-		if (!vehicle)
-		{
-			return;
-		}
+		return;
 	}
 
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	uint16_t vehicleID = vehicle->getID();
+	uint16_t vehicleID = vehicle_->getID();
 
 	// Check if immediate update is needed (basic comparison for now)
 	bool needsImmediateUpdate = passengerSync_.LeftRight != leftAndRight || passengerSync_.UpDown != upAndDown || passengerSync_.Keys != keys || passengerSync_.Position != position_ || passengerSync_.HealthArmour.x != health_ || passengerSync_.HealthArmour.y != armour_ || passengerSync_.VehicleID != vehicleID || passengerSync_.SeatID != vehicleSeat_ || passengerSync_.WeaponID != weapon_;
@@ -1888,21 +1892,39 @@ void NPC::advance(TimePoint now)
 	{
 		// Reached or about to overshoot target
 		auto targetPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
-		stopMove();
+
+		// If following a player, check autoRestart setting
+		bool wasFollowingPlayer = followingPlayer_ != nullptr;
+		if (!wasFollowingPlayer)
+		{
+			stopMove();
+		}
+		else if (!followAutoRestart_)
+		{
+			// If autoRestart is false, completely stop following
+			stopMove();
+		}
+		else
+		{
+			// Just stop movement but keep following state
+			moving_ = false;
+			moveSpeed_ = 0.0f;
+			velocity_ = { 0.0f, 0.0f, 0.0f };
+			upAndDown_ &= ~Key::UP;
+			removeKey(Key::SPRINT);
+			removeKey(Key::WALK);
+		}
+
 		setPosition(targetPos, false);
 
 		// Check if the movement was triggered for entering a vehicle
 		IVehicle* vehicle = NULL;
 		float distanceToVehicle = 0.0f;
 
-		if (vehicleIdToEnter_ != INVALID_VEHICLE_ID)
+		if (vehicleToEnter_)
 		{
-			vehicle = npcComponent_->getVehiclesPool()->get(vehicleIdToEnter_);
-			if (vehicle)
-			{
-				auto vecDestination = getVehicleSeatPos(*vehicle, vehicleSeatToEnter_);
-				distanceToVehicle = glm::distance(getPosition(), vecDestination);
-			}
+			auto vecDestination = getVehicleSeatPos(*vehicleToEnter_, vehicleSeatToEnter_);
+			distanceToVehicle = glm::distance(getPosition(), vecDestination);
 		}
 
 		// Validate the vehicle and check distance
@@ -2064,6 +2086,35 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 					setVelocity({ 0.0f, 0.0f, 0.0f }, false);
 				}
 
+				// Check if we're following a player (whether moving or not)
+				if (followingPlayer_)
+				{
+					if (duration_cast<Milliseconds>(now - lastFollowPosCheck_).count() >= followPosCheckDelay_.count())
+					{
+						Vector3 currentPlayerPos = followingPlayer_->getPosition();
+						Vector3 npcPos = getPosition();
+						float distanceToPlayer = glm::distance(npcPos, currentPlayerPos);
+
+						// If player moved outside stop range, start moving again (if autoRestart is enabled)
+						if (distanceToPlayer > followStopRange_)
+						{
+							if (!moving_ && followAutoRestart_)
+							{
+								// Restart movement to follow player
+								move(currentPlayerPos, followMoveType_, followMoveSpeed_, followStopRange_);
+							}
+							else if (moving_)
+							{
+								// Update target position to player's current position
+								targetPosition_ = currentPlayerPos;
+								lastMove_ = now;
+							}
+						}
+
+						lastFollowPosCheck_ = now;
+					}
+				}
+
 				if (moving_)
 				{
 					advance(now);
@@ -2075,15 +2126,14 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 					{
 						if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
 						{
-							auto vehicle = npcComponent_->getVehiclesPool()->get(vehicleIdToEnter_);
-							if (vehicle)
+							if (vehicleToEnter_)
 							{
-								putInVehicle(*vehicle, vehicleSeatToEnter_);
+								putInVehicle(*vehicleToEnter_, vehicleSeatToEnter_);
 							}
 
 							enteringVehicle_ = false;
 							jackingVehicle_ = false;
-							vehicleIdToEnter_ = INVALID_VEHICLE_ID;
+							vehicleToEnter_ = nullptr;
 							vehicleSeatToEnter_ = SEAT_NONE;
 						}
 					}
@@ -2219,7 +2269,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 		if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
 		{
-			if (vehicleId_ == INVALID_VEHICLE_ID && vehicleSeat_ == SEAT_NONE)
+			if (!vehicle_ || vehicleSeat_ == SEAT_NONE)
 			{
 				sendFootSync();
 			}
@@ -2229,7 +2279,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 		if (duration_cast<Milliseconds>(now - lastVehicleSyncUpdate_).count() > npcComponent_->getVehicleSyncRate())
 		{
-			if (vehicleId_ != INVALID_VEHICLE_ID && vehicleSeat_ != SEAT_NONE)
+			if (vehicle_ && vehicleSeat_ != SEAT_NONE)
 			{
 				if (vehicleSeat_ == 0) // driver
 				{

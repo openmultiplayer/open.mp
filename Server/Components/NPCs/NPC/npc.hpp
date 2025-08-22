@@ -39,6 +39,8 @@ public:
 
 	bool move(Vector3 position, NPCMoveType moveType, float moveSpeed = NPC_MOVE_SPEED_AUTO, float stopRange = 0.2f) override;
 
+	bool moveToPlayer(IPlayer& targetPlayer, NPCMoveType moveType, float moveSpeed = NPC_MOVE_SPEED_AUTO, float stopRange = 0.2f, Milliseconds posCheckUpdateDelay = Milliseconds(500), bool autoRestart = false) override;
+
 	void stopMove() override;
 
 	bool isMoving() const override;
@@ -173,6 +175,47 @@ public:
 
 	void advance(TimePoint now);
 
+	IVehicle* getEnteringVehicle() const
+	{
+		return vehicleToEnter_;
+	}
+
+	void resetEnteringVehicle()
+	{
+		vehicleToEnter_ = nullptr;
+		vehicleSeatToEnter_ = SEAT_NONE;
+	}
+
+	IVehicle* getVehicle() const
+	{
+		return vehicle_;
+	}
+
+	void resetVehicle()
+	{
+		vehicle_ = nullptr;
+	}
+
+	IPlayer* getLastDamager() const
+	{
+		return lastDamager_;
+	}
+
+	void resetLastDamager()
+	{
+		lastDamager_ = nullptr;
+	}
+
+	IPlayer* getFollowingPlayer() const
+	{
+		return followingPlayer_;
+	}
+
+	void resetFollowingPlayer()
+	{
+		followingPlayer_ = nullptr;
+	}
+
 	int getID() const override
 	{
 		return poolID;
@@ -248,6 +291,15 @@ private:
 	bool moving_;
 	bool needsVelocityUpdate_;
 
+	// Player following
+	IPlayer* followingPlayer_;
+	NPCMoveType followMoveType_;
+	float followMoveSpeed_;
+	float followStopRange_;
+	Milliseconds followPosCheckDelay_;
+	TimePoint lastFollowPosCheck_;
+	bool followAutoRestart_;
+
 	// Path movement
 	NPCPath* currentPath_;
 	NPCMoveType pathMoveType_;
@@ -286,9 +338,9 @@ private:
 	uint8_t lastDamagerWeapon_;
 
 	// Vehicle data
-	int vehicleId_;
+	IVehicle* vehicle_;
 	int vehicleSeat_;
-	int vehicleIdToEnter_;
+	IVehicle* vehicleToEnter_;
 	int vehicleSeatToEnter_;
 	bool enteringVehicle_;
 	bool jackingVehicle_;

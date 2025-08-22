@@ -19,7 +19,7 @@
 
 using namespace Impl;
 
-class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler
+class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler, public PoolEventHandler<IPlayer>, public PoolEventHandler<IVehicle>
 {
 public:
 	StringView componentName() const override
@@ -68,6 +68,11 @@ public:
 
 	void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override;
 
+	void onPoolEntryDestroyed(IPlayer& player) override;
+
+	void onPoolEntryDestroyed(IVehicle& vehicle) override;
+
+	// Exposed functions
 	INPC* create(StringView name) override;
 
 	void destroy(INPC& npc) override;
