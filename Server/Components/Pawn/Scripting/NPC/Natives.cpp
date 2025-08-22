@@ -98,9 +98,14 @@ SCRIPT_API(NPC_GetVirtualWorld, int(INPC& npc))
 	return npc.getVirtualWorld();
 }
 
-SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType, float moveSpeed))
+SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType, float moveSpeed, float stopRange))
 {
 	return npc.move(targetPos, NPCMoveType(moveType), moveSpeed);
+}
+
+SCRIPT_API(NPC_MoveToPlayer, bool(INPC& npc, IPlayer& player, int moveType, float moveSpeed, float stopRange, int posCheckUpdateDelay, bool autoRestart))
+{
+	return npc.moveToPlayer(player, NPCMoveType(moveType), moveSpeed, stopRange, Milliseconds(posCheckUpdateDelay), autoRestart);
 }
 
 SCRIPT_API(NPC_StopMove, bool(INPC& npc))
