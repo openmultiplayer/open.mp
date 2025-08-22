@@ -474,3 +474,7 @@ SCRIPT_API(NPC_GetNextPoint, bool(int pathId, Vector3& position, float& stopRang
 	return PawnManager::Get()->npcs->getNextPoint(pathId, position, stopRange);
 }
 
+SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveSpeed))
+{
+	return npc.moveByPath(pathId, NPCMoveType(moveType), moveSpeed);
+}
