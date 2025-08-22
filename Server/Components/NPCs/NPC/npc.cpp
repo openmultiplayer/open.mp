@@ -30,6 +30,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, meleeSecondaryAttack_(false)
 	, moveType_(NPCMoveType_None)
 	, moveSpeed_(0.0f)
+	, stopRange_(0.2f)
 	, targetPosition_({ 0.0f, 0.0f, 0.0f })
 	, velocity_({ 0.0f, 0.0f, 0.0f })
 	, moving_(false)
@@ -204,7 +205,7 @@ void NPC::spawn()
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
 
-bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
+bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRange)
 {
 	if (moveType == NPCMoveType_None)
 	{
@@ -316,6 +317,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed)
 
 	// Set internal variables
 	targetPosition_ = pos;
+	stopRange_ = stopRange;
 	moving_ = true;
 	moveType_ = moveType;
 	lastMove_ = Time::now();
@@ -329,6 +331,7 @@ void NPC::stopMove()
 	targetPosition_ = { 0.0f, 0.0f, 0.0f };
 	velocity_ = { 0.0f, 0.0f, 0.0f };
 	moveType_ = NPCMoveType_None;
+	stopRange_ = 0.2f;
 
 	upAndDown_ &= ~Key::UP;
 	removeKey(Key::SPRINT);
@@ -1810,7 +1813,7 @@ void NPC::advance(TimePoint now)
 	auto distanceToTarget = glm::length(toTarget);
 	auto maxTravel = glm::length(velocity_) * deltaTimeMS;
 
-	if (distanceToTarget <= 0.001f || maxTravel >= distanceToTarget)
+	if (distanceToTarget <= stopRange_ || maxTravel >= distanceToTarget)
 	{
 		// Reached or about to overshoot target
 		auto targetPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
