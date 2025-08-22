@@ -1135,13 +1135,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
 			IVehicle& vehicle = *lock.entry;
-
 			Player& player = static_cast<Player&>(peer);
+
+			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
+
+			if (!vehicleOk)
+			{
+				return false;
+			}
+
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
 			player.armour_ = vehicleSync.PlayerHealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? vehicleSync.WeaponID : 0;
-			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
 			uint32_t newKeys = vehicleSync.Keys;
 			switch (vehicleSync.AdditionalKey)
@@ -1171,33 +1177,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 			player.setState(PlayerState_Driver);
 
-			if (vehicleOk)
+			vehicleSync.HasTrailer = false;
+			if (vehicleSync.TrailerID)
+			{
+				IVehicle* trailer = vehicle.getTrailer();
+				if (trailer)
+				{
+					vehicleSync.HasTrailer = true;
+					vehicleSync.TrailerID = trailer->getID();
+				}
+			}
+
+			TimePoint now = Time::now();
+			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+				[&peer, now](PlayerUpdateEventHandler* handler)
+				{
+					return handler->onPlayerUpdate(peer, now);
+				});
+
+			if (allowedupdate)
 			{
 				vehicleSync.PlayerID = player.poolID;
-
-				vehicleSync.HasTrailer = false;
-				if (vehicleSync.TrailerID)
-				{
-					IVehicle* trailer = vehicle.getTrailer();
-					if (trailer)
-					{
-						vehicleSync.HasTrailer = true;
-						vehicleSync.TrailerID = trailer->getID();
-					}
-				}
-
-				TimePoint now = Time::now();
-				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-					[&peer, now](PlayerUpdateEventHandler* handler)
-					{
-						return handler->onPlayerUpdate(peer, now);
-					});
-
-				if (allowedupdate)
-				{
-					player.vehicleSync_ = vehicleSync;
-					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
-				}
+				player.vehicleSync_ = vehicleSync;
+				player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
 			}
 			return true;
 		}
@@ -1390,7 +1392,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
-			if (vehicle.isRespawning())
+			int vehicleModel = vehicle.getModel();
+			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !(vehicleModel == 569 || vehicleModel == 570))) // Check if vehicle is a train carriage (TODO: Move Vehicle::isTrainCarriage to SDK/Components/Vehicles/Impl/vehicle_models.hpp)
 			{
 				return false;
 			}
@@ -1402,10 +1405,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			player.pos_ = vehicle.getPosition();
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? passengerSync.WeaponID : 0;
-			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
 			switch (passengerSync.AdditionalKey)
@@ -1435,23 +1438,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 			player.setState(PlayerState_Passenger);
 
-			if (vehicleOk)
-			{
-				TimePoint now = Time::now();
-				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-					[&peer, now](PlayerUpdateEventHandler* handler)
-					{
-						return handler->onPlayerUpdate(peer, now);
-					});
-
-				if (allowedupdate)
+			TimePoint now = Time::now();
+			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+				[&peer, now](PlayerUpdateEventHandler* handler)
 				{
-					passengerSync.PlayerID = player.poolID;
-					player.passengerSync_ = passengerSync;
-					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
-				}
-			}
+					return handler->onPlayerUpdate(peer, now);
+				});
 
+			if (allowedupdate)
+			{
+				passengerSync.PlayerID = player.poolID;
+				player.passengerSync_ = passengerSync;
+				player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
+			}
 			return true;
 		}
 	} playerPassengerSyncHandler;
