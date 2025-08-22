@@ -137,17 +137,17 @@ public:
 
 	bool moveByPath(int pathId, NPCMoveType moveType = NPCMoveType_Auto, float moveSpeed = NPC_MOVE_SPEED_AUTO) override;
 
-	void pausePath();
+	void pausePath() override;
 
-	void resumePath();
+	void resumePath() override;
 
-	void stopPath();
+	void stopPath() override;
 
-	bool isMovingByPath() const;
+	bool isMovingByPath() const override;
 
-	bool isPathPaused() const;
+	bool isPathPaused() const override;
 
-	NPCPath* getCurrentPath() const;
+	int getCurrentPathId() const override;
 
 	void setWeaponState(PlayerWeaponState state);
 

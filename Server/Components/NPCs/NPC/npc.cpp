@@ -2019,9 +2019,9 @@ bool NPC::isPathPaused() const
 	return pathPaused_;
 }
 
-NPCPath* NPC::getCurrentPath() const
+int NPC::getCurrentPathId() const
 {
-	return currentPath_;
+	return currentPath_->getID();
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
