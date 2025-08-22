@@ -12,6 +12,8 @@
 #include <netcode.hpp>
 #include <Impl/pool_impl.hpp>
 
+class NPCPath;
+
 class NPCComponent;
 
 class NPC : public INPC, public PoolIDProvider, public NoCopy
@@ -131,6 +133,20 @@ public:
 
 	bool removeFromVehicle() override;
 
+	bool moveByPath(int pathId, NPCMoveType moveType = NPCMoveType_Auto, float moveSpeed = NPC_MOVE_SPEED_AUTO) override;
+
+	void pausePath();
+
+	void resumePath();
+
+	void stopPath();
+
+	bool isMovingByPath() const;
+
+	bool isPathPaused() const;
+
+	NPCPath* getCurrentPath() const;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -229,6 +245,13 @@ private:
 	Vector3 velocity_;
 	bool moving_;
 	bool needsVelocityUpdate_;
+
+	// Path movement
+	NPCPath* currentPath_;
+	NPCMoveType pathMoveType_;
+	float pathMoveSpeed_;
+	bool movingByPath_;
+	bool pathPaused_;
 
 	// Weapon data
 	uint8_t weapon_;

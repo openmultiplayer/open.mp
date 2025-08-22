@@ -251,6 +251,142 @@ void NPCComponent::destroy(INPC& npc)
 	npcNetwork.disconnect(*npc.getPlayer());
 }
 
+int NPCComponent::createPath()
+{
+	NPCPath* path = pathManager_.create();
+	return path ? path->getID() : -1;
+}
+
+bool NPCComponent::destroyPath(int pathId)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		pathManager_.destroy(path);
+		return true;
+	}
+	return false;
+}
+
+void NPCComponent::destroyAllPaths()
+{
+	pathManager_.destroyAll();
+}
+
+size_t NPCComponent::getPathCount() const
+{
+	return pathManager_.getPathCount();
+}
+
+bool NPCComponent::addPointToPath(int pathId, const Vector3& position, float stopRange)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		path->addPoint(position, stopRange);
+		return true;
+	}
+	return false;
+}
+
+bool NPCComponent::removePointFromPath(int pathId, size_t pointIndex)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		return path->removePoint(pointIndex);
+	}
+	return false;
+}
+
+bool NPCComponent::clearPath(int pathId)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		path->clear();
+		return true;
+	}
+	return false;
+}
+
+size_t NPCComponent::getPathPointCount(int pathId)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	return path ? path->getPointCount() : 0;
+}
+
+bool NPCComponent::getPathPoint(int pathId, size_t pointIndex, Vector3& position, float& stopRange)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		const PathPoint* point = path->getPoint(pointIndex);
+		if (point)
+		{
+			position = point->position;
+			stopRange = point->stopRange;
+			return true;
+		}
+	}
+	return false;
+}
+
+bool NPCComponent::setPathCurrentIndex(int pathId, size_t index)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		path->setCurrentIndex(index);
+		return true;
+	}
+	return false;
+}
+
+size_t NPCComponent::getPathCurrentIndex(int pathId)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	return path ? path->getCurrentIndex() : 0;
+}
+
+bool NPCComponent::resetPath(int pathId)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		path->reset();
+		return true;
+	}
+	return false;
+}
+
+bool NPCComponent::isValidPath(int pathId)
+{
+	return pathManager_.get(pathId) != nullptr;
+}
+
+bool NPCComponent::hasNextPoint(int pathId)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	return path ? path->hasNextPoint() : false;
+}
+
+bool NPCComponent::getNextPoint(int pathId, Vector3& position, float& stopRange)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		const PathPoint* point = path->getNextPoint();
+		if (point)
+		{
+			position = point->position;
+			stopRange = point->stopRange;
+			return true;
+		}
+	}
+	return false;
+}
+
 void NPCComponent::emulateRPCIn(IPlayer& player, int rpcId, NetworkBitStream& bs)
 {
 	const bool res = npcNetwork.inEventDispatcher.stopAtFalse([&player, rpcId, &bs](NetworkInEventHandler* handler)

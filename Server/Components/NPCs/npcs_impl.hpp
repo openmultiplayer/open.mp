@@ -15,6 +15,7 @@
 #include <netcode.hpp>
 #include "./Network/npcs_network.hpp"
 #include "./NPC/npc.hpp"
+#include "./Path/path_pool.hpp"
 
 using namespace Impl;
 
@@ -70,6 +71,36 @@ public:
 	INPC* create(StringView name) override;
 
 	void destroy(INPC& npc) override;
+
+	int createPath() override;
+
+	bool destroyPath(int pathId) override;
+
+	void destroyAllPaths() override;
+
+	size_t getPathCount() const override;
+
+	bool addPointToPath(int pathId, const Vector3& position, float stopRange = 1.0f) override;
+
+	bool removePointFromPath(int pathId, size_t pointIndex) override;
+
+	bool clearPath(int pathId) override;
+
+	size_t getPathPointCount(int pathId) override;
+
+	bool getPathPoint(int pathId, size_t pointIndex, Vector3& position, float& stopRange) override;
+
+	bool setPathCurrentIndex(int pathId, size_t index) override;
+
+	size_t getPathCurrentIndex(int pathId) override;
+
+	bool resetPath(int pathId) override;
+
+	bool isValidPath(int pathId) override;
+
+	bool hasNextPoint(int pathId) override;
+
+	bool getNextPoint(int pathId, Vector3& position, float& stopRange) override;
 
 	bool emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 
@@ -137,6 +168,11 @@ public:
 	int getGeneralNPCUpdateRate() const
 	{
 		return *generalNPCUpdateRateMS;
+	}
+
+	NPCPathPool* getPathManager()
+	{
+		return &pathManager_;
 	}
 
 	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
@@ -226,4 +262,7 @@ private:
 	IVehiclesComponent* vehicles = nullptr;
 	IObjectsComponent* objects = nullptr;
 	IActorsComponent* actors = nullptr;
+
+	// Path manager
+	NPCPathPool pathManager_;
 };

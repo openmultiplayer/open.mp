@@ -12,6 +12,7 @@
 #include <math.h>
 #include "../npcs_impl.hpp"
 #include "../utils.hpp"
+#include "../Path/path.hpp"
 #include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
@@ -35,6 +36,11 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, velocity_({ 0.0f, 0.0f, 0.0f })
 	, moving_(false)
 	, needsVelocityUpdate_(false)
+	, currentPath_(nullptr)
+	, pathMoveType_(NPCMoveType_Auto)
+	, pathMoveSpeed_(NPC_MOVE_SPEED_AUTO)
+	, movingByPath_(false)
+	, pathPaused_(false)
 	, weapon_(0)
 	, ammo_(0)
 	, ammoInClip_(0)
@@ -1841,7 +1847,25 @@ void NPC::advance(TimePoint now)
 		}
 		else
 		{
-			npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+			if (movingByPath_ && !pathPaused_ && currentPath_)
+			{
+				currentPath_->moveToNextPoint();
+				const PathPoint* nextPoint = currentPath_->getNextPoint();
+				if (nextPoint)
+				{
+					move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
+				}
+				else
+				{
+					movingByPath_ = false;
+					currentPath_ = nullptr;
+					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+				}
+			}
+			else
+			{
+				npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+			}
 		}
 	}
 	else
@@ -1853,6 +1877,86 @@ void NPC::advance(TimePoint now)
 	}
 
 	lastMove_ = now;
+}
+
+bool NPC::moveByPath(int pathId, NPCMoveType moveType, float moveSpeed)
+{
+	auto pathManager = npcComponent_->getPathManager();
+	if (!pathManager)
+	{
+		return false;
+	}
+
+	NPCPath* path = pathManager->get(pathId);
+	if (!path || path->getPointCount() == 0)
+	{
+		return false;
+	}
+
+	currentPath_ = path;
+	pathMoveType_ = moveType;
+	pathMoveSpeed_ = moveSpeed;
+	movingByPath_ = true;
+	pathPaused_ = false;
+
+	currentPath_->reset();
+
+	const PathPoint* nextPoint = currentPath_->getNextPoint();
+	if (nextPoint)
+	{
+		return move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
+	}
+
+	return false;
+}
+
+void NPC::pausePath()
+{
+	if (movingByPath_)
+	{
+		pathPaused_ = true;
+		stopMove();
+	}
+}
+
+void NPC::resumePath()
+{
+	if (movingByPath_ && pathPaused_)
+	{
+		pathPaused_ = false;
+
+		if (currentPath_)
+		{
+			const PathPoint* nextPoint = currentPath_->getNextPoint();
+			if (nextPoint)
+			{
+				move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
+			}
+		}
+	}
+}
+
+void NPC::stopPath()
+{
+	movingByPath_ = false;
+	pathPaused_ = false;
+	currentPath_ = nullptr;
+	stopMove();
+}
+
+bool NPC::isMovingByPath() const
+{
+	return movingByPath_;
+}
+
+bool NPC::isPathPaused() const
+{
+	return pathPaused_;
+}
+
+NPCPath* NPC::getCurrentPath() const
+{
+	return currentPath_;
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
