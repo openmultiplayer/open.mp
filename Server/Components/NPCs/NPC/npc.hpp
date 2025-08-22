@@ -35,6 +35,8 @@ public:
 
 	void spawn() override;
 
+	void respawn() override;
+
 	bool move(Vector3 position, NPCMoveType moveType, float moveSpeed = NPC_MOVE_SPEED_AUTO, float stopRange = 0.2f) override;
 
 	void stopMove() override;

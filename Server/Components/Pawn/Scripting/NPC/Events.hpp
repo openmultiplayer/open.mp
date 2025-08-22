@@ -54,4 +54,9 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCSpawn", DefaultReturnValue_True, npc.getID());
 	}
+
+	void onNPCRespawn(INPC& npc) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCRespawn", DefaultReturnValue_True, npc.getID());
+	}
 };

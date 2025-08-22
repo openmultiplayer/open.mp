@@ -42,6 +42,12 @@ SCRIPT_API(NPC_Spawn, bool(INPC& npc))
 	return true;
 }
 
+SCRIPT_API(NPC_Respawn, bool(INPC& npc))
+{
+	npc.respawn();
+	return true;
+}
+
 SCRIPT_API(NPC_SetPos, bool(INPC& npc, Vector3 position))
 {
 	npc.setPosition(position, true);

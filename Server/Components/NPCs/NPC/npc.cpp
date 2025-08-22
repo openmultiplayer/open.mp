@@ -211,6 +211,71 @@ void NPC::spawn()
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
 }
 
+void NPC::respawn()
+{
+	// Make sure the player is already spawned
+	auto state = player_->getState();
+	if (!(state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger || state == PlayerState_Spawned))
+	{
+		return;
+	}
+
+	// Get the last player stats
+	auto position = getPosition();
+	auto rotation = getRotation();
+	float health = getHealth();
+	float armour = getArmour();
+	int vehicleId = vehicleId_;
+	int vehicleSeat = vehicleSeat_;
+	int skin = player_->getSkin();
+
+	if (isMovingByPath())
+	{
+		pausePath();
+	}
+
+	// Emulate spawn RPC so server handles the internals
+	NetworkBitStream emptyBS;
+	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::PlayerSpawn::PacketID, emptyBS);
+
+	removeFromVehicle();
+
+	// Set the player stats back
+	if (isEqualFloat(health, 0.0f))
+	{
+		setHealth(100.0f);
+		setArmour(0.0f);
+	}
+	else
+	{
+		setHealth(health);
+		setArmour(armour);
+	}
+
+	setPosition(position, false);
+	setRotation(rotation, false);
+	setSkin(skin);
+
+	if (vehicleId != INVALID_VEHICLE_ID)
+	{
+		auto vehicle = npcComponent_->getVehiclesPool()->get(vehicleId);
+		if (vehicle)
+		{
+			putInVehicle(*vehicle, vehicleSeat);
+		}
+	}
+
+	if (isPathPaused())
+	{
+		resumePath();
+	}
+
+	lastDamager_ = nullptr;
+	lastDamagerWeapon_ = PlayerWeapon_End;
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCRespawn, *this);
+}
+
 bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRange)
 {
 	if (moveType == NPCMoveType_None)
