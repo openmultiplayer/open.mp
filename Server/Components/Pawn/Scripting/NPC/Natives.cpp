@@ -464,12 +464,12 @@ SCRIPT_API(NPC_IsValidPath, bool(int pathId))
 	return PawnManager::Get()->npcs->isValidPath(pathId);
 }
 
-SCRIPT_API(NPC_HasNextPoint, bool(int pathId))
+SCRIPT_API(NPC_PathHasNextPoint, bool(int pathId))
 {
 	return PawnManager::Get()->npcs->hasNextPoint(pathId);
 }
 
-SCRIPT_API(NPC_GetNextPoint, bool(int pathId, Vector3& position, float& stopRange))
+SCRIPT_API(NPC_GetPathNextPoint, bool(int pathId, Vector3& position, float& stopRange))
 {
 	return PawnManager::Get()->npcs->getNextPoint(pathId, position, stopRange);
 }
