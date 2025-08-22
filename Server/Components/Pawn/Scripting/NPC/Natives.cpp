@@ -397,3 +397,80 @@ SCRIPT_API(NPC_RemoveFromVehicle, bool(INPC& npc))
 	npc.removeFromVehicle();
 	return true;
 }
+
+SCRIPT_API(NPC_CreatePath, int())
+{
+	return PawnManager::Get()->npcs->createPath();
+}
+
+SCRIPT_API(NPC_DestroyPath, bool(int pathId))
+{
+	return PawnManager::Get()->npcs->destroyPath(pathId);
+}
+
+SCRIPT_API(NPC_DestroyAllPath, bool())
+{
+	PawnManager::Get()->npcs->destroyAllPaths();
+	return true;
+}
+
+SCRIPT_API(NPC_GetPathCount, int())
+{
+	return PawnManager::Get()->npcs->getPathCount();
+}
+
+SCRIPT_API(NPC_AddPointToPath, bool(int pathId, Vector3 position, float stopRange))
+{
+	return PawnManager::Get()->npcs->addPointToPath(pathId, position, stopRange);
+}
+
+SCRIPT_API(NPC_RemovePointFromPath, bool(int pathId, int pointIndex))
+{
+	return PawnManager::Get()->npcs->removePointFromPath(pathId, pointIndex);
+}
+
+SCRIPT_API(NPC_ClearPath, bool(int pathId))
+{
+	return PawnManager::Get()->npcs->clearPath(pathId);
+}
+
+SCRIPT_API(NPC_GetPathPointCount, int(int pathId))
+{
+	return PawnManager::Get()->npcs->getPathPointCount(pathId);
+}
+
+SCRIPT_API(NPC_GetPathPoint, bool(int pathId, int pointIndex, Vector3& position, float& stopRange))
+{
+	return PawnManager::Get()->npcs->getPathPoint(pathId, pointIndex, position, stopRange);
+}
+
+SCRIPT_API(NPC_SetPathCurrentIndex, bool(int pathId, int index))
+{
+	return PawnManager::Get()->npcs->setPathCurrentIndex(pathId, index);
+}
+
+SCRIPT_API(NPC_GetPathCurrentIndex, int(int pathId))
+{
+	return PawnManager::Get()->npcs->getPathCurrentIndex(pathId);
+}
+
+SCRIPT_API(NPC_ResetPath, bool(int pathId))
+{
+	return PawnManager::Get()->npcs->resetPath(pathId);
+}
+
+SCRIPT_API(NPC_IsValidPath, bool(int pathId))
+{
+	return PawnManager::Get()->npcs->isValidPath(pathId);
+}
+
+SCRIPT_API(NPC_HasNextPoint, bool(int pathId))
+{
+	return PawnManager::Get()->npcs->hasNextPoint(pathId);
+}
+
+SCRIPT_API(NPC_GetNextPoint, bool(int pathId, Vector3& position, float& stopRange))
+{
+	return PawnManager::Get()->npcs->getNextPoint(pathId, position, stopRange);
+}
+
