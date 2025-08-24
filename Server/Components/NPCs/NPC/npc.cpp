@@ -44,6 +44,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, followAutoRestart_(true)
 	, currentPath_(nullptr)
 	, currentPathPointIndex_(0)
+	, pathReverse_(false)
 	, pathMoveType_(NPCMoveType_Auto)
 	, pathMoveSpeed_(NPC_MOVE_SPEED_AUTO)
 	, movingByPath_(false)
@@ -425,6 +426,15 @@ void NPC::stopMove()
 	moveType_ = NPCMoveType_None;
 	stopRange_ = 0.2f;
 	followingPlayer_ = nullptr;
+
+	if (movingByPath_)
+	{
+		movingByPath_ = false;
+		pathPaused_ = false;
+		currentPath_ = nullptr;
+		currentPathPointIndex_ = 0;
+		pathReverse_ = false;
+	}
 
 	upAndDown_ &= ~Key::UP;
 	removeKey(Key::SPRINT);
@@ -1942,7 +1952,25 @@ void NPC::advance(TimePoint now)
 		{
 			if (movingByPath_ && !pathPaused_ && currentPath_)
 			{
-				currentPathPointIndex_++;
+				if (pathReverse_)
+				{
+					if (currentPathPointIndex_ > 0)
+					{
+						currentPathPointIndex_--;
+					}
+					else
+					{
+						movingByPath_ = false;
+						currentPath_ = nullptr;
+						npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+						return;
+					}
+				}
+				else
+				{
+					currentPathPointIndex_++;
+				}
+				
 				const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);
 				if (nextPoint)
 				{
@@ -1975,7 +2003,7 @@ void NPC::advance(TimePoint now)
 	lastMove_ = now;
 }
 
-bool NPC::moveByPath(int pathId, NPCMoveType moveType, float moveSpeed)
+bool NPC::moveByPath(int pathId, NPCMoveType moveType, float moveSpeed, bool reverse)
 {
 	auto pathManager = npcComponent_->getPathManager();
 	if (!pathManager)
@@ -1990,7 +2018,8 @@ bool NPC::moveByPath(int pathId, NPCMoveType moveType, float moveSpeed)
 	}
 
 	currentPath_ = path;
-	currentPathPointIndex_ = 0;
+	pathReverse_ = reverse;
+	currentPathPointIndex_ = reverse ? (path->getPointCount() - 1) : 0;
 	pathMoveType_ = moveType;
 	pathMoveSpeed_ = moveSpeed;
 	movingByPath_ = true;
@@ -2033,10 +2062,6 @@ void NPC::resumePath()
 
 void NPC::stopPath()
 {
-	movingByPath_ = false;
-	pathPaused_ = false;
-	currentPath_ = nullptr;
-	currentPathPointIndex_ = 0;
 	stopMove();
 }
 

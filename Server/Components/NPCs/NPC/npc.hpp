@@ -137,7 +137,7 @@ public:
 
 	bool removeFromVehicle() override;
 
-	bool moveByPath(int pathId, NPCMoveType moveType = NPCMoveType_Auto, float moveSpeed = NPC_MOVE_SPEED_AUTO) override;
+	bool moveByPath(int pathId, NPCMoveType moveType = NPCMoveType_Auto, float moveSpeed = NPC_MOVE_SPEED_AUTO, bool reverse = false) override;
 
 	void pausePath() override;
 
@@ -305,6 +305,7 @@ private:
 	// Path movement
 	NPCPath* currentPath_;
 	size_t currentPathPointIndex_;
+	bool pathReverse_;
 	NPCMoveType pathMoveType_;
 	float pathMoveSpeed_;
 	bool movingByPath_;

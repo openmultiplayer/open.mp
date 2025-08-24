@@ -454,7 +454,7 @@ SCRIPT_API(NPC_IsValidPath, bool(int pathId))
 	return PawnManager::Get()->npcs->isValidPath(pathId);
 }
 
-SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveSpeed))
+SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveSpeed, bool reverse))
 {
-	return npc.moveByPath(pathId, NPCMoveType(moveType), moveSpeed);
+	return npc.moveByPath(pathId, NPCMoveType(moveType), moveSpeed, reverse);
 }
