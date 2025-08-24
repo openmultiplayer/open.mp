@@ -164,8 +164,16 @@ inline float getDistanceFromRayToPoint(const Vector3& startPosition, const Vecto
 inline IPlayer* getClosestPlayerInBetween(IPlayerPool* players, const Vector3& hitOrigin, const Vector3& hitTarget, float range, float& distance, int playerId, int targetId)
 {
 	IPlayer* closestPlayer = nullptr;
+	float rangeSq = range * range; // Pre-calculate square to avoid sqrt in distance comparison
+	float closestDistanceSq = rangeSq;
 
-	// Loop through all the players
+	// Pre-calculate ray direction and length
+	const Vector3 rayDir = hitTarget - hitOrigin;
+	const float rayLengthSq = glm::dot(rayDir, rayDir);
+	const float rayLength = std::sqrt(rayLengthSq);
+	const Vector3 rayNormalized = rayLength > 0.0f ? rayDir / rayLength : Vector3(0.0f);
+
+	// Loop through all the players with early exits
 	for (auto player : players->entries())
 	{
 		// Validate the player
@@ -182,25 +190,35 @@ inline IPlayer* getClosestPlayerInBetween(IPlayerPool* players, const Vector3& h
 
 		auto pos = player->getPosition();
 
-		// Is the player on the ray
-		if (getDistanceFromRayToPoint(hitOrigin, hitTarget, pos) > MAX_HIT_RADIUS)
+		// Quick distance check first (cheaper than ray calculation)
+		const Vector3 toPlayer = pos - hitOrigin;
+		float playerDistanceSq = glm::dot(toPlayer, toPlayer);
+		if (playerDistanceSq > rangeSq)
 		{
 			continue;
 		}
 
-		// Is the player in the damage range
-		float playerDistance = glm::distance(hitOrigin, pos);
-		if (playerDistance > range)
+		// Optimized ray-to-point distance check
+		float t = glm::dot(toPlayer, rayNormalized);
+		t = glm::clamp(t, 0.0f, rayLength);
+		Vector3 projection = hitOrigin + rayNormalized * t;
+		float rayDistanceSq = glm::dot(pos - projection, pos - projection);
+		if (rayDistanceSq > MAX_HIT_RADIUS * MAX_HIT_RADIUS)
 		{
 			continue;
 		}
 
 		// Is the player closer than another player
-		if (!closestPlayer || playerDistance < distance)
+		if (!closestPlayer || playerDistanceSq < closestDistanceSq)
 		{
-			distance = playerDistance;
+			closestDistanceSq = playerDistanceSq;
 			closestPlayer = player;
 		}
+	}
+
+	if (closestPlayer)
+	{
+		distance = std::sqrt(closestDistanceSq);
 	}
 	return closestPlayer;
 }
@@ -208,6 +226,14 @@ inline IPlayer* getClosestPlayerInBetween(IPlayerPool* players, const Vector3& h
 inline INPC* getClosestNpcInBetween(NPCComponent* npcs, const Vector3& hitOrigin, const Vector3& hitTarget, float range, float& distance, int playerId, int targetId)
 {
 	INPC* closestNpc = nullptr;
+	float rangeSq = range * range;
+	float closestDistanceSq = rangeSq;
+
+	// Pre-calculate ray direction and length
+	const Vector3 rayDir = hitTarget - hitOrigin;
+	const float rayLengthSq = glm::dot(rayDir, rayDir);
+	const float rayLength = std::sqrt(rayLengthSq);
+	const Vector3 rayNormalized = rayLength > 0.0f ? rayDir / rayLength : Vector3(0.0f);
 
 	// Loop through all the NPCs
 	for (auto npc : npcs->entries())
@@ -225,27 +251,36 @@ inline INPC* getClosestNpcInBetween(NPCComponent* npcs, const Vector3& hitOrigin
 
 		auto pos = npc->getPosition();
 
-		// Is the NPC on the ray
-		if (getDistanceFromRayToPoint(hitOrigin, hitTarget, pos) > MAX_HIT_RADIUS)
+		// Quick distance check first
+		const Vector3 toNpc = pos - hitOrigin;
+		float npcDistanceSq = glm::dot(toNpc, toNpc);
+		if (npcDistanceSq > rangeSq)
 		{
 			continue;
 		}
 
-		// Is the NPC in the damage range
-		float npcDistance = glm::distance(hitOrigin, pos);
-		if (npcDistance > range)
+		// Optimized ray-to-point distance check
+		float t = glm::dot(toNpc, rayNormalized);
+		t = glm::clamp(t, 0.0f, rayLength);
+		Vector3 projection = hitOrigin + rayNormalized * t;
+		float rayDistanceSq = glm::dot(pos - projection, pos - projection);
+		if (rayDistanceSq > MAX_HIT_RADIUS * MAX_HIT_RADIUS)
 		{
 			continue;
 		}
 
 		// Is the NPC closer than another NPC
-		if (!closestNpc || npcDistance < distance)
+		if (!closestNpc || npcDistanceSq < closestDistanceSq)
 		{
-			distance = npcDistance;
+			closestDistanceSq = npcDistanceSq;
 			closestNpc = npc;
 		}
 	}
 
+	if (closestNpc)
+	{
+		distance = std::sqrt(closestDistanceSq);
+	}
 	return closestNpc;
 }
 

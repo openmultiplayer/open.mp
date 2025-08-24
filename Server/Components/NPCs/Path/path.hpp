@@ -28,6 +28,9 @@ class NPCPath : public NoCopy
 {
 public:
 	NPCPath();
+	
+	// Reserve capacity for better performance
+	void reserve(size_t capacity);
 
 	void addPoint(const Vector3& position, float stopRange = 1.0f);
 
@@ -67,4 +70,7 @@ private:
 	std::vector<PathPoint> points_;
 	size_t currentIndex_;
 	int id_;
+	
+	// Pre-allocated capacity to reduce reallocations
+	static constexpr size_t DEFAULT_CAPACITY = 16;
 };

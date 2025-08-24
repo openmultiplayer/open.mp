@@ -376,17 +376,21 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 
 	// Calculate front vector and player's facing angle:
 	Vector3 front;
-	if (!(std::fabs(distance) < DBL_EPSILON))
+	if (distance > FLT_EPSILON)
 	{
 		front = (pos - position) / distance;
+		auto rotation = getRotation().ToEuler();
+		rotation.z = getAngleOfLine(front.x, front.y);
+		rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
+		
+		// Calculate velocity to use on tick
+		velocity_ = front * (moveSpeed_ / 100.0f);
 	}
-
-	auto rotation = getRotation().ToEuler();
-	rotation.z = getAngleOfLine(front.x, front.y);
-	rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
-
-	// Calculate velocity to use on tick
-	velocity_ = front * (moveSpeed_ / 100.0f);
+	else
+	{
+		// If distance is negligible, zero out velocity
+		velocity_ = Vector3(0.0f, 0.0f, 0.0f);
+	}
 
 	// Set internal variables
 	targetPosition_ = pos;
@@ -1885,8 +1889,9 @@ void NPC::advance(TimePoint now)
 	}
 
 	auto toTarget = targetPosition_ - position;
-	auto distanceToTarget = glm::length(toTarget);
-	auto maxTravel = glm::length(velocity_) * deltaTimeMS;
+	float distanceToTarget = glm::length(toTarget);
+	float velocityLength = glm::length(velocity_);
+	auto maxTravel = velocityLength * deltaTimeMS;
 
 	if (distanceToTarget <= stopRange_ || maxTravel >= distanceToTarget)
 	{
@@ -1958,9 +1963,13 @@ void NPC::advance(TimePoint now)
 	else
 	{
 		// Normalize direction and move by velocity * delta
-		auto direction = glm::normalize(toTarget);
-		auto travelled = direction * glm::length(velocity_) * deltaTimeMS;
-		position_ = position + travelled;
+		if (distanceToTarget > FLT_EPSILON)
+		{
+			auto direction = toTarget / distanceToTarget;
+			auto travelled = direction * velocityLength * deltaTimeMS;
+			position_ = position + travelled;
+			invalidatePositionCache();
+		}
 	}
 
 	lastMove_ = now;

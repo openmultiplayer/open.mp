@@ -12,6 +12,13 @@ NPCPath::NPCPath()
 	: currentIndex_(0)
 	, id_(-1)
 {
+	// Reserve default capacity to reduce reallocations
+	points_.reserve(DEFAULT_CAPACITY);
+}
+
+void NPCPath::reserve(size_t capacity)
+{
+	points_.reserve(capacity);
 }
 
 void NPCPath::addPoint(const Vector3& position, float stopRange)

@@ -10,7 +10,10 @@
 
 NPCPathPool::NPCPathPool()
 	: nextId_(0)
+	, activePathCount_(0)
 {
+	// Reserve initial capacity to reduce reallocations
+	paths_.reserve(64);
 }
 
 NPCPathPool::~NPCPathPool()
@@ -45,6 +48,7 @@ NPCPath* NPCPathPool::create()
 
 	NPCPath* pathPtr = path.get();
 	paths_[id] = std::move(path);
+	activePathCount_++;
 
 	return pathPtr;
 }
@@ -59,6 +63,7 @@ void NPCPathPool::destroy(NPCPath* path)
 	{
 		paths_[id].reset();
 		freeIds_.push(id);
+		activePathCount_--;
 	}
 }
 
@@ -79,17 +84,10 @@ void NPCPathPool::destroyAll()
 		freeIds_.pop();
 	}
 	nextId_ = 0;
+	activePathCount_ = 0;
 }
 
 size_t NPCPathPool::getPathCount() const
 {
-	size_t count = 0;
-	for (const auto& path : paths_)
-	{
-		if (path)
-		{
-			count++;
-		}
-	}
-	return count;
+	return activePathCount_;
 }

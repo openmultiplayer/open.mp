@@ -33,4 +33,5 @@ private:
 	std::vector<std::unique_ptr<NPCPath>> paths_;
 	std::queue<int> freeIds_;
 	int nextId_;
+	size_t activePathCount_; // Track active paths for faster getPathCount()
 };
