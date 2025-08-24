@@ -319,59 +319,9 @@ bool NPCComponent::getPathPoint(int pathId, size_t pointIndex, Vector3& position
 	return false;
 }
 
-bool NPCComponent::setPathCurrentIndex(int pathId, size_t index)
-{
-	NPCPath* path = pathManager_.get(pathId);
-	if (path)
-	{
-		path->setCurrentIndex(index);
-		return true;
-	}
-	return false;
-}
-
-size_t NPCComponent::getPathCurrentIndex(int pathId)
-{
-	NPCPath* path = pathManager_.get(pathId);
-	return path ? path->getCurrentIndex() : 0;
-}
-
-bool NPCComponent::resetPath(int pathId)
-{
-	NPCPath* path = pathManager_.get(pathId);
-	if (path)
-	{
-		path->reset();
-		return true;
-	}
-	return false;
-}
-
 bool NPCComponent::isValidPath(int pathId)
 {
 	return pathManager_.get(pathId) != nullptr;
-}
-
-bool NPCComponent::hasNextPoint(int pathId)
-{
-	NPCPath* path = pathManager_.get(pathId);
-	return path ? path->hasNextPoint() : false;
-}
-
-bool NPCComponent::getNextPoint(int pathId, Vector3& position, float& stopRange)
-{
-	NPCPath* path = pathManager_.get(pathId);
-	if (path)
-	{
-		const PathPoint* point = path->getNextPoint();
-		if (point)
-		{
-			position = point->position;
-			stopRange = point->stopRange;
-			return true;
-		}
-	}
-	return false;
 }
 
 bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)

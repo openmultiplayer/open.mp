@@ -151,6 +151,8 @@ public:
 
 	int getCurrentPathId() const override;
 
+	int getCurrentPathPointIndex() const override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -302,6 +304,7 @@ private:
 
 	// Path movement
 	NPCPath* currentPath_;
+	size_t currentPathPointIndex_;
 	NPCMoveType pathMoveType_;
 	float pathMoveSpeed_;
 	bool movingByPath_;

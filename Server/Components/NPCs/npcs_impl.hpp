@@ -95,17 +95,7 @@ public:
 
 	bool getPathPoint(int pathId, size_t pointIndex, Vector3& position, float& stopRange) override;
 
-	bool setPathCurrentIndex(int pathId, size_t index) override;
-
-	size_t getPathCurrentIndex(int pathId) override;
-
-	bool resetPath(int pathId) override;
-
 	bool isValidPath(int pathId) override;
-
-	bool hasNextPoint(int pathId) override;
-
-	bool getNextPoint(int pathId, Vector3& position, float& stopRange) override;
 
 	bool emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 

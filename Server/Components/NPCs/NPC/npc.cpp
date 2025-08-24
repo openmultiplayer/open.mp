@@ -43,6 +43,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, followPosCheckDelay_(Milliseconds(500))
 	, followAutoRestart_(true)
 	, currentPath_(nullptr)
+	, currentPathPointIndex_(0)
 	, pathMoveType_(NPCMoveType_Auto)
 	, pathMoveSpeed_(NPC_MOVE_SPEED_AUTO)
 	, movingByPath_(false)
@@ -382,7 +383,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 		auto rotation = getRotation().ToEuler();
 		rotation.z = getAngleOfLine(front.x, front.y);
 		rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
-		
+
 		// Calculate velocity to use on tick
 		velocity_ = front * (moveSpeed_ / 100.0f);
 	}
@@ -1941,8 +1942,8 @@ void NPC::advance(TimePoint now)
 		{
 			if (movingByPath_ && !pathPaused_ && currentPath_)
 			{
-				currentPath_->moveToNextPoint();
-				const PathPoint* nextPoint = currentPath_->getNextPoint();
+				currentPathPointIndex_++;
+				const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);
 				if (nextPoint)
 				{
 					move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
@@ -1968,7 +1969,6 @@ void NPC::advance(TimePoint now)
 			auto direction = toTarget / distanceToTarget;
 			auto travelled = direction * velocityLength * deltaTimeMS;
 			position_ = position + travelled;
-			invalidatePositionCache();
 		}
 	}
 
@@ -1990,14 +1990,13 @@ bool NPC::moveByPath(int pathId, NPCMoveType moveType, float moveSpeed)
 	}
 
 	currentPath_ = path;
+	currentPathPointIndex_ = 0;
 	pathMoveType_ = moveType;
 	pathMoveSpeed_ = moveSpeed;
 	movingByPath_ = true;
 	pathPaused_ = false;
 
-	currentPath_->reset();
-
-	const PathPoint* nextPoint = currentPath_->getNextPoint();
+	const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);
 	if (nextPoint)
 	{
 		return move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
@@ -2023,7 +2022,7 @@ void NPC::resumePath()
 
 		if (currentPath_)
 		{
-			const PathPoint* nextPoint = currentPath_->getNextPoint();
+			const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);
 			if (nextPoint)
 			{
 				move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
@@ -2037,6 +2036,7 @@ void NPC::stopPath()
 	movingByPath_ = false;
 	pathPaused_ = false;
 	currentPath_ = nullptr;
+	currentPathPointIndex_ = 0;
 	stopMove();
 }
 
@@ -2053,6 +2053,11 @@ bool NPC::isPathPaused() const
 int NPC::getCurrentPathId() const
 {
 	return currentPath_->getID();
+}
+
+int NPC::getCurrentPathPointIndex() const
+{
+	return currentPathPointIndex_;
 }
 
 void NPC::tick(Microseconds elapsed, TimePoint now)

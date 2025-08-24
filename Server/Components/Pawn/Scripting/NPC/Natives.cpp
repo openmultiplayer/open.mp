@@ -444,34 +444,14 @@ SCRIPT_API(NPC_GetPathPoint, bool(int pathId, int pointIndex, Vector3& position,
 	return PawnManager::Get()->npcs->getPathPoint(pathId, pointIndex, position, stopRange);
 }
 
-SCRIPT_API(NPC_SetPathCurrentIndex, bool(int pathId, int index))
+SCRIPT_API(NPC_GetCurrentPathPointIndex, bool(INPC& npc))
 {
-	return PawnManager::Get()->npcs->setPathCurrentIndex(pathId, index);
-}
-
-SCRIPT_API(NPC_GetPathCurrentIndex, int(int pathId))
-{
-	return PawnManager::Get()->npcs->getPathCurrentIndex(pathId);
-}
-
-SCRIPT_API(NPC_ResetPath, bool(int pathId))
-{
-	return PawnManager::Get()->npcs->resetPath(pathId);
+	return npc.getCurrentPathPointIndex();
 }
 
 SCRIPT_API(NPC_IsValidPath, bool(int pathId))
 {
 	return PawnManager::Get()->npcs->isValidPath(pathId);
-}
-
-SCRIPT_API(NPC_PathHasNextPoint, bool(int pathId))
-{
-	return PawnManager::Get()->npcs->hasNextPoint(pathId);
-}
-
-SCRIPT_API(NPC_GetPathNextPoint, bool(int pathId, Vector3& position, float& stopRange))
-{
-	return PawnManager::Get()->npcs->getNextPoint(pathId, position, stopRange);
 }
 
 SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveSpeed))

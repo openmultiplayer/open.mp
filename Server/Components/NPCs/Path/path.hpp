@@ -28,7 +28,7 @@ class NPCPath : public NoCopy
 {
 public:
 	NPCPath();
-	
+
 	// Reserve capacity for better performance
 	void reserve(size_t capacity);
 
@@ -44,18 +44,6 @@ public:
 
 	const PathPoint* getPoint(size_t index) const;
 
-	const PathPoint* getNextPoint() const;
-
-	bool hasNextPoint() const;
-
-	void moveToNextPoint();
-
-	void reset();
-
-	void setCurrentIndex(size_t index);
-
-	size_t getCurrentIndex() const;
-
 	int getID() const
 	{
 		return id_;
@@ -68,9 +56,8 @@ public:
 
 private:
 	std::vector<PathPoint> points_;
-	size_t currentIndex_;
 	int id_;
-	
+
 	// Pre-allocated capacity to reduce reallocations
 	static constexpr size_t DEFAULT_CAPACITY = 16;
 };

@@ -9,8 +9,7 @@
 #include "path.hpp"
 
 NPCPath::NPCPath()
-	: currentIndex_(0)
-	, id_(-1)
+	: id_(-1)
 {
 	// Reserve default capacity to reduce reallocations
 	points_.reserve(DEFAULT_CAPACITY);
@@ -39,23 +38,12 @@ bool NPCPath::removePoint(size_t index)
 	}
 
 	points_.erase(points_.begin() + index);
-
-	if (currentIndex_ >= points_.size() && !points_.empty())
-	{
-		currentIndex_ = points_.size() - 1;
-	}
-	else if (points_.empty())
-	{
-		currentIndex_ = 0;
-	}
-
 	return true;
 }
 
 void NPCPath::clear()
 {
 	points_.clear();
-	currentIndex_ = 0;
 }
 
 size_t NPCPath::getPointCount() const
@@ -71,45 +59,4 @@ const PathPoint* NPCPath::getPoint(size_t index) const
 	}
 
 	return &points_[index];
-}
-
-const PathPoint* NPCPath::getNextPoint() const
-{
-	if (currentIndex_ >= points_.size())
-	{
-		return nullptr;
-	}
-
-	return &points_[currentIndex_];
-}
-
-bool NPCPath::hasNextPoint() const
-{
-	return currentIndex_ < points_.size();
-}
-
-void NPCPath::moveToNextPoint()
-{
-	if (currentIndex_ < points_.size())
-	{
-		currentIndex_++;
-	}
-}
-
-void NPCPath::reset()
-{
-	currentIndex_ = 0;
-}
-
-void NPCPath::setCurrentIndex(size_t index)
-{
-	if (index <= points_.size())
-	{
-		currentIndex_ = index;
-	}
-}
-
-size_t NPCPath::getCurrentIndex() const
-{
-	return currentIndex_;
 }
