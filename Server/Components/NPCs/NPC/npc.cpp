@@ -77,7 +77,10 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, killPlayerFromVehicleNextTick_(false)
 {
 	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
-	weaponAccuracy.fill(1.0f);
+	weaponAccuracy_.fill(1.0f);
+
+	// Custom weapon info
+	customWeaponInfoList_ = WeaponInfoList;
 
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -575,10 +578,10 @@ void NPC::setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 {
 	if (weaponSkill >= 11 || weaponSkill < 0)
 	{
-		auto weaponData = WeaponInfo::get(weapon_);
-		if (weaponData.type != PlayerWeaponType_None)
+		auto weaponData = getCustomWeaponInfo(weapon_);
+		if (weaponData)
 		{
-			auto currentWeaponClipSize = weaponData.clipSize;
+			auto currentWeaponClipSize = weaponData->clipSize;
 			if (weaponSkill == getWeaponSkillID(weapon_) && isWeaponDoubleHanded(weapon_, getWeaponSkillLevel(getWeaponSkillID(weapon_))) && level < 999 && ammoInClip_ > currentWeaponClipSize)
 			{
 				if (ammo_ < ammoInClip_)
@@ -628,7 +631,7 @@ PlayerWeaponState NPC::getWeaponState() const
 
 void NPC::setAmmoInClip(int ammo)
 {
-	auto clipSize = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
+	auto clipSize = getWeaponActualClipSize(weapon_);
 
 	ammoInClip_ = ammo < clipSize ? ammo : clipSize;
 }
@@ -650,15 +653,15 @@ void NPC::meleeAttack(int time, bool secondaryMeleeAttack)
 		return;
 	}
 
-	auto weaponData = WeaponInfo::get(weapon_);
-	if (weaponData.type != PlayerWeaponType_Melee)
+	auto weaponData = getCustomWeaponInfo(weapon_);
+	if (weaponData)
 	{
 		return;
 	}
 
 	if (time == -1)
 	{
-		meleeAttackDelay_ = Milliseconds(weaponData.shootTime);
+		meleeAttackDelay_ = Milliseconds(weaponData->shootTime);
 	}
 	else
 	{
@@ -1139,7 +1142,7 @@ void NPC::stopAim()
 
 	if (reloading_)
 	{
-		ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
+		ammoInClip_ = getWeaponActualClipSize(weapon_);
 	}
 
 	// Reset aiming flags
@@ -1169,9 +1172,9 @@ bool NPC::isAimingAtPlayer(IPlayer& player) const
 void NPC::setWeaponAccuracy(uint8_t weapon, float accuracy)
 {
 	auto data = WeaponSlotData(weapon);
-	if (data.slot() != INVALID_WEAPON_SLOT && weapon < weaponAccuracy.size())
+	if (data.slot() != INVALID_WEAPON_SLOT && weapon < weaponAccuracy_.size())
 	{
-		weaponAccuracy[weapon] = accuracy;
+		weaponAccuracy_[weapon] = accuracy;
 	}
 }
 
@@ -1179,12 +1182,106 @@ float NPC::getWeaponAccuracy(uint8_t weapon) const
 {
 	float ret = 0.0f;
 	auto data = WeaponSlotData(weapon);
-	if (data.slot() != INVALID_WEAPON_SLOT && weapon < weaponAccuracy.size())
+	if (data.slot() != INVALID_WEAPON_SLOT && weapon < weaponAccuracy_.size())
 	{
-		ret = weaponAccuracy[weapon];
+		ret = weaponAccuracy_[weapon];
 	}
 
 	return ret;
+}
+
+void NPC::setWeaponReloadTime(uint8_t weapon, int time)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		data->reloadTime = time;
+	}
+}
+
+int NPC::getWeaponReloadTime(uint8_t weapon)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		return data->reloadTime;
+	}
+	return 0;
+}
+
+int NPC::getWeaponActualReloadTime(uint8_t weapon)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		int time = data->reloadTime;
+		if (isWeaponDoubleHanded(weapon, getWeaponSkillLevel(getWeaponSkillID(weapon_))))
+		{
+			time += 700;
+		}
+
+		return time;
+	}
+	return 0;
+}
+
+void NPC::setWeaponShootTime(uint8_t weapon, int time)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		data->shootTime = time;
+	}
+}
+
+int NPC::getWeaponShootTime(uint8_t weapon)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		return data->shootTime;
+	}
+	return 0;
+}
+
+void NPC::setWeaponClipSize(uint8_t weapon, int size)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		data->clipSize = size;
+	}
+}
+
+int NPC::getWeaponClipSize(uint8_t weapon)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		return data->clipSize;
+	}
+	return 0;
+}
+
+int NPC::getWeaponActualClipSize(uint8_t weapon)
+{
+	auto data = getCustomWeaponInfo(weapon);
+	if (data)
+	{
+		int size = data->clipSize;
+		if (isWeaponDoubleHanded(weapon, getWeaponSkillLevel(getWeaponSkillID(weapon_))))
+		{
+			size *= 2;
+		}
+
+		if (ammo_ < size && !infiniteAmmo_)
+		{
+			size = ammo_;
+		}
+
+		return size;
+	}
+	return 0;
 }
 
 void NPC::enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType)
@@ -1350,7 +1447,7 @@ void NPC::setWeaponState(PlayerWeaponState state)
 	case PlayerWeaponState_MoreBullets:
 		if (ammo_ > 1 && ammoInClip_ <= 1)
 		{
-			ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_);
+			ammoInClip_ = getWeaponActualClipSize(weapon_);
 		}
 		break;
 	case PlayerWeaponState_NoBullets:
@@ -2199,8 +2296,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 					if (reloading_)
 					{
-						int weaponSkill = getWeaponSkillLevel(getWeaponSkillID(weapon_));
-						uint32_t reloadTime = getWeaponActualReloadTime(weapon_, weaponSkill);
+						uint32_t reloadTime = getWeaponActualReloadTime(weapon_);
 						bool reloadFinished = reloadTime != -1 && duration_cast<Milliseconds>(lastUpdate_ - reloadingUpdateTime_) >= Milliseconds(reloadTime);
 
 						if (reloadFinished)
@@ -2208,7 +2304,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 							shootUpdateTime_ = lastUpdate_;
 							reloading_ = false;
 							shooting_ = true;
-							ammoInClip_ = getWeaponActualClipSize(weapon_, ammo_, weaponSkill, infiniteAmmo_);
+							ammoInClip_ = getWeaponActualClipSize(weapon_);
 						}
 						else
 						{
@@ -2226,7 +2322,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 						}
 						else
 						{
-							int shootTime = getWeaponActualShootTime(weapon_);
+							int shootTime = getWeaponActualShootTime(customWeaponInfoList_, weapon_);
 							if (shootTime != -1 && Milliseconds(shootTime) < shootDelay_)
 							{
 								shootTime = shootDelay_.count();
@@ -2246,7 +2342,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 									auto weaponData = WeaponInfo::get(weapon_);
 									if (weaponData.type == PlayerWeaponType_Bullet)
 									{
-										bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy[weapon_] * 100.0f);
+										bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy_[weapon_] * 100.0f);
 										shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
 									}
 
@@ -2260,7 +2356,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 									ammoInClip_--;
 
-									bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_, ammo_, getWeaponSkillLevel(getWeaponSkillID(weapon_)), infiniteAmmo_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
+									bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
 									if (needsReloading)
 									{
 										reloadingUpdateTime_ = lastUpdate_;

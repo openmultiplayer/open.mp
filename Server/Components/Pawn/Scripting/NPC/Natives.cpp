@@ -374,6 +374,49 @@ SCRIPT_API(NPC_GetWeaponAccuracy, float(INPC& npc, int weapon))
 	return npc.getWeaponAccuracy(weapon);
 }
 
+SCRIPT_API(NPC_SetWeaponReloadTime, bool(INPC& npc, int weapon, int time))
+{
+	npc.setWeaponReloadTime(weapon, time);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponReloadTime, int(INPC& npc, int weapon))
+{
+	return npc.getWeaponReloadTime(weapon);
+}
+
+SCRIPT_API(NPC_GetWeaponActualReloadTime, int(INPC& npc, int weapon))
+{
+	return npc.getWeaponActualReloadTime(weapon);
+}
+
+SCRIPT_API(NPC_SetWeaponShootTime, bool(INPC& npc, int weapon, int time))
+{
+	npc.setWeaponShootTime(weapon, time);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponShootTime, int(INPC& npc, int weapon))
+{
+	return npc.getWeaponShootTime(weapon);
+}
+
+SCRIPT_API(NPC_SetWeaponClipSize, bool(INPC& npc, int weapon, int size))
+{
+	npc.setWeaponClipSize(weapon, size);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponClipSize, int(INPC& npc, int weapon))
+{
+	return npc.getWeaponClipSize(weapon);
+}
+
+SCRIPT_API(NPC_GetWeaponActualClipSize, int(INPC& npc, int weapon))
+{
+	return npc.getWeaponActualClipSize(weapon);
+}
+
 SCRIPT_API(NPC_EnterVehicle, bool(INPC& npc, IVehicle& vehicle, int seatId, int moveType))
 {
 	npc.enterVehicle(vehicle, seatId, NPCMoveType(moveType));

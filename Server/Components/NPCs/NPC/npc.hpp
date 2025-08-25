@@ -129,6 +129,22 @@ public:
 
 	float getWeaponAccuracy(uint8_t weapon) const override;
 
+	void setWeaponReloadTime(uint8_t weapon, int time) override;
+
+	int getWeaponReloadTime(uint8_t weapon) override;
+
+	int getWeaponActualReloadTime(uint8_t weapon) override;
+
+	void setWeaponShootTime(uint8_t weapon, int time) override;
+
+	int getWeaponShootTime(uint8_t weapon) override;
+
+	void setWeaponClipSize(uint8_t weapon, int size) override;
+
+	int getWeaponClipSize(uint8_t weapon) override;
+
+	int getWeaponActualClipSize(uint8_t weapon) override;
+
 	void enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType) override;
 
 	void exitVehicle() override;
@@ -250,6 +266,15 @@ public:
 		leftAndRight_ = 0;
 	}
 
+	inline WeaponInfo* getCustomWeaponInfo(uint8_t weapon)
+	{
+		if (weapon >= customWeaponInfoList_.size())
+		{
+			return nullptr;
+		}
+		return &customWeaponInfoList_[weapon];
+	}
+
 private:
 	// The NPC's player pointer.
 	IPlayer* player_;
@@ -323,7 +348,8 @@ private:
 	TimePoint shootUpdateTime_;
 	Milliseconds shootDelay_;
 	PlayerWeaponState weaponState_;
-	std::array<float, MAX_WEAPON_ID> weaponAccuracy;
+	std::array<float, MAX_WEAPON_ID> weaponAccuracy_;
+	StaticArray<WeaponInfo, MAX_WEAPON_ID> customWeaponInfoList_;
 
 	// Aim data
 	bool aiming_;

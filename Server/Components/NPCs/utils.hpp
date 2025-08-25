@@ -58,6 +58,15 @@ static const float WeaponDamages[MAX_WEAPON_ID] = {
 	0.0f, // WEAPON_PARACHUTE (46)
 };
 
+inline WeaponInfo* getCustomWeaponInfo(StaticArray<WeaponInfo, MAX_WEAPON_ID>& list, uint8_t weapon)
+{
+	if (weapon >= list.size())
+	{
+		return nullptr;
+	}
+	return &list[weapon];
+}
+
 inline bool canWeaponBeDoubleHanded(uint8_t weapon)
 {
 	switch (weapon)
@@ -103,49 +112,12 @@ inline PlayerWeaponSkill getWeaponSkillID(uint8_t weapon)
 	return skills[weapon - 22];
 }
 
-inline int getWeaponActualClipSize(uint8_t weapon, int currentAmmo, int weaponSkillLevel, bool isInfiniteAmmoEnabled)
+inline int getWeaponActualShootTime(StaticArray<WeaponInfo, MAX_WEAPON_ID>& list, uint8_t weapon)
 {
-	auto data = WeaponInfo::get(weapon);
-	if (data.type != PlayerWeaponType_None)
+	auto data = getCustomWeaponInfo(list, weapon);
+	if (data)
 	{
-		int size = data.clipSize;
-		if (isWeaponDoubleHanded(weapon, weaponSkillLevel))
-		{
-			size *= 2;
-		}
-
-		if (currentAmmo < size && !isInfiniteAmmoEnabled)
-		{
-			size = currentAmmo;
-		}
-
-		return size;
-	}
-	return 0;
-}
-
-inline int getWeaponActualReloadTime(uint8_t weapon, int skillLevel)
-{
-	auto data = WeaponInfo::get(weapon);
-	if (data.type != PlayerWeaponType_None)
-	{
-		int time = data.reloadTime;
-		if (isWeaponDoubleHanded(weapon, skillLevel))
-		{
-			time += 700;
-		}
-
-		return time;
-	}
-	return 0;
-}
-
-inline int getWeaponActualShootTime(uint8_t weapon)
-{
-	auto data = WeaponInfo::get(weapon);
-	if (data.type != PlayerWeaponType_None)
-	{
-		return data.shootTime;
+		return data->shootTime;
 	}
 	return 0;
 }
