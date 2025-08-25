@@ -292,12 +292,17 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 
 	if (moveType == NPCMoveType_Auto && player_->getState() == PlayerState_Driver)
 	{
-		moveType_ = NPCMoveType_Drive;
+		moveType = NPCMoveType_Drive;
 	}
 
 	if (moveType != NPCMoveType_Auto && moveType != NPCMoveType_Walk && moveType != NPCMoveType_Jog && moveType != NPCMoveType_Sprint && moveType != NPCMoveType_Drive)
 	{
 		return false;
+	}
+
+	if (moveType != NPCMoveType_Drive && player_->getState() == PlayerState_Driver)
+	{
+		removeFromVehicle();
 	}
 
 	if (moveType == NPCMoveType_Sprint && aiming_)
