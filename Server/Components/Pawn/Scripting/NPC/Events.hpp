@@ -59,4 +59,118 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCRespawn", DefaultReturnValue_True, npc.getID());
 	}
+
+	bool onNPCShotMissed(INPC& npc, const PlayerBulletData& bulletData) override
+	{
+		cell ret = PawnManager::Get()->CallInSidesWhile1(
+			"OnNPCWeaponShot",
+			npc.getID(),
+			bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+			bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		if (ret)
+		{
+			ret = PawnManager::Get()->CallInEntry(
+				"OnNPCWeaponShot",
+				DefaultReturnValue_True,
+				npc.getID(),
+				bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+				bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		}
+		return !!ret;
+	}
+
+	bool onNPCShotPlayer(INPC& npc, IPlayer& target, const PlayerBulletData& bulletData) override
+	{
+		cell ret = PawnManager::Get()->CallInSidesWhile1(
+			"OnNPCWeaponShot",
+			npc.getID(),
+			bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+			bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		if (ret)
+		{
+			ret = PawnManager::Get()->CallInEntry(
+				"OnNPCWeaponShot",
+				DefaultReturnValue_True,
+				npc.getID(),
+				bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+				bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		}
+		return !!ret;
+	}
+
+	bool onNPCShotNPC(INPC& npc, INPC& target, const PlayerBulletData& bulletData) override
+	{
+		cell ret = PawnManager::Get()->CallInSidesWhile1(
+			"OnNPCWeaponShot",
+			npc.getID(),
+			bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+			bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		if (ret)
+		{
+			ret = PawnManager::Get()->CallInEntry(
+				"OnNPCWeaponShot",
+				DefaultReturnValue_True,
+				npc.getID(),
+				bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+				bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		}
+		return !!ret;
+	}
+
+	bool onNPCShotVehicle(INPC& npc, IVehicle& target, const PlayerBulletData& bulletData) override
+	{
+		cell ret = PawnManager::Get()->CallInSidesWhile1(
+			"OnNPCWeaponShot",
+			npc.getID(),
+			bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+			bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		if (ret)
+		{
+			ret = PawnManager::Get()->CallInEntry(
+				"OnNPCWeaponShot",
+				DefaultReturnValue_True,
+				npc.getID(),
+				bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+				bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		}
+		return !!ret;
+	}
+
+	bool onNPCShotObject(INPC& npc, IObject& target, const PlayerBulletData& bulletData) override
+	{
+		cell ret = PawnManager::Get()->CallInSidesWhile1(
+			"OnNPCWeaponShot",
+			npc.getID(),
+			bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+			bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		if (ret)
+		{
+			ret = PawnManager::Get()->CallInEntry(
+				"OnNPCWeaponShot",
+				DefaultReturnValue_True,
+				npc.getID(),
+				bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+				bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		}
+		return !!ret;
+	}
+
+	bool onNPCShotPlayerObject(INPC& npc, IPlayerObject& target, const PlayerBulletData& bulletData) override
+	{
+		cell ret = PawnManager::Get()->CallInSidesWhile1(
+			"OnNPCWeaponShot",
+			npc.getID(),
+			bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+			bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		if (ret)
+		{
+			ret = PawnManager::Get()->CallInEntry(
+				"OnNPCWeaponShot",
+				DefaultReturnValue_True,
+				npc.getID(),
+				bulletData.weapon, int(bulletData.hitType), bulletData.hitID,
+				bulletData.offset.x, bulletData.offset.y, bulletData.offset.z);
+		}
+		return !!ret;
+	}
 };
