@@ -28,7 +28,7 @@ public:
 
 private:
 	bool parseRecordFile(StringView filePath, NPCRecord& record);
-	
+
 	DynamicArray<NPCRecord> records_;
 	NPCRecord emptyRecord_;
 };
