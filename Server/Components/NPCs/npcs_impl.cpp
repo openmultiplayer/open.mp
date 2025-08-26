@@ -35,7 +35,24 @@ void NPCComponent::onInit(IComponentList* components)
 void NPCComponent::free()
 {
 	core->getEventDispatcher().removeEventHandler(this);
+	core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
+	core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
+
+	if (vehicles)
+	{
+		vehicles->getPoolEventDispatcher().removeEventHandler(this);
+		vehicles->getEventDispatcher().removeEventHandler(this);
+	}
+
 	delete this;
+}
+
+void NPCComponent::onFree(IComponent* component)
+{
+	if (component == vehicles)
+	{
+		vehicles = nullptr;
+	}
 }
 
 INetwork* NPCComponent::getNetwork()

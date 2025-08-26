@@ -285,6 +285,7 @@ public:
 		COMPONENT_UNLOADED(mgr->vars)
 		COMPONENT_UNLOADED(mgr->vehicles)
 		COMPONENT_UNLOADED(mgr->models)
+		COMPONENT_UNLOADED(mgr->npcs)
 	}
 
 	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override

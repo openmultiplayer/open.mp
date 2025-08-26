@@ -41,6 +41,8 @@ public:
 
 	void free() override;
 
+	void onFree(IComponent* component) override;
+
 	void reset() override
 	{
 	}
