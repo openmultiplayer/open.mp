@@ -26,6 +26,8 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, leftAndRight_(0)
 	, health_(100.0f)
 	, armour_(0.0f)
+	, animationId_(0)
+	, animationFlags_(0)
 	, meleeAttacking_(false)
 	, meleeAttackDelay_(0)
 	, meleeSecondaryAttack_(false)
@@ -1506,6 +1508,52 @@ float NPC::getVehicleTrainSpeed() const
 	return isInVehicle() ? vehicleTrainSpeed_ : 0.0f;
 }
 
+void NPC::resetAnimation()
+{
+	animationId_ = 0;
+	animationFlags_ = 0;
+}
+
+void NPC::setAnimation(int animationId, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time)
+{
+	animationId_ = animationId;
+
+	if (animationId == 0)
+	{
+		animationFlags_ = 0;
+	}
+	else
+	{
+		animationFlags_ = (static_cast<uint8_t>(delta) & 0xFF)
+			| (loop << 8)
+			| (lockX << 9)
+			| (lockY << 10)
+			| (freeze << 11)
+			| (static_cast<uint8_t>(time) << 12);
+	}
+}
+
+void NPC::getAnimation(int& animationId, float& delta, bool& loop, bool& lockX, bool& lockY, bool& freeze, int& time)
+{
+	animationId = animationId_;
+	delta = static_cast<float>(animationFlags_ & 0xFF);
+	loop = (animationFlags_ >> 8 & 0x1) != 0;
+	lockX = (animationFlags_ >> 9 & 0x1) != 0;
+	lockY = (animationFlags_ >> 10 & 0x1) != 0;
+	freeze = (animationFlags_ >> 11 & 0x1) != 0;
+	time = (animationFlags_ >> 12 & 0xF);
+}
+
+void NPC::applyAnimation(const AnimationData& animationData)
+{
+	player_->applyAnimation(animationData, PlayerAnimationSyncType_Sync);
+}
+
+void NPC::clearAnimations()
+{
+	player_->clearAnimations(PlayerAnimationSyncType_Sync);
+}
+
 void NPC::setWeaponState(PlayerWeaponState state)
 {
 	if (state == PlayerWeaponState_Unknown)
@@ -1832,7 +1880,7 @@ void NPC::sendFootSync()
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_;
+	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_ || footSync_.AnimationID == animationId_ || footSync_.AnimationFlags == animationFlags_;
 
 	auto generateFootSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -1845,6 +1893,8 @@ void NPC::sendFootSync()
 		footSync_.HealthArmour.y = armour_;
 		footSync_.Weapon = weapon_;
 		footSync_.Velocity = velocity_;
+		footSync_.AnimationID = animationId_;
+		footSync_.AnimationFlags = animationFlags_;
 
 		bs.writeUINT8(footSync_.PacketID);
 		bs.writeUINT16(footSync_.LeftRight);

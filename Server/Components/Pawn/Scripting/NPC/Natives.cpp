@@ -201,13 +201,6 @@ SCRIPT_API(NPC_IsDead, bool(INPC& npc))
 	return npc.isDead();
 }
 
-SCRIPT_API(NPC_ApplyAnimation, bool(INPC& npc, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, uint32_t time, int sync))
-{
-	const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
-	npc.getPlayer()->applyAnimation(animationData, PlayerAnimationSyncType_SyncOthers);
-	return true;
-}
-
 SCRIPT_API(NPC_SetWeapon, bool(INPC& npc, uint8_t weapon))
 {
 	npc.setWeapon(weapon);
@@ -570,4 +563,35 @@ SCRIPT_API(NPC_SetVehicleTrainSpeed, bool(INPC& npc, float speed))
 SCRIPT_API(NPC_GetVehicleTrainSpeed, float(INPC& npc))
 {
 	return npc.getVehicleTrainSpeed();
+}
+
+SCRIPT_API(NPC_ResetAnimation, bool(INPC& npc))
+{
+	npc.resetAnimation();
+	return true;
+}
+
+SCRIPT_API(NPC_SetAnimation, bool(INPC& npc, int animationId, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time))
+{
+	npc.setAnimation(animationId, delta, loop, lockX, lockY, freeze, time);
+	return true;
+}
+
+SCRIPT_API(NPC_GetAnimation, bool(INPC& npc, int& animationId, float& delta, bool& loop, bool& lockX, bool& lockY, bool& freeze, int& time))
+{
+	npc.getAnimation(animationId, delta, loop, lockX, lockY, freeze, time);
+	return true;
+}
+
+SCRIPT_API(NPC_ApplyAnimation, bool(INPC& npc, const std::string& animlib, const std::string& animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time))
+{
+	const AnimationData animationData(delta, loop, lockX, lockY, freeze, time, animlib, animname);
+	npc.applyAnimation(animationData);
+	return true;
+}
+
+SCRIPT_API(NPC_ClearAnimations, bool(INPC& npc))
+{
+	npc.clearAnimations();
+	return true;
 }

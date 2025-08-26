@@ -189,6 +189,16 @@ public:
 
 	float getVehicleTrainSpeed() const override;
 
+	void resetAnimation() override;
+
+	void setAnimation(int animationId, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time) override;
+
+	void getAnimation(int& animationId, float& delta, bool& loop, bool& lockX, bool& lockY, bool& freeze, int& time) override;
+
+	void applyAnimation(const AnimationData& animationData) override;
+
+	void clearAnimations() override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -331,6 +341,8 @@ private:
 	GTAQuat rotation_;
 	float health_;
 	float armour_;
+	int animationId_;
+	int animationFlags_;
 
 	// Attack data
 	bool meleeAttacking_;
