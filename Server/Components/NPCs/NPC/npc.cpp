@@ -1321,7 +1321,7 @@ void NPC::enterVehicle(IVehicle& vehicle, uint8_t seatId, NPCMoveType moveType)
 	}
 
 	int passengerSeats = Impl::getVehiclePassengerSeats(vehicle.getModel());
-	if (passengerSeats == 0xFF || seatId < 1 || seatId > passengerSeats)
+	if (passengerSeats == 0xFF || (seatId > passengerSeats))
 	{
 		return;
 	}
