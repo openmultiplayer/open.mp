@@ -432,6 +432,7 @@ private:
 	IVehicle* vehicleToEnter_;
 	int vehicleSeatToEnter_;
 	bool enteringVehicle_;
+	bool exitingVehicle_;
 	bool jackingVehicle_;
 	TimePoint vehicleEnterExitUpdateTime_;
 	bool killPlayerFromVehicleNextTick_;

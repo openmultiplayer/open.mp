@@ -76,6 +76,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, vehicleToEnter_(nullptr)
 	, vehicleSeatToEnter_(SEAT_NONE)
 	, enteringVehicle_(false)
+	, exitingVehicle_(false)
 	, jackingVehicle_(false)
 	, killPlayerFromVehicleNextTick_(false)
 	, useVehicleSiren_(false)
@@ -1399,6 +1400,7 @@ void NPC::exitVehicle()
 	npcComponent_->emulateRPCIn(*player_, NetCode::RPC::OnPlayerExitVehicle::PacketID, bs);
 
 	vehicleEnterExitUpdateTime_ = lastUpdate_;
+	exitingVehicle_ = true;
 }
 
 bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
@@ -2647,8 +2649,14 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 							}
 						}
 					}
+
+					if (exitingVehicle_ && duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (1500))
+					{
+						removeFromVehicle();
+						exitingVehicle_ = false;
+					}
 				}
-				
+
 				lastUpdate_ = now;
 			}
 		}
