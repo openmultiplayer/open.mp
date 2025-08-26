@@ -341,6 +341,31 @@ bool NPCComponent::isValidPath(int pathId)
 	return pathManager_.get(pathId) != nullptr;
 }
 
+int NPCComponent::loadRecord(StringView filePath)
+{
+	return recordManager_.loadRecord(filePath);
+}
+
+bool NPCComponent::unloadRecord(int recordId)
+{
+	return recordManager_.unloadRecord(recordId);
+}
+
+bool NPCComponent::isValidRecord(int recordId)
+{
+	return recordManager_.isValidRecord(recordId);
+}
+
+size_t NPCComponent::getRecordCount() const
+{
+	return recordManager_.getRecordCount();
+}
+
+void NPCComponent::unloadAllRecords()
+{
+	recordManager_.unloadAllRecords();
+}
+
 bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
 {
 	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)

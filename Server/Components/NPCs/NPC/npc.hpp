@@ -12,6 +12,8 @@
 #include <netcode.hpp>
 #include <Impl/pool_impl.hpp>
 
+class NPCPlayback;
+
 class NPCPath;
 
 class NPCComponent;
@@ -20,6 +22,7 @@ class NPC : public INPC, public PoolIDProvider, public NoCopy
 {
 public:
 	NPC(NPCComponent* npcComponent, IPlayer* playerPtr);
+	~NPC();
 
 	Vector3 getPosition() const override;
 
@@ -198,6 +201,20 @@ public:
 	void applyAnimation(const AnimationData& animationData) override;
 
 	void clearAnimations() override;
+
+	bool startPlayback(StringView recordName, bool autoUnload = true, const Vector3& point = Vector3(0.0f, 0.0f, 0.0f), const GTAQuat& rotation = GTAQuat()) override;
+
+	bool startPlayback(int recordId, bool autoUnload = true, const Vector3& point = Vector3(0.0f, 0.0f, 0.0f), const GTAQuat& rotation = GTAQuat()) override;
+
+	void stopPlayback() override;
+
+	void pausePlayback(bool paused = true) override;
+
+	bool isPlayingPlayback() const override;
+
+	bool isPlaybackPaused() const override;
+
+	void processPlayback(TimePoint now);
 
 	void setWeaponState(PlayerWeaponState state);
 
@@ -429,6 +446,10 @@ private:
 	NetCode::Packet::PlayerPassengerSync passengerSync_;
 	NetCode::Packet::PlayerAimSync aimSync_;
 	NetCode::Packet::PlayerAimSync prevAimSync_; // keeping record of previous packet data so we compare and see if it needs an update
+
+	// Playback
+	NPCPlayback* playback_;
+	String playbackPath_;
 
 	NPCComponent* npcComponent_;
 };

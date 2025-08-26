@@ -13,6 +13,7 @@
 #include "../npcs_impl.hpp"
 #include "../utils.hpp"
 #include "../Path/path.hpp"
+#include "../Playback/playback.hpp"
 #include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
@@ -81,6 +82,8 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, hydraThrusterDirection_(5000)
 	, vehicleGearState_(0)
 	, vehicleTrainSpeed_(0.0f)
+	, playback_(nullptr)
+	, playbackPath_("npcmodes/recordings/")
 {
 	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
 	weaponAccuracy_.fill(1.0f);
@@ -141,6 +144,15 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	passengerSync_.Position = initialPosition;
 	passengerSync_.HealthArmour = { 100.0f, 0.0f };
 	passengerSync_.DriveBySeatAdditionalKeyWeapon = 0;
+}
+
+NPC::~NPC()
+{
+	if (playback_)
+	{
+		delete playback_;
+		playback_ = nullptr;
+	}
 }
 
 Vector3 NPC::getPosition() const
@@ -1554,6 +1566,102 @@ void NPC::clearAnimations()
 	player_->clearAnimations(PlayerAnimationSyncType_Sync);
 }
 
+bool NPC::startPlayback(StringView recordName, bool autoUnload, const Vector3& point, const GTAQuat& rotation)
+{
+	if (playback_)
+	{
+		stopPlayback();
+	}
+
+	playback_ = new NPCPlayback(recordName, playbackPath_, autoUnload, npcComponent_->getRecordManager());
+	if (!playback_ || !playback_->isValid())
+	{
+		if (playback_)
+		{
+			delete playback_;
+			playback_ = nullptr;
+		}
+		return false;
+	}
+
+	if (!playback_->initialize(point, rotation))
+	{
+		stopPlayback();
+		return false;
+	}
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCPlaybackStart, *this, playback_->getRecordId());
+	return true;
+}
+
+bool NPC::startPlayback(int recordId, bool autoUnload, const Vector3& point, const GTAQuat& rotation)
+{
+	if (playback_)
+	{
+		stopPlayback();
+	}
+
+	playback_ = new NPCPlayback(recordId, autoUnload, npcComponent_->getRecordManager());
+	if (!playback_ || !playback_->isValid())
+	{
+		if (playback_)
+		{
+			delete playback_;
+			playback_ = nullptr;
+		}
+		return false;
+	}
+
+	if (!playback_->initialize(point, rotation))
+	{
+		stopPlayback();
+		return false;
+	}
+
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCPlaybackStart, *this, playback_->getRecordId());
+	return true;
+}
+
+void NPC::stopPlayback()
+{
+	if (playback_)
+	{
+		int recordId = playback_->getRecordId();
+		delete playback_;
+		playback_ = nullptr;
+		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCPlaybackEnd, *this, recordId);
+	}
+}
+
+void NPC::pausePlayback(bool paused)
+{
+	if (playback_)
+	{
+		playback_->setPaused(paused);
+	}
+}
+
+bool NPC::isPlayingPlayback() const
+{
+	return playback_ != nullptr && playback_->isValid();
+}
+
+bool NPC::isPlaybackPaused() const
+{
+	return playback_ && playback_->isPaused();
+}
+
+void NPC::processPlayback(TimePoint now)
+{
+	if (playback_ && playback_->isValid())
+	{
+		if (!playback_->process(*this, now))
+		{
+			stopPlayback();
+		}
+	}
+}
+
 void NPC::setWeaponState(PlayerWeaponState state)
 {
 	if (state == PlayerWeaponState_Unknown)
@@ -1841,15 +1949,7 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 	{
 		auto rotation = getRotation().ToEuler();
 
-		float facingAngle = atan2(camVecDistance.y, camVecDistance.x) * (180.0f / M_PI) + 270.0f;
-		if (facingAngle >= 360.0f)
-		{
-			facingAngle -= 360.0f;
-		}
-		else if (facingAngle < 0.0f)
-		{
-			facingAngle += 360.0f;
-		}
+		float facingAngle = getAngleOfLine(camVecDistance.y, camVecDistance.x);
 
 		rotation.z = facingAngle;
 		setRotation(rotation, false);
@@ -2338,210 +2438,217 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			// Only process the NPC if it is spawned
 			if (state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger || state == PlayerState_Spawned)
 			{
-				if (getHealth() <= 0.0f && state != PlayerState_Wasted && state != PlayerState_Spawned)
+				if (playback_ && playback_->isValid())
 				{
-					if (killPlayerFromVehicleNextTick_)
+					processPlayback(now);
+				}
+				else
+				{
+					if (getHealth() <= 0.0f && state != PlayerState_Wasted && state != PlayerState_Spawned)
 					{
-						kill(lastDamager_, lastDamagerWeapon_);
-						killPlayerFromVehicleNextTick_ = false;
-					}
-					else
-					{
-						// Check if player is in vehicle, if so, kill them next tick.
-						if (state == PlayerState_Driver || state == PlayerState_Passenger)
-						{
-							removeFromVehicle();
-							killPlayerFromVehicleNextTick_ = true;
-						}
-						else
+						if (killPlayerFromVehicleNextTick_)
 						{
 							kill(lastDamager_, lastDamagerWeapon_);
+							killPlayerFromVehicleNextTick_ = false;
 						}
-					}
-				}
-
-				if (needsVelocityUpdate_)
-				{
-					setPosition(getPosition() + velocity_, false);
-					setVelocity({ 0.0f, 0.0f, 0.0f }, false);
-				}
-
-				// Check if we're following a player (whether moving or not)
-				if (followingPlayer_)
-				{
-					if (duration_cast<Milliseconds>(now - lastFollowPosCheck_).count() >= followPosCheckDelay_.count())
-					{
-						Vector3 currentPlayerPos = followingPlayer_->getPosition();
-						Vector3 npcPos = getPosition();
-						float distanceToPlayer = glm::distance(npcPos, currentPlayerPos);
-
-						// If player moved outside stop range, start moving again (if autoRestart is enabled)
-						if (distanceToPlayer > followStopRange_)
+						else
 						{
-							if (!moving_ && followAutoRestart_)
+							// Check if player is in vehicle, if so, kill them next tick.
+							if (state == PlayerState_Driver || state == PlayerState_Passenger)
 							{
-								// Restart movement to follow player
-								move(currentPlayerPos, followMoveType_, followMoveSpeed_, followStopRange_);
+								removeFromVehicle();
+								killPlayerFromVehicleNextTick_ = true;
 							}
-							else if (moving_)
+							else
 							{
-								// Update target position to player's current position
-								targetPosition_ = currentPlayerPos;
-								lastMove_ = now;
+								kill(lastDamager_, lastDamagerWeapon_);
 							}
-						}
-
-						lastFollowPosCheck_ = now;
-					}
-				}
-
-				if (moving_)
-				{
-					advance(now);
-				}
-
-				if (state == PlayerState_OnFoot)
-				{
-					if (enteringVehicle_)
-					{
-						if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
-						{
-							if (vehicleToEnter_)
-							{
-								putInVehicle(*vehicleToEnter_, vehicleSeatToEnter_);
-							}
-
-							enteringVehicle_ = false;
-							jackingVehicle_ = false;
-							vehicleToEnter_ = nullptr;
-							vehicleSeatToEnter_ = SEAT_NONE;
 						}
 					}
 
-					if (aiming_)
+					if (needsVelocityUpdate_)
 					{
-						auto player = npcComponent_->getCore()->getPlayers().get(hitId_);
-						if (player && hitType_ == PlayerBulletHitType_Player)
+						setPosition(getPosition() + velocity_, false);
+						setVelocity({ 0.0f, 0.0f, 0.0f }, false);
+					}
+
+					// Check if we're following a player (whether moving or not)
+					if (followingPlayer_)
+					{
+						if (duration_cast<Milliseconds>(now - lastFollowPosCheck_).count() >= followPosCheckDelay_.count())
 						{
-							if (isAimingAtPlayer(*player))
+							Vector3 currentPlayerPos = followingPlayer_->getPosition();
+							Vector3 npcPos = getPosition();
+							float distanceToPlayer = glm::distance(npcPos, currentPlayerPos);
+
+							// If player moved outside stop range, start moving again (if autoRestart is enabled)
+							if (distanceToPlayer > followStopRange_)
 							{
-								auto point = player->getPosition() + aimOffset_;
-								if (aimAt_ != point)
+								if (!moving_ && followAutoRestart_)
 								{
-									updateAimData(point, updateAimAngle_);
+									// Restart movement to follow player
+									move(currentPlayerPos, followMoveType_, followMoveSpeed_, followStopRange_);
+								}
+								else if (moving_)
+								{
+									// Update target position to player's current position
+									targetPosition_ = currentPlayerPos;
+									lastMove_ = now;
 								}
 							}
-						}
-						else
-						{
-							stopAim();
+
+							lastFollowPosCheck_ = now;
 						}
 					}
 
-					if (reloading_)
+					if (moving_)
 					{
-						uint32_t reloadTime = getWeaponActualReloadTime(weapon_);
-						bool reloadFinished = reloadTime != -1 && duration_cast<Milliseconds>(lastUpdate_ - reloadingUpdateTime_) >= Milliseconds(reloadTime);
-
-						if (reloadFinished)
-						{
-							shootUpdateTime_ = lastUpdate_;
-							reloading_ = false;
-							shooting_ = true;
-							ammoInClip_ = getWeaponActualClipSize(weapon_);
-						}
-						else
-						{
-							removeKey(Key::FIRE);
-							applyKey(Key::AIM);
-						}
+						advance(now);
 					}
-					else if (shooting_)
+
+					if (state == PlayerState_OnFoot)
 					{
-						if (ammo_ == 0 && !infiniteAmmo_)
+						if (enteringVehicle_)
 						{
-							shooting_ = false;
-							removeKey(Key::FIRE);
-							applyKey(Key::AIM);
-						}
-						else
-						{
-							int shootTime = getWeaponActualShootTime(customWeaponInfoList_, weapon_);
-							if (shootTime != -1 && Milliseconds(shootTime) < shootDelay_)
+							if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
 							{
-								shootTime = shootDelay_.count();
-							}
+								if (vehicleToEnter_)
+								{
+									putInVehicle(*vehicleToEnter_, vehicleSeatToEnter_);
+								}
 
-							Milliseconds lastShootTime = duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_);
-							if (lastShootTime >= shootDelay_)
+								enteringVehicle_ = false;
+								jackingVehicle_ = false;
+								vehicleToEnter_ = nullptr;
+								vehicleSeatToEnter_ = SEAT_NONE;
+							}
+						}
+
+						if (aiming_)
+						{
+							auto player = npcComponent_->getCore()->getPlayers().get(hitId_);
+							if (player && hitType_ == PlayerBulletHitType_Player)
+							{
+								if (isAimingAtPlayer(*player))
+								{
+									auto point = player->getPosition() + aimOffset_;
+									if (aimAt_ != point)
+									{
+										updateAimData(point, updateAimAngle_);
+									}
+								}
+							}
+							else
+							{
+								stopAim();
+							}
+						}
+
+						if (reloading_)
+						{
+							uint32_t reloadTime = getWeaponActualReloadTime(weapon_);
+							bool reloadFinished = reloadTime != -1 && duration_cast<Milliseconds>(lastUpdate_ - reloadingUpdateTime_) >= Milliseconds(reloadTime);
+
+							if (reloadFinished)
+							{
+								shootUpdateTime_ = lastUpdate_;
+								reloading_ = false;
+								shooting_ = true;
+								ammoInClip_ = getWeaponActualClipSize(weapon_);
+							}
+							else
 							{
 								removeKey(Key::FIRE);
 								applyKey(Key::AIM);
 							}
-
-							if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
+						}
+						else if (shooting_)
+						{
+							if (ammo_ == 0 && !infiniteAmmo_)
 							{
-								if (ammoInClip_ != 0)
+								shooting_ = false;
+								removeKey(Key::FIRE);
+								applyKey(Key::AIM);
+							}
+							else
+							{
+								int shootTime = getWeaponActualShootTime(customWeaponInfoList_, weapon_);
+								if (shootTime != -1 && Milliseconds(shootTime) < shootDelay_)
 								{
-									auto weaponData = WeaponInfo::get(weapon_);
-									if (weaponData.type == PlayerWeaponType_Bullet)
-									{
-										bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy_[weapon_] * 100.0f);
-										shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
-									}
+									shootTime = shootDelay_.count();
+								}
 
+								Milliseconds lastShootTime = duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_);
+								if (lastShootTime >= shootDelay_)
+								{
+									removeKey(Key::FIRE);
 									applyKey(Key::AIM);
+								}
+
+								if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
+								{
+									if (ammoInClip_ != 0)
+									{
+										auto weaponData = WeaponInfo::get(weapon_);
+										if (weaponData.type == PlayerWeaponType_Bullet)
+										{
+											bool isHit = rand() % 100 < static_cast<int>(weaponAccuracy_[weapon_] * 100.0f);
+											shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
+										}
+
+										applyKey(Key::AIM);
+										applyKey(Key::FIRE);
+
+										if (!infiniteAmmo_)
+										{
+											ammo_--;
+										}
+
+										ammoInClip_--;
+
+										bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
+										if (needsReloading)
+										{
+											reloadingUpdateTime_ = lastUpdate_;
+											reloading_ = true;
+											shooting_ = false;
+										}
+
+										shootUpdateTime_ = lastUpdate_;
+									}
+								}
+							}
+						}
+						else if (meleeAttacking_)
+						{
+							if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
+							{
+								if (meleeSecondaryAttack_)
+								{
+									applyKey(Key::AIM);
+									applyKey(Key::SECONDARY_ATTACK);
+								}
+								else
+								{
 									applyKey(Key::FIRE);
-
-									if (!infiniteAmmo_)
-									{
-										ammo_--;
-									}
-
-									ammoInClip_--;
-
-									bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
-									if (needsReloading)
-									{
-										reloadingUpdateTime_ = lastUpdate_;
-										reloading_ = true;
-										shooting_ = false;
-									}
-
-									shootUpdateTime_ = lastUpdate_;
+								}
+								shootUpdateTime_ = lastUpdate_;
+							}
+							else if (lastUpdate_ > shootUpdateTime_)
+							{
+								if (meleeSecondaryAttack_)
+								{
+									removeKey(Key::SECONDARY_ATTACK);
+								}
+								else
+								{
+									removeKey(Key::FIRE);
 								}
 							}
 						}
 					}
-					else if (meleeAttacking_)
-					{
-						if (duration_cast<Milliseconds>(lastUpdate_ - shootUpdateTime_) >= meleeAttackDelay_)
-						{
-							if (meleeSecondaryAttack_)
-							{
-								applyKey(Key::AIM);
-								applyKey(Key::SECONDARY_ATTACK);
-							}
-							else
-							{
-								applyKey(Key::FIRE);
-							}
-							shootUpdateTime_ = lastUpdate_;
-						}
-						else if (lastUpdate_ > shootUpdateTime_)
-						{
-							if (meleeSecondaryAttack_)
-							{
-								removeKey(Key::SECONDARY_ATTACK);
-							}
-							else
-							{
-								removeKey(Key::FIRE);
-							}
-						}
-					}
 				}
-
+				
 				lastUpdate_ = now;
 			}
 		}

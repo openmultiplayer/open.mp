@@ -1,7 +1,17 @@
+/*
+ *  This Source Code Form is subject to the terms of the Mozilla Public License,
+ *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
+ *  obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ *  The original code is copyright (c) 2022, open.mp team and contributors.
+ */
+
 #pragma once
 #include <sdk.hpp>
 #include "npcs_impl.hpp"
 #include <Server/Components/Vehicles/vehicle_models.hpp>
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 #define MAX_HIT_RADIUS 0.4f
 #define MAX_HIT_RADIUS_VEHICLE 1.0f

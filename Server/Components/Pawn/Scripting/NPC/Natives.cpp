@@ -595,3 +595,86 @@ SCRIPT_API(NPC_ClearAnimations, bool(INPC& npc))
 	npc.clearAnimations();
 	return true;
 }
+
+SCRIPT_API(NPC_StartPlayback, bool(INPC& npc, const std::string& recordName, bool autoUnload, Vector3 startPos, Vector3 startRot))
+{
+	return npc.startPlayback(recordName, autoUnload, startPos, startRot);
+}
+
+SCRIPT_API(NPC_StartPlaybackEx, bool(INPC& npc, int recordId, bool autoUnload, Vector3 startPos, Vector3 startRot))
+{
+	return npc.startPlayback(recordId, autoUnload, startPos, startRot);
+}
+
+SCRIPT_API(NPC_StopPlayback, bool(INPC& npc))
+{
+	npc.stopPlayback();
+	return true;
+}
+
+SCRIPT_API(NPC_PausePlayback, bool(INPC& npc, bool paused))
+{
+	npc.pausePlayback(paused);
+	return true;
+}
+
+SCRIPT_API(NPC_IsPlayingPlayback, bool(INPC& npc))
+{
+	return npc.isPlayingPlayback();
+}
+
+SCRIPT_API(NPC_IsPlaybackPaused, bool(INPC& npc))
+{
+	return npc.isPlaybackPaused();
+}
+
+SCRIPT_API(NPC_LoadRecord, int(const std::string& filePath))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->loadRecord(filePath);
+	}
+	return -1;
+}
+
+SCRIPT_API(NPC_UnloadRecord, bool(int recordId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->unloadRecord(recordId);
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_IsValidRecord, bool(int recordId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->isValidRecord(recordId);
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_GetRecordCount, int())
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return static_cast<int>(component->getRecordCount());
+	}
+	return 0;
+}
+
+SCRIPT_API(NPC_UnloadAllRecords, bool())
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		component->unloadAllRecords();
+		return true;
+	}
+	return false;
+}

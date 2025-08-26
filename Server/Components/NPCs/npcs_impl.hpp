@@ -16,6 +16,7 @@
 #include "./Network/npcs_network.hpp"
 #include "./NPC/npc.hpp"
 #include "./Path/path_pool.hpp"
+#include "./Playback/record_manager.hpp"
 
 using namespace Impl;
 
@@ -99,6 +100,16 @@ public:
 
 	bool isValidPath(int pathId) override;
 
+	int loadRecord(StringView filePath) override;
+
+	bool unloadRecord(int recordId) override;
+
+	bool isValidRecord(int recordId) override;
+
+	size_t getRecordCount() const override;
+
+	void unloadAllRecords() override;
+
 	bool emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 
 	bool emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
@@ -170,6 +181,11 @@ public:
 	NPCPathPool* getPathManager()
 	{
 		return &pathManager_;
+	}
+
+	NPCRecordManager* getRecordManager()
+	{
+		return &recordManager_;
 	}
 
 	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
@@ -262,4 +278,7 @@ private:
 
 	// Path manager
 	NPCPathPool pathManager_;
+
+	// Record manager
+	NPCRecordManager recordManager_;
 };

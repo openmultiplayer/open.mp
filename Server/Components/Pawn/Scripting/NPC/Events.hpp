@@ -60,6 +60,16 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCRespawn", DefaultReturnValue_True, npc.getID());
 	}
 
+	void onNPCPlaybackStart(INPC& npc, int recordId) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCPlaybackStart", DefaultReturnValue_True, npc.getID(), recordId);
+	}
+
+	void onNPCPlaybackEnd(INPC& npc, int recordId) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCPlaybackEnd", DefaultReturnValue_True, npc.getID(), recordId);
+	}
+
 	bool onNPCShotMissed(INPC& npc, const PlayerBulletData& bulletData) override
 	{
 		cell ret = PawnManager::Get()->CallInSidesWhile1(
