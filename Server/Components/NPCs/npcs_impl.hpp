@@ -19,7 +19,7 @@
 
 using namespace Impl;
 
-class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler, public PoolEventHandler<IPlayer>, public PoolEventHandler<IVehicle>
+class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler, public PoolEventHandler<IPlayer>, public PoolEventHandler<IVehicle>, VehicleEventHandler
 {
 public:
 	StringView componentName() const override
@@ -71,6 +71,8 @@ public:
 	void onPoolEntryDestroyed(IPlayer& player) override;
 
 	void onPoolEntryDestroyed(IVehicle& vehicle) override;
+
+	void onVehicleDeath(IVehicle& vehicle, IPlayer& player) override;
 
 	// Exposed functions
 	INPC* create(StringView name) override;

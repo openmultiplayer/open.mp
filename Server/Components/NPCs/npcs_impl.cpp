@@ -19,12 +19,16 @@ void NPCComponent::onInit(IComponentList* components)
 	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
+	core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 
 	if (components)
 	{
 		vehicles = components->queryComponent<IVehiclesComponent>();
 		objects = components->queryComponent<IObjectsComponent>();
 		actors = components->queryComponent<IActorsComponent>();
+
+		vehicles->getPoolEventDispatcher().addEventHandler(this);
+		vehicles->getEventDispatcher().addEventHandler(this);
 	}
 }
 
@@ -178,6 +182,19 @@ void NPCComponent::onPoolEntryDestroyed(IVehicle& vehicle)
 		if (enteringVehicle && enteringVehicle->getID() == vehicle.getID())
 		{
 			npc->resetEnteringVehicle();
+		}
+	}
+}
+
+void NPCComponent::onVehicleDeath(IVehicle& vehicle, IPlayer& player)
+{
+	for (auto& _npc : storage)
+	{
+		auto npc = static_cast<NPC*>(_npc);
+		if (npc->getVehicle() && npc->getVehicle()->getID() == vehicle.getID())
+		{
+			npc->removeFromVehicle();
+			npc->kill(&player, 255);
 		}
 	}
 }
