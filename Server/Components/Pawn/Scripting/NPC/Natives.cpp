@@ -501,3 +501,73 @@ SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveS
 {
 	return npc.moveByPath(pathId, NPCMoveType(moveType), moveSpeed, reverse);
 }
+
+SCRIPT_API_FAILRET(NPC_GetVehicle, INVALID_VEHICLE_ID, int(INPC& npc))
+{
+	auto vehicle = npc.getVehicle();
+	if (vehicle)
+	{
+		return vehicle->getID();
+	}
+	return INVALID_VEHICLE_ID;
+}
+
+SCRIPT_API(NPC_GetVehicleSeat, int(INPC& npc))
+{
+	return npc.getVehicleSeat();
+}
+
+SCRIPT_API(NPC_UseVehicleSiren, bool(INPC& npc, bool use))
+{
+	npc.useVehicleSiren(use);
+	return true;
+}
+
+SCRIPT_API(NPC_IsVehicleSirenUsed, bool(INPC& npc))
+{
+	return npc.isVehicleSirenUsed();
+}
+
+SCRIPT_API(NPC_SetVehicleHealth, bool(INPC& npc, float health))
+{
+	npc.setVehicleHealth(health);
+	return true;
+}
+
+SCRIPT_API(NPC_GetVehicleHealth, float(INPC& npc))
+{
+	return npc.getVehicleHealth();
+}
+
+SCRIPT_API(NPC_SetVehicleHydraThrusters, bool(INPC& npc, int direction))
+{
+	npc.setVehicleHydraThrusters(direction);
+	return true;
+}
+
+SCRIPT_API(NPC_GetVehicleHydraThrusters, int(INPC& npc))
+{
+	return npc.getVehicleHydraThrusters();
+}
+
+SCRIPT_API(NPC_SetVehicleGearState, bool(INPC& npc, int gearState))
+{
+	npc.setVehicleGearState(gearState);
+	return true;
+}
+
+SCRIPT_API(NPC_GetVehicleGearState, int(INPC& npc))
+{
+	return npc.getVehicleGearState();
+}
+
+SCRIPT_API(NPC_SetVehicleTrainSpeed, bool(INPC& npc, float speed))
+{
+	npc.setVehicleTrainSpeed(speed);
+	return true;
+}
+
+SCRIPT_API(NPC_GetVehicleTrainSpeed, float(INPC& npc))
+{
+	return npc.getVehicleTrainSpeed();
+}

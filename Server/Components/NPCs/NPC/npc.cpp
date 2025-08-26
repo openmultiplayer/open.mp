@@ -75,6 +75,10 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, enteringVehicle_(false)
 	, jackingVehicle_(false)
 	, killPlayerFromVehicleNextTick_(false)
+	, useVehicleSiren_(false)
+	, hydraThrusterDirection_(5000)
+	, vehicleGearState_(0)
+	, vehicleTrainSpeed_(0.0f)
 {
 	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
 	weaponAccuracy_.fill(1.0f);
@@ -1427,8 +1431,79 @@ bool NPC::removeFromVehicle()
 
 	vehicle_ = nullptr;
 	vehicleSeat_ = SEAT_NONE;
+	useVehicleSiren_ = false;
+	hydraThrusterDirection_ = 5000;
+	vehicleGearState_ = 0;
+	vehicleTrainSpeed_ = 0.0f;
 
 	return true;
+}
+
+void NPC::useVehicleSiren(bool use)
+{
+	if (isInVehicle())
+	{
+		vehicle_->setSiren(use);
+		useVehicleSiren_ = use;
+	}
+}
+
+bool NPC::isVehicleSirenUsed() const
+{
+	return isInVehicle() && vehicle_->getSirenState();
+}
+
+void NPC::setVehicleHealth(float health)
+{
+	if (isInVehicle())
+	{
+		vehicle_->setHealth(health);
+	}
+}
+
+float NPC::getVehicleHealth() const
+{
+	return isInVehicle() ? vehicle_->getHealth() : 0.0f;
+}
+
+void NPC::setVehicleHydraThrusters(int direction)
+{
+	if (isInVehicle())
+	{
+		uint16_t dir = static_cast<uint16_t>(direction);
+		hydraThrusterDirection_ = (static_cast<uint32_t>(dir) << 16) | dir;
+	}
+}
+
+int NPC::getVehicleHydraThrusters() const
+{
+	return isInVehicle() ? static_cast<uint16_t>(hydraThrusterDirection_ & 0xFFFF) : 0;
+}
+
+void NPC::setVehicleGearState(int gear)
+{
+	if (isInVehicle())
+	{
+		vehicleGearState_ = gear;
+	}
+}
+
+int NPC::getVehicleGearState() const
+{
+	return isInVehicle() ? vehicleGearState_ : 0;
+}
+
+void NPC::setVehicleTrainSpeed(float speed)
+{
+	if (isInVehicle())
+	{
+		vehicleTrainSpeed_ = speed;
+	}
+}
+
+float NPC::getVehicleTrainSpeed() const
+{
+	return isInVehicle() ? vehicleTrainSpeed_ : 0.0f;
 }
 
 void NPC::setWeaponState(PlayerWeaponState state)
@@ -1839,9 +1914,23 @@ void NPC::sendDriverSync()
 		driverSync_.Health = vehicle_->getHealth();
 
 		// TODO: Probably can implement these too
-		driverSync_.Siren = 0;
-		driverSync_.LandingGear = 0;
-		driverSync_.HydraThrustAngle = 0;
+		driverSync_.Siren = uint8_t(useVehicleSiren_);
+		driverSync_.LandingGear = vehicleGearState_;
+
+		int model = vehicle_->getModel();
+		if (model == 520) // hydra model id
+		{
+			driverSync_.HydraThrustAngle = hydraThrusterDirection_;
+		}
+		else if (model == 537 || model == 538 || model == 570 || model == 569 || model == 449) // train part models
+		{
+			driverSync_.TrainSpeed = vehicleTrainSpeed_;
+		}
+		else
+		{
+			driverSync_.TrainSpeed = 0.0f;
+		}
+
 		driverSync_.TrailerID = INVALID_VEHICLE_ID;
 		driverSync_.HasTrailer = false;
 		driverSync_.AdditionalKeyWeapon = weapon_;
@@ -2072,7 +2161,7 @@ void NPC::advance(TimePoint now)
 				{
 					currentPathPointIndex_++;
 				}
-				
+
 				const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);
 				if (nextPoint)
 				{

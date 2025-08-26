@@ -169,6 +169,26 @@ public:
 
 	int getCurrentPathPointIndex() const override;
 
+	void useVehicleSiren(bool use = true) override;
+
+	bool isVehicleSirenUsed() const override;
+
+	void setVehicleHealth(float health) override;
+
+	float getVehicleHealth() const override;
+
+	void setVehicleHydraThrusters(int direction) override;
+
+	int getVehicleHydraThrusters() const override;
+
+	void setVehicleGearState(int gear) override;
+
+	int getVehicleGearState() const override;
+
+	void setVehicleTrainSpeed(float speed) override;
+
+	float getVehicleTrainSpeed() const override;
+
 	void setWeaponState(PlayerWeaponState state);
 
 	void updateWeaponState();
@@ -204,9 +224,14 @@ public:
 		vehicleSeatToEnter_ = SEAT_NONE;
 	}
 
-	IVehicle* getVehicle() const
+	IVehicle* getVehicle() const override
 	{
 		return vehicle_;
+	}
+
+	int getVehicleSeat() const override
+	{
+		return vehicleSeat_;
 	}
 
 	void resetVehicle()
@@ -266,13 +291,18 @@ public:
 		leftAndRight_ = 0;
 	}
 
-	inline WeaponInfo* getCustomWeaponInfo(uint8_t weapon)
+	WeaponInfo* getCustomWeaponInfo(uint8_t weapon)
 	{
 		if (weapon >= customWeaponInfoList_.size())
 		{
 			return nullptr;
 		}
 		return &customWeaponInfoList_[weapon];
+	}
+
+	inline bool isInVehicle() const
+	{
+		return vehicle_ && vehicleSeat_ != SEAT_NONE;
 	}
 
 private:
@@ -376,6 +406,10 @@ private:
 	bool jackingVehicle_;
 	TimePoint vehicleEnterExitUpdateTime_;
 	bool killPlayerFromVehicleNextTick_;
+	bool useVehicleSiren_;
+	int hydraThrusterDirection_;
+	int vehicleGearState_;
+	float vehicleTrainSpeed_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;
