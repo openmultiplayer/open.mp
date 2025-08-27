@@ -262,9 +262,14 @@ public:
 
 	void advance(TimePoint now);
 
-	IVehicle* getEnteringVehicle() const
+	IVehicle* getEnteringVehicle() override
 	{
 		return vehicleToEnter_;
+	}
+
+	int getEnteringVehicleSeat() const override
+	{
+		return vehicleSeatToEnter_;
 	}
 
 	void resetEnteringVehicle()
@@ -273,7 +278,7 @@ public:
 		vehicleSeatToEnter_ = SEAT_NONE;
 	}
 
-	IVehicle* getVehicle() const override
+	IVehicle* getVehicle() override
 	{
 		return vehicle_;
 	}

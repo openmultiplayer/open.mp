@@ -505,9 +505,49 @@ SCRIPT_API_FAILRET(NPC_GetVehicle, INVALID_VEHICLE_ID, int(INPC& npc))
 	return INVALID_VEHICLE_ID;
 }
 
+SCRIPT_API_FAILRET(NPC_GetVehicleID, INVALID_VEHICLE_ID, int(INPC& npc))
+{
+	auto vehicle = npc.getVehicle();
+	if (vehicle)
+	{
+		return vehicle->getID();
+	}
+	return INVALID_VEHICLE_ID;
+}
+
+SCRIPT_API_FAILRET(NPC_GetEnteringVehicle, INVALID_VEHICLE_ID, int(INPC& npc))
+{
+	auto vehicle = npc.getEnteringVehicle();
+	if (vehicle)
+	{
+		return vehicle->getID();
+	}
+	return INVALID_VEHICLE_ID;
+}
+
+SCRIPT_API_FAILRET(NPC_GetEnteringVehicleID, INVALID_VEHICLE_ID, int(INPC& npc))
+{
+	auto vehicle = npc.getEnteringVehicle();
+	if (vehicle)
+	{
+		return vehicle->getID();
+	}
+	return INVALID_VEHICLE_ID;
+}
+
 SCRIPT_API(NPC_GetVehicleSeat, int(INPC& npc))
 {
 	return npc.getVehicleSeat();
+}
+
+SCRIPT_API(NPC_GetEnteringVehicleSeat, int(INPC& npc))
+{
+	return npc.getEnteringVehicleSeat();
+}
+
+SCRIPT_API(NPC_IsEnteringVehicle, bool(INPC& npc))
+{
+	return npc.getEnteringVehicle() && npc.getVehicleSeat() != SEAT_NONE;
 }
 
 SCRIPT_API(NPC_UseVehicleSiren, bool(INPC& npc, bool use))
