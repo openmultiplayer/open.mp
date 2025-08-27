@@ -30,6 +30,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, armour_(0.0f)
 	, animationId_(0)
 	, animationFlags_(0)
+	, specialAction_(SpecialAction_None)
 	, meleeAttacking_(false)
 	, meleeAttackDelay_(0)
 	, meleeSecondaryAttack_(false)
@@ -275,6 +276,7 @@ void NPC::respawn()
 	auto vehicle = vehicle_;
 	int vehicleSeat = vehicleSeat_;
 	int skin = player_->getSkin();
+	PlayerSpecialAction specialAction = getSpecialAction();
 
 	if (isMovingByPath())
 	{
@@ -302,6 +304,7 @@ void NPC::respawn()
 	setPosition(position, false);
 	setRotation(rotation, false);
 	setSkin(skin);
+	setSpecialAction(specialAction);
 
 	if (vehicle)
 	{
@@ -1585,6 +1588,17 @@ void NPC::clearAnimations()
 	player_->clearAnimations(PlayerAnimationSyncType_Sync);
 }
 
+void NPC::setSpecialAction(PlayerSpecialAction action)
+{
+	specialAction_ = action;
+	player_->setAction(action);
+}
+
+PlayerSpecialAction NPC::getSpecialAction() const
+{
+	return specialAction_;
+}
+
 bool NPC::startPlayback(StringView recordName, bool autoUnload, const Vector3& point, const GTAQuat& rotation)
 {
 	if (playback_)
@@ -1999,7 +2013,7 @@ void NPC::sendFootSync()
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_ || footSync_.AnimationID == animationId_ || footSync_.AnimationFlags == animationFlags_;
+	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_ || footSync_.AnimationID == animationId_ || footSync_.AnimationFlags == animationFlags_ || footSync_.SpecialAction == specialAction_;
 
 	auto generateFootSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -2014,6 +2028,7 @@ void NPC::sendFootSync()
 		footSync_.Velocity = velocity_;
 		footSync_.AnimationID = animationId_;
 		footSync_.AnimationFlags = animationFlags_;
+		footSync_.SpecialAction = specialAction_;
 
 		bs.writeUINT8(footSync_.PacketID);
 		bs.writeUINT16(footSync_.LeftRight);

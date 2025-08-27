@@ -596,6 +596,17 @@ SCRIPT_API(NPC_ClearAnimations, bool(INPC& npc))
 	return true;
 }
 
+SCRIPT_API(NPC_SetSpecialAction, bool(INPC& npc, int action))
+{
+	npc.setSpecialAction(PlayerSpecialAction(action));
+	return true;
+}
+
+SCRIPT_API(NPC_GetSpecialAction, int(INPC& npc))
+{
+	return npc.getSpecialAction();
+}
+
 SCRIPT_API(NPC_StartPlayback, bool(INPC& npc, const std::string& recordName, bool autoUnload, Vector3 startPos, Vector3 startRot))
 {
 	return npc.startPlayback(recordName, autoUnload, startPos, startRot);

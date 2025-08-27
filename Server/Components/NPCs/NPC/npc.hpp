@@ -204,6 +204,10 @@ public:
 
 	void clearAnimations() override;
 
+	void setSpecialAction(PlayerSpecialAction action) override;
+
+	PlayerSpecialAction getSpecialAction() const override;
+
 	bool startPlayback(StringView recordName, bool autoUnload = true, const Vector3& point = Vector3(0.0f, 0.0f, 0.0f), const GTAQuat& rotation = GTAQuat()) override;
 
 	bool startPlayback(int recordId, bool autoUnload = true, const Vector3& point = Vector3(0.0f, 0.0f, 0.0f), const GTAQuat& rotation = GTAQuat()) override;
@@ -378,6 +382,7 @@ private:
 	float armour_;
 	int animationId_;
 	int animationFlags_;
+	PlayerSpecialAction specialAction_;
 
 	// Attack data
 	bool meleeAttacking_;
