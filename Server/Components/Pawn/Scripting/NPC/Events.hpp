@@ -183,4 +183,29 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		}
 		return !!ret;
 	}
+
+	void onNPCFinishNodePoint(INPC& npc, int nodeId, uint16_t pointId) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCFinishNodePoint", DefaultReturnValue_True, npc.getID(), nodeId, int(pointId));
+	}
+
+	void onNPCFinishNode(INPC& npc, int nodeId) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCFinishNode", DefaultReturnValue_True, npc.getID(), nodeId);
+	}
+
+	bool onNPCChangeNode(INPC& npc, int newNodeId, int oldNodeId) override
+	{
+		cell ret = PawnManager::Get()->CallAllInEntryFirst("OnNPCChangeNode", DefaultReturnValue_True, npc.getID(), newNodeId, oldNodeId);
+
+		if (npc.getID() == 999)
+		{
+			if (ret)
+			{
+				printf("yo\n");
+			}
+		}
+
+		return !!ret;
+	}
 };

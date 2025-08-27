@@ -383,6 +383,63 @@ void NPCComponent::unloadAllRecords()
 	recordManager_.unloadAllRecords();
 }
 
+bool NPCComponent::openNode(int nodeId)
+{
+	return nodeManager_.openNode(core, nodeId);
+}
+
+void NPCComponent::closeNode(int nodeId)
+{
+	nodeManager_.closeNode(nodeId);
+}
+
+bool NPCComponent::isNodeOpen(int nodeId) const
+{
+	return nodeManager_.isNodeOpen(nodeId);
+}
+
+uint8_t NPCComponent::getNodeType(int nodeId)
+{
+	NPCNode* node = nodeManager_.getNode(nodeId);
+	return node ? node->getNodeType() : 0;
+}
+
+bool NPCComponent::setNodePoint(int nodeId, uint16_t pointId)
+{
+	NPCNode* node = nodeManager_.getNode(nodeId);
+	return node ? node->setPoint(pointId) : false;
+}
+
+bool NPCComponent::getNodePointPosition(int nodeId, Vector3& position)
+{
+	NPCNode* node = nodeManager_.getNode(nodeId);
+	if (node)
+	{
+		position = node->getPosition();
+		return true;
+	}
+	position = Vector3(0.0f, 0.0f, 0.0f);
+	return false;
+}
+
+int NPCComponent::getNodePointCount(int nodeId)
+{
+	NPCNode* node = nodeManager_.getNode(nodeId);
+	return node ? node->getNodesNumber() : 0;
+}
+
+bool NPCComponent::getNodeInfo(int nodeId, uint32_t& vehicleNodes, uint32_t& pedNodes, uint32_t& naviNodes)
+{
+	NPCNode* node = nodeManager_.getNode(nodeId);
+	if (node)
+	{
+		node->getHeaderInfo(vehicleNodes, pedNodes, naviNodes);
+		return true;
+	}
+	vehicleNodes = pedNodes = naviNodes = 0;
+	return false;
+}
+
 bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
 {
 	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)

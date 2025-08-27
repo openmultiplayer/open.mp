@@ -16,6 +16,8 @@ class NPCPlayback;
 
 class NPCPath;
 
+class NPCNode;
+
 class NPCComponent;
 
 class NPC : public INPC, public PoolIDProvider, public NoCopy
@@ -213,6 +215,22 @@ public:
 	bool isPlayingPlayback() const override;
 
 	bool isPlaybackPaused() const override;
+
+	bool playNode(int nodeId, NPCMoveType moveType, float moveSpeed = NPC_MOVE_SPEED_AUTO, float radius = 0.0f, bool setAngle = true) override;
+
+	void stopPlayingNode() override;
+
+	void pausePlayingNode() override;
+
+	void resumePlayingNode() override;
+
+	bool isPlayingNodePaused() const override;
+
+	bool isPlayingNode() const override;
+
+	uint16_t changeNode(int nodeId, uint16_t targetPointId) override;
+
+	bool updateNodePoint(uint16_t pointId) override;
 
 	void processPlayback(TimePoint now);
 
@@ -451,6 +469,18 @@ private:
 	// Playback
 	NPCPlayback* playback_;
 	String playbackPath_;
+
+	// Node movement
+	class NPCNode* currentNode_;
+	bool playingNode_;
+	bool nodePlayingPaused_;
+	uint16_t currentNodePoint_;
+	uint16_t lastNodePoint_;
+	NPCMoveType nodeMoveType_;
+	float nodeMoveSpeed_;
+	float nodeMoveRadius_;
+	bool nodeSetAngle_;
+	Vector3 nodeLastPosition_;
 
 	NPCComponent* npcComponent_;
 };

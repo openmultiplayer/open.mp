@@ -17,6 +17,7 @@
 #include "./NPC/npc.hpp"
 #include "./Path/path_pool.hpp"
 #include "./Playback/record_manager.hpp"
+#include "./Node/node_manager.hpp"
 
 using namespace Impl;
 
@@ -112,6 +113,30 @@ public:
 
 	void unloadAllRecords() override;
 
+	/// Open a node file for NPC path navigation
+	bool openNode(int nodeId) override;
+
+	/// Close a previously opened node file
+	void closeNode(int nodeId) override;
+
+	/// Check if a node is currently open
+	bool isNodeOpen(int nodeId) const override;
+
+	/// Get node type information
+	uint8_t getNodeType(int nodeId) override;
+
+	/// Set the current point in a node
+	bool setNodePoint(int nodeId, uint16_t pointId) override;
+
+	/// Get the position of a specific point in a node
+	bool getNodePointPosition(int nodeId, Vector3& position) override;
+
+	/// Get the total number of points in a node
+	int getNodePointCount(int nodeId) override;
+
+	/// Get node information (vehicle nodes, pedestrian nodes, navigation nodes)
+	bool getNodeInfo(int nodeId, uint32_t& vehicleNodes, uint32_t& pedNodes, uint32_t& naviNodes) override;
+
 	bool emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 
 	bool emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
@@ -188,6 +213,11 @@ public:
 	NPCRecordManager* getRecordManager()
 	{
 		return &recordManager_;
+	}
+
+	NPCNodeManager* getNodeManager()
+	{
+		return &nodeManager_;
 	}
 
 	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
@@ -283,4 +313,7 @@ private:
 
 	// Record manager
 	NPCRecordManager recordManager_;
+
+	// Node manager
+	NPCNodeManager nodeManager_;
 };

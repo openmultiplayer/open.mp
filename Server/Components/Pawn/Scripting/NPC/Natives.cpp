@@ -678,3 +678,141 @@ SCRIPT_API(NPC_UnloadAllRecords, bool())
 	}
 	return false;
 }
+
+SCRIPT_API(NPC_OpenNode, bool(int nodeId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->openNode(nodeId);
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_CloseNode, bool(int nodeId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		component->closeNode(nodeId);
+		return true;
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_IsNodeOpen, bool(int nodeId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->isNodeOpen(nodeId);
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_GetNodeType, int(int nodeId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->getNodeType(nodeId);
+	}
+	return 0;
+}
+
+SCRIPT_API(NPC_SetNodePoint, bool(int nodeId, int pointId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->setNodePoint(nodeId, static_cast<uint16_t>(pointId));
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_GetNodePointPosition, bool(int nodeId, float& x, float& y, float& z))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		Vector3 position;
+		if (component->getNodePointPosition(nodeId, position))
+		{
+			x = position.x;
+			y = position.y;
+			z = position.z;
+			return true;
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_GetNodePointCount, int(int nodeId))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		return component->getNodePointCount(nodeId);
+	}
+	return 0;
+}
+
+SCRIPT_API(NPC_GetNodeInfo, bool(int nodeId, int& vehicleNodes, int& pedNodes, int& naviNodes))
+{
+	auto component = PawnManager::Get()->npcs;
+	if (component)
+	{
+		uint32_t vehNodes, pedNodes32, naviNodes32;
+		if (component->getNodeInfo(nodeId, vehNodes, pedNodes32, naviNodes32))
+		{
+			vehicleNodes = static_cast<int>(vehNodes);
+			pedNodes = static_cast<int>(pedNodes32);
+			naviNodes = static_cast<int>(naviNodes32);
+			return true;
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_PlayNode, bool(INPC& npc, int nodeId, int moveType, float moveSpeed, float radius, bool setAngle))
+{
+	return npc.playNode(nodeId, static_cast<NPCMoveType>(moveType), moveSpeed, radius, setAngle);
+}
+
+SCRIPT_API(NPC_StopPlayingNode, bool(INPC& npc))
+{
+	npc.stopPlayingNode();
+	return true;
+}
+
+SCRIPT_API(NPC_PausePlayingNode, bool(INPC& npc))
+{
+	npc.pausePlayingNode();
+	return true;
+}
+
+SCRIPT_API(NPC_ResumePlayingNode, bool(INPC& npc))
+{
+	npc.resumePlayingNode();
+	return true;
+}
+
+SCRIPT_API(NPC_IsPlayingNodePaused, bool(INPC& npc))
+{
+	return npc.isPlayingNodePaused();
+}
+
+SCRIPT_API(NPC_IsPlayingNode, bool(INPC& npc))
+{
+	return npc.isPlayingNode();
+}
+
+SCRIPT_API(NPC_ChangeNode, int(INPC& npc, int nodeId, int linkId))
+{
+	return static_cast<int>(npc.changeNode(nodeId, static_cast<uint16_t>(linkId)));
+}
+
+SCRIPT_API(NPC_UpdateNodePoint, bool(INPC& npc, int pointId))
+{
+	return npc.updateNodePoint(static_cast<uint16_t>(pointId));
+}

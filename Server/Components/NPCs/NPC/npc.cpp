@@ -14,6 +14,7 @@
 #include "../utils.hpp"
 #include "../Path/path.hpp"
 #include "../Playback/playback.hpp"
+#include "../Node/node.hpp"
 #include <Server/Components/Vehicles/vehicle_seats.hpp>
 
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
@@ -85,6 +86,16 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, vehicleTrainSpeed_(0.0f)
 	, playback_(nullptr)
 	, playbackPath_("npcmodes/recordings/")
+	, currentNode_(nullptr)
+	, playingNode_(false)
+	, nodePlayingPaused_(false)
+	, currentNodePoint_(0)
+	, lastNodePoint_(0)
+	, nodeMoveType_(NPCMoveType_Auto)
+	, nodeMoveSpeed_(NPC_MOVE_SPEED_AUTO)
+	, nodeMoveRadius_(0.0f)
+	, nodeSetAngle_(true)
+	, nodeLastPosition_(Vector3(0.0f, 0.0f, 0.0f))
 {
 	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
 	weaponAccuracy_.fill(1.0f);
@@ -153,6 +164,12 @@ NPC::~NPC()
 	{
 		delete playback_;
 		playback_ = nullptr;
+	}
+
+	// Clean up node playing state
+	if (playingNode_)
+	{
+		stopPlayingNode();
 	}
 }
 
@@ -2265,7 +2282,7 @@ void NPC::advance(TimePoint now)
 		}
 		else
 		{
-			// Just stop movement but keep following state
+			// Only stop movement but keep following state
 			moving_ = false;
 			moveSpeed_ = 0.0f;
 			velocity_ = { 0.0f, 0.0f, 0.0f };
@@ -2324,6 +2341,56 @@ void NPC::advance(TimePoint now)
 					movingByPath_ = false;
 					currentPath_ = nullptr;
 					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
+				}
+			}
+			else if (playingNode_ && !nodePlayingPaused_ && currentNode_)
+			{
+				// Process node movement
+				npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishNodePoint, *this, currentNode_->getNodeId(), currentNodePoint_);
+
+				uint16_t currentLinkId;
+				uint16_t newPoint = currentNode_->process(this, currentNodePoint_, lastNodePoint_, currentLinkId);
+
+				if (newPoint == 0xFFFF)
+				{
+					// Need to change node - get target info from last processed link
+					int targetNodeId = currentNode_->getLastLinkTargetNodeId();
+					uint16_t targetPointId = currentNode_->getLastLinkTargetPointId();
+					if (npcComponent_->getNodeManager()->isNodeOpen(targetNodeId))
+					{
+						uint16_t changedPoint = changeNode(targetNodeId, targetPointId);
+						if (changedPoint > 0)
+						{
+							lastNodePoint_ = currentNodePoint_;
+							currentNodePoint_ = changedPoint;
+
+							// Update position and move to new point
+							Vector3 newPosition = currentNode_->getPosition();
+							move(newPosition, nodeMoveType_, nodeMoveSpeed_, nodeMoveRadius_);
+						}
+						else
+						{
+							stopPlayingNode();
+						}
+					}
+					else
+					{
+						stopPlayingNode();
+					}
+				}
+				else if (newPoint > 0)
+				{
+					lastNodePoint_ = currentNodePoint_;
+					currentNodePoint_ = newPoint;
+
+					// Update position and move to new point
+					Vector3 newPosition = currentNode_->getPosition();
+					move(newPosition, nodeMoveType_, nodeMoveSpeed_, nodeMoveRadius_);
+				}
+				else
+				{
+					// Node processing failed or reached end
+					stopPlayingNode();
 				}
 			}
 			else
@@ -2696,4 +2763,164 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			lastAimSyncUpdate_ = now;
 		}
 	}
+}
+
+bool NPC::playNode(int nodeId, NPCMoveType moveType, float moveSpeed, float radius, bool setAngle)
+{
+	if (playback_)
+	{
+		stopPlayback();
+	}
+
+	if (playingNode_)
+	{
+		stopPlayingNode();
+	}
+
+	nodeMoveType_ = moveType;
+	nodeMoveSpeed_ = moveSpeed;
+	nodeMoveRadius_ = radius;
+	nodeSetAngle_ = setAngle;
+
+	currentNode_ = npcComponent_->getNodeManager()->getNode(nodeId);
+	if (!currentNode_)
+	{
+		return false;
+	}
+
+	// Set initial position and start movement
+	Vector3 nodePosition = currentNode_->getPosition();
+	setPosition(nodePosition, true);
+
+	// Set link and point information
+	currentNode_->setLink(currentNode_->getLinkId());
+	currentNodePoint_ = currentNode_->getLinkPoint();
+	lastNodePoint_ = currentNode_->getPointId();
+	playingNode_ = true;
+	nodePlayingPaused_ = false;
+
+	// Update node point and start movement
+	updateNodePoint(currentNodePoint_);
+	nodePosition = currentNode_->getPosition();
+	move(nodePosition, moveType, moveSpeed, radius);
+
+	return true;
+}
+
+void NPC::stopPlayingNode()
+{
+	if (!playingNode_)
+	{
+		return;
+	}
+
+	int nodeId = currentNode_ ? currentNode_->getNodeId() : -1;
+
+	// Reset node instance
+	currentNode_ = nullptr;
+
+	stopMove();
+	resetKeys();
+
+	// Reset node movement data
+	playingNode_ = false;
+	nodePlayingPaused_ = false;
+	currentNodePoint_ = 0;
+	lastNodePoint_ = 0;
+	nodeMoveType_ = NPCMoveType_Auto;
+	nodeMoveSpeed_ = NPC_MOVE_SPEED_AUTO;
+	nodeMoveRadius_ = 0.0f;
+	nodeSetAngle_ = true;
+	nodeLastPosition_ = Vector3(0.0f, 0.0f, 0.0f);
+
+	if (nodeId >= 0)
+	{
+		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishNode, *this, nodeId);
+	}
+}
+
+void NPC::pausePlayingNode()
+{
+	if (!playingNode_ || nodePlayingPaused_)
+	{
+		return;
+	}
+
+	stopMove();
+	nodeLastPosition_ = getPosition();
+	nodePlayingPaused_ = true;
+}
+
+void NPC::resumePlayingNode()
+{
+	if (!playingNode_ || !nodePlayingPaused_)
+	{
+		return;
+	}
+
+	nodePlayingPaused_ = false;
+	move(nodeLastPosition_, nodeMoveType_, nodeMoveSpeed_, nodeMoveRadius_);
+}
+
+bool NPC::isPlayingNodePaused() const
+{
+	return nodePlayingPaused_;
+}
+
+bool NPC::isPlayingNode() const
+{
+	return playingNode_;
+}
+
+uint16_t NPC::changeNode(int nodeId, uint16_t targetPointId)
+{
+	if (!playingNode_)
+	{
+		return 0;
+	}
+
+	int oldNodeId = currentNode_ ? currentNode_->getNodeId() : -1;
+	bool shouldChangeNode = true; // Change node by default unless event result says no
+
+	// Dispatch change event - if callback returns false, deny the change
+	if (oldNodeId >= 0)
+	{
+		shouldChangeNode = npcComponent_->getEventDispatcher_internal().stopAtFalse([this, &nodeId, &oldNodeId](NPCEventHandler* handler)
+			{
+				return handler->onNPCChangeNode(*this, nodeId, oldNodeId);
+			});
+	}
+
+	if (!shouldChangeNode)
+	{
+		return 0;
+	}
+
+	// Get the new node instance
+	currentNode_ = npcComponent_->getNodeManager()->getNode(nodeId);
+	if (!currentNode_)
+	{
+		return 0;
+	}
+
+	// Process the node change with the provided target point ID
+	uint16_t newPoint = currentNode_->processNodeChange(this, targetPointId);
+
+	return newPoint;
+}
+
+bool NPC::updateNodePoint(uint16_t pointId)
+{
+	if (!playingNode_ || !currentNode_)
+	{
+		return false;
+	}
+
+	Vector3 position;
+	currentNode_->setPoint(pointId);
+	position = currentNode_->getPosition();
+
+	// Update movement destination
+	targetPosition_ = position;
+	return true;
 }
