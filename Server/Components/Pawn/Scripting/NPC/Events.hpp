@@ -197,15 +197,6 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	bool onNPCChangeNode(INPC& npc, int newNodeId, int oldNodeId) override
 	{
 		cell ret = PawnManager::Get()->CallAllInEntryFirst("OnNPCChangeNode", DefaultReturnValue_True, npc.getID(), newNodeId, oldNodeId);
-
-		if (npc.getID() == 999)
-		{
-			if (ret)
-			{
-				printf("yo\n");
-			}
-		}
-
 		return !!ret;
 	}
 };
