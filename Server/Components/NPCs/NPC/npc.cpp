@@ -363,6 +363,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 
 	if (moveType_ == NPCMoveType_Drive)
 	{
+		upAndDown_ = static_cast<uint16_t>(Key::ANALOG_UP);
 		applyKey(Key::SPRINT);
 
 		if (isEqualFloat(moveSpeed_, NPC_MOVE_SPEED_AUTO))
@@ -1937,8 +1938,6 @@ void NPC::updateAim()
 
 	// Update the weapon state
 	updateWeaponState();
-	// Set the aim sync flag
-	// m_pPlayer->bHasAimSync = true;
 }
 
 void NPC::updateAimData(const Vector3& point, bool setAngle)
@@ -2097,7 +2096,6 @@ void NPC::sendDriverSync()
 		driverSync_.Velocity = velocity_;
 		driverSync_.Health = vehicle_->getHealth();
 
-		// TODO: Probably can implement these too
 		driverSync_.Siren = uint8_t(useVehicleSiren_);
 		driverSync_.LandingGear = vehicleGearState_;
 
