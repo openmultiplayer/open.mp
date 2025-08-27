@@ -2294,7 +2294,6 @@ void NPC::advance(TimePoint now)
 		setPosition(targetPos, false);
 
 		// Check if the movement was triggered for entering a vehicle
-		IVehicle* vehicle = NULL;
 		float distanceToVehicle = 0.0f;
 
 		if (vehicleToEnter_)
@@ -2304,9 +2303,9 @@ void NPC::advance(TimePoint now)
 		}
 
 		// Validate the vehicle and check distance
-		if (vehicle && distanceToVehicle < MIN_VEHICLE_GO_TO_DISTANCE)
+		if (vehicleToEnter_ && distanceToVehicle < MAX_DISTANCE_TO_ENTER_VEHICLE)
 		{
-			enterVehicle(*vehicle, vehicleSeatToEnter_, NPCMoveType_Jog);
+			enterVehicle(*vehicleToEnter_, vehicleSeatToEnter_, NPCMoveType_Jog);
 		}
 		else
 		{
