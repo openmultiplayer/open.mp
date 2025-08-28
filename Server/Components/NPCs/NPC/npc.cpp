@@ -2572,9 +2572,8 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 								}
 								else if (moving_)
 								{
-									// Update target position to player's current position
-									targetPosition_ = currentPlayerPos;
-									lastMove_ = now;
+									// Update target position to player's current position and recall move for angle update too
+									move(currentPlayerPos, followMoveType_, followMoveSpeed_, followStopRange_);
 								}
 							}
 
