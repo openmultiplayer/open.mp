@@ -27,8 +27,12 @@ SCRIPT_API(NPC_Create, int(const String& name))
 
 SCRIPT_API(NPC_Destroy, bool(INPC& npc))
 {
-	PawnManager::Get()->npcs->destroy(npc);
-	return true;
+	if (PawnManager::Get()->npcs)
+	{
+		PawnManager::Get()->npcs->destroy(npc);
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_IsValid, bool(INPC* npc))
@@ -436,48 +440,84 @@ SCRIPT_API(NPC_RemoveFromVehicle, bool(INPC& npc))
 
 SCRIPT_API(NPC_CreatePath, int())
 {
-	return PawnManager::Get()->npcs->createPath();
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->createPath();
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_DestroyPath, bool(int pathId))
 {
-	return PawnManager::Get()->npcs->destroyPath(pathId);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->destroyPath(pathId);
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_DestroyAllPath, bool())
 {
-	PawnManager::Get()->npcs->destroyAllPaths();
-	return true;
+	if (PawnManager::Get()->npcs)
+	{
+		PawnManager::Get()->npcs->destroyAllPaths();
+		return true;
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_GetPathCount, int())
 {
-	return PawnManager::Get()->npcs->getPathCount();
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->getPathCount();
+	}
+	return -1;
 }
 
 SCRIPT_API(NPC_AddPointToPath, bool(int pathId, Vector3 position, float stopRange))
 {
-	return PawnManager::Get()->npcs->addPointToPath(pathId, position, stopRange);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->addPointToPath(pathId, position, stopRange);
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_RemovePointFromPath, bool(int pathId, int pointIndex))
 {
-	return PawnManager::Get()->npcs->removePointFromPath(pathId, pointIndex);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->removePointFromPath(pathId, pointIndex);
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_ClearPath, bool(int pathId))
 {
-	return PawnManager::Get()->npcs->clearPath(pathId);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->clearPath(pathId);
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_GetPathPointCount, int(int pathId))
 {
-	return PawnManager::Get()->npcs->getPathPointCount(pathId);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->getPathPointCount(pathId);
+	}
+	return -1;
 }
 
 SCRIPT_API(NPC_GetPathPoint, bool(int pathId, int pointIndex, Vector3& position, float& stopRange))
 {
-	return PawnManager::Get()->npcs->getPathPoint(pathId, pointIndex, position, stopRange);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->getPathPoint(pathId, pointIndex, position, stopRange);
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_GetCurrentPathPointIndex, bool(INPC& npc))
@@ -487,7 +527,11 @@ SCRIPT_API(NPC_GetCurrentPathPointIndex, bool(INPC& npc))
 
 SCRIPT_API(NPC_IsValidPath, bool(int pathId))
 {
-	return PawnManager::Get()->npcs->isValidPath(pathId);
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->isValidPath(pathId);
+	}
+	return false;
 }
 
 SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveSpeed, bool reverse))
