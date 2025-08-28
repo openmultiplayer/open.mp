@@ -2280,7 +2280,10 @@ void NPC::advance(TimePoint now)
 	if (distanceToTarget <= stopRange_ || maxTravel >= distanceToTarget)
 	{
 		// Reached or about to overshoot target
-		auto targetPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
+		// UPDATE: Since we have stopRange now, let's set NPC's position as where it is now, after reaching.
+		// As in, let's just use position, instead of targetPosition.
+		auto finalPos = position;
+		// auto finalPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
 
 		// If following a player, check autoRestart setting
 		bool wasFollowingPlayer = followingPlayer_ != nullptr;
@@ -2304,7 +2307,7 @@ void NPC::advance(TimePoint now)
 			removeKey(Key::WALK);
 		}
 
-		setPosition(targetPos, false);
+		setPosition(finalPos, false);
 
 		// Check if the movement was triggered for entering a vehicle
 		float distanceToVehicle = 0.0f;
