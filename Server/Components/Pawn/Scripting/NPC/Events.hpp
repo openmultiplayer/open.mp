@@ -199,4 +199,9 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		cell ret = PawnManager::Get()->CallAllInEntryFirst("OnNPCChangeNode", DefaultReturnValue_True, npc.getID(), newNodeId, oldNodeId);
 		return !!ret;
 	}
+
+	void onNPCFinishMovePath(INPC& npc, int pathId) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCFinishMovePath", DefaultReturnValue_True, npc.getID(), pathId);
+	}
 };

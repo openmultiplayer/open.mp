@@ -2353,8 +2353,10 @@ void NPC::advance(TimePoint now)
 				}
 				else
 				{
+					auto pathId = currentPath_->getID();
 					movingByPath_ = false;
 					currentPath_ = nullptr;
+					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePath, *this, pathId);
 					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 				}
 			}
