@@ -1981,7 +1981,7 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 	{
 		auto rotation = getRotation().ToEuler();
 
-		float facingAngle = getAngleOfLine(camVecDistance.y, camVecDistance.x);
+		float facingAngle = getAngleOfLine(camVecDistance.x, camVecDistance.y);
 
 		rotation.z = facingAngle;
 		setRotation(rotation, false);
