@@ -911,3 +911,14 @@ SCRIPT_API(NPC_UpdateNodePoint, bool(INPC& npc, int pointId))
 {
 	return npc.updateNodePoint(static_cast<uint16_t>(pointId));
 }
+
+SCRIPT_API(NPC_SetInvulnerable, bool(INPC& npc, bool toggle))
+{
+	npc.setInvulnerable(toggle);
+	return true;
+}
+
+SCRIPT_API(NPC_IsInvulnerable, bool(INPC& npc))
+{
+	return npc.isInvulnerable();
+}

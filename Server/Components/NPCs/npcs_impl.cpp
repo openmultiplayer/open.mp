@@ -142,8 +142,13 @@ void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount
 		if (npc && npc->getPlayer()->getID() == to.getID())
 		{
 			shouldCallCustomEvents = false;
-			bool eventResult = emulatePlayerGiveDamageToNPCEvent(player, *npc, amount, weapon, part, false);
-			npc->processDamage(&player, amount, weapon, part, eventResult);
+
+			if (npc->isInvulnerable())
+			{
+				bool eventResult = emulatePlayerGiveDamageToNPCEvent(player, *npc, amount, weapon, part, false);
+				npc->processDamage(&player, amount, weapon, part, eventResult);
+			}
+
 			shouldCallCustomEvents = true;
 		}
 	}

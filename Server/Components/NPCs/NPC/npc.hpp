@@ -236,6 +236,10 @@ public:
 
 	bool updateNodePoint(uint16_t pointId) override;
 
+	void setInvulnerable(bool toggle) override;
+
+	bool isInvulnerable() const override;
+
 	void processPlayback(TimePoint now);
 
 	void setWeaponState(PlayerWeaponState state);
@@ -388,6 +392,7 @@ private:
 	int animationId_;
 	int animationFlags_;
 	PlayerSpecialAction specialAction_;
+	bool invulnerable_;
 
 	// Attack data
 	bool meleeAttacking_;

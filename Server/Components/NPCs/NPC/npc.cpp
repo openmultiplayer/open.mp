@@ -31,6 +31,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, animationId_(0)
 	, animationFlags_(0)
 	, specialAction_(SpecialAction_None)
+	, invulnerable_(false)
 	, meleeAttacking_(false)
 	, meleeAttackDelay_(0)
 	, meleeSecondaryAttack_(false)
@@ -1108,7 +1109,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 			auto npc = static_cast<NPC*>(npcComponent_->get(bulletData.hitID));
 			if (npc)
 			{
-				if (!dead_)
+				if (!dead_ || !invulnerable_)
 				{
 					bool eventResult = npcComponent_->emulatePlayerGiveDamageToNPCEvent(*player_, *npc, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
 					npc->processDamage(player_, WeaponDamages[bulletData.weapon], bulletData.weapon, BodyPart_Torso, eventResult);
@@ -2939,4 +2940,14 @@ bool NPC::updateNodePoint(uint16_t pointId)
 	// Update movement destination
 	targetPosition_ = position;
 	return true;
+}
+
+void NPC::setInvulnerable(bool toggle)
+{
+
+}
+
+bool NPC::isInvulnerable() const
+{
+
 }
