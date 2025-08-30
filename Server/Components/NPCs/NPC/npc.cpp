@@ -107,8 +107,14 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
+
 	// We created a player instance for it, let's keep a handle of it internally
 	player_ = playerPtr;
+
+	// Initial values for surfing data
+	surfingData_.offset = Vector3(0.0f, 0.0f, 0.0f);
+	surfingData_.ID = 0;
+	surfingData_.type = PlayerSurfingData::Type::None;
 
 	// Initial entity values
 	Vector3 initialPosition = position_ = { 0.0f, 0.0f, 3.5f };
@@ -2029,6 +2035,9 @@ void NPC::sendFootSync()
 		footSync_.AnimationID = animationId_;
 		footSync_.AnimationFlags = animationFlags_;
 		footSync_.SpecialAction = specialAction_;
+		footSync_.SurfingData.ID = surfingData_.ID;
+		footSync_.SurfingData.type = surfingData_.type;
+		footSync_.SurfingData.offset = surfingData_.offset;
 
 		bs.writeUINT8(footSync_.PacketID);
 		bs.writeUINT16(footSync_.LeftRight);
@@ -2594,6 +2603,59 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 					if (state == PlayerState_OnFoot)
 					{
+						if (surfingData_.type != PlayerSurfingData::Type::None)
+						{
+							if (surfingData_.type == PlayerSurfingData::Type::Vehicle)
+							{
+								auto* vehicle = npcComponent_->getVehiclesPool()->get(surfingData_.ID);
+								if (vehicle)
+								{
+									setPosition(vehicle->getPosition() + surfingData_.offset, false);
+								}
+							}
+							else
+							{
+								IBaseObject* object = nullptr;
+								if (surfingData_.type == PlayerSurfingData::Type::Object)
+								{
+									object = npcComponent_->getObjectsPool()->get(surfingData_.ID);
+								}
+								else if (surfingData_.type == PlayerSurfingData::Type::PlayerObject)
+								{
+									auto playerObjects = queryExtension<IPlayerObjectData>(player_);
+									if (playerObjects)
+									{
+										object = playerObjects->get(surfingData_.ID);
+									}
+								}
+
+								if (object)
+								{
+									auto attachData = object->getAttachmentData();
+									if (attachData.type == ObjectAttachmentData::Type::None)
+									{
+										setPosition(object->getPosition() + surfingData_.offset, false);
+									}
+									else if (attachData.type == ObjectAttachmentData::Type::Object)
+									{
+										auto objectAttachedTo = npcComponent_->getObjectsPool()->get(attachData.ID);
+										if (objectAttachedTo)
+										{
+											setPosition(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+										}
+									}
+									else if (attachData.type == ObjectAttachmentData::Type::Vehicle)
+									{
+										auto vehicleAttachedTo = npcComponent_->getVehiclesPool()->get(attachData.ID);
+										if (vehicleAttachedTo)
+										{
+											setPosition(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+										}
+									}
+								}
+							}
+						}
+
 						if (enteringVehicle_)
 						{
 							if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
@@ -2944,10 +3006,27 @@ bool NPC::updateNodePoint(uint16_t pointId)
 
 void NPC::setInvulnerable(bool toggle)
 {
-
+	invulnerable_ = toggle;
 }
 
 bool NPC::isInvulnerable() const
 {
+	return invulnerable_;
+}
 
+void NPC::setSurfingData(const PlayerSurfingData& data)
+{
+	surfingData_ = data;
+}
+
+PlayerSurfingData NPC::getSurfingData()
+{
+	return surfingData_;
+}
+
+void NPC::resetSurfingData()
+{
+	surfingData_.offset = Vector3(0.0f, 0.0f, 0.0f);
+	surfingData_.ID = 0;
+	surfingData_.type = PlayerSurfingData::Type::None;
 }

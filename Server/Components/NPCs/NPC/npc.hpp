@@ -240,6 +240,12 @@ public:
 
 	bool isInvulnerable() const override;
 
+	void setSurfingData(const PlayerSurfingData& data) override;
+
+	PlayerSurfingData getSurfingData() override;
+
+	void resetSurfingData() override;
+
 	void processPlayback(TimePoint now);
 
 	void setWeaponState(PlayerWeaponState state);
@@ -393,6 +399,7 @@ private:
 	int animationFlags_;
 	PlayerSpecialAction specialAction_;
 	bool invulnerable_;
+	PlayerSurfingData surfingData_;
 
 	// Attack data
 	bool meleeAttacking_;

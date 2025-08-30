@@ -922,3 +922,95 @@ SCRIPT_API(NPC_IsInvulnerable, bool(INPC& npc))
 {
 	return npc.isInvulnerable();
 }
+
+SCRIPT_API(NPC_SetSurfingOffset, bool(INPC& npc, Vector3 offset))
+{
+	auto data = npc.getSurfingData();
+	data.offset = offset;
+	npc.setSurfingData(data);
+	return true;
+}
+
+SCRIPT_API(NPC_GetSurfingOffset, bool(INPC& npc, Vector3& offset))
+{
+	auto data = npc.getSurfingData();
+	offset = data.offset;
+	return true;
+}
+
+SCRIPT_API(NPC_SetSurfingVehicle, bool(INPC& npc, IVehicle& vehicle))
+{
+	auto data = npc.getSurfingData();
+	data.ID = vehicle.getID();
+	data.type = PlayerSurfingData::Type::Vehicle;
+	npc.setSurfingData(data);
+	return true;
+}
+
+SCRIPT_API_FAILRET(NPC_GetSurfingVehicle, INVALID_VEHICLE_ID, int(INPC& npc))
+{
+	auto data = npc.getSurfingData();
+	if (data.type != PlayerSurfingData::Type::Vehicle || PawnManager::Get()->vehicles == nullptr)
+	{
+		return INVALID_VEHICLE_ID;
+	}
+
+	return data.ID;
+}
+
+SCRIPT_API(NPC_SetSurfingObject, bool(INPC& npc, IObject& object))
+{
+	auto data = npc.getSurfingData();
+	data.ID = object.getID();
+	data.type = PlayerSurfingData::Type::Object;
+	npc.setSurfingData(data);
+	return true;
+}
+
+SCRIPT_API_FAILRET(NPC_GetSurfingObject, INVALID_OBJECT_ID, int(INPC& npc))
+{
+	auto data = npc.getSurfingData();
+	if (data.type != PlayerSurfingData::Type::Object || PawnManager::Get()->objects == nullptr)
+	{
+		return INVALID_OBJECT_ID;
+	}
+
+	return data.ID;
+}
+
+SCRIPT_API(NPC_SetSurfingPlayerObject, bool(INPC& npc, int objectId))
+{
+	auto playerObjects = queryExtension<IPlayerObjectData>(npc.getPlayer());
+	if (playerObjects)
+	{
+		auto object = playerObjects->get(objectId);
+		if (object)
+		{
+			auto data = npc.getSurfingData();
+			data.ID = object->getID();
+			data.type = PlayerSurfingData::Type::PlayerObject;
+			npc.setSurfingData(data);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+SCRIPT_API_FAILRET(NPC_GetSurfingPlayerObject, INVALID_OBJECT_ID, int(INPC& npc))
+{
+	auto data = npc.getSurfingData();
+	auto playerObjects = queryExtension<IPlayerObjectData>(npc.getPlayer());
+	if (data.type != PlayerSurfingData::Type::PlayerObject || PawnManager::Get()->objects == nullptr || playerObjects == nullptr)
+	{
+		return INVALID_OBJECT_ID;
+	}
+
+	return data.ID;
+}
+
+SCRIPT_API(NPC_ResetSurfingData, bool(INPC& npc))
+{
+	npc.resetSurfingData();
+	return true;
+}
