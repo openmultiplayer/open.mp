@@ -539,6 +539,15 @@ SCRIPT_API(NPC_MoveByPath, bool(INPC& npc, int pathId, int moveType, float moveS
 	return npc.moveByPath(pathId, NPCMoveType(moveType), moveSpeed, reverse);
 }
 
+SCRIPT_API(NPC_HasPointInRadius, bool(int pathId, Vector3 position, float radius))
+{
+	if (PawnManager::Get()->npcs)
+	{
+		return PawnManager::Get()->npcs->hasPathPointInRadius(pathId, position, radius);
+	}
+	return false;
+}
+
 SCRIPT_API_FAILRET(NPC_GetVehicle, INVALID_VEHICLE_ID, int(INPC& npc))
 {
 	auto vehicle = npc.getVehicle();

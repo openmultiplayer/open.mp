@@ -54,6 +54,11 @@ public:
 		id_ = id;
 	}
 
+	const std::vector<PathPoint>& getPoints() const
+	{
+		return points_;
+	}
+
 private:
 	std::vector<PathPoint> points_;
 	int id_;
