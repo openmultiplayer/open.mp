@@ -368,10 +368,9 @@ bool NPCComponent::hasPathPointInRadius(int pathId, const Vector3& position, flo
 	NPCPath* path = pathManager_.get(pathId);
 	if (path)
 	{
-		for (const auto& pathPoint : path->getPoints())
+		for (const auto& point : path->getPoints())
 		{
-			const Vector3 toTarget = pathPoint.position - position;
-			if (glm::length(toTarget) <= radius)
+			if (glm::distance(point.position, position) <= radius)
 			{
 				return true;
 			}
