@@ -363,6 +363,23 @@ bool NPCComponent::isValidPath(int pathId)
 	return pathManager_.get(pathId) != nullptr;
 }
 
+bool NPCComponent::hasPathPointInRadius(int pathId, const Vector3& position, float radius)
+{
+	NPCPath* path = pathManager_.get(pathId);
+	if (path)
+	{
+		for (const auto& point : path->getPoints())
+		{
+			if (glm::distance(point.position, position) <= radius)
+			{
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 int NPCComponent::loadRecord(StringView filePath)
 {
 	return recordManager_.loadRecord(filePath);
