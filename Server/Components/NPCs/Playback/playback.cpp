@@ -141,6 +141,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 					{
 						npc.setVehicleTrainSpeed(syncData.TrainSpeed);
 					}
+
+					npc.sendDriverSync();
 				}
 			}
 		}
@@ -165,6 +167,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 					(syncData.AnimationFlags >> 10 & 0x1) != 0,
 					(syncData.AnimationFlags >> 11 & 0x1) != 0,
 					(syncData.AnimationFlags >> 12 & 0xF) != 0);
+
+				npc.sendFootSync();
 			}
 		}
 

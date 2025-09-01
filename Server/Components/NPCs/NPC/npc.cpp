@@ -2551,7 +2551,9 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			{
 				if (playback_ && playback_->isValid())
 				{
-					processPlayback(now);
+					// Used to process playback here, but I've moved it out put generate update rate to down below
+					// Keeping this here as a reminder that playbacks already have their own timestamps so they're not
+					// Oversent or overprocessed
 				}
 				else
 				{
@@ -2822,39 +2824,46 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 			}
 		}
 
-		if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
+		if (playback_ && playback_->isValid())
 		{
-			if (!vehicle_ || vehicleSeat_ == SEAT_NONE)
+			processPlayback(now);
+		}
+		else
+		{
+			if (duration_cast<Milliseconds>(now - lastFootSyncUpdate_).count() > npcComponent_->getFootSyncRate())
 			{
-				sendFootSync();
+				if (!vehicle_ || vehicleSeat_ == SEAT_NONE)
+				{
+					sendFootSync();
+				}
+
+				lastFootSyncUpdate_ = now;
 			}
 
-			lastFootSyncUpdate_ = now;
-		}
-
-		if (duration_cast<Milliseconds>(now - lastVehicleSyncUpdate_).count() > npcComponent_->getVehicleSyncRate())
-		{
-			if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+			if (duration_cast<Milliseconds>(now - lastVehicleSyncUpdate_).count() > npcComponent_->getVehicleSyncRate())
 			{
-				if (vehicleSeat_ == 0) // driver
+				if (vehicle_ && vehicleSeat_ != SEAT_NONE)
 				{
-					sendDriverSync();
+					if (vehicleSeat_ == 0) // driver
+					{
+						sendDriverSync();
+					}
+					else
+					{
+						sendPassengerSync();
+					}
 				}
-				else
-				{
-					sendPassengerSync();
-				}
+
+				lastVehicleSyncUpdate_ = now;
 			}
 
-			lastVehicleSyncUpdate_ = now;
-		}
+			if (duration_cast<Milliseconds>(now - lastAimSyncUpdate_).count() > npcComponent_->getAimSyncRate())
+			{
+				sendAimSync();
+				updateAim();
 
-		if (duration_cast<Milliseconds>(now - lastAimSyncUpdate_).count() > npcComponent_->getAimSyncRate())
-		{
-			sendAimSync();
-			updateAim();
-
-			lastAimSyncUpdate_ = now;
+				lastAimSyncUpdate_ = now;
+			}
 		}
 	}
 }
