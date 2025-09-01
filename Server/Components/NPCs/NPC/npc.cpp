@@ -2352,7 +2352,9 @@ void NPC::advance(TimePoint now)
 				{
 					if (currentPathPointIndex_ > 0)
 					{
+						auto pathId = currentPath_->getID();
 						currentPathPointIndex_--;
+						npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePathPoint, *this, pathId, currentPathPointIndex_);
 					}
 					else
 					{
@@ -2364,7 +2366,9 @@ void NPC::advance(TimePoint now)
 				}
 				else
 				{
+					auto pathId = currentPath_->getID();
 					currentPathPointIndex_++;
+					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePathPoint, *this, pathId, currentPathPointIndex_ - 1);
 				}
 
 				const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);

@@ -204,4 +204,9 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCFinishMovePath", DefaultReturnValue_True, npc.getID(), pathId);
 	}
+
+	void onNPCFinishMovePathPoint(INPC& npc, int pathId, int pointIndex) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCFinishMovePathPoint", DefaultReturnValue_True, npc.getID(), pathId, pointIndex);
+	}
 };
