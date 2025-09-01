@@ -2297,18 +2297,28 @@ void NPC::advance(TimePoint now)
 
 		// If following a player, check autoRestart setting
 		bool wasFollowingPlayer = followingPlayer_ != nullptr;
-		if (!wasFollowingPlayer)
+		if (!wasFollowingPlayer && !movingByPath_)
 		{
 			stopMove();
 		}
-		else if (!followAutoRestart_)
+		else if (wasFollowingPlayer && !followAutoRestart_)
 		{
 			// If autoRestart is false, completely stop following
 			stopMove();
 		}
-		else
+		else if (wasFollowingPlayer)
 		{
 			// Only stop movement but keep following state
+			moving_ = false;
+			moveSpeed_ = 0.0f;
+			velocity_ = { 0.0f, 0.0f, 0.0f };
+			upAndDown_ &= ~Key::UP;
+			removeKey(Key::SPRINT);
+			removeKey(Key::WALK);
+		}
+		else if (movingByPath_)
+		{
+			// Only stop movement but keep path state for path progression logic
 			moving_ = false;
 			moveSpeed_ = 0.0f;
 			velocity_ = { 0.0f, 0.0f, 0.0f };
