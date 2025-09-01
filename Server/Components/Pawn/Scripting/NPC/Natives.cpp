@@ -534,7 +534,7 @@ SCRIPT_API(NPC_IsValidPath, bool(int pathId))
 	return false;
 }
 
-SCRIPT_API(NPC_HasPointInRange, bool(int pathId, Vector3 position, float radius))
+SCRIPT_API(NPC_HasPathPointInRange, bool(int pathId, Vector3 position, float radius))
 {
 	if (PawnManager::Get()->npcs)
 	{
