@@ -551,6 +551,10 @@ void NPC::setVelocity(Vector3 velocity, bool update)
 	{
 		velocity_ = velocity;
 	}
+	else if (!moving_)
+	{
+		velocity_ = velocity;
+	}
 
 	needsVelocityUpdate_ = update;
 }
