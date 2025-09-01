@@ -103,7 +103,7 @@ public:
 
 	bool isValidPath(int pathId) override;
 
-	bool hasPathPointInRadius(int pathId, const Vector3& position, float radius) override;
+	bool hasPathPointInRange(int pathId, const Vector3& position, float radius) override;
 
 	int loadRecord(StringView filePath) override;
 

@@ -363,7 +363,7 @@ bool NPCComponent::isValidPath(int pathId)
 	return pathManager_.get(pathId) != nullptr;
 }
 
-bool NPCComponent::hasPathPointInRadius(int pathId, const Vector3& position, float radius)
+bool NPCComponent::hasPathPointInRange(int pathId, const Vector3& position, float radius)
 {
 	NPCPath* path = pathManager_.get(pathId);
 	if (path)
