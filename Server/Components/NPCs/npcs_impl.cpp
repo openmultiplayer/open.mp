@@ -143,7 +143,7 @@ void NPCComponent::onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount
 		{
 			shouldCallCustomEvents = false;
 
-			if (npc->isInvulnerable())
+			if (!npc->isInvulnerable())
 			{
 				bool eventResult = emulatePlayerGiveDamageToNPCEvent(player, *npc, amount, weapon, part, false);
 				npc->processDamage(&player, amount, weapon, part, eventResult);
