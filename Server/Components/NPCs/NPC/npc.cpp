@@ -2696,10 +2696,10 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 										updateAimData(point, updateAimAngle_);
 									}
 								}
-							}
-							else
-							{
-								stopAim();
+								else
+								{
+									stopAim();
+								}
 							}
 						}
 
