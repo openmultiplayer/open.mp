@@ -53,14 +53,11 @@ struct LegacyVehicleSyncData
 	uint16_t trailerId;
 	union
 	{
-		uint32_t hydraThrustAngleAndTrainSpeed;
-		struct
-		{
-			uint32_t hydraThrusterAngle;
-			float trainSpeed;
-		};
+		uint32_t hydraThrusterAngle;
+		float trainSpeed;
 	};
 };
+static_assert(sizeof(LegacyVehicleSyncData) == 63, "Invalid LegacyVehicleSyncData size");
 
 struct LegacyOnFootSyncData
 {
@@ -86,5 +83,6 @@ struct LegacyOnFootSyncData
 		};
 	};
 };
+static_assert(sizeof(LegacyOnFootSyncData) == 68, "Invalid LegacyOnFootSyncData size");
 
 #pragma pack(pop)

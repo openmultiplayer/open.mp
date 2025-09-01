@@ -146,7 +146,7 @@ bool NPCRecordManager::parseRecordFile(StringView filePath, NPCRecord& record)
 			syncData.Health = legacyData.health;
 			syncData.PlayerHealthArmour.x = legacyData.playerHealth;
 			syncData.PlayerHealthArmour.y = legacyData.playerArmour;
-			syncData.WeaponID = legacyData.playerWeaponAndAdditionalKey;
+			syncData.AdditionalKeyWeapon = legacyData.playerWeaponAndAdditionalKey;
 			syncData.Siren = legacyData.sirenState;
 			syncData.LandingGear = legacyData.gearState;
 			syncData.HydraThrustAngle = legacyData.hydraThrusterAngle;
@@ -179,7 +179,7 @@ bool NPCRecordManager::parseRecordFile(StringView filePath, NPCRecord& record)
 				legacyData.quaternion[2], legacyData.quaternion[3]);
 			syncData.HealthArmour.x = legacyData.health;
 			syncData.HealthArmour.y = legacyData.armour;
-			syncData.Weapon = legacyData.weaponAndAdditionalKey;
+			syncData.WeaponAdditionalKey = legacyData.weaponAndAdditionalKey;
 			syncData.SpecialAction = legacyData.specialAction;
 			syncData.Velocity = legacyData.velocity;
 			syncData.SurfingData.offset = legacyData.surfingOffsets;
