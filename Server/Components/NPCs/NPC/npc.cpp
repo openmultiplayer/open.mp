@@ -1712,6 +1712,7 @@ void NPC::setWeaponState(PlayerWeaponState state)
 
 	PlayerWeaponState oldState = weaponState_;
 	weaponState_ = state;
+	aimSync_.WeaponState = weaponState_;
 
 	switch (state)
 	{
