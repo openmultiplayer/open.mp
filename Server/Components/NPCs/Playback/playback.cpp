@@ -101,11 +101,31 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 	{
 		if (recordData_.playbackType == NPCPlaybackType::Driver)
 		{
-			npc.resetKeys();
+			if (currentIndex_ < recordData_.vehicleData.size())
+			{
+				const auto& syncData = recordData_.vehicleData[currentIndex_];
+
+				npc.resetKeys();
+				npc.setVelocity({ 0.0f, 0.0f, 0.0f }, false);
+				npc.setPosition(syncData.Position, false);
+				npc.setRotation(syncData.Rotation, false);
+
+				npc.sendDriverSync();
+			}
 		}
 		else if (recordData_.playbackType == NPCPlaybackType::OnFoot)
 		{
-			npc.resetKeys();
+			if (currentIndex_ < recordData_.onFootData.size())
+			{
+				const auto& syncData = recordData_.onFootData[currentIndex_];
+				npc.resetKeys();
+				npc.setVelocity({ 0.0f, 0.0f, 0.0f }, false);
+				npc.setPosition(syncData.Position, false);
+				npc.setRotation(syncData.Rotation, false);
+				npc.resetAnimation();
+
+				npc.sendFootSync();
+			}
 		}
 		startTime_ = now - recordData_.timeStamps[currentIndex_];
 		return true;
