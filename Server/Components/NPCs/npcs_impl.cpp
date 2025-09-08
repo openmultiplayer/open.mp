@@ -260,6 +260,9 @@ INPC* NPCComponent::create(StringView name)
 	auto npc = storage.get(npcId);
 	if (npc)
 	{
+		npc->setVirtualWorld(0);
+		npc->setInterior(0);
+		npc->setHealth(100.0f);
 		// Call connect events for both NPC and player, this way it can get initialized properly in player pool too
 		ScopedPoolReleaseLock lock(*this, npc->getID());
 		if (lock.entry)
