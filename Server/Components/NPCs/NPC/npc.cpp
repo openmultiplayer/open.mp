@@ -2352,28 +2352,35 @@ void NPC::advance(TimePoint now)
 		{
 			if (movingByPath_ && !pathPaused_ && currentPath_)
 			{
+				int finishedPathPoint = 0;
 				if (pathReverse_)
 				{
 					if (currentPathPointIndex_ > 0)
 					{
+						finishedPathPoint = currentPathPointIndex_;
 						currentPathPointIndex_--;
 					}
 					else
 					{
+						auto pathId = currentPath_->getID();
 						movingByPath_ = false;
 						currentPath_ = nullptr;
+						npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePathPoint, *this, pathId, currentPathPointIndex_);
+						npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePath, *this, pathId);
 						npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 						return;
 					}
 				}
 				else
 				{
+					finishedPathPoint = currentPathPointIndex_;
 					currentPathPointIndex_++;
 				}
 
 				const PathPoint* nextPoint = currentPath_->getPoint(currentPathPointIndex_);
 				if (nextPoint)
 				{
+					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePathPoint, *this, currentPath_->getID(), finishedPathPoint);
 					move(nextPoint->position, pathMoveType_, pathMoveSpeed_, nextPoint->stopRange);
 				}
 				else
@@ -2381,6 +2388,7 @@ void NPC::advance(TimePoint now)
 					auto pathId = currentPath_->getID();
 					movingByPath_ = false;
 					currentPath_ = nullptr;
+					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePathPoint, *this, pathId, currentPathPointIndex_);
 					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMovePath, *this, pathId);
 					npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishMove, *this);
 				}

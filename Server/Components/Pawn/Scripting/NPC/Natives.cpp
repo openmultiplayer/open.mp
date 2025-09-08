@@ -227,9 +227,9 @@ SCRIPT_API(NPC_GetAmmo, int(INPC& npc))
 	return npc.getAmmo();
 }
 
-SCRIPT_API(NPC_SetKeys, bool(INPC& npc, uint16_t upAndDown, uint16_t leftAndDown, uint16_t keys))
+SCRIPT_API(NPC_SetKeys, bool(INPC& npc, uint16_t upAndDown, uint16_t leftAndRight, uint16_t keys))
 {
-	npc.setKeys(upAndDown, leftAndDown, keys);
+	npc.setKeys(upAndDown, leftAndRight, keys);
 	return true;
 }
 
