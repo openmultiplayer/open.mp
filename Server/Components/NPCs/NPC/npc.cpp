@@ -1634,6 +1634,10 @@ bool NPC::startPlayback(StringView recordName, bool autoUnload, const Vector3& p
 		stopPlayback();
 		return false;
 	}
+	else
+	{
+		stopMove();
+	}
 
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCPlaybackStart, *this, playback_->getRecordId());
 	return true;
@@ -1661,6 +1665,10 @@ bool NPC::startPlayback(int recordId, bool autoUnload, const Vector3& point, con
 	{
 		stopPlayback();
 		return false;
+	}
+	else
+	{
+		stopMove();
 	}
 
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCPlaybackStart, *this, playback_->getRecordId());
