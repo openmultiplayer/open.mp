@@ -140,7 +140,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 			{
 				const auto& syncData = recordData_.vehicleData[currentIndex_];
 
-				if (npc.getVehicle())
+				const auto vehicle = npc.getVehicle();
+				if (vehicle)
 				{
 					npc.setKeys(syncData.UpDown, syncData.LeftRight, syncData.Keys);
 					npc.setPosition(syncData.Position, false);
@@ -153,11 +154,11 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 					npc.useVehicleSiren(syncData.Siren != 0);
 					npc.setVehicleGearState(syncData.LandingGear);
 
-					if (npc.getVehicle()->getModel() == 520) // Hydra
+					if (vehicle->getModel() == 520) // Hydra
 					{
 						npc.setVehicleHydraThrusters(static_cast<int>(syncData.HydraThrustAngle & 0xFFFF));
 					}
-					else if (npc.getVehicle()->getModel() == 537 || npc.getVehicle()->getModel() == 538 || npc.getVehicle()->getModel() == 570 || npc.getVehicle()->getModel() == 569 || npc.getVehicle()->getModel() == 449) // Train models
+					else if (vehicle->getModel() == 537 || vehicle->getModel() == 538 || vehicle->getModel() == 570 || vehicle->getModel() == 569 || vehicle->getModel() == 449) // Train models
 					{
 						npc.setVehicleTrainSpeed(syncData.TrainSpeed);
 					}
