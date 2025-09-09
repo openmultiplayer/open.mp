@@ -137,7 +137,7 @@ SCRIPT_API(NPC_IsStreamedIn, bool(INPC& npc, IPlayer& player))
 SCRIPT_API(NPC_IsAnyStreamedIn, bool(INPC& npc))
 {
 	auto streamedIn = npc.streamedForPlayers();
-	return streamedIn.size() > 0;
+	return streamedIn.size() > 1;
 }
 
 SCRIPT_API(NPC_GetAll, int(DynamicArray<int>& outputNPCs))
