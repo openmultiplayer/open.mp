@@ -10,12 +10,12 @@
 
 #include <sdk.hpp>
 #include "playback.hpp"
-#include <Impl/pool_impl.hpp>
+#include <sdk.hpp>
 
 class NPCRecordManager
 {
 public:
-	NPCRecordManager() = default;
+	NPCRecordManager() : nextRecordId_(0) { }
 	~NPCRecordManager() = default;
 
 	int loadRecord(StringView filePath);
@@ -29,7 +29,8 @@ public:
 private:
 	bool parseRecordFile(StringView filePath, NPCRecord& record);
 
-	DynamicArray<NPCRecord> records_;
+	FlatHashMap<int, NPCRecord> records_;
+	int nextRecordId_;
 	NPCRecord emptyRecord_;
 };
 

@@ -23,8 +23,9 @@ int NPCRecordManager::loadRecord(StringView filePath)
 		return INVALID_RECORD_ID;
 	}
 
-	records_.emplace_back(std::move(record));
-	return static_cast<int>(records_.size() - 1);
+	int recordId = nextRecordId_++;
+	records_[recordId] = std::move(record);
+	return recordId;
 }
 
 bool NPCRecordManager::unloadRecord(int recordId)
@@ -34,22 +35,22 @@ bool NPCRecordManager::unloadRecord(int recordId)
 		return false;
 	}
 
-	records_.erase(records_.begin() + recordId);
+	records_.erase(recordId);
 	return true;
 }
 
 bool NPCRecordManager::isValidRecord(int recordId) const
 {
-	return recordId >= 0 && recordId < static_cast<int>(records_.size());
+	return records_.find(recordId) != records_.end();
 }
 
 int NPCRecordManager::findRecord(StringView filePath) const
 {
-	for (size_t i = 0; i < records_.size(); ++i)
+	for (const auto& pair : records_)
 	{
-		if (records_[i].filePath == filePath)
+		if (pair.second.filePath == filePath)
 		{
-			return static_cast<int>(i);
+			return pair.first;
 		}
 	}
 	return INVALID_RECORD_ID;
@@ -57,9 +58,10 @@ int NPCRecordManager::findRecord(StringView filePath) const
 
 const NPCRecord& NPCRecordManager::getRecord(int recordId) const
 {
-	if (isValidRecord(recordId))
+	auto it = records_.find(recordId);
+	if (it != records_.end())
 	{
-		return records_[recordId];
+		return it->second;
 	}
 	return emptyRecord_;
 }
@@ -72,6 +74,7 @@ size_t NPCRecordManager::getRecordCount() const
 void NPCRecordManager::unloadAllRecords()
 {
 	records_.clear();
+	nextRecordId_ = 0;
 }
 
 bool NPCRecordManager::parseRecordFile(StringView filePath, NPCRecord& record)
