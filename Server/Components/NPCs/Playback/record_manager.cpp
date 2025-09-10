@@ -184,6 +184,8 @@ bool NPCRecordManager::parseRecordFile(StringView filePath, NPCRecord& record)
 			syncData.Velocity = legacyData.velocity;
 			syncData.SurfingData.offset = legacyData.surfingOffsets;
 			syncData.SurfingData.ID = legacyData.surfingId;
+			syncData.AnimationFlags = legacyData.animFlags;
+			syncData.AnimationID = legacyData.animId;
 
 			if (syncData.SurfingData.ID < 1)
 			{
