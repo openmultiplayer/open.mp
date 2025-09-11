@@ -2032,7 +2032,7 @@ void NPC::sendFootSync()
 	uint16_t upAndDown, leftAndRight, keys;
 	getKeys(upAndDown, leftAndRight, keys);
 
-	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_ || footSync_.AnimationID == animationId_ || footSync_.AnimationFlags == animationFlags_ || footSync_.SpecialAction == specialAction_;
+	bool needsImmediateUpdate = footSync_.LeftRight != leftAndRight || footSync_.UpDown != upAndDown || footSync_.Keys != keys || footSync_.Position != position_ || footSync_.Rotation.q != rotation_.q || footSync_.HealthArmour.x != health_ || footSync_.HealthArmour.y != armour_ || footSync_.Weapon != weapon_ || footSync_.Velocity != velocity_ || footSync_.AnimationID != animationId_ || footSync_.AnimationFlags != animationFlags_ || footSync_.SpecialAction != specialAction_;
 
 	auto generateFootSyncBitStream = [&](NetworkBitStream& bs)
 	{
