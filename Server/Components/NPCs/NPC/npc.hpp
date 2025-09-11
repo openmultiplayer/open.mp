@@ -246,6 +246,8 @@ public:
 
 	void resetSurfingData() override;
 
+	void setAnimation(uint16_t animationId, uint16_t flags);
+
 	void processPlayback(TimePoint now);
 
 	void setWeaponState(PlayerWeaponState state);
@@ -395,8 +397,8 @@ private:
 	GTAQuat rotation_;
 	float health_;
 	float armour_;
-	int animationId_;
-	int animationFlags_;
+	uint16_t animationId_;
+	uint16_t animationFlags_;
 	PlayerSpecialAction specialAction_;
 	bool invulnerable_;
 	PlayerSurfingData surfingData_;

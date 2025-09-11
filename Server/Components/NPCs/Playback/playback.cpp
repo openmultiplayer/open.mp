@@ -181,13 +181,7 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 				npc.setWeapon(syncData.Weapon);
 				npc.setVelocity(syncData.Velocity, false);
 				npc.setSpecialAction(PlayerSpecialAction(syncData.SpecialAction));
-				npc.setAnimation(syncData.AnimationID,
-					static_cast<float>(syncData.AnimationFlags & 0xFF),
-					(syncData.AnimationFlags >> 8 & 0x1) != 0,
-					(syncData.AnimationFlags >> 9 & 0x1) != 0,
-					(syncData.AnimationFlags >> 10 & 0x1) != 0,
-					(syncData.AnimationFlags >> 11 & 0x1) != 0,
-					(syncData.AnimationFlags >> 12 & 0xF) != 0);
+				npc.setAnimation(syncData.AnimationID, syncData.AnimationFlags);
 
 				npc.sendFootSync();
 			}

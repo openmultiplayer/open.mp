@@ -1579,6 +1579,20 @@ void NPC::setAnimation(int animationId, float delta, bool loop, bool lockX, bool
 	}
 }
 
+void NPC::setAnimation(uint16_t animationId, uint16_t flags)
+{
+	animationId_ = animationId;
+
+	if (animationId == 0)
+	{
+		animationFlags_ = 0;
+	}
+	else
+	{
+		animationFlags_ = flags;
+	}
+}
+
 void NPC::getAnimation(int& animationId, float& delta, bool& loop, bool& lockX, bool& lockY, bool& freeze, int& time)
 {
 	animationId = animationId_;
