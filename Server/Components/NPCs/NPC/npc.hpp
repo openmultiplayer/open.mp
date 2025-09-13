@@ -482,6 +482,7 @@ private:
 	int hydraThrusterDirection_;
 	int vehicleGearState_;
 	float vehicleTrainSpeed_;
+	float vehicleHealth_;
 
 	// Packets
 	NetCode::Packet::PlayerFootSync footSync_;

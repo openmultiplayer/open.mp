@@ -86,6 +86,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, hydraThrusterDirection_(5000)
 	, vehicleGearState_(0)
 	, vehicleTrainSpeed_(0.0f)
+	, vehicleHealth_(1000.0f)
 	, playback_(nullptr)
 	, playbackPath_("npcmodes/recordings/")
 	, currentNode_(nullptr)
@@ -1505,13 +1506,14 @@ void NPC::setVehicleHealth(float health)
 {
 	if (isInVehicle())
 	{
+		vehicleHealth_ = health;
 		vehicle_->setHealth(health);
 	}
 }
 
 float NPC::getVehicleHealth() const
 {
-	return isInVehicle() ? vehicle_->getHealth() : 0.0f;
+	return isInVehicle() ? vehicleHealth_ : 0.0f;
 }
 
 void NPC::setVehicleHydraThrusters(int direction)
@@ -2118,7 +2120,7 @@ void NPC::sendDriverSync()
 	uint16_t vehicleID = vehicle_->getID();
 
 	// Check if immediate update is needed (basic comparison for now)
-	bool needsImmediateUpdate = driverSync_.LeftRight != leftAndRight || driverSync_.UpDown != upAndDown || driverSync_.Keys != keys || driverSync_.Position != position_ || driverSync_.Rotation.q != rotation_.q || driverSync_.PlayerHealthArmour.x != health_ || driverSync_.PlayerHealthArmour.y != armour_ || driverSync_.VehicleID != vehicleID || driverSync_.Velocity != velocity_;
+	bool needsImmediateUpdate = driverSync_.LeftRight != leftAndRight || driverSync_.UpDown != upAndDown || driverSync_.Keys != keys || driverSync_.Position != position_ || driverSync_.Rotation.q != rotation_.q || driverSync_.PlayerHealthArmour.x != health_ || driverSync_.PlayerHealthArmour.y != armour_ || driverSync_.VehicleID != vehicleID || driverSync_.Velocity != velocity_ || driverSync_.Health != vehicleHealth_;
 
 	auto generateDriverSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -2131,7 +2133,7 @@ void NPC::sendDriverSync()
 		driverSync_.PlayerHealthArmour.x = health_;
 		driverSync_.PlayerHealthArmour.y = armour_;
 		driverSync_.Velocity = velocity_;
-		driverSync_.Health = vehicle_->getHealth();
+		driverSync_.Health = vehicleHealth_;
 
 		driverSync_.Siren = uint8_t(useVehicleSiren_);
 		driverSync_.LandingGear = vehicleGearState_;
