@@ -1693,7 +1693,26 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		Player* result = nullptr;
+
+		if (params.bot)
+		{
+			static const auto maxPlayers = core.getConfig().getInt("max_players");
+			for (auto index = *maxPlayers - 1; index >= 0; --index)
+			{
+				if (storage.get(index) == nullptr)
+				{
+					storage.claimHint(index, *this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+					result = storage.get(index);
+					break;
+				}
+			}
+		}
+		else
+		{
+			result = storage.emplace(*this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		}
+
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
