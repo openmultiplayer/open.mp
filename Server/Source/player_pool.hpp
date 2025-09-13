@@ -1506,6 +1506,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				return false;
 			}
+			else if (!unoccupiedSync.SeatID && player.state_ == PlayerState_Passenger)
+			{
+				return false;
+			}
 			else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle) || (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())))
 			{
 				return false;
