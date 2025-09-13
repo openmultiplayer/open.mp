@@ -881,7 +881,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					|| (aimSync.CamMode >= 48u && aimSync.CamMode <= 50u)
 					|| aimSync.CamMode == 52u || aimSync.CamMode == 54u
 					|| aimSync.CamMode == 60u || aimSync.CamMode == 61u || aimSync.CamMode > 64u)
+				{
 					aimSync.CamMode = 4u;
+				}
 
 				aimSync.PlayerID = player.poolID;
 				player.aimSync_ = aimSync;
@@ -1393,7 +1395,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			Player& player = static_cast<Player&>(peer);
 
 			int vehicleModel = vehicle.getModel();
-			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !(vehicleModel == 569 || vehicleModel == 570))) // Check if vehicle is a train carriage (TODO: Move Vehicle::isTrainCarriage to SDK/Components/Vehicles/Impl/vehicle_models.hpp)
+			// Check if vehicle is a train carriage (TODO: Move Vehicle::isTrainCarriage to SDK/Components/Vehicles/Impl/vehicle_models.hpp)
+			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !(vehicleModel == 569 || vehicleModel == 570)))
 			{
 				return false;
 			}
@@ -1472,12 +1475,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f || unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f || unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f)
+			if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f
+				|| unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f
+				|| unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f)
 			{
 				return false;
 			}
 
-			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001 || glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001 || glm::abs(unoccupiedSync.Roll.x * unoccupiedSync.Rotation.x + unoccupiedSync.Roll.y * unoccupiedSync.Rotation.y + unoccupiedSync.Roll.z * unoccupiedSync.Rotation.z) >= 0.000001)
+			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001
+				|| glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001
+				|| glm::abs(glm::dot(unoccupiedSync.Roll, unoccupiedSync.Rotation)) >= 0.000001)
 			{
 				return false;
 			}
@@ -1498,19 +1505,26 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
 
-			if (vehicle.getDriver())
+			if (vehicle.getDriver() || !vehicle.isStreamedInForPlayer(peer))
 			{
 				return false;
 			}
-			else if (!vehicle.isStreamedInForPlayer(peer))
+			else if (unoccupiedSync.SeatID > 0)
 			{
-				return false;
+				if (player.state_ != PlayerState_Passenger)
+				{
+					return false;
+				}
+				else if (playerVehicleData && playerVehicleData->getVehicle() != &vehicle)
+				{
+					return false;
+				}
+				else if (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())
+				{
+					return false;
+				}
 			}
-			else if (!unoccupiedSync.SeatID && player.state_ == PlayerState_Passenger)
-			{
-				return false;
-			}
-			else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle) || (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())))
+			else if (player.state_ == PlayerState_Passenger)
 			{
 				return false;
 			}
@@ -1542,9 +1556,24 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (trailerSync.TurnVelocity.x < -1.0f || trailerSync.TurnVelocity.x > 1.0f || trailerSync.TurnVelocity.y < -1.0f || trailerSync.TurnVelocity.y > 1.0f || trailerSync.TurnVelocity.z < -1.0f || trailerSync.TurnVelocity.z > 1.0f)
+			if (trailerSync.TurnVelocity.x < -1.0f || trailerSync.TurnVelocity.x > 1.0f
+				|| trailerSync.TurnVelocity.y < -1.0f || trailerSync.TurnVelocity.y > 1.0f
+				|| trailerSync.TurnVelocity.z < -1.0f || trailerSync.TurnVelocity.z > 1.0f)
 			{
 				return false;
+			}
+
+			float magnitude = glm::length(trailerSync.Quat);
+			if (std::abs(1.0f - magnitude) >= 0.000001f)
+			{
+				if (magnitude < 0.1f)
+				{
+					trailerSync.Quat = glm::vec4(0.5f);
+				}
+				else
+				{
+					trailerSync.Quat /= magnitude;
+				}
 			}
 
 			IVehicle* vehiclePtr = self.vehiclesComponent->get(trailerSync.VehicleID);
