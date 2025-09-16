@@ -1563,19 +1563,6 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			float magnitude = glm::length(trailerSync.Quat);
-			if (std::abs(1.0f - magnitude) >= 0.000001f)
-			{
-				if (magnitude < 0.1f)
-				{
-					trailerSync.Quat = glm::vec4(0.5f);
-				}
-				else
-				{
-					trailerSync.Quat /= magnitude;
-				}
-			}
-
 			IVehicle* vehiclePtr = self.vehiclesComponent->get(trailerSync.VehicleID);
 			if (!vehiclePtr)
 			{
@@ -1596,6 +1583,20 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (player.vehicleSync_.TrailerID != trailerSync.VehicleID)
 			{
 				return false;
+			}
+
+			// Normalise quaternions
+			float magnitude = glm::length(trailerSync.Quat);
+			if (std::abs(1.0f - magnitude) >= 0.000001f)
+			{
+				if (magnitude < 0.1f)
+				{
+					trailerSync.Quat = glm::vec4(0.5f);
+				}
+				else
+				{
+					trailerSync.Quat /= magnitude;
+				}
 			}
 
 			if (vehicle.updateFromTrailerSync(trailerSync, peer))
