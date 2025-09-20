@@ -460,6 +460,13 @@ void PawnManager::openAMX(PawnScript& script, bool isEntryScript, bool restartin
 	script.Register("IsRepeatingTimer", &utils::pawn_IsRepeatingTimer);
 	script.Register("GetTimerRemaining", &utils::pawn_GetTimerRemaining);
 	script.Register("GetTimerInterval", &utils::pawn_GetTimerInterval);
+	script.Register("SetTimerInterval", &utils::pawn_SetTimerInterval);
+	script.Register("PauseTimer", &utils::pawn_PauseTimer);
+	script.Register("ContinueTimer", &utils::pawn_ContinueTimer);
+	script.Register("IsTimerPaused", &utils::pawn_IsTimerPaused);
+	script.Register("KillAllTimers", &utils::pawn_KillAllTimers);
+	script.Register("IsTimerRunning", &utils::pawn_IsTimerRunning);
+	script.Register("GetRunningTimersCount", &utils::pawn_GetRunningTimersCount);
 	script.Register("SetModeRestartTime", &utils::pawn_SetModeRestartTime);
 	script.Register("GetModeRestartTime", &utils::pawn_GetModeRestartTime);
 
