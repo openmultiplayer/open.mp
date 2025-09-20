@@ -711,7 +711,7 @@ void NPC::meleeAttack(int time, bool secondaryMeleeAttack)
 	}
 
 	auto weaponData = getCustomWeaponInfo(weapon_);
-	if (weaponData)
+	if (!weaponData)
 	{
 		return;
 	}
