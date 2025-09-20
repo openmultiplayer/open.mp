@@ -881,7 +881,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 					|| (aimSync.CamMode >= 48u && aimSync.CamMode <= 50u)
 					|| aimSync.CamMode == 52u || aimSync.CamMode == 54u
 					|| aimSync.CamMode == 60u || aimSync.CamMode == 61u || aimSync.CamMode > 64u)
+				{
 					aimSync.CamMode = 4u;
+				}
 
 				aimSync.PlayerID = player.poolID;
 				player.aimSync_ = aimSync;
@@ -1135,13 +1137,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
 			IVehicle& vehicle = *lock.entry;
-
 			Player& player = static_cast<Player&>(peer);
+
+			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
+
+			if (!vehicleOk)
+			{
+				return false;
+			}
+
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
 			player.armour_ = vehicleSync.PlayerHealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? vehicleSync.WeaponID : 0;
-			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
 			uint32_t newKeys = vehicleSync.Keys;
 			switch (vehicleSync.AdditionalKey)
@@ -1171,33 +1179,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 			player.setState(PlayerState_Driver);
 
-			if (vehicleOk)
+			vehicleSync.HasTrailer = false;
+			if (vehicleSync.TrailerID)
+			{
+				IVehicle* trailer = vehicle.getTrailer();
+				if (trailer)
+				{
+					vehicleSync.HasTrailer = true;
+					vehicleSync.TrailerID = trailer->getID();
+				}
+			}
+
+			TimePoint now = Time::now();
+			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+				[&peer, now](PlayerUpdateEventHandler* handler)
+				{
+					return handler->onPlayerUpdate(peer, now);
+				});
+
+			if (allowedupdate)
 			{
 				vehicleSync.PlayerID = player.poolID;
-
-				vehicleSync.HasTrailer = false;
-				if (vehicleSync.TrailerID)
-				{
-					IVehicle* trailer = vehicle.getTrailer();
-					if (trailer)
-					{
-						vehicleSync.HasTrailer = true;
-						vehicleSync.TrailerID = trailer->getID();
-					}
-				}
-
-				TimePoint now = Time::now();
-				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-					[&peer, now](PlayerUpdateEventHandler* handler)
-					{
-						return handler->onPlayerUpdate(peer, now);
-					});
-
-				if (allowedupdate)
-				{
-					player.vehicleSync_ = vehicleSync;
-					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
-				}
+				player.vehicleSync_ = vehicleSync;
+				player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
 			}
 			return true;
 		}
@@ -1390,7 +1394,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
-			if (vehicle.isRespawning())
+			int vehicleModel = vehicle.getModel();
+			// Check if vehicle is a train carriage (TODO: Move Vehicle::isTrainCarriage to SDK/Components/Vehicles/Impl/vehicle_models.hpp)
+			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !(vehicleModel == 569 || vehicleModel == 570)))
 			{
 				return false;
 			}
@@ -1402,10 +1408,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			player.pos_ = vehicle.getPosition();
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? passengerSync.WeaponID : 0;
-			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
 			switch (passengerSync.AdditionalKey)
@@ -1435,23 +1441,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 			player.setState(PlayerState_Passenger);
 
-			if (vehicleOk)
-			{
-				TimePoint now = Time::now();
-				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-					[&peer, now](PlayerUpdateEventHandler* handler)
-					{
-						return handler->onPlayerUpdate(peer, now);
-					});
-
-				if (allowedupdate)
+			TimePoint now = Time::now();
+			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+				[&peer, now](PlayerUpdateEventHandler* handler)
 				{
-					passengerSync.PlayerID = player.poolID;
-					player.passengerSync_ = passengerSync;
-					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
-				}
-			}
+					return handler->onPlayerUpdate(peer, now);
+				});
 
+			if (allowedupdate)
+			{
+				passengerSync.PlayerID = player.poolID;
+				player.passengerSync_ = passengerSync;
+				player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
+			}
 			return true;
 		}
 	} playerPassengerSyncHandler;
@@ -1473,12 +1475,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f || unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f || unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f)
+			if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f
+				|| unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f
+				|| unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f)
 			{
 				return false;
 			}
 
-			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001 || glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001 || glm::abs(unoccupiedSync.Roll.x * unoccupiedSync.Rotation.x + unoccupiedSync.Roll.y * unoccupiedSync.Rotation.y + unoccupiedSync.Roll.z * unoccupiedSync.Rotation.z) >= 0.000001)
+			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001
+				|| glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001
+				|| glm::abs(glm::dot(unoccupiedSync.Roll, unoccupiedSync.Rotation)) >= 0.000001)
 			{
 				return false;
 			}
@@ -1499,15 +1505,26 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
 
-			if (vehicle.getDriver())
+			if (vehicle.getDriver() || !vehicle.isStreamedInForPlayer(peer))
 			{
 				return false;
 			}
-			else if (!vehicle.isStreamedInForPlayer(peer))
+			else if (unoccupiedSync.SeatID > 0)
 			{
-				return false;
+				if (player.state_ != PlayerState_Passenger)
+				{
+					return false;
+				}
+				else if (playerVehicleData && playerVehicleData->getVehicle() != &vehicle)
+				{
+					return false;
+				}
+				else if (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())
+				{
+					return false;
+				}
 			}
-			else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle) || (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())))
+			else if (player.state_ == PlayerState_Passenger)
 			{
 				return false;
 			}
@@ -1539,7 +1556,9 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (trailerSync.TurnVelocity.x < -1.0f || trailerSync.TurnVelocity.x > 1.0f || trailerSync.TurnVelocity.y < -1.0f || trailerSync.TurnVelocity.y > 1.0f || trailerSync.TurnVelocity.z < -1.0f || trailerSync.TurnVelocity.z > 1.0f)
+			if (trailerSync.TurnVelocity.x < -1.0f || trailerSync.TurnVelocity.x > 1.0f
+				|| trailerSync.TurnVelocity.y < -1.0f || trailerSync.TurnVelocity.y > 1.0f
+				|| trailerSync.TurnVelocity.z < -1.0f || trailerSync.TurnVelocity.z > 1.0f)
 			{
 				return false;
 			}
@@ -1564,6 +1583,20 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (player.vehicleSync_.TrailerID != trailerSync.VehicleID)
 			{
 				return false;
+			}
+
+			// Normalise quaternions
+			float magnitude = glm::length(trailerSync.Quat);
+			if (std::abs(1.0f - magnitude) >= 0.000001f)
+			{
+				if (magnitude < 0.1f)
+				{
+					trailerSync.Quat = glm::vec4(0.5f);
+				}
+				else
+				{
+					trailerSync.Quat /= magnitude;
+				}
 			}
 
 			if (vehicle.updateFromTrailerSync(trailerSync, peer))
