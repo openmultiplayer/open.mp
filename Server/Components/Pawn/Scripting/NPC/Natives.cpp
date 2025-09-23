@@ -104,7 +104,7 @@ SCRIPT_API(NPC_GetVirtualWorld, int(INPC& npc))
 
 SCRIPT_API(NPC_Move, bool(INPC& npc, Vector3 targetPos, int moveType, float moveSpeed, float stopRange))
 {
-	return npc.move(targetPos, NPCMoveType(moveType), moveSpeed);
+	return npc.move(targetPos, NPCMoveType(moveType), moveSpeed, stopRange);
 }
 
 SCRIPT_API(NPC_MoveToPlayer, bool(INPC& npc, IPlayer& player, int moveType, float moveSpeed, float stopRange, int posCheckUpdateDelay, bool autoRestart))
