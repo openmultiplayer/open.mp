@@ -10,6 +10,7 @@
 
 #include "player_impl.hpp"
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 #include <utils.hpp>
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
@@ -35,6 +36,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	IFixesComponent* fixesComponent = nullptr;
 	ICustomModelsComponent* modelsComponent = nullptr;
 	IFixesComponent* fixesComponent_ = nullptr;
+	INPCComponent* npcsComponent_ = nullptr;
 	StreamConfigHelper streamConfigHelper;
 	int* markersShow;
 	int* markersUpdateRate;
@@ -2080,6 +2082,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		actorsComponent = components.queryComponent<IActorsComponent>();
 		modelsComponent = components.queryComponent<ICustomModelsComponent>();
 		fixesComponent = components.queryComponent<IFixesComponent>();
+		npcsComponent_ = components.queryComponent<INPCComponent>();
 	}
 
 	bool onPlayerUpdate(IPlayer& p, TimePoint now) override

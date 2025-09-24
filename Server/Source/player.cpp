@@ -361,6 +361,21 @@ void Player::streamOutForPlayer(IPlayer& other)
 	}
 }
 
+void Player::kick()
+{
+	if (pool_.npcsComponent_ && pool_.npcsComponent_->get(poolID))
+	{
+		// Don't set kick status to true if they're our native NPCs, so we can handle it in NPC component instead.
+		kicked_ = false;
+	}
+	else
+	{
+		kicked_ = true;
+	}
+
+	netData_.network->disconnect(*this);
+}
+
 void Player::ban(StringView reason)
 {
 	PeerAddress::AddressString address;
