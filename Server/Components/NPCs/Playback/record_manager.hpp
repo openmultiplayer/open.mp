@@ -15,7 +15,10 @@
 class NPCRecordManager
 {
 public:
-	NPCRecordManager() : nextRecordId_(0) { }
+	NPCRecordManager()
+		: nextRecordId_(0)
+	{
+	}
 	~NPCRecordManager() = default;
 
 	int loadRecord(StringView filePath);
