@@ -462,6 +462,30 @@ public:
 				}
 			}
 
+			if (vehicle.isTrainCarriage())
+			{
+				int trainId = INVALID_VEHICLE_ID;
+				int carriageId = vehicle.getID();
+				for (auto veh : storage)
+				{
+					int veh_model = veh->getModel();
+					if (veh_model == 538 || veh_model == 537)
+					{
+						for (IVehicle* c : veh->getCarriages())
+						{
+							if (c->getID() == carriageId)
+							{
+								trainId = veh->getID();
+							}
+						}
+					}
+				}
+
+				core->logLn(LogLevel::Warning, "Attempted to destroy a train carriage using vehicle ID = %d. You cannot destroy a carriage individually and you must instead destroy your train. (Train ID = %d)",
+					carriageId, trainId);
+				return;
+			}
+
 			--preloadModels[veh_model - 400];
 			vehiclePtr->destream();
 			storage.release(index, false);
