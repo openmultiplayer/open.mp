@@ -155,7 +155,7 @@ private:
 				return false;
 			}
 
-			if (sendDialogResponse.Response < 0 || sendDialogResponse.Response > 1)
+			if (sendDialogResponse.Response < DialogResponse_Right || sendDialogResponse.Response > DialogResponse_Left)
 			{
 				return false;
 			}
@@ -167,22 +167,42 @@ private:
 
 			if ((data->style_ == DialogStyle_LIST || data->style_ == DialogStyle_TABLIST || data->style_ == DialogStyle_TABLIST_HEADERS) && data->body_.length() > 0)
 			{
-				unsigned int lines = 0;
+				int count = -1;
+				std::string temp;
 
-				for (unsigned int i = 0; i < data->body_.length() - 1; i++)
+				std::remove_copy(data->body_.begin(), data->body_.end(), std::back_inserter(temp), '\n');
+
+				if (!temp.empty())
 				{
-					if (data->body_[i] == '\n')
+					struct duplicateEndLine
 					{
-						lines++;
+						bool operator()(char first, char second) const
+						{
+							return first == second && first == '\n';
+						}
+					};
+
+					data->body_.erase(std::unique(data->body_.begin(), data->body_.end(), duplicateEndLine()), data->body_.end());
+
+					if (data->body_[0] == '\n')
+					{
+						data->body_.erase(0, 1);
+					}
+
+					if (data->body_[data->body_.length() - 1] == '\n')
+					{
+						data->body_.erase(std::prev(data->body_.end()));
+					}
+
+					count = std::count(data->body_.begin(), data->body_.end(), '\n');
+
+					if (data->style_ == DialogStyle_TABLIST_HEADERS)
+					{
+						count--;
 					}
 				}
 
-				if (data->style_ == DialogStyle_TABLIST_HEADERS && lines > 0)
-				{
-					lines--;
-				}
-
-				if (sendDialogResponse.ListItem < 0 || sendDialogResponse.ListItem > lines)
+				if (sendDialogResponse.ListItem < 0 || sendDialogResponse.ListItem > count)
 				{
 					return false;
 				}
