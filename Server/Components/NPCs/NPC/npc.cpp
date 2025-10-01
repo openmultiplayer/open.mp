@@ -2793,8 +2793,14 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 											shoot(hitId_, hitType_, weapon_, aimAt_, aimOffsetFrom_, isHit, betweenCheckFlags_);
 										}
 
-										applyKey(Key::AIM);
-										applyKey(Key::FIRE);
+										// Check shooting again because NPC::shoot actually calls events and people may use stopAim in them.
+										// Therefore we are already in shooting_ == true scope, but it's not true anymore, so we don't want to
+										// Be stuck with the wrong applied keys. But let it do the rest, let it reduce ammo count and do reload checks. 
+										if (shooting_)
+										{
+											applyKey(Key::AIM);
+											applyKey(Key::FIRE);
+										}
 
 										if (!infiniteAmmo_)
 										{
