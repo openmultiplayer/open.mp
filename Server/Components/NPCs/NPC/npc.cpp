@@ -946,7 +946,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 			{
 				auto pos = npc->getPosition();
 				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-				bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+				bulletData.offset = bulletData.hitPos - pos;
 
 				bulletData.hitID = npc->getID();
 				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
@@ -962,7 +962,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 			{
 				auto pos = player->getPosition();
 				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-				bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+				bulletData.offset = bulletData.hitPos - pos;
 
 				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 					{
@@ -979,7 +979,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		{
 			auto pos = vehicle->getPosition();
 			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-			bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+			bulletData.offset = bulletData.hitPos - pos;
 
 			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 				{
@@ -995,7 +995,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		{
 			auto pos = object->getPosition();
 			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-			bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+			bulletData.offset = bulletData.hitPos - pos;
 
 			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 				{
@@ -1020,7 +1020,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 					{
 						auto pos = playerObject->getPosition();
 						bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-						bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+						bulletData.offset = bulletData.hitPos - pos;
 
 						eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 							{
@@ -1043,7 +1043,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 						{
 							auto pos = playerObject->getPosition();
 							bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-							bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+							bulletData.offset = bulletData.hitPos - pos;
 
 							eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 								{
@@ -1066,7 +1066,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 						{
 							auto pos = playerObject->getPosition();
 							bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-							bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+							bulletData.offset = bulletData.hitPos - pos;
 
 							eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 								{
@@ -1086,7 +1086,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 						{
 							auto pos = playerObject->getPosition();
 							bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-							bulletData.offset = bulletData.hitPos /* - pos */; // We make it equal to target hit position because offset is applied artificially.
+							bulletData.offset = bulletData.hitPos - pos;
 
 							eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
 								{
