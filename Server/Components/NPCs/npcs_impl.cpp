@@ -128,7 +128,8 @@ void NPCComponent::onTick(Microseconds elapsed, TimePoint now)
 	// Clean this pool because it is now processed
 	markedForKick.clear();
 
-	for (auto& npc : storage)
+	auto shallowCopy = storage._entries();
+	for (auto& npc : shallowCopy)
 	{
 		static_cast<NPC*>(npc)->tick(elapsed, now);
 	}
