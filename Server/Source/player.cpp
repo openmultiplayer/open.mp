@@ -277,6 +277,28 @@ void Player::streamInForPlayer(IPlayer& other)
 	}
 }
 
+void Player::setFightingStyle(PlayerFightingStyle style)
+{
+	switch (style)
+	{
+	case PlayerFightingStyle_Normal:
+	case PlayerFightingStyle_Boxing:
+	case PlayerFightingStyle_KungFu:
+	case PlayerFightingStyle_KneeHead:
+	case PlayerFightingStyle_GrabKick:
+	case PlayerFightingStyle_Elbow:
+		fightingStyle_ = style;
+		NetCode::RPC::SetPlayerFightingStyle setPlayerFightingStyleRPC;
+		setPlayerFightingStyleRPC.PlayerID = poolID;
+		setPlayerFightingStyleRPC.Style = style;
+		PacketHelper::broadcastToStreamed(setPlayerFightingStyleRPC, *this, false);
+		break;
+
+	default:
+		break;
+	}
+}
+
 void Player::setSkin(int skin, bool send = true)
 {
 	uint32_t customSkin = 0;
