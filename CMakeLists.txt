@@ -144,6 +144,7 @@ add_subdirectory(lib)
 
 if(BUILD_SERVER)
 	message("Configuring server")
+	add_subdirectory(CAPI)
 	add_subdirectory(SDK)
 	add_subdirectory(Shared)
 	add_subdirectory(Server)
