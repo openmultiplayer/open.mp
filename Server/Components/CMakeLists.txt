@@ -1,5 +1,6 @@
 
 add_subdirectory(Actors)
+add_subdirectory(CAPI)
 add_subdirectory(Checkpoints)
 add_subdirectory(Classes)
 add_subdirectory(Console)
