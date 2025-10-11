@@ -3,7 +3,7 @@
  *  v. 2.0. If a copy of the MPL was not distributed with this file, You can
  *  obtain one at http://mozilla.org/MPL/2.0/.
  *
- *  The original code is copyright (c) 2022, open.mp team and contributors.
+ *  The original code is copyright (c) 2025, open.mp team and contributors.
  */
 
 #include "npc.hpp"
@@ -33,6 +33,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, specialAction_(SpecialAction_None)
 	, invulnerable_(false)
 	, spawning_(false)
+	, markedForKick_(false)
 	, meleeAttacking_(false)
 	, meleeAttackDelay_(0)
 	, meleeSecondaryAttack_(false)
@@ -2574,7 +2575,7 @@ int NPC::getCurrentPathPointIndex() const
 
 void NPC::tick(Microseconds elapsed, TimePoint now)
 {
-	if (player_)
+	if (player_ && !markedForKick_)
 	{
 		auto state = player_->getState();
 
@@ -2798,7 +2799,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 										// Check shooting again because NPC::shoot actually calls events and people may use stopAim in them.
 										// Therefore we are already in shooting_ == true scope, but it's not true anymore, so we don't want to
-										// Be stuck with the wrong applied keys. But let it do the rest, let it reduce ammo count and do reload checks. 
+										// Be stuck with the wrong applied keys. But let it do the rest, let it reduce ammo count and do reload checks.
 										if (shooting_)
 										{
 											applyKey(Key::AIM);

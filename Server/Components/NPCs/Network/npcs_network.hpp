@@ -10,6 +10,7 @@
 #include <sdk.hpp>
 #include <Server/Components/NPCs/npcs.hpp>
 #include <Impl/network_impl.hpp>
+#include "../NPC/npc.hpp"
 
 using namespace Impl;
 
@@ -77,6 +78,7 @@ public:
 		auto npc = npcComponent->get(id);
 		if (npc)
 		{
+			reinterpret_cast<NPC*>(npc)->setKickMarkState(true);
 			markedToBeKicked.push_back(npc->getID());
 		}
 	}
