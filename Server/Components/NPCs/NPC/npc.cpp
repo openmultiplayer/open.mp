@@ -32,6 +32,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, animationFlags_(0)
 	, specialAction_(SpecialAction_None)
 	, invulnerable_(false)
+	, spawning_(false)
 	, meleeAttacking_(false)
 	, meleeAttackDelay_(0)
 	, meleeSecondaryAttack_(false)
@@ -264,7 +265,9 @@ void NPC::spawn()
 	lastDamager_ = nullptr;
 	lastDamagerWeapon_ = PlayerWeapon_End;
 
+	spawning_ = true;
 	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCSpawn, *this);
+	spawning_ = false;
 }
 
 void NPC::respawn()
@@ -1438,7 +1441,7 @@ void NPC::exitVehicle()
 
 bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 {
-	if (player_->getState() != PlayerState_OnFoot)
+	if (player_->getState() != PlayerState_OnFoot && spawning_ == false)
 	{
 		spawn();
 	}

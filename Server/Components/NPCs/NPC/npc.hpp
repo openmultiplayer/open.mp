@@ -402,6 +402,7 @@ private:
 	PlayerSpecialAction specialAction_;
 	bool invulnerable_;
 	PlayerSurfingData surfingData_;
+	bool spawning_;
 
 	// Attack data
 	bool meleeAttacking_;
