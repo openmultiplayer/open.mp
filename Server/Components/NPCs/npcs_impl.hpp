@@ -46,6 +46,16 @@ public:
 
 	void reset() override
 	{
+		auto shallowCopy = storage._entries();
+		for (auto npc : shallowCopy)
+		{
+			release(npc->getID());
+		}
+
+		pathManager_.destroyAll();
+		recordManager_.unloadAllRecords();
+		nodeManager_.closeAllNodes();
+		shouldCallCustomEvents = true;
 	}
 
 	INetwork* getNetwork() override;
