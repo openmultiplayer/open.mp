@@ -21,6 +21,7 @@
 #include "Vehicle/Events.hpp"
 #include "GangZone/Events.hpp"
 #include "CustomModels/Events.hpp"
+#include "NPC/Events.hpp"
 
 Scripting::~Scripting()
 {
@@ -87,6 +88,10 @@ Scripting::~Scripting()
 	if (mgr->models)
 	{
 		mgr->models->getEventDispatcher().removeEventHandler(CustomModelsEvents::Get());
+	}
+	if (mgr->npcs)
+	{
+		mgr->npcs->getEventDispatcher().removeEventHandler(NPCEvents::Get());
 	}
 }
 
@@ -155,5 +160,9 @@ void Scripting::addEvents() const
 	if (mgr->models)
 	{
 		mgr->models->getEventDispatcher().addEventHandler(CustomModelsEvents::Get());
+	}
+	if (mgr->npcs)
+	{
+		mgr->npcs->getEventDispatcher().addEventHandler(NPCEvents::Get());
 	}
 }
