@@ -276,6 +276,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 
 	void ban(StringView reason) override;
 
+	void kick() override;
+
 	void spawn() override
 	{
 		// Remove from vehicle.
@@ -920,15 +922,9 @@ public:
 		return fightingStyle_;
 	}
 
-	void kick() override
-	{
-		kicked_ = true;
-		netData_.network->disconnect(*this);
-	}
-
 	void setSkillLevel(PlayerWeaponSkill skill, int level) override
 	{
-		if (skill < skillLevels_.size())
+		if (skill != PlayerWeaponSkill_Invalid && skill < skillLevels_.size())
 		{
 			skillLevels_[skill] = level;
 			NetCode::RPC::SetPlayerSkillLevel setPlayerSkillLevelRPC;

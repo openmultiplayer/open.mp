@@ -74,6 +74,12 @@ SCRIPT_API(GetVehicleRotationQuat, bool(IVehicle& vehicle, GTAQuat& quat))
 	return true;
 }
 
+SCRIPT_API(GetVehicleRotation, bool(IVehicle& vehicle, Vector3& rotation))
+{
+	rotation = vehicle.getRotation().ToEuler();
+	return true;
+}
+
 SCRIPT_API(GetVehicleDistanceFromPoint, float(IVehicle& vehicle, Vector3 pos))
 {
 	return glm::distance(vehicle.getPosition(), pos);
