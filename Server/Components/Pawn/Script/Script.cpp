@@ -381,6 +381,15 @@ __attribute__((noinline)) int amx_FindPublic_impl(AMX* amx, const char* name, in
 
 __attribute__((noinline)) int AMXAPI amx_Register_impl(AMX* amx, const AMX_NATIVE_INFO* list, int number)
 {
+	// Register all natives in the global registry
+	if (list != NULL)
+	{
+		for (int j = 0; (j < number || number == -1) && list[j].name != NULL; j++)
+		{
+			GlobalNativeRegistry::RegisterNative(list[j].name, list[j].func);
+		}
+	}
+
 	AMX_FUNCPART* func;
 	AMX_HEADER* hdr;
 	int i, numnatives, err;

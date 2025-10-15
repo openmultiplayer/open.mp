@@ -17,8 +17,10 @@
 
 #include <array>
 #include <exception>
+#include <functional>
 #include <string>
 #include <vector>
+#include <type_traits>
 
 #include <amx/amx.h>
 #include <amx/amxaux.h>
@@ -30,6 +32,28 @@ struct AMXCache
 {
 	int inited = false; ///< True when the AMX should be used
 	FlatHashMap<String, int> publics; ///< A cache of AMX publics
+};
+
+// Global pawn native registry for all registered pawn natives
+struct GlobalNativeRegistry
+{
+	static FlatHashMap<String, AMX_NATIVE>& GetRegistry()
+	{
+		static FlatHashMap<String, AMX_NATIVE> registry;
+		return registry;
+	}
+
+	static void RegisterNative(const char* name, AMX_NATIVE func)
+	{
+		GetRegistry()[String(name)] = func;
+	}
+
+	static AMX_NATIVE FindNative(const char* name)
+	{
+		auto& registry = GetRegistry();
+		auto it = registry.find(String(name));
+		return (it != registry.end()) ? it->second : nullptr;
+	}
 };
 
 class PawnScript : public IPawnScript
@@ -107,6 +131,277 @@ public:
 	using IPawnScript::Register;
 
 	void tryLoad(std::string const& path);
+
+	/// Find native from global registry (works even if script doesn't use it)
+	AMX_NATIVE FindNativeInRegistry(char const* name) const { return GlobalNativeRegistry::FindNative(name); }
+
+	cell CallNativeArray(const char* name, Span<Impl::NativeParam> params) override
+	{
+		return CallNativeArrayImpl(name, params);
+	}
+
+private:
+	cell CallNativeArrayImpl(const char* name, Span<Impl::NativeParam> params)
+	{
+		AMX_NATIVE native = FindNativeInRegistry(name);
+		if (!native)
+		{
+			return 0;
+		}
+
+		size_t argCount = params.size();
+		if (argCount == 0)
+		{
+			cell paramsArray[1] = { 0 };
+			return native(const_cast<AMX*>(&amx_), paramsArray);
+		}
+
+		DynamicArray<cell> paramsArray(argCount + 1);
+		paramsArray[0] = argCount * sizeof(cell);
+
+		cell amx_addr_save = GetHEA();
+
+		struct RefParamInfo
+		{
+			cell amx_addr;
+			void* ref_obj;
+			enum
+			{
+				INT,
+				FLOAT,
+				BOOL,
+				STRING,
+				VECTOR_INT,
+				VECTOR_FLOAT
+			} type;
+			size_t arraySize;
+			std::function<void(cell*)> readback;
+		};
+
+		DynamicArray<RefParamInfo> refParams;
+
+		for (size_t i = 0; i < argCount; ++i)
+		{
+			const auto& param = params[i];
+			cell amx_addr;
+			cell* phys_addr;
+
+			using ParamType = Impl::NativeParam::Type;
+
+			switch (param.type)
+			{
+			case ParamType::Int:
+				paramsArray[i + 1] = static_cast<cell>(param.intValue);
+				break;
+
+			case ParamType::Float:
+				paramsArray[i + 1] = amx_ftoc(param.floatValue);
+				break;
+
+			case ParamType::Bool:
+				paramsArray[i + 1] = param.boolValue ? 1 : 0;
+				break;
+
+			case ParamType::String:
+				PushString(&amx_addr, nullptr, StringView(param.stringValue), false, false);
+				paramsArray[i + 1] = amx_addr;
+				break;
+
+			case ParamType::ArrayInt:
+			{
+				const int* arr = static_cast<const int*>(param.arrayPtr);
+				DynamicArray<cell> cellArray(param.arraySize);
+				for (size_t j = 0; j < param.arraySize; ++j)
+				{
+					cellArray[j] = static_cast<cell>(arr[j]);
+				}
+				PushArray(&amx_addr, nullptr, cellArray.data(), cellArray.size());
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::ArrayFloat:
+			{
+				const float* arr = static_cast<const float*>(param.arrayPtr);
+				DynamicArray<cell> cellArray(param.arraySize);
+				for (size_t j = 0; j < param.arraySize; ++j)
+				{
+					cellArray[j] = amx_ftoc(arr[j]);
+				}
+				PushArray(&amx_addr, nullptr, cellArray.data(), cellArray.size());
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::RefInt:
+			{
+				auto* ref = static_cast<PawnRef<int>*>(param.refPtr);
+				Allot(1, &amx_addr, &phys_addr);
+				*phys_addr = static_cast<cell>(ref->get());
+				refParams.push_back({ amx_addr, param.refPtr, RefParamInfo::INT, 0, nullptr });
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::RefFloat:
+			{
+				auto* ref = static_cast<PawnRef<float>*>(param.refPtr);
+				Allot(1, &amx_addr, &phys_addr);
+				auto val = ref->get();
+				*phys_addr = amx_ftoc(val);
+				refParams.push_back({ amx_addr, param.refPtr, RefParamInfo::FLOAT, 0, nullptr });
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::RefBool:
+			{
+				auto* ref = static_cast<PawnRef<bool>*>(param.refPtr);
+				Allot(1, &amx_addr, &phys_addr);
+				*phys_addr = ref->get() ? 1 : 0;
+				refParams.push_back({ amx_addr, param.refPtr, RefParamInfo::BOOL, 0, nullptr });
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::RefString:
+			{
+				auto* ref = static_cast<PawnRef<String>*>(param.refPtr);
+				size_t bufferSize = param.arraySize;
+				Allot(bufferSize, &amx_addr, &phys_addr);
+
+				const String& currentStr = ref->get();
+				if (!currentStr.empty())
+				{
+					SetString(phys_addr, StringView(currentStr.c_str(), currentStr.length()), false, false, bufferSize);
+				}
+				else
+				{
+					*phys_addr = 0;
+				}
+
+				refParams.push_back({ amx_addr, param.refPtr, RefParamInfo::STRING, bufferSize, nullptr });
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::RefArrayInt:
+			{
+				auto* ref = static_cast<PawnRef<DynamicArray<int>>*>(param.refPtr);
+				size_t bufferSize = param.arraySize;
+				Allot(bufferSize, &amx_addr, &phys_addr);
+
+				const auto& currentVec = ref->get();
+				size_t initSize = std::min(currentVec.size(), bufferSize);
+				for (size_t j = 0; j < initSize; ++j)
+				{
+					phys_addr[j] = static_cast<cell>(currentVec[j]);
+				}
+
+				auto readback = [ref, bufferSize](cell* data)
+				{
+					auto& vec = ref->ref();
+					vec.clear();
+					vec.reserve(bufferSize);
+					vec.resize(bufferSize, 0);
+					for (size_t j = 0; j < bufferSize; ++j)
+					{
+						vec.push_back(static_cast<int>(data[j]));
+					}
+				};
+
+				refParams.push_back({ amx_addr, param.refPtr, RefParamInfo::VECTOR_INT, bufferSize, readback });
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+
+			case ParamType::RefArrayFloat:
+			{
+				auto* ref = static_cast<PawnRef<DynamicArray<float>>*>(param.refPtr);
+				size_t bufferSize = param.arraySize;
+				Allot(bufferSize, &amx_addr, &phys_addr);
+
+				const auto& currentVec = ref->get();
+				size_t initSize = std::min(currentVec.size(), bufferSize);
+				for (size_t j = 0; j < initSize; ++j)
+				{
+					phys_addr[j] = amx_ftoc(currentVec[j]);
+				}
+
+				auto readback = [ref, bufferSize](cell* data)
+				{
+					auto& vec = ref->ref();
+					vec.clear();
+					vec.reserve(bufferSize);
+					vec.resize(bufferSize, 0);
+					for (size_t j = 0; j < bufferSize; ++j)
+					{
+						vec.push_back(amx_ctof(data[j]));
+					}
+				};
+
+				refParams.push_back({ amx_addr, param.refPtr, RefParamInfo::VECTOR_FLOAT, bufferSize, readback });
+				paramsArray[i + 1] = amx_addr;
+				break;
+			}
+			}
+		}
+
+		cell result = native(const_cast<AMX*>(&amx_), paramsArray.data());
+
+		// Read back reference parameters
+		for (auto& refInfo : refParams)
+		{
+			cell* phys_addr;
+			GetAddr(refInfo.amx_addr, &phys_addr);
+
+			if (phys_addr)
+			{
+				switch (refInfo.type)
+				{
+				case RefParamInfo::FLOAT:
+				{
+					auto* ref = static_cast<PawnRef<float>*>(refInfo.ref_obj);
+					ref->ref() = amx_ctof(*phys_addr);
+					break;
+				}
+				case RefParamInfo::BOOL:
+				{
+					auto* ref = static_cast<PawnRef<bool>*>(refInfo.ref_obj);
+					ref->ref() = (*phys_addr != 0);
+					break;
+				}
+				case RefParamInfo::INT:
+				{
+					auto* ref = static_cast<PawnRef<int>*>(refInfo.ref_obj);
+					ref->ref() = static_cast<int>(*phys_addr);
+					break;
+				}
+				case RefParamInfo::STRING:
+				{
+					auto* ref = static_cast<PawnRef<String>*>(refInfo.ref_obj);
+					DynamicArray<char> buffer(refInfo.arraySize + 1);
+					GetString(buffer.data(), phys_addr, false, refInfo.arraySize);
+					ref->ref() = String(buffer.data());
+					break;
+				}
+				case RefParamInfo::VECTOR_INT:
+				case RefParamInfo::VECTOR_FLOAT:
+				{
+					if (refInfo.readback)
+					{
+						refInfo.readback(phys_addr);
+					}
+					break;
+				}
+				}
+			}
+		}
+
+		Release(amx_addr_save);
+
+		return result;
+	}
 
 private:
 	ICore* serverCore;
