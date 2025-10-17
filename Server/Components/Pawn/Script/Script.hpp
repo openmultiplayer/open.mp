@@ -301,12 +301,10 @@ private:
 				auto readback = [ref, bufferSize](cell* data)
 				{
 					auto& vec = ref->ref();
-					vec.clear();
-					vec.reserve(bufferSize);
 					vec.resize(bufferSize, 0);
 					for (size_t j = 0; j < bufferSize; ++j)
 					{
-						vec.push_back(static_cast<int>(data[j]));
+						vec[j] = static_cast<int>(data[j]);
 					}
 				};
 
@@ -331,12 +329,10 @@ private:
 				auto readback = [ref, bufferSize](cell* data)
 				{
 					auto& vec = ref->ref();
-					vec.clear();
-					vec.reserve(bufferSize);
-					vec.resize(bufferSize, 0);
+					vec.resize(bufferSize, 0.0f);
 					for (size_t j = 0; j < bufferSize; ++j)
 					{
-						vec.push_back(amx_ctof(data[j]));
+						vec[j] = amx_ctof(data[j]);
 					}
 				};
 
