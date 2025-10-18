@@ -256,6 +256,13 @@ public:
 	{
 		PawnManager::Get()->pluginManager.ProcessTick();
 		PawnManager::Get()->ProcessTick(elapsed, now);
+		
+		// Notify registered event handlers (helps us do work and allows async plugins to process callbacks)
+		PawnManager::Get()->eventDispatcher.dispatch(
+			[elapsed, now](PawnEventHandler* handler) {
+				handler->onTick(elapsed, now);
+			}
+		);
 	}
 
 	void onFree(IComponent* component) override
