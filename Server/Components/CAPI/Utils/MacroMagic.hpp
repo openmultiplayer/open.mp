@@ -13,6 +13,7 @@
 #define EXPORT_OMP_API extern "C" SDK_EXPORT
 
 using OutputStringViewPtr = CAPIStringView*;
+using OutputStringBufferPtr = CAPIStringBuffer*;
 using StringCharPtr = const char*;
 using objectPtr = void*;
 using voidPtr = void*;

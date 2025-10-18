@@ -238,19 +238,29 @@ inline PlayerDataType* GetPlayerData(IPlayer* player)
 	if (entity_output == nullptr)                                    \
 	return failret
 
-#define COPY_STRING_TO_CAPI_STRING_VIEW(output, src, len_) \
+#define COPY_STRING_TO_CAPI_STRING_BUFFER(output, src, len_) \
 	if (output)                                            \
 	{                                                      \
-		output->len = len_;                                \
-		memcpy(output->data, src, uint32_t(len_));         \
+		if (output->data && output->capacity >= len_)      \
+		{                                                  \
+			if (len_ && src)                               \
+			{                                              \
+				output->len = len_;                        \
+				memcpy(output->data, src, uint32_t(len_)); \
+			}                                              \
+			if (output->capacity > len_)                   \
+			{                                              \
+				output->data[len_] = '\0';                 \
+			}                                              \
+		}                                                  \
 	}
 
-#define SET_CAPI_STRING_VIEW(output, str_view)             \
-	if (output)                                            \
-	{                                                      \
-		output->len = uint32_t(str_view.length());         \
-		output->data = const_cast<char*>(str_view.data()); \
+#define SET_CAPI_STRING_VIEW(output, str_view)     \
+	if (output)                                    \
+	{                                              \
+		output->len = uint32_t(str_view.length()); \
+		output->data = str_view.data();            \
 	}
 
 #define CREATE_CAPI_STRING_VIEW(str) \
-	CAPIStringView { static_cast<unsigned int>(str.length()), const_cast<char*>(str.data()) }
+	CAPIStringView { static_cast<unsigned int>(str.length()), str.data() }

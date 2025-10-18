@@ -757,7 +757,7 @@ OMP_CAPI(Player_GetFacingAngle, float(objectPtr player))
 	return angle;
 }
 
-OMP_CAPI(Player_GetIp, int(objectPtr player, OutputStringViewPtr ip))
+OMP_CAPI(Player_GetIp, int(objectPtr player, OutputStringBufferPtr ip))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, 0);
 	PeerNetworkData data = player_->getNetworkData();
@@ -767,7 +767,7 @@ OMP_CAPI(Player_GetIp, int(objectPtr player, OutputStringViewPtr ip))
 		if (PeerAddress::ToString(data.networkID.address, addressString))
 		{
 			auto len = addressString.length();
-			COPY_STRING_TO_CAPI_STRING_VIEW(ip, addressString.data(), len);
+			COPY_STRING_TO_CAPI_STRING_BUFFER(ip, addressString.data(), len);
 			return len;
 		}
 	}

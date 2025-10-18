@@ -27,10 +27,10 @@ OMP_CAPI(Config_GetAsFloat, float(StringCharPtr cvar))
 	return value;
 }
 
-OMP_CAPI(Config_GetAsString, int(StringCharPtr cvar, OutputStringViewPtr output))
+OMP_CAPI(Config_GetAsString, int(StringCharPtr cvar, OutputStringBufferPtr output))
 {
 	Impl::String value = Impl::String();
 	int len = getConfigOptionAsString(ComponentManager::Get()->core, cvar, value);
-	COPY_STRING_TO_CAPI_STRING_VIEW(output, value.data(), len);
+	COPY_STRING_TO_CAPI_STRING_BUFFER(output, value.data(), len);
 	return len;
 }

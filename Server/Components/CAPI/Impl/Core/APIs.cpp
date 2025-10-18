@@ -152,7 +152,7 @@ OMP_CAPI(Core_HideGameTextForAll, bool(int style))
 	return true;
 }
 
-OMP_CAPI(Core_NetworkStats, int(OutputStringViewPtr output))
+OMP_CAPI(Core_NetworkStats, int(OutputStringBufferPtr output))
 {
 	std::stringstream stream;
 	NetworkStats stats;
@@ -185,11 +185,11 @@ OMP_CAPI(Core_NetworkStats, int(OutputStringViewPtr output))
 		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
 	int len = stream.str().size();
-	COPY_STRING_TO_CAPI_STRING_VIEW(output, stream.str().c_str(), len);
+	COPY_STRING_TO_CAPI_STRING_BUFFER(output, stream.str().c_str(), len);
 	return len;
 }
 
-OMP_CAPI(Player_GetNetworkStats, int(objectPtr player, OutputStringViewPtr output))
+OMP_CAPI(Player_GetNetworkStats, int(objectPtr player, OutputStringBufferPtr output))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, 0);
 	std::stringstream stream;
@@ -216,7 +216,7 @@ OMP_CAPI(Player_GetNetworkStats, int(objectPtr player, OutputStringViewPtr outpu
 		<< "KBits per second received: " << std::setprecision(1) << (stats.bpsReceived / 1000.0) << std::endl;
 
 	int len = stream.str().size();
-	COPY_STRING_TO_CAPI_STRING_VIEW(output, stream.str().c_str(), len);
+	COPY_STRING_TO_CAPI_STRING_BUFFER(output, stream.str().c_str(), len);
 	return len;
 }
 
@@ -278,7 +278,7 @@ OMP_CAPI(Player_NetStatsGetConnectedTime, int(objectPtr player))
 	return ms;
 }
 
-OMP_CAPI(Player_NetStatsGetIpPort, bool(objectPtr player, OutputStringViewPtr output))
+OMP_CAPI(Player_NetStatsGetIpPort, bool(objectPtr player, OutputStringBufferPtr output))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
 	PeerNetworkData data = player_->getNetworkData();
@@ -289,7 +289,7 @@ OMP_CAPI(Player_NetStatsGetIpPort, bool(objectPtr player, OutputStringViewPtr ou
 		ip_port += ":";
 		ip_port += std::to_string(data.networkID.port);
 		int len = ip_port.length();
-		COPY_STRING_TO_CAPI_STRING_VIEW(output, ip_port.c_str(), len);
+		COPY_STRING_TO_CAPI_STRING_BUFFER(output, ip_port.c_str(), len);
 		return len;
 	}
 	return 0;
