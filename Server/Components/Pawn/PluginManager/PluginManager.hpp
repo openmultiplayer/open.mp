@@ -13,7 +13,6 @@
 #include <string>
 
 #include "../Plugin/Plugin.h"
-#include "../Singleton.hpp"
 
 using namespace Impl;
 
