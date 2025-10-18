@@ -8,7 +8,6 @@
 
 #pragma once
 #include "../ComponentManager.hpp"
-#include "../../Utils/Singleton.hpp"
 #include "sdk.hpp"
 
 template <EventPriorityType PRIORITY>

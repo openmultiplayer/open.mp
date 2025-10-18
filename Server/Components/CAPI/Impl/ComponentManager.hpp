@@ -9,7 +9,7 @@
 #pragma once
 #include <variant>
 
-#include "../Utils/Singleton.hpp"
+#include <Impl/Utils/singleton.hpp>
 #include "../Utils/MacroMagic.hpp"
 
 #include "sdk.hpp"

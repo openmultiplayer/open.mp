@@ -8,7 +8,6 @@
 
 #pragma once
 #include "../../Manager/Manager.hpp"
-#include "../../Singleton.hpp"
 #include "sdk.hpp"
 
 struct ObjectEvents : public ObjectEventHandler, public Singleton<ObjectEvents>

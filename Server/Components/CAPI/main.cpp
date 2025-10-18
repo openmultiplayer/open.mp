@@ -24,18 +24,17 @@ public:
 
 	StringView componentName() const override
 	{
-		return "open.mp C-API";
+		return "C-API";
 	}
 
 	SemanticVersion componentVersion() const override
 	{
-		return SemanticVersion(0, 1, 0, 0);
+		return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore* c) override
 	{
 		core_ = c;
-		core_->printLn("open.mp C-API component loaded");
 	}
 
 	void onInit(IComponentList* components) override
