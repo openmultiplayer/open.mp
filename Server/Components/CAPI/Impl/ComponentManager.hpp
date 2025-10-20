@@ -239,20 +239,20 @@ inline PlayerDataType* GetPlayerData(IPlayer* player)
 	return failret
 
 #define COPY_STRING_TO_CAPI_STRING_BUFFER(output, src, len_) \
-	if (output)                                            \
-	{                                                      \
-		if (output->data && output->capacity >= len_)      \
-		{                                                  \
-			if (len_ && src)                               \
-			{                                              \
-				output->len = len_;                        \
-				memcpy(output->data, src, uint32_t(len_)); \
-			}                                              \
-			if (output->capacity > len_)                   \
-			{                                              \
-				output->data[len_] = '\0';                 \
-			}                                              \
-		}                                                  \
+	if (output)                                              \
+	{                                                        \
+		if (output->data && output->capacity >= len_)        \
+		{                                                    \
+			if (len_ && src)                                 \
+			{                                                \
+				output->len = len_;                          \
+				memcpy(output->data, src, uint32_t(len_));   \
+			}                                                \
+			if (output->capacity > len_)                     \
+			{                                                \
+				output->data[len_] = '\0';                   \
+			}                                                \
+		}                                                    \
 	}
 
 #define SET_CAPI_STRING_VIEW(output, str_view)     \
