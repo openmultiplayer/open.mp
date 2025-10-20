@@ -141,40 +141,39 @@ private:
 	{
 		EventArgs_Common eventArgs;
 		constexpr std::size_t size = sizeof...(Args);
+		Impl::DynamicArray<void*> argsList;
 
-		if (size > 0)
+		if constexpr (size > 0)
 		{
-			eventArgs.list = new void*[size];
+			argsList.reserve(size);
+			(argsList.push_back(&args), ...);
 		}
 
 		eventArgs.size = size;
+		eventArgs.list = size > 0 ? argsList.data() : nullptr;
+
+		if (container->second.empty())
+		{
+			return returnHandler == EventReturnHandler::StopAtTrue ? false : true;
+		}
+
 		bool result = true;
 		for (auto cb : container->second)
 		{
 			if (cb)
 			{
-				int i = 0;
-				([&]
-					{
-						eventArgs.list[i] = &args;
-						i++;
-					}(),
-					...);
-
 				auto ret = cb(&eventArgs);
 				switch (returnHandler)
 				{
 				case EventReturnHandler::StopAtFalse:
 					if (!ret)
 					{
-						delete[] eventArgs.list;
 						return false;
 					}
 					break;
 				case EventReturnHandler::StopAtTrue:
 					if (ret)
 					{
-						delete[] eventArgs.list;
 						return true;
 					}
 					break;
@@ -186,7 +185,6 @@ private:
 			}
 		}
 
-		delete[] eventArgs.list;
 		return result;
 	}
 };
