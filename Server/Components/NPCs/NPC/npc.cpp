@@ -532,6 +532,11 @@ void NPC::setInterior(unsigned int interior)
 	if (player_)
 	{
 		player_->setInterior(interior);
+
+		// Emulate player interior change
+		NetworkBitStream bs;
+		bs.writeUINT8(static_cast<uint8_t>(interior));
+		npcComponent_->emulateRPCIn(*player_, NetCode::RPC::OnPlayerInteriorChange::PacketID, bs);
 	}
 }
 
