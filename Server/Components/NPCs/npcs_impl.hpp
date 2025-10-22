@@ -26,12 +26,12 @@ class NPCComponent final : public INPCComponent, public CoreEventHandler, public
 public:
 	StringView componentName() const override
 	{
-		return "Controllable NPCs";
+		return "NPCs";
 	}
 
 	SemanticVersion componentVersion() const override
 	{
-		return SemanticVersion(0, 0, 1, 0);
+		return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
 	}
 
 	void onLoad(ICore* c) override;
