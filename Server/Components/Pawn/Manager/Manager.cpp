@@ -606,9 +606,25 @@ void PawnManager::closeAMX(PawnScript& script, bool isEntryScript)
 	// Call OnPlayerDisconnect on entry script close first, then we proceed to do unload player callback
 	if (isEntryScript)
 	{
+		// We keep a set of NPC IPlayer handles here to prevent calling OnPlayerDisconnect for them.
+		// This is because during a server reset/restart/gmx all NPCs are destroyed before reaching this part
+		// Of the code, just like the other server sided entites we destroy, i.e. objects, pickups, and etc.
+		FlatPtrHashSet<IPlayer> npcPlayerHandles;
+		if (PawnManager::Get()->npcs)
+		{
+			for (auto npc : *PawnManager::Get()->npcs)
+			{
+				npcPlayerHandles.insert(npc->getPlayer());
+			}
+		}
+
 		for (auto const p : players->entries())
 		{
-			PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_Quit);
+			bool isNPC = npcPlayerHandles.find(p) != npcPlayerHandles.end();
+			if (!isNPC)
+			{
+				PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_Quit);
+			}
 		}
 	}
 

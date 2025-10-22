@@ -22,6 +22,7 @@
 #include <Server/Components/Variables/variables.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/Vehicles/vehicle_models.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 #include <sdk.hpp>
 
 using namespace Impl;
@@ -43,6 +44,7 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 	IConsoleComponent* console = nullptr;
 	IGangZonesComponent* gangzones = nullptr;
 	ITimersComponent* timers = nullptr;
+	INPCComponent* npcs = nullptr;
 	IObject* obj = nullptr;
 	IObject* obj2 = nullptr;
 	IVehicle* vehicle = nullptr;
@@ -995,7 +997,10 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 				text += aimAt + "~n~";
 			}
 
-			td->setText(text);
+			if (td)
+			{
+				td->setText(text);
+			}
 		}
 		return true;
 	}
@@ -1085,6 +1090,7 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 		console = components->queryComponent<IConsoleComponent>();
 		gangzones = components->queryComponent<IGangZonesComponent>();
 		timers = components->queryComponent<ITimersComponent>();
+		npcs = components->queryComponent<INPCComponent>();
 
 		if (classes)
 		{
@@ -1198,6 +1204,22 @@ struct TestComponent : public IComponent, public PlayerDamageEventHandler, publi
 			pos2.min = { 49.0f, -31.5f };
 			pos2.max = { 110.0f, 29.5f };
 			gz2 = gangzones->create(pos2);
+		}
+
+		if (npcs)
+		{
+			auto npc = npcs->create("NPC_Test");
+			if (npc)
+			{
+				npc->spawn();
+				npc->setPosition({ 32.7f, 77.3f, 0.0f }, true);
+
+				if (gz1 && gangzones)
+				{
+					gz1->showForPlayer(*npc->getPlayer(), Colour::FromRGBA(0xFF0000FF));
+					gangzones->useGangZoneCheck(*gz1, true);
+				}
+			}
 		}
 	}
 
