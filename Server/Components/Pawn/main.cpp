@@ -167,6 +167,7 @@ public:
 		mgr->vars = components->queryComponent<IVariablesComponent>();
 		mgr->vehicles = components->queryComponent<IVehiclesComponent>();
 		mgr->models = components->queryComponent<ICustomModelsComponent>();
+		mgr->npcs = components->queryComponent<INPCComponent>();
 
 		scriptingInstance.addEvents();
 
@@ -284,6 +285,7 @@ public:
 		COMPONENT_UNLOADED(mgr->vars)
 		COMPONENT_UNLOADED(mgr->vehicles)
 		COMPONENT_UNLOADED(mgr->models)
+		COMPONENT_UNLOADED(mgr->npcs)
 	}
 
 	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override

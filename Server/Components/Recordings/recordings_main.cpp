@@ -85,21 +85,22 @@ private:
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
-			NetCode::Packet::PlayerFootSync footSync;
-			if (!footSync.read(bs))
-			{
-				return false;
-			}
-
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
 			if (!data)
 			{
-				return false;
+				return true;
 			}
 
 			// Write on foot recording data
 			if (data->type_ == PlayerRecordingType_OnFoot && data->file_.good())
 			{
+
+				NetCode::Packet::PlayerFootSync footSync;
+				if (!footSync.read(bs))
+				{
+					return true;
+				}
+
 				const uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
 
@@ -135,21 +136,21 @@ private:
 
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
-			NetCode::Packet::PlayerVehicleSync vehicleSync;
-			if (!vehicleSync.read(bs))
-			{
-				return false;
-			}
-
 			PlayerRecordingData* data = queryExtension<PlayerRecordingData>(peer);
 			if (!data)
 			{
-				return false;
+				return true;
 			}
 
 			// Write driver recording data
 			if (data->type_ == PlayerRecordingType_Driver && data->file_.good())
 			{
+
+				NetCode::Packet::PlayerVehicleSync vehicleSync;
+				if (!vehicleSync.read(bs))
+				{
+					return true;
+				}
 				const uint32_t timeSinceRecordStart = duration_cast<Milliseconds>(Time::now() - data->start_).count();
 				data->file_.write(reinterpret_cast<const char*>(&timeSinceRecordStart), sizeof(uint32_t));
 

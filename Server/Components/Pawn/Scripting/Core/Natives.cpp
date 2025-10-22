@@ -285,6 +285,8 @@ SCRIPT_API(UnBlockIpAddress, bool(std::string const& ipAddress))
 
 SCRIPT_API(ConnectNPC, bool(std::string const& name, std::string const& script))
 {
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "ConnectNPC() function is deprecated and will be removed in future. You must use open.mp's official NPC functions.");
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "Check our documentations: https://open.mp/docs .");
 	PawnManager::Get()->core->connectBot(name, script);
 	return true;
 }
