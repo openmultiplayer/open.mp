@@ -105,6 +105,7 @@ void ComponentManager::Init(ICore* c, IComponentList* clist)
 	gangzones = GetComponent<IGangZonesComponent>();
 	checkpoints = GetComponent<ICheckpointsComponent>();
 	dialogs = GetComponent<IDialogsComponent>();
+	npcs = GetComponent<INPCComponent>();
 }
 
 void ComponentManager::InitializeEvents()

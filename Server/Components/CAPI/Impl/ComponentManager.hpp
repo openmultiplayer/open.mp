@@ -12,23 +12,24 @@
 #include <Impl/Utils/singleton.hpp>
 #include "../Utils/MacroMagic.hpp"
 
-#include "sdk.hpp"
-#include "Server/Components/Pickups/pickups.hpp"
-#include "Server/Components/Objects/objects.hpp"
-#include "Server/Components/TextLabels/textlabels.hpp"
-#include "Server/Components/Vehicles/vehicles.hpp"
-#include "Server/Components/Checkpoints/checkpoints.hpp"
-#include "Server/Components/Actors/actors.hpp"
-#include "Server/Components/Classes/classes.hpp"
-#include "Server/Components/Console/console.hpp"
-#include "Server/Components/CustomModels/custommodels.hpp"
-#include "Server/Components/Dialogs/dialogs.hpp"
-#include "Server/Components/Menus/menus.hpp"
-#include "Server/Components/TextDraws/textdraws.hpp"
-#include "Server/Components/Recordings/recordings.hpp"
-#include "Server/Components/TextDraws/textdraws.hpp"
-#include "Server/Components/TextLabels/textlabels.hpp"
-#include "Server/Components/GangZones/gangzones.hpp"
+#include <sdk.hpp>
+#include <Server/Components/Pickups/pickups.hpp>
+#include <Server/Components/Objects/objects.hpp>
+#include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/Vehicles/vehicles.hpp>
+#include <Server/Components/Checkpoints/checkpoints.hpp>
+#include <Server/Components/Actors/actors.hpp>
+#include <Server/Components/Classes/classes.hpp>
+#include <Server/Components/Console/console.hpp>
+#include <Server/Components/CustomModels/custommodels.hpp>
+#include <Server/Components/Dialogs/dialogs.hpp>
+#include <Server/Components/Menus/menus.hpp>
+#include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Recordings/recordings.hpp>
+#include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/TextLabels/textlabels.hpp>
+#include <Server/Components/GangZones/gangzones.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 
 enum class EventReturnHandler
 {
@@ -55,6 +56,7 @@ public:
 	IGangZonesComponent* gangzones = nullptr;
 	ICheckpointsComponent* checkpoints = nullptr;
 	IDialogsComponent* dialogs = nullptr;
+	INPCComponent* npcs = nullptr;
 
 	/// Store open.mp components
 	void Init(ICore* c, IComponentList* clist);
@@ -199,6 +201,12 @@ inline PlayerDataType* GetPlayerData(IPlayer* player)
 	}
 	return queryExtension<PlayerDataType>(*player);
 }
+
+/// Component check, return fail_ret if not available
+#define COMPONENT_CHECK_RET(pool, failret)  \
+	if (!ComponentManager::Get()->pool) \
+		return failret;                 \
+	auto pool = ComponentManager::Get()->pool;
 
 /// Cast object pointer to entity type, return fail_ret if not available
 #define ENTITY_CAST_RET(entity_type, entity, output, failret) \
