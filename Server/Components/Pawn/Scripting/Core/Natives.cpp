@@ -270,6 +270,10 @@ SCRIPT_API(BlockIpAddress, bool(std::string const& ipAddress, int timeMS))
 
 SCRIPT_API(UnBlockIpAddress, bool(std::string const& ipAddress))
 {
+	if (ipAddress.empty())
+	{
+		return false;
+	}
 	BanEntry entry(ipAddress);
 	for (INetwork* network : PawnManager::Get()->core->getNetworks())
 	{
@@ -596,10 +600,10 @@ SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, OutputOnlyString& 
 	return getConfigOptionAsString(cvar, buffer);
 }
 
-SCRIPT_API(GetWeaponName, bool(int weaponid, OutputOnlyString& weapon))
+SCRIPT_API(GetWeaponName, int(int weaponid, OutputOnlyString& weapon))
 {
 	weapon = PawnManager::Get()->core->getWeaponName(PlayerWeapon(weaponid));
-	return true;
+	return std::get<StringView>(weapon).length();
 }
 
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
@@ -640,7 +644,7 @@ SCRIPT_API(NetStats_GetConnectedTime, int(IPlayer& player))
 	return stats.connectionElapsedTime;
 }
 
-SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
+SCRIPT_API_FAILRET(NetStats_GetIpPort, -1, int(IPlayer& player, OutputOnlyString& output))
 {
 	PeerNetworkData data = player.getNetworkData();
 	PeerAddress::AddressString addressString;
@@ -651,9 +655,9 @@ SCRIPT_API(NetStats_GetIpPort, bool(IPlayer& player, OutputOnlyString& output))
 		ip_port += std::to_string(data.networkID.port);
 		// Scope-allocated string, copy it
 		output = ip_port;
-		return true;
+		return std::get<String>(output).length();
 	}
-	return false;
+	return FailRet;
 }
 
 SCRIPT_API(NetStats_MessagesReceived, int(IPlayer& player))
@@ -700,6 +704,10 @@ SCRIPT_API(SendRconCommand, bool(cell const* format))
 	if (console)
 	{
 		AmxStringFormatter command(format, GetAMX(), GetParams(), 1);
+		if (command.empty())
+		{
+			return false;
+		}
 		console->send(command);
 	}
 	return true;
@@ -711,6 +719,10 @@ SCRIPT_API(SendRconCommandf, bool(cell const* format))
 	if (console)
 	{
 		AmxStringFormatter command(format, GetAMX(), GetParams(), 1);
+		if (command.empty())
+		{
+			return false;
+		}
 		console->send(command);
 	}
 	return true;
@@ -725,6 +737,10 @@ SCRIPT_API(SetDeathDropAmount, bool(int amount))
 SCRIPT_API(SetGameModeText, bool(cell const* format))
 {
 	AmxStringFormatter string(format, GetAMX(), GetParams(), 1);
+	if (string.empty())
+	{
+		return false;
+	}
 	PawnManager::Get()->core->setData(SettableCoreDataType::ModeText, string);
 	return true;
 }
@@ -748,7 +764,8 @@ SCRIPT_API(SetNameTagDrawDistance, bool(float distance))
 
 SCRIPT_API(SetTeamCount, bool(int count))
 {
-	throw pawn_natives::NotImplemented();
+	PawnManager::Get()->core->logLn(LogLevel::Warning, "SetTeamCount() function is removed.");
+	return true;
 }
 
 SCRIPT_API(SetWeather, bool(int weatherid))
