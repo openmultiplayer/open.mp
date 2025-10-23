@@ -33,6 +33,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
 #include <Server/Components/NPCs/npcs.hpp>
+#include <Impl/Utils/singleton.hpp>
 #include <sdk.hpp>
 
 #include <algorithm>
@@ -43,7 +44,6 @@
 
 #include "../PluginManager/PluginManager.hpp"
 #include "../Script/Script.hpp"
-#include "../Singleton.hpp"
 
 using namespace Impl;
 

@@ -12,6 +12,7 @@
 #include "../Types.hpp"
 #include "../../format.hpp"
 #include <Impl/network_impl.hpp>
+#include <Impl/Utils/helpers.hpp>
 #include <iomanip>
 #include <math.h>
 #include <sstream>
@@ -348,164 +349,27 @@ SCRIPT_API(GameTextForAllf, bool(int time, int style, cell const* format))
 	return true;
 }
 
-int getConfigOptionAsInt(std::string const& cvar)
-{
-	IConfig* config = PawnManager::Get()->config;
-	auto res = config->getNameFromAlias(cvar);
-	bool* v0 = nullptr;
-	int* v1 = nullptr;
-	if (!res.second.empty())
-	{
-		if (res.first)
-		{
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
-		}
-		if (!(v1 = config->getInt(res.second)))
-		{
-			v0 = config->getBool(res.second);
-		}
-	}
-	else
-	{
-		if (!(v1 = config->getInt(cvar)))
-		{
-			v0 = config->getBool(cvar);
-		}
-	}
-	if (v1)
-	{
-		return *v1;
-	}
-	else if (v0)
-	{
-		PawnManager::Get()->core->logLn(LogLevel::Warning, "Boolean console variable \"%s\" retreived as integer.", cvar.c_str());
-		return *v0;
-	}
-	else
-	{
-		return 0;
-	}
-}
-
-bool getConfigOptionAsBool(std::string const& cvar)
-{
-	IConfig* config = PawnManager::Get()->config;
-	auto res = config->getNameFromAlias(cvar);
-	bool* v0 = nullptr;
-	int* v1 = nullptr;
-	if (!res.second.empty())
-	{
-		if (res.first)
-		{
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
-		}
-		if (!(v0 = config->getBool(res.second)))
-		{
-			v1 = config->getInt(res.second);
-		}
-	}
-	else
-	{
-		if (!(v0 = config->getBool(cvar)))
-		{
-			v1 = config->getInt(cvar);
-		}
-	}
-	if (v0)
-	{
-		return *v0;
-	}
-	else if (v1)
-	{
-		PawnManager::Get()->core->logLn(LogLevel::Warning, "Integer console variable \"%s\" retreived as boolean.", cvar.c_str());
-		return *v1 != 0;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-float getConfigOptionAsFloat(std::string const& cvar)
-{
-	IConfig* config = PawnManager::Get()->config;
-	auto res = config->getNameFromAlias(cvar);
-	float* var = nullptr;
-	if (!res.second.empty())
-	{
-		if (res.first)
-		{
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
-		}
-		var = config->getFloat(res.second);
-	}
-	else
-	{
-		var = config->getFloat(cvar);
-	}
-	if (var)
-	{
-		return *var;
-	}
-	else
-	{
-		return 0.0f;
-	}
-}
-
-int getConfigOptionAsString(std::string const& cvar, OutputOnlyString& buffer)
-{
-	// Special case, converting `gamemode0` to `pawn.main_scripts[0]`.  It is the only string to
-	// array change.
-	IConfig* config = PawnManager::Get()->config;
-	bool gm = cvar.substr(0, 8) == "gamemode";
-	auto res = config->getNameFromAlias(gm ? "gamemode" : cvar);
-	if (!res.second.empty())
-	{
-		if (res.first)
-		{
-			PawnManager::Get()->core->logLn(LogLevel::Warning, "Deprecated console variable \"%s\", use \"%.*s\" instead.", cvar.c_str(), PRINT_VIEW(res.second));
-		}
-		if (gm)
-		{
-			size_t i = std::stoi("0" + cvar.substr(8));
-			DynamicArray<StringView> mainScripts(i + 1);
-			size_t n = config->getStrings(res.second, Span<StringView>(mainScripts.data(), mainScripts.size()));
-			if (i < n)
-			{
-				buffer = mainScripts[i];
-			}
-		}
-		else
-		{
-			buffer = config->getString(res.second);
-		}
-	}
-	else
-	{
-		buffer = config->getString(cvar);
-	}
-	return std::get<StringView>(buffer).length();
-}
-
 SCRIPT_API(GetConsoleVarAsBool, bool(std::string const& cvar))
 {
-	return getConfigOptionAsBool(cvar);
+	return getConfigOptionAsBool(PawnManager::Get()->core, cvar);
 }
 
 SCRIPT_API(GetConsoleVarAsInt, int(std::string const& cvar))
 {
-	return getConfigOptionAsInt(cvar);
+	return getConfigOptionAsInt(PawnManager::Get()->core, cvar);
 }
 
 SCRIPT_API(GetConsoleVarAsFloat, float(std::string const& cvar))
 {
-	return getConfigOptionAsFloat(cvar);
+	return getConfigOptionAsFloat(PawnManager::Get()->core, cvar);
 }
 
 SCRIPT_API(GetConsoleVarAsString, int(std::string const& cvar, OutputOnlyString& buffer))
 {
-	return getConfigOptionAsString(cvar, buffer);
+	Impl::String str_buffer;
+	auto result = getConfigOptionAsString(PawnManager::Get()->core, cvar, str_buffer);
+	buffer = str_buffer;
+	return result;
 }
 
 SCRIPT_API(GetNetworkStats, bool(OutputOnlyString& output))
@@ -582,22 +446,25 @@ SCRIPT_API(GetServerTickRate, int())
 
 SCRIPT_API(GetServerVarAsBool, bool(std::string const& cvar))
 {
-	return getConfigOptionAsBool(cvar);
+	return getConfigOptionAsBool(PawnManager::Get()->core, cvar);
 }
 
 SCRIPT_API(GetServerVarAsInt, int(std::string const& cvar))
 {
-	return getConfigOptionAsInt(cvar);
+	return getConfigOptionAsInt(PawnManager::Get()->core, cvar);
 }
 
 SCRIPT_API(GetServerVarAsFloat, float(std::string const& cvar))
 {
-	return getConfigOptionAsFloat(cvar);
+	return getConfigOptionAsFloat(PawnManager::Get()->core, cvar);
 }
 
 SCRIPT_API(GetServerVarAsString, int(std::string const& cvar, OutputOnlyString& buffer))
 {
-	return getConfigOptionAsString(cvar, buffer);
+	Impl::String str_buffer;
+	auto result = getConfigOptionAsString(PawnManager::Get()->core, cvar, str_buffer);
+	buffer = str_buffer;
+	return result;
 }
 
 SCRIPT_API(GetWeaponName, int(int weaponid, OutputOnlyString& weapon))
