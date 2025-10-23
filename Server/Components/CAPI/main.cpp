@@ -69,6 +69,7 @@ public:
 		COMPONENT_UNLOADED(mgr->textlabels)
 		COMPONENT_UNLOADED(mgr->vehicles)
 		COMPONENT_UNLOADED(mgr->models)
+		COMPONENT_UNLOADED(mgr->npcs)
 	}
 
 	void free() override
