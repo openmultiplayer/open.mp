@@ -203,9 +203,9 @@ inline PlayerDataType* GetPlayerData(IPlayer* player)
 }
 
 /// Component check, return fail_ret if not available
-#define COMPONENT_CHECK_RET(pool, failret)  \
-	if (!ComponentManager::Get()->pool) \
-		return failret;                 \
+#define COMPONENT_CHECK_RET(pool, failret) \
+	if (!ComponentManager::Get()->pool)    \
+		return failret;                    \
 	auto pool = ComponentManager::Get()->pool;
 
 /// Cast object pointer to entity type, return fail_ret if not available

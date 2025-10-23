@@ -20,6 +20,7 @@
 #include "Vehicles/Events.hpp"
 #include "GangZones/Events.hpp"
 #include "CustomModels/Events.hpp"
+#include "NPCs/Events.hpp"
 #include "ComponentManager.hpp"
 
 #define ADD_EVENT_HANDLER(component, event_instance)                                                                                    \
@@ -123,6 +124,7 @@ void ComponentManager::InitializeEvents()
 	ADD_EVENT_HANDLER(console, ConsoleEvents);
 	ADD_EVENT_HANDLER(gangzones, GangZoneEvents);
 	ADD_EVENT_HANDLER(models, CustomModelsEvents);
+	ADD_EVENT_HANDLER(npcs, NPCEvents);
 
 	ADD_PLAYER_EVENT_HANDLER(players, Spawn, PlayerEvents);
 	ADD_PLAYER_EVENT_HANDLER(players, Connect, PlayerEvents);
@@ -151,6 +153,7 @@ void ComponentManager::FreeEvents()
 	REMOVE_EVENT_HANDLER(console, ConsoleEvents);
 	REMOVE_EVENT_HANDLER(gangzones, GangZoneEvents);
 	REMOVE_EVENT_HANDLER(models, CustomModelsEvents);
+	REMOVE_EVENT_HANDLER(npcs, NPCEvents);
 
 	REMOVE_PLAYER_EVENT_HANDLER(players, Spawn, PlayerEvents);
 	REMOVE_PLAYER_EVENT_HANDLER(players, Connect, PlayerEvents);

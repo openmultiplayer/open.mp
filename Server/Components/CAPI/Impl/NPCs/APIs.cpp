@@ -73,18 +73,9 @@ OMP_CAPI(NPC_GetPos, bool(objectPtr npc, float* x, float* y, float* z))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	Vector3 position = npc_->getPosition();
-	if (x)
-	{
-		*x = position.x;
-	}
-	if (y)
-	{
-		*y = position.y;
-	}
-	if (z)
-	{
-		*z = position.z;
-	}
+	*x = position.x;
+	*y = position.y;
+	*z = position.z;
 	return true;
 }
 
@@ -99,18 +90,9 @@ OMP_CAPI(NPC_GetRot, bool(objectPtr npc, float* rx, float* ry, float* rz))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	Vector3 rotation = npc_->getRotation().ToEuler();
-	if (rx)
-	{
-		*rx = rotation.x;
-	}
-	if (ry)
-	{
-		*ry = rotation.y;
-	}
-	if (rz)
-	{
-		*rz = rotation.z;
-	}
+	*rx = rotation.x;
+	*ry = rotation.y;
+	*rz = rotation.z;
 	return true;
 }
 
@@ -126,10 +108,6 @@ OMP_CAPI(NPC_SetFacingAngle, bool(objectPtr npc, float angle))
 OMP_CAPI(NPC_GetFacingAngle, bool(objectPtr npc, float* angle))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
-	if (!angle)
-	{
-		return false;
-	}
 	auto rotation = npc_->getRotation().ToEuler();
 	*angle = rotation.z;
 	return true;
@@ -716,61 +694,34 @@ OMP_CAPI(NPC_AddPointToPath, bool(int pathId, float x, float y, float z, float s
 
 OMP_CAPI(NPC_RemovePointFromPath, bool(int pathId, int pointIndex))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->removePointFromPath(pathId, pointIndex);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->removePointFromPath(pathId, pointIndex);
 }
 
 OMP_CAPI(NPC_ClearPath, bool(int pathId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->clearPath(pathId);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->clearPath(pathId);
 }
 
 OMP_CAPI(NPC_GetPathPointCount, int(int pathId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->getPathPointCount(pathId);
-	}
-	return -1;
+	COMPONENT_CHECK_RET(npcs, -1);
+	return npcs->getPathPointCount(pathId);
 }
 
 OMP_CAPI(NPC_GetPathPoint, bool(int pathId, int pointIndex, float* x, float* y, float* z, float* stopRange))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
+	COMPONENT_CHECK_RET(npcs, false);
+	Vector3 position;
+	float sr;
+	if (npcs->getPathPoint(pathId, pointIndex, position, sr))
 	{
-		Vector3 position;
-		float sr;
-		if (component->getPathPoint(pathId, pointIndex, position, sr))
-		{
-			if (x)
-			{
-				*x = position.x;
-			}
-			if (y)
-			{
-				*y = position.y;
-			}
-			if (z)
-			{
-				*z = position.z;
-			}
-			if (stopRange)
-			{
-				*stopRange = sr;
-			}
-			return true;
-		}
+		*x = position.x;
+		*y = position.y;
+		*z = position.z;
+		*stopRange = sr;
+		return true;
 	}
 	return false;
 }
@@ -783,22 +734,14 @@ OMP_CAPI(NPC_GetCurrentPathPointIndex, int(objectPtr npc))
 
 OMP_CAPI(NPC_IsValidPath, bool(int pathId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->isValidPath(pathId);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->isValidPath(pathId);
 }
 
 OMP_CAPI(NPC_HasPathPointInRange, bool(int pathId, float x, float y, float z, float radius))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->hasPathPointInRange(pathId, Vector3(x, y, z), radius);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->hasPathPointInRange(pathId, Vector3(x, y, z), radius);
 }
 
 OMP_CAPI(NPC_MoveByPath, bool(objectPtr npc, int pathId, int moveType, float moveSpeed, bool reverse))
@@ -829,34 +772,13 @@ OMP_CAPI(NPC_GetAnimation, bool(objectPtr npc, int* animationId, float* delta, b
 	bool l, lx, ly, f;
 	int t;
 	npc_->getAnimation(aId, d, l, lx, ly, f, t);
-	if (animationId)
-	{
-		*animationId = aId;
-	}
-	if (delta)
-	{
-		*delta = d;
-	}
-	if (loop)
-	{
-		*loop = l;
-	}
-	if (lockX)
-	{
-		*lockX = lx;
-	}
-	if (lockY)
-	{
-		*lockY = ly;
-	}
-	if (freeze)
-	{
-		*freeze = f;
-	}
-	if (time)
-	{
-		*time = t;
-	}
+	*animationId = aId;
+	*delta = d;
+	*loop = l;
+	*lockX = lx;
+	*lockY = ly;
+	*freeze = f;
+	*time = t;
 	return true;
 }
 
@@ -936,164 +858,100 @@ OMP_CAPI(NPC_IsPlaybackPaused, bool(objectPtr npc))
 
 OMP_CAPI(NPC_LoadRecord, int(const char* filePath))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component && filePath)
+	COMPONENT_CHECK_RET(npcs, -1);
+	if (filePath)
 	{
-		return component->loadRecord(filePath);
+		return npcs->loadRecord(filePath);
 	}
 	return -1;
 }
 
 OMP_CAPI(NPC_UnloadRecord, bool(int recordId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->unloadRecord(recordId);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->unloadRecord(recordId);
 }
 
 OMP_CAPI(NPC_IsValidRecord, bool(int recordId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->isValidRecord(recordId);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->isValidRecord(recordId);
 }
 
 OMP_CAPI(NPC_GetRecordCount, int())
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return static_cast<int>(component->getRecordCount());
-	}
-	return 0;
+	COMPONENT_CHECK_RET(npcs, 0);
+	return static_cast<int>(npcs->getRecordCount());
 }
 
 OMP_CAPI(NPC_UnloadAllRecords, bool())
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		component->unloadAllRecords();
-		return true;
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	npcs->unloadAllRecords();
+	return true;
 }
 
 OMP_CAPI(NPC_OpenNode, bool(int nodeId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->openNode(nodeId);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->openNode(nodeId);
 }
 
 OMP_CAPI(NPC_CloseNode, bool(int nodeId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		component->closeNode(nodeId);
-		return true;
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	npcs->closeNode(nodeId);
+	return true;
 }
 
 OMP_CAPI(NPC_IsNodeOpen, bool(int nodeId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->isNodeOpen(nodeId);
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->isNodeOpen(nodeId);
 }
 
 OMP_CAPI(NPC_GetNodeType, int(int nodeId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->getNodeType(nodeId);
-	}
-	return 0;
+	COMPONENT_CHECK_RET(npcs, 0);
+	return npcs->getNodeType(nodeId);
 }
 
 OMP_CAPI(NPC_SetNodePoint, bool(int nodeId, int pointId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->setNodePoint(nodeId, static_cast<uint16_t>(pointId));
-	}
-	return false;
+	COMPONENT_CHECK_RET(npcs, false);
+	return npcs->setNodePoint(nodeId, static_cast<uint16_t>(pointId));
 }
 
 OMP_CAPI(NPC_GetNodePointPosition, bool(int nodeId, float* x, float* y, float* z))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
+	COMPONENT_CHECK_RET(npcs, false);
+	Vector3 position;
+	if (npcs->getNodePointPosition(nodeId, position))
 	{
-		Vector3 position;
-		if (component->getNodePointPosition(nodeId, position))
-		{
-			if (x)
-			{
-				*x = position.x;
-			}
-			if (y)
-			{
-				*y = position.y;
-			}
-			if (z)
-			{
-				*z = position.z;
-			}
-			return true;
-		}
+		*x = position.x;
+		*y = position.y;
+		*z = position.z;
+		return true;
 	}
 	return false;
 }
 
 OMP_CAPI(NPC_GetNodePointCount, int(int nodeId))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
-	{
-		return component->getNodePointCount(nodeId);
-	}
-	return 0;
+	COMPONENT_CHECK_RET(npcs, 0);
+	return npcs->getNodePointCount(nodeId);
 }
 
-OMP_CAPI(NPC_GetNodeInfo, bool(int nodeId, int* vehicleNodes, int* pedNodes, int* naviNodes))
+OMP_CAPI(NPC_GetNodeInfo, bool(int nodeId, uint32_t* vehicleNodes, uint32_t* pedNodes, uint32_t* naviNodes))
 {
-	auto component = ComponentManager::Get()->GetComponent<INPCComponent>();
-	if (component)
+	COMPONENT_CHECK_RET(npcs, false);
+	uint32_t vehNodes, pedNodes32, naviNodes32;
+	if (npcs->getNodeInfo(nodeId, vehNodes, pedNodes32, naviNodes32))
 	{
-		uint32_t vehNodes, pedNodes32, naviNodes32;
-		if (component->getNodeInfo(nodeId, vehNodes, pedNodes32, naviNodes32))
-		{
-			if (vehicleNodes)
-			{
-				*vehicleNodes = static_cast<int>(vehNodes);
-			}
-			if (pedNodes)
-			{
-				*pedNodes = static_cast<int>(pedNodes32);
-			}
-			if (naviNodes)
-			{
-				*naviNodes = static_cast<int>(naviNodes32);
-			}
-			return true;
-		}
+		*vehicleNodes = vehNodes;
+		*pedNodes = pedNodes32;
+		*naviNodes = naviNodes32;
+		return true;
 	}
 	return false;
 }
@@ -1162,18 +1020,9 @@ OMP_CAPI(NPC_GetSurfingOffset, bool(objectPtr npc, float* x, float* y, float* z)
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	auto data = npc_->getSurfingData();
-	if (x)
-	{
-		*x = data.offset.x;
-	}
-	if (y)
-	{
-		*y = data.offset.y;
-	}
-	if (z)
-	{
-		*z = data.offset.z;
-	}
+	*x = data.offset.x;
+	*y = data.offset.y;
+	*z = data.offset.z;
 	return true;
 }
 
