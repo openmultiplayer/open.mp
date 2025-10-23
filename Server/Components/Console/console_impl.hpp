@@ -214,10 +214,7 @@ public:
 		threadData = new ThreadProcData { true, this };
 		cinThread = std::thread(ThreadProc, threadData);
 		nativeThreadHandle = cinThread.native_handle();
-
-#ifndef WIN32
 		cinThread.detach();
-#endif
 	}
 
 	void onReady() override
