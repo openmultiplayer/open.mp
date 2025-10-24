@@ -1153,24 +1153,22 @@ void NPC::aimAt(const Vector3& point, bool shoot, int shootDelay, bool setAngle,
 		return;
 	}
 
-	// Set the aiming flag
-	if (!aiming_)
+	if (aiming_)
 	{
-		// Get the shooting start tick
-		shootUpdateTime_ = lastUpdate_;
-		reloading_ = false;
+		stopAim();
 	}
+
+	// Get the shooting start tick
+	shootUpdateTime_ = lastUpdate_;
+	reloading_ = false;
 
 	// Update aiming data
 	aimOffsetFrom_ = offsetFrom;
 	updateAimData(point, setAngle);
 
 	// Set keys
-	if (!aiming_)
-	{
-		aiming_ = true;
-		applyKey(Key::AIM);
-	}
+	applyKey(Key::AIM);
+	aiming_ = true;
 
 	// Set the shoot delay
 	auto updateRate = npcComponent_->getGeneralNPCUpdateRate();
