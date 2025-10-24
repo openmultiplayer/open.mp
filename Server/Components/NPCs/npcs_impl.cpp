@@ -187,6 +187,11 @@ void NPCComponent::onPoolEntryDestroyed(IPlayer& player)
 			npc->stopMove();
 			npc->resetFollowingPlayer();
 		}
+
+		if (npc->isAiming() && npc->isAimingAtPlayer(player))
+		{
+			npc->stopAim();
+		}
 	}
 }
 
