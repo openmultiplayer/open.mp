@@ -27,8 +27,6 @@ struct NPCRecord
 	DynamicArray<NetCode::Packet::PlayerVehicleSync> vehicleData;
 };
 
-constexpr int INVALID_RECORD_ID = -1;
-
 class NPC;
 class NPCRecordManager;
 

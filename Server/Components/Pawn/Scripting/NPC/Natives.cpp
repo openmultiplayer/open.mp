@@ -123,10 +123,25 @@ SCRIPT_API(NPC_IsMoving, bool(INPC& npc))
 	return npc.isMoving();
 }
 
+SCRIPT_API(NPC_IsMovingToPlayer, bool(INPC& npc, IPlayer& player))
+{
+	return npc.isMovingToPlayer(player);
+}
+
 SCRIPT_API(NPC_SetSkin, bool(INPC& npc, int model))
 {
 	npc.setSkin(model);
 	return true;
+}
+
+SCRIPT_API(NPC_GetSkin, bool(INPC& npc))
+{
+	auto player = npc.getPlayer();
+	if (player)
+	{
+		return player->getSkin();
+	}
+	return -1;
 }
 
 SCRIPT_API(NPC_IsStreamedIn, bool(INPC& npc, IPlayer& player))
@@ -932,7 +947,7 @@ SCRIPT_API(NPC_IsInvulnerable, bool(INPC& npc))
 	return npc.isInvulnerable();
 }
 
-SCRIPT_API(NPC_SetSurfingOffset, bool(INPC& npc, Vector3 offset))
+SCRIPT_API(NPC_SetSurfingOffsets, bool(INPC& npc, Vector3 offset))
 {
 	auto data = npc.getSurfingData();
 	data.offset = offset;
@@ -940,7 +955,7 @@ SCRIPT_API(NPC_SetSurfingOffset, bool(INPC& npc, Vector3 offset))
 	return true;
 }
 
-SCRIPT_API(NPC_GetSurfingOffset, bool(INPC& npc, Vector3& offset))
+SCRIPT_API(NPC_GetSurfingOffsets, bool(INPC& npc, Vector3& offset))
 {
 	auto data = npc.getSurfingData();
 	offset = data.offset;
@@ -1021,5 +1036,55 @@ SCRIPT_API_FAILRET(NPC_GetSurfingPlayerObject, INVALID_OBJECT_ID, int(INPC& npc)
 SCRIPT_API(NPC_ResetSurfingData, bool(INPC& npc))
 {
 	npc.resetSurfingData();
+	return true;
+}
+
+SCRIPT_API(NPC_IsSpawned, bool(INPC& npc))
+{
+	auto player = npc.getPlayer();
+	if (player)
+	{
+		auto state = player->getState();
+		if (state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger || state == PlayerState_Spawned)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+SCRIPT_API(NPC_Kill, bool(INPC& npc, IPlayer* killer, int reason))
+{
+	npc.kill(killer, reason);
+	return true;
+}
+
+SCRIPT_API(NPC_SetVelocity, bool(INPC& npc, Vector3 velocity))
+{
+	npc.setVelocity(velocity, true);
+	return true;
+}
+
+SCRIPT_API(NPC_GetVelocity, bool(INPC& npc, Vector3& velocity))
+{
+	velocity = npc.getVelocity();
+	return true;
+}
+
+SCRIPT_API(NPC_GetPlayerAimingAt, int(INPC& npc))
+{
+	auto player = npc.getPlayerAimingAt();
+	return player ? player->getID() : INVALID_PLAYER_ID;
+}
+
+SCRIPT_API(NPC_GetPlayerMovingTo, int(INPC& npc))
+{
+	auto player = npc.getPlayerMovingTo();
+	return player ? player->getID() : INVALID_PLAYER_ID;
+}
+
+SCRIPT_API(NPC_SetWeaponState, bool(INPC& npc, int weaponState))
+{
+	npc.setWeaponState(PlayerWeaponState(weaponState));
 	return true;
 }

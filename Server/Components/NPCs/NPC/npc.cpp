@@ -71,6 +71,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, aimOffsetFrom_({ 0.0f, 0.0f, 0.0f })
 	, aimOffset_({ 0.0f, 0.0f, 0.0f })
 	, updateAimAngle_(false)
+	, playerAimingAt_(nullptr)
 	, betweenCheckFlags_(EntityCheckType::None)
 	, hitId_(0)
 	, hitType_(PlayerBulletHitType_None)
@@ -505,6 +506,11 @@ void NPC::stopMove()
 bool NPC::isMoving() const
 {
 	return moving_;
+}
+
+bool NPC::isMovingToPlayer(IPlayer& player) const
+{
+	return followingPlayer_ != nullptr;
 }
 
 void NPC::setSkin(int model)
@@ -1194,6 +1200,7 @@ void NPC::aimAtPlayer(IPlayer& atPlayer, bool shoot, int shootDelay, bool setAng
 	hitId_ = atPlayer.getID();
 	hitType_ = PlayerBulletHitType_Player;
 	aimOffset_ = offset;
+	playerAimingAt_ = &atPlayer;
 }
 
 void NPC::stopAim()
@@ -1217,6 +1224,7 @@ void NPC::stopAim()
 	hitType_ = PlayerBulletHitType_None;
 	updateAimAngle_ = false;
 	betweenCheckFlags_ = EntityCheckType::None;
+	playerAimingAt_ = nullptr;
 
 	// Reset keys
 	removeKey(Key::AIM);
@@ -1874,6 +1882,16 @@ void NPC::updateWeaponState()
 		setWeaponState(PlayerWeaponState_NoBullets);
 		break;
 	}
+}
+
+IPlayer* NPC::getPlayerAimingAt()
+{
+	return playerAimingAt_;
+}
+
+IPlayer* NPC::getPlayerMovingTo()
+{
+	return followingPlayer_;
 }
 
 void NPC::kill(IPlayer* killer, uint8_t weapon)
