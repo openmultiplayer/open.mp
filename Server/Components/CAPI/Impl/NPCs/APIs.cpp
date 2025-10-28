@@ -49,6 +49,12 @@ OMP_CAPI(NPC_IsValid, bool(objectPtr npc))
 	return npcs->get(npc_->getID()) != nullptr;
 }
 
+OMP_CAPI(NPC_GetPlayer, objectPtr(objectPtr npc))
+{
+	POOL_ENTITY_RET(npcs, INPC, npc, npc_, nullptr);
+	return npc_->getPlayer();
+}
+
 OMP_CAPI(NPC_Spawn, bool(objectPtr npc))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
