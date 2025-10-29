@@ -9,7 +9,7 @@
 #include "../ComponentManager.hpp"
 #include <Server/Components/NPCs/npcs.hpp>
 
-OMP_CAPI(NPC_Create, objectPtr(const char* name))
+OMP_CAPI(NPC_Create, objectPtr(StringCharPtr name, int* id))
 {
 	COMPONENT_CHECK_RET(npcs, nullptr);
 	if (name)
@@ -17,6 +17,7 @@ OMP_CAPI(NPC_Create, objectPtr(const char* name))
 		auto npc = npcs->create(name);
 		if (npc)
 		{
+			*id = npc->getID();
 			return npc;
 		}
 	}
@@ -46,6 +47,12 @@ OMP_CAPI(NPC_IsValid, bool(objectPtr npc))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	return npcs->get(npc_->getID()) != nullptr;
+}
+
+OMP_CAPI(NPC_GetPlayer, objectPtr(objectPtr npc))
+{
+	POOL_ENTITY_RET(npcs, INPC, npc, npc_, nullptr);
+	return npc_->getPlayer();
 }
 
 OMP_CAPI(NPC_Spawn, bool(objectPtr npc))
@@ -782,7 +789,7 @@ OMP_CAPI(NPC_GetAnimation, bool(objectPtr npc, int* animationId, float* delta, b
 	return true;
 }
 
-OMP_CAPI(NPC_ApplyAnimation, bool(objectPtr npc, const char* animlib, const char* animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time))
+OMP_CAPI(NPC_ApplyAnimation, bool(objectPtr npc, StringCharPtr animlib, StringCharPtr animname, float delta, bool loop, bool lockX, bool lockY, bool freeze, int time))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	if (!animlib || !animname)
@@ -814,7 +821,7 @@ OMP_CAPI(NPC_GetSpecialAction, int(objectPtr npc))
 	return npc_->getSpecialAction();
 }
 
-OMP_CAPI(NPC_StartPlayback, bool(objectPtr npc, const char* recordName, bool autoUnload, float startPosX, float startPosY, float startPosZ, float startRotX, float startRotY, float startRotZ))
+OMP_CAPI(NPC_StartPlayback, bool(objectPtr npc, StringCharPtr recordName, bool autoUnload, float startPosX, float startPosY, float startPosZ, float startRotX, float startRotY, float startRotZ))
 {
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	if (!recordName)
@@ -856,7 +863,7 @@ OMP_CAPI(NPC_IsPlaybackPaused, bool(objectPtr npc))
 	return npc_->isPlaybackPaused();
 }
 
-OMP_CAPI(NPC_LoadRecord, int(const char* filePath))
+OMP_CAPI(NPC_LoadRecord, int(StringCharPtr filePath))
 {
 	COMPONENT_CHECK_RET(npcs, -1);
 	if (filePath)

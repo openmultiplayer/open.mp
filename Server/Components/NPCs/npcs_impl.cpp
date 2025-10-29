@@ -187,6 +187,11 @@ void NPCComponent::onPoolEntryDestroyed(IPlayer& player)
 			npc->stopMove();
 			npc->resetFollowingPlayer();
 		}
+
+		if (npc->isAiming() && npc->isAimingAtPlayer(player))
+		{
+			npc->stopAim();
+		}
 	}
 }
 
@@ -284,7 +289,7 @@ void NPCComponent::destroy(INPC& npc)
 int NPCComponent::createPath()
 {
 	NPCPath* path = pathManager_.create();
-	return path ? path->getID() : -1;
+	return path ? path->getID() : INVALID_PATH_ID;
 }
 
 bool NPCComponent::destroyPath(int pathId)

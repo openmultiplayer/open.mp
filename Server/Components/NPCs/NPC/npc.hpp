@@ -50,6 +50,8 @@ public:
 
 	bool isMoving() const override;
 
+	bool isMovingToPlayer(IPlayer& player) const override;
+
 	void setSkin(int model) override;
 
 	bool isStreamedInForPlayer(const IPlayer& other) const override;
@@ -111,6 +113,8 @@ public:
 	bool isInfiniteAmmoEnabled() const override;
 
 	PlayerWeaponState getWeaponState() const override;
+
+	void setWeaponState(PlayerWeaponState state) override;
 
 	void setAmmoInClip(int ammo) override;
 
@@ -246,15 +250,17 @@ public:
 
 	void resetSurfingData() override;
 
+	void kill(IPlayer* killer, uint8_t weapon) override;
+
+	IPlayer* getPlayerAimingAt() override;
+
+	IPlayer* getPlayerMovingTo() override;
+
 	void setAnimation(uint16_t animationId, uint16_t flags);
 
 	void processPlayback(TimePoint now);
 
-	void setWeaponState(PlayerWeaponState state);
-
 	void updateWeaponState();
-
-	void kill(IPlayer* killer, uint8_t weapon);
 
 	void processDamage(IPlayer* damager, float damage, uint8_t weapon, BodyPart bodyPart, bool handleHealthAndArmour);
 
@@ -465,6 +471,7 @@ private:
 	Vector3 aimOffsetFrom_;
 	Vector3 aimOffset_;
 	bool updateAimAngle_;
+	IPlayer* playerAimingAt_;
 
 	// Weapon raycast/shot checks data
 	EntityCheckType betweenCheckFlags_;
