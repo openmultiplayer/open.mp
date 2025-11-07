@@ -395,7 +395,7 @@ public:
 			return nullptr;
 		}
 		IVehicle* ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
-		if (modelID == 538 || modelID == 537)
+		if (ret && (modelID == 538 || modelID == 537))
 		{
 			int carridgeModel = modelID == 538 ? 570 : 569;
 			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 0);
