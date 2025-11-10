@@ -394,14 +394,59 @@ public:
 		{
 			return nullptr;
 		}
-		IVehicle* ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
+
+		IVehicle* ret = nullptr;
 		if (modelID == 538 || modelID == 537)
 		{
+			auto findConsecutiveFreeIds = [&](size_t count)
+			{
+				int candidate = storage.findFreeIndex(storage.Lower);
+				while (candidate < storage.Upper - count + 1)
+				{
+					bool all_free = true;
+					for (size_t i = 1; i < count; i++)
+					{
+						if (storage.get(candidate + i) != nullptr)
+						{
+							candidate = storage.findFreeIndex(candidate + i + 1);
+							all_free = false;
+							break;
+						}
+					}
+
+					if (all_free)
+					{
+						return candidate;
+					}
+				}
+
+				return -1;
+			};
+
+			int startId = findConsecutiveFreeIds(4);
+			if (startId < 0)
+			{
+				core->logLn(LogLevel::Warning, "Creation of the train failed due to the absence of 4 consecutive vehicle IDs.");
+				return nullptr;
+			}
+
+			ret = createWithMustHint(startId, VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
+			if (!ret)
+			{
+				core->logLn(LogLevel::Warning, "Creation of the train failed because the locomotive could not be created.");
+				return nullptr;
+			}
+
 			int carridgeModel = modelID == 538 ? 570 : 569;
-			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 0);
-			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 1);
-			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 2);
+			ret->addCarriage(createWithMustHint(startId + 1, VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 0);
+			ret->addCarriage(createWithMustHint(startId + 2, VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 1);
+			ret->addCarriage(createWithMustHint(startId + 3, VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 2);
 		}
+		else
+		{
+			ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
+		}
+
 		return ret;
 	}
 
@@ -409,6 +454,31 @@ public:
 	{
 		IVehicle* vehicle = storage.emplace(this, data);
 
+		if (vehicle)
+		{
+			++preloadModels[data.modelID - 400];
+
+			static bool delay_warn = false;
+			if (!delay_warn && data.respawnDelay == Seconds(0))
+			{
+				core->logLn(LogLevel::Warning, "Vehicle created with respawn delay 0 which is undefined behaviour that might change in the future.");
+				delay_warn = true;
+			}
+		}
+
+		return vehicle;
+	}
+
+	IVehicle* createWithMustHint(int hint, const VehicleSpawnData& data)
+	{
+		int vehicleId = storage.claimHint(hint, this, data);
+		if (hint != vehicleId)
+		{
+			storage.release(vehicleId, true);
+			return nullptr;
+		}
+
+		IVehicle* vehicle = storage.get(vehicleId);
 		if (vehicle)
 		{
 			++preloadModels[data.modelID - 400];
