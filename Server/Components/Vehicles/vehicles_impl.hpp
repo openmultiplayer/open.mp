@@ -547,7 +547,7 @@ public:
 
 					// Trains shouldn't be respawned.
 					const int model = vehicle->getModel();
-					if (model == 537 || model == 538 || model == 569 || model == 570)
+					if (model == 537 || model == 538 || model == 570 || model == 569 || model == 449)
 					{
 						continue;
 					}
