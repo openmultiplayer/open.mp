@@ -390,7 +390,7 @@ public:
 		{
 			return nullptr;
 		}
-		if (!isStatic && (modelID == 538 || modelID == 537))
+		if (!isStatic && (modelID == 538 || modelID == 537 || modelID == 449))
 		{
 			return nullptr;
 		}
@@ -547,7 +547,7 @@ public:
 
 					// Trains shouldn't be respawned.
 					const int model = vehicle->getModel();
-					if (model == 537 || model == 538 || model == 569 || model == 570)
+					if (model == 537 || model == 538 || model == 570 || model == 569 || model == 449)
 					{
 						continue;
 					}
