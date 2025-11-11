@@ -390,7 +390,7 @@ public:
 		{
 			return nullptr;
 		}
-		if (!isStatic && (modelID == 538 || modelID == 537))
+		if (!isStatic && (modelID == 538 || modelID == 537 || modelID == 449))
 		{
 			return nullptr;
 		}
