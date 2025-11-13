@@ -350,40 +350,27 @@ private:
 			}
 
 			const size_t varStart = i + 2;
-			size_t end = varStart;
-			while (end < value.length() && value[end] != '}')
-			{
-				++end;
-			}
+			const size_t end = value.find('}', varStart);
 
-			if (end >= value.length())
+			if (end == String::npos)
 			{
 				result.append(value.substr(i));
 				break;
 			}
 
-			String fullVar = value.substr(varStart, end - varStart);
-			String varName;
-			String defaultValue;
+			const String fullVar = value.substr(varStart, end - varStart);
 			const size_t defaultPos = fullVar.find(":-");
-			if (defaultPos != String::npos)
-			{
-				varName = fullVar.substr(0, defaultPos);
-				defaultValue = fullVar.substr(defaultPos + 2);
-			}
-			else
-			{
-				varName = std::move(fullVar);
-			}
 
+			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
 			const char* envValue = std::getenv(varName.c_str());
+
 			if (envValue)
 			{
 				result.append(envValue);
 			}
 			else if (defaultPos != String::npos)
 			{
-				result.append(defaultValue);
+				result.append(fullVar.substr(defaultPos + 2));
 			}
 			else
 			{
