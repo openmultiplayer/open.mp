@@ -48,6 +48,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	bool* allowInteriorWeapons_;
 	bool* logConnectionMessages_;
 	int* maxBots;
+	int* maxPlayers;
 	StaticArray<bool, 256> allowNickCharacter;
 	TimePoint lastScoresAndPingsCached;
 
@@ -1724,6 +1725,12 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
 		}
 
+		// Check if regular players would exceed available slots after accounting for NPCs
+		if (!params.bot && playerList.size() >= *maxPlayers - *maxBots)
+		{
+			return { NewConnectionResult_NoPlayerSlot, nullptr };
+		}
+
 		if (!isNameValid(params.name) || isNameTaken(params.name, nullptr))
 		{
 			return { NewConnectionResult_BadName, nullptr };
@@ -2095,6 +2102,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
 		logConnectionMessages_ = config.getBool("logging.log_connection_messages");
 		maxBots = config.getInt("max_bots");
+		maxPlayers = config.getInt("max_players");
 
 		playerUpdateDispatcher.addEventHandler(this);
 		core.getEventDispatcher().addEventHandler(this, EventPriority_FairlyLow /* want this to execute after others */);
