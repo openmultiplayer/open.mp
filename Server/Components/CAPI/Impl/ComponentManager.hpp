@@ -122,7 +122,7 @@ public:
 			auto callbacks = container->find(name);
 			if (callbacks != container->end())
 			{
-				auto result = CallEventOfPriority(callbacks, returnHandler, args...);
+				result = CallEventOfPriority(callbacks, returnHandler, args...);
 			}
 		}
 
