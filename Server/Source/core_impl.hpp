@@ -47,6 +47,57 @@ using namespace Impl;
 
 typedef std::variant<int, String, float, DynamicArray<String>, bool> ConfigStorage;
 
+static const StaticArray<StringView, 39> ReadonlyKeys {
+	// Artwork
+	"artwork.cdn",
+	"artwork.enable",
+	"artwork.models_path",
+	"artwork.port",
+	"artwork.web_server_bind",
+	// Game
+	"game.lag_compensation_mode",
+	"game.use_all_animations",
+	"game.use_entry_exit_markers",
+	// Logging
+	"logging.file",
+	"logging.timestamp_format",
+	// Players
+	"max_players",
+	// Network
+	"network.aiming_sync_rate",
+	"network.bind",
+	"network.in_vehicle_sync_rate",
+	"network.mtu",
+	"network.on_foot_sync_rate",
+	"network.player_marker_sync_rate",
+	"network.stream_rate",
+	// Pawn
+	"pawn.legacy_plugins",
+	"pawn.main_scripts",
+	"pawn.side_scripts",
+	// RCON
+	"rcon.allow_teleport",
+	"rcon.enable",
+	// Ticks
+	"use_dyn_ticks",
+	// Legacy
+	"rcon",
+	"gamemode",
+	"filterscripts",
+	"plugins",
+	"logtimeformat",
+	"bind",
+	"mtu",
+	"onfoot_rate",
+	"incar_rate",
+	"weapon_rate",
+	"stream_rate",
+	"useartwork",
+	"artpath",
+	"lagcompmode",
+	"maxplayers"
+};
+
 static const std::map<String, ConfigStorage> Defaults {
 	{ "announce", true },
 	{ "chat_input_filter", true },
@@ -1367,7 +1418,7 @@ private:
 		return false;
 	}
 
-	bool setConfigFromString(StringView conf)
+	bool setConfigFromString(StringView conf, bool atRuntime = false)
 	{
 		size_t split = conf.find_first_of('=');
 		if (split == StringView::npos)
@@ -1389,13 +1440,21 @@ private:
 			return false;
 		}
 
-		return setConfigFromString(conf, key, value);
+		return setConfigFromString(conf, key, value, atRuntime);
 	}
 
-	bool setConfigFromString(StringView conf, StringView key, StringView value)
+	bool setConfigFromString(StringView conf, StringView key, StringView value, bool atRuntime = false)
 	{
 		try
 		{
+			bool isReadonly = std::find(ReadonlyKeys.begin(), ReadonlyKeys.end(), key) != ReadonlyKeys.end();
+			if (atRuntime && isReadonly)
+			{
+				logLn(LogLevel::Warning, "Modifying read-only key `%.*s` during runtime is not supported and may result in unexpected behaviour.", PRINT_VIEW(key));
+				logLn(LogLevel::Warning, "If you want to change this option, please do so in config.json and restart the server.");
+				return false;
+			}
+			
 			// Try the code twice - once for the given config, once for it translated from legacy.
 			bool retry = false;
 			do
@@ -2161,12 +2220,12 @@ public:
 		{
 			if (parameters.length() < 2 || *(parameters.data()) != '"' || *(parameters.data() + parameters.length() - 1) != '"')
 			{
-				setConfigFromString(parameters);
+				setConfigFromString(parameters, true /* atRuntime */);
 			}
 			else
 			{
 				// Remove `"`s.
-				setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2));
+				setConfigFromString(StringView(parameters.data() + 1, parameters.length() - 2), true /* atRuntime */);
 			}
 			updateNetworks();
 			return true;
@@ -2191,7 +2250,7 @@ public:
 				}
 				else
 				{
-					setConfigFromString(parameters, command, parameters);
+					setConfigFromString(parameters, command, parameters, true /* atRuntime */);
 					updateNetworks();
 				}
 				return true;
