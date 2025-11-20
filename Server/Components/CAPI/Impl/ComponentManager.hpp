@@ -106,7 +106,7 @@ public:
 		{
 			container = &defaultPriorityEvents;
 		}
-		else if constexpr (PRIORITY == EventPriorityType_FairlyHigh)
+		else if constexpr (PRIORITY == EventPriorityType_FairlyLow)
 		{
 			container = &fairlyLowPriorityEvents;
 		}
