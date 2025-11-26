@@ -116,6 +116,8 @@ public:
 
 	void setWeaponState(PlayerWeaponState state) override;
 
+	Vector3 getPositionMovingTo() const override;
+
 	void setAmmoInClip(int ammo) override;
 
 	int getAmmoInClip() const override;

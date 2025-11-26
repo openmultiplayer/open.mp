@@ -1103,3 +1103,9 @@ SCRIPT_API(NPC_SetWeaponState, bool(INPC& npc, int weaponState))
 	npc.setWeaponState(PlayerWeaponState(weaponState));
 	return true;
 }
+
+SCRIPT_API(NPC_GetPosMovingTo, bool(INPC& npc, Vector3& position))
+{
+	position = npc.getPositionMovingTo();
+	return true;
+}
