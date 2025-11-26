@@ -17,6 +17,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <cstdlib>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -317,6 +318,71 @@ private:
 
 	std::map<String, ConfigStorage> defaults;
 
+	String expandEnvironmentVariables(const String& value) const
+	{
+		String result;
+		result.reserve(value.length());
+
+		size_t i = 0;
+		while (i < value.length())
+		{
+			const char ch = value[i];
+
+			if (ch != '$')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			if (i + 1 < value.length() && value[i + 1] == '$')
+			{
+				result.push_back('$');
+				i += 2;
+				continue;
+			}
+
+			if (i + 1 >= value.length() || value[i + 1] != '{')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			const size_t varStart = i + 2;
+			const size_t end = value.find('}', varStart);
+
+			if (end == String::npos)
+			{
+				result.append(value.substr(i));
+				break;
+			}
+
+			const String fullVar = value.substr(varStart, end - varStart);
+			const size_t defaultPos = fullVar.find(":-");
+
+			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
+			const char* envValue = std::getenv(varName.c_str());
+
+			if (envValue)
+			{
+				result.append(envValue);
+			}
+			else if (defaultPos != String::npos)
+			{
+				result.append(fullVar.substr(defaultPos + 2));
+			}
+			else
+			{
+				result.append(value.substr(i, end - i + 1));
+			}
+
+			i = end + 1;
+		}
+
+		return result;
+	}
+
 	void processNode(const nlohmann::json::object_t& node, String ns = "")
 	{
 		for (const auto& kv : node)
@@ -337,7 +403,8 @@ private:
 			}
 			else if (v.is_string())
 			{
-				processed[key].emplace<String>(v.get<String>());
+				String strValue = v.get<String>();
+				processed[key].emplace<String>(expandEnvironmentVariables(strValue));
 			}
 			else if (v.is_array())
 			{
@@ -347,7 +414,8 @@ private:
 				{
 					if (arrVal.is_string())
 					{
-						vec.emplace_back(arrVal.get<String>());
+						String strValue = arrVal.get<String>();
+						vec.emplace_back(expandEnvironmentVariables(strValue));
 					}
 				}
 			}
