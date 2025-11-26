@@ -828,6 +828,7 @@ void RakNetLegacyNetwork::start()
 
 	IConfig& config = core->getConfig();
 	int maxPlayers = *config.getInt("max_players");
+	int minimumSendBPS = *config.getFloat("network.minimum_send_bits_per_second");
 
 	int port = *config.getInt("network.port");
 	int sleep = static_cast<int>(*config.getFloat("sleep"));
@@ -836,6 +837,8 @@ void RakNetLegacyNetwork::start()
 	bool* artwork_config = config.getBool("artwork.enable");
 	bool artwork = !artwork_config ? false : *artwork_config;
 	bool allow037 = *config.getBool("network.allow_037_clients");
+
+	SAMPRakNet::SetMinimumSendBitsPerSecond(minimumSendBPS); // Default: 96 kbps  (~12 KB/s)
 
 	query.setCore(core);
 
