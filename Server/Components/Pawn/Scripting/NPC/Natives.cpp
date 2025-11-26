@@ -144,6 +144,21 @@ SCRIPT_API(NPC_GetSkin, bool(INPC& npc))
 	return -1;
 }
 
+SCRIPT_API(NPC_GetCustomSkin, bool(INPC& npc))
+{
+	auto player = npc.getPlayer();
+	if (player)
+	{
+		IPlayerCustomModelsData* data = queryExtension<IPlayerCustomModelsData>(player);
+		if (!data)
+		{
+			return -1;
+		}
+		return data->getCustomSkin();
+	}
+	return -1;
+}
+
 SCRIPT_API(NPC_IsStreamedIn, bool(INPC& npc, IPlayer& player))
 {
 	return npc.isStreamedInForPlayer(player);
