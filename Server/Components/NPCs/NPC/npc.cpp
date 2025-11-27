@@ -1792,6 +1792,11 @@ void NPC::setWeaponState(PlayerWeaponState state)
 	}
 }
 
+Vector3 NPC::getPositionMovingTo() const
+{
+	return targetPosition_;
+}
+
 void NPC::updateWeaponState()
 {
 	switch (weapon_)
