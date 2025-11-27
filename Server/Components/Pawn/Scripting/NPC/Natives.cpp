@@ -550,7 +550,7 @@ SCRIPT_API(NPC_GetPathPoint, bool(int pathId, int pointIndex, Vector3& position,
 	return false;
 }
 
-SCRIPT_API(NPC_GetCurrentPathPointIndex, bool(INPC& npc))
+SCRIPT_API(NPC_GetCurrentPathPointIndex, int(INPC& npc))
 {
 	return npc.getCurrentPathPointIndex();
 }
