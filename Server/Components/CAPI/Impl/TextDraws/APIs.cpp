@@ -131,7 +131,7 @@ OMP_CAPI(TextDraw_SetFont, bool(objectPtr textdraw, int font))
 	return true;
 }
 
-OMP_CAPI(TextDraw_SetSetProportional, bool(objectPtr textdraw, bool set))
+OMP_CAPI(TextDraw_SetProportional, bool(objectPtr textdraw, bool set))
 {
 	POOL_ENTITY_RET(textdraws, ITextDraw, textdraw, textdraw_, false);
 	textdraw_->setProportional(set);
