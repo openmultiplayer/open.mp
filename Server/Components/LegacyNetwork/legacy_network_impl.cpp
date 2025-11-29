@@ -291,6 +291,12 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
 		core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 		core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 	}
+
+	if (npcComponent)
+	{
+		npcComponent->getPoolEventDispatcher().removeEventHandler(this);
+	}
+
 	rakNetServer.Disconnect(300);
 	RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
 }

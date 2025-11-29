@@ -28,6 +28,7 @@ public:
 	void onInit(IComponentList* components) override
 	{
 		legacyNetwork.setQueryConsole(components->queryComponent<IConsoleComponent>());
+		legacyNetwork.setNPCComponent(components->queryComponent<INPCComponent>());
 	}
 
 	void onFree(IComponent* component) override
