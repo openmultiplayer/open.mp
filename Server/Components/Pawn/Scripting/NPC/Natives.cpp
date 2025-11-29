@@ -144,6 +144,21 @@ SCRIPT_API(NPC_GetSkin, bool(INPC& npc))
 	return -1;
 }
 
+SCRIPT_API(NPC_GetCustomSkin, bool(INPC& npc))
+{
+	auto player = npc.getPlayer();
+	if (player)
+	{
+		IPlayerCustomModelsData* data = queryExtension<IPlayerCustomModelsData>(player);
+		if (!data)
+		{
+			return -1;
+		}
+		return data->getCustomSkin();
+	}
+	return -1;
+}
+
 SCRIPT_API(NPC_IsStreamedIn, bool(INPC& npc, IPlayer& player))
 {
 	return npc.isStreamedInForPlayer(player);
@@ -535,7 +550,7 @@ SCRIPT_API(NPC_GetPathPoint, bool(int pathId, int pointIndex, Vector3& position,
 	return false;
 }
 
-SCRIPT_API(NPC_GetCurrentPathPointIndex, bool(INPC& npc))
+SCRIPT_API(NPC_GetCurrentPathPointIndex, int(INPC& npc))
 {
 	return npc.getCurrentPathPointIndex();
 }
@@ -1086,5 +1101,11 @@ SCRIPT_API(NPC_GetPlayerMovingTo, int(INPC& npc))
 SCRIPT_API(NPC_SetWeaponState, bool(INPC& npc, int weaponState))
 {
 	npc.setWeaponState(PlayerWeaponState(weaponState));
+	return true;
+}
+
+SCRIPT_API(NPC_GetPosMovingTo, bool(INPC& npc, Vector3& position))
+{
+	position = npc.getPositionMovingTo();
 	return true;
 }
