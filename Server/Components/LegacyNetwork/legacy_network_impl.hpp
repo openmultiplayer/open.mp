@@ -58,6 +58,11 @@ public:
 		}
 	}
 
+	inline INPCComponent* getNPCComponent()
+	{
+		return npcComponent;
+	}
+
 	inline void setQueryConsole(IConsoleComponent* console)
 	{
 		query.setConsole(console);

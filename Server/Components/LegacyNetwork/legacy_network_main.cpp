@@ -37,6 +37,11 @@ public:
 		{
 			legacyNetwork.setQueryConsole(nullptr);
 		}
+
+		if (component == legacyNetwork.getNPCComponent())
+		{
+			legacyNetwork.setNPCComponent(nullptr);
+		}
 	}
 
 	INetwork* getNetwork() override
