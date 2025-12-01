@@ -291,6 +291,12 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
 		core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 		core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 	}
+
+	if (npcComponent)
+	{
+		npcComponent->getPoolEventDispatcher().removeEventHandler(this);
+	}
+
 	rakNetServer.Disconnect(300);
 	RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
 }
@@ -898,6 +904,15 @@ void RakNetLegacyNetwork::start()
 	if (gracePeriod)
 	{
 		SAMPRakNet::SetGracePeriod(*gracePeriod);
+	}
+
+	// Set reserved slots based on NPC count once more because slots reserved
+	// Before RakServer::Start are reset because RakPeer::Start calls RakPeer::Disconnect
+	// As well which resets the value for RakPeer::reservedSlots class member.
+	// Note: this behavior does not affect slots reserved in next executions.
+	if (npcComponent)
+	{
+		rakNetServer.ReserveSlots(npcComponent->count());
 	}
 }
 
