@@ -905,6 +905,15 @@ void RakNetLegacyNetwork::start()
 	{
 		SAMPRakNet::SetGracePeriod(*gracePeriod);
 	}
+
+	// Set reserved slots based on NPC count once more because slots reserved
+	// Before RakServer::Start are reset because RakPeer::Start calls RakPeer::Disconnect
+	// As well which resets the value for RakPeer::reservedSlots class member.
+	// Note: this behavior does not affect slots reserved in next executions.
+	if (npcComponent)
+	{
+		rakNetServer.ReserveSlots(npcComponent->count());
+	}
 }
 
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
