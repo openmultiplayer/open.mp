@@ -24,7 +24,7 @@ NPCPlayback::NPCPlayback(StringView filePath, StringView playbackPath, bool auto
 		recordId_ = recordManager_->loadRecord(fullPath);
 		if (recordId_ == INVALID_RECORD_ID)
 		{
-			// Log error: Playback file not found
+			core->logLn(LogLevel::Error, "[NPC] Playback initialization failed. Playback file '%.*s' not found.", PRINT_VIEW(fullPath));
 		}
 	}
 }
