@@ -274,9 +274,9 @@ void NPC::spawn()
 
 void NPC::respawn()
 {
-	// Make sure the player is already spawned
+	// Make sure the player is already spawned, but including dead state
 	auto state = player_->getState();
-	if (!(state == PlayerState_OnFoot || state == PlayerState_Driver || state == PlayerState_Passenger || state == PlayerState_Spawned))
+	if (!(state >= PlayerState_OnFoot && state <= PlayerState_Spawned))
 	{
 		return;
 	}
@@ -1649,7 +1649,7 @@ bool NPC::startPlayback(StringView recordName, bool autoUnload, const Vector3& p
 		stopPlayback();
 	}
 
-	playback_ = new NPCPlayback(recordName, playbackPath_, autoUnload, npcComponent_->getRecordManager());
+	playback_ = new NPCPlayback(recordName, playbackPath_, autoUnload, npcComponent_);
 	if (!playback_ || !playback_->isValid())
 	{
 		if (playback_)
@@ -1681,7 +1681,7 @@ bool NPC::startPlayback(int recordId, bool autoUnload, const Vector3& point, con
 		stopPlayback();
 	}
 
-	playback_ = new NPCPlayback(recordId, autoUnload, npcComponent_->getRecordManager());
+	playback_ = new NPCPlayback(recordId, autoUnload, npcComponent_);
 	if (!playback_ || !playback_->isValid())
 	{
 		if (playback_)

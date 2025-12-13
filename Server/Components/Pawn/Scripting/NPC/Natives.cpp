@@ -9,7 +9,23 @@
 #include "../Types.hpp"
 #include "sdk.hpp"
 #include <iostream>
+#define _USE_MATH_DEFINES
+#include <math.h>
 #include "../../format.hpp"
+
+inline float getAngleOfLine(float x, float y)
+{
+	float angle = atan2(y, x) * (180.0f / M_PI) + 270.0f;
+	if (angle >= 360.0f)
+	{
+		angle -= 360.0f;
+	}
+	else if (angle < 0.0f)
+	{
+		angle += 360.0f;
+	}
+	return angle;
+}
 
 SCRIPT_API(NPC_Create, int(const String& name))
 {
@@ -1107,5 +1123,19 @@ SCRIPT_API(NPC_SetWeaponState, bool(INPC& npc, int weaponState))
 SCRIPT_API(NPC_GetPosMovingTo, bool(INPC& npc, Vector3& position))
 {
 	position = npc.getPositionMovingTo();
+	return true;
+}
+
+SCRIPT_API(NPC_SetAngleToPos, bool(INPC& npc, Vector3 position))
+{
+	auto vec = position - npc.getPosition();
+	auto angle = getAngleOfLine(vec.x, vec.z);
+	openmp_scripting::NPC_SetFacingAngle(npc, angle);
+	return true;
+}
+
+SCRIPT_API(NPC_SetAngleToPlayer, bool(INPC& npc, IPlayer& player))
+{
+	openmp_scripting::NPC_SetAngleToPos(npc, player.getPosition());
 	return true;
 }

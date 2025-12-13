@@ -10,13 +10,15 @@
 #include "record_manager.hpp"
 #include "../NPC/npc.hpp"
 #include "../utils.hpp"
+#include "../npcs_impl.hpp"
 
-NPCPlayback::NPCPlayback(StringView filePath, StringView playbackPath, bool autoUnload, NPCRecordManager* recordManager)
+NPCPlayback::NPCPlayback(StringView filePath, StringView playbackPath, bool autoUnload, NPCComponent* npcComponent)
 	: autoUnload_(autoUnload)
 	, recordId_(INVALID_RECORD_ID)
 	, paused_(false)
 	, currentIndex_(0)
-	, recordManager_(recordManager)
+	, npcComponent_(npcComponent)
+	, recordManager_(npcComponent->getRecordManager())
 {
 	if (recordManager_)
 	{
@@ -24,17 +26,18 @@ NPCPlayback::NPCPlayback(StringView filePath, StringView playbackPath, bool auto
 		recordId_ = recordManager_->loadRecord(fullPath);
 		if (recordId_ == INVALID_RECORD_ID)
 		{
-			// Log error: Playback file not found
+			npcComponent_->getCore()->logLn(LogLevel::Error, "[NPC] Playback initialization failed. Playback file \"%s\" not found.", fullPath.c_str());
 		}
 	}
 }
 
-NPCPlayback::NPCPlayback(int recordId, bool autoUnload, NPCRecordManager* recordManager)
+NPCPlayback::NPCPlayback(int recordId, bool autoUnload, NPCComponent* npcComponent)
 	: autoUnload_(autoUnload)
 	, recordId_(recordId)
 	, paused_(false)
 	, currentIndex_(0)
-	, recordManager_(recordManager)
+	, npcComponent_(npcComponent)
+	, recordManager_(npcComponent->getRecordManager())
 {
 }
 
