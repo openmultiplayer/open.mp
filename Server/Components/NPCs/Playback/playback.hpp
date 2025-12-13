@@ -29,12 +29,13 @@ struct NPCRecord
 
 class NPC;
 class NPCRecordManager;
+class NPCComponent;
 
 class NPCPlayback
 {
 public:
-	NPCPlayback(StringView filePath, StringView playbackPath, bool autoUnload, NPCRecordManager* recordManager);
-	NPCPlayback(int recordId, bool autoUnload, NPCRecordManager* recordManager);
+	NPCPlayback(StringView filePath, StringView playbackPath, bool autoUnload, NPCComponent* npcComponent);
+	NPCPlayback(int recordId, bool autoUnload, NPCComponent* npcComponent);
 	~NPCPlayback();
 
 	bool initialize(const Vector3& startPoint = Vector3(0.0f, 0.0f, 0.0f), const GTAQuat& startRotation = GTAQuat());
@@ -59,5 +60,6 @@ private:
 	bool paused_;
 	NPCRecord recordData_;
 	size_t currentIndex_;
+	NPCComponent* npcComponent_;
 	NPCRecordManager* recordManager_;
 };
