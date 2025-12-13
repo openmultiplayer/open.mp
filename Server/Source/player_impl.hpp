@@ -631,12 +631,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 			toSpawn_ = true;
 			spectateData_.type = PlayerSpectateData::ESpectateType::None;
 			spectateData_.spectateID = INVALID_PLAYER_ID;
-
-			// When client exits spectate mode it will attempt to request a class or to spawn
-			// but the server still thinks the it is in it's previous state.
-			// This can lead to those requests being rejected.
-			// This state update will fix that.
-			setState(PlayerState_None, false);
 		}
 		else
 		{
