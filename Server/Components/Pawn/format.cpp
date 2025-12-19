@@ -783,20 +783,21 @@ reswitch:
 			}
 			if (argLen > 0)
 			{
-				++argLen;
-				std::string strArg;
-				strArg.resize(argLen);
+				//using only cell
+				DynamicArray<cell> escaped(cptr, cptr + argLen + 1);
+				cell quote = '\'';
 
-				amx_GetString((char*)strArg.data(), cptr, false, argLen);
+				for(int i = 0; i < escaped.size() - 1; i++)
+					if(escaped[i] == quote)
+					{
+						escaped.insert(escaped.begin() + i, quote);
+						i++;
+					}
 
-				size_t pos = 0;
-				while ((pos = strArg.find('\'', pos)) != std::string::npos)
-				{
-					strArg.insert(strArg.begin() + pos, '\'');
-					pos += 2;
-				}
+				//null terminator
+				escaped[escaped.size() - 1] = 0;
 
-				AddString(&buf_p, llen, strArg.c_str(), width, prec, flags);
+				AddString(&buf_p, llen, escaped.data(), width, prec, flags);
 			}
 
 			arg++;
