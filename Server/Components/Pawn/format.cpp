@@ -789,7 +789,7 @@ reswitch:
 
 				for (size_t i = 0; i < escaped.size(); ++i)
 				{
-					if (escaped[i] == quote) 
+					if (escaped[i] == quote)
 					{
 						escaped.insert(escaped.begin() + i, quote);
 						i++;
