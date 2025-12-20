@@ -53,11 +53,11 @@ SCRIPT_API(AttachPlayerObjectToPlayer, bool(IPlayer& player, IPlayerObject& obje
 	return true;
 }
 
-SCRIPT_API(AttachPlayerObjectToObject, bool(IPlayer& player, IPlayerObject& object, IPlayerObject* attachedTo, Vector3 offset, Vector3 rotation))
+SCRIPT_API(AttachPlayerObjectToObject, bool(IPlayer& player, IPlayerObject& object, IPlayerObject* attachedTo, Vector3 offset, Vector3 rotation, bool syncRotation))
 {
 	if (attachedTo)
 	{
-		object.attachToObject(*attachedTo, offset, rotation);
+		object.attachToObject(*attachedTo, offset, rotation, syncRotation);
 	}
 	else
 	{
