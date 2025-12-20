@@ -783,19 +783,21 @@ reswitch:
 			}
 			if (argLen > 0)
 			{
-				//using only cell
-				DynamicArray<cell> escaped(cptr, cptr + argLen + 1);
+				// using only cell
+				DynamicArray<cell> escaped(cptr, cptr + argLen);
 				cell quote = '\'';
 
-				for(int i = 0; i < escaped.size() - 1; i++)
-					if(escaped[i] == quote)
+				for (size_t i = 0; i < escaped.size(); ++i)
+				{
+					if (escaped[i] == quote) 
 					{
 						escaped.insert(escaped.begin() + i, quote);
 						i++;
 					}
+				}
 
-				//null terminator
-				escaped[escaped.size() - 1] = 0;
+				// null terminator
+				escaped.push_back(0);
 
 				AddString(&buf_p, llen, escaped.data(), width, prec, flags);
 			}
