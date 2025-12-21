@@ -302,7 +302,7 @@ private:
 	String cdn = "";
 	bool usingCdn = false;
 	uint16_t httpThreads = 50; // default max_players is 50
-	bool showCRCLogs;
+	bool showCRCLogs = false;
 
 	DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
