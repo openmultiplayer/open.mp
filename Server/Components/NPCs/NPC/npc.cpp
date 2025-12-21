@@ -631,6 +631,11 @@ uint8_t NPC::getWeapon() const
 
 void NPC::setAmmo(int ammo)
 {
+	if (ammo < 0)
+	{
+		ammo = 0;
+	}
+
 	ammo_ = ammo;
 
 	if (ammo_ < ammoInClip_)
@@ -1346,7 +1351,7 @@ int NPC::getWeaponActualClipSize(uint8_t weapon)
 			size *= 2;
 		}
 
-		if (ammo_ < size && !infiniteAmmo_)
+		if (ammo_ < size)
 		{
 			size = ammo_;
 		}
@@ -1854,18 +1859,19 @@ void NPC::updateWeaponState()
 		{
 			setWeaponState(PlayerWeaponState_Reloading);
 		}
+		else if (ammoInClip_ > 1 || infiniteAmmo_)
+		{
+			setWeaponState(PlayerWeaponState_MoreBullets);
+		}
+		else if (ammo_ == 0)
+		{
+			setWeaponState(PlayerWeaponState_NoBullets);
+		}
 		else if (ammoInClip_ == 1)
 		{
 			setWeaponState(PlayerWeaponState_LastBullet);
 		}
-		else if (ammo_ == 0 && !infiniteAmmo_)
-		{
-			setWeaponState(PlayerWeaponState_NoBullets);
-		}
-		else if (ammoInClip_ > 1)
-		{
-			setWeaponState(PlayerWeaponState_MoreBullets);
-		}
+
 		break;
 
 	case PlayerWeapon_Shotgun:
@@ -1873,14 +1879,15 @@ void NPC::updateWeaponState()
 		{
 			setWeaponState(PlayerWeaponState_Reloading);
 		}
-		else if (ammo_ == 0 && !infiniteAmmo_)
-		{
-			setWeaponState(PlayerWeaponState_NoBullets);
-		}
-		else if (ammoInClip_ == 1)
+		else if (ammoInClip_ == 1 || infiniteAmmo_)
 		{
 			setWeaponState(PlayerWeaponState_LastBullet);
 		}
+		else if (ammo_ == 0)
+		{
+			setWeaponState(PlayerWeaponState_NoBullets);
+		}
+
 		break;
 
 	default:
@@ -2814,7 +2821,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 								if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
 								{
-									if (ammoInClip_ != 0)
+									if (ammoInClip_ != 0 || infiniteAmmo_)
 									{
 										auto weaponData = WeaponInfo::get(weapon_);
 										if (weaponData.type == PlayerWeaponType_Bullet)
@@ -2835,11 +2842,10 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 										if (!infiniteAmmo_)
 										{
 											ammo_--;
+											ammoInClip_--;
 										}
 
-										ammoInClip_--;
-
-										bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
+										bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && ammo_ != 0 && ammoInClip_ == 0 && !infiniteAmmo_;
 										if (needsReloading)
 										{
 											reloadingUpdateTime_ = lastUpdate_;
