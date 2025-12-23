@@ -783,20 +783,23 @@ reswitch:
 			}
 			if (argLen > 0)
 			{
-				++argLen;
-				std::string strArg;
-				strArg.resize(argLen);
+				// using only cell
+				DynamicArray<cell> escaped(cptr, cptr + argLen);
+				cell quote = '\'';
 
-				amx_GetString((char*)strArg.data(), cptr, false, argLen);
-
-				size_t pos = 0;
-				while ((pos = strArg.find('\'', pos)) != std::string::npos)
+				for (size_t i = 0; i < escaped.size(); ++i)
 				{
-					strArg.insert(strArg.begin() + pos, '\'');
-					pos += 2;
+					if (escaped[i] == quote)
+					{
+						escaped.insert(escaped.begin() + i, quote);
+						i++;
+					}
 				}
 
-				AddString(&buf_p, llen, strArg.c_str(), width, prec, flags);
+				// null terminator
+				escaped.push_back(0);
+
+				AddString(&buf_p, llen, escaped.data(), width, prec, flags);
 			}
 
 			arg++;
