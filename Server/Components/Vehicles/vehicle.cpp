@@ -819,16 +819,7 @@ void Vehicle::destream()
 		{
 			vehicleData->setVehicle(nullptr, 0);
 		}
-
-		// Related issue: https://github.com/openmultiplayer/open.mp/issues/735
-		// Disable spectator's spectating state when spectated vehicle is removed
-		// This also makes spectateData values to be accurate and not remain with old data
-		auto spectateData = player->getSpectateData();
-		if (spectateData.type == PlayerSpectateData::ESpectateType::Vehicle && spectateData.spectateID == poolID)
-		{
-			player->setSpectating(false);
-		}
-
+		
 		if (isStreamedInForPlayer(*player))
 		{
 			streamOutForClient(*player);
