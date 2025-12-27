@@ -150,7 +150,7 @@ SCRIPT_API(NPC_SetSkin, bool(INPC& npc, int model))
 	return true;
 }
 
-SCRIPT_API(NPC_GetSkin, bool(INPC& npc))
+SCRIPT_API(NPC_GetSkin, int(INPC& npc))
 {
 	auto player = npc.getPlayer();
 	if (player)
