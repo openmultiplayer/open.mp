@@ -51,6 +51,7 @@ void NPCComponent::free()
 	{
 		vehicles->getPoolEventDispatcher().removeEventHandler(this);
 		vehicles->getEventDispatcher().removeEventHandler(this);
+		vehicles = nullptr;
 	}
 
 	delete this;
@@ -61,6 +62,16 @@ void NPCComponent::onFree(IComponent* component)
 	if (component == vehicles)
 	{
 		vehicles = nullptr;
+	}
+
+	if (component == objects)
+	{
+		objects = nullptr;
+	}
+
+	if (component == actors)
+	{
+		actors = nullptr;
 	}
 }
 

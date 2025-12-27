@@ -932,12 +932,15 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		if (bulletData.hitID >= 0 && bulletData.hitID < ACTOR_POOL_SIZE)
 		{
 			// Actors don't have a hit type
-			auto actor = npcComponent_->getActorsPool()->get(bulletData.hitID);
-			if (actor)
+			if (npcComponent_->getActorsPool())
 			{
-				auto pos = actor->getPosition();
-				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-				bulletData.offset = bulletData.hitPos; // When actor is hit use the actor collision position
+				auto actor = npcComponent_->getActorsPool()->get(bulletData.hitID);
+				if (actor)
+				{
+					auto pos = actor->getPosition();
+					bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+					bulletData.offset = bulletData.hitPos; // When actor is hit use the actor collision position
+				}
 			}
 		}
 		else if (bulletData.hitID == ACTOR_POOL_SIZE + 1)
@@ -994,33 +997,39 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 	}
 	case PlayerBulletHitType_Vehicle:
 	{
-		auto vehicle = npcComponent_->getVehiclesPool()->get(bulletData.hitID);
-		if (vehicle)
+		if (npcComponent_->getVehiclesPool())
 		{
-			auto pos = vehicle->getPosition();
-			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-			bulletData.offset = bulletData.hitPos - pos;
+			auto vehicle = npcComponent_->getVehiclesPool()->get(bulletData.hitID);
+			if (vehicle)
+			{
+				auto pos = vehicle->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos - pos;
 
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
-				});
+				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+					{
+						return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
+					});
+			}
 		}
 		break;
 	}
 	case PlayerBulletHitType_Object:
 	{
-		auto object = npcComponent_->getObjectsPool()->get(bulletData.hitID);
-		if (object)
+		if (npcComponent_->getObjectsPool())
 		{
-			auto pos = object->getPosition();
-			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-			bulletData.offset = bulletData.hitPos - pos;
+			auto object = npcComponent_->getObjectsPool()->get(bulletData.hitID);
+			if (object)
+			{
+				auto pos = object->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos - pos;
 
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotObject(*this, *object, bulletData);
-				});
+				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+					{
+						return handler->onNPCShotObject(*this, *object, bulletData);
+					});
+			}
 		}
 		break;
 	}
@@ -2693,10 +2702,13 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 						{
 							if (surfingData_.type == PlayerSurfingData::Type::Vehicle)
 							{
-								auto* vehicle = npcComponent_->getVehiclesPool()->get(surfingData_.ID);
-								if (vehicle)
+								if (npcComponent_->getVehiclesPool())
 								{
-									setPosition(vehicle->getPosition() + surfingData_.offset, false);
+									auto* vehicle = npcComponent_->getVehiclesPool()->get(surfingData_.ID);
+									if (vehicle)
+									{
+										setPosition(vehicle->getPosition() + surfingData_.offset, false);
+									}
 								}
 							}
 							else
@@ -2704,7 +2716,10 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 								IBaseObject* object = nullptr;
 								if (surfingData_.type == PlayerSurfingData::Type::Object)
 								{
-									object = npcComponent_->getObjectsPool()->get(surfingData_.ID);
+									if (npcComponent_->getObjectsPool())
+									{
+										object = npcComponent_->getObjectsPool()->get(surfingData_.ID);
+									}
 								}
 								else if (surfingData_.type == PlayerSurfingData::Type::PlayerObject)
 								{
@@ -2724,18 +2739,24 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 									}
 									else if (attachData.type == ObjectAttachmentData::Type::Object)
 									{
-										auto objectAttachedTo = npcComponent_->getObjectsPool()->get(attachData.ID);
-										if (objectAttachedTo)
+										if (npcComponent_->getObjectsPool())
 										{
-											setPosition(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											auto objectAttachedTo = npcComponent_->getObjectsPool()->get(attachData.ID);
+											if (objectAttachedTo)
+											{
+												setPosition(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											}
 										}
 									}
 									else if (attachData.type == ObjectAttachmentData::Type::Vehicle)
 									{
-										auto vehicleAttachedTo = npcComponent_->getVehiclesPool()->get(attachData.ID);
-										if (vehicleAttachedTo)
+										if (npcComponent_->getVehiclesPool())
 										{
-											setPosition(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											auto vehicleAttachedTo = npcComponent_->getVehiclesPool()->get(attachData.ID);
+											if (vehicleAttachedTo)
+											{
+												setPosition(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											}
 										}
 									}
 								}
