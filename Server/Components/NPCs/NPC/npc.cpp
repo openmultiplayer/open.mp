@@ -196,7 +196,21 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 
 	if (immediateUpdate)
 	{
-		sendFootSync();
+		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+		{
+			if (vehicleSeat_ == 0) // driver
+			{
+				sendDriverSync();
+			}
+			else
+			{
+				sendPassengerSync();
+			}
+		}
+		else
+		{
+			sendFootSync();
+		}
 	}
 
 	if (moving_)
@@ -216,7 +230,21 @@ void NPC::setRotation(const GTAQuat& rot, bool immediateUpdate)
 
 	if (immediateUpdate)
 	{
-		sendFootSync();
+		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+		{
+			if (vehicleSeat_ == 0) // driver
+			{
+				sendDriverSync();
+			}
+			else
+			{
+				sendPassengerSync();
+			}
+		}
+		else
+		{
+			sendFootSync();
+		}
 	}
 
 	if (moving_)
