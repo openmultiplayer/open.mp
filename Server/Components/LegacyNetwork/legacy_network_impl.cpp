@@ -429,6 +429,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 
 		network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
 		network->rakNetServer.Kick(rpcParams->sender);
+		network->rakNetServer.AddToBanList(addressString.data(), 15'000u);
 		return;
 	}
 
