@@ -27,8 +27,11 @@ void NPCComponent::onInit(IComponentList* components)
 		objects = components->queryComponent<IObjectsComponent>();
 		actors = components->queryComponent<IActorsComponent>();
 
-		vehicles->getPoolEventDispatcher().addEventHandler(this);
-		vehicles->getEventDispatcher().addEventHandler(this);
+		if (vehicles != nullptr)
+		{
+			vehicles->getPoolEventDispatcher().addEventHandler(this);
+			vehicles->getEventDispatcher().addEventHandler(this);
+		}
 	}
 }
 
