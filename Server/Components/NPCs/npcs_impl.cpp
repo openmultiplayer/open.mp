@@ -37,6 +37,12 @@ void NPCComponent::onInit(IComponentList* components)
 
 void NPCComponent::free()
 {
+	auto shallowCopy = storage._entries();
+	for (auto npc : shallowCopy)
+	{
+		release(npc->getID());
+	}
+
 	core->getEventDispatcher().removeEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
