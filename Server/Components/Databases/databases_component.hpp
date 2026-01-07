@@ -26,6 +26,7 @@ private:
 
 	bool* logSQLite_;
 	bool* logSQLiteQueries_;
+	int* SQLiteTimeout_;
 
 	ICore* core_;
 
