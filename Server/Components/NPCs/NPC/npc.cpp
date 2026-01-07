@@ -194,9 +194,29 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 {
 	position_ = pos;
 
+	// Explicitly remove from vehicle if we are in one
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		removeFromVehicle();
+	}
+
 	if (immediateUpdate)
 	{
-		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+		sendFootSync();
+	}
+
+	if (moving_)
+	{
+		move(targetPosition_, moveType_);
+	}
+}
+
+void NPC::setVehiclePosition(const Vector3& position, bool immediateUpdate)
+{
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		position_ = position;
+		if (immediateUpdate)
 		{
 			if (vehicleSeat_ == 0) // driver
 			{
@@ -207,15 +227,11 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 				sendPassengerSync();
 			}
 		}
-		else
-		{
-			sendFootSync();
-		}
-	}
 
-	if (moving_)
-	{
-		move(targetPosition_, moveType_);
+		if (moving_)
+		{
+			move(targetPosition_, moveType_);
+		}
 	}
 }
 
@@ -230,7 +246,21 @@ void NPC::setRotation(const GTAQuat& rot, bool immediateUpdate)
 
 	if (immediateUpdate)
 	{
-		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+		sendFootSync();
+	}
+
+	if (moving_)
+	{
+		move(targetPosition_, moveType_);
+	}
+}
+
+void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
+{
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		rotation_ = rotation;
+		if (immediateUpdate)
 		{
 			if (vehicleSeat_ == 0) // driver
 			{
@@ -241,15 +271,11 @@ void NPC::setRotation(const GTAQuat& rot, bool immediateUpdate)
 				sendPassengerSync();
 			}
 		}
-		else
-		{
-			sendFootSync();
-		}
-	}
 
-	if (moving_)
-	{
-		move(targetPosition_, moveType_);
+		if (moving_)
+		{
+			move(targetPosition_, moveType_);
+		}
 	}
 }
 
@@ -342,8 +368,8 @@ void NPC::respawn()
 		setArmour(armour);
 	}
 
-	setPosition(position, false);
-	setRotation(rotation, false);
+	setPositionHandled(position, false);
+	setRotationHandled(rotation, false);
 	setSkin(skin);
 	setSpecialAction(specialAction);
 
@@ -1506,7 +1532,7 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 		return false;
 	}
 
-	setPosition(vehicle.getPosition(), true);
+	setPositionHandled(vehicle.getPosition(), true);
 	vehicle.putPlayer(*player_, seat);
 	vehicle_ = &vehicle;
 	vehicleSeat_ = seat;
@@ -1514,7 +1540,7 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 	auto angle = vehicle.getRotation().ToEuler().z;
 	auto rotation = getRotation().ToEuler();
 	rotation.z = angle;
-	setRotation(rotation, true);
+	setRotationHandled(rotation, true);
 
 	return true;
 }
@@ -1527,12 +1553,11 @@ bool NPC::removeFromVehicle()
 		return false;
 	}
 
+	Vector3 seatPos;
 	auto vehicleData = queryExtension<IPlayerVehicleData>(player_);
 	if (vehicleData)
 	{
-		setPosition(getVehicleSeatPos(*vehicle_, vehicleData->getSeat()), true);
-		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
-		player_->removeFromVehicle(true);
+		seatPos = getVehicleSeatPos(*vehicle_, vehicleData->getSeat());
 	}
 
 	vehicle_ = nullptr;
@@ -1541,6 +1566,13 @@ bool NPC::removeFromVehicle()
 	hydraThrusterDirection_ = 5000;
 	vehicleGearState_ = 0;
 	vehicleTrainSpeed_ = 0.0f;
+
+	if (vehicleData)
+	{
+		setPositionHandled(seatPos, true);
+		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
+		player_->removeFromVehicle(true);
+	}
 
 	return true;
 }
@@ -2094,7 +2126,7 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 		float facingAngle = getAngleOfLine(camVecDistance.x, camVecDistance.y);
 
 		rotation.z = facingAngle;
-		setRotation(rotation, false);
+		setRotationHandled(rotation, false);
 	}
 
 	// Set the aim sync data
@@ -2430,7 +2462,7 @@ void NPC::advance(TimePoint now)
 			removeKey(Key::WALK);
 		}
 
-		setPosition(finalPos, false);
+		setPositionHandled(finalPos, false);
 
 		// Check if the movement was triggered for entering a vehicle
 		float distanceToVehicle = 0.0f;
@@ -2687,7 +2719,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 					if (needsVelocityUpdate_)
 					{
-						setPosition(getPosition() + velocity_, false);
+						setPositionHandled(getPosition() + velocity_, false);
 						setVelocity({ 0.0f, 0.0f, 0.0f }, false);
 					}
 
@@ -2735,7 +2767,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 									auto* vehicle = npcComponent_->getVehiclesPool()->get(surfingData_.ID);
 									if (vehicle)
 									{
-										setPosition(vehicle->getPosition() + surfingData_.offset, false);
+										setPositionHandled(vehicle->getPosition() + surfingData_.offset, false);
 									}
 								}
 							}
@@ -2763,7 +2795,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 									auto attachData = object->getAttachmentData();
 									if (attachData.type == ObjectAttachmentData::Type::None)
 									{
-										setPosition(object->getPosition() + surfingData_.offset, false);
+										setPositionHandled(object->getPosition() + surfingData_.offset, false);
 									}
 									else if (attachData.type == ObjectAttachmentData::Type::Object)
 									{
@@ -2772,7 +2804,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 											auto objectAttachedTo = npcComponent_->getObjectsPool()->get(attachData.ID);
 											if (objectAttachedTo)
 											{
-												setPosition(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+												setPositionHandled(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
 											}
 										}
 									}
@@ -2783,7 +2815,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 											auto vehicleAttachedTo = npcComponent_->getVehiclesPool()->get(attachData.ID);
 											if (vehicleAttachedTo)
 											{
-												setPosition(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+												setPositionHandled(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
 											}
 										}
 									}
@@ -3016,7 +3048,7 @@ bool NPC::playNode(int nodeId, NPCMoveType moveType, float moveSpeed, float radi
 
 	// Set initial position and start movement
 	Vector3 nodePosition = currentNode_->getPosition();
-	setPosition(nodePosition, true);
+	setPositionHandled(nodePosition, true);
 
 	// Set link and point information
 	currentNode_->setLink(currentNode_->getLinkId());
