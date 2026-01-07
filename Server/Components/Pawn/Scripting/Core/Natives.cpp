@@ -473,6 +473,11 @@ SCRIPT_API(GetWeaponName, int(int weaponid, OutputOnlyString& weapon))
 	return std::get<StringView>(weapon).length();
 }
 
+SCRIPT_API(IsValidWeapon, bool(int weaponid))
+{
+	return PawnManager::Get()->core->isWeaponValid(PlayerWeapon(weaponid));
+}
+
 SCRIPT_API(LimitGlobalChatRadius, bool(float chatRadius))
 {
 	*PawnManager::Get()->config->getBool("game.use_chat_radius") = true;
