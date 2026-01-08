@@ -15,10 +15,12 @@
 #include "crc32.hpp"
 #include <regex>
 #include <shared_mutex>
+#include "utils.hpp"
 
 static auto rAddCharModel = std::regex(R"(AddCharModel\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rAddSimpleModelTimed = std::regex(R"(AddSimpleModelTimed\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*;*)");
+static auto rUri = std::regex("[A-Za-z0-9-._~:/?#\\[\\]@!$&'()*+,;=]+"); // very loose interpretation of rfc3986
 
 using namespace Impl;
 
@@ -300,6 +302,7 @@ private:
 	String cdn = "";
 	bool usingCdn = false;
 	uint16_t httpThreads = 50; // default max_players is 50
+	bool showCRCLogs = false;
 
 	DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
@@ -416,6 +419,7 @@ public:
 			config.setInt("network.http_threads", httpThreads);
 			config.setInt("artwork.port", modelsPort);
 			config.setString("artwork.web_server_bind", webServerBindAddress);
+			config.setBool("artwork.show_crc_logs", showCRCLogs);
 		}
 		else
 		{
@@ -449,6 +453,10 @@ public:
 			{
 				config.setString("artwork.web_server_bind", webServerBindAddress);
 			}
+			if (config.getType("artwork.show_crc_logs") == ConfigOptionType_None)
+			{
+				config.setBool("artwork.show_crc_logs", showCRCLogs);
+			}
 		}
 	}
 
@@ -459,10 +467,11 @@ public:
 		players->getPlayerConnectDispatcher().addEventHandler(this);
 
 		enabled = *core->getConfig().getBool("artwork.enable");
-		modelsPath = String(core->getConfig().getString("artwork.models_path"));
-		cdn = String(core->getConfig().getString("artwork.cdn"));
+		modelsPath = String(trim(core->getConfig().getString("artwork.models_path")));
+		cdn = String(trim(core->getConfig().getString("artwork.cdn")));
 		httpThreads = *core->getConfig().getInt("network.http_threads");
 		webServerBindAddress = String(core->getConfig().getString("artwork.web_server_bind"));
+		showCRCLogs = *core->getConfig().getBool("artwork.show_crc_logs");
 
 		NetCode::RPC::RequestTXD::addEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::RequestDFF::addEventHandler(*core, &requestDownloadLinkHandler);
@@ -488,11 +497,17 @@ public:
 
 		if (!cdn.empty())
 		{
+			if (!std::regex_match(cdn, rUri))
+			{
+				core->logLn(LogLevel::Warning, "[artwork:warn] CDN URL '%.*s' seems to be invalid, the CDN feature has been disabled.", PRINT_VIEW(cdn));
+				return;
+			}
+
 			if (cdn.back() != '/')
 			{
 				cdn.push_back('/');
 			}
-			core->logLn(LogLevel::Message, "[artwork:info] Using CDN %.*s", PRINT_VIEW(cdn));
+			core->logLn(LogLevel::Message, "[artwork:info] Using CDN '%.*s'", PRINT_VIEW(cdn));
 			usingCdn = true;
 		}
 	}
@@ -615,8 +630,11 @@ public:
 			return false;
 		}
 
-		// core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
-		// core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
+		if (showCRCLogs)
+		{
+			core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
+			core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
+		}
 
 		auto model = storage.emplace_back(new ModelInfo(type, id, baseId, dff, txd, virtualWorld, timeOn, timeOff));
 

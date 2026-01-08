@@ -39,6 +39,7 @@ namespace RPC
 		HybridString<16> Key;
 		HybridString<16> VersionString;
 		bool IsUsingOfficialClient;
+		uint32_t OmpVersion;
 
 		bool read(NetworkBitStream& bs)
 		{
@@ -51,6 +52,7 @@ namespace RPC
 
 			uint32_t dummyVar = 0;
 			IsUsingOfficialClient = bs.readUINT32(dummyVar);
+			OmpVersion = dummyVar;
 
 			return readFailed;
 		}
@@ -368,7 +370,7 @@ namespace RPC
 		}
 	};
 
-	struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct SendClientMessage : NetworkPacketBase<93, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		HybridString<128> Message;
 		Colour Col;
@@ -385,7 +387,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerRequestChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 
 		HybridString<128> message;
@@ -399,7 +401,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerChatMessage : NetworkPacketBase<101, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		int PlayerID;
 		HybridString<128> message;
@@ -415,7 +417,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerRequestCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 
 		HybridString<128> message;
@@ -448,7 +450,7 @@ namespace RPC
 		}
 	};
 
-	struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct PlayerCommandMessage : NetworkPacketBase<50, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		HybridString<128> message;
 
@@ -463,7 +465,7 @@ namespace RPC
 		}
 	};
 
-	struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC, OrderingChannel_Unordered>
+	struct SendDeathMessage : NetworkPacketBase<55, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		bool HasKiller;
 		int KillerID;
@@ -748,7 +750,9 @@ namespace RPC
 
 			bs.writeUINT16(PlayerID);
 			bs.writeUINT32(Skin);
-			bs.writeUINT32(CustomSkin);
+
+			if (isDL)
+				bs.writeUINT32(CustomSkin);
 		}
 	};
 
@@ -1123,9 +1127,11 @@ namespace RPC
 	struct SendPlayerScoresAndPings : NetworkPacketBase<155, NetworkPacketType::RPC, OrderingChannel_SyncRPC>
 	{
 		const FlatPtrHashSet<IPlayer>& Players;
+		const Nanoseconds LastCachedTickDiff;
 
-		SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players)
+		SendPlayerScoresAndPings(const FlatPtrHashSet<IPlayer>& players, Nanoseconds lastCachedTickDiff)
 			: Players(players)
+			, LastCachedTickDiff(lastCachedTickDiff)
 		{
 		}
 
@@ -1136,12 +1142,21 @@ namespace RPC
 
 		void write(NetworkBitStream& bs) const
 		{
-			for (IPlayer* player : Players)
+			// This is added to make sure we have a global cache and we don't recalculate and regenerate for every player and every request of theirs
+			// So instead it keeps a cache of our bitstream to use, which won't loop through player pool and gathering data
+			static NetworkBitStream cache;
+			if (LastCachedTickDiff >= Seconds(2))
 			{
-				bs.writeUINT16(player->getID());
-				bs.writeINT32(player->getScore());
-				bs.writeUINT32(player->getPing());
+				cache.reset();
+				for (IPlayer* player : Players)
+				{
+					cache.writeUINT16(player->getID());
+					cache.writeINT32(player->getScore());
+					cache.writeUINT32(player->getPing());
+				}
 			}
+
+			bs.WriteBits(cache.GetData(), cache.GetNumberOfBitsUsed());
 		}
 	};
 

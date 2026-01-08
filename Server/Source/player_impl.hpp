@@ -117,6 +117,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool allowWeapons_;
 	bool allowTeleport_;
 	bool isUsingOfficialClient_;
+	bool isUsingOmp_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -158,6 +159,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		fightingStyle_ = PlayerFightingStyle_Normal;
 		controllable_ = true;
 		clockToggled_ = false;
+		health_ = 100.0f;
+		armour_ = 0.0f;
 		keys_ = { 0u, 0, 0 };
 		velocity_ = Vector3(0.0f, 0.0f, 0.0f);
 		surfing_ = { PlayerSurfingData::Type::None };
@@ -219,6 +222,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, state_(PlayerState_None)
 		, controllable_(true)
 		, clockToggled_(false)
+		, health_(100.0f)
+		, armour_(0.0f)
 		, keys_ { 0u, 0, 0 }
 		, velocity_(0.0f, 0.0f, 0.0f)
 		, surfing_ { PlayerSurfingData::Type::None }
@@ -255,6 +260,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, allowWeapons_(true)
 		, allowTeleport_(false)
 		, isUsingOfficialClient_(params.isUsingOfficialClient)
+		, isUsingOmp_(params.isUsingOmp)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -269,6 +275,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	}
 
 	void ban(StringView reason) override;
+
+	void kick() override;
 
 	void spawn() override
 	{
@@ -315,6 +323,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isUsingOfficialClient() const override
 	{
 		return isUsingOfficialClient_;
+	}
+
+	bool isUsingOmp() const override
+	{
+		return isUsingOmp_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
@@ -618,12 +631,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 			toSpawn_ = true;
 			spectateData_.type = PlayerSpectateData::ESpectateType::None;
 			spectateData_.spectateID = INVALID_PLAYER_ID;
-
-			// When client exits spectate mode it will attempt to request a class or to spawn
-			// but the server still thinks the it is in it's previous state.
-			// This can lead to those requests being rejected.
-			// This state update will fix that.
-			setState(PlayerState_None, false);
 		}
 		else
 		{
@@ -781,34 +788,6 @@ public:
 		{
 			PacketHelper::broadcastToStreamed(clearPlayerTasksRPC, *this, false /* skipFrom */);
 		}
-
-		IPlayerVehicleData* data = queryExtension<IPlayerVehicleData>(*this);
-		if (!data || !data->getVehicle())
-		{
-			// TODO: This must be fixed on client side
-			// *
-			// *     <problem>
-			// *         ClearAnimations doesn't do anything when the animation ends if we
-			// *         pass 1 for the freeze parameter in ApplyAnimation.
-			// *     </problem>
-			// *     <solution>
-			// *         Apply an idle animation for stop and then use ClearAnimation.
-			// *     </solution>
-			// *     <see>FIXES_ClearAnimations</see>
-			// *     <author    href="https://github.com/simonepri/" >simonepri</author>
-			// *
-			AnimationData animationData(4.0f, false, false, false, false, 1, "", "");
-
-			animationData.lib = "PED";
-			animationData.name = "IDLE_STANCE";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "IDLE_CHAT";
-			applyAnimationImpl(animationData, syncType);
-			animationData.lib = "PED";
-			animationData.name = "WALK_PLAYER";
-			applyAnimationImpl(animationData, syncType);
-		}
 	}
 
 	void clearAnimations(PlayerAnimationSyncType syncType) override
@@ -937,15 +916,9 @@ public:
 		return fightingStyle_;
 	}
 
-	void kick() override
-	{
-		kicked_ = true;
-		netData_.network->disconnect(*this);
-	}
-
 	void setSkillLevel(PlayerWeaponSkill skill, int level) override
 	{
-		if (skill < skillLevels_.size())
+		if (skill != PlayerWeaponSkill_Invalid && skill < skillLevels_.size())
 		{
 			skillLevels_[skill] = level;
 			NetCode::RPC::SetPlayerSkillLevel setPlayerSkillLevelRPC;
@@ -1338,6 +1311,16 @@ removeWeapon_has_weapon:
 				PacketHelper::send(givePlayerWeaponRPC, *this);
 			}
 		}
+		NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+		if (weaponid != armedWeapon_)
+		{
+			setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+		}
+		else
+		{
+			setPlayerArmedWeaponRPC.Weapon = 0;
+		}
+		PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 	}
 
 	void setWeaponAmmo(WeaponSlotData weapon) override
@@ -1376,10 +1359,6 @@ removeWeapon_has_weapon:
 			return ret;
 		}
 		WeaponSlotData ret = weapons_[slot];
-		if (ret.ammo == 0)
-		{
-			ret.id = 0;
-		}
 		return ret;
 	}
 
@@ -1719,7 +1698,7 @@ removeWeapon_has_weapon:
 		{
 			if (!allowWeapons_)
 			{
-				// Give the player all their weapons back.  Don't worry about the armed weapon.
+				// Give the player all their weapons back.
 				allowWeapons_ = true;
 				NetCode::RPC::ResetPlayerWeapons resetWeaponsRPC;
 				PacketHelper::send(resetWeaponsRPC, *this);
@@ -1733,6 +1712,9 @@ removeWeapon_has_weapon:
 						PacketHelper::send(givePlayerWeaponRPC, *this);
 					}
 				}
+				NetCode::RPC::SetPlayerArmedWeapon setPlayerArmedWeaponRPC;
+				setPlayerArmedWeaponRPC.Weapon = armedWeapon_;
+				PacketHelper::send(setPlayerArmedWeaponRPC, *this);
 			}
 		}
 		else

@@ -74,6 +74,12 @@ SCRIPT_API(GetVehicleRotationQuat, bool(IVehicle& vehicle, GTAQuat& quat))
 	return true;
 }
 
+SCRIPT_API(GetVehicleRotation, bool(IVehicle& vehicle, Vector3& rotation))
+{
+	rotation = vehicle.getRotation().ToEuler();
+	return true;
+}
+
 SCRIPT_API(GetVehicleDistanceFromPoint, float(IVehicle& vehicle, Vector3 pos))
 {
 	return glm::distance(vehicle.getPosition(), pos);
@@ -346,7 +352,7 @@ SCRIPT_API(GetVehicleVirtualWorld, int(IVehicle& vehicle))
 
 SCRIPT_API(GetVehicleLandingGearState, int(IVehicle& vehicle))
 {
-	return !vehicle.getLandingGearState();
+	return vehicle.getLandingGearState();
 }
 
 SCRIPT_API(IsValidVehicle, bool(IVehicle* vehicle))

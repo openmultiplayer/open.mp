@@ -20,10 +20,14 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/StringCompressor.h>
+#include <Server/Components/NPCs/npcs.hpp>
 
 using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
+
+#define MAX_MTU_037 576
+#define MAX_MTU_DL MAXIMUM_MTU_SIZE
 
 static const StaticArray<StringView, 2> ProtectedRules = {
 	"version", "allowed_clients"
@@ -31,17 +35,34 @@ static const StaticArray<StringView, 2> ProtectedRules = {
 
 class Core;
 
-class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension, public PoolEventHandler<INPC>
 {
 private:
 	ICore* core = nullptr;
 	Query query;
 	RakNet::RakServerInterface& rakNetServer;
-	std::array<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+	StaticArray<IPlayer*, PLAYER_POOL_SIZE> playerFromRakIndex;
+	StaticArray<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
+	INPCComponent* npcComponent = nullptr;
 
 public:
+	inline void setNPCComponent(INPCComponent* comp)
+	{
+		npcComponent = comp;
+
+		if (npcComponent)
+		{
+			npcComponent->getPoolEventDispatcher().addEventHandler(this);
+		}
+	}
+
+	inline INPCComponent* getNPCComponent()
+	{
+		return npcComponent;
+	}
+
 	inline void setQueryConsole(IConsoleComponent* console)
 	{
 		query.setConsole(console);
@@ -85,16 +106,15 @@ public:
 		{
 			playerFromRakIndex[playerIndex] = nullptr;
 		}
+		playerRemoteSystem[peer.getID()] = nullptr;
 		rakNetServer.Kick(rid);
 	}
 
 	bool broadcastPacket(Span<uint8_t> data, int channel, const IPlayer* exceptPeer, bool dispatchEvents) override
 	{
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -130,11 +150,11 @@ public:
 				const PeerNetworkData::NetworkID& nid = netData.networkID;
 				const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 
-				return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true);
+				return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true);
 			}
 		}
 
-		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
+		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true);
 	}
 
 	bool sendPacket(IPlayer& peer, Span<uint8_t> data, int channel, bool dispatchEvents) override
@@ -145,11 +165,9 @@ public:
 			return false;
 		}
 
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -179,7 +197,7 @@ public:
 		const PeerNetworkData::NetworkID& nid = netData.networkID;
 		const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 		const RakNet::PacketReliability reliability = (channel == OrderingChannel_Reliable) ? RakNet::RELIABLE : ((channel == OrderingChannel_Unordered) ? RakNet::UNRELIABLE : RakNet::UNRELIABLE_SEQUENCED);
-		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBytesUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false);
+		return rakNetServer.Send((const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, false);
 	}
 
 	bool broadcastRPC(int id, Span<uint8_t> data, int channel, const IPlayer* exceptPeer, bool dispatchEvents) override
@@ -189,11 +207,9 @@ public:
 			return false;
 		}
 
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -245,11 +261,9 @@ public:
 			return false;
 		}
 
-		// Don't use constructor because it takes bytes; we want bits
-		NetworkBitStream bs;
-		bs.SetData(data.data());
+		// We want exact bits - set the write offset with bit granularity
+		NetworkBitStream bs(data.data(), bitsToBytes(data.size()), false /* copyData */);
 		bs.SetWriteOffset(data.size());
-		bs.SetReadOffset(0);
 
 		if (dispatchEvents)
 		{
@@ -281,7 +295,7 @@ public:
 	static void OnPlayerConnect(RakNet::RPCParameters* rpcParams, void* extra);
 	static void OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra);
 
-	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient = false);
+	IPlayer* OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOmp, bool isUsingOfficialClient = false);
 	template <size_t ID>
 	static void RPCHook(RakNet::RPCParameters* rpcParams, void* extra);
 	void onTick(Microseconds elapsed, TimePoint now) override;
@@ -310,6 +324,22 @@ public:
 	void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
 	{
 		query.buildPlayerDependentBuffers(&player);
+	}
+
+	void onPoolEntryCreated(INPC& npc) override
+	{
+		if (npcComponent)
+		{
+			rakNetServer.ReserveSlots(npcComponent->count());
+		}
+	}
+
+	void onPoolEntryDestroyed(INPC& npc) override
+	{
+		if (npcComponent)
+		{
+			rakNetServer.ReserveSlots(npcComponent->count());
+		}
 	}
 
 	bool addRule(StringView rule, StringView value) override
@@ -360,15 +390,20 @@ public:
 
 	unsigned getPing(const IPlayer& peer) override
 	{
-		const PeerNetworkData& netData = peer.getNetworkData();
-		if (netData.network != this)
+		auto remoteSystem = playerRemoteSystem[peer.getID()];
+		if (remoteSystem == nullptr)
 		{
-			return 0;
+			return -1;
 		}
 
-		const PeerNetworkData::NetworkID& nid = netData.networkID;
-		const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
-		return rakNetServer.GetLastPing(rid);
+		if (remoteSystem->pingAndClockDifferentialWriteIndex == 0)
+		{
+			return remoteSystem->pingAndClockDifferential[RakNet::PING_TIMES_ARRAY_SIZE - 1].pingTime;
+		}
+		else
+		{
+			return remoteSystem->pingAndClockDifferential[remoteSystem->pingAndClockDifferentialWriteIndex - 1].pingTime;
+		}
 	}
 
 	void ban(const BanEntry& entry, Milliseconds expire = Milliseconds(0)) override;
@@ -392,17 +427,10 @@ struct AnnounceHTTPResponseHandler final : HTTPResponseHandler
 	{
 		if (status != 200)
 		{
-			core->printLn("Couldn't announce legacy network to open.mp list.");
-			if (status < 100)
-			{
-				core->printLn("\t[HTTP Client Error] Status: %d", status);
-			}
-			else
-			{
-				core->printLn("\t[Server Error] Status: %d", status);
-				core->printLn("\t[Server Error] Message: %.*s", PRINT_VIEW(body));
-			}
-			core->printLn("This won't affect the server's behaviour.");
+			core->logLn(LogLevel::Warning, "Couldn't announce legacy network to open.mp list.");
+			core->logLn(LogLevel::Warning, "\t Status: %d", status);
+			core->logLn(LogLevel::Warning, "\t Message: %.*s", PRINT_VIEW(body));
+			core->logLn(LogLevel::Warning, "This won't affect the server's behaviour.");
 		}
 		delete this;
 	}

@@ -9,14 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone server repository
-        uses: actions/checkout@v3
-        with:
-          clean: true
-          path: "Server"
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-
       - name: Clone SDK repository
         uses: actions/checkout@v3
         with:
@@ -27,30 +19,18 @@ jobs:
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
 
-      - name: Update SDK files from server repository
+      - name: Update SDK files from dev branch
         if: always()
         shell: bash
         run: |
-          rm -rf ./SDK/include/*
-          mv -f ./Server/SDK/include ./SDK
           cd SDK
-          git config user.name open.mp
-          git config user.email open.mp@github.com
-          git add .
-          git commit -m "Update SDK" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}" || true
+          git fetch
+          git rebase origin/dev
           git push || true
 
   update-network:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone server repository
-        uses: actions/checkout@v3
-        with:
-          clean: true
-          path: "Server"
-          submodules: recursive
-          token: ${{ secrets.CI_TOKEN }}
-
       - name: Clone Network repository
         uses: actions/checkout@v3
         with:
@@ -61,15 +41,11 @@ jobs:
           submodules: recursive
           token: ${{ secrets.CI_TOKEN }}
 
-      - name: Update Network files from server repository
+      - name: Update Network files from dev branch
         if: always()
         shell: bash
         run: |
-          rm -rf ./Network/*
-          mv -f ./Server/Shared/Network/* ./Network
           cd Network
-          git config user.name open.mp
-          git config user.email open.mp@github.com
-          git add .
-          git commit -m "Update Network" -m "with https://github.com/openmultiplayer/open.mp/commit/${{ github.sha }}" || true
+          git fetch
+          git rebase origin/dev
           git push || true

@@ -20,8 +20,10 @@ struct IUnknown;
 #include <timeapi.h>
 #define SET_TICKER_RESOLUTION(ms) timeBeginPeriod(ms)
 #define LIBRARY_OPEN(path) LoadLibrary(path)
+#define LIBRARY_OPEN_GLOBAL(path) LIBRARY_OPEN(path)
 #define LIBRARY_GET_ADDR GetProcAddress
 #define LIBRARY_FREE FreeLibrary
+static LARGE_INTEGER initialTime;
 static LARGE_INTEGER yo;
 #define BUILD_WINDOWS
 #else
@@ -31,6 +33,7 @@ static LARGE_INTEGER yo;
 #include <unistd.h>
 #define SET_TICKER_RESOLUTION(ms)
 #define LIBRARY_OPEN(path) dlopen(path, RTLD_LAZY | RTLD_LOCAL)
+#define LIBRARY_OPEN_GLOBAL(path) dlopen(path, RTLD_LAZY | RTLD_GLOBAL)
 #define LIBRARY_GET_ADDR dlsym
 #define LIBRARY_FREE dlclose
 static timeval initialTime;
@@ -118,6 +121,7 @@ unsigned GetTickCount()
 	{
 #ifdef BUILD_WINDOWS
 		QueryPerformanceFrequency(&yo);
+		QueryPerformanceCounter(&initialTime);
 #else
 		gettimeofday(&initialTime, 0);
 #endif
@@ -129,7 +133,7 @@ unsigned GetTickCount()
 
 	QueryPerformanceCounter(&PerfVal);
 
-	return (unsigned)(PerfVal.QuadPart * 1000 / yo.QuadPart);
+	return (unsigned)((PerfVal.QuadPart - initialTime.QuadPart) * 1000 / yo.QuadPart);
 #else
 	struct timeval tp;
 	gettimeofday(&tp, 0);

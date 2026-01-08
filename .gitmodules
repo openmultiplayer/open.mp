@@ -10,9 +10,18 @@
 [submodule "lib/ttmath"]
 	path = lib/ttmath
 	url = https://github.com/openmultiplayer/ttmath.git
-[submodule "SDK/lib/cmake-conan"]
-	path = SDK/lib/cmake-conan
-	url = https://github.com/openmultiplayer/cmake-conan.git
 [submodule "lib/cpp-httplib"]
 	path = lib/cpp-httplib
-	url = https://github.com/ksenonadv/cpp-httplib.git
+	url = https://github.com/openmultiplayer/cpp-httplib.git
+[submodule "lib/cmake-conan"]
+	path = lib/cmake-conan
+	url = https://github.com/openmultiplayer/cmake-conan.git
+[submodule "SDK"]
+	path = SDK
+	url = https://github.com/openmultiplayer/open.mp-sdk
+[submodule "Shared/Network"]
+	path = Shared/Network
+	url = https://github.com/openmultiplayer/open.mp-network
+[submodule "CAPI"]
+	path = CAPI
+	url = https://github.com/openmultiplayer/open.mp-capi

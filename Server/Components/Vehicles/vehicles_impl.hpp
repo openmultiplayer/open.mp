@@ -16,7 +16,7 @@
 
 using namespace Impl;
 
-class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public PlayerUpdateEventHandler, public PoolEventHandler<IPlayer>
+class VehiclesComponent final : public IVehiclesComponent, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public PlayerUpdateEventHandler, public PlayerDamageEventHandler, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -48,7 +48,8 @@ private:
 				return false;
 			}
 
-			if (!lock.entry->isStreamedInForPlayer(peer) || peer.getState() != PlayerState_OnFoot)
+			Vehicle* lockedVehicle = static_cast<Vehicle*>(lock.entry);
+			if ((!lockedVehicle->isStreamedInForPlayer(peer) && !lockedVehicle->isTrainCarriage()) || peer.getState() != PlayerState_OnFoot)
 			{
 				return false;
 			}
@@ -90,8 +91,9 @@ private:
 				return false;
 			}
 
+			Vehicle* lockedVehicle = static_cast<Vehicle*>(lock.entry);
 			IPlayerVehicleData* vehData = queryExtension<IPlayerVehicleData>(peer);
-			if (vehData == nullptr || !lock.entry->isStreamedInForPlayer(peer) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry)
+			if (vehData == nullptr || (!lockedVehicle->isStreamedInForPlayer(peer) && !lockedVehicle->isTrainCarriage()) || !(peer.getState() == PlayerState_Driver || peer.getState() == PlayerState_Passenger) || vehData->getVehicle() != lock.entry)
 			{
 				return false;
 			}
@@ -335,6 +337,7 @@ public:
 			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 			core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
+			core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerEnterVehicle::removeEventHandler(*core, &playerEnterVehicleHandler);
 			NetCode::RPC::OnPlayerExitVehicle::removeEventHandler(*core, &playerExitVehicleHandler);
 			NetCode::RPC::SetVehicleDamageStatus::removeEventHandler(*core, &vehicleDamageStatusHandler);
@@ -351,6 +354,7 @@ public:
 		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
 		core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
 		core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
+		core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this, EventPriority_Lowest);
 		NetCode::RPC::OnPlayerEnterVehicle::addEventHandler(*core, &playerEnterVehicleHandler);
 		NetCode::RPC::OnPlayerExitVehicle::addEventHandler(*core, &playerExitVehicleHandler);
 		NetCode::RPC::SetVehicleDamageStatus::addEventHandler(*core, &vehicleDamageStatusHandler);
@@ -386,18 +390,63 @@ public:
 		{
 			return nullptr;
 		}
-		if (!isStatic && (modelID == 538 || modelID == 537))
+		if (!isStatic && (modelID == 538 || modelID == 537 || modelID == 449))
 		{
 			return nullptr;
 		}
-		IVehicle* ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
+
+		IVehicle* ret = nullptr;
 		if (modelID == 538 || modelID == 537)
 		{
+			auto findConsecutiveFreeIds = [&](size_t count)
+			{
+				int candidate = storage.findFreeIndex(storage.Lower);
+				while (candidate < storage.Upper - count + 1)
+				{
+					bool all_free = true;
+					for (size_t i = 1; i < count; i++)
+					{
+						if (storage.get(candidate + i) != nullptr)
+						{
+							candidate = storage.findFreeIndex(candidate + i + 1);
+							all_free = false;
+							break;
+						}
+					}
+
+					if (all_free)
+					{
+						return candidate;
+					}
+				}
+
+				return -1;
+			};
+
+			int startId = findConsecutiveFreeIds(4);
+			if (startId < 0)
+			{
+				core->logLn(LogLevel::Warning, "Creation of the train failed due to the absence of 4 consecutive vehicle IDs.");
+				return nullptr;
+			}
+
+			ret = createWithMustHint(startId, VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
+			if (!ret)
+			{
+				core->logLn(LogLevel::Warning, "Creation of the train failed because the locomotive could not be created.");
+				return nullptr;
+			}
+
 			int carridgeModel = modelID == 538 ? 570 : 569;
-			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 0);
-			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 1);
-			ret->addCarriage(create(VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 2);
+			ret->addCarriage(createWithMustHint(startId + 1, VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 0);
+			ret->addCarriage(createWithMustHint(startId + 2, VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 1);
+			ret->addCarriage(createWithMustHint(startId + 3, VehicleSpawnData { respawnDelay, carridgeModel, position, Z, colour1, colour2, 0 }), 2);
 		}
+		else
+		{
+			ret = create(VehicleSpawnData { respawnDelay, modelID, position, Z, colour1, colour2, addSiren, 0 });
+		}
+
 		return ret;
 	}
 
@@ -405,6 +454,31 @@ public:
 	{
 		IVehicle* vehicle = storage.emplace(this, data);
 
+		if (vehicle)
+		{
+			++preloadModels[data.modelID - 400];
+
+			static bool delay_warn = false;
+			if (!delay_warn && data.respawnDelay == Seconds(0))
+			{
+				core->logLn(LogLevel::Warning, "Vehicle created with respawn delay 0 which is undefined behaviour that might change in the future.");
+				delay_warn = true;
+			}
+		}
+
+		return vehicle;
+	}
+
+	IVehicle* createWithMustHint(int hint, const VehicleSpawnData& data)
+	{
+		int vehicleId = storage.claimHint(hint, this, data);
+		if (hint != vehicleId)
+		{
+			storage.release(vehicleId, true);
+			return nullptr;
+		}
+
+		IVehicle* vehicle = storage.get(vehicleId);
 		if (vehicle)
 		{
 			++preloadModels[data.modelID - 400];
@@ -456,6 +530,30 @@ public:
 					carriage->destream();
 					storage.release(carriage->poolID, false);
 				}
+			}
+
+			if (vehicle.isTrainCarriage())
+			{
+				int trainId = INVALID_VEHICLE_ID;
+				int carriageId = vehicle.getID();
+				for (auto veh : storage)
+				{
+					int veh_model = veh->getModel();
+					if (veh_model == 538 || veh_model == 537)
+					{
+						for (IVehicle* c : veh->getCarriages())
+						{
+							if (c->getID() == carriageId)
+							{
+								trainId = veh->getID();
+							}
+						}
+					}
+				}
+
+				core->logLn(LogLevel::Warning, "Attempted to destroy a train carriage using vehicle ID = %d. You cannot destroy a carriage individually and you must instead destroy your train. (Train ID = %d)",
+					carriageId, trainId);
+				return;
 			}
 
 			--preloadModels[veh_model - 400];
@@ -519,7 +617,7 @@ public:
 
 					// Trains shouldn't be respawned.
 					const int model = vehicle->getModel();
-					if (model == 537 || model == 538 || model == 569 || model == 570)
+					if (model == 537 || model == 538 || model == 570 || model == 569 || model == 449)
 					{
 						continue;
 					}
@@ -539,9 +637,25 @@ public:
 		storage.clear();
 	}
 
+	void onPlayerDeath(IPlayer& player, IPlayer* killer, int reason) override
+	{
+		PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
+		if (!data)
+		{
+			return;
+		}
+
+		auto vehicle = static_cast<Vehicle*>(data->getVehicle());
+		if (vehicle)
+		{
+			vehicle->unoccupy(player);
+		}
+		data->setVehicle(nullptr, SEAT_NONE);
+	}
+
 	void onPlayerStateChange(IPlayer& player, PlayerState newState, PlayerState oldState) override
 	{
-		if (newState != PlayerState_Driver && newState != PlayerState_Passenger)
+		if (newState != PlayerState_Driver && newState != PlayerState_Passenger && newState != PlayerState_Wasted)
 		{
 			PlayerVehicleData* data = queryExtension<PlayerVehicleData>(player);
 			if (!data)

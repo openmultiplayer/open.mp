@@ -66,7 +66,7 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "timestamp", ParamType::Bool },
 	{ "logtimeformat", ParamType::String },
 	{ "logqueries", ParamType::Bool },
-	{ "chatlogging", ParamType::Bool },
+	{ "chatlogging", ParamType::Custom },
 	{ "db_logging", ParamType::Bool },
 	{ "db_log_queries", ParamType::Bool },
 	{ "onfoot_rate", ParamType::Int },
@@ -206,6 +206,30 @@ private:
 			}
 			auto it = dictionary.find("password");
 			config.setString(it->second, password);
+			return true;
+		}
+
+		if (name.find("chatlogging") == 0)
+		{
+			auto it = dictionary.find("chatlogging");
+
+			Impl::String lower(right);
+			std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c)
+				{
+					return std::tolower(c);
+				});
+
+			if (lower == "true" || lower == "1")
+			{
+				config.setBool(it->second, true);
+				config.setBool("logging.log_deaths", true);
+			}
+			else if (lower == "false" || lower == "0")
+			{
+				config.setBool(it->second, false);
+				config.setBool("logging.log_deaths", false);
+			}
+
 			return true;
 		}
 
@@ -487,17 +511,15 @@ private:
 					processFallback(logger, config, typeIt->second, name, line.substr(idx + 1));
 				}
 			}
-			size_t gmcount = 0;
 			DynamicArray<StringView> list;
 			for (int i = 0; i < gamemodes_.size(); ++i)
 			{
 				if (gamemodes_[i] != "")
 				{
-					++gmcount;
 					list.emplace_back(gamemodes_[i]);
 				}
 			}
-			if (gmcount != 0)
+			if (!list.empty())
 			{
 				config.setStrings("pawn.main_scripts", list);
 			}

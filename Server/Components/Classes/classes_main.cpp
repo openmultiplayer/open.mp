@@ -181,6 +181,11 @@ private:
 					player_data->default_ = false;
 				}
 			}
+			else if (player_data)
+			{
+				player_data->cls = *used_class;
+				player_data->default_ = true;
+			}
 
 			peer.setSkin(used_class->skin, false);
 			peer.setTeam(used_class->team);

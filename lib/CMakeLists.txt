@@ -1,6 +1,6 @@
 # Conan third-party libraries
-include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan.cmake)
-include(${CMAKE_SOURCE_DIR}/SDK/lib/cmake-conan/conan-omp.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan.cmake)
+include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan-omp.cmake)
 
 if(BUILD_SERVER)
 	if(BUILD_PAWN_COMPONENT)
@@ -59,6 +59,7 @@ if(BUILD_SERVER)
 				-DsNAMEMAX=63
 				-DPAWN_CELL_SIZE=32
 				-DAMX_FILENO_CHECKS
+				-DAMX_NODYNALOAD
 
 				# Disable default amx_FindPublic implementation because we want our own more performant one
 				# Also disable amx_Allot because we want to check if we have enough memory when we are passing data
@@ -117,10 +118,10 @@ conan_omp_add_lib(nlohmann_json 3.9.1)
 # -------
 	if(SHARED_OPENSSL)
 		message("Using shared OpenSSL")
-	conan_omp_add_lib_opt(openssl 1.1.1q "openssl:shared=True")
+	conan_omp_add_lib_opt(openssl 3.0.13 "openssl:shared=True")
 else()
 		message("Using static OpenSSL")
-	conan_omp_add_lib(openssl 1.1.1q)
+	conan_omp_add_lib(openssl 3.0.13)
 endif()
 
 # ghc-filesystem

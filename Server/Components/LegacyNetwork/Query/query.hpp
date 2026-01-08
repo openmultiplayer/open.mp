@@ -159,6 +159,11 @@ public:
 		darkBannerUrl = String(value);
 	}
 
+	void setLogoUrl(StringView value)
+	{
+		logoUrl = String(value);
+	}
+
 private:
 	ICore* core = nullptr;
 	IConsoleComponent* console = nullptr;
@@ -170,6 +175,7 @@ private:
 	String discordLink = "";
 	String lightBannerUrl = "";
 	String darkBannerUrl = "";
+	String logoUrl = "";
 	bool passworded = false;
 	bool logQueries = false;
 	bool rconEnabled = false;

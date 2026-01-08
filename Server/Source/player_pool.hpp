@@ -10,6 +10,7 @@
 
 #include "player_impl.hpp"
 #include <Server/Components/Console/console.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 #include <utils.hpp>
 
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
@@ -35,6 +36,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	IFixesComponent* fixesComponent = nullptr;
 	ICustomModelsComponent* modelsComponent = nullptr;
 	IFixesComponent* fixesComponent_ = nullptr;
+	INPCComponent* npcsComponent_ = nullptr;
 	StreamConfigHelper streamConfigHelper;
 	int* markersShow;
 	int* markersUpdateRate;
@@ -44,8 +46,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	bool* useAllAnimations_;
 	bool* validateAnimations_;
 	bool* allowInteriorWeapons_;
+	bool* logConnectionMessages_;
 	int* maxBots;
 	StaticArray<bool, 256> allowNickCharacter;
+	TimePoint lastScoresAndPingsCached;
 
 	struct PlayerRequestSpawnRPCHandler : public SingleNetworkInEventHandler
 	{
@@ -95,9 +99,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			const TimePoint now = Time::now();
 
 			// SA:MP client is nice and makes this request every 3 seconds.
-			if (now - player.lastScoresAndPings_ >= Seconds(2))
+			// But not every client is the official one... so I guess we need a hard limit for player here as well
+			if (now - player.lastScoresAndPings_ >= Seconds(3))
 			{
-				NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries());
+				// There is also a cache tick diff we are sending to SendPlayerScoresAndPings constructor to use in SendPlayerScoresAndPings::write
+				// This is added to make sure we have a global cache and we don't recalculate and regenerate for every player and every request of theirs
+				// So instead it keeps a cache of our bitstream to use, which won't loop through player pool and gathering data
+				NetCode::RPC::SendPlayerScoresAndPings sendPlayerScoresAndPingsRPC(self.storage.entries(), now - self.lastScoresAndPingsCached);
 				PacketHelper::send(sendPlayerScoresAndPingsRPC, peer);
 				player.lastScoresAndPings_ = now;
 			}
@@ -370,7 +378,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 
 			Player& player = static_cast<Player&>(peer);
-			player.setState(PlayerState_Wasted);
+
+			player.setState(PlayerState_Wasted, /* dispatchEvents = */ true);
 
 			IPlayer* killer = self.storage.get(onPlayerDeathRPC.KillerID);
 			uint8_t reason = onPlayerDeathRPC.Reason;
@@ -864,9 +873,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				player.aimingData_.weaponState = PlayerWeaponState(aimSync.WeaponState);
 				player.aimingData_.aspectRatio = (aimSync.AspectRatio * 1.f / 255) + 1.f;
 
-				// Fix for camera shaking hack, i think there are more bugged ids
-				if (aimSync.CamMode == 34u || aimSync.CamMode == 45u || aimSync.CamMode == 41u || aimSync.CamMode == 42u || aimSync.CamMode == 49u)
+				// Check for invalid camera modes
+				// https://gtag.sannybuilder.com/sanandreas/camera-modes/
+				if (aimSync.CamMode < 3u || aimSync.CamMode == 5u || aimSync.CamMode == 6u
+					|| (aimSync.CamMode >= 9u && aimSync.CamMode <= 13u) || aimSync.CamMode == 17u
+					|| (aimSync.CamMode >= 19u && aimSync.CamMode <= 21u)
+					|| (aimSync.CamMode >= 23u && aimSync.CamMode <= 28u)
+					|| (aimSync.CamMode >= 30u && aimSync.CamMode <= 45u)
+					|| (aimSync.CamMode >= 48u && aimSync.CamMode <= 50u)
+					|| aimSync.CamMode == 52u || aimSync.CamMode == 54u
+					|| aimSync.CamMode == 60u || aimSync.CamMode == 61u || aimSync.CamMode > 64u)
+				{
 					aimSync.CamMode = 4u;
+				}
 
 				aimSync.PlayerID = player.poolID;
 				player.aimSync_ = aimSync;
@@ -1118,13 +1137,21 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			IVehicle& vehicle = *vehiclePtr;
+			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
+			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
+
+			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
+
+			if (!vehicleOk)
+			{
+				return false;
+			}
+
 			player.pos_ = vehicleSync.Position;
 			player.health_ = vehicleSync.PlayerHealthArmour.x;
 			player.armour_ = vehicleSync.PlayerHealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? vehicleSync.WeaponID : 0;
-			const bool vehicleOk = vehicle.updateFromDriverSync(vehicleSync, player);
 
 			uint32_t newKeys = vehicleSync.Keys;
 			switch (vehicleSync.AdditionalKey)
@@ -1154,33 +1181,29 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 			player.setState(PlayerState_Driver);
 
-			if (vehicleOk)
+			vehicleSync.HasTrailer = false;
+			if (vehicleSync.TrailerID)
+			{
+				IVehicle* trailer = vehicle.getTrailer();
+				if (trailer)
+				{
+					vehicleSync.HasTrailer = true;
+					vehicleSync.TrailerID = trailer->getID();
+				}
+			}
+
+			TimePoint now = Time::now();
+			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+				[&peer, now](PlayerUpdateEventHandler* handler)
+				{
+					return handler->onPlayerUpdate(peer, now);
+				});
+
+			if (allowedupdate)
 			{
 				vehicleSync.PlayerID = player.poolID;
-
-				vehicleSync.HasTrailer = false;
-				if (vehicleSync.TrailerID)
-				{
-					IVehicle* trailer = vehicle.getTrailer();
-					if (trailer)
-					{
-						vehicleSync.HasTrailer = true;
-						vehicleSync.TrailerID = trailer->getID();
-					}
-				}
-
-				TimePoint now = Time::now();
-				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-					[&peer, now](PlayerUpdateEventHandler* handler)
-					{
-						return handler->onPlayerUpdate(peer, now);
-					});
-
-				if (allowedupdate)
-				{
-					player.vehicleSync_ = vehicleSync;
-					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
-				}
+				player.vehicleSync_ = vehicleSync;
+				player.primarySyncUpdateType_ = PrimarySyncUpdateType::Driver;
 			}
 			return true;
 		}
@@ -1369,11 +1392,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			IVehicle& vehicle = *vehiclePtr;
+			ScopedPoolReleaseLock lock(*self.vehiclesComponent, *vehiclePtr);
+			IVehicle& vehicle = *lock.entry;
 			Player& player = static_cast<Player&>(peer);
 
-			if (vehicle.isRespawning())
+			int vehicleModel = vehicle.getModel();
+			// Check if vehicle is a train carriage (TODO: Move Vehicle::isTrainCarriage to SDK/Components/Vehicles/Impl/vehicle_models.hpp)
+			if (vehicle.isRespawning() || (!vehicle.isStreamedInForPlayer(player) && !(vehicleModel == 569 || vehicleModel == 570)))
+			{
 				return false;
+			}
 
 			const bool vehicleOk = vehicle.updateFromPassengerSync(passengerSync, peer);
 
@@ -1382,10 +1410,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			player.pos_ = vehicle.getPosition();
 			player.health_ = passengerSync.HealthArmour.x;
 			player.armour_ = passengerSync.HealthArmour.y;
 			player.armedWeapon_ = player.areWeaponsAllowed() ? passengerSync.WeaponID : 0;
-			player.pos_ = passengerSync.Position;
 
 			uint32_t newKeys = passengerSync.Keys;
 			switch (passengerSync.AdditionalKey)
@@ -1415,23 +1443,19 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			}
 			player.setState(PlayerState_Passenger);
 
-			if (vehicleOk)
-			{
-				TimePoint now = Time::now();
-				bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
-					[&peer, now](PlayerUpdateEventHandler* handler)
-					{
-						return handler->onPlayerUpdate(peer, now);
-					});
-
-				if (allowedupdate)
+			TimePoint now = Time::now();
+			bool allowedupdate = self.playerUpdateDispatcher.stopAtFalse(
+				[&peer, now](PlayerUpdateEventHandler* handler)
 				{
-					passengerSync.PlayerID = player.poolID;
-					player.passengerSync_ = passengerSync;
-					player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
-				}
-			}
+					return handler->onPlayerUpdate(peer, now);
+				});
 
+			if (allowedupdate)
+			{
+				passengerSync.PlayerID = player.poolID;
+				player.passengerSync_ = passengerSync;
+				player.primarySyncUpdateType_ = PrimarySyncUpdateType::Passenger;
+			}
 			return true;
 		}
 	} playerPassengerSyncHandler;
@@ -1453,12 +1477,16 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
-			if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f || unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f || unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f)
+			if (unoccupiedSync.AngularVelocity.x < -1.0f || unoccupiedSync.AngularVelocity.x > 1.0f
+				|| unoccupiedSync.AngularVelocity.y < -1.0f || unoccupiedSync.AngularVelocity.y > 1.0f
+				|| unoccupiedSync.AngularVelocity.z < -1.0f || unoccupiedSync.AngularVelocity.z > 1.0f)
 			{
 				return false;
 			}
 
-			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001 || glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001 || glm::abs(unoccupiedSync.Roll.x * unoccupiedSync.Rotation.x + unoccupiedSync.Roll.y * unoccupiedSync.Rotation.y + unoccupiedSync.Roll.z * unoccupiedSync.Rotation.z) >= 0.000001)
+			if (glm::abs(1.0 - glm::length(unoccupiedSync.Roll)) >= 0.000001
+				|| glm::abs(1.0 - glm::length(unoccupiedSync.Rotation)) >= 0.000001
+				|| glm::abs(glm::dot(unoccupiedSync.Roll, unoccupiedSync.Rotation)) >= 0.000001)
 			{
 				return false;
 			}
@@ -1479,15 +1507,26 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 
 			IPlayerVehicleData* playerVehicleData = queryExtension<IPlayerVehicleData>(peer);
 
-			if (vehicle.getDriver())
+			if (vehicle.getDriver() || !vehicle.isStreamedInForPlayer(peer))
 			{
 				return false;
 			}
-			else if (!vehicle.isStreamedInForPlayer(peer))
+			else if (unoccupiedSync.SeatID > 0)
 			{
-				return false;
+				if (player.state_ != PlayerState_Passenger)
+				{
+					return false;
+				}
+				else if (playerVehicleData && playerVehicleData->getVehicle() != &vehicle)
+				{
+					return false;
+				}
+				else if (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())
+				{
+					return false;
+				}
 			}
-			else if (unoccupiedSync.SeatID && (player.state_ != PlayerState_Passenger || (playerVehicleData && playerVehicleData->getVehicle() != &vehicle) || (playerVehicleData && unoccupiedSync.SeatID != playerVehicleData->getSeat())))
+			else if (player.state_ == PlayerState_Passenger)
 			{
 				return false;
 			}
@@ -1519,6 +1558,13 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				return false;
 			}
 
+			if (trailerSync.TurnVelocity.x < -1.0f || trailerSync.TurnVelocity.x > 1.0f
+				|| trailerSync.TurnVelocity.y < -1.0f || trailerSync.TurnVelocity.y > 1.0f
+				|| trailerSync.TurnVelocity.z < -1.0f || trailerSync.TurnVelocity.z > 1.0f)
+			{
+				return false;
+			}
+
 			IVehicle* vehiclePtr = self.vehiclesComponent->get(trailerSync.VehicleID);
 			if (!vehiclePtr)
 			{
@@ -1539,6 +1585,20 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			if (player.vehicleSync_.TrailerID != trailerSync.VehicleID)
 			{
 				return false;
+			}
+
+			// Normalise quaternions
+			float magnitude = glm::length(trailerSync.Quat);
+			if (std::abs(1.0f - magnitude) >= 0.000001f)
+			{
+				if (magnitude < 0.1f)
+				{
+					trailerSync.Quat = glm::vec4(0.5f);
+				}
+				else
+				{
+					trailerSync.Quat /= magnitude;
+				}
 			}
 
 			if (vehicle.updateFromTrailerSync(trailerSync, peer))
@@ -1669,7 +1729,26 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			return { NewConnectionResult_BadName, nullptr };
 		}
 
-		Player* result = storage.emplace(*this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		Player* result = nullptr;
+
+		if (params.bot)
+		{
+			static const auto maxPlayers = core.getConfig().getInt("max_players");
+			for (auto index = *maxPlayers - 1; index >= 0; --index)
+			{
+				if (storage.get(index) == nullptr)
+				{
+					storage.claimHint(index, *this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+					result = storage.get(index);
+					break;
+				}
+			}
+		}
+		else
+		{
+			result = storage.emplace(*this, netData, params, useAllAnimations_, validateAnimations_, allowInteriorWeapons_, fixesComponent_);
+		}
+
 		if (!result)
 		{
 			return { NewConnectionResult_NoPlayerSlot, nullptr };
@@ -1735,7 +1814,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		player.weather_ = *weather;
 		player.gravity_ = core.getGravity();
 
-		if (config.getBool("logging.log_connection_messages"))
+		if (logConnectionMessages_ && *logConnectionMessages_)
 		{
 			core.logLn(
 				LogLevel::Message,
@@ -1795,7 +1874,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		packet.Reason = reason;
 		PacketHelper::broadcast(packet, *this);
 
-		if (core.getConfig().getBool("logging.log_connection_messages"))
+		if (logConnectionMessages_ && *logConnectionMessages_)
 		{
 			core.logLn(
 				LogLevel::Message,
@@ -1820,6 +1899,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 	PlayerPool(ICore& core)
 		: core(core)
 		, networks(core.getNetworks())
+		, lastScoresAndPingsCached(Time::now())
 		, playerRequestSpawnRPCHandler(*this)
 		, playerRequestScoresAndPingsRPCHandler(*this)
 		, onPlayerClickMapRPCHandler(*this)
@@ -2013,6 +2093,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		useAllAnimations_ = config.getBool("game.use_all_animations");
 		validateAnimations_ = config.getBool("game.validate_animations");
 		allowInteriorWeapons_ = config.getBool("game.allow_interior_weapons");
+		logConnectionMessages_ = config.getBool("logging.log_connection_messages");
 		maxBots = config.getInt("max_bots");
 
 		playerUpdateDispatcher.addEventHandler(this);
@@ -2039,6 +2120,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		actorsComponent = components.queryComponent<IActorsComponent>();
 		modelsComponent = components.queryComponent<ICustomModelsComponent>();
 		fixesComponent = components.queryComponent<IFixesComponent>();
+		npcsComponent_ = components.queryComponent<INPCComponent>();
 	}
 
 	bool onPlayerUpdate(IPlayer& p, TimePoint now) override
@@ -2116,82 +2198,87 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 				continue;
 			}
 
-			switch (player->primarySyncUpdateType_)
+			if (!player->spectateData_.spectating)
 			{
-			case PrimarySyncUpdateType::OnFoot:
-			{
-				if (!player->controllable_)
+				switch (player->primarySyncUpdateType_)
 				{
-					player->footSync_.Keys = 0;
-					player->footSync_.UpDown = 0;
-					player->footSync_.LeftRight = 0;
-				}
-
-				// Setting player's special action to enter vehicle
-				if (player->ghostMode_)
+				case PrimarySyncUpdateType::OnFoot:
 				{
-					player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
-				}
-
-				PacketHelper::broadcastSyncPacket(player->footSync_, *player);
-				break;
-			}
-			case PrimarySyncUpdateType::Driver:
-			{
-				if (!player->controllable_)
-				{
-					player->vehicleSync_.Keys = 0;
-					player->vehicleSync_.UpDown = 0;
-					player->vehicleSync_.LeftRight = 0;
-				}
-
-				PacketHelper::broadcastSyncPacket(player->vehicleSync_, *player);
-				break;
-			}
-			case PrimarySyncUpdateType::Passenger:
-			{
-				if (!player->controllable_)
-				{
-					player->passengerSync_.Keys = 0;
-					player->passengerSync_.UpDown = 0;
-					player->passengerSync_.LeftRight = 0;
-				}
-
-				uint16_t keys = player->passengerSync_.Keys;
-				if (player->passengerSync_.WeaponID == 43 /* camera */)
-				{
-					player->passengerSync_.Keys &= 0xFB;
-				}
-				PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
-				player->passengerSync_.Keys = keys;
-
-				break;
-			}
-			default:
-				break;
-			}
-			player->primarySyncUpdateType_ = PrimarySyncUpdateType::None;
-
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Aim)
-			{
-				PacketHelper::broadcastSyncPacket(player->aimSync_, *player);
-			}
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Trailer)
-			{
-				PacketHelper::broadcastSyncPacket(player->trailerSync_, *player);
-			}
-			if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Unoccupied)
-			{
-				if (vehiclesComponent)
-				{
-					IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
-					if (vehicle)
+					if (!player->controllable_)
 					{
-						PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						player->footSync_.Keys = 0;
+						player->footSync_.UpDown = 0;
+						player->footSync_.LeftRight = 0;
+					}
+
+					// Setting player's special action to enter vehicle
+					if (player->ghostMode_)
+					{
+						player->footSync_.SpecialAction = SpecialAction_EnterVehicle;
+					}
+
+					PacketHelper::broadcastSyncPacket(player->footSync_, *player);
+					break;
+				}
+				case PrimarySyncUpdateType::Driver:
+				{
+					if (!player->controllable_)
+					{
+						player->vehicleSync_.Keys = 0;
+						player->vehicleSync_.UpDown = 0;
+						player->vehicleSync_.LeftRight = 0;
+					}
+
+					PacketHelper::broadcastSyncPacket(player->vehicleSync_, *player);
+					break;
+				}
+				case PrimarySyncUpdateType::Passenger:
+				{
+					if (!player->controllable_)
+					{
+						player->passengerSync_.Keys = 0;
+						player->passengerSync_.UpDown = 0;
+						player->passengerSync_.LeftRight = 0;
+					}
+
+					uint16_t keys = player->passengerSync_.Keys;
+					if (player->passengerSync_.WeaponID == 43 /* camera */)
+					{
+						player->passengerSync_.Keys &= 0xFB;
+					}
+					PacketHelper::broadcastSyncPacket(player->passengerSync_, *player);
+					player->passengerSync_.Keys = keys;
+
+					break;
+				}
+				default:
+					break;
+				}
+				player->primarySyncUpdateType_ = PrimarySyncUpdateType::None;
+
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Aim)
+				{
+					PacketHelper::broadcastSyncPacket(player->aimSync_, *player);
+				}
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Trailer)
+				{
+					PacketHelper::broadcastSyncPacket(player->trailerSync_, *player);
+				}
+				if (player->secondarySyncUpdateType_ & SecondarySyncUpdateType_Unoccupied)
+				{
+					if (vehiclesComponent)
+					{
+						IVehicle* vehicle = vehiclesComponent->get(player->unoccupiedSync_.VehicleID);
+						if (vehicle)
+						{
+							PacketHelper::broadcastToSome(player->unoccupiedSync_, vehicle->streamedForPlayers(), player);
+						}
 					}
 				}
+
+				player->secondarySyncUpdateType_ = 0;
 			}
-			player->secondarySyncUpdateType_ = 0;
+
 			++it;
 		}
 

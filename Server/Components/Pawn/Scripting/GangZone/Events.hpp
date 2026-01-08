@@ -8,7 +8,6 @@
 
 #pragma once
 #include "../../Manager/Manager.hpp"
-#include "../../Singleton.hpp"
 #include "sdk.hpp"
 
 struct GangZoneEvents : public GangZoneEventHandler, public Singleton<GangZoneEvents>

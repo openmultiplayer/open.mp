@@ -23,6 +23,7 @@ RakNetLegacyNetwork::RakNetLegacyNetwork()
 	, rakNetServer(*RakNet::RakNetworkFactory::GetRakServerInterface())
 {
 	rakNetServer.SetMTUSize(512);
+	playerRemoteSystem.fill(nullptr);
 
 	RPCHOOK(0);
 	RPCHOOK(1);
@@ -290,21 +291,26 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
 		core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 		core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 	}
+
+	if (npcComponent)
+	{
+		npcComponent->getPoolEventDispatcher().removeEventHandler(this);
+	}
+
 	rakNetServer.Disconnect(300);
 	RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
 }
 
 static NetworkBitStream GetBitStream(RakNet::RPCParameters& rpcParams)
 {
-	unsigned int
+	const unsigned int
 		bits
 		= rpcParams.numberOfBitsOfData;
 	if (bits == 0)
 		return NetworkBitStream();
-	unsigned int
-		bytes
-		= (bits - 1) / 8 + 1;
-	return NetworkBitStream(rpcParams.input, bytes, false);
+	NetworkBitStream bs(rpcParams.input, bitsToBytes(bits), false /* copyData */);
+	bs.SetWriteOffset(bits);
+	return bs;
 }
 
 enum LegacyClientVersion
@@ -313,7 +319,7 @@ enum LegacyClientVersion
 	LegacyClientVersion_03DL = 4062
 };
 
-IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOfficialClient)
+IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bool isNPC, StringView serial, uint32_t version, StringView versionName, uint32_t challenge, StringView name, bool isUsingOmp, bool isUsingOfficialClient)
 {
 	const RakNet::PlayerID rid = rpcParams->sender;
 
@@ -344,6 +350,7 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 		params.bot = isNPC;
 		params.serial = serial;
 		params.isUsingOfficialClient = isUsingOfficialClient;
+		params.isUsingOmp = isUsingOmp;
 		newConnectionResult = core->getPlayers().requestPlayer(netData, params);
 	}
 	else
@@ -359,11 +366,6 @@ IPlayer* RakNetLegacyNetwork::OnPeerConnect(RakNet::RPCParameters* rpcParams, bo
 			RakNet::BitStream bss;
 			bss.Write(uint8_t(newConnectionResult.first));
 			rakNetServer.RPC(130, &bss, RakNet::HIGH_PRIORITY, RakNet::UNRELIABLE, 0, rid, false, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
-
-			if (newConnectionResult.first != NewConnectionResult_VersionMismatch)
-			{
-				rakNetServer.Kick(rid);
-			}
 		}
 		return nullptr;
 	}
@@ -383,83 +385,91 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 		return;
 	}
 
-	if (remoteSystem->sampData.authType == SAMPRakNet::AuthType_Player)
+	if (remoteSystem->sampData.authType != SAMPRakNet::AuthType_Player)
 	{
-		NetworkBitStream bs = GetBitStream(*rpcParams);
-		NetCode::RPC::PlayerConnect playerConnectRPC;
-		if (playerConnectRPC.read(bs))
-		{
-
-			bool serialIsInvalid = true;
-			String serial;
-			ttmath::UInt<100> serialNumber;
-			ttmath::uint remainder = 0;
-
-			serialNumber.FromString(String(StringView(playerConnectRPC.Key)), 16);
-			serialNumber.DivInt(1001, remainder);
-
-			if (remainder == 0)
-			{
-				serial = serialNumber.ToString(16);
-				if (serial.size() != 0 && serial.size() < 50)
-				{
-					serialIsInvalid = false;
-				}
-			}
-
-			const bool versionIsInvalid = (playerConnectRPC.VersionString.length() > 24);
-
-			if (serialIsInvalid || versionIsInvalid)
-			{
-				PeerAddress address;
-				address.v4 = rpcParams->sender.binaryAddress;
-				address.ipv6 = false;
-
-				PeerAddress::AddressString addressString;
-				PeerAddress::ToString(address, addressString);
-
-				network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
-				network->rakNetServer.Kick(rpcParams->sender);
-				return;
-			}
-
-			remoteSystem->isLogon = true;
-			IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name, playerConnectRPC.IsUsingOfficialClient);
-			if (newPeer)
-			{
-				if (!network->inEventDispatcher.stopAtFalse(
-						[newPeer, &bs](NetworkInEventHandler* handler)
-						{
-							bs.resetReadPointer();
-							return handler->onReceiveRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
-						}))
-				{
-					return;
-				}
-
-				if (!network->rpcInEventDispatcher.stopAtFalse(
-						NetCode::RPC::PlayerConnect::PacketID,
-						[newPeer, &bs](SingleNetworkInEventHandler* handler)
-						{
-							bs.resetReadPointer();
-							return handler->onReceive(*newPeer, bs);
-						}))
-				{
-					return;
-				}
-
-				network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
-				return;
-			}
-		}
-		else
-		{
-			network->rakNetServer.Kick(rpcParams->sender);
-		}
+		network->rakNetServer.Kick(rpcParams->sender);
 		return;
 	}
 
-	network->rakNetServer.Kick(rpcParams->sender);
+	NetworkBitStream bs = GetBitStream(*rpcParams);
+	NetCode::RPC::PlayerConnect playerConnectRPC;
+	if (!playerConnectRPC.read(bs))
+	{
+		network->rakNetServer.Kick(rpcParams->sender);
+		return;
+	}
+
+	bool serialIsInvalid = true;
+	String serial;
+	ttmath::UInt<100> serialNumber;
+	ttmath::uint remainder = 0;
+
+	serialNumber.FromString(String(StringView(playerConnectRPC.Key)), 16);
+	serialNumber.DivInt(1001, remainder);
+
+	if (remainder == 0)
+	{
+		serial = serialNumber.ToString(16);
+		if (serial.size() != 0 && serial.size() < 50)
+		{
+			serialIsInvalid = false;
+		}
+	}
+
+	const bool versionIsInvalid = (playerConnectRPC.VersionString.length() > 24);
+
+	if (serialIsInvalid || versionIsInvalid)
+	{
+		PeerAddress address;
+		address.v4 = rpcParams->sender.binaryAddress;
+		address.ipv6 = false;
+
+		PeerAddress::AddressString addressString;
+		PeerAddress::ToString(address, addressString);
+
+		network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
+		network->rakNetServer.Kick(rpcParams->sender);
+		network->rakNetServer.AddToBanList(addressString.data(), 15'000u);
+		return;
+	}
+
+	bool isUsingOmp = SAMPRakNet::IsPlayerUsingOmp(rpcParams->sender);
+	if (isUsingOmp)
+	{
+		SAMPRakNet::SetPlayerOmpVersion(rpcParams->sender, playerConnectRPC.OmpVersion);
+	}
+
+	IPlayer* newPeer = network->OnPeerConnect(rpcParams, false, serial, playerConnectRPC.VersionNumber, playerConnectRPC.VersionString, playerConnectRPC.ChallengeResponse, playerConnectRPC.Name, isUsingOmp, playerConnectRPC.IsUsingOfficialClient);
+	if (!newPeer)
+	{
+		network->rakNetServer.Kick(rpcParams->sender);
+		return;
+	}
+
+	if (!network->inEventDispatcher.stopAtFalse(
+			[newPeer, &bs](NetworkInEventHandler* handler)
+			{
+				bs.resetReadPointer();
+				return handler->onReceiveRPC(*newPeer, NetCode::RPC::PlayerConnect::PacketID, bs);
+			}))
+	{
+		return;
+	}
+
+	if (!network->rpcInEventDispatcher.stopAtFalse(
+			NetCode::RPC::PlayerConnect::PacketID,
+			[newPeer, &bs](SingleNetworkInEventHandler* handler)
+			{
+				bs.resetReadPointer();
+				return handler->onReceive(*newPeer, bs);
+			}))
+	{
+		return;
+	}
+
+	network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
+	network->playerRemoteSystem[newPeer->getID()] = remoteSystem;
+	remoteSystem->isLogon = true;
 }
 
 void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* extra)
@@ -478,8 +488,7 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 		NetCode::RPC::NPCConnect NPCConnectRPC;
 		if (NPCConnectRPC.read(bs))
 		{
-			remoteSystem->isLogon = true;
-			IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name);
+			IPlayer* newPeer = network->OnPeerConnect(rpcParams, true, "", NPCConnectRPC.VersionNumber, "npc", NPCConnectRPC.ChallengeResponse, NPCConnectRPC.Name, false);
 			if (newPeer)
 			{
 				if (!network->inEventDispatcher.stopAtFalse(
@@ -504,12 +513,10 @@ void RakNetLegacyNetwork::OnNPCConnect(RakNet::RPCParameters* rpcParams, void* e
 				}
 
 				network->networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerConnect, *newPeer);
-				return;
+				remoteSystem->isLogon = true;
 			}
 		}
 	}
-
-	network->rakNetServer.Kick(rpcParams->sender);
 }
 
 void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDisconnectReason reason)
@@ -522,6 +529,7 @@ void RakNetLegacyNetwork::OnRakNetDisconnect(RakNet::PlayerIndex rid, PeerDiscon
 	}
 
 	playerFromRakIndex[rid] = nullptr;
+	playerRemoteSystem[player->getID()] = nullptr;
 	networkEventDispatcher.dispatch(&NetworkEventHandler::onPeerDisconnect, *player, reason);
 }
 
@@ -773,6 +781,12 @@ void RakNetLegacyNetwork::update()
 		query.setDarkBannerUrl(bannerUrl);
 	}
 
+	StringView logoUrl = config.getString("logo");
+	if (!logoUrl.empty())
+	{
+		query.setLogoUrl(logoUrl);
+	}
+
 	query.setRuleValue<false>("worldtime", String(std::to_string(*config.getInt("game.time")) + ":00"));
 
 	StringView rconPassword = config.getString("rcon.password");
@@ -786,6 +800,18 @@ void RakNetLegacyNetwork::update()
 	query.buildConfigDependentBuffers();
 
 	int mtu = *config.getInt("network.mtu");
+
+	static const auto maxMTU = *core->getConfig().getBool("network.allow_037_clients") ? MAX_MTU_037 : MAX_MTU_DL;
+
+	// Check if provided MTU is larger than the maximum allowed size for current targeted client(s).
+	// Example: 0.3.7 clients have a maximum MTU of 576 bytes, while 0.3DL clients have a maximum MTU of 1500 bytes.
+	// If that is the case, we will log a warning and set the MTU to the maximum allowed size so client won't experience packet loss/disconnects.
+	if (mtu > maxMTU)
+	{
+		core->logLn(LogLevel::Warning, "MTU %d is larger than the maximum allowed size %d for current targeted client(s).", mtu, maxMTU);
+		mtu = maxMTU;
+	}
+
 	rakNetServer.SetMTUSize(mtu);
 }
 
@@ -795,7 +821,7 @@ void RakNetLegacyNetwork::init(ICore* c)
 
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerChangeDispatcher().addEventHandler(this);
-	core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this, EventPriority_Lowest);
 }
 
 void RakNetLegacyNetwork::start()
@@ -809,6 +835,7 @@ void RakNetLegacyNetwork::start()
 
 	IConfig& config = core->getConfig();
 	int maxPlayers = *config.getInt("max_players");
+	int minimumSendBPS = *config.getFloat("network.minimum_send_bits_per_second");
 
 	int port = *config.getInt("network.port");
 	int sleep = static_cast<int>(*config.getFloat("sleep"));
@@ -817,6 +844,8 @@ void RakNetLegacyNetwork::start()
 	bool* artwork_config = config.getBool("artwork.enable");
 	bool artwork = !artwork_config ? false : *artwork_config;
 	bool allow037 = *config.getBool("network.allow_037_clients");
+
+	SAMPRakNet::SetMinimumSendBitsPerSecond(minimumSendBPS); // Default: 96 kbps  (~12 KB/s)
 
 	query.setCore(core);
 
@@ -877,6 +906,15 @@ void RakNetLegacyNetwork::start()
 	{
 		SAMPRakNet::SetGracePeriod(*gracePeriod);
 	}
+
+	// Set reserved slots based on NPC count once more because slots reserved
+	// Before RakServer::Start are reset because RakPeer::Start calls RakPeer::Disconnect
+	// As well which resets the value for RakPeer::reservedSlots class member.
+	// Note: this behavior does not affect slots reserved in next executions.
+	if (npcComponent)
+	{
+		rakNetServer.ReserveSlots(npcComponent->count());
+	}
 }
 
 void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
@@ -890,9 +928,24 @@ void RakNetLegacyNetwork::onTick(Microseconds elapsed, TimePoint now)
 		}
 
 		IPlayer* player = playerFromRakIndex[pkt->playerIndex];
+
+		// We shouldn't be needing this, it's only here IF somehow this is happening again
+		// So users can report it to us
+		if (player && player->getID() == -1)
+		{
+			rakNetServer.Kick(pkt->playerId);
+			playerFromRakIndex[pkt->playerIndex] = nullptr;
+			core->logLn(LogLevel::Warning, "RakNet player %d with open.mp player pool id -1  was found and deleted. Packet ID: %d", pkt->playerIndex, pkt->data[0]);
+			core->logLn(LogLevel::Warning, "Please contact us by creating an issue in our repository at https://github.com/openmultiplayer/open.mp");
+			rakNetServer.DeallocatePacket(pkt);
+			continue;
+		}
+
 		if (player)
 		{
-			NetworkBitStream bs(pkt->data, pkt->length, false);
+			const unsigned int bits = pkt->bitSize;
+			NetworkBitStream bs(pkt->data, bitsToBytes(bits), false);
+			bs.SetWriteOffset(bits);
 			uint8_t type;
 			if (bs.readUINT8(type))
 			{

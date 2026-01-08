@@ -65,6 +65,7 @@ private:
 	String cmd;
 	ThreadProcData* threadData;
 	std::thread cinThread;
+	std::thread::native_handle_type nativeThreadHandle;
 
 	struct PlayerRconCommandHandler : public SingleNetworkInEventHandler
 	{
@@ -212,6 +213,7 @@ public:
 
 		threadData = new ThreadProcData { true, this };
 		cinThread = std::thread(ThreadProc, threadData);
+		nativeThreadHandle = cinThread.native_handle();
 		cinThread.detach();
 	}
 
@@ -257,10 +259,16 @@ public:
 		if (threadData)
 		{
 			threadData->valid = false;
+
+#ifdef WIN32
 			if (cinThread.joinable())
 			{
 				cinThread.join();
 			}
+#else
+			pthread_cancel(nativeThreadHandle);
+#endif
+
 			delete threadData;
 			threadData = nullptr;
 		}

@@ -13,7 +13,7 @@ const size_t MAX_ACCEPTABLE_HOSTNAME_SIZE = 63;
 const size_t MAX_ACCEPTABLE_LANGUAGE_SIZE = 39;
 const size_t MAX_ACCEPTABLE_GMTEXT_SIZE = 39;
 const size_t MAX_ACCEPTABLE_DISCORD_LINK_SIZE = 50;
-const size_t MAX_ACCEPTABLE_BANNER_URL_SIZE = 120;
+const size_t MAX_ACCEPTABLE_IMAGE_URL_SIZE = 160;
 
 template <typename T>
 void writeToBuffer(char* output, size_t& offset, T value)
@@ -133,10 +133,11 @@ void Query::buildExtraServerInfoBuffer()
 
 	// Set discord link length to 0 if it's over acceptable length (max size defined by discord itself)
 	uint32_t discordLinkLength = MAX_ACCEPTABLE_DISCORD_LINK_SIZE < discordLink.length() ? 0 : discordLink.length();
-	uint32_t lightBannerUrlLength = std::min(lightBannerUrl.length(), MAX_ACCEPTABLE_BANNER_URL_SIZE);
-	uint32_t darkBannerUrlLength = std::min(darkBannerUrl.length(), MAX_ACCEPTABLE_BANNER_URL_SIZE);
+	uint32_t lightBannerUrlLength = std::min(lightBannerUrl.length(), MAX_ACCEPTABLE_IMAGE_URL_SIZE);
+	uint32_t darkBannerUrlLength = std::min(darkBannerUrl.length(), MAX_ACCEPTABLE_IMAGE_URL_SIZE);
+	uint32_t logoUrlLength = std::min(logoUrl.length(), MAX_ACCEPTABLE_IMAGE_URL_SIZE);
 
-	extraInfoBufferLength = BASE_QUERY_SIZE + sizeof(discordLinkLength) + discordLinkLength + sizeof(lightBannerUrlLength) + lightBannerUrlLength + sizeof(darkBannerUrlLength) + darkBannerUrlLength;
+	extraInfoBufferLength = BASE_QUERY_SIZE + sizeof(discordLinkLength) + discordLinkLength + sizeof(lightBannerUrlLength) + lightBannerUrlLength + sizeof(darkBannerUrlLength) + darkBannerUrlLength + sizeof(logoUrlLength) + logoUrlLength;
 	extraInfoBuffer.reset(new char[extraInfoBufferLength]);
 
 	size_t offset = QUERY_TYPE_INDEX;
@@ -155,6 +156,10 @@ void Query::buildExtraServerInfoBuffer()
 	// Write dark banner url
 	writeToBuffer(output, offset, darkBannerUrlLength);
 	writeToBuffer(output, darkBannerUrl.c_str(), offset, darkBannerUrlLength);
+
+	// Write logo url
+	writeToBuffer(output, offset, logoUrlLength);
+	writeToBuffer(output, logoUrl.c_str(), offset, logoUrlLength);
 }
 
 void Query::updateServerInfoBufferPlayerCount(IPlayer* except)

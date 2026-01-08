@@ -574,7 +574,7 @@ public:
 	{
 		if (gts_[style] && gtTimers_[style])
 		{
-			message = String(gts_[style]->getText());
+			message = gts_[style]->getText();
 			time = gtTimers_[style]->interval();
 			remaining = gtTimers_[style]->remaining();
 			return true;

@@ -136,6 +136,7 @@ public:
 
 	void reset() override
 	{
+		checkingList.clear();
 		storage.clear();
 		// Clear all the IDs.
 		for (int i = 0; i != GANG_ZONE_POOL_SIZE; ++i)
@@ -161,7 +162,6 @@ public:
 
 			for (auto gangzone : checkingList.entries())
 			{
-
 				// Only check visible gangzones
 				if (!gangzone->isShownForPlayer(player))
 				{

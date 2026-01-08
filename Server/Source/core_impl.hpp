@@ -17,6 +17,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <cstdlib>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -123,6 +124,8 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "network.use_lan_mode", false },
 	{ "network.allow_037_clients", true },
 	{ "network.grace_period", 5000 },
+	{ "network.use_omp_encryption", false },
+	{ "network.minimum_send_bits_per_second", 96000.0f }, // 96 kbps  (~12 KB/s)
 	// rcon
 	{ "rcon.allow_teleport", false },
 	{ "rcon.enable", false },
@@ -130,6 +133,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	// banners
 	{ "banners.light", String("") },
 	{ "banners.dark", String("") },
+	{ "logo", String("") },
 	// discord
 	{ "discord.invite", String("") },
 };
@@ -315,6 +319,71 @@ private:
 
 	std::map<String, ConfigStorage> defaults;
 
+	String expandEnvironmentVariables(const String& value) const
+	{
+		String result;
+		result.reserve(value.length());
+
+		size_t i = 0;
+		while (i < value.length())
+		{
+			const char ch = value[i];
+
+			if (ch != '$')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			if (i + 1 < value.length() && value[i + 1] == '$')
+			{
+				result.push_back('$');
+				i += 2;
+				continue;
+			}
+
+			if (i + 1 >= value.length() || value[i + 1] != '{')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			const size_t varStart = i + 2;
+			const size_t end = value.find('}', varStart);
+
+			if (end == String::npos)
+			{
+				result.append(value.substr(i));
+				break;
+			}
+
+			const String fullVar = value.substr(varStart, end - varStart);
+			const size_t defaultPos = fullVar.find(":-");
+
+			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
+			const char* envValue = std::getenv(varName.c_str());
+
+			if (envValue)
+			{
+				result.append(envValue);
+			}
+			else if (defaultPos != String::npos)
+			{
+				result.append(fullVar.substr(defaultPos + 2));
+			}
+			else
+			{
+				result.append(value.substr(i, end - i + 1));
+			}
+
+			i = end + 1;
+		}
+
+		return result;
+	}
+
 	void processNode(const nlohmann::json::object_t& node, String ns = "")
 	{
 		for (const auto& kv : node)
@@ -335,7 +404,8 @@ private:
 			}
 			else if (v.is_string())
 			{
-				processed[key].emplace<String>(v.get<String>());
+				String strValue = v.get<String>();
+				processed[key].emplace<String>(expandEnvironmentVariables(strValue));
 			}
 			else if (v.is_array())
 			{
@@ -345,7 +415,8 @@ private:
 				{
 					if (arrVal.is_string())
 					{
-						vec.emplace_back(arrVal.get<String>());
+						String strValue = arrVal.get<String>();
+						vec.emplace_back(expandEnvironmentVariables(strValue));
 					}
 				}
 			}
@@ -552,11 +623,12 @@ public:
 
 	void setStrings(StringView key, Span<const StringView> value) override
 	{
-		auto& vec = processed[String(key)].emplace<DynamicArray<String>>();
+		DynamicArray<String> newStrings;
 		for (const StringView v : value)
 		{
-			vec.emplace_back(String(v));
+			newStrings.emplace_back(String(v));
 		}
+		processed[String(key)].emplace<DynamicArray<String>>(std::move(newStrings));
 	}
 
 	void addBan(const BanEntry& entry) override
@@ -941,6 +1013,10 @@ private:
 		else
 		{
 			params->response = int(res.error());
+			if (params->response < 100)
+			{
+				params->body = httplib::detail::internal_error_to_string(res.error());
+			}
 		}
 
 		params->finished.store(true);
@@ -1024,10 +1100,10 @@ private:
 		}
 	}
 
-	IComponent* loadComponent(const ghc::filesystem::path& path)
+	IComponent* loadComponent(const ghc::filesystem::path& path, bool highPriority = false)
 	{
 		printLn("Loading component %s", path.filename().u8string().c_str());
-		auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
+		auto componentLib = highPriority ? LIBRARY_OPEN_GLOBAL(path.u8string().c_str()) : LIBRARY_OPEN(path.u8string().c_str());
 		if (componentLib == nullptr)
 		{
 			printLn("\tFailed to load component: %s.", utils::GetLastErrorAsString().c_str());
@@ -1077,22 +1153,69 @@ private:
 
 		auto componentsCfg = config.getStrings("components");
 		auto excludeCfg = config.getStrings("exclude");
+
+		Impl::DynamicArray<ghc::filesystem::path> highPriorityComponents;
+		Impl::DynamicArray<ghc::filesystem::path> normalComponents;
+
+		const auto shouldLoad = [&](const ghc::filesystem::path& p)
+		{
+			if (excludeCfg && !excludeCfg->empty())
+			{
+				ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
+				rel.replace_extension();
+				// Is this in the "don't load" list?
+				const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+				{
+					return ghc::filesystem::path(exclude) == rel;
+				};
+				if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+					!= excludeCfg->end())
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+
 		if (!componentsCfg || componentsCfg->empty())
 		{
-			for (auto& de : ghc::filesystem::directory_iterator(path))
+			for (auto& de : ghc::filesystem::recursive_directory_iterator(path))
 			{
 				ghc::filesystem::path p = de.path();
+				if (p.filename().string().at(0) == '$')
+				{
+					highPriorityComponents.push_back(p);
+				}
+				else
+				{
+					normalComponents.push_back(p);
+				}
+			}
+
+			for (auto& p : highPriorityComponents)
+			{
 				if (p.extension() == LIBRARY_EXT)
 				{
-					if (excludeCfg && !excludeCfg->empty())
+					if (!shouldLoad(p))
 					{
-						p.replace_extension("");
-						// Is this in the "don't load" list?
-						if (std::find(excludeCfg->begin(), excludeCfg->end(), p.filename().string()) != excludeCfg->end())
-						{
-							continue;
-						}
-						p.replace_extension(LIBRARY_EXT);
+						continue;
+					}
+
+					IComponent* component = loadComponent(p, true);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+			}
+
+			for (auto& p : normalComponents)
+			{
+				if (p.extension() == LIBRARY_EXT)
+				{
+					if (!shouldLoad(p))
+					{
+						continue;
 					}
 
 					IComponent* component = loadComponent(p);
@@ -1113,20 +1236,28 @@ private:
 					file.replace_extension("");
 				}
 
-				if (excludeCfg && !excludeCfg->empty())
+				if (file.filename().string().at(0) == '$')
 				{
-					// Is this in the "don't load" list?
-					if (std::find(excludeCfg->begin(), excludeCfg->end(), file.filename().string()) != excludeCfg->end())
-					{
-						continue;
-					}
+					highPriorityComponents.push_back(file);
+				}
+				else
+				{
+					normalComponents.push_back(file);
+				}
+			}
+
+			for (auto& p : highPriorityComponents)
+			{
+				if (!shouldLoad(p))
+				{
+					continue;
 				}
 
 				// Now load it.
-				file.replace_extension(LIBRARY_EXT);
-				if (ghc::filesystem::exists(file))
+				p.replace_extension(LIBRARY_EXT);
+				if (ghc::filesystem::exists(p))
 				{
-					IComponent* component = loadComponent(file);
+					IComponent* component = loadComponent(p, true);
 					if (component)
 					{
 						addComponent(component);
@@ -1134,7 +1265,31 @@ private:
 				}
 				else
 				{
-					printLn("Loading component %s", file.filename().u8string().c_str());
+					printLn("Loading component %s", p.filename().u8string().c_str());
+					printLn("\tCould not find component");
+				}
+			}
+
+			for (auto& p : normalComponents)
+			{
+				if (!shouldLoad(p))
+				{
+					continue;
+				}
+
+				// Now load it.
+				p.replace_extension(LIBRARY_EXT);
+				if (ghc::filesystem::exists(p))
+				{
+					IComponent* component = loadComponent(p);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+				else
+				{
+					printLn("Loading component %s", p.filename().u8string().c_str());
 					printLn("\tCould not find component");
 				}
 			}
@@ -1773,7 +1928,7 @@ public:
 #ifdef BUILD_WINDOWS
 		_lock_locales();
 		UINT oldCP = 0;
-		char oldLocale[64] = { 0 };
+		wchar_t oldLocale[64] = { 0 };
 		bool oldLocaleSaved = false;
 		if (utf8)
 		{
@@ -1781,10 +1936,10 @@ public:
 			SetConsoleOutputCP(CP_UTF8);
 
 			/* Getting current locale */
-			const char* old_locale_ptr = std::setlocale(LC_CTYPE, nullptr);
+			const wchar_t* old_locale_ptr = _wsetlocale(LC_CTYPE, nullptr);
 			if (old_locale_ptr != nullptr)
 			{
-				strcpy_s(oldLocale, old_locale_ptr);
+				wcscpy_s(oldLocale, old_locale_ptr);
 				oldLocaleSaved = true;
 
 				std::setlocale(LC_CTYPE, ".UTF-8");
@@ -1862,7 +2017,7 @@ public:
 		{
 			if (oldLocaleSaved)
 			{
-				std::setlocale(LC_CTYPE, oldLocale);
+				_wsetlocale(LC_CTYPE, oldLocale);
 			}
 			SetConsoleOutputCP(oldCP);
 		}

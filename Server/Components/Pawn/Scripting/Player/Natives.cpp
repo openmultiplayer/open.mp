@@ -879,15 +879,15 @@ SCRIPT_API(GetPlayerMarkerForPlayer, int(IPlayer& player, IPlayer& other))
 	return colour.RGBA();
 }
 
-SCRIPT_API(AllowPlayerTeleport, bool(IPlayer* player, bool allow))
+SCRIPT_API(AllowPlayerTeleport, bool(IPlayer& player, bool allow))
 {
-	player->allowTeleport(allow);
+	player.allowTeleport(allow);
 	return true;
 }
 
-SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer* player))
+SCRIPT_API(IsPlayerTeleportAllowed, bool(IPlayer& player))
 {
-	return player->isTeleportAllowed();
+	return player.isTeleportAllowed();
 }
 
 SCRIPT_API(DisableRemoteVehicleCollisions, bool(IPlayer& player, bool disable))
@@ -964,7 +964,7 @@ SCRIPT_API(HasGameText, bool(IPlayer& player, int style))
 	return player.hasGameText(style);
 }
 
-SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& message, int time, int remaining))
+SCRIPT_API(GetGameText, bool(IPlayer& player, int style, OutputOnlyString& message, int& time, int& remaining))
 {
 	Milliseconds mt;
 	Milliseconds mr;
@@ -1158,7 +1158,7 @@ SCRIPT_API(ArePlayerWeaponsAllowed, bool(IPlayer& player))
 	return player.areWeaponsAllowed();
 }
 
-SCRIPT_API(IsPlayerUsingOfficialClient, int(IPlayer& player))
+SCRIPT_API(IsPlayerUsingOfficialClient, bool(IPlayer& player))
 {
 	return player.isUsingOfficialClient();
 }
@@ -1194,4 +1194,9 @@ SCRIPT_API(IsPlayerCuffed, bool(IPlayer& player))
 		}
 	}
 	return false;
+}
+
+SCRIPT_API(IsPlayerUsingOmp, bool(IPlayer& player))
+{
+	return player.isUsingOmp();
 }

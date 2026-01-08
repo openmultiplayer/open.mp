@@ -33,14 +33,14 @@ on:
 jobs:
   build-windows:
     name: Windows build
-    runs-on: windows-2019
+    runs-on: windows-latest
 
     strategy:
       matrix:
         arch: [Win32, x64]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           clean: true
           submodules: recursive
@@ -114,7 +114,7 @@ jobs:
           powershell -NoLogo -NoProfile -Command Compress-Archive -DestinationPath "${artifact_name}.zip" -Path "Server"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.artifact_name }}
           path: build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.zip
@@ -130,7 +130,7 @@ jobs:
         ssl: [dynamic, static]
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           clean: true
           submodules: recursive
@@ -190,7 +190,7 @@ jobs:
           sudo tar -cJvf "${artifact_name}.tar.xz" "Server"
 
       - name: Upload build artifacts
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.build.outputs.artifact_name }}
           path: docker/build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.tar.xz
@@ -203,7 +203,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           clean: true
           submodules: recursive
@@ -217,7 +217,7 @@ jobs:
         run: |
           echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
 
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         id: download
         with:
           name: open.mp-linux-x86-dynssl-${{ steps.vars.outputs.build_version }}
@@ -233,7 +233,7 @@ jobs:
 
   build-arm-gnu:
     name: ARM build (GNU)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       matrix:
@@ -241,7 +241,7 @@ jobs:
         ssl: [dynamic, static]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
       with:
         clean: true
         submodules: recursive
@@ -288,7 +288,7 @@ jobs:
             mv ~/.conan/data docker/conan
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: open.mp-linux-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${{ steps.vars.outputs.build_version }}
         path: build/Output/${{ steps.vars.outputs.build_config }}/Server
