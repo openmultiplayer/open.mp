@@ -192,13 +192,14 @@ Vector3 NPC::getPosition() const
 
 void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 {
-	position_ = pos;
-
 	// Explicitly remove from vehicle if we are in one
 	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
 	{
 		removeFromVehicle();
 	}
+
+	// Setting position right after removing from vehicle because removeFromVehicle also sets position
+	position_ = pos;
 
 	if (immediateUpdate)
 	{
@@ -2145,7 +2146,8 @@ void NPC::sendFootSync()
 	if (!vehicle_)
 	{
 		auto state = player_->getState();
-		if (state != PlayerState_OnFoot && state != PlayerState_Spawned)
+		//                                                           -- Checking for driver and passenger for the times npc has just been removed from vehicle
+		if (state != PlayerState_OnFoot && state != PlayerState_Spawned && state != PlayerState_Driver && state != PlayerState_Passenger)
 		{
 			return;
 		}
