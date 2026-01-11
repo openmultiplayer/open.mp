@@ -154,7 +154,8 @@ private:
 			}
 
 			PlayerState state = peer.getState();
-			if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted))
+			if (!static_cast<Player&>(peer).leftSpectating_
+				&& (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)))
 			{
 				return false;
 			}

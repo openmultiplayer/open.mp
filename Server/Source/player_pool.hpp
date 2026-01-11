@@ -62,7 +62,8 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
 			PlayerState state = peer.getState();
-			if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted))
+			if (!static_cast<Player&>(peer).leftSpectating_
+				&& (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)))
 			{
 				return false;
 			}
@@ -458,6 +459,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			Player& player = static_cast<Player&>(peer);
 			if (player.toSpawn_ || player.isBot_)
 			{
+				player.leftSpectating_ = false;
 				player.setState(PlayerState_Spawned);
 				player.controllable_ = true;
 

@@ -109,6 +109,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	PlayerChatBubble chatBubble_;
 	const bool isBot_;
 	bool toSpawn_;
+	bool leftSpectating_;
 	TimePoint lastGameTimeUpdate_;
 	PlayerSpectateData spectateData_;
 	float gravity_;
@@ -195,6 +196,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		targetActor_ = INVALID_ACTOR_ID;
 		chatBubbleExpiration_ = Time::now();
 		toSpawn_ = false;
+		leftSpectating_ = false;
 		lastGameTimeUpdate_ = TimePoint();
 		spectateData_ = { false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
 		gravity_ = 0.0f;
@@ -252,6 +254,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, chatBubbleExpiration_(Time::now())
 		, isBot_(params.bot)
 		, toSpawn_(false)
+		, leftSpectating_(false)
 		, lastGameTimeUpdate_()
 		, spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
 		, gravity_(0.0f)
@@ -639,6 +642,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 			// This is due code conflicts and issues brough into samp script when state change event
 			// Is called in here, which it shouldn't according to samp structure.
 		}
+
+		leftSpectating_ = !spectating;
 
 		NetCode::RPC::TogglePlayerSpectating togglePlayerSpectatingRPC;
 		spectateData_.spectating = spectating;
