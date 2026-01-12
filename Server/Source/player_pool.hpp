@@ -460,6 +460,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 			{
 				player.setState(PlayerState_Spawned);
 				player.controllable_ = true;
+				player.spectateData_.leftSpectating = false;
 
 				IPlayerClassData* classData = queryExtension<IPlayerClassData>(peer);
 				if (classData)
