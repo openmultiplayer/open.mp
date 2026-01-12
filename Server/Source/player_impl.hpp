@@ -299,7 +299,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		spectateData_.spectating = false;
 		spectateData_.type = PlayerSpectateData::ESpectateType::None;
 		spectateData_.spectateID = INVALID_PLAYER_ID;
-		leavingSpec_ = true;
 
 		toSpawn_ = true;
 		IPlayerClassData* classData = queryExtension<IPlayerClassData>(*this);
