@@ -153,8 +153,7 @@ private:
 				return false;
 			}
 
-			const auto& spectateData = peer.getSpectateData();
-			if (!spectateData.leftSpectating)
+			if (!peer.isLeavingSpectatorMode())
 			{
 				PlayerState state = peer.getState();
 
