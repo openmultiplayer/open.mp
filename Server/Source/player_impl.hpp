@@ -255,7 +255,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, isBot_(params.bot)
 		, toSpawn_(false)
 		, lastGameTimeUpdate_()
-		, spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None }) 
+		, spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
 		, gravity_(0.0f)
 		, ghostMode_(false)
 		, defaultObjectsRemoved_(0)
