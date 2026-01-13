@@ -62,7 +62,7 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		bool onReceive(IPlayer& peer, NetworkBitStream& bs) override
 		{
 			PlayerState state = peer.getState();
-			if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted))
+			if (!peer.isLeavingSpectatorMode() && (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted)))
 			{
 				return false;
 			}
