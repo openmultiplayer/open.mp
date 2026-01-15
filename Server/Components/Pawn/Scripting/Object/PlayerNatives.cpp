@@ -146,6 +146,11 @@ SCRIPT_API(BeginPlayerObjectEditing, bool(IPlayerObjectData& data, IPlayerObject
 	return true;
 }
 
+SCRIPT_API(IsPlayerEditingObject, bool(IPlayerObjectData& data))
+{
+	return data.editingObject() == ObjectEditingType::ObjectEditingType_Object;
+}
+
 SCRIPT_API(SetPlayerObjectMaterial, bool(IPlayer& player, IPlayerObject& object, int materialIndex, int modelId, const std::string& textureLibrary, const std::string& textureName, uint32_t materialColour))
 {
 	object.setMaterial(materialIndex, modelId, textureLibrary, textureName, Colour::FromARGB(materialColour));
