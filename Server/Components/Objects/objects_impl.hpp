@@ -98,7 +98,7 @@ private:
 			}
 
 			IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
-			if (data && data->editingObject())
+			if (data && data->getEditingType() == ObjectEditingType::ObjectEditingType_Object)
 			{
 
 				if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final)
@@ -164,7 +164,7 @@ private:
 			}
 
 			IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
-			if (data && data->editingObject() && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index))
+			if (data && data->getEditingType() == ObjectEditingType::ObjectEditingType_AttachedObject && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index))
 			{
 				auto attachedObjectData = data->getAttachedObject(onPlayerEditAttachedObjectRPC.Index);
 
