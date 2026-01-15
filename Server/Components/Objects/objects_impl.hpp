@@ -667,11 +667,6 @@ public:
 		return objectEdit_ != ObjectEditingType::ObjectEditingType_None;
 	}
 
-	ObjectEditingType getEditingType() const override
-	{
-		return objectEdit_;
-	}
-
 	void endEditing() override
 	{
 		inObjectSelection_ = false;
@@ -759,6 +754,11 @@ public:
 		NetCode::RPC::PlayerBeginAttachedObjectEdit playerBeginAttachedObjectEditRPC;
 		playerBeginAttachedObjectEditRPC.Index = index;
 		PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
+	}
+
+	ObjectEditingType getEditingType() const override
+	{
+		return objectEdit_;
 	}
 
 	bool getStreamedGlobalObjects() const
