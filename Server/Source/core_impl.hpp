@@ -29,6 +29,7 @@
 #include <thread>
 #include <variant>
 #include <utils.hpp>
+#include <openssl/evp.h>
 
 #ifdef OMP_VERSION_HASH
 #define OMP_VERSION_HASH_STR STRINGIFY(OMP_VERSION_HASH)
@@ -2178,17 +2179,10 @@ public:
 	{
 		String input(String(password) + String(salt));
 
-		SHA256_CTX ctx {};
-		if (!SHA256_Init(&ctx))
-		{
-			return false;
-		}
-		if (!SHA256_Update(&ctx, input.data(), input.length()))
-		{
-			return false;
-		}
 		unsigned char md[SHA256_DIGEST_LENGTH];
-		if (!SHA256_Final(md, &ctx))
+		size_t md_len = 0;
+
+		if (!EVP_Q_digest(NULL, "SHA256", NULL, input.data(), input.length(), md, &md_len))
 		{
 			return false;
 		}
