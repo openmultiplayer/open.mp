@@ -98,7 +98,7 @@ private:
 			}
 
 			IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
-			if (data && data->editingObject())
+			if (data && data->getEditingType() == ObjectEditingType::ObjectEditingType_Object)
 			{
 
 				if (onPlayerEditObjectRPC.Response == ObjectEditResponse_Cancel || onPlayerEditObjectRPC.Response == ObjectEditResponse_Final)
@@ -164,7 +164,7 @@ private:
 			}
 
 			IPlayerObjectData* data = queryExtension<IPlayerObjectData>(peer);
-			if (data && data->editingObject() && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index))
+			if (data && data->getEditingType() == ObjectEditingType::ObjectEditingType_AttachedObject && data->hasAttachedObject(onPlayerEditAttachedObjectRPC.Index))
 			{
 				auto attachedObjectData = data->getAttachedObject(onPlayerEditAttachedObjectRPC.Index);
 
@@ -482,7 +482,7 @@ private:
 	MarkedDynamicPoolStorage<PlayerObject, IPlayerObject, 1, OBJECT_POOL_SIZE> storage;
 	FlatPtrHashSet<PlayerObject> attachedToPlayer_;
 	bool inObjectSelection_;
-	bool inObjectEdit_;
+	ObjectEditingType objectEdit_;
 	bool streamedGlobalObjects_;
 
 public:
@@ -641,7 +641,7 @@ public:
 
 	void reset() override
 	{
-		inObjectEdit_ = false;
+		objectEdit_ = ObjectEditingType::ObjectEditingType_None;
 		inObjectSelection_ = false;
 		streamedGlobalObjects_ = false;
 		slotsOccupied_.reset();
@@ -651,7 +651,7 @@ public:
 
 	void beginSelecting() override
 	{
-		inObjectEdit_ = false;
+		objectEdit_ = ObjectEditingType::ObjectEditingType_None;
 		inObjectSelection_ = true;
 		NetCode::RPC::PlayerBeginObjectSelect playerBeginObjectSelectRPC;
 		PacketHelper::send(playerBeginObjectSelectRPC, player_);
@@ -664,13 +664,13 @@ public:
 
 	bool editingObject() const override
 	{
-		return inObjectEdit_;
+		return objectEdit_ != ObjectEditingType::ObjectEditingType_None;
 	}
 
 	void endEditing() override
 	{
 		inObjectSelection_ = false;
-		inObjectEdit_ = false;
+		objectEdit_ = ObjectEditingType::ObjectEditingType_None;
 		NetCode::RPC::PlayerCancelObjectEdit playerCancelObjectEditRPC;
 		PacketHelper::send(playerCancelObjectEditRPC, player_);
 	}
@@ -678,7 +678,7 @@ public:
 	void beginEditing(IObject& object) override
 	{
 		inObjectSelection_ = false;
-		inObjectEdit_ = true;
+		objectEdit_ = ObjectEditingType::ObjectEditingType_Object;
 
 		NetCode::RPC::PlayerBeginObjectEdit playerBeginObjectEditRPC;
 		playerBeginObjectEditRPC.PlayerObject = false;
@@ -689,7 +689,7 @@ public:
 	void beginEditing(IPlayerObject& object) override
 	{
 		inObjectSelection_ = false;
-		inObjectEdit_ = true;
+		objectEdit_ = ObjectEditingType::ObjectEditingType_Object;
 
 		NetCode::RPC::PlayerBeginObjectEdit playerBeginObjectEditRPC;
 		playerBeginObjectEditRPC.PlayerObject = true;
@@ -749,11 +749,16 @@ public:
 		}
 
 		inObjectSelection_ = false;
-		inObjectEdit_ = true;
+		objectEdit_ = ObjectEditingType::ObjectEditingType_AttachedObject;
 
 		NetCode::RPC::PlayerBeginAttachedObjectEdit playerBeginAttachedObjectEditRPC;
 		playerBeginAttachedObjectEditRPC.Index = index;
 		PacketHelper::send(playerBeginAttachedObjectEditRPC, player_);
+	}
+
+	ObjectEditingType getEditingType() const override
+	{
+		return objectEdit_;
 	}
 
 	bool getStreamedGlobalObjects() const
