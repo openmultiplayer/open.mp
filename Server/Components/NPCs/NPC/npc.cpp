@@ -329,6 +329,7 @@ void NPC::respawn()
 		resumePath();
 	}
 
+	dead_ = false;
 	lastDamager_ = nullptr;
 	lastDamagerWeapon_ = PlayerWeapon_End;
 
