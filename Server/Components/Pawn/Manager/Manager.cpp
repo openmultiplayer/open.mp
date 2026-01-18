@@ -705,6 +705,10 @@ bool PawnManager::Unload(std::string const& name)
 	if (isEntryScript)
 	{
 		core->resetAll();
+
+		// Kill timers started during events called from components resetting (ex: NPCs OnPlayerDisconnect).
+		PawnTimerImpl::Get()->killTimers(script.GetAMX());
+
 		mainName_ = "";
 		delete mainScript_;
 		mainScript_ = nullptr;
