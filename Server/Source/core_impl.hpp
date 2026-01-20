@@ -320,15 +320,15 @@ private:
 
 	std::map<String, ConfigStorage> defaults;
 
-	String expandEnvironmentVariables(const String& value) const
+	String expandEnvironmentVariablesInRawJSON(const String& jsonText) const
 	{
 		String result;
-		result.reserve(value.length());
+		result.reserve(jsonText.length());
 
 		size_t i = 0;
-		while (i < value.length())
+		while (i < jsonText.length())
 		{
-			const char ch = value[i];
+			const char ch = jsonText[i];
 
 			if (ch != '$')
 			{
@@ -337,14 +337,14 @@ private:
 				continue;
 			}
 
-			if (i + 1 < value.length() && value[i + 1] == '$')
+			if (i + 1 < jsonText.length() && jsonText[i + 1] == '$')
 			{
 				result.push_back('$');
 				i += 2;
 				continue;
 			}
 
-			if (i + 1 >= value.length() || value[i + 1] != '{')
+			if (i + 1 >= jsonText.length() || jsonText[i + 1] != '{')
 			{
 				result.push_back(ch);
 				++i;
@@ -352,31 +352,28 @@ private:
 			}
 
 			const size_t varStart = i + 2;
-			const size_t end = value.find('}', varStart);
+			const size_t end = jsonText.find('}', varStart);
 
 			if (end == String::npos)
 			{
-				result.append(value.substr(i));
+				result.append(jsonText.substr(i));
 				break;
 			}
 
-			const String fullVar = value.substr(varStart, end - varStart);
+			const String fullVar = jsonText.substr(varStart, end - varStart);
 			const size_t defaultPos = fullVar.find(":-");
 
 			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
+			const String defaultValue = (defaultPos != String::npos) ? fullVar.substr(defaultPos + 2) : "";
 			const char* envValue = std::getenv(varName.c_str());
 
-			if (envValue)
+			if (envValue && envValue[0] != '\0')
 			{
 				result.append(envValue);
 			}
-			else if (defaultPos != String::npos)
+			else if (!defaultValue.empty())
 			{
-				result.append(fullVar.substr(defaultPos + 2));
-			}
-			else
-			{
-				result.append(value.substr(i, end - i + 1));
+				result.append(defaultValue);
 			}
 
 			i = end + 1;
@@ -405,8 +402,7 @@ private:
 			}
 			else if (v.is_string())
 			{
-				String strValue = v.get<String>();
-				processed[key].emplace<String>(expandEnvironmentVariables(strValue));
+				processed[key].emplace<String>(v.get<String>());
 			}
 			else if (v.is_array())
 			{
@@ -416,8 +412,7 @@ private:
 				{
 					if (arrVal.is_string())
 					{
-						String strValue = arrVal.get<String>();
-						vec.emplace_back(expandEnvironmentVariables(strValue));
+						vec.emplace_back(arrVal.get<String>());
 					}
 				}
 			}
@@ -445,7 +440,10 @@ public:
 					nlohmann::json props;
 					try
 					{
-						props = nlohmann::json::parse(ifs, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
+						String fileContent((std::istreambuf_iterator<char>(ifs)),
+							std::istreambuf_iterator<char>());
+						String expandedContent = expandEnvironmentVariablesInRawJSON(fileContent);
+						props = nlohmann::json::parse(expandedContent, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
 					}
 					catch (nlohmann::json::exception const& e)
 					{
