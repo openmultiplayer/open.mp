@@ -704,10 +704,11 @@ bool PawnManager::Unload(std::string const& name)
 
 	if (isEntryScript)
 	{
-		core->resetAll();
 		mainName_ = "";
 		delete mainScript_;
 		mainScript_ = nullptr;
+
+		core->resetAll();
 	}
 	else
 	{
