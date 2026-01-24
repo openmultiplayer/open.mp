@@ -113,3 +113,23 @@ SCRIPT_API(GetCustomModelPath, bool(int modelId, OutputOnlyString& dffPath, Outp
 
 	return status;
 }
+
+SCRIPT_API(SetModelDownloadAtConnect, bool(bool value))
+{
+	auto models = PawnManager::Get()->models;
+	
+	if(!models)
+		return false;
+
+	return models->setModelDownloadAtConnect(value);
+}
+
+SCRIPT_API(StartDownloadForPlayer, bool(IPlayer& player))
+{
+	auto models = PawnManager::Get()->models;
+	
+	if(!models)
+		return false;
+
+	return models->startDownloadForPlayer(player);
+}
