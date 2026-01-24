@@ -115,3 +115,26 @@ OMP_CAPI(CustomModel_GetPath, bool(int modelId, OutputStringViewPtr dffPath, Out
 
 	return status;
 }
+
+OMP_CAPI(SetModelDownloadAtConnect, bool(bool value))
+{
+	auto models = ComponentManager::Get()->models;
+	
+	if (!models)
+		return false;
+
+	return models->setModelDownloadAtConnect(value);
+}
+
+OMP_CAPI(StartDownloadForPlayer, bool(objectPtr player))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
+	auto models = ComponentManager::Get()->models;
+	
+	if (!models)
+	{
+		return false;
+	}
+		
+	return models->startDownloadForPlayer(*player_);
+}
