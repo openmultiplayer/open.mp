@@ -67,6 +67,7 @@ private:
 	uint32_t hydraThrustAngle = 0;
 	float trainSpeed = 0.0f;
 	int lastDriverPoolID = INVALID_PLAYER_ID;
+	bool hidden_ = false;
 
 	/// Update the vehicle occupied status - set beenOccupied to true and update the lastOccupied time.
 	void updateOccupied()
@@ -153,6 +154,16 @@ public:
 
 	~Vehicle();
 	void destream();
+
+	void toggleHide(bool value) override
+	{
+		hidden_ = value;
+	}
+
+	bool isHidden() const override
+	{
+		return hidden_;
+	}
 
 	int getVirtualWorld() const override
 	{
