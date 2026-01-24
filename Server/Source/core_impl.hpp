@@ -473,6 +473,8 @@ public:
 
 						// Fill any values missing in config with defaults.
 						// Fill default value if invalid type is provided.
+						// if the user provided a string but expected type is different
+						// attempt to parse string to the expected type.
 						for (const auto& kv : Defaults)
 						{
 							auto itr = processed.find(kv.first);
@@ -480,7 +482,67 @@ public:
 							{
 								if (itr->second.index() != kv.second.index())
 								{
-									itr->second = kv.second;
+									// check if we can convert from string
+									bool converted = false;
+									if (itr->second.index() == 1) // User value is String
+									{
+										const String& strVal = std::get<String>(itr->second);
+										switch (kv.second.index())
+										{
+										case 0: // Expected int
+										{
+											try
+											{
+												size_t pos = 0;
+												int intVal = std::stoi(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = intVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 2: // Expected float
+										{
+											try
+											{
+												size_t pos = 0;
+												float floatVal = std::stof(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = floatVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 4: // Expected bool
+										{
+											if (strVal == "true" || strVal == "1")
+											{
+												itr->second = true;
+												converted = true;
+											}
+											else if (strVal == "false" || strVal == "0")
+											{
+												itr->second = false;
+												converted = true;
+											}
+											break;
+										}
+										}
+									}
+									if (!converted)
+									{
+										itr->second = kv.second;
+									}
 								}
 								continue;
 							}
