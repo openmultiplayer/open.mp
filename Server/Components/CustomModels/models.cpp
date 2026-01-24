@@ -718,7 +718,7 @@ public:
 		if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL)
 			return;
 
-		if(DownloadAtConnect)
+		if (DownloadAtConnect)
 			promptModelsForPlayer(player);
 	}
 
@@ -735,7 +735,7 @@ public:
 		{
 			return;
 		}
-		if(DownloadAtConnect)
+		if (DownloadAtConnect)
 		{
 			webServer->allowIPAddress(player.getNetworkData().networkID.address.v4);
 		}
@@ -780,7 +780,7 @@ public:
 
 	bool startDownloadForPlayer(IPlayer& player) override
 	{
-		if(DownloadAtConnect)
+		if (DownloadAtConnect)
 			return false;
 
 		webServer->allowIPAddress(player.getNetworkData().networkID.address.v4);
