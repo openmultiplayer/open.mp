@@ -780,3 +780,23 @@ OMP_CAPI(Vehicle_CountOccupants, int(objectPtr vehicle))
 
 	return occupants;
 }
+
+OMP_CAPI(ShowVehicle, bool(objectPtr vehicle))
+{
+	POOL_ENTITY_RET(vehicles, IVehicle, vehicle, vehicle_, 0);
+	vehicle_->toggleHide(false);
+	return true;
+}
+
+OMP_CAPI(HideVehicle, bool(objectPtr vehicle))
+{
+	POOL_ENTITY_RET(vehicles, IVehicle, vehicle, vehicle_, 0);
+	vehicle_->toggleHide(true);
+	return true;
+}
+
+OMP_CAPI(IsVehicleHidden, bool(objectPtr vehicle))
+{
+	POOL_ENTITY_RET(vehicles, IVehicle, vehicle, vehicle_, 0);
+	return vehicle_->isHidden();
+}

@@ -596,6 +596,12 @@ OMP_CAPI(Player_GetBuildingsRemoved, int(objectPtr player))
 	return count;
 }
 
+OMP_CAPI(Player_IsBuildingRemoved, bool(objectPtr player, int model, float x, float y, float z, float radius))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
+	return player_->isDefaultObjectRemoved(model, {x, y, z}, radius);
+}
+
 OMP_CAPI(Player_RemoveFromVehicle, bool(objectPtr player, bool force))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
