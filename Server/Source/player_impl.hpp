@@ -977,10 +977,15 @@ public:
 	{
 		for (const auto& object : defaultObjectsRemoved_)
 		{
-			if (model != object.ModelId) continue;
-			if (pos != object.pos) continue;
-			if (radius != object.radius) continue;
-			return true;
+			if (model == -1 || object.ModelId == -1 || model == object.ModelId)
+			{
+				float dist = (pos - object.pos).length();
+
+				if(dist + radius <= object.radius)
+				{
+					return true;	
+				}
+			}
 		}
 		return false;
 	}
