@@ -592,7 +592,7 @@ OMP_CAPI(Player_RemoveBuilding, bool(objectPtr player, int model, float x, float
 OMP_CAPI(Player_GetBuildingsRemoved, int(objectPtr player))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
-	int count = player_->getDefaultObjectsRemoved();
+	int count = player_->getDefaultObjectsRemovedCount();
 	return count;
 }
 

@@ -959,7 +959,7 @@ public:
 		theObject.pos = pos;
 		theObject.radius = radius;
 
-		defaultObjectsRemoved_.push(theObject);
+		defaultObjectsRemoved_.push_back(theObject);
 		//defaultObjectsRemoved_++;
 		NetCode::RPC::RemoveBuildingForPlayer removeBuildingForPlayerRPC;
 		removeBuildingForPlayerRPC.ModelID = model;
