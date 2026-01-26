@@ -132,6 +132,5 @@ SCRIPT_API(StartDownloadForPlayer, bool(IPlayer& player))
 	{
 		return false;
 	}
-		
 	return models->startDownloadForPlayer(player);
 }
