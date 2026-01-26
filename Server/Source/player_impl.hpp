@@ -53,6 +53,13 @@ enum SecondarySyncUpdateType
 	SecondarySyncUpdateType_Trailer = (1 << 2),
 };
 
+struct RemovedDefaultObject
+{
+	unsigned ModelId;
+	Vector3 pos;
+	float radius;
+};
+
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 {
 	PlayerPool& pool_;
@@ -113,12 +120,13 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	PlayerSpectateData spectateData_;
 	float gravity_;
 	bool ghostMode_;
-	int defaultObjectsRemoved_;
+	DynamicArray<RemovedDefaultObject> defaultObjectsRemoved_;
 	bool allowWeapons_;
 	bool allowTeleport_;
 	bool isUsingOfficialClient_;
 	bool isUsingOmp_;
 	bool leavingSpec_;
+	
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -200,7 +208,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		spectateData_ = { false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None };
 		gravity_ = 0.0f;
 		ghostMode_ = false;
-		defaultObjectsRemoved_ = 0;
+		defaultObjectsRemoved_.clear();
 		primarySyncUpdateType_ = PrimarySyncUpdateType::None;
 		secondarySyncUpdateType_ = 0;
 		leavingSpec_ = false;
@@ -258,7 +266,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, spectateData_({ false, INVALID_PLAYER_ID, PlayerSpectateData::ESpectateType::None })
 		, gravity_(0.0f)
 		, ghostMode_(false)
-		, defaultObjectsRemoved_(0)
 		, allowWeapons_(true)
 		, allowTeleport_(false)
 		, isUsingOfficialClient_(params.isUsingOfficialClient)
@@ -946,7 +953,12 @@ public:
 
 	void removeDefaultObjects(unsigned model, Vector3 pos, float radius) override
 	{
-		defaultObjectsRemoved_++;
+		RemovedDefaultObject theObject;
+		theObject.ModelId = model;
+		theObject.pos = pos;
+		theObject.radius = radius;
+
+		defaultObjectsRemoved_.push_back(theObject);
 		NetCode::RPC::RemoveBuildingForPlayer removeBuildingForPlayerRPC;
 		removeBuildingForPlayerRPC.ModelID = model;
 		removeBuildingForPlayerRPC.Position = pos;
@@ -954,9 +966,26 @@ public:
 		PacketHelper::send(removeBuildingForPlayerRPC, *this);
 	}
 
-	int getDefaultObjectsRemoved() const override
+	int getDefaultObjectsRemovedCount() const override
 	{
-		return defaultObjectsRemoved_;
+		return defaultObjectsRemoved_.size();
+	}
+
+	bool isDefaultObjectRemoved(unsigned model, Vector3 pos, float radius) const override
+	{
+		for (const auto& object : defaultObjectsRemoved_)
+		{
+			if (model == -1 || object.ModelId == -1 || model == object.ModelId)
+			{
+				float dist = (pos - object.pos).length();
+
+				if (dist + radius <= object.radius)
+				{
+					return true;	
+				}
+			}
+		}
+		return false;
 	}
 
 	bool getKickStatus() const override

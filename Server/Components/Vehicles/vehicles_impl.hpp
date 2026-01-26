@@ -706,7 +706,7 @@ public:
 				}
 
 				const Vector2 dist2D = vehicle->getPosition() - player.getPosition();
-				const bool shouldBeStreamedIn = state != PlayerState_None && player.getVirtualWorld() == vehicle->getVirtualWorld() && (playerVehicle == vehicle || glm::dot(dist2D, dist2D) < maxDist);
+				const bool shouldBeStreamedIn = state != PlayerState_None && (vehicle->isHidden() != true) && player.getVirtualWorld() == vehicle->getVirtualWorld() && (playerVehicle == vehicle || glm::dot(dist2D, dist2D) < maxDist);
 
 				const bool isStreamedIn = vehicle->isStreamedInForPlayer(player);
 				if (!isStreamedIn && shouldBeStreamedIn)

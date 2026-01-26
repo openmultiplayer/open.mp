@@ -679,3 +679,20 @@ SCRIPT_API(CountVehicleOccupants, int(IVehicle& vehicle))
 	occupants += passengers.size();
 	return occupants;
 }
+
+SCRIPT_API(ShowVehicle, bool(IVehicle& vehicle))
+{
+	vehicle.toggleHide(false);
+	return true;
+}
+
+SCRIPT_API(HideVehicle, bool(IVehicle& vehicle))
+{
+	vehicle.toggleHide(true);
+	return true;
+}
+
+SCRIPT_API(IsVehicleHidden, bool(IVehicle& vehicle))
+{
+	return vehicle.isHidden();
+}

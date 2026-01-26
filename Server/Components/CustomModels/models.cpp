@@ -303,6 +303,7 @@ private:
 	bool usingCdn = false;
 	uint16_t httpThreads = 50; // default max_players is 50
 	bool showCRCLogs = false;
+	bool DownloadAtConnect = true;
 
 	DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
@@ -695,11 +696,8 @@ public:
 		return file.name;
 	}
 
-	void onPlayerClientInit(IPlayer& player) override
+	void promptModelsForPlayer(IPlayer& player)
 	{
-		if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL)
-			return;
-
 		const auto modelsCount = storage.size();
 		for (auto i = 0; i != modelsCount; ++i)
 		{
@@ -707,13 +705,21 @@ public:
 			storage[i]->write(modelInfo);
 			PacketHelper::send(modelInfo, player);
 		}
-
 		// If client reconnected (lost connection to the server) let's force it to download files if there are any.
 		NetCode::RPC::SetPlayerVirtualWorld setWorld;
 		setWorld.worldId = player.getVirtualWorld() + 1;
 		PacketHelper::send(setWorld, player);
 		setWorld.worldId--;
 		PacketHelper::send(setWorld, player);
+	}
+
+	void onPlayerClientInit(IPlayer& player) override
+	{
+		if (player.getClientVersion() != ClientVersion::ClientVersion_SAMP_03DL)
+			return;
+
+		if (DownloadAtConnect)
+			promptModelsForPlayer(player);
 	}
 
 	IEventDispatcher<PlayerModelsEventHandler>& getEventDispatcher() override
@@ -729,8 +735,10 @@ public:
 		{
 			return;
 		}
-
-		webServer->allowIPAddress(player.getNetworkData().networkID.address.v4);
+		if (DownloadAtConnect)
+		{
+			webServer->allowIPAddress(player.getNetworkData().networkID.address.v4);
+		}
 	}
 
 	void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
@@ -762,6 +770,22 @@ public:
 			return true;
 		}
 		return false;
+	}
+
+	bool setModelDownloadAtConnect(bool toggle) override
+	{
+		DownloadAtConnect = toggle;
+		return DownloadAtConnect;
+	}
+
+	bool startDownloadForPlayer(IPlayer& player) override
+	{
+		if (DownloadAtConnect)
+			return false;
+
+		webServer->allowIPAddress(player.getNetworkData().networkID.address.v4);
+		promptModelsForPlayer(player);
+		return true;
 	}
 };
 
