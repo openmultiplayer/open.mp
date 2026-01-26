@@ -120,7 +120,6 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	PlayerSpectateData spectateData_;
 	float gravity_;
 	bool ghostMode_;
-	//int defaultObjectsRemoved_;
 	DynamicArray<RemovedDefaultObject> defaultObjectsRemoved_;
 	bool allowWeapons_;
 	bool allowTeleport_;
@@ -960,7 +959,6 @@ public:
 		theObject.radius = radius;
 
 		defaultObjectsRemoved_.push_back(theObject);
-		//defaultObjectsRemoved_++;
 		NetCode::RPC::RemoveBuildingForPlayer removeBuildingForPlayerRPC;
 		removeBuildingForPlayerRPC.ModelID = model;
 		removeBuildingForPlayerRPC.Position = pos;
@@ -981,7 +979,7 @@ public:
 			{
 				float dist = (pos - object.pos).length();
 
-				if(dist + radius <= object.radius)
+				if (dist + radius <= object.radius)
 				{
 					return true;	
 				}
