@@ -461,36 +461,45 @@ inline int getClosestEntityInBetween(NPCComponent* npcs, const Vector3& hitOrigi
 	if (int(betweenCheckFlags) & int(EntityCheckType::Actor))
 	{
 		float closestActorDistance = 0.0f;
-		IActor* closestActor = getClosestActorInBetween(npcs->getActorsPool(), hitOrigin, hitTarget, range, closestActorDistance);
-		if (closestActor != nullptr && (closestEntityId == INVALID_PLAYER_ID || closestActorDistance < closestEntityDistance))
+		if (npcs->getActorsPool())
 		{
-			entityType = EntityCheckType::Actor;
-			closestEntityDistance = closestActorDistance;
-			closestEntityId = closestActor->getID();
+			IActor* closestActor = getClosestActorInBetween(npcs->getActorsPool(), hitOrigin, hitTarget, range, closestActorDistance);
+			if (closestActor != nullptr && (closestEntityId == INVALID_PLAYER_ID || closestActorDistance < closestEntityDistance))
+			{
+				entityType = EntityCheckType::Actor;
+				closestEntityDistance = closestActorDistance;
+				closestEntityId = closestActor->getID();
+			}
 		}
 	}
 
 	if (int(betweenCheckFlags) & int(EntityCheckType::Vehicle))
 	{
 		float closestVehicleDistance = 0.0f;
-		IVehicle* closestVehicle = getClosestVehicleInBetween(npcs->getVehiclesPool(), hitOrigin, hitTarget, range, closestVehicleDistance);
-		if (closestVehicle != nullptr && (closestEntityId == INVALID_PLAYER_ID || closestVehicleDistance < closestEntityDistance))
+		if (npcs->getVehiclesPool())
 		{
-			entityType = EntityCheckType::Vehicle;
-			closestEntityDistance = closestVehicleDistance;
-			closestEntityId = closestVehicle->getID();
+			IVehicle* closestVehicle = getClosestVehicleInBetween(npcs->getVehiclesPool(), hitOrigin, hitTarget, range, closestVehicleDistance);
+			if (closestVehicle != nullptr && (closestEntityId == INVALID_PLAYER_ID || closestVehicleDistance < closestEntityDistance))
+			{
+				entityType = EntityCheckType::Vehicle;
+				closestEntityDistance = closestVehicleDistance;
+				closestEntityId = closestVehicle->getID();
+			}
 		}
 	}
 
 	if (int(betweenCheckFlags) & int(EntityCheckType::Object))
 	{
 		float closestObjectDistance = 0.0f;
-		IObject* closestObject = getClosestObjectInBetween(npcs->getObjectsPool(), hitOrigin, hitTarget, range, closestObjectDistance);
-		if (closestObject != nullptr && (closestEntityId == INVALID_PLAYER_ID || closestObjectDistance < closestEntityDistance))
+		if (npcs->getObjectsPool())
 		{
-			entityType = EntityCheckType::Object;
-			closestEntityDistance = closestObjectDistance;
-			closestEntityId = closestObject->getID();
+			IObject* closestObject = getClosestObjectInBetween(npcs->getObjectsPool(), hitOrigin, hitTarget, range, closestObjectDistance);
+			if (closestObject != nullptr && (closestEntityId == INVALID_PLAYER_ID || closestObjectDistance < closestEntityDistance))
+			{
+				entityType = EntityCheckType::Object;
+				closestEntityDistance = closestObjectDistance;
+				closestEntityId = closestObject->getID();
+			}
 		}
 	}
 

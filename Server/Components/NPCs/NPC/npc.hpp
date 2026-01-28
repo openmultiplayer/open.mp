@@ -258,6 +258,34 @@ public:
 
 	IPlayer* getPlayerMovingTo() override;
 
+	void setVehiclePosition(const Vector3& position, bool immediateUpdate) override;
+
+	void setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate) override;
+
+	void setPositionHandled(const Vector3& position, bool immediateUpdate)
+	{
+		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+		{
+			setVehiclePosition(position, immediateUpdate);
+		}
+		else
+		{
+			setPosition(position, immediateUpdate);
+		}
+	}
+
+	void setRotationHandled(const GTAQuat& rotation, bool immediateUpdate)
+	{
+		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+		{
+			setVehicleRotation(rotation, immediateUpdate);
+		}
+		else
+		{
+			setRotation(rotation, immediateUpdate);
+		}
+	}
+
 	void setAnimation(uint16_t animationId, uint16_t flags);
 
 	void processPlayback(TimePoint now);
