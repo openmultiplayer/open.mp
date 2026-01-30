@@ -1661,6 +1661,13 @@ removeWeapon_has_weapon:
 		pos_ = target.getPosition();
 		target.streamInForPlayer(*this);
 
+		IPlayer* vdriver = target.getDriver();
+		// Stream vehicle driver immediately.
+		if (vdriver != nullptr)
+		{
+			vdriver->streamInForPlayer(*this);
+		}
+		
 		spectateData_.type = PlayerSpectateData::ESpectateType::Vehicle;
 		spectateData_.spectateID = target.getID();
 
