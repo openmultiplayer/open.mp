@@ -8,6 +8,7 @@
 
 #include "Plugin.h"
 #include "../Manager/Manager.hpp"
+#include <cstdarg>
 
 #ifdef WIN32
 #include <Windows.h>
