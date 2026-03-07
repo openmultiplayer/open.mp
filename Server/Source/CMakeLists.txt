@@ -35,7 +35,9 @@ if(MSVC)
 		winmm
 	)
 else()
-	target_link_libraries(Server PRIVATE dl atomic)
+	if(UNIX AND NOT APPLE)
+		target_link_libraries(Server PRIVATE dl atomic)
+	endif()
 
 	if(SHARED_STDCXXFS)
 		target_link_libraries(Server PRIVATE stdc++fs)
