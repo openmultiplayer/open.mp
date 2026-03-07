@@ -10,12 +10,16 @@
 #include "Server/Components/Console/console.hpp"
 #include "sdk.hpp"
 #include <map>
+#include <sys/socket.h>
 
 using namespace Impl;
 
 constexpr size_t BASE_QUERY_SIZE = 11;
 constexpr size_t QUERY_TYPE_INDEX = 10;
 constexpr size_t QUERY_COPY_TO = 10;
+constexpr size_t BASE_QUERY6_SIZE = 24;
+constexpr size_t QUERY6_TYPE_INDEX = 23;
+constexpr size_t QUERY6_COPY_TO = 23;
 
 class Query : NoCopy
 {
@@ -35,8 +39,8 @@ public:
 		return console;
 	}
 
-	Span<const char> handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen);
-	void handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen);
+	Span<const char> handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_storage& client, int tolen);
+	void handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_storage& client, int tolen);
 	void buildRulesBuffer();
 
 	void buildPlayerDependentBuffers(IPlayer* except = nullptr)
@@ -194,6 +198,8 @@ private:
 
 	std::unique_ptr<char[]> extraInfoBuffer;
 	size_t extraInfoBufferLength = 0;
+	std::unique_ptr<char[]> responseBuffer;
+	size_t responseBufferLength = 0;
 
 	void buildPlayerInfoBuffer(IPlayer* except = nullptr);
 	void updateServerInfoBufferPlayerCount(IPlayer* except = nullptr);

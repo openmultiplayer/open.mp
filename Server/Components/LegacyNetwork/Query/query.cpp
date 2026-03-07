@@ -8,6 +8,7 @@
 
 #include "query.hpp"
 #include <cstring>
+#include <netdb.h>
 
 const size_t MAX_ACCEPTABLE_HOSTNAME_SIZE = 63;
 const size_t MAX_ACCEPTABLE_LANGUAGE_SIZE = 39;
@@ -210,26 +211,66 @@ void Query::buildRulesBuffer()
 	}
 }
 
-constexpr Span<char> getBuffer(Span<const char> input, std::unique_ptr<char[]>& buffer, size_t length)
+struct QueryLayout
+{
+	size_t baseSize;
+	size_t typeIndex;
+	size_t copyTo;
+};
+
+QueryLayout getQueryLayout(Span<const char> input)
+{
+	if (input.size() >= BASE_QUERY6_SIZE && std::memcmp(input.data(), "SAMP6", 5) == 0)
+	{
+		return { BASE_QUERY6_SIZE, QUERY6_TYPE_INDEX, QUERY6_COPY_TO };
+	}
+
+	return { BASE_QUERY_SIZE, QUERY_TYPE_INDEX, QUERY_COPY_TO };
+}
+
+std::string DescribeClient(const sockaddr_storage& client, int tolen)
+{
+	char host[NI_MAXHOST];
+	char service[NI_MAXSERV];
+	if (getnameinfo(reinterpret_cast<const sockaddr*>(&client), tolen, host, sizeof(host), service, sizeof(service), NI_NUMERICHOST | NI_NUMERICSERV) != 0)
+		return "<unknown>";
+
+	if (client.ss_family == AF_INET6)
+		return std::string("[") + host + "]:" + service;
+	return std::string(host) + ":" + service;
+}
+
+Span<const char> getBuffer(Span<const char> input, std::unique_ptr<char[]>& buffer, size_t length, std::unique_ptr<char[]>& responseBuffer, size_t& responseBufferLength)
 {
 	if (!buffer)
 	{
 		return Span<char>();
 	}
 
-	char* buf = buffer.get();
-	memcpy(buf, input.data(), QUERY_COPY_TO);
-	return Span<char>(buf, length);
+	const QueryLayout layout = getQueryLayout(input);
+	if (layout.baseSize == BASE_QUERY_SIZE)
+	{
+		char* buf = buffer.get();
+		std::memcpy(buf, input.data(), QUERY_COPY_TO);
+		return Span<char>(buf, length);
+	}
+
+	responseBufferLength = layout.copyTo + (length - QUERY_COPY_TO);
+	responseBuffer.reset(new char[responseBufferLength]);
+	char* output = responseBuffer.get();
+	std::memcpy(output, input.data(), layout.copyTo);
+	std::memcpy(output + layout.copyTo, buffer.get() + QUERY_COPY_TO, length - QUERY_COPY_TO);
+	return Span<char>(output, responseBufferLength);
 }
 
 struct LegacyConsoleMessageHandler : ConsoleMessageHandler
 {
 	uint32_t sock;
-	const sockaddr_in& client;
+	const sockaddr_storage& client;
 	Span<const char> packet;
 	int tolen;
 
-	LegacyConsoleMessageHandler(uint32_t sock, const sockaddr_in& client, int tolen, Span<const char> data)
+	LegacyConsoleMessageHandler(uint32_t sock, const sockaddr_storage& client, int tolen, Span<const char> data)
 		: sock(sock)
 		, client(client)
 		, packet(data)
@@ -249,11 +290,12 @@ struct LegacyConsoleMessageHandler : ConsoleMessageHandler
 	}
 };
 
-void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen)
+void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_storage& client, int tolen)
 {
-	if (buffer.size() >= BASE_QUERY_SIZE + sizeof(uint16_t))
+	const QueryLayout layout = getQueryLayout(buffer);
+	if (buffer.size() >= layout.baseSize + sizeof(uint16_t))
 	{
-		Span<const char> subbuf = buffer.subspan(BASE_QUERY_SIZE);
+		Span<const char> subbuf = buffer.subspan(layout.baseSize);
 		size_t offset = 0;
 		uint16_t passLen;
 		if (readFromBuffer(subbuf, offset, passLen))
@@ -270,7 +312,7 @@ void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in
 						if (subbuf.size() - offset == cmdLen)
 						{
 							StringView cmd(&subbuf.data()[offset], cmdLen);
-							LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
+							LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, layout.baseSize));
 							console->send(cmd, ConsoleCommandSenderData(handler));
 						}
 					}
@@ -278,65 +320,67 @@ void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in
 				}
 			}
 
-			LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
+			LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, layout.baseSize));
 			handler.handleConsoleMessage("Invalid RCON password.");
 		}
 	}
 }
 
-Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen)
+Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_storage& client, int tolen)
 {
 	if (core == nullptr)
 	{
 		return Span<char>();
 	}
 
+	const QueryLayout layout = getQueryLayout(buffer);
+	if (buffer.size() < layout.baseSize)
+	{
+		return Span<char>();
+	}
+
 	if (logQueries)
 	{
-		PeerAddress::AddressString addrString;
-		PeerAddress addr;
-		addr.ipv6 = false;
-		addr.v4 = client.sin_addr.s_addr;
-		PeerAddress::ToString(addr, addrString);
-		core->printLn("[query:%c] from %.*s", buffer[QUERY_TYPE_INDEX], PRINT_VIEW(addrString));
+		const std::string addrString = DescribeClient(client, tolen);
+		core->printLn("[query:%c] from %s", buffer[layout.typeIndex], addrString.c_str());
 	}
 
 	// Ping
-	if (buffer[QUERY_TYPE_INDEX] == 'p')
+	if (buffer[layout.typeIndex] == 'p')
 	{
-		if (buffer.size() != BASE_QUERY_SIZE + sizeof(uint32_t))
+		if (buffer.size() != layout.baseSize + sizeof(uint32_t))
 		{
 			return Span<char>();
 		}
 		return buffer;
 	}
-	else if (buffer.size() == BASE_QUERY_SIZE)
+	else if (buffer.size() == layout.baseSize)
 	{
 		// This is how we detect open.mp, but also let's send some extra data
-		if (buffer[QUERY_TYPE_INDEX] == 'o')
+		if (buffer[layout.typeIndex] == 'o')
 		{
-			return getBuffer(buffer, extraInfoBuffer, extraInfoBufferLength);
+			return getBuffer(buffer, extraInfoBuffer, extraInfoBufferLength, responseBuffer, responseBufferLength);
 		}
 
 		// Server info
-		else if (buffer[QUERY_TYPE_INDEX] == 'i')
+		else if (buffer[layout.typeIndex] == 'i')
 		{
-			return getBuffer(buffer, serverInfoBuffer, serverInfoBufferLength);
+			return getBuffer(buffer, serverInfoBuffer, serverInfoBufferLength, responseBuffer, responseBufferLength);
 		}
 
 		// Players
-		else if (buffer[QUERY_TYPE_INDEX] == 'c')
+		else if (buffer[layout.typeIndex] == 'c')
 		{
-			return getBuffer(buffer, playerListBuffer, playerListBufferLength);
+			return getBuffer(buffer, playerListBuffer, playerListBufferLength, responseBuffer, responseBufferLength);
 		}
 
 		// Rules
-		else if (buffer[QUERY_TYPE_INDEX] == 'r' && rulesBuffer)
+		else if (buffer[layout.typeIndex] == 'r' && rulesBuffer)
 		{
-			return getBuffer(buffer, rulesBuffer, rulesBufferLength);
+			return getBuffer(buffer, rulesBuffer, rulesBufferLength, responseBuffer, responseBufferLength);
 		}
 	}
-	else if (buffer[QUERY_TYPE_INDEX] == 'x' && console && rconEnabled)
+	else if (buffer[layout.typeIndex] == 'x' && console && rconEnabled)
 	{
 		// RCON
 		handleRCON(buffer, sock, client, tolen);
