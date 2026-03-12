@@ -19,6 +19,8 @@
 
 namespace
 {
+StaticArray<WeaponInfo, MAX_WEAPON_ID> DefaultWeaponInfoList = WeaponInfoList;
+
 StaticArray<float, MAX_WEAPON_ID> DefaultWeaponAccuracyList = []
 {
 	StaticArray<float, MAX_WEAPON_ID> list;
@@ -118,7 +120,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	weaponAccuracy_ = DefaultWeaponAccuracyList;
 
 	// Custom weapon info
-	customWeaponInfoList_ = WeaponInfoList;
+	customWeaponInfoList_ = DefaultWeaponInfoList;
 
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -976,7 +978,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 	bool playerIsNPC = false;
 
 	// Pass original hit ID to correctly handle missed or out of range shots!
-	int closestEntityId = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos);
+	int closestEntityId = ::getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos);
 
 	// Just invalid anything, but INVALID_PLAYER_ID holds the value we want.
 	if (closestEntityId != INVALID_PLAYER_ID)
@@ -2097,7 +2099,7 @@ bool NPC::setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int cl
 		return false;
 	}
 
-	auto& defaultInfo = WeaponInfoList[weapon];
+	auto& defaultInfo = DefaultWeaponInfoList[weapon];
 	if (reloadTime != -1)
 	{
 		defaultInfo.reloadTime = reloadTime;
@@ -2127,7 +2129,7 @@ bool NPC::getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int&
 		return false;
 	}
 
-	const auto& defaultInfo = WeaponInfoList[weapon];
+	const auto& defaultInfo = DefaultWeaponInfoList[weapon];
 	reloadTime = defaultInfo.reloadTime;
 	shootTime = defaultInfo.shootTime;
 	clipSize = defaultInfo.clipSize;
