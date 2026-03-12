@@ -36,6 +36,8 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, keys_(0)
 	, upAndDown_(0)
 	, leftAndRight_(0)
+	, minHeightPosCall_(0.0f)
+	, lastHeightPosCall_(0.0f)
 	, health_(100.0f)
 	, armour_(0.0f)
 	, animationId_(0)
@@ -131,6 +133,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 
 	// Initial entity values
 	Vector3 initialPosition = position_ = { 0.0f, 0.0f, 3.5f };
+	lastHeightPosCall_ = initialPosition.z;
 	GTAQuat initialRotation = rotation_ = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
 
 	// Initial values for foot sync values
@@ -199,6 +202,29 @@ Vector3 NPC::getPosition() const
 	return position_;
 }
 
+void NPC::setPositionValue(const Vector3& position)
+{
+	position_ = position;
+	processHeightPosChange(position.z);
+}
+
+void NPC::processHeightPosChange(float newZ)
+{
+	if (minHeightPosCall_ <= 0.0f)
+	{
+		return;
+	}
+
+	float oldZ = lastHeightPosCall_;
+	if (fabs(newZ - oldZ) < minHeightPosCall_)
+	{
+		return;
+	}
+
+	lastHeightPosCall_ = newZ;
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCChangeHeightPos, *this, newZ, oldZ);
+}
+
 void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 {
 	// Explicitly remove from vehicle if we are in one
@@ -208,7 +234,7 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 	}
 
 	// Setting position right after removing from vehicle because removeFromVehicle also sets position
-	position_ = pos;
+	setPositionValue(pos);
 
 	if (immediateUpdate)
 	{
@@ -225,7 +251,7 @@ void NPC::setVehiclePosition(const Vector3& position, bool immediateUpdate)
 {
 	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
 	{
-		position_ = position;
+		setPositionValue(position);
 		if (immediateUpdate)
 		{
 			if (vehicleSeat_ == 0) // driver
@@ -287,6 +313,17 @@ void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
 			move(targetPosition_, moveType_);
 		}
 	}
+}
+
+void NPC::setMinHeightPosCall(float height)
+{
+	minHeightPosCall_ = height > 0.0f ? height : 0.0f;
+	lastHeightPosCall_ = position_.z;
+}
+
+float NPC::getMinHeightPosCall() const
+{
+	return minHeightPosCall_;
 }
 
 int NPC::getVirtualWorld() const
@@ -2710,7 +2747,7 @@ void NPC::advance(TimePoint now)
 		{
 			auto direction = toTarget / distanceToTarget;
 			auto travelled = direction * velocityLength * deltaTimeMS;
-			position_ = position + travelled;
+			setPositionValue(position + travelled);
 		}
 	}
 

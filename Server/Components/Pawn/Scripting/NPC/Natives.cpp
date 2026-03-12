@@ -98,6 +98,17 @@ SCRIPT_API(NPC_GivePos, bool(INPC& npc, Vector3 position))
 	return true;
 }
 
+SCRIPT_API(NPC_SetMinHeightPosCall, bool(INPC& npc, float height))
+{
+	getNPCImpl(npc).setMinHeightPosCall(height);
+	return true;
+}
+
+SCRIPT_API(NPC_GetMinHeightPosCall, float(INPC& npc))
+{
+	return getNPCImpl(npc).getMinHeightPosCall();
+}
+
 SCRIPT_API(NPC_SetRot, bool(INPC& npc, Vector3 rotation))
 {
 	npc.setRotation(rotation, true);

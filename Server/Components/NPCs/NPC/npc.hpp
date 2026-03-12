@@ -272,6 +272,10 @@ public:
 
 	static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
 
+	void setMinHeightPosCall(float height);
+
+	float getMinHeightPosCall() const;
+
 	void setVehiclePosition(const Vector3& position, bool immediateUpdate) override;
 
 	void setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate) override;
@@ -301,6 +305,10 @@ public:
 	}
 
 	void setAnimation(uint16_t animationId, uint16_t flags);
+
+	void setPositionValue(const Vector3& position);
+
+	void processHeightPosChange(float newZ);
 
 	void processPlayback(TimePoint now);
 
@@ -450,6 +458,8 @@ private:
 	uint16_t leftAndRight_;
 	Vector3 position_;
 	GTAQuat rotation_;
+	float minHeightPosCall_;
+	float lastHeightPosCall_;
 	float health_;
 	float armour_;
 	uint16_t animationId_;
