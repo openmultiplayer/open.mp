@@ -8,6 +8,7 @@
 
 #include "../ComponentManager.hpp"
 #include <Server/Components/NPCs/npcs.hpp>
+#include "../../../NPCs/NPC/npc.hpp"
 
 OMP_CAPI(NPC_Create, objectPtr(StringCharPtr name, int* id))
 {
@@ -191,6 +192,20 @@ OMP_CAPI(NPC_IsAnyStreamedIn, bool(objectPtr npc))
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
 	auto streamedIn = npc_->streamedForPlayers();
 	return streamedIn.size() > 1;
+}
+
+OMP_CAPI(NPC_ShowInTabListForPlayer, bool(objectPtr npc, objectPtr player))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
+	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
+	return static_cast<NPC&>(*npc_).showInTabListForPlayer(*player_);
+}
+
+OMP_CAPI(NPC_HideInTabListForPlayer, bool(objectPtr npc, objectPtr player))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
+	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
+	return static_cast<NPC&>(*npc_).hideInTabListForPlayer(*player_);
 }
 
 OMP_CAPI(NPC_GetAll, int(int* npcsArr, int maxNPCs))

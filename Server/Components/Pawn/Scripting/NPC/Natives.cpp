@@ -266,6 +266,16 @@ SCRIPT_API(NPC_IsAnyStreamedIn, bool(INPC& npc))
 	return streamedIn.size() > 1;
 }
 
+SCRIPT_API(NPC_ShowInTabListForPlayer, bool(INPC& npc, IPlayer& forPlayer))
+{
+	return getNPCImpl(npc).showInTabListForPlayer(forPlayer);
+}
+
+SCRIPT_API(NPC_HideInTabListForPlayer, bool(INPC& npc, IPlayer& forPlayer))
+{
+	return getNPCImpl(npc).hideInTabListForPlayer(forPlayer);
+}
+
 SCRIPT_API(NPC_GetAll, int(DynamicArray<int>& outputNPCs))
 {
 	int index = -1;

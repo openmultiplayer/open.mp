@@ -272,6 +272,10 @@ public:
 
 	static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
 
+	bool showInTabListForPlayer(IPlayer& forPlayer);
+
+	bool hideInTabListForPlayer(IPlayer& forPlayer);
+
 	bool setMoveMode(int mode);
 
 	int getMoveMode() const;

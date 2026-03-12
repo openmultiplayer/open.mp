@@ -663,6 +663,76 @@ const FlatPtrHashSet<IPlayer>& NPC::streamedForPlayers() const
 	return player_->streamedForPlayers();
 }
 
+bool NPC::showInTabListForPlayer(IPlayer& forPlayer)
+{
+	if (!player_ || forPlayer.getID() == getID())
+	{
+		return false;
+	}
+
+	const bool wasStreamedIn = player_->isStreamedInForPlayer(forPlayer);
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamOutEvent(getID(), forPlayer.getID());
+		player_->streamOutForPlayer(forPlayer);
+	}
+
+	NetCode::RPC::PlayerQuit playerQuitPacket;
+	playerQuitPacket.PlayerID = getID();
+	playerQuitPacket.Reason = PeerDisconnectReason_Quit;
+	PacketHelper::send(playerQuitPacket, forPlayer);
+
+	NetCode::RPC::PlayerJoin playerJoinPacket;
+	playerJoinPacket.PlayerID = getID();
+	playerJoinPacket.Col = player_->getColour();
+	playerJoinPacket.IsNPC = false;
+	playerJoinPacket.Name = player_->getName();
+	PacketHelper::send(playerJoinPacket, forPlayer);
+
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamInEvent(getID(), forPlayer.getID());
+		player_->streamInForPlayer(forPlayer);
+	}
+
+	return true;
+}
+
+bool NPC::hideInTabListForPlayer(IPlayer& forPlayer)
+{
+	if (!player_ || forPlayer.getID() == getID())
+	{
+		return false;
+	}
+
+	const bool wasStreamedIn = player_->isStreamedInForPlayer(forPlayer);
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamOutEvent(getID(), forPlayer.getID());
+		player_->streamOutForPlayer(forPlayer);
+	}
+
+	NetCode::RPC::PlayerQuit playerQuitPacket;
+	playerQuitPacket.PlayerID = getID();
+	playerQuitPacket.Reason = PeerDisconnectReason_Quit;
+	PacketHelper::send(playerQuitPacket, forPlayer);
+
+	NetCode::RPC::PlayerJoin playerJoinPacket;
+	playerJoinPacket.PlayerID = getID();
+	playerJoinPacket.Col = player_->getColour();
+	playerJoinPacket.IsNPC = true;
+	playerJoinPacket.Name = player_->getName();
+	PacketHelper::send(playerJoinPacket, forPlayer);
+
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamInEvent(getID(), forPlayer.getID());
+		player_->streamInForPlayer(forPlayer);
+	}
+
+	return true;
+}
+
 void NPC::setInterior(unsigned int interior)
 {
 	if (player_)
