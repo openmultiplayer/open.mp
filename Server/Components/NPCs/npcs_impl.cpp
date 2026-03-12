@@ -8,6 +8,7 @@
 
 #include "./npcs_impl.hpp"
 #include <random>
+#include "./utils.hpp"
 
 void NPCComponent::onLoad(ICore* c)
 {
@@ -19,6 +20,8 @@ void NPCComponent::onInit(IComponentList* components)
 	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerShotDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerStreamDispatcher().addEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 
 	if (components)
@@ -45,6 +48,8 @@ void NPCComponent::free()
 
 	core->getEventDispatcher().removeEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
+	core->getPlayers().getPlayerShotDispatcher().removeEventHandler(this);
+	core->getPlayers().getPlayerStreamDispatcher().removeEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 
 	if (vehicles)
@@ -187,6 +192,83 @@ void NPCComponent::onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amou
 				emulatePlayerTakeDamageFromNPCEvent(player, *npc, amount, weapon, part, false);
 			}
 		}
+	}
+}
+
+bool NPCComponent::onPlayerShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData)
+{
+	if (!shouldCallCustomEvents)
+	{
+		return true;
+	}
+
+	IPlayer* driver = target.getDriver();
+	if (!driver || !driver->isBot())
+	{
+		return true;
+	}
+
+	auto npc = static_cast<NPC*>(get(driver->getID()));
+	if (!npc || npc->getPlayer()->getID() != driver->getID())
+	{
+		return true;
+	}
+
+	const uint8_t weapon = bulletData.weapon;
+	const float damage = weapon < MAX_WEAPON_ID ? WeaponDamages[weapon] : 0.0f;
+
+	shouldCallCustomEvents = false;
+	const bool eventResult = eventDispatcher.stopAtFalse(
+		[&](NPCEventHandler* handler)
+		{
+			return handler->onNPCVehicleTakeDamage(*npc, player, target, damage, weapon, bulletData.hitPos);
+		});
+	shouldCallCustomEvents = true;
+
+	if (!eventResult)
+	{
+		return false;
+	}
+
+	float health = npc->getVehicleHealth();
+	if (health <= 0.0f)
+	{
+		health = target.getHealth();
+	}
+
+	health -= damage;
+	if (health < 0.0f)
+	{
+		health = 0.0f;
+	}
+
+	npc->setVehicleHealth(health);
+	return true;
+}
+
+void NPCComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
+{
+	auto npc = static_cast<NPC*>(get(player.getID()));
+	if (npc && npc->getPlayer()->getID() == player.getID())
+	{
+		if (consumeSuppressedNPCStreamInEvent(npc->getID(), forPlayer.getID()))
+		{
+			return;
+		}
+		eventDispatcher.dispatch(&NPCEventHandler::onNPCStreamIn, *npc, forPlayer);
+	}
+}
+
+void NPCComponent::onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer)
+{
+	auto npc = static_cast<NPC*>(get(player.getID()));
+	if (npc && npc->getPlayer()->getID() == player.getID())
+	{
+		if (consumeSuppressedNPCStreamOutEvent(npc->getID(), forPlayer.getID()))
+		{
+			return;
+		}
+		eventDispatcher.dispatch(&NPCEventHandler::onNPCStreamOut, *npc, forPlayer);
 	}
 }
 
@@ -489,6 +571,16 @@ bool NPCComponent::getNodeInfo(int nodeId, uint32_t& vehicleNodes, uint32_t& ped
 	}
 	vehicleNodes = pedNodes = naviNodes = 0;
 	return false;
+}
+
+bool NPCComponent::setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy)
+{
+	return NPC::setWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy);
+}
+
+bool NPCComponent::getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy)
+{
+	return NPC::getWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy);
 }
 
 bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
