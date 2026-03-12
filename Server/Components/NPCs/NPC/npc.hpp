@@ -258,6 +258,20 @@ public:
 
 	IPlayer* getPlayerMovingTo() override;
 
+	int getClosestEntityInBetween(const Vector3& point, float range, EntityCheckType betweenCheckFlags, const Vector3& offsetFrom, int& entityType, int& playerObjectOwnerId, Vector3& hitMap);
+
+	void setPlaybackPath(StringView path);
+
+	StringView getPlaybackPath() const;
+
+	void setWeaponInfo(uint8_t weapon, int reloadTime, int shootTime, int clipSize, float accuracy);
+
+	bool getWeaponInfo(uint8_t weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) const;
+
+	static bool setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy);
+
+	static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
+
 	void setVehiclePosition(const Vector3& position, bool immediateUpdate) override;
 
 	void setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate) override;

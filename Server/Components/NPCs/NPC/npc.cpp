@@ -17,6 +17,16 @@
 #include "../Node/node.hpp"
 #include <Server/Components/Vehicles/vehicle_seats.hpp>
 
+namespace
+{
+StaticArray<float, MAX_WEAPON_ID> DefaultWeaponAccuracyList = []
+{
+	StaticArray<float, MAX_WEAPON_ID> list;
+	list.fill(1.0f);
+	return list;
+}();
+}
+
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	: footSyncSkipUpdate_(0)
 	, driverSyncSkipUpdate_(0)
@@ -103,8 +113,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, nodeSetAngle_(true)
 	, nodeLastPosition_(Vector3(0.0f, 0.0f, 0.0f))
 {
-	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
-	weaponAccuracy_.fill(1.0f);
+	weaponAccuracy_ = DefaultWeaponAccuracyList;
 
 	// Custom weapon info
 	customWeaponInfoList_ = WeaponInfoList;
@@ -1975,6 +1984,118 @@ IPlayer* NPC::getPlayerAimingAt()
 IPlayer* NPC::getPlayerMovingTo()
 {
 	return followingPlayer_;
+}
+
+int NPC::getClosestEntityInBetween(const Vector3& point, float range, EntityCheckType betweenCheckFlags, const Vector3& offsetFrom, int& entityType, int& playerObjectOwnerId, Vector3& hitMap)
+{
+	entityType = int(EntityCheckType::None);
+	playerObjectOwnerId = INVALID_PLAYER_ID;
+	hitMap = point;
+
+	if (!npcComponent_)
+	{
+		return INVALID_PLAYER_ID;
+	}
+
+	EntityCheckType resolvedEntityType = EntityCheckType::None;
+	Vector3 hitOrigin = getPosition() + offsetFrom;
+	int closestEntityId = ::getClosestEntityInBetween(npcComponent_, hitOrigin, point, range, betweenCheckFlags, getID(), INVALID_PLAYER_ID, resolvedEntityType, playerObjectOwnerId, hitMap);
+	entityType = int(resolvedEntityType);
+	return closestEntityId;
+}
+
+void NPC::setPlaybackPath(StringView path)
+{
+	playbackPath_ = String(path);
+}
+
+StringView NPC::getPlaybackPath() const
+{
+	return playbackPath_;
+}
+
+void NPC::setWeaponInfo(uint8_t weapon, int reloadTime, int shootTime, int clipSize, float accuracy)
+{
+	if (reloadTime != -1)
+	{
+		setWeaponReloadTime(weapon, reloadTime);
+	}
+	if (shootTime != -1)
+	{
+		setWeaponShootTime(weapon, shootTime);
+	}
+	if (clipSize != -1)
+	{
+		setWeaponClipSize(weapon, clipSize);
+	}
+	setWeaponAccuracy(weapon, accuracy);
+}
+
+bool NPC::getWeaponInfo(uint8_t weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) const
+{
+	auto data = WeaponSlotData(weapon);
+	if (weapon >= customWeaponInfoList_.size() || data.slot() == INVALID_WEAPON_SLOT)
+	{
+		return false;
+	}
+
+	const WeaponInfo& info = customWeaponInfoList_[weapon];
+	reloadTime = info.reloadTime;
+	shootTime = info.shootTime;
+	clipSize = info.clipSize;
+	accuracy = weaponAccuracy_[weapon];
+	return true;
+}
+
+bool NPC::setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy)
+{
+	if (weapon < 0 || weapon >= MAX_WEAPON_ID)
+	{
+		return false;
+	}
+
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() == INVALID_WEAPON_SLOT)
+	{
+		return false;
+	}
+
+	auto& defaultInfo = WeaponInfoList[weapon];
+	if (reloadTime != -1)
+	{
+		defaultInfo.reloadTime = reloadTime;
+	}
+	if (shootTime != -1)
+	{
+		defaultInfo.shootTime = shootTime;
+	}
+	if (clipSize != -1)
+	{
+		defaultInfo.clipSize = clipSize;
+	}
+	DefaultWeaponAccuracyList[weapon] = accuracy;
+	return true;
+}
+
+bool NPC::getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy)
+{
+	if (weapon < 0 || weapon >= MAX_WEAPON_ID)
+	{
+		return false;
+	}
+
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() == INVALID_WEAPON_SLOT)
+	{
+		return false;
+	}
+
+	const auto& defaultInfo = WeaponInfoList[weapon];
+	reloadTime = defaultInfo.reloadTime;
+	shootTime = defaultInfo.shootTime;
+	clipSize = defaultInfo.clipSize;
+	accuracy = DefaultWeaponAccuracyList[weapon];
+	return true;
 }
 
 void NPC::kill(IPlayer* killer, uint8_t weapon)
