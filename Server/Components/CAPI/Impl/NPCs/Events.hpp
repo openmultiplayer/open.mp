@@ -93,6 +93,12 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents<PRIORITY>>
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleExitComplete", EventReturnHandler::None, &npc, &vehicle);
 	}
 
+	bool onNPCVehicleTakeDamage(INPC& npc, IPlayer& issuer, IVehicle& vehicle, float damage, uint8_t weapon, const Vector3& hitPos) override
+	{
+		return ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleTakeDamage", EventReturnHandler::StopAtFalse, &npc, &issuer, &vehicle,
+			damage, int(weapon), hitPos.x, hitPos.y, hitPos.z);
+	}
+
 	void onNPCChangeHeightPos(INPC& npc, float newZ, float oldZ) override
 	{
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCChangeHeightPos", EventReturnHandler::None, &npc, newZ, oldZ);

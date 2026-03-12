@@ -94,6 +94,13 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCVehicleExitComplete", DefaultReturnValue_True, npc.getID(), vehicle.getID());
 	}
 
+	bool onNPCVehicleTakeDamage(INPC& npc, IPlayer& issuer, IVehicle& vehicle, float damage, uint8_t weapon, const Vector3& hitPos) override
+	{
+		auto result = !!PawnManager::Get()->CallAllInEntryFirst("OnNPCVehicleTakeDamage", DefaultReturnValue_True,
+			npc.getID(), issuer.getID(), vehicle.getID(), damage, weapon, hitPos.x, hitPos.y, hitPos.z);
+		return result;
+	}
+
 	void onNPCChangeHeightPos(INPC& npc, float newZ, float oldZ) override
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCChangeHeightPos", DefaultReturnValue_True, npc.getID(), newZ, oldZ);

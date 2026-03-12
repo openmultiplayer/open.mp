@@ -8,6 +8,7 @@
 
 #include "./npcs_impl.hpp"
 #include <random>
+#include "./utils.hpp"
 
 void NPCComponent::onLoad(ICore* c)
 {
@@ -19,6 +20,7 @@ void NPCComponent::onInit(IComponentList* components)
 	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerShotDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerStreamDispatcher().addEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 
@@ -46,6 +48,7 @@ void NPCComponent::free()
 
 	core->getEventDispatcher().removeEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
+	core->getPlayers().getPlayerShotDispatcher().removeEventHandler(this);
 	core->getPlayers().getPlayerStreamDispatcher().removeEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 
@@ -190,6 +193,57 @@ void NPCComponent::onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amou
 			}
 		}
 	}
+}
+
+bool NPCComponent::onPlayerShotVehicle(IPlayer& player, IVehicle& target, const PlayerBulletData& bulletData)
+{
+	if (!shouldCallCustomEvents)
+	{
+		return true;
+	}
+
+	IPlayer* driver = target.getDriver();
+	if (!driver || !driver->isBot())
+	{
+		return true;
+	}
+
+	auto npc = static_cast<NPC*>(get(driver->getID()));
+	if (!npc || npc->getPlayer()->getID() != driver->getID())
+	{
+		return true;
+	}
+
+	const uint8_t weapon = bulletData.weapon;
+	const float damage = weapon < MAX_WEAPON_ID ? WeaponDamages[weapon] : 0.0f;
+
+	shouldCallCustomEvents = false;
+	const bool eventResult = eventDispatcher.stopAtFalse(
+		[&](NPCEventHandler* handler)
+		{
+			return handler->onNPCVehicleTakeDamage(*npc, player, target, damage, weapon, bulletData.hitPos);
+		});
+	shouldCallCustomEvents = true;
+
+	if (!eventResult)
+	{
+		return false;
+	}
+
+	float health = npc->getVehicleHealth();
+	if (health <= 0.0f)
+	{
+		health = target.getHealth();
+	}
+
+	health -= damage;
+	if (health < 0.0f)
+	{
+		health = 0.0f;
+	}
+
+	npc->setVehicleHealth(health);
+	return true;
 }
 
 void NPCComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
