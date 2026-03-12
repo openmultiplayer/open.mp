@@ -2951,15 +2951,23 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 						{
 							if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
 							{
-								if (vehicleToEnter_)
+								IVehicle* enteredVehicle = vehicleToEnter_;
+								int enteredSeat = vehicleSeatToEnter_;
+								bool entryCompleted = false;
+								if (enteredVehicle)
 								{
-									putInVehicle(*vehicleToEnter_, vehicleSeatToEnter_);
+									entryCompleted = putInVehicle(*enteredVehicle, enteredSeat);
 								}
 
 								enteringVehicle_ = false;
 								jackingVehicle_ = false;
 								vehicleToEnter_ = nullptr;
 								vehicleSeatToEnter_ = SEAT_NONE;
+
+								if (entryCompleted)
+								{
+									npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCVehicleEntryComplete, *this, *enteredVehicle, enteredSeat);
+								}
 							}
 						}
 
@@ -3094,11 +3102,17 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 					if (exitingVehicle_ && duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (1500))
 					{
-						removeFromVehicle();
+						IVehicle* exitedVehicle = vehicle_;
+						bool exitCompleted = exitedVehicle && removeFromVehicle();
 						exitingVehicle_ = false;
+						if (exitCompleted)
+						{
+							npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCVehicleExitComplete, *this, *exitedVehicle);
+						}
 					}
 				}
 
+				npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCUpdate, *this);
 				lastUpdate_ = now;
 			}
 		}

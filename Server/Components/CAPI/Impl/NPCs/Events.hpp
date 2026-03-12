@@ -58,6 +58,11 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents<PRIORITY>>
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCRespawn", EventReturnHandler::None, &npc);
 	}
 
+	void onNPCUpdate(INPC& npc) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCUpdate", EventReturnHandler::None, &npc);
+	}
+
 	void onNPCPlaybackStart(INPC& npc, int recordId) override
 	{
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCPlaybackStart", EventReturnHandler::None, &npc, recordId);
@@ -66,6 +71,21 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents<PRIORITY>>
 	void onNPCPlaybackEnd(INPC& npc, int recordId) override
 	{
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCPlaybackEnd", EventReturnHandler::None, &npc, recordId);
+	}
+
+	void onNPCVehicleEntryComplete(INPC& npc, IVehicle& vehicle, int seatId) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleEntryComplete", EventReturnHandler::None, &npc, &vehicle, seatId);
+	}
+
+	void onNPCVehicleExitComplete(INPC& npc, IVehicle& vehicle) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleExitComplete", EventReturnHandler::None, &npc, &vehicle);
+	}
+
+	void onNPCChangeHeightPos(INPC& npc, float newZ, float oldZ) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCChangeHeightPos", EventReturnHandler::None, &npc, newZ, oldZ);
 	}
 
 	bool onNPCShotMissed(INPC& npc, const PlayerBulletData& bulletData) override
