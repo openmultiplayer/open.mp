@@ -325,6 +325,10 @@ void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
 
 bool NPC::setMoveMode(int mode)
 {
+	// Preserve FCNPC-compatible values, but do not pretend that open.mp has a
+	// real MapAndreas/ColAndreas movement backend switch yet. Values 1/2 are
+	// currently stored as compatibility state only; the external backend
+	// dependency remains unresolved.
 	switch (mode)
 	{
 	case FCNPCMoveMode_Auto:

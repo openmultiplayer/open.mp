@@ -94,6 +94,8 @@ SCRIPT_API(NPC_GivePos, bool(INPC& npc, Vector3 position))
 
 SCRIPT_API(NPC_SetMoveMode, bool(INPC& npc, int mode))
 {
+	// FCNPC compatibility surface only. Modes 1/2 currently do not activate a
+	// real MapAndreas/ColAndreas backend in open.mp.
 	return npc.setMoveMode(mode);
 }
 
