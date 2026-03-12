@@ -63,6 +63,16 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents<PRIORITY>>
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCUpdate", EventReturnHandler::None, &npc);
 	}
 
+	void onNPCStreamIn(INPC& npc, IPlayer& forPlayer) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCStreamIn", EventReturnHandler::None, &npc, &forPlayer);
+	}
+
+	void onNPCStreamOut(INPC& npc, IPlayer& forPlayer) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCStreamOut", EventReturnHandler::None, &npc, &forPlayer);
+	}
+
 	void onNPCPlaybackStart(INPC& npc, int recordId) override
 	{
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCPlaybackStart", EventReturnHandler::None, &npc, recordId);

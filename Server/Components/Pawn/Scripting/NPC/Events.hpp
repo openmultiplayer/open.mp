@@ -64,6 +64,16 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCUpdate", DefaultReturnValue_True, npc.getID());
 	}
 
+	void onNPCStreamIn(INPC& npc, IPlayer& forPlayer) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCStreamIn", DefaultReturnValue_True, npc.getID(), forPlayer.getID());
+	}
+
+	void onNPCStreamOut(INPC& npc, IPlayer& forPlayer) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCStreamOut", DefaultReturnValue_True, npc.getID(), forPlayer.getID());
+	}
+
 	void onNPCPlaybackStart(INPC& npc, int recordId) override
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCPlaybackStart", DefaultReturnValue_True, npc.getID(), recordId);

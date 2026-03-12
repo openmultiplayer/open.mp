@@ -19,6 +19,7 @@ void NPCComponent::onInit(IComponentList* components)
 	npcNetwork.init(core, this);
 	core->getEventDispatcher().addEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().addEventHandler(this);
+	core->getPlayers().getPlayerStreamDispatcher().addEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 
 	if (components)
@@ -45,6 +46,7 @@ void NPCComponent::free()
 
 	core->getEventDispatcher().removeEventHandler(this);
 	core->getPlayers().getPlayerDamageDispatcher().removeEventHandler(this);
+	core->getPlayers().getPlayerStreamDispatcher().removeEventHandler(this);
 	core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 
 	if (vehicles)
@@ -187,6 +189,32 @@ void NPCComponent::onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amou
 				emulatePlayerTakeDamageFromNPCEvent(player, *npc, amount, weapon, part, false);
 			}
 		}
+	}
+}
+
+void NPCComponent::onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer)
+{
+	auto npc = static_cast<NPC*>(get(player.getID()));
+	if (npc && npc->getPlayer()->getID() == player.getID())
+	{
+		if (consumeSuppressedNPCStreamInEvent(npc->getID(), forPlayer.getID()))
+		{
+			return;
+		}
+		eventDispatcher.dispatch(&NPCEventHandler::onNPCStreamIn, *npc, forPlayer);
+	}
+}
+
+void NPCComponent::onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer)
+{
+	auto npc = static_cast<NPC*>(get(player.getID()));
+	if (npc && npc->getPlayer()->getID() == player.getID())
+	{
+		if (consumeSuppressedNPCStreamOutEvent(npc->getID(), forPlayer.getID()))
+		{
+			return;
+		}
+		eventDispatcher.dispatch(&NPCEventHandler::onNPCStreamOut, *npc, forPlayer);
 	}
 }
 

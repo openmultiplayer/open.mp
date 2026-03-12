@@ -21,7 +21,7 @@
 
 using namespace Impl;
 
-class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler, public PoolEventHandler<IPlayer>, public PoolEventHandler<IVehicle>, VehicleEventHandler
+class NPCComponent final : public INPCComponent, public CoreEventHandler, public PlayerDamageEventHandler, public PlayerStreamEventHandler, public PoolEventHandler<IPlayer>, public PoolEventHandler<IVehicle>, VehicleEventHandler
 {
 public:
 	StringView componentName() const override
@@ -81,6 +81,10 @@ public:
 	void onPlayerGiveDamage(IPlayer& player, IPlayer& to, float amount, unsigned weapon, BodyPart part) override;
 
 	void onPlayerTakeDamage(IPlayer& player, IPlayer* from, float amount, unsigned weapon, BodyPart part) override;
+
+	void onPlayerStreamIn(IPlayer& player, IPlayer& forPlayer) override;
+
+	void onPlayerStreamOut(IPlayer& player, IPlayer& forPlayer) override;
 
 	void onPoolEntryDestroyed(IPlayer& player) override;
 
@@ -180,6 +184,26 @@ public:
 	DefaultEventDispatcher<NPCEventHandler>& getEventDispatcher_internal()
 	{
 		return eventDispatcher;
+	}
+
+	void suppressNPCStreamInEvent(int npcId, int playerId)
+	{
+		suppressedNPCStreamInEvents_.insert(makeNPCStreamEventKey(npcId, playerId));
+	}
+
+	void suppressNPCStreamOutEvent(int npcId, int playerId)
+	{
+		suppressedNPCStreamOutEvents_.insert(makeNPCStreamEventKey(npcId, playerId));
+	}
+
+	bool consumeSuppressedNPCStreamInEvent(int npcId, int playerId)
+	{
+		return suppressedNPCStreamInEvents_.erase(makeNPCStreamEventKey(npcId, playerId)) != 0;
+	}
+
+	bool consumeSuppressedNPCStreamOutEvent(int npcId, int playerId)
+	{
+		return suppressedNPCStreamOutEvents_.erase(makeNPCStreamEventKey(npcId, playerId)) != 0;
 	}
 
 	int getFootSyncRate() const
@@ -298,11 +322,18 @@ public:
 	}
 
 private:
+	static uint32_t makeNPCStreamEventKey(int npcId, int playerId)
+	{
+		return (uint32_t(uint16_t(npcId)) << 16) | uint16_t(playerId);
+	}
+
 	ICore* core = nullptr;
 	NPCNetwork npcNetwork;
 	DefaultEventDispatcher<NPCEventHandler> eventDispatcher;
 	MarkedDynamicPoolStorage<NPC, INPC, 0, NPC_POOL_SIZE> storage;
 	bool shouldCallCustomEvents = true;
+	FlatHashSet<uint32_t> suppressedNPCStreamInEvents_;
+	FlatHashSet<uint32_t> suppressedNPCStreamOutEvents_;
 
 	// Update rates
 	int* generalNPCUpdateRateMS = nullptr;
