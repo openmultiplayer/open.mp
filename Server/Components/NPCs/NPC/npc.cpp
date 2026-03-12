@@ -19,6 +19,11 @@
 
 namespace
 {
+constexpr int FCNPCMoveMode_Auto = -1;
+constexpr int FCNPCMoveMode_None = 0;
+constexpr int FCNPCMoveMode_MapAndreas = 1;
+constexpr int FCNPCMoveMode_ColAndreas = 2;
+
 StaticArray<WeaponInfo, MAX_WEAPON_ID> DefaultWeaponInfoList = WeaponInfoList;
 
 StaticArray<float, MAX_WEAPON_ID> DefaultWeaponAccuracyList = []
@@ -38,6 +43,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, keys_(0)
 	, upAndDown_(0)
 	, leftAndRight_(0)
+	, moveMode_(FCNPCMoveMode_Auto)
 	, minHeightPosCall_(0.0f)
 	, lastHeightPosCall_(0.0f)
 	, health_(100.0f)
@@ -315,6 +321,26 @@ void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
 			move(targetPosition_, moveType_);
 		}
 	}
+}
+
+bool NPC::setMoveMode(int mode)
+{
+	switch (mode)
+	{
+	case FCNPCMoveMode_Auto:
+	case FCNPCMoveMode_None:
+	case FCNPCMoveMode_MapAndreas:
+	case FCNPCMoveMode_ColAndreas:
+		moveMode_ = mode;
+		return true;
+	}
+
+	return false;
+}
+
+int NPC::getMoveMode() const
+{
+	return moveMode_;
 }
 
 void NPC::setMinHeightPosCall(float height)

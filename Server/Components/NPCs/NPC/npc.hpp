@@ -272,6 +272,10 @@ public:
 
 	static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
 
+	bool setMoveMode(int mode);
+
+	int getMoveMode() const;
+
 	void setMinHeightPosCall(float height);
 
 	float getMinHeightPosCall() const;
@@ -456,6 +460,7 @@ private:
 	uint16_t keys_;
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
+	int moveMode_;
 	Vector3 position_;
 	GTAQuat rotation_;
 	float minHeightPosCall_;

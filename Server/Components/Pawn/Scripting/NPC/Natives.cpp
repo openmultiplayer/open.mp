@@ -98,6 +98,16 @@ SCRIPT_API(NPC_GivePos, bool(INPC& npc, Vector3 position))
 	return true;
 }
 
+SCRIPT_API(NPC_SetMoveMode, bool(INPC& npc, int mode))
+{
+	return getNPCImpl(npc).setMoveMode(mode);
+}
+
+SCRIPT_API(NPC_GetMoveMode, int(INPC& npc))
+{
+	return getNPCImpl(npc).getMoveMode();
+}
+
 SCRIPT_API(NPC_SetMinHeightPosCall, bool(INPC& npc, float height))
 {
 	getNPCImpl(npc).setMinHeightPosCall(height);
