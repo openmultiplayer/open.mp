@@ -758,7 +758,7 @@ unsigned int NPC::getInterior() const
 
 Vector3 NPC::getVelocity() const
 {
-	return player_->getPosition();
+	return velocity_;
 }
 
 void NPC::setVelocity(Vector3 velocity, bool update)
@@ -843,7 +843,6 @@ void NPC::setAmmo(int ammo)
 		ammoInClip_ = ammo_;
 	}
 	updateWeaponState();
-	setAmmoInClip(ammo);
 }
 
 int NPC::getAmmo() const

@@ -153,6 +153,10 @@ public:
 	/// Get node information (vehicle nodes, pedestrian nodes, navigation nodes)
 	bool getNodeInfo(int nodeId, uint32_t& vehicleNodes, uint32_t& pedNodes, uint32_t& naviNodes) override;
 
+	bool setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy) override;
+
+	bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) override;
+
 	bool emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);
 
 	bool emulatePlayerTakeDamageFromNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents);

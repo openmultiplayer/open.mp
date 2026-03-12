@@ -8,7 +8,6 @@
 
 #include "../Types.hpp"
 #include "sdk.hpp"
-#include "../../../NPCs/NPC/npc.hpp"
 #include <iostream>
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -26,11 +25,6 @@ inline float getAngleOfLine(float x, float y)
 		angle += 360.0f;
 	}
 	return angle;
-}
-
-inline NPC& getNPCImpl(INPC& npc)
-{
-	return static_cast<NPC&>(npc);
 }
 
 SCRIPT_API(NPC_Create, int(const String& name))
@@ -100,23 +94,23 @@ SCRIPT_API(NPC_GivePos, bool(INPC& npc, Vector3 position))
 
 SCRIPT_API(NPC_SetMoveMode, bool(INPC& npc, int mode))
 {
-	return getNPCImpl(npc).setMoveMode(mode);
+	return npc.setMoveMode(mode);
 }
 
 SCRIPT_API(NPC_GetMoveMode, int(INPC& npc))
 {
-	return getNPCImpl(npc).getMoveMode();
+	return npc.getMoveMode();
 }
 
 SCRIPT_API(NPC_SetMinHeightPosCall, bool(INPC& npc, float height))
 {
-	getNPCImpl(npc).setMinHeightPosCall(height);
+	npc.setMinHeightPosCall(height);
 	return true;
 }
 
 SCRIPT_API(NPC_GetMinHeightPosCall, float(INPC& npc))
 {
-	return getNPCImpl(npc).getMinHeightPosCall();
+	return npc.getMinHeightPosCall();
 }
 
 SCRIPT_API(NPC_SetRot, bool(INPC& npc, Vector3 rotation))
@@ -268,12 +262,12 @@ SCRIPT_API(NPC_IsAnyStreamedIn, bool(INPC& npc))
 
 SCRIPT_API(NPC_ShowInTabListForPlayer, bool(INPC& npc, IPlayer& forPlayer))
 {
-	return getNPCImpl(npc).showInTabListForPlayer(forPlayer);
+	return npc.showInTabListForPlayer(forPlayer);
 }
 
 SCRIPT_API(NPC_HideInTabListForPlayer, bool(INPC& npc, IPlayer& forPlayer))
 {
-	return getNPCImpl(npc).hideInTabListForPlayer(forPlayer);
+	return npc.hideInTabListForPlayer(forPlayer);
 }
 
 SCRIPT_API(NPC_GetAll, int(DynamicArray<int>& outputNPCs))
@@ -518,7 +512,7 @@ SCRIPT_API(NPC_AimAtPlayer, bool(INPC& npc, IPlayer& atPlayer, bool shoot, int s
 SCRIPT_API(NPC_GetClosestEntityInBetween, bool(INPC& npc, Vector3 point, float range, int checkInBetweenMode, uint8_t checkInBetweenFlags, Vector3 offsetFrom, int& entityId, int& entityType, int& objectOwnerId, Vector3& hitPoint))
 {
 	static_cast<void>(checkInBetweenMode);
-	entityId = getNPCImpl(npc).getClosestEntityInBetween(point, range, EntityCheckType(checkInBetweenFlags), offsetFrom, entityType, objectOwnerId, hitPoint);
+	entityId = npc.getClosestEntityInBetween(point, range, EntityCheckType(checkInBetweenFlags), offsetFrom, entityType, objectOwnerId, hitPoint);
 	return true;
 }
 
@@ -594,23 +588,25 @@ SCRIPT_API(NPC_GetWeaponActualClipSize, int(INPC& npc, int weapon))
 
 SCRIPT_API(NPC_SetWeaponInfo, bool(INPC& npc, int weapon, int reloadTime, int shootTime, int clipSize, float accuracy))
 {
-	getNPCImpl(npc).setWeaponInfo(static_cast<uint8_t>(weapon), reloadTime, shootTime, clipSize, accuracy);
+	npc.setWeaponInfo(static_cast<uint8_t>(weapon), reloadTime, shootTime, clipSize, accuracy);
 	return true;
 }
 
 SCRIPT_API(NPC_GetWeaponInfo, bool(INPC& npc, int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy))
 {
-	return getNPCImpl(npc).getWeaponInfo(static_cast<uint8_t>(weapon), reloadTime, shootTime, clipSize, accuracy);
+	return npc.getWeaponInfo(static_cast<uint8_t>(weapon), reloadTime, shootTime, clipSize, accuracy);
 }
 
 SCRIPT_API(NPC_SetWeaponDefaultInfo, bool(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy))
 {
-	return NPC::setWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy);
+	auto component = PawnManager::Get()->npcs;
+	return component ? component->setWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy) : false;
 }
 
 SCRIPT_API(NPC_GetWeaponDefaultInfo, bool(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy))
 {
-	return NPC::getWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy);
+	auto component = PawnManager::Get()->npcs;
+	return component ? component->getWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy) : false;
 }
 
 SCRIPT_API(NPC_EnterVehicle, bool(INPC& npc, IVehicle& vehicle, int seatId, int moveType))
@@ -938,13 +934,13 @@ SCRIPT_API(NPC_SetPlaybackPath, bool(INPC& npc, const std::string& path))
 		return false;
 	}
 
-	getNPCImpl(npc).setPlaybackPath(path);
+	npc.setPlaybackPath(path);
 	return true;
 }
 
 SCRIPT_API(NPC_GetPlaybackPath, bool(INPC& npc, OutputOnlyString& path))
 {
-	path = getNPCImpl(npc).getPlaybackPath();
+	path = npc.getPlaybackPath();
 	return true;
 }
 

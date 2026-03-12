@@ -519,6 +519,16 @@ bool NPCComponent::getNodeInfo(int nodeId, uint32_t& vehicleNodes, uint32_t& ped
 	return false;
 }
 
+bool NPCComponent::setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy)
+{
+	return NPC::setWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy);
+}
+
+bool NPCComponent::getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy)
+{
+	return NPC::getWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy);
+}
+
 bool NPCComponent::emulatePlayerGiveDamageToNPCEvent(IPlayer& player, INPC& npc, float amount, unsigned weapon, BodyPart part, bool callOriginalEvents)
 {
 	bool eventResult = eventDispatcher.stopAtFalse([&](NPCEventHandler* handler)

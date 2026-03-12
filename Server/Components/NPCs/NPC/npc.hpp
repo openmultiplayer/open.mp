@@ -258,31 +258,31 @@ public:
 
 	IPlayer* getPlayerMovingTo() override;
 
-	int getClosestEntityInBetween(const Vector3& point, float range, EntityCheckType betweenCheckFlags, const Vector3& offsetFrom, int& entityType, int& playerObjectOwnerId, Vector3& hitMap);
+	SDK_EXPORT int getClosestEntityInBetween(const Vector3& point, float range, EntityCheckType betweenCheckFlags, const Vector3& offsetFrom, int& entityType, int& playerObjectOwnerId, Vector3& hitMap) override;
 
-	void setPlaybackPath(StringView path);
+	SDK_EXPORT void setPlaybackPath(StringView path) override;
 
-	StringView getPlaybackPath() const;
+	SDK_EXPORT StringView getPlaybackPath() const override;
 
-	void setWeaponInfo(uint8_t weapon, int reloadTime, int shootTime, int clipSize, float accuracy);
+	SDK_EXPORT void setWeaponInfo(uint8_t weapon, int reloadTime, int shootTime, int clipSize, float accuracy) override;
 
-	bool getWeaponInfo(uint8_t weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) const;
+	SDK_EXPORT bool getWeaponInfo(uint8_t weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) const override;
 
-	static bool setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy);
+	SDK_EXPORT static bool setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy);
 
-	static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
+	SDK_EXPORT static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
 
-	bool showInTabListForPlayer(IPlayer& forPlayer);
+	SDK_EXPORT bool showInTabListForPlayer(IPlayer& forPlayer) override;
 
-	bool hideInTabListForPlayer(IPlayer& forPlayer);
+	SDK_EXPORT bool hideInTabListForPlayer(IPlayer& forPlayer) override;
 
-	bool setMoveMode(int mode);
+	SDK_EXPORT bool setMoveMode(int mode) override;
 
-	int getMoveMode() const;
+	SDK_EXPORT int getMoveMode() const override;
 
-	void setMinHeightPosCall(float height);
+	SDK_EXPORT void setMinHeightPosCall(float height) override;
 
-	float getMinHeightPosCall() const;
+	SDK_EXPORT float getMinHeightPosCall() const override;
 
 	void setVehiclePosition(const Vector3& position, bool immediateUpdate) override;
 
