@@ -1963,20 +1963,89 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		{
 			return false;
 		}
+/*This new feature can supports ANSI() and supports native function"AllowNickNameCharacter"*/
 		try
 		{
 			std::string name_temp(name);
-			std::smatch result_of_regex;
-			std::regex myExp("[!@#$%^&*()-=+{}:;\"\'|\\\\<,>.?/\\s\\\a\\\b\\\f\\\n\\\r\\\t\\\v\\\?]");
-			bool letThisPlayerJoinIn = !(std::regex_search(name_temp, result_of_regex, myExp));
-			return letThisPlayerJoinIn;
-		}
-		catch (...){	}
-		return std::all_of(name.begin(), name.end(),
-			[&](const char& character)
+			
+			//Find if the player's nickname has these symbols. If has, is it allowed?, if allowed, continue; if not allowed, return false
+			if (name_temp.find("]") > -1)
 			{
-				return allowNickCharacter[static_cast<uint8_t>(character)];
-			});
+				if (!allowNickCharacter[static_cast<uint8_t>(']')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find("[") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('[')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find("_") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('_')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find("$") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('$')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find("=") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('=')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find(")") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('(')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find(")") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>(')')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find("@") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('@')])
+				{
+					return false;
+				}
+			}
+			if (name_temp.find(".") > -1)
+			{
+				if (!allowNickCharacter[static_cast<uint8_t>('.')])
+				{
+					return false;
+				}
+			}
+			std::regex myExp("[!#%^&*-+{}:;\"\'|\\\\<,>?/\\s\\\a\\\b\\\f\\\n\\\r\\\t\\\v\\\?]");
+			bool letThisPlayerJoinIn = !(std::regex_search(name_temp,myExp));
+
+			return letThisPlayerJoinIn;
+
+		}
+		catch (...)//if exception, continue
+		{
+			return std::all_of(name.begin(), name.end(),
+				[&](const char& character)
+				{
+					return allowNickCharacter[static_cast<uint8_t>(character)];
+				});
+		}
 	}
 
 	void allowNickNameCharacter(char character, bool allow) override
