@@ -12,7 +12,8 @@
 #include <Server/Components/Console/console.hpp>
 #include <Server/Components/NPCs/npcs.hpp>
 #include <utils.hpp>
-
+#include <regex>
+#include <string>
 struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public PlayerUpdateEventHandler, public CoreEventHandler
 {
 	ICore& core;
@@ -1962,7 +1963,15 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		{
 			return false;
 		}
-
+		try
+		{
+			std::string name_temp(name);
+			std::smatch result_of_regex;
+			std::regex myExp("[!@#$%^&*()-=+{}:;\"\'|\\\\<,>.?/\\s\\\a\\\b\\\f\\\n\\\r\\\t\\\v\\\?]");
+			bool letThisPlayerJoinIn = !(std::regex_search(name_temp, result_of_regex, myExp));
+			return letThisPlayerJoinIn;
+		}
+		catch (...){	}
 		return std::all_of(name.begin(), name.end(),
 			[&](const char& character)
 			{
