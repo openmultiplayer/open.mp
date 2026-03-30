@@ -1963,82 +1963,36 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		{
 			return false;
 		}
-/*This new feature can supports ANSI() and supports native function"AllowNickNameCharacter"*/
-		try
-		{
-			std::string name_temp(name);
-			
 			//Find if the player's nickname has these symbols. If has, is it allowed?, if allowed, continue; if not allowed, return false
-			if (name_temp.find("]") > -1)
+			char singleCharacter[9] = {
+				']',
+				'[',
+				'_',
+				'$',
+				'=',
+				')',
+				'(',
+				'@',
+				'.'
+			};
+			for (size_t i = 0; i < sizeof(singleCharacter); ++i)
 			{
-				if (!allowNickCharacter[static_cast<uint8_t>(']')])
+				if (name_temp.find(singleCharacter[i]) >= 0)
 				{
-					return false;
+					if (!allowNickCharacter[static_cast<uint8_t>(singleCharacter[i])])
+					{
+						return false;
+					}
 				}
 			}
-			if (name_temp.find("[") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('[')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find("_") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('_')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find("$") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('$')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find("=") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('=')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find(")") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('(')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find(")") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>(')')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find("@") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('@')])
-				{
-					return false;
-				}
-			}
-			if (name_temp.find(".") > -1)
-			{
-				if (!allowNickCharacter[static_cast<uint8_t>('.')])
-				{
-					return false;
-				}
-			}
+			
 			std::regex myExp("[!#%^&*-+{}:;\"\'|\\\\<,>?/\\s\\\a\\\b\\\f\\\n\\\r\\\t\\\v\\\?]");
 			bool letThisPlayerJoinIn = !(std::regex_search(name_temp,myExp));
 
 			return letThisPlayerJoinIn;
 
 		}
-		catch (...)//if exception, continue
+		catch (...)
 		{
 			return std::all_of(name.begin(), name.end(),
 				[&](const char& character)
