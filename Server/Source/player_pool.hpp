@@ -1963,6 +1963,10 @@ struct PlayerPool final : public IPlayerPool, public NetworkEventHandler, public
 		{
 			return false;
 		}
+		try
+		{
+			std::string name_temp(name);//string_view to string
+			
 			//Find if the player's nickname has these symbols. If has, is it allowed?, if allowed, continue; if not allowed, return false
 			char singleCharacter[9] = {
 				']',
