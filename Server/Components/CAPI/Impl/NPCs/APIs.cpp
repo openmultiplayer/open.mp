@@ -193,6 +193,20 @@ OMP_CAPI(NPC_IsAnyStreamedIn, bool(objectPtr npc))
 	return streamedIn.size() > 1;
 }
 
+OMP_CAPI(NPC_ShowInTabListForPlayer, bool(objectPtr npc, objectPtr player))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
+	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
+	return npc_->showInTabListForPlayer(*player_);
+}
+
+OMP_CAPI(NPC_HideInTabListForPlayer, bool(objectPtr npc, objectPtr player))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
+	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
+	return npc_->hideInTabListForPlayer(*player_);
+}
+
 OMP_CAPI(NPC_GetAll, int(int* npcsArr, int maxNPCs))
 {
 	COMPONENT_CHECK_RET(npcs, 0);

@@ -258,6 +258,32 @@ public:
 
 	IPlayer* getPlayerMovingTo() override;
 
+	SDK_EXPORT int getClosestEntityInBetween(const Vector3& point, float range, EntityCheckType betweenCheckFlags, const Vector3& offsetFrom, int& entityType, int& playerObjectOwnerId, Vector3& hitMap) override;
+
+	SDK_EXPORT void setPlaybackPath(StringView path) override;
+
+	SDK_EXPORT StringView getPlaybackPath() const override;
+
+	SDK_EXPORT void setWeaponInfo(uint8_t weapon, int reloadTime, int shootTime, int clipSize, float accuracy) override;
+
+	SDK_EXPORT bool getWeaponInfo(uint8_t weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) const override;
+
+	SDK_EXPORT static bool setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy);
+
+	SDK_EXPORT static bool getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy);
+
+	SDK_EXPORT bool showInTabListForPlayer(IPlayer& forPlayer) override;
+
+	SDK_EXPORT bool hideInTabListForPlayer(IPlayer& forPlayer) override;
+
+	SDK_EXPORT bool setMoveMode(int mode) override;
+
+	SDK_EXPORT int getMoveMode() const override;
+
+	SDK_EXPORT void setMinHeightPosCall(float height) override;
+
+	SDK_EXPORT float getMinHeightPosCall() const override;
+
 	void setVehiclePosition(const Vector3& position, bool immediateUpdate) override;
 
 	void setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate) override;
@@ -287,6 +313,10 @@ public:
 	}
 
 	void setAnimation(uint16_t animationId, uint16_t flags);
+
+	void setPositionValue(const Vector3& position);
+
+	void processHeightPosChange(float newZ);
 
 	void processPlayback(TimePoint now);
 
@@ -434,8 +464,11 @@ private:
 	uint16_t keys_;
 	uint16_t upAndDown_;
 	uint16_t leftAndRight_;
+	int moveMode_;
 	Vector3 position_;
 	GTAQuat rotation_;
+	float minHeightPosCall_;
+	float lastHeightPosCall_;
 	float health_;
 	float armour_;
 	uint16_t animationId_;

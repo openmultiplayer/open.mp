@@ -59,6 +59,21 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCRespawn", DefaultReturnValue_True, npc.getID());
 	}
 
+	void onNPCUpdate(INPC& npc) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCUpdate", DefaultReturnValue_True, npc.getID());
+	}
+
+	void onNPCStreamIn(INPC& npc, IPlayer& forPlayer) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCStreamIn", DefaultReturnValue_True, npc.getID(), forPlayer.getID());
+	}
+
+	void onNPCStreamOut(INPC& npc, IPlayer& forPlayer) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCStreamOut", DefaultReturnValue_True, npc.getID(), forPlayer.getID());
+	}
+
 	void onNPCPlaybackStart(INPC& npc, int recordId) override
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCPlaybackStart", DefaultReturnValue_True, npc.getID(), recordId);
@@ -67,6 +82,28 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents>
 	void onNPCPlaybackEnd(INPC& npc, int recordId) override
 	{
 		PawnManager::Get()->CallAllInEntryFirst("OnNPCPlaybackEnd", DefaultReturnValue_True, npc.getID(), recordId);
+	}
+
+	void onNPCVehicleEntryComplete(INPC& npc, IVehicle& vehicle, int seatId) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCVehicleEntryComplete", DefaultReturnValue_True, npc.getID(), vehicle.getID(), seatId);
+	}
+
+	void onNPCVehicleExitComplete(INPC& npc, IVehicle& vehicle) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCVehicleExitComplete", DefaultReturnValue_True, npc.getID(), vehicle.getID());
+	}
+
+	bool onNPCVehicleTakeDamage(INPC& npc, IPlayer& issuer, IVehicle& vehicle, float damage, uint8_t weapon, const Vector3& hitPos) override
+	{
+		auto result = !!PawnManager::Get()->CallAllInEntryFirst("OnNPCVehicleTakeDamage", DefaultReturnValue_True,
+			npc.getID(), issuer.getID(), vehicle.getID(), damage, weapon, hitPos.x, hitPos.y, hitPos.z);
+		return result;
+	}
+
+	void onNPCChangeHeightPos(INPC& npc, float newZ, float oldZ) override
+	{
+		PawnManager::Get()->CallAllInEntryFirst("OnNPCChangeHeightPos", DefaultReturnValue_True, npc.getID(), newZ, oldZ);
 	}
 
 	bool onNPCShotMissed(INPC& npc, const PlayerBulletData& bulletData) override

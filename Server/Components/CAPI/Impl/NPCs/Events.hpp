@@ -58,6 +58,21 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents<PRIORITY>>
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCRespawn", EventReturnHandler::None, &npc);
 	}
 
+	void onNPCUpdate(INPC& npc) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCUpdate", EventReturnHandler::None, &npc);
+	}
+
+	void onNPCStreamIn(INPC& npc, IPlayer& forPlayer) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCStreamIn", EventReturnHandler::None, &npc, &forPlayer);
+	}
+
+	void onNPCStreamOut(INPC& npc, IPlayer& forPlayer) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCStreamOut", EventReturnHandler::None, &npc, &forPlayer);
+	}
+
 	void onNPCPlaybackStart(INPC& npc, int recordId) override
 	{
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCPlaybackStart", EventReturnHandler::None, &npc, recordId);
@@ -66,6 +81,27 @@ struct NPCEvents : public NPCEventHandler, public Singleton<NPCEvents<PRIORITY>>
 	void onNPCPlaybackEnd(INPC& npc, int recordId) override
 	{
 		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCPlaybackEnd", EventReturnHandler::None, &npc, recordId);
+	}
+
+	void onNPCVehicleEntryComplete(INPC& npc, IVehicle& vehicle, int seatId) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleEntryComplete", EventReturnHandler::None, &npc, &vehicle, seatId);
+	}
+
+	void onNPCVehicleExitComplete(INPC& npc, IVehicle& vehicle) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleExitComplete", EventReturnHandler::None, &npc, &vehicle);
+	}
+
+	bool onNPCVehicleTakeDamage(INPC& npc, IPlayer& issuer, IVehicle& vehicle, float damage, uint8_t weapon, const Vector3& hitPos) override
+	{
+		return ComponentManager::Get()->CallEvent<PRIORITY>("onNPCVehicleTakeDamage", EventReturnHandler::StopAtFalse, &npc, &issuer, &vehicle,
+			damage, int(weapon), hitPos.x, hitPos.y, hitPos.z);
+	}
+
+	void onNPCChangeHeightPos(INPC& npc, float newZ, float oldZ) override
+	{
+		ComponentManager::Get()->CallEvent<PRIORITY>("onNPCChangeHeightPos", EventReturnHandler::None, &npc, newZ, oldZ);
 	}
 
 	bool onNPCShotMissed(INPC& npc, const PlayerBulletData& bulletData) override
