@@ -707,6 +707,7 @@ void Vehicle::_respawn()
 	lastOccupiedChange = TimePoint();
 	timeOfSpawn = Time::now();
 	mods.fill(0);
+	paintJob = 0;
 	doorDamage = 0;
 	tyreDamage = 0;
 	lightDamage = 0;
