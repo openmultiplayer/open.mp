@@ -707,6 +707,7 @@ void Vehicle::_respawn()
 	lastOccupiedChange = TimePoint();
 	timeOfSpawn = Time::now();
 	mods.fill(0);
+	// paintJob was not reset here unlike mods and colours, causing it to persist after vehicle respawn (issue #1212)
 	paintJob = 0;
 	doorDamage = 0;
 	tyreDamage = 0;
