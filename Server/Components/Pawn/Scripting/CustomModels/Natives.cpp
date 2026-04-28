@@ -39,6 +39,16 @@ SCRIPT_API(AddSimpleModelTimed, bool(int virtualWorld, int baseid, int newid, st
 	return models->addCustomModel(ModelType::Object, newid, baseid, dff, textureLibrary, virtualWorld, timeOn, timeOff);
 }
 
+SCRIPT_API(AddVehicleModel, bool(int baseid, int newid, std::string const& dff, std::string const& textureLibrary))
+{
+	auto models = PawnManager::Get()->models;
+
+	if (!models)
+		return false;
+
+	return models->addCustomModel(ModelType::Vehicle, newid, baseid, dff, textureLibrary);
+}
+
 SCRIPT_API(GetPlayerCustomSkin, int(IPlayer& player))
 {
 	IPlayerCustomModelsData* data = queryExtension<IPlayerCustomModelsData>(player);

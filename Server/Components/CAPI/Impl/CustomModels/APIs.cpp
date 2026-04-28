@@ -44,6 +44,18 @@ OMP_CAPI(CustomModel_AddSimpleModelTimed, bool(int virtualWorld, int baseid, int
 	return ret;
 }
 
+OMP_CAPI(CustomModel_AddVehicleModel, bool(int baseid, int newid, StringCharPtr dff, StringCharPtr textureLibrary))
+{
+	auto models = ComponentManager::Get()->models;
+	if (!models)
+	{
+		return false;
+	}
+
+	bool ret = models->addCustomModel(ModelType::Vehicle, newid, baseid, dff, textureLibrary);
+	return ret;
+}
+
 OMP_CAPI(Player_GetCustomSkin, int(objectPtr player))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, 0);

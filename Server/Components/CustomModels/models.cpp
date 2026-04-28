@@ -20,6 +20,7 @@
 static auto rAddCharModel = std::regex(R"(AddCharModel\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rAddSimpleModel = std::regex(R"(AddSimpleModel\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rAddSimpleModelTimed = std::regex(R"(AddSimpleModelTimed\s*\(\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(-\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*,\s*(\d+)\s*,\s*(\d+)\s*\)\s*;*)");
+static auto rAddVehicleModel = std::regex(R"(AddVehicleModel\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
 static auto rUri = std::regex("[A-Za-z0-9-._~:/?#\\[\\]@!$&'()*+,;=]+"); // very loose interpretation of rfc3986
 
 using namespace Impl;
@@ -535,6 +536,10 @@ public:
 				{
 					addCustomModel(ModelType::Object, std::atoi(match[3].str().c_str()), std::atoi(match[2].str().c_str()), match[4].str(), match[5].str(), std::atoi(match[1].str().c_str()), std::atoi(match[6].str().c_str()), std::atoi(match[7].str().c_str()));
 				}
+				else if (std::regex_match(line, match, rAddVehicleModel))
+				{
+					addCustomModel(ModelType::Vehicle, std::atoi(match[2].str().c_str()), std::atoi(match[1].str().c_str()), match[3].str(), match[4].str());
+				}
 			}
 		}
 	}
@@ -608,6 +613,8 @@ public:
 			return false;
 		else if (type == ModelType::Object && !(id >= MIN_CUSTOM_OBJECT_ID && id <= MAX_CUSTOM_OBJECT_ID))
 			return false;
+		else if (type == ModelType::Vehicle && !(id >= MIN_CUSTOM_VEHICLE_ID && id <= MAX_CUSTOM_VEHICLE_ID))
+			return false;
 		else if (baseModels.find(id) != baseModels.end())
 		{
 			// Sadly this error will be displayed on gmx. Dunno what do about it.
@@ -641,8 +648,9 @@ public:
 		if (!model)
 			return false;
 
-		auto size = storage.size() - 1;
-		NetCode::RPC::ModelRequest modelInfo(size - 1, size);
+		const auto index = static_cast<int32_t>(storage.size() - 1);
+		const auto count = static_cast<uint32_t>(storage.size());
+		NetCode::RPC::ModelRequest modelInfo(index, count);
 		model->write(modelInfo);
 
 		for (IPlayer* player : players->entries())
@@ -664,20 +672,12 @@ public:
 
 	bool getBaseModel(uint32_t& baseModelIdOrInput, uint32_t& customModel) override
 	{
-		// Check if model is default one (base).
-		// If so, there's no custom model to be returned.
-		if (baseModelIdOrInput >= 0 && baseModelIdOrInput < MIN_CUSTOM_SKIN_ID)
-			return false;
-
-		// Check if input is valid custom model.
-		// If not treat is as base model.
 		auto itr = baseModels.find(baseModelIdOrInput);
 		if (itr == baseModels.end())
 		{
 			return false;
 		}
 
-		// Input is a custom model.
 		customModel = baseModelIdOrInput;
 		baseModelIdOrInput = itr->second;
 		return true;

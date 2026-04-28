@@ -456,7 +456,10 @@ public:
 
 		if (vehicle)
 		{
-			++preloadModels[data.modelID - 400];
+			if (data.modelID >= 400 && data.modelID <= 611)
+			{
+				++preloadModels[data.modelID - 400];
+			}
 
 			static bool delay_warn = false;
 			if (!delay_warn && data.respawnDelay == Seconds(0))
@@ -481,7 +484,10 @@ public:
 		IVehicle* vehicle = storage.get(vehicleId);
 		if (vehicle)
 		{
-			++preloadModels[data.modelID - 400];
+			if (data.modelID >= 400 && data.modelID <= 611)
+			{
+				++preloadModels[data.modelID - 400];
+			}
 
 			static bool delay_warn = false;
 			if (!delay_warn && data.respawnDelay == Seconds(0))
@@ -556,7 +562,10 @@ public:
 				return;
 			}
 
-			--preloadModels[veh_model - 400];
+			if (veh_model >= 400 && veh_model <= 611)
+			{
+				--preloadModels[veh_model - 400];
+			}
 			vehiclePtr->destream();
 			storage.release(index, false);
 		}

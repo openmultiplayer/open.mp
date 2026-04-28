@@ -1,0 +1,1 @@
+AddVehicleModel(411, 40001, "infernus.dff", "infernus.txd");
