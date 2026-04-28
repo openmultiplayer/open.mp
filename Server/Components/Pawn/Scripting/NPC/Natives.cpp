@@ -86,6 +86,35 @@ SCRIPT_API(NPC_GetPos, bool(INPC& npc, Vector3& position))
 	return true;
 }
 
+SCRIPT_API(NPC_GivePos, bool(INPC& npc, Vector3 position))
+{
+	npc.setPosition(npc.getPosition() + position, true);
+	return true;
+}
+
+SCRIPT_API(NPC_SetMoveMode, bool(INPC& npc, int mode))
+{
+	// FCNPC compatibility surface only. Modes 1/2 currently do not activate a
+	// real MapAndreas/ColAndreas backend in open.mp.
+	return npc.setMoveMode(mode);
+}
+
+SCRIPT_API(NPC_GetMoveMode, int(INPC& npc))
+{
+	return npc.getMoveMode();
+}
+
+SCRIPT_API(NPC_SetMinHeightPosCall, bool(INPC& npc, float height))
+{
+	npc.setMinHeightPosCall(height);
+	return true;
+}
+
+SCRIPT_API(NPC_GetMinHeightPosCall, float(INPC& npc))
+{
+	return npc.getMinHeightPosCall();
+}
+
 SCRIPT_API(NPC_SetRot, bool(INPC& npc, Vector3 rotation))
 {
 	npc.setRotation(rotation, true);
@@ -104,6 +133,33 @@ SCRIPT_API(NPC_GetRot, bool(INPC& npc, Vector3& rotation))
 	return true;
 }
 
+SCRIPT_API(NPC_SetQuaternion, bool(INPC& npc, float w, float x, float y, float z))
+{
+	npc.setRotation(GTAQuat(w, x, y, z), true);
+	return true;
+}
+
+SCRIPT_API(NPC_GiveQuaternion, bool(INPC& npc, float w, float x, float y, float z))
+{
+	GTAQuat rotation = npc.getRotation();
+	rotation.q.w += w;
+	rotation.q.x += x;
+	rotation.q.y += y;
+	rotation.q.z += z;
+	npc.setRotation(rotation, true);
+	return true;
+}
+
+SCRIPT_API(NPC_GetQuaternion, bool(INPC& npc, float& w, float& x, float& y, float& z))
+{
+	glm::quat rotation = npc.getRotation().q;
+	w = rotation.w;
+	x = rotation.x;
+	y = rotation.y;
+	z = rotation.z;
+	return true;
+}
+
 SCRIPT_API(NPC_SetFacingAngle, bool(INPC& npc, float angle))
 {
 	auto rotation = npc.getRotation().ToEuler();
@@ -117,6 +173,14 @@ SCRIPT_API(NPC_GetFacingAngle, bool(INPC& npc, float& angle))
 	auto rotation = npc.getRotation().ToEuler();
 	angle = rotation.z;
 	return true;
+}
+
+SCRIPT_API(NPC_GiveFacingAngle, float(INPC& npc, float angle))
+{
+	auto rotation = npc.getRotation().ToEuler();
+	rotation.z += angle;
+	npc.setRotation(rotation, true);
+	return rotation.z;
 }
 
 SCRIPT_API(NPC_SetVirtualWorld, bool(INPC& npc, int virtualWorld))
@@ -198,6 +262,16 @@ SCRIPT_API(NPC_IsAnyStreamedIn, bool(INPC& npc))
 	return streamedIn.size() > 1;
 }
 
+SCRIPT_API(NPC_ShowInTabListForPlayer, bool(INPC& npc, IPlayer& forPlayer))
+{
+	return npc.showInTabListForPlayer(forPlayer);
+}
+
+SCRIPT_API(NPC_HideInTabListForPlayer, bool(INPC& npc, IPlayer& forPlayer))
+{
+	return npc.hideInTabListForPlayer(forPlayer);
+}
+
 SCRIPT_API(NPC_GetAll, int(DynamicArray<int>& outputNPCs))
 {
 	int index = -1;
@@ -242,6 +316,13 @@ SCRIPT_API(NPC_SetHealth, bool(INPC& npc, float health))
 	return true;
 }
 
+SCRIPT_API(NPC_GiveHealth, float(INPC& npc, float health))
+{
+	float newHealth = npc.getHealth() + health;
+	npc.setHealth(newHealth);
+	return newHealth;
+}
+
 SCRIPT_API(NPC_GetHealth, float(INPC& npc))
 {
 	return npc.getHealth();
@@ -251,6 +332,13 @@ SCRIPT_API(NPC_SetArmour, bool(INPC& npc, float armour))
 {
 	npc.setArmour(armour);
 	return true;
+}
+
+SCRIPT_API(NPC_GiveArmour, float(INPC& npc, float armour))
+{
+	float newArmour = npc.getArmour() + armour;
+	npc.setArmour(newArmour);
+	return newArmour;
 }
 
 SCRIPT_API(NPC_GetArmour, float(INPC& npc))
@@ -280,6 +368,13 @@ SCRIPT_API(NPC_SetAmmo, bool(INPC& npc, int ammo))
 	return true;
 }
 
+SCRIPT_API(NPC_GiveAmmo, int(INPC& npc, int ammo))
+{
+	int newAmmo = npc.getAmmo() + ammo;
+	npc.setAmmo(newAmmo);
+	return newAmmo;
+}
+
 SCRIPT_API(NPC_GetAmmo, int(INPC& npc))
 {
 	return npc.getAmmo();
@@ -301,6 +396,13 @@ SCRIPT_API(NPC_SetWeaponSkillLevel, bool(INPC& npc, uint8_t skill, int level))
 {
 	npc.setWeaponSkillLevel(PlayerWeaponSkill(skill), level);
 	return true;
+}
+
+SCRIPT_API(NPC_GiveWeaponSkillLevel, int(INPC& npc, uint8_t skill, int level))
+{
+	int newLevel = npc.getWeaponSkillLevel(PlayerWeaponSkill(skill)) + level;
+	npc.setWeaponSkillLevel(PlayerWeaponSkill(skill), newLevel);
+	return newLevel;
 }
 
 SCRIPT_API(NPC_GetWeaponSkillLevel, int(INPC& npc, int skill))
@@ -374,6 +476,13 @@ SCRIPT_API(NPC_SetAmmoInClip, bool(INPC& npc, int ammo))
 	return true;
 }
 
+SCRIPT_API(NPC_GiveAmmoInClip, int(INPC& npc, int ammo))
+{
+	int newAmmo = npc.getAmmoInClip() + ammo;
+	npc.setAmmoInClip(newAmmo);
+	return newAmmo;
+}
+
 SCRIPT_API(NPC_GetAmmoInClip, int(INPC& npc))
 {
 	return npc.getAmmoInClip();
@@ -399,6 +508,13 @@ SCRIPT_API(NPC_AimAt, bool(INPC& npc, Vector3 point, bool shoot, int shootDelay,
 SCRIPT_API(NPC_AimAtPlayer, bool(INPC& npc, IPlayer& atPlayer, bool shoot, int shootDelay, bool updateAngle, Vector3 offset, Vector3 offsetFrom, uint8_t checkInBetweenFlags))
 {
 	npc.aimAtPlayer(atPlayer, shoot, shootDelay, updateAngle, offset, offsetFrom, EntityCheckType(checkInBetweenFlags));
+	return true;
+}
+
+SCRIPT_API(NPC_GetClosestEntityInBetween, bool(INPC& npc, Vector3 point, float range, int checkInBetweenMode, uint8_t checkInBetweenFlags, Vector3 offsetFrom, int& entityId, int& entityType, int& objectOwnerId, Vector3& hitPoint))
+{
+	static_cast<void>(checkInBetweenMode);
+	entityId = npc.getClosestEntityInBetween(point, range, EntityCheckType(checkInBetweenFlags), offsetFrom, entityType, objectOwnerId, hitPoint);
 	return true;
 }
 
@@ -470,6 +586,29 @@ SCRIPT_API(NPC_GetWeaponClipSize, int(INPC& npc, int weapon))
 SCRIPT_API(NPC_GetWeaponActualClipSize, int(INPC& npc, int weapon))
 {
 	return npc.getWeaponActualClipSize(weapon);
+}
+
+SCRIPT_API(NPC_SetWeaponInfo, bool(INPC& npc, int weapon, int reloadTime, int shootTime, int clipSize, float accuracy))
+{
+	npc.setWeaponInfo(static_cast<uint8_t>(weapon), reloadTime, shootTime, clipSize, accuracy);
+	return true;
+}
+
+SCRIPT_API(NPC_GetWeaponInfo, bool(INPC& npc, int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy))
+{
+	return npc.getWeaponInfo(static_cast<uint8_t>(weapon), reloadTime, shootTime, clipSize, accuracy);
+}
+
+SCRIPT_API(NPC_SetWeaponDefaultInfo, bool(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy))
+{
+	auto component = PawnManager::Get()->npcs;
+	return component ? component->setWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy) : false;
+}
+
+SCRIPT_API(NPC_GetWeaponDefaultInfo, bool(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy))
+{
+	auto component = PawnManager::Get()->npcs;
+	return component ? component->getWeaponDefaultInfo(weapon, reloadTime, shootTime, clipSize, accuracy) : false;
 }
 
 SCRIPT_API(NPC_EnterVehicle, bool(INPC& npc, IVehicle& vehicle, int seatId, int moveType))
@@ -790,6 +929,23 @@ SCRIPT_API(NPC_IsPlaybackPaused, bool(INPC& npc))
 	return npc.isPlaybackPaused();
 }
 
+SCRIPT_API(NPC_SetPlaybackPath, bool(INPC& npc, const std::string& path))
+{
+	if (path.empty())
+	{
+		return false;
+	}
+
+	npc.setPlaybackPath(path);
+	return true;
+}
+
+SCRIPT_API(NPC_GetPlaybackPath, bool(INPC& npc, OutputOnlyString& path))
+{
+	path = npc.getPlaybackPath();
+	return true;
+}
+
 SCRIPT_API(NPC_LoadRecord, int(const std::string& filePath))
 {
 	auto component = PawnManager::Get()->npcs;
@@ -1005,6 +1161,14 @@ SCRIPT_API(NPC_GetSurfingOffsets, bool(INPC& npc, Vector3& offset))
 	return true;
 }
 
+SCRIPT_API(NPC_GiveSurfingOffsets, bool(INPC& npc, Vector3 offset))
+{
+	auto data = npc.getSurfingData();
+	data.offset += offset;
+	npc.setSurfingData(data);
+	return true;
+}
+
 SCRIPT_API(NPC_SetSurfingVehicle, bool(INPC& npc, IVehicle& vehicle))
 {
 	auto data = npc.getSurfingData();
@@ -1105,6 +1269,12 @@ SCRIPT_API(NPC_Kill, bool(INPC& npc, IPlayer* killer, int reason))
 SCRIPT_API(NPC_SetVelocity, bool(INPC& npc, Vector3 velocity))
 {
 	npc.setVelocity(velocity, true);
+	return true;
+}
+
+SCRIPT_API(NPC_GiveVelocity, bool(INPC& npc, Vector3 velocity, bool updatePos))
+{
+	npc.setVelocity(npc.getVelocity() + velocity, updatePos);
 	return true;
 }
 
