@@ -590,7 +590,12 @@ public:
 			Vehicle* vehicle = static_cast<Vehicle*>(v);
 			const Seconds delay = vehicle->getRespawnDelay();
 
-			if (!vehicle->isOccupied())
+			// A dead vehicle driven solely by an NPC has no client to send exit/death RPCs,
+			// so it stays "occupied" indefinitely. Treat it as unoccupied for death/respawn handling.
+			IPlayer* vehicleDriver = vehicle->getDriver();
+			bool deadNPCOnly = vehicle->isDead() && vehicleDriver != nullptr && vehicleDriver->isBot() && vehicle->getPassengers().empty();
+
+			if (!vehicle->isOccupied() || deadNPCOnly)
 			{
 				TimePoint lastOccupied = vehicle->getLastOccupiedTime();
 				if (vehicle->isDead())
