@@ -16,12 +16,13 @@ struct BrokenPluginMessageData
 	StringView message;
 };
 
-static const StaticArray<BrokenPluginMessageData, 24> BrokenPlugins = {
+static const StaticArray<BrokenPluginMessageData, 25> BrokenPlugins = {
 	{
 		{ "YSF", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
 		{ "YSF_DL", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
 		{ "YSF_static", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
 		{ "YSF_DL_static", "It requires memory hacking to run and is therefore broken on open.mp, we already added many built-in features from YSF to open.mp and the rest are coming" },
+		{ "fixes2", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },
 		{ "FCNPC", "It requires memory hacking to run and is therefore broken on open.mp, we already have NPC component with many built-in features in open.mp" },
 		{ "FCNPC-DL", "It requires memory hacking to run and is therefore broken on open.mp, we already have NPC component with many built-in features in open.mp" },
 		{ "SKY", "It requires memory hacking to run and is therefore broken on open.mp. There should be a replacement component supported by open.mp" },

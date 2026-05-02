@@ -496,7 +496,7 @@ public:
 			// Gametext style 13 (stunt).
 			td->setLetterSize({ 0.58, 2.42 });
 			td->setAlignment(TextDrawAlignment_Center);
-			td->setColour(Colour(0xDD, 0xDD, 0xDB, 0xFF));
+			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(2);
 			td->setOutline(0);
 			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
@@ -510,15 +510,13 @@ public:
 			// Gametext style 14 (clock).
 			td->setLetterSize({ 0.55, 2.2 });
 			td->setAlignment(TextDrawAlignment_Right);
-			// There's some debate over this colour.  It seems some versions
-			// somehow end up with `0xE1E1E1FF` instead.
 			td->setColour(Colour(0xE1, 0xE1, 0xE1, 0xFF));
 			td->setShadow(0);
 			td->setOutline(2);
 			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
 			td->setStyle(TextDrawStyle_3);
 			td->setProportional(false);
-			td->useBox(false);
+			td->useBox(true);
 			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x00));
 			td->setTextSize({ 400.0, 20.0 });
 			break;
@@ -529,11 +527,11 @@ public:
 			td->setColour(Colour(0xFF, 0xFF, 0xFF, 0x96));
 			td->setShadow(0);
 			td->setOutline(0);
-			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0xFF));
+			td->setBackgroundColour(Colour(0x00, 0x00, 0x00, 0x00));
 			td->setStyle(TextDrawStyle_1);
 			td->setProportional(true);
 			td->useBox(true);
-			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0x80));
+			td->setBoxColour(Colour(0x00, 0x00, 0x00, 0xDD));
 			td->setTextSize({ 230.5, 200.0 });
 			break;
 		}
