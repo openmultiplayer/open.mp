@@ -43,10 +43,10 @@ int PawnTimerImpl::setTimer(const char* callback, Milliseconds interval, bool re
 	return newTimer(callback, interval, repeating, amx).first;
 }
 
-#define RETURN_WITH_ERROR(message)                                                                                                                                                 \
-	amx_RaiseError(amx, err);                                                                                                                                                      \
+#define RETURN_WITH_ERROR(message)                                                                                                                                                       \
+	amx_RaiseError(amx, err);                                                                                                                                                            \
 	PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: There was a problem creating the timer %s (fmt: %s). Error: %s (amx: %s)", callback, fmt, message, aux_StrError(err)); \
-	timer->kill();                                                                                                                                                                 \
+	timer->kill();                                                                                                                                                                       \
 	return 0
 
 int PawnTimerImpl::setTimerEx(const char* callback, Milliseconds interval, bool repeating, const char* fmt, AMX* amx, const cell* params)
