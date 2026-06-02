@@ -475,7 +475,7 @@ __attribute__((noinline)) int AMXAPI amx_Allot_impl(AMX* amx, int cells, cell* a
 	{
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Unable to find enough memory for your data.");
 		PawnManager::Get()->core->logLn(LogLevel::Error, "Size: %i bytes, Available space: %i bytes, Need extra size: %i bytes",
-			int(amx->hea + cells * sizeof(cell)), amx->stk, int(amx->hea + cells * sizeof(cell) - amx->stk));
+			int(amx->hea + cells * sizeof(cell)), int(amx->stk), int(amx->hea + cells * sizeof(cell) - amx->stk));
 		PawnManager::Get()->core->logLn(LogLevel::Error, "You can increase your available memory size by using `#pragma dynamic %i`.",
 			int(amx->hea / sizeof(cell) + cells));
 		return AMX_ERR_MEMORY;

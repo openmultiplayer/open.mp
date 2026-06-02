@@ -754,7 +754,7 @@ reswitch:
 			cell* ptr = reinterpret_cast<cell*>(*cptr);
 			if (!ptr)
 			{
-				PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid vector string handle provided (%d)", *cptr);
+				PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid vector string handle provided (%d)", int(*cptr));
 				return 0;
 			}
 
