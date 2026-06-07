@@ -46,8 +46,9 @@ OMP_CAPI(GangZone_Create, objectPtr(float minx, float miny, float maxx, float ma
 OMP_CAPI(GangZone_Destroy, bool(objectPtr gangzone))
 {
 	POOL_ENTITY_RET(gangzones, IGangZone, gangzone, gz, false);
+	int legacyID = gangzones->toLegacyID(gz->getID());
 	gangzones->release(gz->getID());
-	gangzones->releaseLegacyID(gangzones->toLegacyID(gz->getID()));
+	gangzones->releaseLegacyID(legacyID);
 	return true;
 }
 
