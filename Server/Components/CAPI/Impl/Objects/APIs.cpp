@@ -490,7 +490,7 @@ OMP_CAPI(PlayerObject_AttachToPlayer, bool(objectPtr player, objectPtr object, o
 	return true;
 }
 
-OMP_CAPI(PlayerObject_AttachToObject, bool(objectPtr player, objectPtr object, objectPtr attachedTo, float offsetX, float offsetY, float offsetZ, float rotationX, float rotationY, float rotationZ))
+OMP_CAPI(PlayerObject_AttachToObject, bool(objectPtr player, objectPtr object, objectPtr attachedTo, float offsetX, float offsetY, float offsetZ, float rotationX, float rotationY, float rotationZ, bool syncRotation))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
 	PLAYER_POOL_ENTITY_RET(player_, IPlayerObjectData, IPlayerObject, object, object_, false);
@@ -498,7 +498,7 @@ OMP_CAPI(PlayerObject_AttachToObject, bool(objectPtr player, objectPtr object, o
 	if (attachedTo)
 	{
 		PLAYER_POOL_ENTITY_RET(player_, IPlayerObjectData, IPlayerObject, attachedTo, attachedTo_, false);
-		object_->attachToObject(*attachedTo_, { offsetX, offsetY, offsetZ }, { rotationX, rotationY, rotationZ });
+		object_->attachToObject(*attachedTo_, { offsetX, offsetY, offsetZ }, { rotationX, rotationY, rotationZ }, syncRotation);
 	}
 	else
 	{
