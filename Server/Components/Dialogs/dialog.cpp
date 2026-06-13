@@ -168,21 +168,30 @@ private:
 			if ((data->style_ == DialogStyle_LIST || data->style_ == DialogStyle_TABLIST || data->style_ == DialogStyle_TABLIST_HEADERS) && data->body_.length() > 0)
 			{
 				unsigned int lines = 0;
-
-				for (unsigned int i = 0; i < data->body_.length() - 1; i++)
+				
+				for (unsigned int i = 0; i < data->body_.length(); i++)
 				{
-					if (data->body_[i] == '\n')
+					if (data->body_[i] != '\n' && i > 0 && data->body_[i - 1] == '\n')
 					{
 						lines++;
 					}
 				}
 
-				if (data->style_ == DialogStyle_TABLIST_HEADERS && lines > 0)
+				if (data->style_ == DialogStyle_TABLIST_HEADERS)
 				{
-					lines--;
+					if (lines <= 1)
+					{
+						sendDialogResponse.ListItem = 0;
+						lines = 1;
+					}
+				}
+				else
+				{
+					if (lines == 0) sendDialogResponse.ListItem = 0;
+					lines++;
 				}
 
-				if (sendDialogResponse.ListItem < 0 || sendDialogResponse.ListItem > lines)
+				if (sendDialogResponse.ListItem < 0 || sendDialogResponse.ListItem >= lines)
 				{
 					return false;
 				}
