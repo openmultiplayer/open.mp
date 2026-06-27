@@ -33,15 +33,13 @@ docker build \
 folders=('build' 'conan')
 for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
-        mkdir ${folder}
+        mkdir "./${folder}"
     fi
-    sudo chown -R 1000:1000 ${folder} || exit 1
+    sudo chown -R 1000:1000 "./${folder}" || exit 1
 done
 
-if [[ ! -d "./conan/p" ]]; then
-    mkdir -p ./conan/p
-    sudo chown -R 1000:1000 ./conan || exit 1
-fi
+mkdir -p "./conan/p" || exit 1
+sudo chown -R 1000:1000 "./conan" || exit 1
 
 docker run \
     --rm \
