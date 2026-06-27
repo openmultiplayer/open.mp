@@ -337,8 +337,13 @@ jobs:
           brew update
           brew install ninja cmake
 
-          python3 -m pip install --upgrade pip
-          python3 -m pip install conan
+          python3 -m venv "$RUNNER_TEMP/conan-venv"
+          source "$RUNNER_TEMP/conan-venv/bin/activate"
+
+          python -m pip install --upgrade pip
+          python -m pip install conan
+
+          echo "$RUNNER_TEMP/conan-venv/bin" >> "$GITHUB_PATH"
 
           conan --version
           cmake --version
@@ -383,7 +388,7 @@ jobs:
         shell: bash
         run: |
           version="${{ steps.vars.outputs.build_version }}"
-          artifact_name="open.mp-macos-arm-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${version}"
+          artifact_name="open.mp-macos-arm-${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${version}"
 
           echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
 
