@@ -33,13 +33,10 @@ docker build \
 folders=('build' 'conan')
 for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
-        mkdir "./${folder}"
+        mkdir ${folder}
     fi
-    sudo chown -R 1000:1000 "./${folder}" || exit 1
+    sudo chown -R 1000:1000 ${folder} || exit 1
 done
-
-mkdir -p "./conan/p" || exit 1
-sudo chown -R 1000:1000 "./conan" || exit 1
 
 docker run \
     --rm \
@@ -47,7 +44,7 @@ docker run \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
-    -v $PWD/conan/p:/home/user/.conan2/p \
+    -v $PWD/conan:/home/user/.conan2 \
     -e CONFIG=${config} \
     -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \

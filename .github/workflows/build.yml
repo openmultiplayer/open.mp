@@ -161,7 +161,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/p
+          path: docker/conan2/p
           key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Build
@@ -175,7 +175,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/p
+          path: docker/conan2/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Create a build archive
@@ -262,7 +262,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/p
+          path: docker/conan2/p
           key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Run ARM build
@@ -280,12 +280,12 @@ jobs:
             export CC=/usr/bin/clang-11
             export CXX=/usr/bin/clang++-11
             export PATH=~/.local/bin:${PATH}
-            mkdir -p docker/conan/p
+            mkdir -p docker/conan2/p
             mkdir -p ~/.conan2
             mv docker/conan/p ~/.conan2
             cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
             cmake --build build --config ${{ steps.vars.outputs.build_config }} --parallel $(nproc)
-            mv ~/.conan2/p docker/conan
+            mv ~/.conan2/p docker/conan2
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -401,7 +401,7 @@ jobs:
         shell: bash
         run: |
           version="${{ steps.vars.outputs.build_version }}"
-          artifact_name="open.mp-macos-arm-${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${version}"
+          artifact_name="open.mp-macos-arm${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${version}"
 
           echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
 

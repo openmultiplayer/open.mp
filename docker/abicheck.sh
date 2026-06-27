@@ -33,16 +33,13 @@ docker build \
     abicheck_ubuntu-${ubuntu_version}/ \
 || exit 1
 
-folders=('build' 'conan')
+folders=('build' 'conan2')
 for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
-        mkdir "./${folder}" || exit 1
+        mkdir ${folder}
     fi
-    sudo chown -R 1000:1000 "./${folder}" || exit 1
+    sudo chown -R 1000:1000 ${folder} || exit 1
 done
-
-mkdir -p "./conan/p" || exit 1
-sudo chown -R 1000:1000 "./conan" || exit 1
 
 docker run \
     --rm \
@@ -50,7 +47,7 @@ docker run \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
-    -v $PWD/conan/p:/home/user/.conan2/p \
+    -v $PWD/conan2/p:/home/user/.conan2 \
     -v $PWD/ref:/ref \
     -e CONFIG=${config} \
     -e NIGHTLY_REPO=${nightly_repo} \
