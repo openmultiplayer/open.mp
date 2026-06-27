@@ -68,7 +68,7 @@ jobs:
       - name: Install latest conan
         run: |
           python -m pip install --upgrade pip
-          pip install -v "conan==1.57.0"
+          pip install conan
 
       - name: Try to restore conan cache
         id: conan-cache-restore
@@ -275,7 +275,7 @@ jobs:
         commands: |
             apt update && apt install -y ninja-build clang-11 python3-pip libstdc++6 libc6
             pip install --upgrade pip setuptools wheel
-            pip3 install --user -v "conan==1.59.0"
+            pip3 install --user conan
             pip3 install --user -v "cmake==3.23.3"
             export CC=/usr/bin/clang-11
             export CXX=/usr/bin/clang++-11
