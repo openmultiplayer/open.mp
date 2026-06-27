@@ -282,7 +282,7 @@ jobs:
             export PATH=~/.local/bin:${PATH}
             mkdir -p docker/conan2/p
             mkdir -p ~/.conan2
-            mv docker/conan/p ~/.conan2
+            mv docker/conan2/p ~/.conan2
             cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
             cmake --build build --config ${{ steps.vars.outputs.build_config }} --parallel $(nproc)
             mv ~/.conan2/p docker/conan2
@@ -300,7 +300,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/p
+          path: docker/conan2/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
   build-macos-arm:
