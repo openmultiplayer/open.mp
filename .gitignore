@@ -296,6 +296,7 @@ __pycache__/
 *.i
 .vscode/
 /docker/conan/
+/docker/conan2/
 /docker/data/
 /buildlinux/*
 **/CMakeFiles/*
