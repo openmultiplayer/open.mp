@@ -38,13 +38,18 @@ for folder in "${folders[@]}"; do
     sudo chown -R 1000:1000 ${folder} || exit 1
 done
 
+if [[ ! -d "./conan/p" ]]; then
+    mkdir -p ./conan/p
+    sudo chown -R 1000:1000 ./conan || exit 1
+fi
+
 docker run \
     --rm \
     -t \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
-    -v $PWD/conan:/home/user/.conan \
+    -v $PWD/conan/p:/home/user/.conan2/p \
     -e CONFIG=${config} \
     -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \

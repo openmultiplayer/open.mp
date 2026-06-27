@@ -76,7 +76,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: ~/.conan/data
+          path: ~/.conan2/p
           key: conan-windows-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Generate build files
@@ -93,7 +93,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: ~/.conan/data
+          path: ~/.conan2/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Build
@@ -161,7 +161,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/data
+          path: docker/conan/p
           key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Build
@@ -175,7 +175,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/data
+          path: docker/conan/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Create a build archive
@@ -262,7 +262,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/data
+          path: docker/conan/p
           key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Run ARM build
@@ -280,12 +280,12 @@ jobs:
             export CC=/usr/bin/clang-11
             export CXX=/usr/bin/clang++-11
             export PATH=~/.local/bin:${PATH}
-            mkdir -p docker/conan/data
-            mkdir ~/.conan
-            mv docker/conan/data ~/.conan
+            mkdir -p docker/conan/p
+            mkdir -p ~/.conan2
+            mv docker/conan/p ~/.conan2
             cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
             cmake --build build --config ${{ steps.vars.outputs.build_config }} --parallel $(nproc)
-            mv ~/.conan/data docker/conan
+            mv ~/.conan2/p docker/conan
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -300,7 +300,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/data
+          path: docker/conan/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
   build-macos-arm:
@@ -331,11 +331,16 @@ jobs:
           echo "build_tools=0" >> "$GITHUB_OUTPUT"
           echo "build_target_arch=arm64" >> "$GITHUB_OUTPUT"
 
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.8"
+
       - name: Install build dependencies
         shell: bash
         run: |
           brew update
-          brew install ninja cmake
+          brew install ninja
 
           python3 -m venv "$RUNNER_TEMP/conan-venv"
           source "$RUNNER_TEMP/conan-venv/bin/activate"
@@ -354,7 +359,7 @@ jobs:
         id: conan-cache-restore
         uses: actions/cache/restore@v4
         with:
-          path: ~/.conan/data
+          path: ~/.conan2/p
           key: conan-macos-arm64-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Configure
@@ -380,7 +385,7 @@ jobs:
         if: steps.conan-cache-restore.outputs.cache-hit != 'true'
         uses: actions/cache/save@v4
         with:
-          path: ~/.conan/data
+          path: ~/.conan2/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Create build archive

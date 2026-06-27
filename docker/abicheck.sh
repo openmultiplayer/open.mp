@@ -41,13 +41,18 @@ for folder in "${folders[@]}"; do
     fi
 done
 
+if [[ ! -d "./conan/p" ]]; then
+    mkdir -p ./conan/p &&
+    sudo chown -R 1000:1000 ./conan || exit 1
+fi
+
 docker run \
     --rm \
     -t \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
-    -v $PWD/conan:/home/user/.conan \
+    -v $PWD/conan/p:/home/user/.conan2/p \
     -v $PWD/ref:/ref \
     -e CONFIG=${config} \
     -e NIGHTLY_REPO=${nightly_repo} \
