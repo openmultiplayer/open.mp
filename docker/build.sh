@@ -30,7 +30,7 @@ docker build \
     build_ubuntu-${ubuntu_version}/ \
 || exit 1
 
-folders=('build' 'conan')
+folders=('build' 'conan2')
 for folder in "${folders[@]}"; do
     if [[ ! -d "./${folder}" ]]; then
         mkdir ${folder}
@@ -44,7 +44,7 @@ docker run \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
-    -v $PWD/conan:/home/user/.conan \
+    -v $PWD/conan2:/home/user/.conan2 \
     -e CONFIG=${config} \
     -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \
