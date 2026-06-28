@@ -47,7 +47,7 @@ docker run \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
-    -v $PWD/conan2/p:/home/user/.conan2 \
+    -v $PWD/conan2:/home/user/.conan2 \
     -v $PWD/ref:/ref \
     -e CONFIG=${config} \
     -e NIGHTLY_REPO=${nightly_repo} \
