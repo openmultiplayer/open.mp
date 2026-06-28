@@ -495,9 +495,9 @@ public:
 		restream();
 	}
 
-	void attachToObject(IPlayerObject& object, Vector3 offset, Vector3 rotation) override
+	void attachToObject(IPlayerObject& object, Vector3 offset, Vector3 rotation, bool syncRotation) override
 	{
-		setAttachmentData(ObjectAttachmentData::Type::Object, object.getID(), offset, rotation, true);
+		setAttachmentData(ObjectAttachmentData::Type::Object, object.getID(), offset, rotation, syncRotation);
 		restream();
 	}
 
