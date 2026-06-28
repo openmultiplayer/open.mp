@@ -287,7 +287,12 @@ SCRIPT_API(GetPlayerSurfingPlayerObjectID, int(IPlayer& player))
 
 SCRIPT_API(GetPlayerCameraTargetPlayerObj, int(IPlayer& player))
 {
-	IObject* object = player.getCameraTargetObject();
+	IPlayerCameraTargetData* data = queryExtension<IPlayerCameraTargetData>(player);
+	if (!data)
+	{
+		return INVALID_OBJECT_ID;
+	}
+	IPlayerObject* object = data->getCameraTargetPlayerObject();
 	if (object)
 	{
 		return object->getID();
