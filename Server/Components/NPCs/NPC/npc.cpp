@@ -1539,6 +1539,18 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 	vehicle_ = &vehicle;
 	vehicleSeat_ = seat;
 
+	// Vehicle::putPlayer only sends PutPlayerInVehicle to the entering player,
+	// which is a no-op for an NPC (no real client to receive it). Without an
+	// explicit broadcast, remote clients have no signal to visually attach the
+	// NPC and must rely on the next DriverSync, which some vehicles (notably
+	// boats) refuse to honour while the player is on-foot. Mirror the natural
+	// goToVehicle flow by broadcasting EnterVehicle to streamed players.
+	NetCode::RPC::EnterVehicle enterVehicleRPC;
+	enterVehicleRPC.PlayerID = player_->getID();
+	enterVehicleRPC.VehicleID = vehicle.getID();
+	enterVehicleRPC.Passenger = (seat != 0) ? 1 : 0;
+	PacketHelper::broadcastToStreamed(enterVehicleRPC, *player_, true);
+
 	auto angle = vehicle.getRotation().ToEuler().z;
 	auto rotation = getRotation().ToEuler();
 	rotation.z = angle;
