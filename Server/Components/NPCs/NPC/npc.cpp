@@ -280,6 +280,24 @@ void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
 	}
 }
 
+Vector3 NPC::getVehiclePosition() const
+{
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		return position_;
+	}
+	return Vector3(0.0f, 0.0f, 0.0f);
+}
+
+GTAQuat NPC::getVehicleRotation() const
+{
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		return rotation_;
+	}
+	return GTAQuat();
+}
+
 int NPC::getVirtualWorld() const
 {
 	return player_->getVirtualWorld();
