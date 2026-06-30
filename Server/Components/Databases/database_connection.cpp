@@ -42,14 +42,55 @@ IDatabaseResultSet* DatabaseConnection::executeQuery(StringView query)
 	IDatabaseResultSet* ret(parentDatabasesComponent->createResultSet());
 	if (ret)
 	{
-		// TODO: Properly handle errors
 		parentDatabasesComponent->logQuery("[log_sqlite_queries]: %.*s", PRINT_VIEW(query));
-		if (sqlite3_exec(databaseConnectionHandle, query.data(), queryStepExecuted, ret, nullptr) != SQLITE_OK)
+		char *sqlError = nullptr;
+		int sqlRet = 999;
+		sqlRet = sqlite3_exec(databaseConnectionHandle, query.data(), queryStepExecuted, ret, &sqlError);
+		if(sqlRet == SQLITE_BUSY)
 		{
-			parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query.");
-			parentDatabasesComponent->freeResultSet(*ret);
-			ret = nullptr;
+            int sqlRetries = 5;
+			while (sqlRetries-- > 0) {
+		    	parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query. Database is busy, retrying...");
+		    	sqlite3_sleep(100);
+				sqlRet = sqlite3_exec(databaseConnectionHandle, query.data(), queryStepExecuted, ret, &sqlError);
+		        if (sqlRet != SQLITE_OK)
+		    	{
+		    		if(sqlRet != SQLITE_BUSY)
+		    		{
+						if(sqlError)
+						{
+		    	    	    parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query. %s", sqlError);
+						}
+						else
+						{
+							parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query.");
+						}
+		    			break;
+		    		}
+		    	}
+		    	else
+			    {
+			    	break;
+			    }
+		    }
 		}
+		else
+		{
+			if(sqlRet != SQLITE_OK)
+			{
+			    if(sqlError)
+				{
+		    	    parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query. %s", sqlError);
+				}
+				else
+				{
+					parentDatabasesComponent->log(LogLevel::Error, "[log_sqlite]: Error executing query.");
+				}
+		        parentDatabasesComponent->freeResultSet(*ret);
+		        ret = nullptr;
+			}
+		}
+		sqlite3_free(sqlError);
 	}
 	else
 	{
