@@ -291,6 +291,12 @@ RakNetLegacyNetwork::~RakNetLegacyNetwork()
 		core->getPlayers().getPlayerChangeDispatcher().removeEventHandler(this);
 		core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
 	}
+
+	if (npcComponent)
+	{
+		npcComponent->getPoolEventDispatcher().removeEventHandler(this);
+	}
+
 	rakNetServer.Disconnect(300);
 	RakNet::RakNetworkFactory::DestroyRakServerInterface(&rakNetServer);
 }
@@ -423,6 +429,7 @@ void RakNetLegacyNetwork::OnPlayerConnect(RakNet::RPCParameters* rpcParams, void
 
 		network->core->logLn(LogLevel::Warning, "Invalid client connecting from %.*s", int(addressString.length()), addressString.data());
 		network->rakNetServer.Kick(rpcParams->sender);
+		network->rakNetServer.AddToBanList(addressString.data(), 15'000u);
 		return;
 	}
 
@@ -793,6 +800,18 @@ void RakNetLegacyNetwork::update()
 	query.buildConfigDependentBuffers();
 
 	int mtu = *config.getInt("network.mtu");
+
+	static const auto maxMTU = *core->getConfig().getBool("network.allow_037_clients") ? MAX_MTU_037 : MAX_MTU_DL;
+
+	// Check if provided MTU is larger than the maximum allowed size for current targeted client(s).
+	// Example: 0.3.7 clients have a maximum MTU of 576 bytes, while 0.3DL clients have a maximum MTU of 1500 bytes.
+	// If that is the case, we will log a warning and set the MTU to the maximum allowed size so client won't experience packet loss/disconnects.
+	if (mtu > maxMTU)
+	{
+		core->logLn(LogLevel::Warning, "MTU %d is larger than the maximum allowed size %d for current targeted client(s).", mtu, maxMTU);
+		mtu = maxMTU;
+	}
+
 	rakNetServer.SetMTUSize(mtu);
 }
 
@@ -816,6 +835,7 @@ void RakNetLegacyNetwork::start()
 
 	IConfig& config = core->getConfig();
 	int maxPlayers = *config.getInt("max_players");
+	int minimumSendBPS = *config.getFloat("network.minimum_send_bits_per_second");
 
 	int port = *config.getInt("network.port");
 	int sleep = static_cast<int>(*config.getFloat("sleep"));
@@ -824,6 +844,8 @@ void RakNetLegacyNetwork::start()
 	bool* artwork_config = config.getBool("artwork.enable");
 	bool artwork = !artwork_config ? false : *artwork_config;
 	bool allow037 = *config.getBool("network.allow_037_clients");
+
+	SAMPRakNet::SetMinimumSendBitsPerSecond(minimumSendBPS); // Default: 96 kbps  (~12 KB/s)
 
 	query.setCore(core);
 
@@ -883,6 +905,15 @@ void RakNetLegacyNetwork::start()
 	if (gracePeriod)
 	{
 		SAMPRakNet::SetGracePeriod(*gracePeriod);
+	}
+
+	// Set reserved slots based on NPC count once more because slots reserved
+	// Before RakServer::Start are reset because RakPeer::Start calls RakPeer::Disconnect
+	// As well which resets the value for RakPeer::reservedSlots class member.
+	// Note: this behavior does not affect slots reserved in next executions.
+	if (npcComponent)
+	{
+		rakNetServer.ReserveSlots(npcComponent->count());
 	}
 }
 

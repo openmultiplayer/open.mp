@@ -20,10 +20,14 @@
 #include <raknet/RakNetworkFactory.h>
 #include <raknet/RakServerInterface.h>
 #include <raknet/StringCompressor.h>
+#include <Server/Components/NPCs/npcs.hpp>
 
 using namespace Impl;
 
 #define MAGNITUDE_EPSILON 0.00001f
+
+#define MAX_MTU_037 576
+#define MAX_MTU_DL MAXIMUM_MTU_SIZE
 
 static const StaticArray<StringView, 2> ProtectedRules = {
 	"version", "allowed_clients"
@@ -31,7 +35,7 @@ static const StaticArray<StringView, 2> ProtectedRules = {
 
 class Core;
 
-class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension
+class RakNetLegacyNetwork final : public Network, public CoreEventHandler, public PlayerConnectEventHandler, public PlayerChangeEventHandler, public INetworkQueryExtension, public PoolEventHandler<INPC>
 {
 private:
 	ICore* core = nullptr;
@@ -41,8 +45,24 @@ private:
 	StaticArray<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
+	INPCComponent* npcComponent = nullptr;
 
 public:
+	inline void setNPCComponent(INPCComponent* comp)
+	{
+		npcComponent = comp;
+
+		if (npcComponent)
+		{
+			npcComponent->getPoolEventDispatcher().addEventHandler(this);
+		}
+	}
+
+	inline INPCComponent* getNPCComponent()
+	{
+		return npcComponent;
+	}
+
 	inline void setQueryConsole(IConsoleComponent* console)
 	{
 		query.setConsole(console);
@@ -221,11 +241,11 @@ public:
 				const PeerNetworkData::NetworkID& nid = netData.networkID;
 				const RakNet::PlayerID rid { unsigned(nid.address.v4), nid.port };
 
-				return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+				return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, rid, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
 			}
 		}
 
-		return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfUnreadBits(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
+		return rakNetServer.RPC(id, (const char*)bs.GetData(), bs.GetNumberOfBitsUsed(), RakNet::HIGH_PRIORITY, reliability, channel, RakNet::UNASSIGNED_PLAYER_ID, true, false, RakNet::UNASSIGNED_NETWORK_ID, nullptr);
 	}
 
 	bool sendRPC(IPlayer& peer, int id, Span<uint8_t> data, int channel, bool dispatchEvents) override
@@ -304,6 +324,22 @@ public:
 	void onPlayerDisconnect(IPlayer& player, PeerDisconnectReason reason) override
 	{
 		query.buildPlayerDependentBuffers(&player);
+	}
+
+	void onPoolEntryCreated(INPC& npc) override
+	{
+		if (npcComponent)
+		{
+			rakNetServer.ReserveSlots(npcComponent->count());
+		}
+	}
+
+	void onPoolEntryDestroyed(INPC& npc) override
+	{
+		if (npcComponent)
+		{
+			rakNetServer.ReserveSlots(npcComponent->count());
+		}
 	}
 
 	bool addRule(StringView rule, StringView value) override

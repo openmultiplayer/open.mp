@@ -33,7 +33,7 @@ on:
 jobs:
   build-windows:
     name: Windows build
-    runs-on: windows-2019
+    runs-on: windows-2022
 
     strategy:
       matrix:
@@ -58,7 +58,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10'
+          python-version: "3.10"
 
       - name: Install CMake
         uses: lukka/get-cmake@latest
@@ -68,7 +68,7 @@ jobs:
       - name: Install latest conan
         run: |
           python -m pip install --upgrade pip
-          pip install -v "conan==1.57.0"
+          pip install conan
 
       - name: Try to restore conan cache
         id: conan-cache-restore
@@ -76,7 +76,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: ~/.conan/data
+          path: ~/.conan2/p
           key: conan-windows-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Generate build files
@@ -85,7 +85,7 @@ jobs:
           $env:OMP_BUILD_COMMIT=$(git rev-parse HEAD)
           mkdir build
           cd build
-          cmake -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A ${{ matrix.arch }} -T "ClangCL"
+          cmake -G "Visual Studio 17 2022" -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} .. -A ${{ matrix.arch }} -T "ClangCL"
 
       - name: Try to save conan cache
         if: steps.conan-cache-restore.outputs.cache-hit != 'true'
@@ -93,7 +93,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: ~/.conan/data
+          path: ~/.conan2/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Build
@@ -161,7 +161,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/data
+          path: docker/conan2/p
           key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
       - name: Build
@@ -175,7 +175,7 @@ jobs:
         env:
           cache-name: cache-conan-modules
         with:
-          path: docker/conan/data
+          path: docker/conan2/p
           key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
 
       - name: Create a build archive
@@ -241,64 +241,176 @@ jobs:
         ssl: [dynamic, static]
 
     steps:
-    - uses: actions/checkout@v4
-      with:
-        clean: true
-        submodules: recursive
-        fetch-depth: 0
+      - uses: actions/checkout@v4
+        with:
+          clean: true
+          submodules: recursive
+          fetch-depth: 0
 
-    - name: Declare build output variables
-      id: vars
-      shell: bash
-      env:
-        HEAD_REF: ${{ github.head_ref || github.ref_name }}
-      run: |
-        echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
-        echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> $GITHUB_OUTPUT
+          echo "build_config=RelWithDebInfo" >> $GITHUB_OUTPUT
 
-    - name: Try to restore conan cache
-      id: conan-cache-restore
-      uses: actions/cache/restore@v3
-      env:
-        cache-name: cache-conan-modules
-      with:
-        path: docker/conan/data
-        key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+      - name: Try to restore conan cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: docker/conan2/p
+          key: conan-linux-${{ matrix.arch }}-${{ matrix.ssl }}-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
 
-    - name: Run ARM build
-      uses: pguyot/arm-runner-action@v2.5.2
-      with:
-        base_image: ${{ matrix.arch == 'arm32' && 'raspios_lite' || 'raspios_lite_arm64' }}:2022-04-04
-        image_additional_mb: 10000
-        bind_mount_repository: true
-        cpu: cortex-a7
-        commands: |
+      - name: Run ARM build
+        uses: pguyot/arm-runner-action@v2.5.2
+        with:
+          base_image: ${{ matrix.arch == 'arm32' && 'raspios_lite' || 'raspios_lite_arm64' }}:2022-04-04
+          image_additional_mb: 10000
+          bind_mount_repository: true
+          cpu: cortex-a7
+          commands: |
             apt update && apt install -y ninja-build clang-11 python3-pip libstdc++6 libc6
             pip install --upgrade pip setuptools wheel
-            pip3 install --user -v "conan==1.59.0"
+            pip3 install --user conan
             pip3 install --user -v "cmake==3.23.3"
             export CC=/usr/bin/clang-11
             export CXX=/usr/bin/clang++-11
             export PATH=~/.local/bin:${PATH}
-            mkdir -p docker/conan/data
-            mkdir ~/.conan
-            mv docker/conan/data ~/.conan
+            mkdir -p docker/conan2/p
+            mkdir -p ~/.conan2
+            mv docker/conan2/p ~/.conan2
             cmake -S . -B build -G Ninja -DTARGET_BUILD_ARCH=${{ matrix.arch == 'arm32' && 'armv7' || 'armv8' }} -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} -DSHARED_OPENSSL=${{ matrix.ssl == 'dynamic' }} -DSTATIC_STDCXX=true -DBUILD_SERVER=1 -DBUILD_ABI_CHECK_TOOL=0
             cmake --build build --config ${{ steps.vars.outputs.build_config }} --parallel $(nproc)
-            mv ~/.conan/data docker/conan
+            mv ~/.conan2/p docker/conan2
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: open.mp-linux-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${{ steps.vars.outputs.build_version }}
-        path: build/Output/${{ steps.vars.outputs.build_config }}/Server
-        if-no-files-found: error
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: open.mp-linux-${{ matrix.arch }}${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${{ steps.vars.outputs.build_version }}
+          path: build/Output/${{ steps.vars.outputs.build_config }}/Server
+          if-no-files-found: error
 
-    - name: Try to save conan cache
-      if: steps.conan-cache-restore.outputs.cache-hit != 'true'
-      uses: actions/cache/save@v3
-      env:
-        cache-name: cache-conan-modules
-      with:
-        path: docker/conan/data
-        key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
+      - name: Try to save conan cache
+        if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v3
+        env:
+          cache-name: cache-conan-modules
+        with:
+          path: docker/conan2/p
+          key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
+
+  build-macos-arm:
+    name: macOS ARM build
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        ssl: [dynamic, static]
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: true
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Declare build output variables
+        id: vars
+        shell: bash
+        env:
+          HEAD_REF: ${{ github.head_ref || github.ref_name }}
+        run: |
+          echo "build_version=$(git describe --always --tags "refs/remotes/origin/${HEAD_REF}")" >> "$GITHUB_OUTPUT"
+          echo "build_config=RelWithDebInfo" >> "$GITHUB_OUTPUT"
+          echo "build_shared=${{ matrix.ssl == 'dynamic' }}" >> $GITHUB_OUTPUT
+          echo "build_server=1" >> "$GITHUB_OUTPUT"
+          echo "build_tools=0" >> "$GITHUB_OUTPUT"
+          echo "build_target_arch=arm64" >> "$GITHUB_OUTPUT"
+
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "3.31.8"
+
+      - name: Install build dependencies
+        shell: bash
+        run: |
+          brew update
+          brew install ninja
+
+          python3 -m venv "$RUNNER_TEMP/conan-venv"
+          source "$RUNNER_TEMP/conan-venv/bin/activate"
+
+          python -m pip install --upgrade pip
+          python -m pip install conan
+
+          echo "$RUNNER_TEMP/conan-venv/bin" >> "$GITHUB_PATH"
+
+          conan --version
+          cmake --version
+          ninja --version
+          clang --version
+
+      - name: Restore Conan cache
+        id: conan-cache-restore
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.conan2/p
+          key: conan-macos-arm64-${{ hashFiles('CMakeLists.txt', 'lib/CMakeLists.txt', 'SDK/CMakeLists.txt', 'SDK/lib/cmake-conan/conan.cmake', 'SDK/lib/cmake-conan/conan-omp.cmake') }}
+
+      - name: Configure
+        shell: bash
+        run: |
+          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+          export MACOSX_DEPLOYMENT_TARGET="11.0"
+          export CFLAGS="-isysroot ${SDKROOT}"
+          export CXXFLAGS="-isysroot ${SDKROOT}"
+          export LDFLAGS="-isysroot ${SDKROOT}"
+
+          cmake -S . -B build \
+            -G Ninja \
+            -DCMAKE_OSX_SYSROOT="${SDKROOT}" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET}" \
+            -DTARGET_BUILD_ARCH=${{ steps.vars.outputs.build_target_arch }} \
+            -DCMAKE_BUILD_TYPE=${{ steps.vars.outputs.build_config }} \
+            -DSHARED_OPENSSL=${{ steps.vars.outputs.build_shared }} \
+            -DSTATIC_STDCXX=false \
+            -DBUILD_SERVER=${{ steps.vars.outputs.build_server }} \
+            -DBUILD_ABI_CHECK_TOOL=${{ steps.vars.outputs.build_tools }}
+
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build build \
+            --config ${{ steps.vars.outputs.build_config }} \
+            --parallel "$(sysctl -n hw.logicalcpu)"
+
+      - name: Save Conan cache
+        if: steps.conan-cache-restore.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ~/.conan2/p
+          key: ${{ steps.conan-cache-restore.outputs.cache-primary-key }}
+
+      - name: Create build archive
+        id: build
+        shell: bash
+        run: |
+          version="${{ steps.vars.outputs.build_version }}"
+          artifact_name="open.mp-macos-arm${{ matrix.ssl == 'dynamic' && '-dynssl' || '' }}-${version}"
+
+          echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+
+          cd "build/Output/${{ steps.vars.outputs.build_config }}"
+          tar -cJvf "${artifact_name}.tar.xz" "Server"
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.build.outputs.artifact_name }}
+          path: build/Output/${{ steps.vars.outputs.build_config }}/${{ steps.build.outputs.artifact_name }}.tar.xz
+          if-no-files-found: error

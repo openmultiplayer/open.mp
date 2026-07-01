@@ -17,6 +17,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <cstdlib>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -28,6 +29,7 @@
 #include <thread>
 #include <variant>
 #include <utils.hpp>
+#include <openssl/evp.h>
 
 #ifdef OMP_VERSION_HASH
 #define OMP_VERSION_HASH_STR STRINGIFY(OMP_VERSION_HASH)
@@ -124,6 +126,7 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "network.allow_037_clients", true },
 	{ "network.grace_period", 5000 },
 	{ "network.use_omp_encryption", false },
+	{ "network.minimum_send_bits_per_second", 96000.0f }, // 96 kbps  (~12 KB/s)
 	// rcon
 	{ "rcon.allow_teleport", false },
 	{ "rcon.enable", false },
@@ -317,6 +320,68 @@ private:
 
 	std::map<String, ConfigStorage> defaults;
 
+	String expandEnvironmentVariablesInRawJSON(const String& jsonText) const
+	{
+		String result;
+		result.reserve(jsonText.length());
+
+		size_t i = 0;
+		while (i < jsonText.length())
+		{
+			const char ch = jsonText[i];
+
+			if (ch != '$')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			if (i + 1 < jsonText.length() && jsonText[i + 1] == '$')
+			{
+				result.push_back('$');
+				i += 2;
+				continue;
+			}
+
+			if (i + 1 >= jsonText.length() || jsonText[i + 1] != '{')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			const size_t varStart = i + 2;
+			const size_t end = jsonText.find('}', varStart);
+
+			if (end == String::npos)
+			{
+				result.append(jsonText.substr(i));
+				break;
+			}
+
+			const String fullVar = jsonText.substr(varStart, end - varStart);
+			const size_t defaultPos = fullVar.find(":-");
+
+			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
+			const String defaultValue = (defaultPos != String::npos) ? fullVar.substr(defaultPos + 2) : "";
+			const char* envValue = std::getenv(varName.c_str());
+
+			if (envValue && envValue[0] != '\0')
+			{
+				result.append(envValue);
+			}
+			else if (!defaultValue.empty())
+			{
+				result.append(defaultValue);
+			}
+
+			i = end + 1;
+		}
+
+		return result;
+	}
+
 	void processNode(const nlohmann::json::object_t& node, String ns = "")
 	{
 		for (const auto& kv : node)
@@ -375,7 +440,10 @@ public:
 					nlohmann::json props;
 					try
 					{
-						props = nlohmann::json::parse(ifs, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
+						String fileContent((std::istreambuf_iterator<char>(ifs)),
+							std::istreambuf_iterator<char>());
+						String expandedContent = expandEnvironmentVariablesInRawJSON(fileContent);
+						props = nlohmann::json::parse(expandedContent, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
 					}
 					catch (nlohmann::json::exception const& e)
 					{
@@ -405,6 +473,8 @@ public:
 
 						// Fill any values missing in config with defaults.
 						// Fill default value if invalid type is provided.
+						// if the user provided a string but expected type is different
+						// attempt to parse string to the expected type.
 						for (const auto& kv : Defaults)
 						{
 							auto itr = processed.find(kv.first);
@@ -412,7 +482,67 @@ public:
 							{
 								if (itr->second.index() != kv.second.index())
 								{
-									itr->second = kv.second;
+									// check if we can convert from string
+									bool converted = false;
+									if (itr->second.index() == 1) // User value is String
+									{
+										const String& strVal = std::get<String>(itr->second);
+										switch (kv.second.index())
+										{
+										case 0: // Expected int
+										{
+											try
+											{
+												size_t pos = 0;
+												int intVal = std::stoi(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = intVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 2: // Expected float
+										{
+											try
+											{
+												size_t pos = 0;
+												float floatVal = std::stof(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = floatVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 4: // Expected bool
+										{
+											if (strVal == "true" || strVal == "1")
+											{
+												itr->second = true;
+												converted = true;
+											}
+											else if (strVal == "false" || strVal == "0")
+											{
+												itr->second = false;
+												converted = true;
+											}
+											break;
+										}
+										}
+									}
+									if (!converted)
+									{
+										itr->second = kv.second;
+									}
 								}
 								continue;
 							}
@@ -2109,17 +2239,10 @@ public:
 	{
 		String input(String(password) + String(salt));
 
-		SHA256_CTX ctx {};
-		if (!SHA256_Init(&ctx))
-		{
-			return false;
-		}
-		if (!SHA256_Update(&ctx, input.data(), input.length()))
-		{
-			return false;
-		}
 		unsigned char md[SHA256_DIGEST_LENGTH];
-		if (!SHA256_Final(md, &ctx))
+		size_t md_len = 0;
+
+		if (!EVP_Q_digest(NULL, "SHA256", NULL, input.data(), input.length(), md, &md_len))
 		{
 			return false;
 		}

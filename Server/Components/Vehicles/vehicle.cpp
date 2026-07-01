@@ -41,7 +41,7 @@ void Vehicle::streamInForPlayer(IPlayer& player)
 	streamIn.Angle = rot.ToEuler().z;
 
 	// Trains should always be streamed with default rotation.
-	if (spawnData.modelID == 537 || spawnData.modelID == 538)
+	if (spawnData.modelID == 537 || spawnData.modelID == 538 || spawnData.modelID == 449)
 	{
 		streamIn.Angle = spawnData.zRotation;
 	}
@@ -164,6 +164,13 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 		return false;
 	}
 
+	if (vehicleSync.TrailerID && trailer && trailer->getID() != vehicleSync.TrailerID)
+	{
+		// The client instantly jumped from one trailer to another one.  Probably a cheat, so don't
+		// allow it.
+		return false;
+	}
+
 	pos = vehicleSync.Position;
 	rot = vehicleSync.Rotation;
 	velocity = vehicleSync.Velocity;
@@ -218,16 +225,7 @@ bool Vehicle::updateFromDriverSync(const VehicleDriverSyncPacket& vehicleSync, I
 
 	if (vehicleSync.TrailerID)
 	{
-		if (trailer)
-		{
-			if (trailer->getID() != vehicleSync.TrailerID)
-			{
-				// The client instantly jumped from one trailer to another one.  Probably a cheat, so don't
-				// allow it.
-				return false;
-			}
-		}
-		else
+		if (!trailer)
 		{
 			// Got a new one that we didn't know about.
 			trailer = static_cast<Vehicle*>(pool->get(vehicleSync.TrailerID));
@@ -322,18 +320,18 @@ bool Vehicle::updateFromTrailerSync(const VehicleTrailerSyncPacket& trailerSync,
 		return false;
 	}
 
+	PlayerVehicleData* playerData = queryExtension<PlayerVehicleData>(player);
+	if (!playerData)
+	{
+		return false;
+	}
+
 	pos = trailerSync.Position;
 	velocity = trailerSync.Velocity;
 	angularVelocity = trailerSync.TurnVelocity;
 	rot.q = glm::quat(trailerSync.Quat[0], trailerSync.Quat[1], trailerSync.Quat[2], trailerSync.Quat[3]);
 
 	updateOccupied();
-
-	PlayerVehicleData* playerData = queryExtension<PlayerVehicleData>(player);
-	if (!playerData)
-	{
-		return false;
-	}
 
 	Vehicle* vehicle = static_cast<Vehicle*>(playerData->getVehicle());
 
@@ -685,7 +683,11 @@ bool Vehicle::isDead()
 
 void Vehicle::_respawn()
 {
-	respawning = true;
+	if (!isTrainCarriage())
+	{
+		respawning = true;
+	}
+
 	const auto& entries = streamedFor_.entries();
 	for (IPlayer* player : entries)
 	{

@@ -22,3 +22,6 @@
 [submodule "Shared/Network"]
 	path = Shared/Network
 	url = https://github.com/openmultiplayer/open.mp-network
+[submodule "CAPI"]
+	path = CAPI
+	url = https://github.com/openmultiplayer/open.mp-capi
