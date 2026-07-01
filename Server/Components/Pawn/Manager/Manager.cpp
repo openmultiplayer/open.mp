@@ -92,7 +92,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	// Legacy commands.
 	if (cmd == "loadfs")
 	{
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: loadfs fileName");
 			return true;
@@ -109,7 +109,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "unloadfs")
 	{
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: unloadfs fileName");
 			return true;
@@ -126,7 +126,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "reloadfs")
 	{
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: reloadfs fileName");
 			return true;
@@ -152,7 +152,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 		{
 			return true;
 		}
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: changemode fileName");
 			return true;
@@ -166,7 +166,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	// New commands.
 	else if (cmd == "loadscript")
 	{
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: loadscript fileName");
 			return true;
@@ -183,7 +183,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "unloadscript")
 	{
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: unloadscript fileName");
 			return true;
@@ -200,7 +200,7 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "reloadscript")
 	{
-		if(args.empty())
+		if (args.empty())
 		{
 			console->sendMessage(sender, "Usage: reloadscript fileName");
 			return true;
