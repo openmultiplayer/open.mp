@@ -92,6 +92,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	// Legacy commands.
 	if (cmd == "loadfs")
 	{
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: loadfs fileName");
+			return true;
+		}
 		if (!Load("filterscripts/" + args))
 		{
 			console->sendMessage(sender, "Filterscript '" + args + "' load failed.");
@@ -104,6 +109,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "unloadfs")
 	{
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: unloadfs fileName");
+			return true;
+		}
 		if (!Unload("filterscripts/" + args))
 		{
 			console->sendMessage(sender, "Filterscript '" + args + "' unload failed.");
@@ -116,6 +126,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "reloadfs")
 	{
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: reloadfs fileName");
+			return true;
+		}
 		if (!Reload("filterscripts/" + args))
 		{
 			console->sendMessage(sender, "Filterscript '" + args + "' reload failed.");
@@ -137,6 +152,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 		{
 			return true;
 		}
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: changemode fileName");
+			return true;
+		}
 		if (Changemode("gamemodes/" + args))
 		{
 			gamemodeRepeat_ = 1;
@@ -146,6 +166,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	// New commands.
 	else if (cmd == "loadscript")
 	{
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: loadscript fileName");
+			return true;
+		}
 		if (!Load(args))
 		{
 			console->sendMessage(sender, "Script '" + args + "' load failed.");
@@ -158,6 +183,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "unloadscript")
 	{
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: unloadscript fileName");
+			return true;
+		}
 		if (!Unload(args))
 		{
 			console->sendMessage(sender, "Script '" + args + "' unload failed.");
@@ -170,6 +200,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "reloadscript")
 	{
+		if(args.empty())
+		{
+			console->sendMessage(sender, "Usage: reloadscript fileName");
+			return true;
+		}
 		if (!Reload(args))
 		{
 			console->sendMessage(sender, "Script '" + args + "' reload failed.");
