@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.19)
-project(open-mp LANGUAGES C CXX VERSION 1.3.1)
+project(open-mp LANGUAGES C CXX VERSION 1.5.8)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -19,6 +19,7 @@ if(MSVC)
 	add_link_options("/LARGEADDRESSAWARE")
 	# Use strict intermediate floating-point precision
 	add_compile_options("/fp:strict")
+	add_compile_options("/MP")
 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 		add_compile_options("/arch:SSE2")
 	endif()
@@ -96,6 +97,7 @@ if(WIN32)
 		-DWIN32_LEAN_AND_MEAN
 		-D_CRT_DECLARE_NONSTDC_NAMES
 		-D_CRT_NONSTDC_NO_WARNINGS
+		-D_DISABLE_CONSTEXPR_MUTEX_CONSTRUCTOR
 	)
 elseif(CMAKE_CXX_COMPILER_ID STREQUAL GNU)
 	add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
@@ -134,7 +136,7 @@ set(BUILD_UNICODE_COMPONENT FALSE CACHE BOOL "Whether to build the Unicode compo
 set(BUILD_LEGACY_COMPONENTS TRUE CACHE BOOL "Whether to build the legacy components")
 set(BUILD_TEST_COMPONENTS FALSE CACHE BOOL "Whether to build the test component")
 set(BUILD_SQLITE_COMPONENT TRUE CACHE BOOL "Whether to build the SQLite component")
-set(BUILD_FIXES_COMPONENT TRUE CACHE BOOL "Whether to build the Fixes component")
+set(BUILD_FIXES_COMPONENT FALSE CACHE BOOL "Whether to build the Fixes component")
 
 if (UNIX)
 	set(BUILD_ABI_CHECK_TOOL TRUE CACHE BOOL "Whether to build the abi-check tool")
@@ -144,6 +146,7 @@ add_subdirectory(lib)
 
 if(BUILD_SERVER)
 	message("Configuring server")
+	add_subdirectory(CAPI)
 	add_subdirectory(SDK)
 	add_subdirectory(Shared)
 	add_subdirectory(Server)

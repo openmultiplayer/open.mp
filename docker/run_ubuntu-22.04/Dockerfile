@@ -7,20 +7,9 @@ RUN \
         wget \
         libstdc++6:i386 \
         tzdata \
-    && \
-    wget \
-        http://security.ubuntu.com/ubuntu/pool/main/o/openssl/libssl1.1_1.1.1f-1ubuntu2.16_i386.deb \
-        -P /tmp \
-    && \
-    dpkg -i /tmp/libssl1.1_1.1.1f-1ubuntu2.16_i386.deb && \
-    wget \
-        http://security.ubuntu.com/ubuntu/pool/main/o/openssl/openssl_1.1.1f-1ubuntu2.16_i386.deb \
-        -P /tmp \
-    && \
-    dpkg -i /tmp/openssl_1.1.1f-1ubuntu2.16_i386.deb && \
-    rm \
-        /tmp/libssl1.1_1.1.1f-1ubuntu2.16_i386.deb \
-        /tmp/openssl_1.1.1f-1ubuntu2.16_i386.deb \
+        openssl \
+        libssl3 \
+        libssl-dev \
     && \
     useradd -m user
 

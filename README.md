@@ -27,7 +27,7 @@
 ## Tools
 
 * [CMake 3.19+](https://cmake.org/)
-* [Conan 1.57+](https://conan.io/) (You can't use conan v2.x, so may need to [download directly from github releases](https://github.com/conan-io/conan/releases) or install it using `pip3 install conan==1.57.0`)
+* [Conan 2.x](https://conan.io/) (Install it using `pip install conan` or `pip3 install conan`)
 
 ## Tools on Windows
 
@@ -58,11 +58,11 @@ cmake --build . --config RelWithDebInfo
 
 ## Building on Mac
 
-If you install conan via brew you must ensure you get the correct version; however, the cmake-conan script will not detect it from the default install location.  You must therefore also alias it elsewhere:
+If you install conan via brew the cmake-conan script will not detect it from the default install location.  You must therefore also alias it elsewhere:
 
 ```bash
-brew install conan@1
-sudo ln -s /usr/local/opt/conan@1/bin/conan /usr/local/bin/conan
+brew install conan
+sudo ln -s /usr/local/opt/conan/bin/conan /usr/local/bin/conan
 cd open.mp
 mkdir build
 cd build

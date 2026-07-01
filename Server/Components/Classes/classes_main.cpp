@@ -153,10 +153,14 @@ private:
 				return false;
 			}
 
-			PlayerState state = peer.getState();
-			if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted))
+			if (!peer.isLeavingSpectatorMode())
 			{
-				return false;
+				PlayerState state = peer.getState();
+
+				if (state == PlayerState_Spawned || (state >= PlayerState_OnFoot && state < PlayerState_Wasted))
+				{
+					return false;
+				}
 			}
 
 			self.inClassRequest = true;
@@ -180,6 +184,11 @@ private:
 					player_data->cls = *used_class;
 					player_data->default_ = false;
 				}
+			}
+			else if (player_data)
+			{
+				player_data->cls = *used_class;
+				player_data->default_ = true;
 			}
 
 			peer.setSkin(used_class->skin, false);

@@ -17,6 +17,7 @@
 #include <Server/Components/Vehicles/vehicles.hpp>
 #include <Server/Components/LegacyConfig/legacyconfig.hpp>
 #include <Server/Components/CustomModels/custommodels.hpp>
+#include <cstdlib>
 #include <cstdarg>
 #include <cxxopts.hpp>
 #include <events.hpp>
@@ -28,6 +29,7 @@
 #include <thread>
 #include <variant>
 #include <utils.hpp>
+#include <openssl/evp.h>
 
 #ifdef OMP_VERSION_HASH
 #define OMP_VERSION_HASH_STR STRINGIFY(OMP_VERSION_HASH)
@@ -123,6 +125,8 @@ static const std::map<String, ConfigStorage> Defaults {
 	{ "network.use_lan_mode", false },
 	{ "network.allow_037_clients", true },
 	{ "network.grace_period", 5000 },
+	{ "network.use_omp_encryption", false },
+	{ "network.minimum_send_bits_per_second", 96000.0f }, // 96 kbps  (~12 KB/s)
 	// rcon
 	{ "rcon.allow_teleport", false },
 	{ "rcon.enable", false },
@@ -316,6 +320,68 @@ private:
 
 	std::map<String, ConfigStorage> defaults;
 
+	String expandEnvironmentVariablesInRawJSON(const String& jsonText) const
+	{
+		String result;
+		result.reserve(jsonText.length());
+
+		size_t i = 0;
+		while (i < jsonText.length())
+		{
+			const char ch = jsonText[i];
+
+			if (ch != '$')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			if (i + 1 < jsonText.length() && jsonText[i + 1] == '$')
+			{
+				result.push_back('$');
+				i += 2;
+				continue;
+			}
+
+			if (i + 1 >= jsonText.length() || jsonText[i + 1] != '{')
+			{
+				result.push_back(ch);
+				++i;
+				continue;
+			}
+
+			const size_t varStart = i + 2;
+			const size_t end = jsonText.find('}', varStart);
+
+			if (end == String::npos)
+			{
+				result.append(jsonText.substr(i));
+				break;
+			}
+
+			const String fullVar = jsonText.substr(varStart, end - varStart);
+			const size_t defaultPos = fullVar.find(":-");
+
+			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
+			const String defaultValue = (defaultPos != String::npos) ? fullVar.substr(defaultPos + 2) : "";
+			const char* envValue = std::getenv(varName.c_str());
+
+			if (envValue && envValue[0] != '\0')
+			{
+				result.append(envValue);
+			}
+			else if (!defaultValue.empty())
+			{
+				result.append(defaultValue);
+			}
+
+			i = end + 1;
+		}
+
+		return result;
+	}
+
 	void processNode(const nlohmann::json::object_t& node, String ns = "")
 	{
 		for (const auto& kv : node)
@@ -374,7 +440,10 @@ public:
 					nlohmann::json props;
 					try
 					{
-						props = nlohmann::json::parse(ifs, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
+						String fileContent((std::istreambuf_iterator<char>(ifs)),
+							std::istreambuf_iterator<char>());
+						String expandedContent = expandEnvironmentVariablesInRawJSON(fileContent);
+						props = nlohmann::json::parse(expandedContent, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
 					}
 					catch (nlohmann::json::exception const& e)
 					{
@@ -404,6 +473,8 @@ public:
 
 						// Fill any values missing in config with defaults.
 						// Fill default value if invalid type is provided.
+						// if the user provided a string but expected type is different
+						// attempt to parse string to the expected type.
 						for (const auto& kv : Defaults)
 						{
 							auto itr = processed.find(kv.first);
@@ -411,7 +482,67 @@ public:
 							{
 								if (itr->second.index() != kv.second.index())
 								{
-									itr->second = kv.second;
+									// check if we can convert from string
+									bool converted = false;
+									if (itr->second.index() == 1) // User value is String
+									{
+										const String& strVal = std::get<String>(itr->second);
+										switch (kv.second.index())
+										{
+										case 0: // Expected int
+										{
+											try
+											{
+												size_t pos = 0;
+												int intVal = std::stoi(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = intVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 2: // Expected float
+										{
+											try
+											{
+												size_t pos = 0;
+												float floatVal = std::stof(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = floatVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 4: // Expected bool
+										{
+											if (strVal == "true" || strVal == "1")
+											{
+												itr->second = true;
+												converted = true;
+											}
+											else if (strVal == "false" || strVal == "0")
+											{
+												itr->second = false;
+												converted = true;
+											}
+											break;
+										}
+										}
+									}
+									if (!converted)
+									{
+										itr->second = kv.second;
+									}
 								}
 								continue;
 							}
@@ -1030,10 +1161,10 @@ private:
 		}
 	}
 
-	IComponent* loadComponent(const ghc::filesystem::path& path)
+	IComponent* loadComponent(const ghc::filesystem::path& path, bool highPriority = false)
 	{
 		printLn("Loading component %s", path.filename().u8string().c_str());
-		auto componentLib = LIBRARY_OPEN(path.u8string().c_str());
+		auto componentLib = highPriority ? LIBRARY_OPEN_GLOBAL(path.u8string().c_str()) : LIBRARY_OPEN(path.u8string().c_str());
 		if (componentLib == nullptr)
 		{
 			printLn("\tFailed to load component: %s.", utils::GetLastErrorAsString().c_str());
@@ -1083,27 +1214,69 @@ private:
 
 		auto componentsCfg = config.getStrings("components");
 		auto excludeCfg = config.getStrings("exclude");
+
+		Impl::DynamicArray<ghc::filesystem::path> highPriorityComponents;
+		Impl::DynamicArray<ghc::filesystem::path> normalComponents;
+
+		const auto shouldLoad = [&](const ghc::filesystem::path& p)
+		{
+			if (excludeCfg && !excludeCfg->empty())
+			{
+				ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
+				rel.replace_extension();
+				// Is this in the "don't load" list?
+				const auto isExcluded = [rel = std::move(rel)](const String& exclude)
+				{
+					return ghc::filesystem::path(exclude) == rel;
+				};
+				if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
+					!= excludeCfg->end())
+				{
+					return false;
+				}
+			}
+			return true;
+		};
+
 		if (!componentsCfg || componentsCfg->empty())
 		{
 			for (auto& de : ghc::filesystem::recursive_directory_iterator(path))
 			{
 				ghc::filesystem::path p = de.path();
+				if (p.filename().string().at(0) == '$')
+				{
+					highPriorityComponents.push_back(p);
+				}
+				else
+				{
+					normalComponents.push_back(p);
+				}
+			}
+
+			for (auto& p : highPriorityComponents)
+			{
 				if (p.extension() == LIBRARY_EXT)
 				{
-					if (excludeCfg && !excludeCfg->empty())
+					if (!shouldLoad(p))
 					{
-						ghc::filesystem::path rel = ghc::filesystem::relative(p, path);
-						rel.replace_extension();
-						// Is this in the "don't load" list?
-						const auto isExcluded = [rel = std::move(rel)](const String& exclude)
-						{
-							return ghc::filesystem::path(exclude) == rel;
-						};
-						if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
-							!= excludeCfg->end())
-						{
-							continue;
-						}
+						continue;
+					}
+
+					IComponent* component = loadComponent(p, true);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+			}
+
+			for (auto& p : normalComponents)
+			{
+				if (p.extension() == LIBRARY_EXT)
+				{
+					if (!shouldLoad(p))
+					{
+						continue;
 					}
 
 					IComponent* component = loadComponent(p);
@@ -1124,27 +1297,28 @@ private:
 					file.replace_extension("");
 				}
 
-				if (excludeCfg && !excludeCfg->empty())
+				if (file.filename().string().at(0) == '$')
 				{
-					ghc::filesystem::path rel = ghc::filesystem::relative(file, path);
-					rel.replace_extension();
-					// Is this in the "don't load" list?
-					const auto isExcluded = [rel = std::move(rel)](const String& exclude)
-					{
-						return ghc::filesystem::path(exclude) == rel;
-					};
-					if (std::find_if(excludeCfg->begin(), excludeCfg->end(), isExcluded)
-						!= excludeCfg->end())
-					{
-						continue;
-					}
+					highPriorityComponents.push_back(file);
+				}
+				else
+				{
+					normalComponents.push_back(file);
+				}
+			}
+
+			for (auto& p : highPriorityComponents)
+			{
+				if (!shouldLoad(p))
+				{
+					continue;
 				}
 
 				// Now load it.
-				file.replace_extension(LIBRARY_EXT);
-				if (ghc::filesystem::exists(file))
+				p.replace_extension(LIBRARY_EXT);
+				if (ghc::filesystem::exists(p))
 				{
-					IComponent* component = loadComponent(file);
+					IComponent* component = loadComponent(p, true);
 					if (component)
 					{
 						addComponent(component);
@@ -1152,7 +1326,31 @@ private:
 				}
 				else
 				{
-					printLn("Loading component %s", file.filename().u8string().c_str());
+					printLn("Loading component %s", p.filename().u8string().c_str());
+					printLn("\tCould not find component");
+				}
+			}
+
+			for (auto& p : normalComponents)
+			{
+				if (!shouldLoad(p))
+				{
+					continue;
+				}
+
+				// Now load it.
+				p.replace_extension(LIBRARY_EXT);
+				if (ghc::filesystem::exists(p))
+				{
+					IComponent* component = loadComponent(p);
+					if (component)
+					{
+						addComponent(component);
+					}
+				}
+				else
+				{
+					printLn("Loading component %s", p.filename().u8string().c_str());
 					printLn("\tCould not find component");
 				}
 			}
@@ -2041,17 +2239,10 @@ public:
 	{
 		String input(String(password) + String(salt));
 
-		SHA256_CTX ctx {};
-		if (!SHA256_Init(&ctx))
-		{
-			return false;
-		}
-		if (!SHA256_Update(&ctx, input.data(), input.length()))
-		{
-			return false;
-		}
 		unsigned char md[SHA256_DIGEST_LENGTH];
-		if (!SHA256_Final(md, &ctx))
+		size_t md_len = 0;
+
+		if (!EVP_Q_digest(NULL, "SHA256", NULL, input.data(), input.length(), md, &md_len))
 		{
 			return false;
 		}
