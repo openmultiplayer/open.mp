@@ -17,6 +17,23 @@
 #include "../Node/node.hpp"
 #include <Server/Components/Vehicles/vehicle_seats.hpp>
 
+namespace
+{
+constexpr int FCNPCMoveMode_Auto = -1;
+constexpr int FCNPCMoveMode_None = 0;
+constexpr int FCNPCMoveMode_MapAndreas = 1;
+constexpr int FCNPCMoveMode_ColAndreas = 2;
+
+StaticArray<WeaponInfo, MAX_WEAPON_ID> DefaultWeaponInfoList = WeaponInfoList;
+
+StaticArray<float, MAX_WEAPON_ID> DefaultWeaponAccuracyList = []
+{
+	StaticArray<float, MAX_WEAPON_ID> list;
+	list.fill(1.0f);
+	return list;
+}();
+}
+
 NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	: footSyncSkipUpdate_(0)
 	, driverSyncSkipUpdate_(0)
@@ -26,6 +43,9 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, keys_(0)
 	, upAndDown_(0)
 	, leftAndRight_(0)
+	, moveMode_(FCNPCMoveMode_Auto)
+	, minHeightPosCall_(0.0f)
+	, lastHeightPosCall_(0.0f)
 	, health_(100.0f)
 	, armour_(0.0f)
 	, animationId_(0)
@@ -103,11 +123,10 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 	, nodeSetAngle_(true)
 	, nodeLastPosition_(Vector3(0.0f, 0.0f, 0.0f))
 {
-	// Fill weapon accuracy with 1.0f, let server devs change it with the desired values
-	weaponAccuracy_.fill(1.0f);
+	weaponAccuracy_ = DefaultWeaponAccuracyList;
 
 	// Custom weapon info
-	customWeaponInfoList_ = WeaponInfoList;
+	customWeaponInfoList_ = DefaultWeaponInfoList;
 
 	// Keep a handle of NPC copmonent instance internally
 	npcComponent_ = component;
@@ -122,6 +141,7 @@ NPC::NPC(NPCComponent* component, IPlayer* playerPtr)
 
 	// Initial entity values
 	Vector3 initialPosition = position_ = { 0.0f, 0.0f, 3.5f };
+	lastHeightPosCall_ = initialPosition.z;
 	GTAQuat initialRotation = rotation_ = { 0.960891485f, 0.0f, 0.0f, 0.276925147f };
 
 	// Initial values for foot sync values
@@ -190,6 +210,29 @@ Vector3 NPC::getPosition() const
 	return position_;
 }
 
+void NPC::setPositionValue(const Vector3& position)
+{
+	position_ = position;
+	processHeightPosChange(position.z);
+}
+
+void NPC::processHeightPosChange(float newZ)
+{
+	if (minHeightPosCall_ <= 0.0f)
+	{
+		return;
+	}
+
+	float oldZ = lastHeightPosCall_;
+	if (fabs(newZ - oldZ) < minHeightPosCall_)
+	{
+		return;
+	}
+
+	lastHeightPosCall_ = newZ;
+	npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCChangeHeightPos, *this, newZ, oldZ);
+}
+
 void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 {
 	// Explicitly remove from vehicle if we are in one
@@ -199,7 +242,7 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 	}
 
 	// Setting position right after removing from vehicle because removeFromVehicle also sets position
-	position_ = pos;
+	setPositionValue(pos);
 
 	if (immediateUpdate)
 	{
@@ -216,7 +259,7 @@ void NPC::setVehiclePosition(const Vector3& position, bool immediateUpdate)
 {
 	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
 	{
-		position_ = position;
+		setPositionValue(position);
 		if (immediateUpdate)
 		{
 			if (vehicleSeat_ == 0) // driver
@@ -278,6 +321,41 @@ void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
 			move(targetPosition_, moveType_);
 		}
 	}
+}
+
+bool NPC::setMoveMode(int mode)
+{
+	// Preserve FCNPC-compatible values, but do not pretend that open.mp has a
+	// real MapAndreas/ColAndreas movement backend switch yet. Values 1/2 are
+	// currently stored as compatibility state only; the external backend
+	// dependency remains unresolved.
+	switch (mode)
+	{
+	case FCNPCMoveMode_Auto:
+	case FCNPCMoveMode_None:
+	case FCNPCMoveMode_MapAndreas:
+	case FCNPCMoveMode_ColAndreas:
+		moveMode_ = mode;
+		return true;
+	}
+
+	return false;
+}
+
+int NPC::getMoveMode() const
+{
+	return moveMode_;
+}
+
+void NPC::setMinHeightPosCall(float height)
+{
+	minHeightPosCall_ = height > 0.0f ? height : 0.0f;
+	lastHeightPosCall_ = position_.z;
+}
+
+float NPC::getMinHeightPosCall() const
+{
+	return minHeightPosCall_;
 }
 
 int NPC::getVirtualWorld() const
@@ -589,6 +667,76 @@ const FlatPtrHashSet<IPlayer>& NPC::streamedForPlayers() const
 	return player_->streamedForPlayers();
 }
 
+bool NPC::showInTabListForPlayer(IPlayer& forPlayer)
+{
+	if (!player_ || forPlayer.getID() == getID())
+	{
+		return false;
+	}
+
+	const bool wasStreamedIn = player_->isStreamedInForPlayer(forPlayer);
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamOutEvent(getID(), forPlayer.getID());
+		player_->streamOutForPlayer(forPlayer);
+	}
+
+	NetCode::RPC::PlayerQuit playerQuitPacket;
+	playerQuitPacket.PlayerID = getID();
+	playerQuitPacket.Reason = PeerDisconnectReason_Quit;
+	PacketHelper::send(playerQuitPacket, forPlayer);
+
+	NetCode::RPC::PlayerJoin playerJoinPacket;
+	playerJoinPacket.PlayerID = getID();
+	playerJoinPacket.Col = player_->getColour();
+	playerJoinPacket.IsNPC = false;
+	playerJoinPacket.Name = player_->getName();
+	PacketHelper::send(playerJoinPacket, forPlayer);
+
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamInEvent(getID(), forPlayer.getID());
+		player_->streamInForPlayer(forPlayer);
+	}
+
+	return true;
+}
+
+bool NPC::hideInTabListForPlayer(IPlayer& forPlayer)
+{
+	if (!player_ || forPlayer.getID() == getID())
+	{
+		return false;
+	}
+
+	const bool wasStreamedIn = player_->isStreamedInForPlayer(forPlayer);
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamOutEvent(getID(), forPlayer.getID());
+		player_->streamOutForPlayer(forPlayer);
+	}
+
+	NetCode::RPC::PlayerQuit playerQuitPacket;
+	playerQuitPacket.PlayerID = getID();
+	playerQuitPacket.Reason = PeerDisconnectReason_Quit;
+	PacketHelper::send(playerQuitPacket, forPlayer);
+
+	NetCode::RPC::PlayerJoin playerJoinPacket;
+	playerJoinPacket.PlayerID = getID();
+	playerJoinPacket.Col = player_->getColour();
+	playerJoinPacket.IsNPC = true;
+	playerJoinPacket.Name = player_->getName();
+	PacketHelper::send(playerJoinPacket, forPlayer);
+
+	if (wasStreamedIn)
+	{
+		npcComponent_->suppressNPCStreamInEvent(getID(), forPlayer.getID());
+		player_->streamInForPlayer(forPlayer);
+	}
+
+	return true;
+}
+
 void NPC::setInterior(unsigned int interior)
 {
 	if (player_)
@@ -614,7 +762,7 @@ unsigned int NPC::getInterior() const
 
 Vector3 NPC::getVelocity() const
 {
-	return player_->getPosition();
+	return velocity_;
 }
 
 void NPC::setVelocity(Vector3 velocity, bool update)
@@ -699,7 +847,6 @@ void NPC::setAmmo(int ammo)
 		ammoInClip_ = ammo_;
 	}
 	updateWeaponState();
-	setAmmoInClip(ammo);
 }
 
 int NPC::getAmmo() const
@@ -930,7 +1077,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 	bool playerIsNPC = false;
 
 	// Pass original hit ID to correctly handle missed or out of range shots!
-	int closestEntityId = getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos);
+	int closestEntityId = ::getClosestEntityInBetween(npcComponent_, bulletData.origin, bulletData.hitPos, std::min(range, targetDistance), betweenCheckFlags, poolID, hitId, closestEntityType, playerObjectOwnerId, hitMapPos);
 
 	// Just invalid anything, but INVALID_PLAYER_ID holds the value we want.
 	if (closestEntityId != INVALID_PLAYER_ID)
@@ -1977,6 +2124,118 @@ IPlayer* NPC::getPlayerMovingTo()
 	return followingPlayer_;
 }
 
+int NPC::getClosestEntityInBetween(const Vector3& point, float range, EntityCheckType betweenCheckFlags, const Vector3& offsetFrom, int& entityType, int& playerObjectOwnerId, Vector3& hitMap)
+{
+	entityType = int(EntityCheckType::None);
+	playerObjectOwnerId = INVALID_PLAYER_ID;
+	hitMap = point;
+
+	if (!npcComponent_)
+	{
+		return INVALID_PLAYER_ID;
+	}
+
+	EntityCheckType resolvedEntityType = EntityCheckType::None;
+	Vector3 hitOrigin = getPosition() + offsetFrom;
+	int closestEntityId = ::getClosestEntityInBetween(npcComponent_, hitOrigin, point, range, betweenCheckFlags, getID(), INVALID_PLAYER_ID, resolvedEntityType, playerObjectOwnerId, hitMap);
+	entityType = int(resolvedEntityType);
+	return closestEntityId;
+}
+
+void NPC::setPlaybackPath(StringView path)
+{
+	playbackPath_ = String(path);
+}
+
+StringView NPC::getPlaybackPath() const
+{
+	return playbackPath_;
+}
+
+void NPC::setWeaponInfo(uint8_t weapon, int reloadTime, int shootTime, int clipSize, float accuracy)
+{
+	if (reloadTime != -1)
+	{
+		setWeaponReloadTime(weapon, reloadTime);
+	}
+	if (shootTime != -1)
+	{
+		setWeaponShootTime(weapon, shootTime);
+	}
+	if (clipSize != -1)
+	{
+		setWeaponClipSize(weapon, clipSize);
+	}
+	setWeaponAccuracy(weapon, accuracy);
+}
+
+bool NPC::getWeaponInfo(uint8_t weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy) const
+{
+	auto data = WeaponSlotData(weapon);
+	if (weapon >= customWeaponInfoList_.size() || data.slot() == INVALID_WEAPON_SLOT)
+	{
+		return false;
+	}
+
+	const WeaponInfo& info = customWeaponInfoList_[weapon];
+	reloadTime = info.reloadTime;
+	shootTime = info.shootTime;
+	clipSize = info.clipSize;
+	accuracy = weaponAccuracy_[weapon];
+	return true;
+}
+
+bool NPC::setWeaponDefaultInfo(int weapon, int reloadTime, int shootTime, int clipSize, float accuracy)
+{
+	if (weapon < 0 || weapon >= MAX_WEAPON_ID)
+	{
+		return false;
+	}
+
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() == INVALID_WEAPON_SLOT)
+	{
+		return false;
+	}
+
+	auto& defaultInfo = DefaultWeaponInfoList[weapon];
+	if (reloadTime != -1)
+	{
+		defaultInfo.reloadTime = reloadTime;
+	}
+	if (shootTime != -1)
+	{
+		defaultInfo.shootTime = shootTime;
+	}
+	if (clipSize != -1)
+	{
+		defaultInfo.clipSize = clipSize;
+	}
+	DefaultWeaponAccuracyList[weapon] = accuracy;
+	return true;
+}
+
+bool NPC::getWeaponDefaultInfo(int weapon, int& reloadTime, int& shootTime, int& clipSize, float& accuracy)
+{
+	if (weapon < 0 || weapon >= MAX_WEAPON_ID)
+	{
+		return false;
+	}
+
+	auto data = WeaponSlotData(weapon);
+	if (data.slot() == INVALID_WEAPON_SLOT)
+	{
+		return false;
+	}
+
+	const auto& defaultInfo = DefaultWeaponInfoList[weapon];
+	reloadTime = defaultInfo.reloadTime;
+	shootTime = defaultInfo.shootTime;
+	clipSize = defaultInfo.clipSize;
+	accuracy = DefaultWeaponAccuracyList[weapon];
+	return true;
+}
+
 void NPC::kill(IPlayer* killer, uint8_t weapon)
 {
 	if (dead_)
@@ -2589,7 +2848,7 @@ void NPC::advance(TimePoint now)
 		{
 			auto direction = toTarget / distanceToTarget;
 			auto travelled = direction * velocityLength * deltaTimeMS;
-			position_ = position + travelled;
+			setPositionValue(position + travelled);
 		}
 	}
 
@@ -2830,15 +3089,23 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 						{
 							if (duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (jackingVehicle_ ? 5800 : 2500))
 							{
-								if (vehicleToEnter_)
+								IVehicle* enteredVehicle = vehicleToEnter_;
+								int enteredSeat = vehicleSeatToEnter_;
+								bool entryCompleted = false;
+								if (enteredVehicle)
 								{
-									putInVehicle(*vehicleToEnter_, vehicleSeatToEnter_);
+									entryCompleted = putInVehicle(*enteredVehicle, enteredSeat);
 								}
 
 								enteringVehicle_ = false;
 								jackingVehicle_ = false;
 								vehicleToEnter_ = nullptr;
 								vehicleSeatToEnter_ = SEAT_NONE;
+
+								if (entryCompleted)
+								{
+									npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCVehicleEntryComplete, *this, *enteredVehicle, enteredSeat);
+								}
 							}
 						}
 
@@ -2973,11 +3240,17 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 					if (exitingVehicle_ && duration_cast<Milliseconds>(now - vehicleEnterExitUpdateTime_).count() > (1500))
 					{
-						removeFromVehicle();
+						IVehicle* exitedVehicle = vehicle_;
+						bool exitCompleted = exitedVehicle && removeFromVehicle();
 						exitingVehicle_ = false;
+						if (exitCompleted)
+						{
+							npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCVehicleExitComplete, *this, *exitedVehicle);
+						}
 					}
 				}
 
+				npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCUpdate, *this);
 				lastUpdate_ = now;
 			}
 		}
