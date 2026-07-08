@@ -123,23 +123,23 @@ IObject* Player::getCameraTargetObject()
 		return nullptr;
 	}
 
-	IObject* object = component->get(cameraTargetObject_);
+	return component->get(cameraTargetObject_);
+}
 
-	if (!object)
+IPlayerObject* PlayerCameraTargetData::getCameraTargetPlayerObject()
+{
+	if (!player_.enableCameraTargeting_)
 	{
-		IPlayerObjectData* data = queryExtension<IPlayerObjectData>(this);
-
-		if (data)
-		{
-			IPlayerObject* player_object = data->get(cameraTargetObject_);
-			if (player_object)
-			{
-				return reinterpret_cast<IObject*>(player_object);
-			}
-		}
+		return nullptr;
 	}
 
-	return object;
+	IPlayerObjectData* data = queryExtension<IPlayerObjectData>(&player_);
+	if (!data)
+	{
+		return nullptr;
+	}
+
+	return data->get(player_.cameraTargetObject_);
 }
 
 IPlayer* Player::getTargetPlayer()

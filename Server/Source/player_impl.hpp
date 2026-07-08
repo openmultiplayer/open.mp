@@ -53,6 +53,31 @@ enum SecondarySyncUpdateType
 	SecondarySyncUpdateType_Trailer = (1 << 2),
 };
 
+struct Player;
+
+class PlayerCameraTargetData final : public IPlayerCameraTargetData
+{
+private:
+	Player& player_;
+
+public:
+	PlayerCameraTargetData(Player& player)
+		: player_(player)
+	{
+	}
+
+	IPlayerObject* getCameraTargetPlayerObject() override;
+
+	void freeExtension() override
+	{
+		delete this;
+	}
+
+	void reset() override
+	{
+	}
+};
+
 struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 {
 	PlayerPool& pool_;
@@ -275,6 +300,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	{
 		weapons_.fill({ 0, 0 });
 		skillLevels_.fill(MAX_SKILL_LEVEL);
+		addExtension(new PlayerCameraTargetData(*this), true);
 	}
 
 	void ban(StringView reason) override;

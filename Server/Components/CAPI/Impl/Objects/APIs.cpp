@@ -821,10 +821,10 @@ OMP_CAPI(Player_GetSurfingPlayerObject, objectPtr(objectPtr player))
 OMP_CAPI(Player_GetCameraTargetPlayerObject, objectPtr(objectPtr player))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, nullptr);
-	IObject* object = player_->getCameraTargetObject();
-	if (object)
+	IPlayerCameraTargetData* data = queryExtension<IPlayerCameraTargetData>(player_);
+	if (!data)
 	{
-		return object;
+		return nullptr;
 	}
-	return nullptr;
+	return data->getCameraTargetPlayerObject();
 }
