@@ -15,6 +15,7 @@
 
 #include "format.hpp"
 #include "timers.hpp"
+#include "../Timers/timer.hpp"
 
 extern "C"
 {
@@ -235,10 +236,101 @@ inline cell AMX_NATIVE_CALL pawn_GetTimerInterval(AMX* amx, cell const* params)
 	return timer->interval().count();
 }
 
+inline cell AMX_NATIVE_CALL pawn_SetTimerInterval(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("SetTimerInterval", params, 2);
+	ITimer* timer = PawnTimerImpl::Get()->getTimer(params[1]);
+	if (timer == nullptr || !timer->running())
+	{
+		return false;
+	}
+
+	int interval = static_cast<int>(params[2]);
+
+	if(interval < 1)
+	{
+		return false;
+	}
+
+	timer->setInterval(static_cast<Milliseconds>(interval));
+	return true;
+}
+
+inline cell AMX_NATIVE_CALL pawn_KillAllTimers(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("KillAllTimers", params, 0);
+	ITimersComponent* timers = PawnManager::Get()->timers;
+	for (int timerid = 0; timerid < timers->count(); timerid++)
+    {
+	    ITimer* timer = PawnTimerImpl::Get()->getTimer(timerid);
+		if (timer == nullptr || !timer->running())
+	    {
+		    return false;
+	    }
+	    timer->kill();
+    }
+	return true;
+}
+
+inline cell AMX_NATIVE_CALL pawn_IsTimerRunning(AMX* amx, cell const* params)
+{
+	GET_TIMER(timer, "IsTimerRunning", false)
+	return timer->running();
+}
+
 inline cell AMX_NATIVE_CALL pawn_IsRepeatingTimer(AMX* amx, cell const* params)
 {
 	GET_TIMER(timer, "IsRepeatingTimer", false)
 	return timer->calls() == 0;
+}
+
+inline cell AMX_NATIVE_CALL pawn_GetRunningTimersCount(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("GetRunningTimersCount", params, 0);
+	return PawnManager::Get()->timers->count();
+}
+
+inline cell AMX_NATIVE_CALL pawn_IsTimerPaused(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("IsTimerPaused", params, 1);
+	ITimer* timer = PawnTimerImpl::Get()->getTimer(params[1]);
+	if (timer == nullptr || !timer->running())
+	{
+		return false;
+	}
+
+	if (!timer->paused())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+inline cell AMX_NATIVE_CALL pawn_PauseTimer(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("PauseTimer", params, 1);
+	ITimer* timer = PawnTimerImpl::Get()->getTimer(params[1]);
+	if (timer == nullptr || !timer->running())
+	{
+		return false;
+	}
+
+	timer->togglePause(true);
+	return true;
+}
+
+inline cell AMX_NATIVE_CALL pawn_ContinueTimer(AMX* amx, cell const* params)
+{
+	AMX_MIN_PARAMETERS("ContinueTimer", params, 1);
+	ITimer* timer = PawnTimerImpl::Get()->getTimer(params[1]);
+	if (timer == nullptr || !timer->running())
+	{
+		return false;
+	}
+
+	timer->togglePause(false);
+	return true;
 }
 
 inline cell AMX_NATIVE_CALL pawn_SetModeRestartTime(AMX* amx, cell const* params)
