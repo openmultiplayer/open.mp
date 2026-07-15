@@ -580,7 +580,7 @@ void AddOctal(U** buf_p, size_t& maxlen, unsigned int val, int width, int flags)
 	*buf_p = buf;
 }
 
-//#define ATCPRINTF_ADVANCE(fmt, ispacked) atcadvance(fmt, ispacked)
+// #define ATCPRINTF_ADVANCE(fmt, ispacked) atcadvance(fmt, ispacked)
 
 template <typename S>
 static inline unsigned char atcadvance(unsigned char const** fmt, bool ispacked)

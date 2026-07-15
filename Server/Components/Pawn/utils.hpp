@@ -247,7 +247,7 @@ inline cell AMX_NATIVE_CALL pawn_SetTimerInterval(AMX* amx, cell const* params)
 
 	int interval = static_cast<int>(params[2]);
 
-	if(interval < 1)
+	if (interval < 1)
 	{
 		return false;
 	}
@@ -261,14 +261,14 @@ inline cell AMX_NATIVE_CALL pawn_KillAllTimers(AMX* amx, cell const* params)
 	AMX_MIN_PARAMETERS("KillAllTimers", params, 0);
 	ITimersComponent* timers = PawnManager::Get()->timers;
 	for (int timerid = 0; timerid < timers->count(); timerid++)
-    {
-	    ITimer* timer = PawnTimerImpl::Get()->getTimer(timerid);
+	{
+		ITimer* timer = PawnTimerImpl::Get()->getTimer(timerid);
 		if (timer == nullptr || !timer->running())
-	    {
-		    return false;
-	    }
-	    timer->kill();
-    }
+		{
+			return false;
+		}
+		timer->kill();
+	}
 	return true;
 }
 

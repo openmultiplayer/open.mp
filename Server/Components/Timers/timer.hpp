@@ -65,7 +65,7 @@ public:
 		return running_;
 	}
 
-    bool paused() const override
+	bool paused() const override
 	{
 		return paused_;
 	}
