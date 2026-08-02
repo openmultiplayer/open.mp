@@ -20,239 +20,239 @@ using namespace Impl;
 
 namespace
 {
-	template <typename Type, typename Interface, typename RefCountType = uint8_t>
-	class RuntimeMarkedPoolStorage final : public NoCopy
+template <typename Type, typename Interface, typename RefCountType = uint8_t>
+class RuntimeMarkedPoolStorage final : public NoCopy
+{
+public:
+	using Iterator = MarkedPoolIterator<Interface, RuntimeMarkedPoolStorage<Type, Interface, RefCountType>>;
+	static constexpr size_t Lower = 0;
+
+	explicit RuntimeMarkedPoolStorage(size_t capacity)
 	{
-	public:
-		using Iterator = MarkedPoolIterator<Interface, RuntimeMarkedPoolStorage<Type, Interface, RefCountType>>;
-		static constexpr size_t Lower = 0;
+		resize(capacity);
+	}
 
-		explicit RuntimeMarkedPoolStorage(size_t capacity)
+	~RuntimeMarkedPoolStorage()
+	{
+		clear();
+	}
+
+	void resize(size_t capacity)
+	{
+		assert(entries_.empty());
+		pool_.assign(capacity, nullptr);
+		refs_.assign(capacity, RefCountType(0));
+		deleted_.assign(capacity, false);
+		lowestFreeIndex_ = Lower;
+	}
+
+	size_t upper() const
+	{
+		return pool_.size();
+	}
+
+	Pair<size_t, size_t> bounds() const
+	{
+		return std::make_pair(Lower, upper());
+	}
+
+	template <class... Args>
+	Type* emplace(Args&&... args)
+	{
+		const int freeIdx = findFreeIndex();
+		if (freeIdx < 0)
 		{
-			resize(capacity);
+			return nullptr;
 		}
 
-		~RuntimeMarkedPoolStorage()
+		const int id = claimHint(freeIdx, std::forward<Args>(args)...);
+		return id < 0 ? nullptr : get(id);
+	}
+
+	Type* get(int index)
+	{
+		return valid(index) ? pool_[static_cast<size_t>(index)] : nullptr;
+	}
+
+	const Type* get(int index) const
+	{
+		return valid(index) ? pool_[static_cast<size_t>(index)] : nullptr;
+	}
+
+	void release(int index, bool force)
+	{
+		(void)force;
+		if (!inBounds(index))
 		{
-			clear();
+			return;
 		}
 
-		void resize(size_t capacity)
+		if (refs_[static_cast<size_t>(index)] > 0)
 		{
-			assert(entries_.empty());
-			pool_.assign(capacity, nullptr);
-			refs_.assign(capacity, RefCountType(0));
-			deleted_.assign(capacity, false);
-			lowestFreeIndex_ = Lower;
+			deleted_[static_cast<size_t>(index)] = true;
 		}
-
-		size_t upper() const
+		else
 		{
-			return pool_.size();
+			deleted_[static_cast<size_t>(index)] = false;
+			remove(index);
 		}
+	}
 
-		Pair<size_t, size_t> bounds() const
+	void lock(int index)
+	{
+		if (!inBounds(index))
 		{
-			return std::make_pair(Lower, upper());
+			return;
 		}
+		++refs_[static_cast<size_t>(index)];
+		assert(refs_[static_cast<size_t>(index)] < std::numeric_limits<RefCountType>::max());
+	}
 
-		template <class... Args>
-		Type* emplace(Args&&... args)
+	bool unlock(int index)
+	{
+		if (!inBounds(index) || refs_[static_cast<size_t>(index)] == 0)
 		{
-			const int freeIdx = findFreeIndex();
-			if (freeIdx < 0)
-			{
-				return nullptr;
-			}
-
-			const int id = claimHint(freeIdx, std::forward<Args>(args)...);
-			return id < 0 ? nullptr : get(id);
-		}
-
-		Type* get(int index)
-		{
-			return valid(index) ? pool_[static_cast<size_t>(index)] : nullptr;
-		}
-
-		const Type* get(int index) const
-		{
-			return valid(index) ? pool_[static_cast<size_t>(index)] : nullptr;
-		}
-
-		void release(int index, bool force)
-		{
-			(void)force;
-			if (!inBounds(index))
-			{
-				return;
-			}
-
-			if (refs_[static_cast<size_t>(index)] > 0)
-			{
-				deleted_[static_cast<size_t>(index)] = true;
-			}
-			else
-			{
-				deleted_[static_cast<size_t>(index)] = false;
-				remove(index);
-			}
-		}
-
-		void lock(int index)
-		{
-			if (!inBounds(index))
-			{
-				return;
-			}
-			++refs_[static_cast<size_t>(index)];
-			assert(refs_[static_cast<size_t>(index)] < std::numeric_limits<RefCountType>::max());
-		}
-
-		bool unlock(int index)
-		{
-			if (!inBounds(index) || refs_[static_cast<size_t>(index)] == 0)
-			{
-				return false;
-			}
-
-			const size_t internalIndex = static_cast<size_t>(index);
-			if (--refs_[internalIndex] == 0 && deleted_[internalIndex])
-			{
-				remove(index);
-				return true;
-			}
 			return false;
 		}
 
-		Iterator begin()
+		const size_t internalIndex = static_cast<size_t>(index);
+		if (--refs_[internalIndex] == 0 && deleted_[internalIndex])
 		{
-			return Iterator(*this, entries_, entries_.begin());
+			remove(index);
+			return true;
 		}
+		return false;
+	}
 
-		Iterator end()
+	Iterator begin()
+	{
+		return Iterator(*this, entries_, entries_.begin());
+	}
+
+	Iterator end()
+	{
+		return Iterator(*this, entries_, entries_.end());
+	}
+
+	void clear()
+	{
+		for (Interface* const entry : entries_)
 		{
-			return Iterator(*this, entries_, entries_.end());
+			eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *entry);
+			delete static_cast<Type*>(entry);
 		}
+		entries_.clear();
+		std::fill(pool_.begin(), pool_.end(), nullptr);
+		std::fill(refs_.begin(), refs_.end(), RefCountType(0));
+		std::fill(deleted_.begin(), deleted_.end(), false);
+		lowestFreeIndex_ = Lower;
+	}
 
-		void clear()
+	const FlatPtrHashSet<Interface>& _entries() const
+	{
+		return entries_;
+	}
+
+	IEventDispatcher<PoolEventHandler<Interface>>& getEventDispatcher()
+	{
+		return eventDispatcher_;
+	}
+
+private:
+	bool inBounds(int index) const
+	{
+		return index >= static_cast<int>(Lower) && static_cast<size_t>(index) < pool_.size();
+	}
+
+	bool valid(int index) const
+	{
+		return inBounds(index) && pool_[static_cast<size_t>(index)] != nullptr;
+	}
+
+	int findFreeIndex() const
+	{
+		for (size_t index = static_cast<size_t>(lowestFreeIndex_); index < pool_.size(); ++index)
 		{
-			for (Interface* const entry : entries_)
+			if (pool_[index] == nullptr)
 			{
-				eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *entry);
-				delete static_cast<Type*>(entry);
+				return static_cast<int>(index);
 			}
-			entries_.clear();
-			std::fill(pool_.begin(), pool_.end(), nullptr);
-			std::fill(refs_.begin(), refs_.end(), RefCountType(0));
-			std::fill(deleted_.begin(), deleted_.end(), false);
-			lowestFreeIndex_ = Lower;
 		}
+		return -1;
+	}
 
-		const FlatPtrHashSet<Interface>& _entries() const
+	template <class... Args>
+	int claim(Args&&... args)
+	{
+		const int freeIdx = findFreeIndex();
+		if (freeIdx < 0)
 		{
-			return entries_;
-		}
-
-		IEventDispatcher<PoolEventHandler<Interface>>& getEventDispatcher()
-		{
-			return eventDispatcher_;
-		}
-
-	private:
-		bool inBounds(int index) const
-		{
-			return index >= static_cast<int>(Lower) && static_cast<size_t>(index) < pool_.size();
-		}
-
-		bool valid(int index) const
-		{
-			return inBounds(index) && pool_[static_cast<size_t>(index)] != nullptr;
-		}
-
-		int findFreeIndex() const
-		{
-			for (size_t index = static_cast<size_t>(lowestFreeIndex_); index < pool_.size(); ++index)
-			{
-				if (pool_[index] == nullptr)
-				{
-					return static_cast<int>(index);
-				}
-			}
 			return -1;
 		}
 
-		template <class... Args>
-		int claim(Args&&... args)
+		if (freeIdx == lowestFreeIndex_)
 		{
-			const int freeIdx = findFreeIndex();
-			if (freeIdx < 0)
-			{
-				return -1;
-			}
+			++lowestFreeIndex_;
+		}
+		claimAt(freeIdx, std::forward<Args>(args)...);
+		return freeIdx;
+	}
 
-			if (freeIdx == lowestFreeIndex_)
+	template <class... Args>
+	int claimHint(int hint, Args&&... args)
+	{
+		if (inBounds(hint) && !valid(hint))
+		{
+			if (hint == lowestFreeIndex_)
 			{
 				++lowestFreeIndex_;
 			}
-			claimAt(freeIdx, std::forward<Args>(args)...);
-			return freeIdx;
+			claimAt(hint, std::forward<Args>(args)...);
+			return hint;
 		}
+		return claim(std::forward<Args>(args)...);
+	}
 
-		template <class... Args>
-		int claimHint(int hint, Args&&... args)
+	template <class... Args>
+	void claimAt(int index, Args&&... args)
+	{
+		const size_t internalIndex = static_cast<size_t>(index);
+		pool_[internalIndex] = new Type(std::forward<Args>(args)...);
+		entries_.insert(pool_[internalIndex]);
+		if constexpr (std::is_base_of<PoolIDProvider, Type>::value)
 		{
-			if (inBounds(hint) && !valid(hint))
-			{
-				if (hint == lowestFreeIndex_)
-				{
-					++lowestFreeIndex_;
-				}
-				claimAt(hint, std::forward<Args>(args)...);
-				return hint;
-			}
-			return claim(std::forward<Args>(args)...);
+			pool_[internalIndex]->poolID = index;
 		}
+		eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryCreated, *pool_[internalIndex]);
+	}
 
-		template <class... Args>
-		void claimAt(int index, Args&&... args)
+	void remove(int index)
+	{
+		if (!valid(index))
 		{
-			const size_t internalIndex = static_cast<size_t>(index);
-			pool_[internalIndex] = new Type(std::forward<Args>(args)...);
-			entries_.insert(pool_[internalIndex]);
-			if constexpr (std::is_base_of<PoolIDProvider, Type>::value)
-			{
-				pool_[internalIndex]->poolID = index;
-			}
-			eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryCreated, *pool_[internalIndex]);
+			return;
 		}
 
-		void remove(int index)
+		const size_t internalIndex = static_cast<size_t>(index);
+		if (index < lowestFreeIndex_)
 		{
-			if (!valid(index))
-			{
-				return;
-			}
-
-			const size_t internalIndex = static_cast<size_t>(index);
-			if (index < lowestFreeIndex_)
-			{
-				lowestFreeIndex_ = index;
-			}
-			Type* entry = pool_[internalIndex];
-			entries_.erase(entry);
-			eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *entry);
-			delete entry;
-			pool_[internalIndex] = nullptr;
-			deleted_[internalIndex] = false;
+			lowestFreeIndex_ = index;
 		}
+		Type* entry = pool_[internalIndex];
+		entries_.erase(entry);
+		eventDispatcher_.dispatch(&PoolEventHandler<Interface>::onPoolEntryDestroyed, *entry);
+		delete entry;
+		pool_[internalIndex] = nullptr;
+		deleted_[internalIndex] = false;
+	}
 
-		std::vector<Type*> pool_;
-		std::vector<RefCountType> refs_;
-		std::vector<bool> deleted_;
-		FlatPtrHashSet<Interface> entries_;
-		int lowestFreeIndex_ = Lower;
-		DefaultEventDispatcher<PoolEventHandler<Interface>> eventDispatcher_;
-	};
+	std::vector<Type*> pool_;
+	std::vector<RefCountType> refs_;
+	std::vector<bool> deleted_;
+	FlatPtrHashSet<Interface> entries_;
+	int lowestFreeIndex_ = Lower;
+	DefaultEventDispatcher<PoolEventHandler<Interface>> eventDispatcher_;
+};
 }
 
 class PlayerTextDrawData final : public IPlayerTextDrawData
