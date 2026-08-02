@@ -35,13 +35,15 @@ private:
 	Vector3 previewRotation = Vector3(0.f);
 	Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
 	float previewZoom = 1.f;
+	int globalTextDrawPoolSize;
 
 public:
-	TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+	TextDrawBase(int globalTextDrawPoolSize, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
 		: pos(pos)
 		, text(text)
 		, style(style)
 		, previewModel(previewModel)
+		, globalTextDrawPoolSize(globalTextDrawPoolSize)
 	{
 		trimText();
 	}
@@ -260,6 +262,7 @@ protected:
 	{
 		NetCode::RPC::PlayerShowTextDraw playerShowTextDrawRPC;
 		playerShowTextDrawRPC.PlayerTextDraw = isPlayerTextDraw;
+		playerShowTextDrawRPC.GlobalTextDrawPoolSize = globalTextDrawPoolSize;
 		playerShowTextDrawRPC.UseBox = box;
 		switch (alignment)
 		{
@@ -301,6 +304,7 @@ protected:
 	{
 		NetCode::RPC::PlayerHideTextDraw playerHideTextDrawRPC;
 		playerHideTextDrawRPC.PlayerTextDraw = isPlayerTextDraw;
+		playerHideTextDrawRPC.GlobalTextDrawPoolSize = globalTextDrawPoolSize;
 		playerHideTextDrawRPC.TextDrawID = poolID;
 		PacketHelper::send(playerHideTextDrawRPC, player);
 	}
@@ -309,6 +313,7 @@ protected:
 	{
 		NetCode::RPC::PlayerTextDrawSetString playerTextDrawSetStringRPC;
 		playerTextDrawSetStringRPC.PlayerTextDraw = isPlayerTextDraw;
+		playerTextDrawSetStringRPC.GlobalTextDrawPoolSize = globalTextDrawPoolSize;
 		playerTextDrawSetStringRPC.TextDrawID = poolID;
 		playerTextDrawSetStringRPC.Text = txt;
 		PacketHelper::send(playerTextDrawSetStringRPC, player);
@@ -338,9 +343,12 @@ class TextDraw final : public TextDrawBase<ITextDraw>
 private:
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> shownFor_;
 
-	using TextDrawBase<ITextDraw>::TextDrawBase;
-
 public:
+	TextDraw(int globalTextDrawPoolSize, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+		: TextDrawBase<ITextDraw>(globalTextDrawPoolSize, pos, text, style, previewModel)
+	{
+	}
+
 	void removeFor(int pid, IPlayer& player)
 	{
 		if (shownFor_.valid(pid))
@@ -408,8 +416,8 @@ private:
 	bool shown = false;
 
 public:
-	PlayerTextDraw(IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
-		: TextDrawBase(pos, text, style, previewModel)
+	PlayerTextDraw(int globalTextDrawPoolSize, IPlayer& player, Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
+		: TextDrawBase<IPlayerTextDraw>(globalTextDrawPoolSize, pos, text, style, previewModel)
 		, player(player)
 	{
 	}
