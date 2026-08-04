@@ -452,7 +452,7 @@ public:
 		const int globalLimit = configuredGlobalLimit ? *configuredGlobalLimit : GLOBAL_TEXTDRAW_POOL_SIZE;
 		const int playerLimit = configuredPlayerLimit ? *configuredPlayerLimit : PLAYER_TEXTDRAW_POOL_SIZE;
 		const long long totalLimit = static_cast<long long>(globalLimit) + static_cast<long long>(playerLimit);
-		if (globalLimit < 1 || playerLimit < 1 || totalLimit > INVALID_TEXTDRAW)
+		if (globalLimit < 0 || playerLimit < 0 || totalLimit > INVALID_TEXTDRAW)
 		{
 			core->logLn(LogLevel::Warning,
 				"Textdraw limits exceed the maximum allowed value, using defaults.");
