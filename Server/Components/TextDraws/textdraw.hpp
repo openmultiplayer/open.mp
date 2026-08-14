@@ -8,6 +8,7 @@
 
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Vehicles/vehicle_colours.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
 
@@ -43,6 +44,13 @@ public:
 		, style(style)
 		, previewModel(previewModel)
 	{
+		if (previewModel >= 400 && previewModel <= 611)
+		{
+			int colour1;
+			int colour2;
+			Impl::getRandomVehicleColour(previewModel, colour1, colour2);
+			previewVehicleColours = std::make_pair(colour1, colour2);
+		}
 		trimText();
 	}
 
@@ -213,6 +221,13 @@ public:
 	T& setPreviewModel(int model) override
 	{
 		previewModel = model;
+		if (model >= 400 && model <= 611)
+		{
+			int colour1;
+			int colour2;
+			Impl::getRandomVehicleColour(model, colour1, colour2);
+			previewVehicleColours = std::make_pair(colour1, colour2);
+		}
 		return *this;
 	}
 
