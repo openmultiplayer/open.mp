@@ -82,7 +82,7 @@ public:
 		{
 			return static_cast<INetworkQueryExtension*>(this);
 		}
-		return nullptr;
+		return IExtensible::getExtension(id);
 	}
 
 	ENetworkType getNetworkType() const override
