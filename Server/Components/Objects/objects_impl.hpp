@@ -738,6 +738,11 @@ public:
 
 	const ObjectAttachmentSlotData& getAttachedObject(int index) const override
 	{
+		if (index < 0 || index >= MAX_ATTACHED_OBJECT_SLOTS)
+		{
+			static const ObjectAttachmentSlotData invalidData {};
+			return invalidData;
+		}
 		return slots_[index];
 	}
 
