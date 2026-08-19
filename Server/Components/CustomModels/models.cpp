@@ -146,9 +146,16 @@ public:
 						return httplib::Server::HandlerResponse::Handled;
 					}
 				}
-				else if (req.sockaddr.ss_family == AF_INET6)
+				else
 				{
-					// TODO: Add IPV6 support.
+					// The allowlist only holds the IPv4 addresses of connected players
+					// (see allowIPAddress), so a request from any other address family
+					// (IPv6 included) can never be on it. Until IPv6 allowlisting is
+					// implemented we deny those requests instead of letting them through
+					// unchecked, otherwise the player-IP restriction is trivially bypassed
+					// by downloading the models over IPv6.
+					res.status = 401;
+					return httplib::Server::HandlerResponse::Handled;
 				}
 
 				return httplib::Server::HandlerResponse::Unhandled;
