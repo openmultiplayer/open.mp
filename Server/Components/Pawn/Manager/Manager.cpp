@@ -611,6 +611,7 @@ bool PawnManager::Load(std::string const& name, bool isEntryScript, bool restart
 	if (!ptr || !ptr->IsLoaded())
 	{
 		// core->logLn(LogLevel::Error, "Unable to load script %s\n\n", name.c_str());
+		delete ptr;
 		return false;
 	}
 	ptr->name_ = normal_script_name;
