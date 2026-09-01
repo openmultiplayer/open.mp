@@ -10,6 +10,7 @@
 
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/Actors/actors.hpp>
+#include <Server/Components/NPCs/npcs.hpp>
 #include <Server/Components/Classes/classes.hpp>
 #include <Server/Components/Objects/objects.hpp>
 #include <Server/Components/Vehicles/vehicles.hpp>
@@ -1604,6 +1605,8 @@ removeWeapon_has_weapon:
 	IObject* getCameraTargetObject() override;
 
 	IActor* getCameraTargetActor() override;
+
+	INPC* getCameraTargetNPC() override;
 
 	IPlayer* getTargetPlayer() override;
 
