@@ -25,7 +25,28 @@
 && target_build_arch=x86 \
 || target_build_arch="$TARGET_BUILD_ARCH"
 
+case "$target_build_arch" in
+    armv8*)
+        container_platform="linux/arm64"
+        ;;
+
+    arm*) # Unknown "arm" are marked as 32-bit platforms
+        container_platform="linux/arm"
+        ;;
+
+    x86|x86_64) # Ubuntu images don't have a i386 tag, must run the container with a amd64 tag, let's just not support i386 builders
+        container_platform="linux/amd64"
+        ;;
+
+    *)
+        echo "Unsupported container platform: $target_build_arch"
+        exit 1
+        ;;
+esac
+
 docker build \
+    --platform "$container_platform" \
+    --build-arg "TARGET_CONTAINER_BUILD_ARCH=$target_build_arch" \
     -t open.mp/build:ubuntu-${ubuntu_version} \
     build_ubuntu-${ubuntu_version}/ \
 || exit 1
@@ -41,6 +62,7 @@ done
 docker run \
     --rm \
     -t \
+    --platform "$container_platform" \
     -w /code \
     -v $PWD/..:/code \
     -v $PWD/build:/code/build \
