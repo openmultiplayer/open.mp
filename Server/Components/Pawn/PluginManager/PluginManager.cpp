@@ -104,7 +104,9 @@ void PawnPluginManager::Spawn(std::string const& name)
 	// otherwise, don't, as they may have supplied a full abs/rel path.
 	// std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
 
-	std::string canon;
+	core->printLn("Loading plugin: %s", name.c_str());
+
+	std::string pluginFile = basePath_ + pluginPath_ + name;
 #ifndef WIN32
 	size_t pos = name.rfind(".so");
 	// You would think this could be done in one comparison, but the path may
@@ -112,15 +114,20 @@ void PawnPluginManager::Spawn(std::string const& name)
 	if (pos == std::string::npos || pos + 3 != name.length())
 	{
 		// Append the extension.
-		utils::Canonicalise(basePath_ + pluginPath_ + name + ".so", canon);
+		pluginFile += ".so";
 	}
-	else
 #endif // WIN32
-	{
-		utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
-	}
 
-	core->printLn("Loading plugin: %s", name.c_str());
+	// `Canonicalise` fails when the file is missing (on Linux it uses `realpath`,
+	// which requires the file to exist).  Bail out before handing an unresolved
+	// path to the loader, which would otherwise `dlopen("")` and match a symbol
+	// from the main program.
+	std::string canon;
+	if (!utils::Canonicalise(pluginFile, canon))
+	{
+		core->printLn("Could not load plugin:\nFile not found: %s", pluginFile.c_str());
+		return;
+	}
 
 	std::unique_ptr<PawnPlugin> ptr = std::make_unique<PawnPlugin>(canon, core);
 

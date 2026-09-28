@@ -834,6 +834,9 @@ inline bool Canonicalise(std::string path, std::string& result)
 	{
 		path.replace(pos, 1, 1, '/');
 	}
+	// `realpath` only assigns `result` on success, so clear it first to keep the
+	// contract that a `false` return means `result` holds nothing.
+	result.clear();
 	char* canon = realpath(path.c_str(), nullptr);
 	if (canon)
 	{
