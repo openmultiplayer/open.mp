@@ -105,6 +105,7 @@ void PawnPluginManager::Spawn(std::string const& name)
 	// std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
 
 	std::string canon;
+	bool found = false;
 #ifndef WIN32
 	size_t pos = name.rfind(".so");
 	// You would think this could be done in one comparison, but the path may
@@ -112,15 +113,25 @@ void PawnPluginManager::Spawn(std::string const& name)
 	if (pos == std::string::npos || pos + 3 != name.length())
 	{
 		// Append the extension.
-		utils::Canonicalise(basePath_ + pluginPath_ + name + ".so", canon);
+		found = utils::Canonicalise(basePath_ + pluginPath_ + name + ".so", canon);
 	}
 	else
 #endif // WIN32
 	{
-		utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
+		found = utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
 	}
 
 	core->printLn("Loading plugin: %s", name.c_str());
+
+	// On Linux `Canonicalise` uses `realpath`, which fails if the file doesn't
+	// exist.  Don't pass the empty result on to the loader - `dlopen("")`
+	// returns a handle to the server itself and the plugin then gets
+	// misreported as an open.mp component.
+	if (!found)
+	{
+		core->printLn("Unable to load plugin; file not found: %s", name.c_str());
+		return;
+	}
 
 	std::unique_ptr<PawnPlugin> ptr = std::make_unique<PawnPlugin>(canon, core);
 
