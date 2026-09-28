@@ -21,6 +21,12 @@
 #include <sdk.hpp>
 #include <thread>
 
+#ifndef WIN32
+#include <cerrno>
+#include <poll.h>
+#include <unistd.h>
+#endif
+
 using namespace Impl;
 
 class PlayerConsoleData final : public IPlayerConsoleData
@@ -234,6 +240,73 @@ public:
 		}
 	}
 
+#ifndef WIN32
+	static void ThreadProc(ThreadProcData* threadData)
+	{
+		// Read stdin with a blocking poll()+read() pair instead of
+		// std::getline(std::wcin). Some edge-case plugins/components can flip fd 0
+		// into non-blocking mode, which would make the wide-stream getline() fail
+		// with EAGAIN and permanently kill this thread. poll() also ignores
+		// O_NONBLOCK, and being a cancellation point it keeps the destructor's
+		// immediate pthread_cancel() working.
+		char buffer[1024];
+		String pending;
+
+		while (true)
+		{
+			pollfd fd { STDIN_FILENO, POLLIN, 0 };
+			if (poll(&fd, 1, -1) < 0)
+			{
+				if (errno == EINTR)
+				{
+					continue;
+				}
+				threadData->isRunning = false;
+				return;
+			}
+
+			const ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer));
+			if (bytesRead < 0)
+			{
+				if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
+				{
+					continue;
+				}
+				threadData->isRunning = false;
+				return;
+			}
+			if (bytesRead == 0)
+			{
+				// EOF, handled the same way as the old getline() failure.
+				threadData->isRunning = false;
+				return;
+			}
+
+			for (ssize_t i = 0; i < bytesRead; ++i)
+			{
+				const char c = buffer[i];
+				if (c != '\n' && c != '\r')
+				{
+					pending.push_back(c);
+					continue;
+				}
+
+				// Normalise CRLF (and a lone CR from a raw-mode terminal) to one line break.
+				if (c == '\r' && i + 1 < bytesRead && buffer[i + 1] == '\n')
+				{
+					++i;
+				}
+				if (!pending.empty())
+				{
+					std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
+					threadData->component->cmd = std::move(pending);
+					threadData->component->newCmd = true;
+					pending.clear();
+				}
+			}
+		}
+	}
+#else
 	static void ThreadProc(ThreadProcData* threadData)
 	{
 		std::wstring line;
@@ -255,6 +328,7 @@ public:
 			}
 		}
 	}
+#endif
 
 	~ConsoleComponent()
 	{
