@@ -2151,7 +2151,10 @@ public:
 
 		for (IPlayer* player : players.entries())
 		{
-			static_cast<Player*>(player)->time_ = time;
+			Player* impl = static_cast<Player*>(player);
+			// Override the hour only, keeping minutes, like SA:MP.
+			// https://github.com/openmultiplayer/open.mp/issues/631
+			impl->time_ = time + (impl->time_ % Hours(1));
 		}
 
 		updateNetworks();
