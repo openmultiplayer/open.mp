@@ -500,6 +500,12 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 		front = (pos - position) / distance;
 		auto rotation = getRotation().ToEuler();
 		rotation.z = getAngleOfLine(front.x, front.y);
+
+		if (moveType_ == NPCMoveType_Drive)
+		{
+			// GTAQuat negates Euler angles internally, matching the negative slope pitch.
+			rotation.x = glm::degrees(atan2(front.z, glm::length(glm::vec2(front))));
+		}
 		rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 		// Calculate velocity to use on tick
