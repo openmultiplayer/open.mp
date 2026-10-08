@@ -503,19 +503,10 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 
 		if (moveType_ == NPCMoveType_Drive)
 		{
-			rotation.x = 0.0f; // The slope pitch is recalculated below, drop whatever a previous move left here
-			rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
-
-			// Tilt the vehicle to match the slope towards the target
-			const float pitch = -atan2(front.z, glm::length(glm::vec2(front)));
-			const float yaw = glm::roll(rotation_.q); // glm is Y up, so its roll() is the rotation around our Z axis
-			rotation_.q = glm::angleAxis(pitch, Vector3(1.0f, 0.0f, 0.0f)) * glm::angleAxis(yaw, Vector3(0.0f, 0.0f, 1.0f));
+			// GTAQuat negates Euler angles internally, matching the negative slope pitch.
+			rotation.x = glm::degrees(atan2(front.z, glm::length(glm::vec2(front))));
 		}
-		else
-		{
-			rotation.x = 0.0f; // A previous drive move may have left a pitch here, it would make the ped lean
-			rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
-		}
+		rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 		// Calculate velocity to use on tick
 		velocity_ = front * (moveSpeed_ / 100.0f);
