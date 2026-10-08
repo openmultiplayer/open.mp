@@ -1141,7 +1141,7 @@ SCRIPT_API(NPC_GetPosMovingTo, bool(INPC& npc, Vector3& position))
 SCRIPT_API(NPC_SetAngleToPos, bool(INPC& npc, Vector3 position))
 {
 	auto vec = position - npc.getPosition();
-	auto angle = getAngleOfLine(vec.x, vec.z);
+	auto angle = getAngleOfLine(vec.x, vec.y);
 	openmp_scripting::NPC_SetFacingAngle(npc, angle);
 	return true;
 }
