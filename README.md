@@ -24,62 +24,6 @@
 | Extensible | Something to which extensions can be added to preserve ABI compatibility |
 | Extension | Something which adds additional functionality to an extensible and preserves ABI compatibility |
 
-## Tools
+## Building
 
-* [CMake 3.19+](https://cmake.org/)
-* [Conan 2.x](https://conan.io/) (Install it using `pip install conan` or `pip3 install conan`)
-
-## Tools on Windows
-
-* [Visual Studio 2019+](https://www.visualstudio.com/)
-
-Visual Studio needs the `Desktop development with C++` workload with the `C++ Clang tools for Windows` component.
-
-## Sources
-
-```bash
-# With HTTPS:
-git clone --recursive https://github.com/openmultiplayer/open.mp
-# With SSH:
-git clone --recursive git@github.com:openmultiplayer/open.mp
-```
-
-Note the use of the `--recursive` argument, because this repository contains submodules.
-
-## Building on Windows
-
-```bash
-cd open.mp
-mkdir build
-cd build
-cmake .. -A Win32 -T ClangCL
-cmake --build . --config RelWithDebInfo
-```
-
-## Building on Mac
-
-If you install conan via brew the cmake-conan script will not detect it from the default install location.  You must therefore also alias it elsewhere:
-
-```bash
-brew install conan
-sudo ln -s /usr/local/opt/conan/bin/conan /usr/local/bin/conan
-cd open.mp
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Release ..
-make
-```
-
-## Building on Linux (with Docker)
-
-Replace `/home/user/open.mp` with your actual path in the last command `docker run`
-
-```bash
-cd open.mp
-mkdir build
-cd docker/build_ubuntu-18.04
-docker build -t openmp .
-docker run --rm -ti -v /home/user/open.mp:/omp -w /omp openmp
-```
-
-After that, in `./open.mp/build/Output/Release/Server`, you will find the `omp-server` file and the `components/` folder.
+See [BUILD.md](BUILD.md) for source checkout, prerequisites, and build instructions for Windows, Linux, and macOS.
