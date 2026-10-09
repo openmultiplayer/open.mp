@@ -34,24 +34,24 @@ extern "C"
 
 #include "Manager/Manager.hpp"
 
-#define AMX_CHECK_PARAMETERS(name, params, n)                                                                                                 \
-	do                                                                                                                                        \
-	{                                                                                                                                         \
-		if (amx_NumParams(params) != (n))                                                                                                     \
-		{                                                                                                                                     \
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `%s`: %u != %u", name, amx_NumParams(params), n); \
-			return 0;                                                                                                                         \
-		}                                                                                                                                     \
+#define AMX_CHECK_PARAMETERS(name, params, n)                                                                                                           \
+	do                                                                                                                                                  \
+	{                                                                                                                                                   \
+		if (amx_NumParams(params) != (n))                                                                                                               \
+		{                                                                                                                                               \
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Incorrect parameters given to `%s`: %u != %u", name, uint32_t(amx_NumParams(params)), n); \
+			return 0;                                                                                                                                   \
+		}                                                                                                                                               \
 	} while (0)
 
-#define AMX_MIN_PARAMETERS(name, params, n)                                                                                                     \
-	do                                                                                                                                          \
-	{                                                                                                                                           \
-		if (amx_NumParams(params) < (n))                                                                                                        \
-		{                                                                                                                                       \
-			PawnManager::Get()->core->logLn(LogLevel::Error, "Insufficient parameters given to `%s`: %u < %u", name, amx_NumParams(params), n); \
-			return 0;                                                                                                                           \
-		}                                                                                                                                       \
+#define AMX_MIN_PARAMETERS(name, params, n)                                                                                                               \
+	do                                                                                                                                                    \
+	{                                                                                                                                                     \
+		if (amx_NumParams(params) < (n))                                                                                                                  \
+		{                                                                                                                                                 \
+			PawnManager::Get()->core->logLn(LogLevel::Error, "Insufficient parameters given to `%s`: %u < %u", name, uint32_t(amx_NumParams(params)), n); \
+			return 0;                                                                                                                                     \
+		}                                                                                                                                                 \
 	} while (0)
 
 namespace utils
@@ -176,7 +176,7 @@ inline cell AMX_NATIVE_CALL pawn_settimer(AMX* amx, cell const* params)
 
 	if (params[2] < 0)
 	{
-		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimer interval (%i) when calling: %s", params[2], callback);
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimer interval (%i) when calling: %s", int(params[2]), callback);
 		return false;
 	}
 
@@ -192,7 +192,7 @@ inline cell AMX_NATIVE_CALL pawn_settimerex(AMX* amx, cell const* params)
 
 	if (params[2] < 0)
 	{
-		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimerEx interval (%i) when calling: %s", params[2], callback);
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Invalid SetTimerEx interval (%i) when calling: %s", int(params[2]), callback);
 		return false;
 	}
 
@@ -413,7 +413,7 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallOne(AMX* amx, cell const* params)
 	amx = PawnManager::Get()->AMXFromID(params[1]);
 	if (amx == nullptr)
 	{
-		PawnManager::Get()->core->logLn(LogLevel::Error, "Could not find target script (%u) in `Script_CallOne`", params[1]);
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Could not find target script (%u) in `Script_CallOne`", uint32_t(params[1]));
 		return 0;
 	}
 	amx_StrParamChar(amx, params[2], name);
@@ -490,7 +490,7 @@ inline cell AMX_NATIVE_CALL pawn_Script_CallOneByIndex(AMX* amx, cell const* par
 	amx = PawnManager::Get()->AMXFromID(params[1]);
 	if (amx == nullptr)
 	{
-		PawnManager::Get()->core->logLn(LogLevel::Error, "Could not find target script (%u) in `Script_CallOneByIndex`", params[1]);
+		PawnManager::Get()->core->logLn(LogLevel::Error, "Could not find target script (%u) in `Script_CallOneByIndex`", uint32_t(params[1]));
 		return 0;
 	}
 	int

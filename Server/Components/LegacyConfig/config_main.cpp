@@ -66,7 +66,7 @@ const FlatHashMap<StringView, ParamType> types = {
 	{ "timestamp", ParamType::Bool },
 	{ "logtimeformat", ParamType::String },
 	{ "logqueries", ParamType::Bool },
-	{ "chatlogging", ParamType::Bool },
+	{ "chatlogging", ParamType::Custom },
 	{ "db_logging", ParamType::Bool },
 	{ "db_log_queries", ParamType::Bool },
 	{ "onfoot_rate", ParamType::Int },
@@ -206,6 +206,30 @@ private:
 			}
 			auto it = dictionary.find("password");
 			config.setString(it->second, password);
+			return true;
+		}
+
+		if (name.find("chatlogging") == 0)
+		{
+			auto it = dictionary.find("chatlogging");
+
+			Impl::String lower(right);
+			std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char c)
+				{
+					return std::tolower(c);
+				});
+
+			if (lower == "true" || lower == "1")
+			{
+				config.setBool(it->second, true);
+				config.setBool("logging.log_deaths", true);
+			}
+			else if (lower == "false" || lower == "0")
+			{
+				config.setBool(it->second, false);
+				config.setBool("logging.log_deaths", false);
+			}
+
 			return true;
 		}
 

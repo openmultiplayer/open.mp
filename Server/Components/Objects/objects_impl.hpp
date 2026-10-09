@@ -634,6 +634,8 @@ public:
 			// Decrement the number of player objects using this ID.  Once it hits 0 it can become global.
 			component_.decrementPlayerCounter(obj->getID());
 		}
+		// Explicitly clear PlayerObjects to avoid use-after-free when accessing this object from PlayerObject's destructor
+		storage.clear();
 		delete this;
 	}
 

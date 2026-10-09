@@ -76,7 +76,7 @@ SCRIPT_API(GetPVarsUpperIndex, int(IPlayer& player))
 	return component->size();
 }
 
-SCRIPT_API(GetPVarNameAtIndex, bool(IPlayer& player, int index, OutputOnlyString& output))
+SCRIPT_API(GetPVarNameAtIndex, int(IPlayer& player, int index, OutputOnlyString& output))
 {
 	GET_PLAYER_VAR_COMP(component, false);
 	StringView varname;
@@ -85,7 +85,7 @@ SCRIPT_API(GetPVarNameAtIndex, bool(IPlayer& player, int index, OutputOnlyString
 	{
 		output = varname;
 	}
-	return res;
+	return std::get<StringView>(output).length();
 }
 
 SCRIPT_API(GetPVarType, int(IPlayer& player, const std::string& varname))

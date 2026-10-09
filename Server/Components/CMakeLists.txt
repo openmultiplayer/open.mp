@@ -1,5 +1,6 @@
 
 add_subdirectory(Actors)
+add_subdirectory(CAPI)
 add_subdirectory(Checkpoints)
 add_subdirectory(Classes)
 add_subdirectory(Console)
@@ -20,6 +21,7 @@ add_subdirectory(TextLabels)
 add_subdirectory(Timers)
 add_subdirectory(Variables)
 add_subdirectory(Vehicles)
+add_subdirectory(NPCs)
 
 # Pawn
 if(BUILD_PAWN_COMPONENT)

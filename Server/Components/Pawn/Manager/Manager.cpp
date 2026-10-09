@@ -92,6 +92,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	// Legacy commands.
 	if (cmd == "loadfs")
 	{
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: loadfs fileName");
+			return true;
+		}
 		if (!Load("filterscripts/" + args))
 		{
 			console->sendMessage(sender, "Filterscript '" + args + "' load failed.");
@@ -104,6 +109,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "unloadfs")
 	{
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: unloadfs fileName");
+			return true;
+		}
 		if (!Unload("filterscripts/" + args))
 		{
 			console->sendMessage(sender, "Filterscript '" + args + "' unload failed.");
@@ -116,6 +126,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "reloadfs")
 	{
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: reloadfs fileName");
+			return true;
+		}
 		if (!Reload("filterscripts/" + args))
 		{
 			console->sendMessage(sender, "Filterscript '" + args + "' reload failed.");
@@ -137,6 +152,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 		{
 			return true;
 		}
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: changemode fileName");
+			return true;
+		}
 		if (Changemode("gamemodes/" + args))
 		{
 			gamemodeRepeat_ = 1;
@@ -146,6 +166,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	// New commands.
 	else if (cmd == "loadscript")
 	{
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: loadscript fileName");
+			return true;
+		}
 		if (!Load(args))
 		{
 			console->sendMessage(sender, "Script '" + args + "' load failed.");
@@ -158,6 +183,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "unloadscript")
 	{
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: unloadscript fileName");
+			return true;
+		}
 		if (!Unload(args))
 		{
 			console->sendMessage(sender, "Script '" + args + "' unload failed.");
@@ -170,6 +200,11 @@ bool PawnManager::OnServerCommand(const ConsoleCommandSenderData& sender, std::s
 	}
 	else if (cmd == "reloadscript")
 	{
+		if (args.empty())
+		{
+			console->sendMessage(sender, "Usage: reloadscript fileName");
+			return true;
+		}
 		if (!Reload(args))
 		{
 			console->sendMessage(sender, "Script '" + args + "' reload failed.");
@@ -606,9 +641,25 @@ void PawnManager::closeAMX(PawnScript& script, bool isEntryScript)
 	// Call OnPlayerDisconnect on entry script close first, then we proceed to do unload player callback
 	if (isEntryScript)
 	{
+		// We keep a set of NPC IPlayer handles here to prevent calling OnPlayerDisconnect for them.
+		// This is because during a server reset/restart/gmx all NPCs are destroyed before reaching this part
+		// Of the code, just like the other server sided entites we destroy, i.e. objects, pickups, and etc.
+		FlatPtrHashSet<IPlayer> npcPlayerHandles;
+		if (PawnManager::Get()->npcs)
+		{
+			for (auto npc : *PawnManager::Get()->npcs)
+			{
+				npcPlayerHandles.insert(npc->getPlayer());
+			}
+		}
+
 		for (auto const p : players->entries())
 		{
-			PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_Quit);
+			bool isNPC = npcPlayerHandles.find(p) != npcPlayerHandles.end();
+			if (!isNPC)
+			{
+				PawnManager::Get()->CallInEntry("OnPlayerDisconnect", DefaultReturnValue_True, p->getID(), PeerDisconnectReason_Quit);
+			}
 		}
 	}
 
@@ -688,10 +739,11 @@ bool PawnManager::Unload(std::string const& name)
 
 	if (isEntryScript)
 	{
-		core->resetAll();
 		mainName_ = "";
 		delete mainScript_;
 		mainScript_ = nullptr;
+
+		core->resetAll();
 	}
 	else
 	{

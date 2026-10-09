@@ -20,6 +20,7 @@ struct IUnknown;
 #include <timeapi.h>
 #define SET_TICKER_RESOLUTION(ms) timeBeginPeriod(ms)
 #define LIBRARY_OPEN(path) LoadLibrary(path)
+#define LIBRARY_OPEN_GLOBAL(path) LIBRARY_OPEN(path)
 #define LIBRARY_GET_ADDR GetProcAddress
 #define LIBRARY_FREE FreeLibrary
 static LARGE_INTEGER initialTime;
@@ -30,8 +31,12 @@ static LARGE_INTEGER yo;
 #include <stdlib.h>
 #include <sys/time.h>
 #include <unistd.h>
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
 #define SET_TICKER_RESOLUTION(ms)
 #define LIBRARY_OPEN(path) dlopen(path, RTLD_LAZY | RTLD_LOCAL)
+#define LIBRARY_OPEN_GLOBAL(path) dlopen(path, RTLD_LAZY | RTLD_GLOBAL)
 #define LIBRARY_GET_ADDR dlsym
 #define LIBRARY_FREE dlclose
 static timeval initialTime;
@@ -146,6 +151,19 @@ ghc::filesystem::path GetExecutablePath()
 	if (GetModuleFileNameA(nullptr, path, sizeof(path)))
 	{
 		return ghc::filesystem::canonical(path);
+	}
+	else
+	{
+		return ghc::filesystem::path();
+	}
+#elif defined(__APPLE__)
+	char path[4096] = { 0 };
+	uint32_t size = sizeof(path);
+	if (_NSGetExecutablePath(path, &size) == 0)
+	{
+		std::error_code ec;
+		auto canonicalPath = ghc::filesystem::canonical(path, ec);
+		return ec ? ghc::filesystem::path(path) : canonicalPath;
 	}
 	else
 	{

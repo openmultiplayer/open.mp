@@ -8,7 +8,6 @@
 
 #pragma once
 #include "../../Manager/Manager.hpp"
-#include "../../Singleton.hpp"
 #include "sdk.hpp"
 
 struct CheckpointEvents : public PlayerCheckpointEventHandler, public Singleton<CheckpointEvents>

@@ -302,6 +302,7 @@ private:
 	String cdn = "";
 	bool usingCdn = false;
 	uint16_t httpThreads = 50; // default max_players is 50
+	bool showCRCLogs = false;
 
 	DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
@@ -418,6 +419,7 @@ public:
 			config.setInt("network.http_threads", httpThreads);
 			config.setInt("artwork.port", modelsPort);
 			config.setString("artwork.web_server_bind", webServerBindAddress);
+			config.setBool("artwork.show_crc_logs", showCRCLogs);
 		}
 		else
 		{
@@ -451,6 +453,10 @@ public:
 			{
 				config.setString("artwork.web_server_bind", webServerBindAddress);
 			}
+			if (config.getType("artwork.show_crc_logs") == ConfigOptionType_None)
+			{
+				config.setBool("artwork.show_crc_logs", showCRCLogs);
+			}
 		}
 	}
 
@@ -465,6 +471,7 @@ public:
 		cdn = String(trim(core->getConfig().getString("artwork.cdn")));
 		httpThreads = *core->getConfig().getInt("network.http_threads");
 		webServerBindAddress = String(core->getConfig().getString("artwork.web_server_bind"));
+		showCRCLogs = *core->getConfig().getBool("artwork.show_crc_logs");
 
 		NetCode::RPC::RequestTXD::addEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::RequestDFF::addEventHandler(*core, &requestDownloadLinkHandler);
@@ -623,8 +630,11 @@ public:
 			return false;
 		}
 
-		// core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
-		// core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
+		if (showCRCLogs)
+		{
+			core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(txdName), txd.checksum);
+			core->logLn(LogLevel::Message, "[artwork:crc] %.*s CRC = 0x%X", PRINT_VIEW(dffName), dff.checksum);
+		}
 
 		auto model = storage.emplace_back(new ModelInfo(type, id, baseId, dff, txd, virtualWorld, timeOn, timeOff));
 

@@ -126,7 +126,7 @@ public:
 	}
 };
 
-class DialogsComponent final : public IDialogsComponent, public PlayerConnectEventHandler
+class DialogsComponent final : public IDialogsComponent, public PoolEventHandler<IPlayer>
 {
 private:
 	ICore* core = nullptr;
@@ -203,7 +203,7 @@ private:
 	} dialogResponseHandler;
 
 public:
-	void onPlayerConnect(IPlayer& player) override
+	void onPoolEntryCreated(IPlayer& player) override
 	{
 		player.addExtension(new PlayerDialogData(), true);
 	}
@@ -226,7 +226,7 @@ public:
 	void onLoad(ICore* c) override
 	{
 		core = c;
-		core->getPlayers().getPlayerConnectDispatcher().addEventHandler(this);
+		core->getPlayers().getPoolEventDispatcher().addEventHandler(this);
 		NetCode::RPC::OnPlayerDialogResponse::addEventHandler(*core, &dialogResponseHandler);
 	}
 
@@ -251,7 +251,7 @@ public:
 	{
 		if (core)
 		{
-			core->getPlayers().getPlayerConnectDispatcher().removeEventHandler(this);
+			core->getPlayers().getPoolEventDispatcher().removeEventHandler(this);
 			NetCode::RPC::OnPlayerDialogResponse::removeEventHandler(*core, &dialogResponseHandler);
 		}
 	}

@@ -260,6 +260,13 @@ void Player::streamInForPlayer(IPlayer& other)
 			playerStreamInRPC.SkillLevel = skillLevels_;
 			PacketHelper::send(playerStreamInRPC, other);
 
+			if (state_ == PlayerState_Wasted)
+			{
+				NetCode::RPC::PlayerDeath playerDeathRPC;
+				playerDeathRPC.PlayerID = poolID;
+				PacketHelper::send(playerDeathRPC, other);
+			}
+
 			const Milliseconds expire = duration_cast<Milliseconds>(chatBubbleExpiration_ - Time::now());
 			if (expire.count() > 0)
 			{
@@ -359,6 +366,21 @@ void Player::streamOutForPlayer(IPlayer& other)
 
 		pool_.playerStreamDispatcher.dispatch(&PlayerStreamEventHandler::onPlayerStreamOut, *this, other);
 	}
+}
+
+void Player::kick()
+{
+	if (pool_.npcsComponent_ && pool_.npcsComponent_->get(poolID))
+	{
+		// Don't set kick status to true if they're our native NPCs, so we can handle it in NPC component instead.
+		kicked_ = false;
+	}
+	else
+	{
+		kicked_ = true;
+	}
+
+	netData_.network->disconnect(*this);
 }
 
 void Player::ban(StringView reason)

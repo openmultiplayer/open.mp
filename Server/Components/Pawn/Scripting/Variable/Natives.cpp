@@ -90,7 +90,7 @@ SCRIPT_API(GetSVarsUpperIndex, int())
 	return component->size();
 }
 
-SCRIPT_API(GetSVarNameAtIndex, bool(int index, OutputOnlyString& output))
+SCRIPT_API(GetSVarNameAtIndex, int(int index, OutputOnlyString& output))
 {
 	GET_VAR_COMP(component, false);
 	StringView varname;
@@ -99,7 +99,7 @@ SCRIPT_API(GetSVarNameAtIndex, bool(int index, OutputOnlyString& output))
 	{
 		output = varname;
 	}
-	return res;
+	return std::get<StringView>(output).length();
 }
 
 SCRIPT_API(GetSVarType, int(const std::string& varname))
