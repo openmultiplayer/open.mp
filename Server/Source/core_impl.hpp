@@ -728,6 +728,17 @@ public:
 
 		bans.clear();
 		loadBans();
+
+		// The freshly loaded bans need to be applied to the networks again;
+		// otherwise only the config copy is updated and the networks no longer
+		// reject any of the banned addresses.
+		for (INetwork* network : core.getNetworks())
+		{
+			for (const BanEntry& ban : bans)
+			{
+				network->ban(ban);
+			}
+		}
 	}
 
 	void writeBans() override
