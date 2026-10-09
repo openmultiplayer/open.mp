@@ -6,6 +6,8 @@
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
 
+#include <cerrno>
+#include <cstring>
 #include <ghc/filesystem.hpp>
 #include "PluginManager.hpp"
 #include "../utils.hpp"
@@ -118,14 +120,18 @@ void PawnPluginManager::Spawn(std::string const& name)
 	}
 #endif // WIN32
 
-	// `Canonicalise` fails when the file is missing (on Linux it uses `realpath`,
-	// which requires the file to exist).  Bail out before handing an unresolved
-	// path to the loader, which would otherwise `dlopen("")` and match a symbol
-	// from the main program.
+	// On Linux, `Canonicalise` uses `realpath`, which fails if the path cannot
+	// be resolved.  Don't hand an unresolved path to the loader, which would
+	// otherwise `dlopen("")` and match a symbol from the main program.
 	std::string canon;
 	if (!utils::Canonicalise(pluginFile, canon))
 	{
-		core->printLn("Could not load plugin:\nFile not found: %s", pluginFile.c_str());
+#ifndef WIN32
+		const int pathError = errno;
+		core->printLn("Could not load plugin:\n%s: %s", pluginFile.c_str(), std::strerror(pathError));
+#else
+		core->printLn("Could not resolve plugin path: %s", pluginFile.c_str());
+#endif // WIN32
 		return;
 	}
 
