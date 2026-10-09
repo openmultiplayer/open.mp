@@ -8,6 +8,7 @@
 
 #include "npc.hpp"
 #include <netcode.hpp>
+#include <algorithm>
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "../npcs_impl.hpp"
@@ -2245,9 +2246,16 @@ void NPC::sendDriverSync()
 	getKeys(upAndDown, leftAndRight, keys);
 
 	uint16_t vehicleID = vehicle_->getID();
+	Vector3 syncVelocity = velocity_;
+	if (moving_ && moveType_ == NPCMoveType_Drive)
+	{
+		// advance() stores movement speed in units per millisecond. Driver sync uses
+		// GTA's movement speed units per 20 ms physics step (50 steps per second).
+		syncVelocity *= 20.0f;
+	}
 
 	// Check if immediate update is needed (basic comparison for now)
-	bool needsImmediateUpdate = driverSync_.LeftRight != leftAndRight || driverSync_.UpDown != upAndDown || driverSync_.Keys != keys || driverSync_.Position != position_ || driverSync_.Rotation.q != rotation_.q || driverSync_.PlayerHealthArmour.x != health_ || driverSync_.PlayerHealthArmour.y != armour_ || driverSync_.VehicleID != vehicleID || driverSync_.Velocity != velocity_ || driverSync_.Health != vehicleHealth_;
+	bool needsImmediateUpdate = driverSync_.LeftRight != leftAndRight || driverSync_.UpDown != upAndDown || driverSync_.Keys != keys || driverSync_.Position != position_ || driverSync_.Rotation.q != rotation_.q || driverSync_.PlayerHealthArmour.x != health_ || driverSync_.PlayerHealthArmour.y != armour_ || driverSync_.VehicleID != vehicleID || driverSync_.Velocity != syncVelocity || driverSync_.Health != vehicleHealth_;
 
 	auto generateDriverSyncBitStream = [&](NetworkBitStream& bs)
 	{
@@ -2259,7 +2267,7 @@ void NPC::sendDriverSync()
 		driverSync_.Rotation = rotation_;
 		driverSync_.PlayerHealthArmour.x = health_;
 		driverSync_.PlayerHealthArmour.y = armour_;
-		driverSync_.Velocity = velocity_;
+		driverSync_.Velocity = syncVelocity;
 		driverSync_.Health = vehicleHealth_;
 
 		driverSync_.Siren = uint8_t(useVehicleSiren_);
@@ -2443,6 +2451,105 @@ void NPC::advance(TimePoint now)
 	float velocityLength = glm::length(velocity_);
 	auto maxTravel = velocityLength * deltaTimeMS;
 
+	auto advanceNodePoint = [this]() -> bool
+	{
+		if (!playingNode_ || nodePlayingPaused_ || !currentNode_)
+		{
+			return false;
+		}
+
+		npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishNodePoint, *this, currentNode_->getNodeId(), currentNodePoint_);
+		if (!playingNode_ || nodePlayingPaused_ || !currentNode_)
+		{
+			return false;
+		}
+
+		uint16_t currentLinkId;
+		uint16_t newPoint = currentNode_->process(this, currentNodePoint_, lastNodePoint_, currentLinkId);
+		if (newPoint == 0xFFFF)
+		{
+			int targetNodeId = currentNode_->getLastLinkTargetNodeId();
+			uint16_t targetPointId = currentNode_->getLastLinkTargetPointId();
+			if (!npcComponent_->getNodeManager()->isNodeOpen(targetNodeId))
+			{
+				stopPlayingNode();
+				return false;
+			}
+
+			uint16_t changedPoint = changeNode(targetNodeId, targetPointId);
+			if (changedPoint == 0)
+			{
+				stopPlayingNode();
+				return false;
+			}
+
+			lastNodePoint_ = currentNodePoint_;
+			currentNodePoint_ = changedPoint;
+		}
+		else if (newPoint > 0)
+		{
+			lastNodePoint_ = currentNodePoint_;
+			currentNodePoint_ = newPoint;
+		}
+		else
+		{
+			stopPlayingNode();
+			return false;
+		}
+
+		return move(currentNode_->getPosition(), nodeMoveType_, nodeMoveSpeed_, nodeMoveRadius_);
+	};
+
+	// Carry unused tick time across node boundaries so short node segments do not
+	// create a stationary update each time the next point is reached.
+	if (playingNode_ && !nodePlayingPaused_ && currentNode_ && !movingByPath_ && !followingPlayer_ && !vehicleToEnter_)
+	{
+		float remainingTimeMS = deltaTimeMS;
+		uint16_t nodeTransitions = 0;
+		constexpr uint16_t maxNodeTransitionsPerTick = 256;
+
+		while (moving_ && playingNode_ && !nodePlayingPaused_ && currentNode_ && remainingTimeMS > 0.0f && nodeTransitions < maxNodeTransitionsPerTick)
+		{
+			position = getPosition();
+			toTarget = targetPosition_ - position;
+			distanceToTarget = glm::length(toTarget);
+			velocityLength = glm::length(velocity_);
+
+			const float arrivalRadius = std::max(0.0f, stopRange_);
+			const float distanceToArrival = std::max(0.0f, distanceToTarget - arrivalRadius);
+			if (distanceToTarget <= arrivalRadius || (velocityLength > FLT_EPSILON && distanceToArrival <= velocityLength * remainingTimeMS))
+			{
+				if (distanceToArrival > FLT_EPSILON && velocityLength > FLT_EPSILON)
+				{
+					const auto direction = toTarget / distanceToTarget;
+					position_ = position + direction * distanceToArrival;
+					remainingTimeMS = std::max(0.0f, remainingTimeMS - distanceToArrival / velocityLength);
+				}
+
+				stopMove();
+				setPositionHandled(position_, false);
+				++nodeTransitions;
+				if (!advanceNodePoint())
+				{
+					break;
+				}
+				continue;
+			}
+
+			if (velocityLength <= FLT_EPSILON)
+			{
+				break;
+			}
+
+			const auto direction = toTarget / distanceToTarget;
+			position_ = position + direction * (velocityLength * remainingTimeMS);
+			remainingTimeMS = 0.0f;
+		}
+
+		lastMove_ = now;
+		return;
+	}
+
 	if (distanceToTarget <= stopRange_ || maxTravel >= distanceToTarget)
 	{
 		// Reached or about to overshoot target
@@ -2546,53 +2653,7 @@ void NPC::advance(TimePoint now)
 			}
 			else if (playingNode_ && !nodePlayingPaused_ && currentNode_)
 			{
-				// Process node movement
-				npcComponent_->getEventDispatcher_internal().dispatch(&NPCEventHandler::onNPCFinishNodePoint, *this, currentNode_->getNodeId(), currentNodePoint_);
-
-				uint16_t currentLinkId;
-				uint16_t newPoint = currentNode_->process(this, currentNodePoint_, lastNodePoint_, currentLinkId);
-
-				if (newPoint == 0xFFFF)
-				{
-					// Need to change node - get target info from last processed link
-					int targetNodeId = currentNode_->getLastLinkTargetNodeId();
-					uint16_t targetPointId = currentNode_->getLastLinkTargetPointId();
-					if (npcComponent_->getNodeManager()->isNodeOpen(targetNodeId))
-					{
-						uint16_t changedPoint = changeNode(targetNodeId, targetPointId);
-						if (changedPoint > 0)
-						{
-							lastNodePoint_ = currentNodePoint_;
-							currentNodePoint_ = changedPoint;
-
-							// Update position and move to new point
-							Vector3 newPosition = currentNode_->getPosition();
-							move(newPosition, nodeMoveType_, nodeMoveSpeed_, nodeMoveRadius_);
-						}
-						else
-						{
-							stopPlayingNode();
-						}
-					}
-					else
-					{
-						stopPlayingNode();
-					}
-				}
-				else if (newPoint > 0)
-				{
-					lastNodePoint_ = currentNodePoint_;
-					currentNodePoint_ = newPoint;
-
-					// Update position and move to new point
-					Vector3 newPosition = currentNode_->getPosition();
-					move(newPosition, nodeMoveType_, nodeMoveSpeed_, nodeMoveRadius_);
-				}
-				else
-				{
-					// Node processing failed or reached end
-					stopPlayingNode();
-				}
+				advanceNodePoint();
 			}
 			else
 			{
