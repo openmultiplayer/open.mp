@@ -34,7 +34,6 @@ struct PawnTimerImpl : public Singleton<PawnTimerImpl>
 
 private:
 	Pair<size_t, PawnTimerHandler*> newTimer(const char* callback, Milliseconds interval, bool repeating, AMX* amx);
-	int newTimerExError(PawnTimerHandler* handler, AMX* amx, int err, StringView message);
 
 	size_t insert(ITimer* timer)
 	{

@@ -19,6 +19,7 @@ if(MSVC)
 	add_link_options("/LARGEADDRESSAWARE")
 	# Use strict intermediate floating-point precision
 	add_compile_options("/fp:strict")
+	add_compile_options("/MP")
 	if(CMAKE_SIZEOF_VOID_P EQUAL 4)
 		add_compile_options("/arch:SSE2")
 	endif()

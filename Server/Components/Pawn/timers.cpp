@@ -13,7 +13,6 @@ Pair<size_t, PawnTimerHandler*> PawnTimerImpl::newTimer(const char* callback, Mi
 	ITimersComponent* timers = PawnManager::Get()->timers;
 	if (timers && amx)
 	{
-
 		int callbackId;
 
 		// Also checking the callbackId value because SAMPGDK's FindPublic hook returns AMX_ERR_NONE.
@@ -44,82 +43,97 @@ int PawnTimerImpl::setTimer(const char* callback, Milliseconds interval, bool re
 	return newTimer(callback, interval, repeating, amx).first;
 }
 
+#define RETURN_WITH_ERROR(message)                                                                                                                                                       \
+	amx_RaiseError(amx, err);                                                                                                                                                            \
+	PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: There was a problem creating the timer %s (fmt: %s). Error: %s (amx: %s)", callback, fmt, message, aux_StrError(err)); \
+	timer->kill();                                                                                                                                                                       \
+	return 0
+
 int PawnTimerImpl::setTimerEx(const char* callback, Milliseconds interval, bool repeating, const char* fmt, AMX* amx, const cell* params)
 {
-	auto res = newTimer(callback, interval, repeating, amx);
-	PawnTimerHandler* handler = res.second;
-	if (res.second)
+	auto [id, handler] = newTimer(callback, interval, repeating, amx);
+
+	if (!handler)
 	{
-		int err = AMX_ERR_NONE;
-		handler->fmt = fmt;
+		return id;
+	}
 
-		cell* data;
-		cell* len1;
-		int len2;
+	auto* timer = this->getTimer(handler->poolID);
 
-		// Collect data and parameters
-		for (size_t i = 0; fmt[i]; ++i)
+	int err = AMX_ERR_NONE;
+	handler->fmt = fmt;
+
+	cell* data;
+	cell* len1;
+	int len2;
+
+	// Collect data and parameters
+	for (size_t i = 0; fmt[i]; ++i)
+	{
+		switch (fmt[i])
 		{
-			switch (fmt[i])
+		case 'a':
+		{
+			++i;
+
+			if (fmt[i] != 'i' && fmt[i] != 'd')
 			{
-			case 'a':
-				++i;
-				if (fmt[i] != 'i' && fmt[i] != 'd')
+				err = AMX_ERR_PARAMS;
+				RETURN_WITH_ERROR("Error in pushing parameters; Array not followed by size");
+			}
+			if ((err = amx_GetAddr(amx, params[i - 1], &data)) != AMX_ERR_NONE || (err = amx_GetAddr(amx, params[i], &len1)) != AMX_ERR_NONE || *len1 < 1)
+			{
+				if (err == AMX_ERR_NONE)
 				{
 					err = AMX_ERR_PARAMS;
-					return newTimerExError(handler, amx, err, "Error in pushing parameters; Array not followed by size");
 				}
-				if (
-					(err = amx_GetAddr(amx, params[i - 1], &data)) != AMX_ERR_NONE || (err = amx_GetAddr(amx, params[i], &len1)) != AMX_ERR_NONE || *len1 < 1)
-				{
-					if (err == AMX_ERR_NONE)
-					{
-						err = AMX_ERR_PARAMS;
-					}
-					return newTimerExError(handler, amx, err, "Error in pushing parameters");
-				}
-				// Store the offset in to the new heap data, then the size, then copy the data.
-				handler->params.push_back(handler->data.size() * sizeof(cell));
-				handler->params.push_back(*len1);
-				handler->data.insert(handler->data.end(), data, data + *len1);
-				break;
-			case 's':
-				if ((err = amx_GetAddr(amx, params[i], &data)) != AMX_ERR_NONE || (err = amx_StrSize(data, &len2)) != AMX_ERR_NONE)
-				{
-					return newTimerExError(handler, amx, err, "Error in pushing parameters");
-				}
-				// Store the offset in to the new heap data, then copy the data.
-				handler->params.push_back(handler->data.size() * sizeof(cell));
-				handler->data.insert(handler->data.end(), data, data + len2);
-				break;
-			case 'v':
-				if ((err = amx_GetAddr(amx, params[i], &data)) != AMX_ERR_NONE)
-				{
-					return newTimerExError(handler, amx, err, "Error in pushing parameters");
-				}
-				// Store the offset in to the new heap data, then copy the data.
-				handler->params.push_back(handler->data.size() * sizeof(cell));
-				handler->data.push_back(*data);
-				break;
-			default:
-				if ((err = amx_GetAddr(amx, params[i], &data)) != AMX_ERR_NONE)
-				{
-					return newTimerExError(handler, amx, err, "Error in pushing parameters");
-				}
-				handler->params.push_back(*data);
-				break;
+				RETURN_WITH_ERROR("Error in pushing parameters");
 			}
+
+			// Store the offset in to the new heap data, then the size, then copy the data.
+			handler->params.push_back(handler->data.size() * sizeof(cell));
+			handler->params.push_back(*len1);
+			handler->data.insert(handler->data.end(), data, data + *len1);
+			break;
+		}
+		case 's':
+		{
+			if ((err = amx_GetAddr(amx, params[i], &data)) != AMX_ERR_NONE || (err = amx_StrSize(data, &len2)) != AMX_ERR_NONE)
+			{
+				RETURN_WITH_ERROR("Error in pushing parameters");
+			}
+
+			// Store the offset in to the new heap data, then copy the data.
+			handler->params.push_back(handler->data.size() * sizeof(cell));
+			handler->data.insert(handler->data.end(), data, data + len2);
+			break;
+		}
+		case 'v':
+		{
+			if ((err = amx_GetAddr(amx, params[i], &data)) != AMX_ERR_NONE)
+			{
+				RETURN_WITH_ERROR("Error in pushing parameters");
+			}
+
+			// Store the offset in to the new heap data, then copy the data.
+			handler->params.push_back(handler->data.size() * sizeof(cell));
+			handler->data.push_back(*data);
+			break;
+		}
+		default:
+		{
+			if ((err = amx_GetAddr(amx, params[i], &data)) != AMX_ERR_NONE)
+			{
+				RETURN_WITH_ERROR("Error in pushing parameters");
+			}
+
+			handler->params.push_back(*data);
+			break;
+		}
 		}
 	}
-	return res.first;
-}
 
-int PawnTimerImpl::newTimerExError(PawnTimerHandler* handler, AMX* amx, int err, StringView message)
-{
-	amx_RaiseError(amx, err);
-	PawnManager::Get()->core->logLn(LogLevel::Error, "SetTimerEx: %.*s: %s", PRINT_VIEW(message), aux_StrError(err));
-	delete handler;
-	return 0;
+	return id;
 }
 
 void PawnTimerImpl::killTimers(AMX* amx)
