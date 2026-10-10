@@ -1075,6 +1075,18 @@ private:
 		case HTTPRequestType_Head:
 			res = request.Head(path.data());
 			break;
+		case HTTPRequestType_Put:
+			res = request.Put(path.data(), String(data), "application/x-www-form-urlencoded");
+			break;
+		case HTTPRequestType_Patch:
+			res = request.Patch(path.data(), String(data), "application/x-www-form-urlencoded");
+			break;
+		case HTTPRequestType_Delete:
+			res = request.Delete(path.data());
+			break;
+		case HTTPRequestType_Options:
+			res = request.Options(path.data());
+			break;
 		}
 
 		if (res)
