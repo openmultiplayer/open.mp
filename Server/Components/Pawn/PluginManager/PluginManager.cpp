@@ -6,6 +6,8 @@
  *  The original code is copyright (c) 2022, open.mp team and contributors.
  */
 
+#include <cerrno>
+#include <cstring>
 #include <ghc/filesystem.hpp>
 #include "PluginManager.hpp"
 #include "../utils.hpp"
@@ -104,7 +106,9 @@ void PawnPluginManager::Spawn(std::string const& name)
 	// otherwise, don't, as they may have supplied a full abs/rel path.
 	// std::string ext = utils::endsWith(name, ".amx") ? "" : ".amx";
 
-	std::string canon;
+	core->printLn("Loading plugin: %s", name.c_str());
+
+	std::string pluginFile = basePath_ + pluginPath_ + name;
 #ifndef WIN32
 	size_t pos = name.rfind(".so");
 	// You would think this could be done in one comparison, but the path may
@@ -112,15 +116,24 @@ void PawnPluginManager::Spawn(std::string const& name)
 	if (pos == std::string::npos || pos + 3 != name.length())
 	{
 		// Append the extension.
-		utils::Canonicalise(basePath_ + pluginPath_ + name + ".so", canon);
+		pluginFile += ".so";
 	}
-	else
 #endif // WIN32
-	{
-		utils::Canonicalise(basePath_ + pluginPath_ + name, canon);
-	}
 
-	core->printLn("Loading plugin: %s", name.c_str());
+	// On Linux, `Canonicalise` uses `realpath`, which fails if the path cannot
+	// be resolved.  Don't hand an unresolved path to the loader, which would
+	// otherwise `dlopen("")` and match a symbol from the main program.
+	std::string canon;
+	if (!utils::Canonicalise(pluginFile, canon))
+	{
+#ifndef WIN32
+		const int pathError = errno;
+		core->printLn("Could not load plugin:\n%s: %s", pluginFile.c_str(), std::strerror(pathError));
+#else
+		core->printLn("Could not resolve plugin path: %s", pluginFile.c_str());
+#endif // WIN32
+		return;
+	}
 
 	std::unique_ptr<PawnPlugin> ptr = std::make_unique<PawnPlugin>(canon, core);
 
