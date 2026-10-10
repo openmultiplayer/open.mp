@@ -11,6 +11,7 @@
 #include <network.hpp>
 #include <player.hpp>
 #include <types.hpp>
+#include <values.hpp>
 
 namespace NetCode
 {
@@ -20,6 +21,7 @@ namespace RPC
 	{
 		bool PlayerTextDraw;
 		int TextDrawID;
+		int GlobalTextDrawPoolSize = GLOBAL_TEXTDRAW_POOL_SIZE;
 		bool UseBox;
 		int Alignment;
 		bool Proportional;
@@ -48,7 +50,7 @@ namespace RPC
 		void write(NetworkBitStream& bs) const
 		{
 			uint8_t flags = UseBox | (Alignment << 1) | (Proportional << 4);
-			bs.writeUINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID);
+			bs.writeUINT16(PlayerTextDraw ? GlobalTextDrawPoolSize + TextDrawID : TextDrawID);
 			bs.writeUINT8(flags);
 			bs.writeVEC2(LetterSize);
 			bs.writeUINT32(LetterColour.ABGR());
@@ -73,6 +75,7 @@ namespace RPC
 	{
 		bool PlayerTextDraw;
 		int TextDrawID;
+		int GlobalTextDrawPoolSize = GLOBAL_TEXTDRAW_POOL_SIZE;
 
 		bool read(NetworkBitStream& bs)
 		{
@@ -81,7 +84,7 @@ namespace RPC
 
 		void write(NetworkBitStream& bs) const
 		{
-			bs.writeUINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID);
+			bs.writeUINT16(PlayerTextDraw ? GlobalTextDrawPoolSize + TextDrawID : TextDrawID);
 		}
 	};
 
@@ -89,6 +92,7 @@ namespace RPC
 	{
 		bool PlayerTextDraw;
 		int TextDrawID;
+		int GlobalTextDrawPoolSize = GLOBAL_TEXTDRAW_POOL_SIZE;
 		HybridString<256> Text;
 
 		bool read(NetworkBitStream& bs)
@@ -98,7 +102,7 @@ namespace RPC
 
 		void write(NetworkBitStream& bs) const
 		{
-			bs.writeUINT16(PlayerTextDraw ? GLOBAL_TEXTDRAW_POOL_SIZE + TextDrawID : TextDrawID);
+			bs.writeUINT16(PlayerTextDraw ? GlobalTextDrawPoolSize + TextDrawID : TextDrawID);
 			bs.writeDynStr16(Text);
 		}
 	};
@@ -125,6 +129,7 @@ namespace RPC
 		bool PlayerTextDraw;
 		bool Invalid;
 		int TextDrawID;
+		int GlobalTextDrawPoolSize = GLOBAL_TEXTDRAW_POOL_SIZE;
 
 		bool read(NetworkBitStream& bs)
 		{
@@ -132,10 +137,10 @@ namespace RPC
 			Invalid = TextDrawID == INVALID_TEXTDRAW;
 			if (!Invalid)
 			{
-				PlayerTextDraw = TextDrawID >= GLOBAL_TEXTDRAW_POOL_SIZE;
+				PlayerTextDraw = TextDrawID >= GlobalTextDrawPoolSize;
 				if (PlayerTextDraw)
 				{
-					TextDrawID -= GLOBAL_TEXTDRAW_POOL_SIZE;
+					TextDrawID -= GlobalTextDrawPoolSize;
 				}
 			}
 			return res;
