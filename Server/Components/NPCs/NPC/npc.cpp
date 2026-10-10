@@ -2506,6 +2506,7 @@ void NPC::advance(TimePoint now)
 	{
 		float remainingTimeMS = deltaTimeMS;
 		uint16_t nodeTransitions = 0;
+		bool zeroTimeTransitionDone = false;
 		constexpr uint16_t maxNodeTransitionsPerTick = 256;
 
 		while (moving_ && playingNode_ && !nodePlayingPaused_ && currentNode_ && remainingTimeMS > 0.0f && nodeTransitions < maxNodeTransitionsPerTick)
@@ -2519,12 +2520,26 @@ void NPC::advance(TimePoint now)
 			const float distanceToArrival = std::max(0.0f, distanceToTarget - arrivalRadius);
 			if (distanceToTarget <= arrivalRadius || (velocityLength > FLT_EPSILON && distanceToArrival <= velocityLength * remainingTimeMS))
 			{
-				if (distanceToArrival > FLT_EPSILON && velocityLength > FLT_EPSILON)
+				const bool hasTravel = distanceToArrival > FLT_EPSILON && velocityLength > FLT_EPSILON;
+				const float travelTimeMS = hasTravel ? distanceToArrival / velocityLength : 0.0f;
+				const float nextRemainingTimeMS = std::max(0.0f, remainingTimeMS - travelTimeMS);
+				if (nextRemainingTimeMS == remainingTimeMS)
+				{
+					// A large radius can cover multiple points. Limit transitions that
+					// consume no tick time so callbacks cannot cycle through the graph.
+					if (zeroTimeTransitionDone)
+					{
+						break;
+					}
+					zeroTimeTransitionDone = true;
+				}
+
+				if (hasTravel)
 				{
 					const auto direction = toTarget / distanceToTarget;
 					position_ = position + direction * distanceToArrival;
-					remainingTimeMS = std::max(0.0f, remainingTimeMS - distanceToArrival / velocityLength);
 				}
+				remainingTimeMS = nextRemainingTimeMS;
 
 				stopMove();
 				setPositionHandled(position_, false);
