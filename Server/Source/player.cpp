@@ -260,6 +260,13 @@ void Player::streamInForPlayer(IPlayer& other)
 			playerStreamInRPC.SkillLevel = skillLevels_;
 			PacketHelper::send(playerStreamInRPC, other);
 
+			if (state_ == PlayerState_Wasted)
+			{
+				NetCode::RPC::PlayerDeath playerDeathRPC;
+				playerDeathRPC.PlayerID = poolID;
+				PacketHelper::send(playerDeathRPC, other);
+			}
+
 			const Milliseconds expire = duration_cast<Milliseconds>(chatBubbleExpiration_ - Time::now());
 			if (expire.count() > 0)
 			{

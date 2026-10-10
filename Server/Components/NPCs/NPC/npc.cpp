@@ -192,6 +192,13 @@ Vector3 NPC::getPosition() const
 
 void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 {
+	// Explicitly remove from vehicle if we are in one
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		removeFromVehicle();
+	}
+
+	// Setting position right after removing from vehicle because removeFromVehicle also sets position
 	position_ = pos;
 
 	if (immediateUpdate)
@@ -202,6 +209,30 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 	if (moving_)
 	{
 		move(targetPosition_, moveType_);
+	}
+}
+
+void NPC::setVehiclePosition(const Vector3& position, bool immediateUpdate)
+{
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		position_ = position;
+		if (immediateUpdate)
+		{
+			if (vehicleSeat_ == 0) // driver
+			{
+				sendDriverSync();
+			}
+			else
+			{
+				sendPassengerSync();
+			}
+		}
+
+		if (moving_)
+		{
+			move(targetPosition_, moveType_);
+		}
 	}
 }
 
@@ -222,6 +253,30 @@ void NPC::setRotation(const GTAQuat& rot, bool immediateUpdate)
 	if (moving_)
 	{
 		move(targetPosition_, moveType_);
+	}
+}
+
+void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
+{
+	if (vehicle_ && vehicleSeat_ != SEAT_NONE)
+	{
+		rotation_ = rotation;
+		if (immediateUpdate)
+		{
+			if (vehicleSeat_ == 0) // driver
+			{
+				sendDriverSync();
+			}
+			else
+			{
+				sendPassengerSync();
+			}
+		}
+
+		if (moving_)
+		{
+			move(targetPosition_, moveType_);
+		}
 	}
 }
 
@@ -314,8 +369,8 @@ void NPC::respawn()
 		setArmour(armour);
 	}
 
-	setPosition(position, false);
-	setRotation(rotation, false);
+	setPositionHandled(position, false);
+	setRotationHandled(rotation, false);
 	setSkin(skin);
 	setSpecialAction(specialAction);
 
@@ -329,6 +384,7 @@ void NPC::respawn()
 		resumePath();
 	}
 
+	dead_ = false;
 	lastDamager_ = nullptr;
 	lastDamagerWeapon_ = PlayerWeapon_End;
 
@@ -444,6 +500,12 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 		front = (pos - position) / distance;
 		auto rotation = getRotation().ToEuler();
 		rotation.z = getAngleOfLine(front.x, front.y);
+
+		if (moveType_ == NPCMoveType_Drive)
+		{
+			// GTAQuat negates Euler angles internally, matching the negative slope pitch.
+			rotation.x = glm::degrees(atan2(front.z, glm::length(glm::vec2(front))));
+		}
 		rotation_ = GTAQuat(rotation); // Do this directly, if you use NPC::setRotation it's going to cause recursion
 
 		// Calculate velocity to use on tick
@@ -631,6 +693,11 @@ uint8_t NPC::getWeapon() const
 
 void NPC::setAmmo(int ammo)
 {
+	if (ammo < 0)
+	{
+		ammo = 0;
+	}
+
 	ammo_ = ammo;
 
 	if (ammo_ < ammoInClip_)
@@ -927,12 +994,15 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 		if (bulletData.hitID >= 0 && bulletData.hitID < ACTOR_POOL_SIZE)
 		{
 			// Actors don't have a hit type
-			auto actor = npcComponent_->getActorsPool()->get(bulletData.hitID);
-			if (actor)
+			if (npcComponent_->getActorsPool())
 			{
-				auto pos = actor->getPosition();
-				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-				bulletData.offset = bulletData.hitPos; // When actor is hit use the actor collision position
+				auto actor = npcComponent_->getActorsPool()->get(bulletData.hitID);
+				if (actor)
+				{
+					auto pos = actor->getPosition();
+					bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+					bulletData.offset = bulletData.hitPos; // When actor is hit use the actor collision position
+				}
 			}
 		}
 		else if (bulletData.hitID == ACTOR_POOL_SIZE + 1)
@@ -989,33 +1059,39 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 	}
 	case PlayerBulletHitType_Vehicle:
 	{
-		auto vehicle = npcComponent_->getVehiclesPool()->get(bulletData.hitID);
-		if (vehicle)
+		if (npcComponent_->getVehiclesPool())
 		{
-			auto pos = vehicle->getPosition();
-			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-			bulletData.offset = bulletData.hitPos - pos;
+			auto vehicle = npcComponent_->getVehiclesPool()->get(bulletData.hitID);
+			if (vehicle)
+			{
+				auto pos = vehicle->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos - pos;
 
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
-				});
+				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+					{
+						return handler->onNPCShotVehicle(*this, *vehicle, bulletData);
+					});
+			}
 		}
 		break;
 	}
 	case PlayerBulletHitType_Object:
 	{
-		auto object = npcComponent_->getObjectsPool()->get(bulletData.hitID);
-		if (object)
+		if (npcComponent_->getObjectsPool())
 		{
-			auto pos = object->getPosition();
-			bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
-			bulletData.offset = bulletData.hitPos - pos;
+			auto object = npcComponent_->getObjectsPool()->get(bulletData.hitID);
+			if (object)
+			{
+				auto pos = object->getPosition();
+				bulletData.hitPos = getNearestPointToRay(bulletData.origin, bulletData.hitPos, pos);
+				bulletData.offset = bulletData.hitPos - pos;
 
-			eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
-				{
-					return handler->onNPCShotObject(*this, *object, bulletData);
-				});
+				eventResult = npcComponent_->getEventDispatcher_internal().stopAtFalse([&](NPCEventHandler* handler)
+					{
+						return handler->onNPCShotObject(*this, *object, bulletData);
+					});
+			}
 		}
 		break;
 	}
@@ -1346,7 +1422,7 @@ int NPC::getWeaponActualClipSize(uint8_t weapon)
 			size *= 2;
 		}
 
-		if (ammo_ < size && !infiniteAmmo_)
+		if (ammo_ < size)
 		{
 			size = ammo_;
 		}
@@ -1464,15 +1540,27 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 		return false;
 	}
 
-	setPosition(vehicle.getPosition(), true);
+	setPositionHandled(vehicle.getPosition(), true);
 	vehicle.putPlayer(*player_, seat);
 	vehicle_ = &vehicle;
 	vehicleSeat_ = seat;
 
+	// Vehicle::putPlayer only sends PutPlayerInVehicle to the entering player,
+	// which is a no-op for an NPC (no real client to receive it). Without an
+	// explicit broadcast, remote clients have no signal to visually attach the
+	// NPC and must rely on the next DriverSync, which some vehicles (notably
+	// boats) refuse to honour while the player is on-foot. Mirror the natural
+	// goToVehicle flow by broadcasting EnterVehicle to streamed players.
+	NetCode::RPC::EnterVehicle enterVehicleRPC;
+	enterVehicleRPC.PlayerID = player_->getID();
+	enterVehicleRPC.VehicleID = vehicle.getID();
+	enterVehicleRPC.Passenger = (seat != 0) ? 1 : 0;
+	PacketHelper::broadcastToStreamed(enterVehicleRPC, *player_, true);
+
 	auto angle = vehicle.getRotation().ToEuler().z;
 	auto rotation = getRotation().ToEuler();
 	rotation.z = angle;
-	setRotation(rotation, true);
+	setRotationHandled(rotation, true);
 
 	return true;
 }
@@ -1485,12 +1573,11 @@ bool NPC::removeFromVehicle()
 		return false;
 	}
 
+	Vector3 seatPos;
 	auto vehicleData = queryExtension<IPlayerVehicleData>(player_);
 	if (vehicleData)
 	{
-		setPosition(getVehicleSeatPos(*vehicle_, vehicleData->getSeat()), true);
-		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
-		player_->removeFromVehicle(true);
+		seatPos = getVehicleSeatPos(*vehicle_, vehicleData->getSeat());
 	}
 
 	vehicle_ = nullptr;
@@ -1499,6 +1586,13 @@ bool NPC::removeFromVehicle()
 	hydraThrusterDirection_ = 5000;
 	vehicleGearState_ = 0;
 	vehicleTrainSpeed_ = 0.0f;
+
+	if (vehicleData)
+	{
+		setPositionHandled(seatPos, true);
+		vehicleData->resetVehicle(); // Using this internal function to reset player's vehicle data
+		player_->removeFromVehicle(true);
+	}
 
 	return true;
 }
@@ -1854,18 +1948,19 @@ void NPC::updateWeaponState()
 		{
 			setWeaponState(PlayerWeaponState_Reloading);
 		}
+		else if (ammoInClip_ > 1 || infiniteAmmo_)
+		{
+			setWeaponState(PlayerWeaponState_MoreBullets);
+		}
+		else if (ammo_ == 0)
+		{
+			setWeaponState(PlayerWeaponState_NoBullets);
+		}
 		else if (ammoInClip_ == 1)
 		{
 			setWeaponState(PlayerWeaponState_LastBullet);
 		}
-		else if (ammo_ == 0 && !infiniteAmmo_)
-		{
-			setWeaponState(PlayerWeaponState_NoBullets);
-		}
-		else if (ammoInClip_ > 1)
-		{
-			setWeaponState(PlayerWeaponState_MoreBullets);
-		}
+
 		break;
 
 	case PlayerWeapon_Shotgun:
@@ -1873,14 +1968,15 @@ void NPC::updateWeaponState()
 		{
 			setWeaponState(PlayerWeaponState_Reloading);
 		}
-		else if (ammo_ == 0 && !infiniteAmmo_)
-		{
-			setWeaponState(PlayerWeaponState_NoBullets);
-		}
-		else if (ammoInClip_ == 1)
+		else if (ammoInClip_ == 1 || infiniteAmmo_)
 		{
 			setWeaponState(PlayerWeaponState_LastBullet);
 		}
+		else if (ammo_ == 0)
+		{
+			setWeaponState(PlayerWeaponState_NoBullets);
+		}
+
 		break;
 
 	default:
@@ -2050,7 +2146,7 @@ void NPC::updateAimData(const Vector3& point, bool setAngle)
 		float facingAngle = getAngleOfLine(camVecDistance.x, camVecDistance.y);
 
 		rotation.z = facingAngle;
-		setRotation(rotation, false);
+		setRotationHandled(rotation, false);
 	}
 
 	// Set the aim sync data
@@ -2069,7 +2165,8 @@ void NPC::sendFootSync()
 	if (!vehicle_)
 	{
 		auto state = player_->getState();
-		if (state != PlayerState_OnFoot && state != PlayerState_Spawned)
+		//                                                           -- Checking for driver and passenger for the times npc has just been removed from vehicle
+		if (state != PlayerState_OnFoot && state != PlayerState_Spawned && state != PlayerState_Driver && state != PlayerState_Passenger)
 		{
 			return;
 		}
@@ -2386,7 +2483,7 @@ void NPC::advance(TimePoint now)
 			removeKey(Key::WALK);
 		}
 
-		setPosition(finalPos, false);
+		setPositionHandled(finalPos, false);
 
 		// Check if the movement was triggered for entering a vehicle
 		float distanceToVehicle = 0.0f;
@@ -2643,7 +2740,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 					if (needsVelocityUpdate_)
 					{
-						setPosition(getPosition() + velocity_, false);
+						setPositionHandled(getPosition() + velocity_, false);
 						setVelocity({ 0.0f, 0.0f, 0.0f }, false);
 					}
 
@@ -2686,10 +2783,13 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 						{
 							if (surfingData_.type == PlayerSurfingData::Type::Vehicle)
 							{
-								auto* vehicle = npcComponent_->getVehiclesPool()->get(surfingData_.ID);
-								if (vehicle)
+								if (npcComponent_->getVehiclesPool())
 								{
-									setPosition(vehicle->getPosition() + surfingData_.offset, false);
+									auto* vehicle = npcComponent_->getVehiclesPool()->get(surfingData_.ID);
+									if (vehicle)
+									{
+										setPositionHandled(vehicle->getPosition() + surfingData_.offset, false);
+									}
 								}
 							}
 							else
@@ -2697,7 +2797,10 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 								IBaseObject* object = nullptr;
 								if (surfingData_.type == PlayerSurfingData::Type::Object)
 								{
-									object = npcComponent_->getObjectsPool()->get(surfingData_.ID);
+									if (npcComponent_->getObjectsPool())
+									{
+										object = npcComponent_->getObjectsPool()->get(surfingData_.ID);
+									}
 								}
 								else if (surfingData_.type == PlayerSurfingData::Type::PlayerObject)
 								{
@@ -2713,22 +2816,28 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 									auto attachData = object->getAttachmentData();
 									if (attachData.type == ObjectAttachmentData::Type::None)
 									{
-										setPosition(object->getPosition() + surfingData_.offset, false);
+										setPositionHandled(object->getPosition() + surfingData_.offset, false);
 									}
 									else if (attachData.type == ObjectAttachmentData::Type::Object)
 									{
-										auto objectAttachedTo = npcComponent_->getObjectsPool()->get(attachData.ID);
-										if (objectAttachedTo)
+										if (npcComponent_->getObjectsPool())
 										{
-											setPosition(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											auto objectAttachedTo = npcComponent_->getObjectsPool()->get(attachData.ID);
+											if (objectAttachedTo)
+											{
+												setPositionHandled(objectAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											}
 										}
 									}
 									else if (attachData.type == ObjectAttachmentData::Type::Vehicle)
 									{
-										auto vehicleAttachedTo = npcComponent_->getVehiclesPool()->get(attachData.ID);
-										if (vehicleAttachedTo)
+										if (npcComponent_->getVehiclesPool())
 										{
-											setPosition(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											auto vehicleAttachedTo = npcComponent_->getVehiclesPool()->get(attachData.ID);
+											if (vehicleAttachedTo)
+											{
+												setPositionHandled(vehicleAttachedTo->getPosition() + attachData.offset + surfingData_.offset, false);
+											}
 										}
 									}
 								}
@@ -2814,7 +2923,7 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 
 								if (shootTime != -1 && Milliseconds(shootTime) <= lastShootTime)
 								{
-									if (ammoInClip_ != 0)
+									if (ammoInClip_ != 0 || infiniteAmmo_)
 									{
 										auto weaponData = WeaponInfo::get(weapon_);
 										if (weaponData.type == PlayerWeaponType_Bullet)
@@ -2835,11 +2944,10 @@ void NPC::tick(Microseconds elapsed, TimePoint now)
 										if (!infiniteAmmo_)
 										{
 											ammo_--;
+											ammoInClip_--;
 										}
 
-										ammoInClip_--;
-
-										bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && (ammo_ != 0 || infiniteAmmo_) && ammoInClip_ == 0;
+										bool needsReloading = hasReloading_ && getWeaponActualClipSize(weapon_) > 0 && ammo_ != 0 && ammoInClip_ == 0 && !infiniteAmmo_;
 										if (needsReloading)
 										{
 											reloadingUpdateTime_ = lastUpdate_;
@@ -2961,7 +3069,7 @@ bool NPC::playNode(int nodeId, NPCMoveType moveType, float moveSpeed, float radi
 
 	// Set initial position and start movement
 	Vector3 nodePosition = currentNode_->getPosition();
-	setPosition(nodePosition, true);
+	setPositionHandled(nodePosition, true);
 
 	// Set link and point information
 	currentNode_->setLink(currentNode_->getLinkId());

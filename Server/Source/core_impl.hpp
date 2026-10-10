@@ -29,6 +29,7 @@
 #include <thread>
 #include <variant>
 #include <utils.hpp>
+#include <openssl/evp.h>
 
 #ifdef OMP_VERSION_HASH
 #define OMP_VERSION_HASH_STR STRINGIFY(OMP_VERSION_HASH)
@@ -319,15 +320,15 @@ private:
 
 	std::map<String, ConfigStorage> defaults;
 
-	String expandEnvironmentVariables(const String& value) const
+	String expandEnvironmentVariablesInRawJSON(const String& jsonText) const
 	{
 		String result;
-		result.reserve(value.length());
+		result.reserve(jsonText.length());
 
 		size_t i = 0;
-		while (i < value.length())
+		while (i < jsonText.length())
 		{
-			const char ch = value[i];
+			const char ch = jsonText[i];
 
 			if (ch != '$')
 			{
@@ -336,14 +337,14 @@ private:
 				continue;
 			}
 
-			if (i + 1 < value.length() && value[i + 1] == '$')
+			if (i + 1 < jsonText.length() && jsonText[i + 1] == '$')
 			{
 				result.push_back('$');
 				i += 2;
 				continue;
 			}
 
-			if (i + 1 >= value.length() || value[i + 1] != '{')
+			if (i + 1 >= jsonText.length() || jsonText[i + 1] != '{')
 			{
 				result.push_back(ch);
 				++i;
@@ -351,31 +352,28 @@ private:
 			}
 
 			const size_t varStart = i + 2;
-			const size_t end = value.find('}', varStart);
+			const size_t end = jsonText.find('}', varStart);
 
 			if (end == String::npos)
 			{
-				result.append(value.substr(i));
+				result.append(jsonText.substr(i));
 				break;
 			}
 
-			const String fullVar = value.substr(varStart, end - varStart);
+			const String fullVar = jsonText.substr(varStart, end - varStart);
 			const size_t defaultPos = fullVar.find(":-");
 
 			const String varName = (defaultPos != String::npos) ? fullVar.substr(0, defaultPos) : fullVar;
+			const String defaultValue = (defaultPos != String::npos) ? fullVar.substr(defaultPos + 2) : "";
 			const char* envValue = std::getenv(varName.c_str());
 
-			if (envValue)
+			if (envValue && envValue[0] != '\0')
 			{
 				result.append(envValue);
 			}
-			else if (defaultPos != String::npos)
+			else if (!defaultValue.empty())
 			{
-				result.append(fullVar.substr(defaultPos + 2));
-			}
-			else
-			{
-				result.append(value.substr(i, end - i + 1));
+				result.append(defaultValue);
 			}
 
 			i = end + 1;
@@ -404,8 +402,7 @@ private:
 			}
 			else if (v.is_string())
 			{
-				String strValue = v.get<String>();
-				processed[key].emplace<String>(expandEnvironmentVariables(strValue));
+				processed[key].emplace<String>(v.get<String>());
 			}
 			else if (v.is_array())
 			{
@@ -415,8 +412,7 @@ private:
 				{
 					if (arrVal.is_string())
 					{
-						String strValue = arrVal.get<String>();
-						vec.emplace_back(expandEnvironmentVariables(strValue));
+						vec.emplace_back(arrVal.get<String>());
 					}
 				}
 			}
@@ -444,7 +440,10 @@ public:
 					nlohmann::json props;
 					try
 					{
-						props = nlohmann::json::parse(ifs, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
+						String fileContent((std::istreambuf_iterator<char>(ifs)),
+							std::istreambuf_iterator<char>());
+						String expandedContent = expandEnvironmentVariablesInRawJSON(fileContent);
+						props = nlohmann::json::parse(expandedContent, nullptr, true /* allow_exceptions */, true /* ignore_comments */);
 					}
 					catch (nlohmann::json::exception const& e)
 					{
@@ -474,6 +473,8 @@ public:
 
 						// Fill any values missing in config with defaults.
 						// Fill default value if invalid type is provided.
+						// if the user provided a string but expected type is different
+						// attempt to parse string to the expected type.
 						for (const auto& kv : Defaults)
 						{
 							auto itr = processed.find(kv.first);
@@ -481,7 +482,67 @@ public:
 							{
 								if (itr->second.index() != kv.second.index())
 								{
-									itr->second = kv.second;
+									// check if we can convert from string
+									bool converted = false;
+									if (itr->second.index() == 1) // User value is String
+									{
+										const String& strVal = std::get<String>(itr->second);
+										switch (kv.second.index())
+										{
+										case 0: // Expected int
+										{
+											try
+											{
+												size_t pos = 0;
+												int intVal = std::stoi(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = intVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 2: // Expected float
+										{
+											try
+											{
+												size_t pos = 0;
+												float floatVal = std::stof(strVal, &pos);
+												if (pos == strVal.length())
+												{
+													itr->second = floatVal;
+													converted = true;
+												}
+											}
+											catch (...)
+											{
+											}
+											break;
+										}
+										case 4: // Expected bool
+										{
+											if (strVal == "true" || strVal == "1")
+											{
+												itr->second = true;
+												converted = true;
+											}
+											else if (strVal == "false" || strVal == "0")
+											{
+												itr->second = false;
+												converted = true;
+											}
+											break;
+										}
+										}
+									}
+									if (!converted)
+									{
+										itr->second = kv.second;
+									}
 								}
 								continue;
 							}
@@ -667,6 +728,17 @@ public:
 
 		bans.clear();
 		loadBans();
+
+		// The freshly loaded bans need to be applied to the networks again;
+		// otherwise only the config copy is updated and the networks no longer
+		// reject any of the banned addresses.
+		for (INetwork* network : core.getNetworks())
+		{
+			for (const BanEntry& ban : bans)
+			{
+				network->ban(ban);
+			}
+		}
 	}
 
 	void writeBans() override
@@ -2178,17 +2250,10 @@ public:
 	{
 		String input(String(password) + String(salt));
 
-		SHA256_CTX ctx {};
-		if (!SHA256_Init(&ctx))
-		{
-			return false;
-		}
-		if (!SHA256_Update(&ctx, input.data(), input.length()))
-		{
-			return false;
-		}
 		unsigned char md[SHA256_DIGEST_LENGTH];
-		if (!SHA256_Final(md, &ctx))
+		size_t md_len = 0;
+
+		if (!EVP_Q_digest(NULL, "SHA256", NULL, input.data(), input.length(), md, &md_len))
 		{
 			return false;
 		}

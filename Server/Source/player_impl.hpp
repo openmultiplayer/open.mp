@@ -118,6 +118,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool allowTeleport_;
 	bool isUsingOfficialClient_;
 	bool isUsingOmp_;
+	bool leavingSpec_;
 
 	PrimarySyncUpdateType primarySyncUpdateType_;
 	int secondarySyncUpdateType_;
@@ -202,6 +203,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		defaultObjectsRemoved_ = 0;
 		primarySyncUpdateType_ = PrimarySyncUpdateType::None;
 		secondarySyncUpdateType_ = 0;
+		leavingSpec_ = false;
 		lastScoresAndPings_ = Time::now();
 		IExtensible::resetExtensions();
 	}
@@ -261,6 +263,7 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 		, allowTeleport_(false)
 		, isUsingOfficialClient_(params.isUsingOfficialClient)
 		, isUsingOmp_(params.isUsingOmp)
+		, leavingSpec_(false)
 		, primarySyncUpdateType_(PrimarySyncUpdateType::None)
 		, secondarySyncUpdateType_(0)
 		, lastScoresAndPings_(Time::now())
@@ -328,6 +331,11 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 	bool isUsingOmp() const override
 	{
 		return isUsingOmp_;
+	}
+
+	bool isLeavingSpectatorMode() const override
+	{
+		return leavingSpec_;
 	}
 
 	void setState(PlayerState state, bool dispatchEvents = true);
@@ -631,6 +639,8 @@ struct Player final : public IPlayer, public PoolIDProvider, public NoCopy
 			toSpawn_ = true;
 			spectateData_.type = PlayerSpectateData::ESpectateType::None;
 			spectateData_.spectateID = INVALID_PLAYER_ID;
+
+			leavingSpec_ = true;
 		}
 		else
 		{

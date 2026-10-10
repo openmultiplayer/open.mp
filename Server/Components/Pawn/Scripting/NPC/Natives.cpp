@@ -74,6 +74,12 @@ SCRIPT_API(NPC_SetPos, bool(INPC& npc, Vector3 position))
 	return true;
 }
 
+SCRIPT_API(NPC_SetVehiclePos, bool(INPC& npc, Vector3 position))
+{
+	npc.setVehiclePosition(position, true);
+	return true;
+}
+
 SCRIPT_API(NPC_GetPos, bool(INPC& npc, Vector3& position))
 {
 	position = npc.getPosition();
@@ -83,6 +89,12 @@ SCRIPT_API(NPC_GetPos, bool(INPC& npc, Vector3& position))
 SCRIPT_API(NPC_SetRot, bool(INPC& npc, Vector3 rotation))
 {
 	npc.setRotation(rotation, true);
+	return true;
+}
+
+SCRIPT_API(NPC_SetVehicleRot, bool(INPC& npc, Vector3 rotation))
+{
+	npc.setVehicleRotation(rotation, true);
 	return true;
 }
 
@@ -150,7 +162,7 @@ SCRIPT_API(NPC_SetSkin, bool(INPC& npc, int model))
 	return true;
 }
 
-SCRIPT_API(NPC_GetSkin, bool(INPC& npc))
+SCRIPT_API(NPC_GetSkin, int(INPC& npc))
 {
 	auto player = npc.getPlayer();
 	if (player)
@@ -1129,7 +1141,7 @@ SCRIPT_API(NPC_GetPosMovingTo, bool(INPC& npc, Vector3& position))
 SCRIPT_API(NPC_SetAngleToPos, bool(INPC& npc, Vector3 position))
 {
 	auto vec = position - npc.getPosition();
-	auto angle = getAngleOfLine(vec.x, vec.z);
+	auto angle = getAngleOfLine(vec.x, vec.y);
 	openmp_scripting::NPC_SetFacingAngle(npc, angle);
 	return true;
 }
