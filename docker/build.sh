@@ -24,8 +24,18 @@
 [[ -z "$TARGET_BUILD_ARCH" ]] \
 && target_build_arch=x86 \
 || target_build_arch="$TARGET_BUILD_ARCH"
+# Available container runtimes: [docker], podman, other 
+[[ -z "$CONTAINER_RUNTIME" ]] \
+&& container_runtime=docker \
+|| container_runtime="$CONTAINER_RUNTIME"
+[[ "$container_runtime" == "podman" ]] \
+&& volume_suffix=":Z" \
+|| volume_suffix=""
+[[ "$container_runtime" == "podman" ]] \
+&& userns_option="--userns=keep-id" \
+|| userns_option=""
 
-docker build \
+$container_runtime build \
     -t open.mp/build:ubuntu-${ubuntu_version} \
     build_ubuntu-${ubuntu_version}/ \
 || exit 1
@@ -38,13 +48,14 @@ for folder in "${folders[@]}"; do
     sudo chown -R 1000:1000 ${folder} || exit 1
 done
 
-docker run \
+$container_runtime run \
     --rm \
     -t \
+    $userns_option \
     -w /code \
-    -v $PWD/..:/code \
-    -v $PWD/build:/code/build \
-    -v $PWD/conan2:/home/user/.conan2 \
+    -v $PWD/..:/code${volume_suffix} \
+    -v $PWD/build:/code/build${volume_suffix} \
+    -v $PWD/conan2:/home/user/.conan2${volume_suffix} \
     -e CONFIG=${config} \
     -e TARGET_BUILD_ARCH=${target_build_arch} \
     -e BUILD_SHARED=${build_shared} \
