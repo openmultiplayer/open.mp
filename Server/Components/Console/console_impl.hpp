@@ -16,6 +16,7 @@
 #include <iostream>
 #include <locale>
 #include <mutex>
+#include <queue>
 #include <netcode.hpp>
 #include <network.hpp>
 #include <sdk.hpp>
@@ -23,7 +24,10 @@
 
 #ifndef WIN32
 #include <cerrno>
+#include <fcntl.h>
 #include <poll.h>
+#include <pthread.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #endif
 
@@ -62,17 +66,19 @@ private:
 	{
 		std::atomic_bool valid;
 		ConsoleComponent* component;
-		std::atomic_bool isRunning;
 	};
 
 	ICore* core = nullptr;
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
 	std::mutex cmdMutex;
-	std::atomic_bool newCmd = false;
-	String cmd;
+	std::queue<String> pendingCommands;
 	ThreadProcData* threadData;
 	std::thread cinThread;
-	std::thread::native_handle_type nativeThreadHandle;
+#ifndef WIN32
+	int inputFd = STDIN_FILENO;
+	int stopReadFd = -1;
+	int stopWriteFd = -1;
+#endif
 
 	struct PlayerRconCommandHandler : public SingleNetworkInEventHandler
 	{
@@ -157,6 +163,12 @@ private:
 		}
 	} playerRconCommandHandler;
 
+	void enqueueCommand(String command)
+	{
+		std::lock_guard<std::mutex> lock(cmdMutex);
+		pendingCommands.emplace(std::move(command));
+	}
+
 public:
 	void sendMessage(const ConsoleCommandSenderData& recipient, StringView message) override
 	{
@@ -218,10 +230,51 @@ public:
 
 		NetCode::Packet::PlayerRconCommand::addEventHandler(*core, &playerRconCommandHandler);
 
-		threadData = new ThreadProcData { true, this, true };
+#ifndef WIN32
+		int stopPipe[2];
+		if (pipe(stopPipe) == -1)
+		{
+			core->logLn(LogLevel::Error, "Console: failed to create stdin reader wake pipe (errno %d)", errno);
+			return;
+		}
+		stopReadFd = stopPipe[0];
+		stopWriteFd = stopPipe[1];
+		if (fcntl(stopReadFd, F_SETFD, FD_CLOEXEC) == -1
+			|| fcntl(stopWriteFd, F_SETFD, FD_CLOEXEC) == -1)
+		{
+			const int error = errno;
+			close(stopReadFd);
+			close(stopWriteFd);
+			stopReadFd = stopWriteFd = -1;
+			core->logLn(LogLevel::Error, "Console: failed to configure stdin reader wake pipe (errno %d)", error);
+			return;
+		}
+
+#ifdef __linux__
+		// Reopen non-regular stdin to get independent file status flags. dup()
+		// would share O_NONBLOCK with components using fd 0. Do not reopen a
+		// regular file: that would reset its offset and replay earlier input.
+		struct stat stdinStat;
+		if (fstat(STDIN_FILENO, &stdinStat) == 0 && !S_ISREG(stdinStat.st_mode))
+		{
+			int fd = open("/proc/self/fd/0", O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
+			if (fd != -1)
+			{
+				inputFd = fd;
+			}
+			else
+			{
+				core->logLn(LogLevel::Warning, "Console: could not open an independent non-blocking stdin handle (errno %d)", errno);
+			}
+		}
+#endif
+#endif
+
+		threadData = new ThreadProcData { true, this };
 		cinThread = std::thread(ThreadProc, threadData);
-		nativeThreadHandle = cinThread.native_handle();
+#ifdef WIN32
 		cinThread.detach();
+#endif
 	}
 
 	void onReady() override
@@ -243,42 +296,45 @@ public:
 #ifndef WIN32
 	static void ThreadProc(ThreadProcData* threadData)
 	{
-		// Read stdin with a blocking poll()+read() pair instead of
-		// std::getline(std::wcin). Some edge-case plugins/components can flip fd 0
-		// into non-blocking mode, which would make the wide-stream getline() fail
-		// with EAGAIN and permanently kill this thread. poll() also ignores
-		// O_NONBLOCK, and being a cancellation point it keeps the destructor's
-		// immediate pthread_cancel() working.
+		ConsoleComponent* component = threadData->component;
 		char buffer[1024];
 		String pending;
 
-		while (true)
+		while (threadData->valid)
 		{
-			pollfd fd { STDIN_FILENO, POLLIN, 0 };
-			if (poll(&fd, 1, -1) < 0)
+			pollfd fds[2] {
+				{ component->inputFd, POLLIN, 0 },
+				{ component->stopReadFd, POLLIN, 0 },
+			};
+			if (poll(fds, 2, -1) < 0)
 			{
 				if (errno == EINTR)
 				{
 					continue;
 				}
-				threadData->isRunning = false;
+				return;
+			}
+			if (fds[1].revents || !threadData->valid)
+			{
 				return;
 			}
 
-			const ssize_t bytesRead = read(STDIN_FILENO, buffer, sizeof(buffer));
+			const ssize_t bytesRead = read(component->inputFd, buffer, sizeof(buffer));
 			if (bytesRead < 0)
 			{
 				if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
 				{
 					continue;
 				}
-				threadData->isRunning = false;
 				return;
 			}
 			if (bytesRead == 0)
 			{
-				// EOF, handled the same way as the old getline() failure.
-				threadData->isRunning = false;
+				// getline() also returns the final, unterminated line at EOF.
+				if (!pending.empty() && threadData->valid)
+				{
+					component->enqueueCommand(std::move(pending));
+				}
 				return;
 			}
 
@@ -291,16 +347,14 @@ public:
 					continue;
 				}
 
-				// Normalise CRLF (and a lone CR from a raw-mode terminal) to one line break.
+				// Normalise CRLF (and a lone CR) to one line break.
 				if (c == '\r' && i + 1 < bytesRead && buffer[i + 1] == '\n')
 				{
 					++i;
 				}
-				if (!pending.empty())
+				if (!pending.empty() && threadData->valid)
 				{
-					std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
-					threadData->component->cmd = std::move(pending);
-					threadData->component->newCmd = true;
+					component->enqueueCommand(std::move(pending));
 					pending.clear();
 				}
 			}
@@ -316,14 +370,10 @@ public:
 				std::getline(std::wcin, line)
 				&& threadData->valid)
 			{
-				std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
-
-				threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
-				threadData->component->newCmd = true;
+				threadData->component->enqueueCommand(std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line));
 			}
 			else
 			{
-				threadData->isRunning = false;
 				return;
 			}
 		}
@@ -342,10 +392,24 @@ public:
 				cinThread.join();
 			}
 #else
-			if (threadData->isRunning)
+			const char wake = 0;
+			ssize_t wakeResult;
+			do
 			{
-				pthread_cancel(nativeThreadHandle);
+				wakeResult = write(stopWriteFd, &wake, sizeof(wake));
+			} while (wakeResult == -1 && errno == EINTR);
+			if (wakeResult == -1 || inputFd == STDIN_FILENO)
+			{
+				// The original stdin may still block in read().
+				pthread_cancel(cinThread.native_handle());
 			}
+			cinThread.join();
+			if (inputFd != STDIN_FILENO)
+			{
+				close(inputFd);
+			}
+			close(stopReadFd);
+			close(stopWriteFd);
 #endif
 
 			delete threadData;
@@ -413,15 +477,17 @@ public:
 
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
-		bool expected = true;
-		if (newCmd.compare_exchange_weak(expected, false))
+		String command;
 		{
-			cmdMutex.lock();
-			String command = cmd;
-			cmdMutex.unlock();
-
-			send(command);
+			std::lock_guard<std::mutex> lock(cmdMutex);
+			if (pendingCommands.empty())
+			{
+				return;
+			}
+			command = std::move(pendingCommands.front());
+			pendingCommands.pop();
 		}
+		send(command);
 	}
 
 	bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override;
