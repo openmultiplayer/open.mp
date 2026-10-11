@@ -9,6 +9,7 @@
 #include "../Types.hpp"
 #include "../../format.hpp"
 #include "sdk.hpp"
+#include <Server/Components/NPCs/npcs.hpp>
 #include <iostream>
 
 SCRIPT_API(SendClientMessage, bool(IPlayer& player, uint32_t colour, cell const* format))
@@ -476,6 +477,16 @@ SCRIPT_API_FAILRET(GetPlayerCameraTargetObject, INVALID_OBJECT_ID, int(IPlayer& 
 SCRIPT_API_FAILRET(GetPlayerCameraTargetVehicle, INVALID_VEHICLE_ID, int(IPlayer& player))
 {
 	IVehicle* target = player.getCameraTargetVehicle();
+	if (target)
+	{
+		return target->getID();
+	}
+	return FailRet;
+}
+
+SCRIPT_API_FAILRET(GetPlayerCameraTargetNPC, INVALID_PLAYER_ID, int(IPlayer& player))
+{
+	INPC* target = player.getCameraTargetNPC();
 	if (target)
 	{
 		return target->getID();

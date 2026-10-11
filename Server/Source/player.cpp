@@ -181,6 +181,39 @@ IActor* Player::getCameraTargetActor()
 	return target;
 }
 
+INPC* Player::getCameraTargetNPC()
+{
+	if (!enableCameraTargeting_)
+	{
+		return nullptr;
+	}
+
+	IPlayer* target = pool_.get(cameraTargetPlayer_);
+	if (!target)
+	{
+		return nullptr;
+	}
+
+	if (!target->isBot())
+	{
+		return nullptr;
+	}
+
+	if (!target->isStreamedInForPlayer(*this))
+	{
+		return nullptr;
+	}
+
+	INPCComponent* component = pool_.npcsComponent_;
+	if (!component)
+	{
+		return nullptr;
+	}
+
+	INPC* npc = component->get(target->getID());
+	return npc;
+}
+
 IActor* Player::getTargetActor()
 {
 	IActorsComponent* component = pool_.actorsComponent;

@@ -574,6 +574,12 @@ OMP_CAPI(Player_GetCameraTargetVehicle, objectPtr(objectPtr player))
 	return player_->getCameraTargetVehicle();
 }
 
+OMP_CAPI(Player_GetCameraTargetNPC, objectPtr(objectPtr player))
+{
+	POOL_ENTITY_RET(players, IPlayer, player, player_, nullptr);
+	return player_->getCameraTargetNPC();
+}
+
 OMP_CAPI(Player_PutInVehicle, bool(objectPtr player, objectPtr vehicle, int seat))
 {
 	POOL_ENTITY_RET(players, IPlayer, player, player_, false);
