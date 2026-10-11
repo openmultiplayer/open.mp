@@ -20,6 +20,7 @@
 #include <network.hpp>
 #include <sdk.hpp>
 #include <thread>
+#include "console_encoding.hpp"
 
 using namespace Impl;
 
@@ -63,7 +64,10 @@ private:
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
 	std::mutex cmdMutex;
 	std::atomic_bool newCmd = false;
-	String cmd;
+	std::wstring cmd;
+#ifdef WIN32
+	inline static thread_local unsigned localReplyCodepage = 0;
+#endif
 	ThreadProcData* threadData;
 	std::thread cinThread;
 	std::thread::native_handle_type nativeThreadHandle;
@@ -154,6 +158,16 @@ private:
 public:
 	void sendMessage(const ConsoleCommandSenderData& recipient, StringView message) override
 	{
+#ifdef WIN32
+		// Replies to local input use the command's byte encoding; logLnU8 expects UTF-8.
+		String localReply;
+		if (recipient.sender == ConsoleCommandSender::Console && localReplyCodepage != 0
+			&& ConsoleEncoding::toUtf8(std::string_view(message.data(), message.size()), localReplyCodepage, localReply))
+		{
+			core->logLnU8(LogLevel::Message, "%.*s", PRINT_VIEW(localReply));
+			return;
+		}
+#endif
 		// We don't output UTF-8 for ingame commands
 		if (recipient.sender == ConsoleCommandSender::Player)
 		{
@@ -203,6 +217,22 @@ public:
 		return SemanticVersion(OMP_VERSION_MAJOR, OMP_VERSION_MINOR, OMP_VERSION_PATCH, BUILD_NUMBER);
 	}
 
+	void provideConfiguration(ILogger& logger, IEarlyConfig& config, bool defaults) override
+	{
+#ifdef WIN32
+		// Preserve UTF-8 by default; legacy servers can select their game code page.
+		if (defaults || config.getType("console.input_codepage") == ConfigOptionType_None)
+		{
+			config.setInt("console.input_codepage", CP_UTF8);
+		}
+		if (defaults || config.getType("rcon.utf8_command_codepage") == ConfigOptionType_None)
+		{
+			// Zero leaves remote commands byte-for-byte unchanged.
+			config.setInt("rcon.utf8_command_codepage", 0);
+		}
+#endif
+	}
+
 	void onLoad(ICore* core) override
 	{
 		this->core = core;
@@ -245,7 +275,8 @@ public:
 			{
 				std::scoped_lock<std::mutex> lock(threadData->component->cmdMutex);
 
-				threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
+				// Keep Unicode intact until the main thread applies the configured game encoding.
+				threadData->component->cmd = line;
 				threadData->component->newCmd = true;
 			}
 			else
@@ -342,10 +373,33 @@ public:
 		bool expected = true;
 		if (newCmd.compare_exchange_weak(expected, false))
 		{
-			cmdMutex.lock();
-			String command = cmd;
-			cmdMutex.unlock();
-
+			std::wstring line;
+			{
+				std::scoped_lock<std::mutex> lock(cmdMutex);
+				line = cmd;
+			}
+			String command;
+#ifdef WIN32
+			const int* setting = core->getConfig().getInt("console.input_codepage");
+			const unsigned codepage = setting ? static_cast<unsigned>(*setting) : CP_UTF8;
+			if (!ConsoleEncoding::encode(line, codepage, command))
+			{
+				core->logLn(LogLevel::Error, "Local console command was not executed: text cannot be represented in console.input_codepage (%u).", codepage);
+				return;
+			}
+			struct ReplyEncodingScope
+			{
+				unsigned previous;
+				ReplyEncodingScope(unsigned value)
+					: previous(localReplyCodepage)
+				{
+					localReplyCodepage = value;
+				}
+				~ReplyEncodingScope() { localReplyCodepage = previous; }
+			} scope(codepage == 0 ? GetACP() : codepage);
+#else
+			command = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
+#endif
 			send(command);
 		}
 	}

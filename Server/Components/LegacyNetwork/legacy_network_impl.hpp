@@ -29,8 +29,8 @@ using namespace Impl;
 #define MAX_MTU_037 576
 #define MAX_MTU_DL MAXIMUM_MTU_SIZE
 
-static const StaticArray<StringView, 2> ProtectedRules = {
-	"version", "allowed_clients"
+static const StaticArray<StringView, 3> ProtectedRules = {
+	"version", "allowed_clients", "sc_d16"
 };
 
 class Core;
@@ -45,6 +45,7 @@ private:
 	StaticArray<RakNet::RakPeer::RemoteSystemStruct*, PLAYER_POOL_SIZE> playerRemoteSystem;
 	Milliseconds cookieSeedTime;
 	TimePoint lastCookieSeed;
+	TimePoint lastDetailedQueryRefresh {};
 	INPCComponent* npcComponent = nullptr;
 
 public:
