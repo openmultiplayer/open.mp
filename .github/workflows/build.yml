@@ -273,7 +273,9 @@ jobs:
           bind_mount_repository: true
           cpu: cortex-a7
           commands: |
-            apt update && apt install -y ninja-build clang-11 python3-pip libstdc++6 libc6
+            # Keep the Bullseye build target, using its final security package snapshot after EOL.
+            sed -i 's#http://security.debian.org/debian-security#https://snapshot.debian.org/archive/debian-security/20260901T000000Z/#' /etc/apt/sources.list /etc/apt/sources.list.d/*.list
+            apt-get -o Acquire::Check-Valid-Until=false update && apt-get install -y ninja-build clang-11 python3-pip libstdc++6 libc6
             pip install --upgrade pip setuptools wheel
             pip3 install --user conan
             pip3 install --user -v "cmake==3.23.3"

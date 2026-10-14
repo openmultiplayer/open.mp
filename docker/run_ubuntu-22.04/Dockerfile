@@ -6,9 +6,11 @@ RUN \
     apt-get install -y --no-install-recommends \
         wget \
         libstdc++6:i386 \
+        libatomic1:i386 \
         tzdata \
         openssl \
         libssl3 \
+        libssl3:i386 \
         libssl-dev \
     && \
     useradd -m user
