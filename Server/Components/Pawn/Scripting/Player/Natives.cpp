@@ -609,6 +609,11 @@ SCRIPT_API(EditAttachedObject, bool(IPlayerObjectData& data, int index))
 	return true;
 }
 
+SCRIPT_API(IsPlayerEditingAttachedObject, bool(IPlayerObjectData& data))
+{
+	return data.getEditingType() == ObjectEditingType::ObjectEditingType_AttachedObject;
+}
+
 SCRIPT_API(EnablePlayerCameraTarget, bool(IPlayer& player, bool enable))
 {
 	player.useCameraTargeting(enable);

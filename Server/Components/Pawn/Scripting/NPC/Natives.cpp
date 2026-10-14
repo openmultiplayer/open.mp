@@ -80,6 +80,12 @@ SCRIPT_API(NPC_SetVehiclePos, bool(INPC& npc, Vector3 position))
 	return true;
 }
 
+SCRIPT_API(NPC_GetVehiclePos, bool(INPC& npc, Vector3& position))
+{
+	position = npc.getVehiclePosition();
+	return true;
+}
+
 SCRIPT_API(NPC_GetPos, bool(INPC& npc, Vector3& position))
 {
 	position = npc.getPosition();
@@ -95,6 +101,12 @@ SCRIPT_API(NPC_SetRot, bool(INPC& npc, Vector3 rotation))
 SCRIPT_API(NPC_SetVehicleRot, bool(INPC& npc, Vector3 rotation))
 {
 	npc.setVehicleRotation(rotation, true);
+	return true;
+}
+
+SCRIPT_API(NPC_GetVehicleRot, bool(INPC& npc, Vector3& rotation))
+{
+	rotation = npc.getVehicleRotation().ToEuler();
 	return true;
 }
 
