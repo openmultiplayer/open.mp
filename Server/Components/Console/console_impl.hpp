@@ -56,6 +56,7 @@ private:
 	{
 		std::atomic_bool valid;
 		ConsoleComponent* component;
+		std::atomic_bool isRunning;
 	};
 
 	ICore* core = nullptr;
@@ -211,7 +212,7 @@ public:
 
 		NetCode::Packet::PlayerRconCommand::addEventHandler(*core, &playerRconCommandHandler);
 
-		threadData = new ThreadProcData { true, this };
+		threadData = new ThreadProcData { true, this, true };
 		cinThread = std::thread(ThreadProc, threadData);
 		nativeThreadHandle = cinThread.native_handle();
 		cinThread.detach();
@@ -249,6 +250,7 @@ public:
 			}
 			else
 			{
+				threadData->isRunning = false;
 				return;
 			}
 		}
@@ -266,7 +268,10 @@ public:
 				cinThread.join();
 			}
 #else
-			pthread_cancel(nativeThreadHandle);
+			if (threadData->isRunning)
+			{
+				pthread_cancel(nativeThreadHandle);
+			}
 #endif
 
 			delete threadData;

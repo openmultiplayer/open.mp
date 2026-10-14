@@ -110,8 +110,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 
 				npc.resetKeys();
 				npc.setVelocity({ 0.0f, 0.0f, 0.0f }, false);
-				npc.setPosition(syncData.Position, false);
-				npc.setRotation(syncData.Rotation, false);
+				npc.setPositionHandled(syncData.Position, false);
+				npc.setRotationHandled(syncData.Rotation, false);
 
 				npc.sendDriverSync();
 			}
@@ -123,8 +123,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 				const auto& syncData = recordData_.onFootData[currentIndex_];
 				npc.resetKeys();
 				npc.setVelocity({ 0.0f, 0.0f, 0.0f }, false);
-				npc.setPosition(syncData.Position, false);
-				npc.setRotation(syncData.Rotation, false);
+				npc.setPositionHandled(syncData.Position, false);
+				npc.setRotationHandled(syncData.Rotation, false);
 				npc.resetAnimation();
 
 				npc.sendFootSync();
@@ -147,8 +147,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 				if (vehicle)
 				{
 					npc.setKeys(syncData.UpDown, syncData.LeftRight, syncData.Keys);
-					npc.setPosition(syncData.Position, false);
-					npc.setRotation(syncData.Rotation, false);
+					npc.setPositionHandled(syncData.Position, false);
+					npc.setRotationHandled(syncData.Rotation, false);
 					npc.setVelocity(syncData.Velocity, false);
 					npc.setVehicleHealth(syncData.Health);
 					npc.setHealth(syncData.PlayerHealthArmour.x);
@@ -177,8 +177,8 @@ bool NPCPlayback::process(NPC& npc, TimePoint now)
 				const auto& syncData = recordData_.onFootData[currentIndex_];
 
 				npc.setKeys(syncData.UpDown, syncData.LeftRight, syncData.Keys);
-				npc.setPosition(syncData.Position, false);
-				npc.setRotation(syncData.Rotation, false);
+				npc.setPositionHandled(syncData.Position, false);
+				npc.setRotationHandled(syncData.Rotation, false);
 				npc.setHealth(syncData.HealthArmour.x);
 				npc.setArmour(syncData.HealthArmour.y);
 				npc.setWeapon(syncData.Weapon);

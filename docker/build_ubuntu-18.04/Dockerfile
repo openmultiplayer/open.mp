@@ -20,7 +20,7 @@ RUN \
     mv cmake-3.20.6-linux-x86_64       /opt/cmake-3.20.6 && \
     ln -sf  /opt/cmake-3.20.6/bin/*    /usr/bin/ && \
     useradd -m user && \
-    su user -c 'pip3 install --user -v "conan==1.57.0"'
+    su user -c 'pip3 install --user conan'
 
 USER user
 

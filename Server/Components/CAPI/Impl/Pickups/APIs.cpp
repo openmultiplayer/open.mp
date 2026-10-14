@@ -62,8 +62,9 @@ OMP_CAPI(Pickup_AddStatic, bool(int model, int type, float x, float y, float z, 
 OMP_CAPI(Pickup_Destroy, bool(objectPtr pickup))
 {
 	POOL_ENTITY_RET(pickups, IPickup, pickup, p, false);
+	int legacyID = pickups->toLegacyID(p->getID());
 	pickups->release(p->getID());
-	pickups->releaseLegacyID(pickups->toLegacyID(p->getID()));
+	pickups->releaseLegacyID(legacyID);
 	return true;
 }
 
