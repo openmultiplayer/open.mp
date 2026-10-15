@@ -498,8 +498,7 @@ SCRIPT_API(NPC_ExitVehicle, bool(INPC& npc))
 
 SCRIPT_API(NPC_PutInVehicle, bool(INPC& npc, IVehicle& vehicle, int seatId))
 {
-	npc.putInVehicle(vehicle, seatId);
-	return true;
+	return npc.putInVehicle(vehicle, seatId);
 }
 
 SCRIPT_API(NPC_RemoveFromVehicle, bool(INPC& npc))
