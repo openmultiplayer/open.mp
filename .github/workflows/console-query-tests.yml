@@ -1,0 +1,28 @@
+name: Console and query regression tests
+on:
+  push:
+    paths:
+      - 'Server/Components/Console/**'
+      - 'Server/Components/LegacyNetwork/**'
+      - 'Tests/ConsoleQuery/**'
+      - '.github/workflows/console-query-tests.yml'
+  pull_request:
+    paths:
+      - 'Server/Components/Console/**'
+      - 'Server/Components/LegacyNetwork/**'
+      - 'Tests/ConsoleQuery/**'
+      - '.github/workflows/console-query-tests.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  unit:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - run: cmake -S Tests/ConsoleQuery -B build/regression -DCMAKE_BUILD_TYPE=Release
+      - run: cmake --build build/regression --config Release
+      - run: ctest --test-dir build/regression -C Release --output-on-failure

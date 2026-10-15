@@ -10,6 +10,9 @@
 #include "Server/Components/Console/console.hpp"
 #include "sdk.hpp"
 #include <map>
+#include <deque>
+#include <mutex>
+#include "detailed_players.hpp"
 
 using namespace Impl;
 
@@ -38,6 +41,7 @@ public:
 	Span<const char> handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen);
 	void handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen);
 	void buildRulesBuffer();
+	void refreshDetailedPlayers();
 
 	void buildPlayerDependentBuffers(IPlayer* except = nullptr)
 	{
@@ -179,6 +183,12 @@ private:
 	bool passworded = false;
 	bool logQueries = false;
 	bool rconEnabled = false;
+	std::mutex detailedMutex;
+	uint32_t detailedGeneration = 0;
+	std::deque<DetailedPlayersQuery::Snapshot> detailedSnapshots;
+	std::vector<char> legacyDetailedPlayers;
+	std::vector<char> detailedResponse;
+	Span<const char> detailedQuery(Span<const char> buffer);
 
 	std::unique_ptr<char[]> playerListBuffer;
 	size_t playerListBufferLength = 0;
