@@ -21,6 +21,11 @@
 #include <sdk.hpp>
 #include <thread>
 
+#ifndef WIN32
+#include <fcntl.h>
+#include <unistd.h>
+#endif
+
 using namespace Impl;
 
 class PlayerConsoleData final : public IPlayerConsoleData
@@ -247,6 +252,26 @@ public:
 
 				threadData->component->cmd = std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line);
 				threadData->component->newCmd = true;
+			}
+			else if (threadData->valid)
+			{
+#ifndef WIN32
+				// A plugin or component (one embedding node.js for example) may
+				// have switched stdin to non-blocking mode, making `read()` fail
+				// with EAGAIN and `std::getline` set failbit.  Restore the
+				// blocking mode and retry instead of killing the reader thread.
+				int flags = fcntl(STDIN_FILENO, F_GETFL);
+				if (flags != -1 && (flags & O_NONBLOCK))
+				{
+					if (fcntl(STDIN_FILENO, F_SETFL, flags & ~O_NONBLOCK) != -1)
+					{
+						std::wcin.clear();
+						continue;
+					}
+				}
+#endif
+				threadData->isRunning = false;
+				return;
 			}
 			else
 			{
