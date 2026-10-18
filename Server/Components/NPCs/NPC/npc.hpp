@@ -262,6 +262,10 @@ public:
 
 	void setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate) override;
 
+	Vector3 getVehiclePosition() const override;
+
+	GTAQuat getVehicleRotation() const override;
+
 	void setPositionHandled(const Vector3& position, bool immediateUpdate)
 	{
 		if (vehicle_ && vehicleSeat_ != SEAT_NONE)
