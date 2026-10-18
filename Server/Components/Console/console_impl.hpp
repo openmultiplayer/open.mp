@@ -12,23 +12,25 @@
 #include <Server/Components/Console/console.hpp>
 #include <utils.hpp>
 #include <atomic>
-#include <codecvt>
-#include <iostream>
-#include <locale>
+#include <cstdio>
+#include <memory>
 #include <mutex>
-#include <queue>
 #include <netcode.hpp>
 #include <network.hpp>
 #include <sdk.hpp>
+#include <string>
 #include <thread>
+#include <vector>
 
 #ifndef WIN32
 #include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <fcntl.h>
 #include <poll.h>
-#include <pthread.h>
-#include <sys/stat.h>
 #include <unistd.h>
+#else
+#include <windows.h>
 #endif
 
 using namespace Impl;
@@ -62,6 +64,10 @@ public:
 class ConsoleComponent final : public IConsoleComponent, public CoreEventHandler, public ConsoleEventHandler, public PlayerConnectEventHandler
 {
 private:
+	// Hard limits to keep a runaway input stream from growing memory without bound.
+	static constexpr size_t MAX_LINE_LENGTH = 4096;
+	static constexpr size_t MAX_PENDING_COMMANDS = 4096;
+
 	struct ThreadProcData
 	{
 		std::atomic_bool valid;
@@ -71,13 +77,22 @@ private:
 	ICore* core = nullptr;
 	DefaultEventDispatcher<ConsoleEventHandler> eventDispatcher;
 	std::mutex cmdMutex;
-	std::queue<String> pendingCommands;
-	ThreadProcData* threadData;
+	std::vector<String> pendingCmds;
+	std::vector<String> tickCmds; // reused by onTick to avoid per-tick allocation
+	std::atomic_bool cmdOverflowWarned { false };
+	ThreadProcData* threadData = nullptr;
 	std::thread cinThread;
 #ifndef WIN32
-	int inputFd = STDIN_FILENO;
-	int stopReadFd = -1;
-	int stopWriteFd = -1;
+	// Our own fd for reading input. When stdin is a TTY we reopen the
+	// terminal so we get a file description with independent file status
+	// flags (e.g. O_NONBLOCK) and offset, rather than sharing fd 0's.
+	// Note this is NOT an independent data stream: on a pty both fds still
+	// read the same queue, which is only safe because we are the sole reader.
+	int inputFd = -1;
+	// Self-pipe used to wake the reader thread from poll() during shutdown.
+	int wakePipe[2] = { -1, -1 };
+#else
+	HANDLE stdinHandle = INVALID_HANDLE_VALUE;
 #endif
 
 	struct PlayerRconCommandHandler : public SingleNetworkInEventHandler
@@ -163,12 +178,6 @@ private:
 		}
 	} playerRconCommandHandler;
 
-	void enqueueCommand(String command)
-	{
-		std::lock_guard<std::mutex> lock(cmdMutex);
-		pendingCommands.emplace(std::move(command));
-	}
-
 public:
 	void sendMessage(const ConsoleCommandSenderData& recipient, StringView message) override
 	{
@@ -191,10 +200,11 @@ public:
 			}
 			break;
 		case ConsoleCommandSender::Custom:
-		{
-			recipient.handler->handleConsoleMessage(message);
+			if (recipient.handler)
+			{
+				recipient.handler->handleConsoleMessage(message);
+			}
 			break;
-		}
 		default:
 			break;
 		}
@@ -211,8 +221,7 @@ public:
 	}
 
 	ConsoleComponent()
-		: threadData(nullptr)
-		, playerRconCommandHandler(*this)
+		: playerRconCommandHandler(*this)
 	{
 	}
 
@@ -231,50 +240,80 @@ public:
 		NetCode::Packet::PlayerRconCommand::addEventHandler(*core, &playerRconCommandHandler);
 
 #ifndef WIN32
-		int stopPipe[2];
-		if (pipe(stopPipe) == -1)
+		// If stdin is a TTY, reopen it to get a file description with its own
+		// status flags. Never fcntl() fd 0 directly: its file description is
+		// shared with the host process and any other readers
+		// so changing its flags — such as clearing O_NONBLOCK — would
+		// silently alter their blocking behaviour.
+		if (isatty(STDIN_FILENO))
 		{
-			core->logLn(LogLevel::Error, "Console: failed to create stdin reader wake pipe (errno %d)", errno);
-			return;
-		}
-		stopReadFd = stopPipe[0];
-		stopWriteFd = stopPipe[1];
-		if (fcntl(stopReadFd, F_SETFD, FD_CLOEXEC) == -1
-			|| fcntl(stopWriteFd, F_SETFD, FD_CLOEXEC) == -1)
-		{
-			const int error = errno;
-			close(stopReadFd);
-			close(stopWriteFd);
-			stopReadFd = stopWriteFd = -1;
-			core->logLn(LogLevel::Error, "Console: failed to configure stdin reader wake pipe (errno %d)", error);
-			return;
-		}
-
-#ifdef __linux__
-		// Reopen non-regular stdin to get independent file status flags. dup()
-		// would share O_NONBLOCK with components using fd 0. Do not reopen a
-		// regular file: that would reset its offset and replay earlier input.
-		struct stat stdinStat;
-		if (fstat(STDIN_FILENO, &stdinStat) == 0 && !S_ISREG(stdinStat.st_mode))
-		{
-			int fd = open("/proc/self/fd/0", O_RDONLY | O_NONBLOCK | O_CLOEXEC | O_NOCTTY);
-			if (fd != -1)
+			char path[PATH_MAX];
+			if (ttyname_r(STDIN_FILENO, path, sizeof(path)) == 0)
 			{
-				inputFd = fd;
+				inputFd = open(path, O_RDONLY | O_NOCTTY | O_CLOEXEC);
 			}
-			else
+			if (inputFd == -1)
 			{
-				core->logLn(LogLevel::Warning, "Console: could not open an independent non-blocking stdin handle (errno %d)", errno);
+				inputFd = open("/dev/tty", O_RDONLY | O_NOCTTY | O_CLOEXEC);
+			}
+			if (inputFd == -1)
+			{
+				core->logLn(LogLevel::Warning, "Console: could not reopen the terminal, falling back to fd 0 (errno %d)", errno);
 			}
 		}
-#endif
+
+		if (pipe(wakePipe) == 0)
+		{
+			int flags = fcntl(wakePipe[0], F_GETFL);
+			if (flags != -1)
+			{
+				fcntl(wakePipe[0], F_SETFL, flags | O_NONBLOCK);
+			}
+			flags = fcntl(wakePipe[1], F_GETFL);
+			if (flags != -1)
+			{
+				fcntl(wakePipe[1], F_SETFL, flags | O_NONBLOCK);
+			}
+			fcntl(wakePipe[0], F_SETFD, FD_CLOEXEC);
+			fcntl(wakePipe[1], F_SETFD, FD_CLOEXEC);
+		}
+		else
+		{
+			wakePipe[0] = -1;
+			wakePipe[1] = -1;
+			core->logLn(LogLevel::Warning, "Console: could not create wake pipe (errno %d)", errno);
+		}
+#else
+		stdinHandle = GetStdHandle(STD_INPUT_HANDLE);
+		if (stdinHandle != INVALID_HANDLE_VALUE)
+		{
+			DWORD consoleMode = 0;
+			if (GetConsoleMode(stdinHandle, &consoleMode))
+			{
+				// Keep line input and echo enabled so the console itself
+				// performs echo, line editing and IME composition. We only
+				// receive complete lines from ReadConsoleW.
+				SetConsoleMode(stdinHandle, consoleMode | ENABLE_LINE_INPUT | ENABLE_ECHO_INPUT | ENABLE_PROCESSED_INPUT);
+			}
+		}
+		else
+		{
+			core->logLn(LogLevel::Warning, "Console: GetStdHandle(STD_INPUT_HANDLE) returned an invalid handle; console input will be unavailable");
+		}
 #endif
 
-		threadData = new ThreadProcData { true, this };
-		cinThread = std::thread(ThreadProc, threadData);
-#ifdef WIN32
-		cinThread.detach();
-#endif
+		std::unique_ptr<ThreadProcData> data(new ThreadProcData { true, this });
+		threadData = data.get();
+		try
+		{
+			cinThread = std::thread(ThreadProc, threadData);
+			data.release();
+		}
+		catch (const std::exception& e)
+		{
+			threadData = nullptr;
+			core->logLn(LogLevel::Error, "Console: could not start input thread: %s", e.what());
+		}
 	}
 
 	void onReady() override
@@ -293,49 +332,99 @@ public:
 		}
 	}
 
+	static void submitLine(ThreadProcData* threadData, const char* begin, size_t len)
+	{
+		ConsoleComponent* component = threadData->component;
+		bool warnOverflow = false;
+		{
+			std::scoped_lock<std::mutex> lock(component->cmdMutex);
+			if (component->pendingCmds.size() >= MAX_PENDING_COMMANDS)
+			{
+				warnOverflow = !component->cmdOverflowWarned.exchange(true);
+			}
+			else
+			{
+				component->cmdOverflowWarned.store(false);
+				component->pendingCmds.emplace_back(begin, len);
+			}
+		}
+		// Log outside the lock so a slow/hooked logger can't stall the reader.
+		if (warnOverflow)
+		{
+			component->core->logLn(
+				LogLevel::Warning,
+				"Console: pending command queue is full (%zu), dropping input until it drains",
+				MAX_PENDING_COMMANDS);
+		}
+	}
+
 #ifndef WIN32
 	static void ThreadProc(ThreadProcData* threadData)
 	{
 		ConsoleComponent* component = threadData->component;
+		const int fd = (component->inputFd != -1) ? component->inputFd : STDIN_FILENO;
+		const int wakeFd = component->wakePipe[0];
+
 		char buffer[1024];
 		String pending;
+		bool eof = false;
 
-		while (threadData->valid)
+		while (threadData->valid && !eof)
 		{
-			pollfd fds[2] {
-				{ component->inputFd, POLLIN, 0 },
-				{ component->stopReadFd, POLLIN, 0 },
-			};
-			if (poll(fds, 2, -1) < 0)
+			pollfd fds[2];
+			nfds_t nfds = 1;
+			fds[0] = { fd, POLLIN, 0 };
+			if (wakeFd != -1)
+			{
+				fds[1] = { wakeFd, POLLIN, 0 };
+				nfds = 2;
+			}
+
+			// Timeout is a backstop in case the wake pipe was not created
+			// or the write side never gets a chance to fire.
+			const int ret = poll(fds, nfds, 200);
+			if (ret < 0)
 			{
 				if (errno == EINTR)
 				{
 					continue;
 				}
-				return;
+				break;
 			}
-			if (fds[1].revents || !threadData->valid)
+			if (ret == 0)
 			{
-				return;
+				continue;
+			}
+			if (nfds > 1 && (fds[1].revents & (POLLIN | POLLHUP | POLLERR)))
+			{
+				// Wake request, or the write end was closed: either way stop.
+				break;
+			}
+			if (fds[0].revents & (POLLERR | POLLNVAL))
+			{
+				break;
+			}
+			if (!(fds[0].revents & (POLLIN | POLLHUP)))
+			{
+				continue;
 			}
 
-			const ssize_t bytesRead = read(component->inputFd, buffer, sizeof(buffer));
+			const ssize_t bytesRead = read(fd, buffer, sizeof(buffer));
 			if (bytesRead < 0)
 			{
+				// When we fell back to fd 0, its O_NONBLOCK flag may have
+				// been set by another reader in the same process, so a
+				// non-blocking read can legitimately return EAGAIN here.
 				if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
 				{
 					continue;
 				}
-				return;
+				break;
 			}
 			if (bytesRead == 0)
 			{
-				// getline() also returns the final, unterminated line at EOF.
-				if (!pending.empty() && threadData->valid)
-				{
-					component->enqueueCommand(std::move(pending));
-				}
-				return;
+				eof = true;
+				break;
 			}
 
 			for (ssize_t i = 0; i < bytesRead; ++i)
@@ -343,38 +432,165 @@ public:
 				const char c = buffer[i];
 				if (c != '\n' && c != '\r')
 				{
-					pending.push_back(c);
+					if (pending.size() < MAX_LINE_LENGTH)
+					{
+						pending.push_back(c);
+					}
 					continue;
 				}
-
-				// Normalise CRLF (and a lone CR) to one line break.
 				if (c == '\r' && i + 1 < bytesRead && buffer[i + 1] == '\n')
 				{
-					++i;
+					++i; // CRLF counts as one break
 				}
 				if (!pending.empty() && threadData->valid)
 				{
-					component->enqueueCommand(std::move(pending));
+					submitLine(threadData, pending.data(), pending.size());
 					pending.clear();
 				}
 			}
 		}
+
+		// Flush a final line when stdin is closed (EOF) without a trailing
+		// newline. Only do this if the component is still alive.
+		if (eof && !pending.empty() && threadData->valid)
+		{
+			submitLine(threadData, pending.data(), pending.size());
+		}
 	}
 #else
+	static String wideToUtf8(const std::wstring& wide)
+	{
+		if (wide.empty())
+		{
+			return String();
+		}
+		const int size = WideCharToMultiByte(CP_UTF8, 0, wide.data(), static_cast<int>(wide.size()), nullptr, 0, nullptr, nullptr);
+		if (size <= 0)
+		{
+			return String();
+		}
+		String utf8(static_cast<size_t>(size), '\0');
+		WideCharToMultiByte(CP_UTF8, 0, wide.data(), static_cast<int>(wide.size()), utf8.data(), size, nullptr, nullptr);
+		return utf8;
+	}
+
 	static void ThreadProc(ThreadProcData* threadData)
 	{
-		std::wstring line;
-		while (true)
+		ConsoleComponent* component = threadData->component;
+		HANDLE handle = component->stdinHandle;
+
+		if (handle == INVALID_HANDLE_VALUE)
 		{
-			if (
-				std::getline(std::wcin, line)
-				&& threadData->valid)
+			// Nothing we can read from; onLoad already logged this.
+			return;
+		}
+
+		DWORD mode = 0;
+		const bool isConsole = GetConsoleMode(handle, &mode) != 0;
+
+		if (isConsole)
+		{
+			// Console path: blocking ReadConsoleW. The console performs
+			// echo, line editing and IME composition; we receive whole
+			// lines terminated by CR/LF.
+			std::wstring pending;
+			wchar_t buf[1024];
+			while (threadData->valid)
 			{
-				threadData->component->enqueueCommand(std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>, wchar_t>().to_bytes(line));
+				DWORD charsRead = 0;
+				if (!ReadConsoleW(handle, buf, static_cast<DWORD>(sizeof(buf) / sizeof(buf[0])), &charsRead, nullptr))
+				{
+					// ERROR_OPERATION_ABORTED means CancelSynchronousIo fired.
+					break;
+				}
+				if (charsRead == 0)
+				{
+					// Cancellation may surface as TRUE with zero characters.
+					break;
+				}
+
+				for (DWORD i = 0; i < charsRead; ++i)
+				{
+					const wchar_t ch = buf[i];
+					if (ch != L'\r' && ch != L'\n')
+					{
+						if (pending.size() < MAX_LINE_LENGTH)
+						{
+							pending.push_back(ch);
+						}
+						continue;
+					}
+					if (ch == L'\r' && i + 1 < charsRead && buf[i + 1] == L'\n')
+					{
+						++i; // CRLF counts as one break
+					}
+					if (!pending.empty() && threadData->valid)
+					{
+						const String utf8 = wideToUtf8(pending);
+						if (!utf8.empty())
+						{
+							submitLine(threadData, utf8.data(), utf8.size());
+						}
+						pending.clear();
+					}
+				}
 			}
-			else
+		}
+		else
+		{
+			// Redirected stdin: blocking ReadFile, cancelled via CancelSynchronousIo.
+			// No PeekNamedPipe, no WaitForMultipleObjects.
+			char buf[1024];
+			String pending;
+			bool eof = false;
+			while (threadData->valid && !eof)
 			{
-				return;
+				DWORD bytesRead = 0;
+				if (!ReadFile(handle, buf, static_cast<DWORD>(sizeof(buf)), &bytesRead, nullptr))
+				{
+					const DWORD err = GetLastError();
+					if (err == ERROR_BROKEN_PIPE || err == ERROR_OPERATION_ABORTED || err == ERROR_HANDLE_EOF)
+					{
+						eof = true;
+					}
+					else
+					{
+						component->core->logLn(LogLevel::Warning, "Console: ReadFile on stdin failed with error %lu", static_cast<unsigned long>(err));
+					}
+					break;
+				}
+				if (bytesRead == 0)
+				{
+					eof = true;
+					break;
+				}
+
+				for (DWORD i = 0; i < bytesRead; ++i)
+				{
+					const char c = buf[i];
+					if (c != '\n' && c != '\r')
+					{
+						if (pending.size() < MAX_LINE_LENGTH)
+						{
+							pending.push_back(c);
+						}
+						continue;
+					}
+					if (c == '\r' && i + 1 < bytesRead && buf[i + 1] == '\n')
+					{
+						++i;
+					}
+					if (!pending.empty() && threadData->valid)
+					{
+						submitLine(threadData, pending.data(), pending.size());
+						pending.clear();
+					}
+				}
+			}
+
+			if (eof && !pending.empty() && threadData->valid)
+			{
+				submitLine(threadData, pending.data(), pending.size());
 			}
 		}
 	}
@@ -386,35 +602,50 @@ public:
 		{
 			threadData->valid = false;
 
-#ifdef WIN32
+#ifndef WIN32
+			// Wake the reader out of poll() so it can observe valid == false.
+			if (wakePipe[1] != -1)
+			{
+				const char byte = 1;
+				while (write(wakePipe[1], &byte, 1) == -1 && errno == EINTR)
+				{
+				}
+			}
+#else
+			if (cinThread.joinable())
+			{
+				// Unblock ReadConsoleW / ReadFile on the reader thread.
+				CancelSynchronousIo(reinterpret_cast<HANDLE>(cinThread.native_handle()));
+			}
+#endif
+
 			if (cinThread.joinable())
 			{
 				cinThread.join();
 			}
-#else
-			const char wake = 0;
-			ssize_t wakeResult;
-			do
-			{
-				wakeResult = write(stopWriteFd, &wake, sizeof(wake));
-			} while (wakeResult == -1 && errno == EINTR);
-			if (wakeResult == -1 || inputFd == STDIN_FILENO)
-			{
-				// The original stdin may still block in read().
-				pthread_cancel(cinThread.native_handle());
-			}
-			cinThread.join();
-			if (inputFd != STDIN_FILENO)
-			{
-				close(inputFd);
-			}
-			close(stopReadFd);
-			close(stopWriteFd);
-#endif
 
 			delete threadData;
 			threadData = nullptr;
 		}
+
+#ifndef WIN32
+		if (inputFd != -1)
+		{
+			close(inputFd);
+			inputFd = -1;
+		}
+		if (wakePipe[0] != -1)
+		{
+			close(wakePipe[0]);
+			wakePipe[0] = -1;
+		}
+		if (wakePipe[1] != -1)
+		{
+			close(wakePipe[1]);
+			wakePipe[1] = -1;
+		}
+#endif
+
 		if (core)
 		{
 			core->getEventDispatcher().removeEventHandler(this);
@@ -477,17 +708,15 @@ public:
 
 	void onTick(Microseconds elapsed, TimePoint now) override
 	{
-		String command;
 		{
-			std::lock_guard<std::mutex> lock(cmdMutex);
-			if (pendingCommands.empty())
-			{
-				return;
-			}
-			command = std::move(pendingCommands.front());
-			pendingCommands.pop();
+			std::scoped_lock<std::mutex> lock(cmdMutex);
+			tickCmds.swap(pendingCmds);
 		}
-		send(command);
+		for (const String& command : tickCmds)
+		{
+			send(command);
+		}
+		tickCmds.clear();
 	}
 
 	bool onConsoleText(StringView command, StringView parameters, const ConsoleCommandSenderData& sender) override;
