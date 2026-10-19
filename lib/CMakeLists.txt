@@ -128,6 +128,10 @@ endif()
 # ----
 conan_omp_add_lib(ghc-filesystem 1.5.12)
 
+# zlib (compressed model pack)
+# ----
+conan_omp_add_lib(zlib 1.3.1)
+
 if(BUILD_SQLITE_COMPONENT)
 	# SQLite 3
 	# --------
