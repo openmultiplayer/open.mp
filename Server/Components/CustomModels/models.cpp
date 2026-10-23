@@ -13,6 +13,7 @@
 #include <httplib.h>
 #include <ghc/filesystem.hpp>
 #include "crc32.hpp"
+#include "model_pack.hpp"
 #include <regex>
 #include <shared_mutex>
 #include "utils.hpp"
@@ -97,7 +98,7 @@ private:
 	std::shared_mutex mutex_;
 
 public:
-	WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port, StringView publicAddr, uint16_t threadsCount)
+	WebServer(ICore* core, StringView modelsPath, StringView bind, uint16_t port, StringView publicAddr, uint16_t threadsCount, ModelPack& pack)
 		: port_(port)
 	{
 
@@ -130,6 +131,12 @@ public:
 
 		svr.set_pre_routing_handler([&](const auto& req, auto& res)
 			{
+				// Launchers fetch the compressed model packs before the player has joined.
+				if (req.method == "GET" && req.path.rfind("/modelpack/v1/", 0) == 0)
+				{
+					return httplib::Server::HandlerResponse::Unhandled;
+				}
+
 				if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3" || ((req.path.rfind(".txd") == std::string::npos) && (req.path.rfind(".dff") == std::string::npos)))
 				{
 					res.status = 401;
@@ -152,6 +159,66 @@ public:
 				}
 
 				return httplib::Server::HandlerResponse::Unhandled;
+			});
+
+		auto unavailable = [](httplib::Response& res, ModelPack::Status status)
+		{
+			res.status = status == ModelPack::Status::Building ? 503 : 404;
+			if (status == ModelPack::Status::Building)
+			{
+				res.set_header("Retry-After", "30");
+			}
+		};
+
+		svr.Get("/modelpack/v1/index.json", [&pack, unavailable](const httplib::Request&, httplib::Response& res)
+			{
+				std::string index;
+				auto status = pack.index(index);
+				if (status != ModelPack::Status::Ready)
+				{
+					unavailable(res, status);
+					return;
+				}
+				res.set_header("Cache-Control", "no-store");
+				res.set_content(index, "application/json");
+			});
+
+		svr.Get(R"(/modelpack/v1/pack/(\d{1,5}))", [&pack, unavailable](const httplib::Request& req, httplib::Response& res)
+			{
+				ModelPack::Segment segment;
+				auto status = pack.segment(std::stoul(req.matches[1]), segment);
+				if (status != ModelPack::Status::Ready)
+				{
+					unavailable(res, status);
+					return;
+				}
+				if (!pack.acquireDownload())
+				{
+					res.status = 503;
+					res.set_header("Retry-After", "5");
+					return;
+				}
+				auto file = std::make_shared<std::ifstream>(segment.path, std::ios::binary);
+				if (!*file)
+				{
+					pack.releaseDownload();
+					res.status = 404;
+					return;
+				}
+				res.set_content_provider(
+					size_t(segment.size), "application/octet-stream", [file](size_t offset, size_t length, httplib::DataSink& sink)
+					{
+						static thread_local char buffer[1 << 18];
+						file->clear();
+						file->seekg(offset);
+						file->read(buffer, (std::min)(length, sizeof buffer));
+						sink.write(buffer, size_t(file->gcount()));
+						return file->gcount() > 0;
+					},
+					[&pack](bool)
+					{
+						pack.releaseDownload();
+					});
 			});
 
 		if (svr.set_mount_point("/", modelsPath.data()))
@@ -290,6 +357,7 @@ private:
 	IPlayerPool* players = nullptr;
 
 	WebServer* webServer = nullptr;
+	std::unique_ptr<ModelPack> pack;
 
 	std::vector<ModelInfo*> storage;
 	FlatHashMap<uint32_t, uint16_t> baseModels;
@@ -303,6 +371,7 @@ private:
 	bool usingCdn = false;
 	uint16_t httpThreads = 50; // default max_players is 50
 	bool showCRCLogs = false;
+	bool modelPack = true;
 
 	DefaultEventDispatcher<PlayerModelsEventHandler> eventDispatcher;
 
@@ -420,6 +489,7 @@ public:
 			config.setInt("artwork.port", modelsPort);
 			config.setString("artwork.web_server_bind", webServerBindAddress);
 			config.setBool("artwork.show_crc_logs", showCRCLogs);
+			config.setBool("artwork.model_pack", modelPack);
 		}
 		else
 		{
@@ -457,6 +527,11 @@ public:
 			{
 				config.setBool("artwork.show_crc_logs", showCRCLogs);
 			}
+			// Launchers can fetch every model as one compressed download before a player joins.
+			if (config.getType("artwork.model_pack") == ConfigOptionType_None)
+			{
+				config.setBool("artwork.model_pack", modelPack);
+			}
 		}
 	}
 
@@ -472,6 +547,7 @@ public:
 		httpThreads = *core->getConfig().getInt("network.http_threads");
 		webServerBindAddress = String(core->getConfig().getString("artwork.web_server_bind"));
 		showCRCLogs = *core->getConfig().getBool("artwork.show_crc_logs");
+		modelPack = *core->getConfig().getBool("artwork.model_pack");
 
 		NetCode::RPC::RequestTXD::addEventHandler(*core, &requestDownloadLinkHandler);
 		NetCode::RPC::RequestDFF::addEventHandler(*core, &requestDownloadLinkHandler);
@@ -539,6 +615,13 @@ public:
 		}
 	}
 
+	ModelPack& getPack()
+	{
+		if (!pack)
+			pack = std::make_unique<ModelPack>(String(modelsPath), *core->getConfig().getInt("artwork.port"));
+		return *pack;
+	}
+
 	void startWebServer()
 	{
 		if (usingCdn || webServer)
@@ -560,7 +643,7 @@ public:
 			}
 		}
 
-		webServer = new WebServer(core, modelsPath, bindAddress, *core->getConfig().getInt("artwork.port"), core->getConfig().getString("network.public_addr"), httpThreads);
+		webServer = new WebServer(core, modelsPath, bindAddress, *core->getConfig().getInt("artwork.port"), core->getConfig().getString("network.public_addr"), httpThreads, getPack());
 
 		if (webServer->is_running())
 		{
@@ -651,6 +734,12 @@ public:
 				continue;
 
 			PacketHelper::send(modelInfo, *player);
+		}
+
+		if (modelPack)
+		{
+			getPack().add(String(dffName), dff.checksum, dff.size);
+			getPack().add(String(txdName), txd.checksum, txd.size);
 		}
 
 		baseModels.emplace(id, baseId);
