@@ -7,6 +7,7 @@
  */
 
 #include "query.hpp"
+#include "../../Console/console_encoding.hpp"
 #include <cstring>
 
 const size_t MAX_ACCEPTABLE_HOSTNAME_SIZE = 63;
@@ -14,6 +15,65 @@ const size_t MAX_ACCEPTABLE_LANGUAGE_SIZE = 39;
 const size_t MAX_ACCEPTABLE_GMTEXT_SIZE = 39;
 const size_t MAX_ACCEPTABLE_DISCORD_LINK_SIZE = 50;
 const size_t MAX_ACCEPTABLE_IMAGE_URL_SIZE = 160;
+
+void Query::refreshDetailedPlayers()
+{
+	if (!core)
+		return;
+	std::vector<DetailedPlayersQuery::Player> players;
+	for (IPlayer* player : core->getPlayers().players())
+	{
+		if (player->isBot())
+			continue;
+		const auto name = player->getName();
+		players.push_back({ static_cast<uint16_t>(player->getID()), std::string(name.data(), name.size()), static_cast<int32_t>(player->getScore()), static_cast<uint32_t>(player->getPing()) });
+	}
+	std::sort(players.begin(), players.end(), [](const auto& a, const auto& b)
+		{
+			return a.id < b.id;
+		});
+	if (++detailedGeneration == 0)
+		++detailedGeneration;
+	auto snapshot = DetailedPlayersQuery::buildSnapshot(detailedGeneration, players);
+	auto legacy = DetailedPlayersQuery::buildLegacy(players);
+	std::lock_guard<std::mutex> lock(detailedMutex);
+	detailedSnapshots.push_back(std::move(snapshot));
+	while (detailedSnapshots.size() > 16)
+		detailedSnapshots.pop_front();
+	legacyDetailedPlayers = std::move(legacy);
+}
+
+Span<const char> Query::detailedQuery(Span<const char> buffer)
+{
+	std::lock_guard<std::mutex> lock(detailedMutex);
+	if (buffer.size() == BASE_QUERY_SIZE && buffer[QUERY_TYPE_INDEX] == 'd')
+	{
+		detailedResponse = legacyDetailedPlayers;
+	}
+	else if (buffer.size() == BASE_QUERY_SIZE + 7 && buffer[QUERY_TYPE_INDEX] == 'D' && buffer[BASE_QUERY_SIZE] == 1)
+	{
+		const auto* bytes = reinterpret_cast<const uint8_t*>(buffer.data());
+		uint32_t generation = uint32_t(bytes[12]) | (uint32_t(bytes[13]) << 8) | (uint32_t(bytes[14]) << 16) | (uint32_t(bytes[15]) << 24);
+		const uint16_t page = uint16_t(bytes[16]) | (uint16_t(bytes[17]) << 8);
+		if (detailedSnapshots.empty() || (generation == 0 && page != 0))
+			return {};
+		if (generation == 0)
+			generation = detailedSnapshots.back().generation;
+		auto snapshot = std::find_if(detailedSnapshots.begin(), detailedSnapshots.end(), [generation](const auto& item)
+			{
+				return item.generation == generation;
+			});
+		if (snapshot == detailedSnapshots.end() || page >= snapshot->pages.size())
+			return {};
+		detailedResponse = snapshot->pages[page];
+	}
+	else
+		return {};
+	if (detailedResponse.empty())
+		return {};
+	memcpy(detailedResponse.data(), buffer.data(), QUERY_COPY_TO);
+	return Span<const char>(detailedResponse.data(), detailedResponse.size());
+}
 
 template <typename T>
 void writeToBuffer(char* output, size_t& offset, T value)
@@ -210,7 +270,7 @@ void Query::buildRulesBuffer()
 	}
 }
 
-constexpr Span<char> getBuffer(Span<const char> input, std::unique_ptr<char[]>& buffer, size_t length)
+inline Span<char> getBuffer(Span<const char> input, std::unique_ptr<char[]>& buffer, size_t length)
 {
 	if (!buffer)
 	{
@@ -271,6 +331,21 @@ void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in
 						{
 							StringView cmd(&subbuf.data()[offset], cmdLen);
 							LegacyConsoleMessageHandler handler(sock, client, tolen, buffer.subspan(0, BASE_QUERY_SIZE));
+#ifdef WIN32
+							// Password validation always uses the original bytes. Conversion is
+							// opt-in because legacy RCON clients already send the game's encoding.
+							String converted;
+							const int* codepage = core->getConfig().getInt("rcon.utf8_command_codepage");
+							if (codepage && *codepage != 0)
+							{
+								if (!ConsoleEncoding::fromUtf8(std::string_view(cmd.data(), cmd.size()), static_cast<unsigned>(*codepage), converted))
+								{
+									handler.handleConsoleMessage("RCON command was not executed: invalid UTF-8 or text cannot be represented in rcon.utf8_command_codepage.");
+									return;
+								}
+								cmd = converted;
+							}
+#endif
 							console->send(cmd, ConsoleCommandSenderData(handler));
 						}
 					}
@@ -286,7 +361,7 @@ void Query::handleRCON(Span<const char> buffer, uint32_t sock, const sockaddr_in
 
 Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, const sockaddr_in& client, int tolen)
 {
-	if (core == nullptr)
+	if (core == nullptr || buffer.size() < BASE_QUERY_SIZE)
 	{
 		return Span<char>();
 	}
@@ -299,6 +374,11 @@ Span<const char> Query::handleQuery(Span<const char> buffer, uint32_t sock, cons
 		addr.v4 = client.sin_addr.s_addr;
 		PeerAddress::ToString(addr, addrString);
 		core->printLn("[query:%c] from %.*s", buffer[QUERY_TYPE_INDEX], PRINT_VIEW(addrString));
+	}
+
+	if (buffer[QUERY_TYPE_INDEX] == 'd' || buffer[QUERY_TYPE_INDEX] == 'D')
+	{
+		return detailedQuery(buffer);
 	}
 
 	// Ping
