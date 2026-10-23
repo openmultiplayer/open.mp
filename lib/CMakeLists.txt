@@ -137,7 +137,7 @@ endif()
 if(BUILD_UNICODE_COMPONENT)
 	# ICU
 	# ---
-	conan_omp_add_lib(icu 70.1)
+	conan_omp_add_lib(icu 74.2)
 
 	if(WIN32)
 		target_link_options(CONAN_PKG::icu INTERFACE "/SAFESEH:NO")
