@@ -8,6 +8,7 @@
 
 #include <Impl/pool_impl.hpp>
 #include <Server/Components/TextDraws/textdraws.hpp>
+#include <Server/Components/Vehicles/vehicle_colours.hpp>
 #include <netcode.hpp>
 #include <sdk.hpp>
 
@@ -34,7 +35,20 @@ private:
 	int previewModel;
 	Vector3 previewRotation = Vector3(0.f);
 	Pair<int, int> previewVehicleColours = std::make_pair(-1, -1);
+	Pair<int, int> colourSettings = std::make_pair(-1, -1);
 	float previewZoom = 1.f;
+
+	void updatePreviewColours()
+	{
+		previewVehicleColours = colourSettings;
+
+		// Pick random colours here instead of sending -1, so the getter returns what the client shows
+		if (previewModel >= 400 && previewModel <= 611 && (previewVehicleColours.first == -1 || previewVehicleColours.second == -1))
+		{
+			int ignore;
+			getRandomVehicleColour(previewModel, previewVehicleColours.first == -1 ? previewVehicleColours.first : ignore, previewVehicleColours.second == -1 ? previewVehicleColours.second : ignore);
+		}
+	}
 
 public:
 	TextDrawBase(Vector2 pos, StringView text, TextDrawStyle style = TextDrawStyle_FontAharoniBold, int previewModel = 0)
@@ -44,6 +58,7 @@ public:
 		, previewModel(previewModel)
 	{
 		trimText();
+		updatePreviewColours();
 	}
 
 	int getID() const override
@@ -212,7 +227,11 @@ public:
 
 	T& setPreviewModel(int model) override
 	{
-		previewModel = model;
+		if (previewModel != model)
+		{
+			previewModel = model;
+			updatePreviewColours();
+		}
 		return *this;
 	}
 
@@ -234,8 +253,9 @@ public:
 
 	T& setPreviewVehicleColour(int colour1, int colour2) override
 	{
-		previewVehicleColours.first = colour1;
-		previewVehicleColours.second = colour2;
+		colourSettings.first = colour1;
+		colourSettings.second = colour2;
+		updatePreviewColours();
 		return *this;
 	}
 
