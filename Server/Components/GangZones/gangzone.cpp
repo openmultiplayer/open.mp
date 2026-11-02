@@ -155,13 +155,28 @@ public:
 		// Only go through those that are added to our checking list using IGangZonesComponent::useGangZoneCheck
 		if (checkingList.entries().size())
 		{
-			const Vector3& playerPos = player.getPosition();
-			DynamicArray<IGangZone*> enteredList;
-			// Guarantee a single allocation
-			enteredList.reserve(checkingList.entries().size());
-
+			// Snapshot IDs: destroying a gangzone during dispatch below must not mutate
+			// checkingList while we're iterating over it.
+			DynamicArray<int> ids;
+			ids.reserve(checkingList.entries().size());
 			for (auto gangzone : checkingList.entries())
 			{
+				ids.push_back(gangzone->getID());
+			}
+
+			const Vector3& playerPos = player.getPosition();
+			DynamicArray<int> enteredList;
+			// Guarantee a single allocation
+			enteredList.reserve(ids.size());
+
+			for (int id : ids)
+			{
+				IGangZone* gangzone = get(id);
+				if (!gangzone || !checkingList.valid(id))
+				{
+					continue;
+				}
+
 				// Only check visible gangzones
 				if (!gangzone->isShownForPlayer(player))
 				{
@@ -175,7 +190,7 @@ public:
 				if (isPlayerInZoneArea && !isPlayerInInsideList)
 				{
 					// Collect entered gangzones to call events with them later after exit events
-					enteredList.push_back(gangzone);
+					enteredList.push_back(id);
 				}
 				else if (!isPlayerInZoneArea && isPlayerInInsideList)
 				{
@@ -190,8 +205,14 @@ public:
 			}
 
 			// Call enter gangzone events for all the gangzones in entered gangzone list
-			for (auto gangzone : enteredList)
+			for (int id : enteredList)
 			{
+				IGangZone* gangzone = get(id);
+				if (!gangzone || !checkingList.valid(id) || !gangzone->isShownForPlayer(player))
+				{
+					continue;
+				}
+
 				ScopedPoolReleaseLock<IGangZone> lock(*this, *gangzone);
 				static_cast<GangZone*>(gangzone)->setPlayerInside(player, true);
 				eventDispatcher.dispatch(
@@ -319,8 +340,21 @@ public:
 	void onPlayerClickMap(IPlayer& player, Vector3 clickPos) override
 	{
 		// Only go through those that are added to our checking list using IGangZonesComponent::toggleGangZoneCheck
+		DynamicArray<int> ids;
+		ids.reserve(checkingList.entries().size());
 		for (auto gangzone : checkingList.entries())
 		{
+			ids.push_back(gangzone->getID());
+		}
+
+		for (int id : ids)
+		{
+			IGangZone* gangzone = get(id);
+			if (!gangzone || !checkingList.valid(id))
+			{
+				continue;
+			}
+
 			// only check visible gangzones
 			if (!gangzone->isShownForPlayer(player))
 			{
