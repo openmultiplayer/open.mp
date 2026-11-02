@@ -29,18 +29,14 @@ if (-not (Test-Path build)) {
         }
     }
 
-    Write-Output "Checking Conan install..."
+    Write-Output "Checking vcpkg install..."
 
-    try {
-        & conan --version | Out-Null
-    }
-    catch [System.Management.Automation.CommandNotFoundException] {
-        Write-Warning "Conan not found in PATH; installing it through pip3."
-        try {
-            & pip3 install --no-warn-script-location conan
-        }
-        catch [System.Management.Automation.CommandNotFoundException] {
-            throw "Pip3 not found. Please install it and run the script again."
+    if (-not $env:VCPKG_ROOT) {
+        $vcpkgCmd = Get-Command vcpkg -ErrorAction SilentlyContinue
+        if ($vcpkgCmd) {
+            $env:VCPKG_ROOT = Split-Path -Parent $vcpkgCmd.Source
+        } else {
+            Write-Warning "VCPKG_ROOT is not set and vcpkg was not found in PATH. Please set VCPKG_ROOT or install vcpkg."
         }
     }
 
@@ -60,11 +56,10 @@ if (-not (Test-Path build)) {
     }
 
     try {
-        & conan --version
         & cmake --version
     }
     catch [System.Management.Automation.CommandNotFoundException] {
-        Write-Warning "Conan or CMake not found in PATH; adding Python scripts to PATH."
+        Write-Warning "CMake not found in PATH; adding Python scripts to PATH."
         $PIP_SCRIPTS_PATH = & python3 -c "import os,sysconfig;print(sysconfig.get_path('scripts',f'{os.name}_user'))"
         if ($LASTEXITCODE -eq 0) {
             $Env:Path += ";$PIP_SCRIPTS_PATH;"
@@ -77,22 +72,19 @@ if (-not (Test-Path build)) {
         }
 
         try {
-            & conan --version
             & cmake --version
         }
         catch [System.Management.Automation.CommandNotFoundException] {
-            throw "Conan or CMake not found in PATH. Please install them manually."
+            throw "CMake not found in PATH. Please install it manually."
         }
     }
 }
 
 Write-Output "Running CMake..."
 
-mkdir build -Force
-cd build
-cmake .. -A Win32 -T ClangCL
+cmake -B build -A Win32 -T ClangCL
 
 Write-Output "Running build..."
 
-cmake --build . --config RelWithDebInfo
-cd ..
+cmake --build build --config RelWithDebInfo
+

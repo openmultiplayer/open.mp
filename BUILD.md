@@ -14,16 +14,14 @@ If you already cloned without `--recursive`, run `git submodule update --init --
 
 ## Windows
 
-Install [CMake 3.19 or later](https://cmake.org/), [Conan 2.x](https://conan.io/) (`pip install conan` or `pip3 install conan`), and [Visual Studio 2019 or later](https://visualstudio.microsoft.com/). In Visual Studio, select the **Desktop development with C++** workload and the **C++ Clang tools for Windows** component.
+Install [CMake 3.19 or later](https://cmake.org/), [vcpkg](https://vcpkg.io/), and [Visual Studio 2019 or later](https://visualstudio.microsoft.com/). Ensure `VCPKG_ROOT` is set in your environment or `vcpkg` is in your `PATH`. In Visual Studio, select the **Desktop development with C++** workload and the **C++ Clang tools for Windows** component.
 
 From the directory containing the checkout, run:
 
 ```powershell
 cd open.mp
-mkdir build
-cd build
-cmake .. -A Win32 -T ClangCL
-cmake --build . --config RelWithDebInfo
+cmake -B build -A Win32 -T ClangCL
+cmake --build build --config RelWithDebInfo
 ```
 
 The server executable and components are written to `build/Output/RelWithDebInfo/Server/`.

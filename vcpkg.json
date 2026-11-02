@@ -1,0 +1,24 @@
+{
+  "name": "open-mp",
+  "dependencies": [
+    "cxxopts",
+    "ghc-filesystem",
+    "nlohmann-json",
+    "openssl",
+    "sqlite3",
+    "icu",
+    {
+      "name": "libelfin",
+      "platform": "!windows"
+    }
+  ],
+  "overrides": [
+    { "name": "cxxopts", "version": "2.2.1" },
+    { "name": "ghc-filesystem", "version": "1.5.12" },
+    { "name": "nlohmann-json", "version": "3.9.1" },
+    { "name": "openssl", "version": "3.0.8#2" },
+    { "name": "sqlite3", "version": "3.36.0" },
+    { "name": "icu", "version": "74.2#6" },
+    { "name": "libelfin", "version": "0.3" }
+  ]
+}

@@ -1,6 +1,4 @@
-# Conan third-party libraries
-include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan.cmake)
-include(${CMAKE_SOURCE_DIR}/lib/cmake-conan/conan-omp.cmake)
+# Third-party dependencies are managed via vcpkg (see vcpkg.json)
 
 if(BUILD_SERVER)
 	if(BUILD_PAWN_COMPONENT)
@@ -112,32 +110,50 @@ set_property(TARGET ttmath PROPERTY FOLDER "lib")
 
 # JSON
 # ----
-conan_omp_add_lib(nlohmann_json 3.9.1)
+find_package(nlohmann_json CONFIG REQUIRED)
+if(NOT TARGET CONAN_PKG::nlohmann_json)
+	add_library(CONAN_PKG::nlohmann_json INTERFACE IMPORTED GLOBAL)
+	target_link_libraries(CONAN_PKG::nlohmann_json INTERFACE nlohmann_json::nlohmann_json)
+endif()
 
 # OpenSSL
 # -------
-	if(SHARED_OPENSSL)
-		message("Using shared OpenSSL")
-	conan_omp_add_lib_opt(openssl 3.0.13 "openssl:shared=True")
-else()
-		message("Using static OpenSSL")
-	conan_omp_add_lib(openssl 3.0.13)
+find_package(OpenSSL REQUIRED)
+if(NOT TARGET CONAN_PKG::openssl)
+	add_library(CONAN_PKG::openssl INTERFACE IMPORTED GLOBAL)
+	target_link_libraries(CONAN_PKG::openssl INTERFACE OpenSSL::SSL OpenSSL::Crypto)
 endif()
 
 # ghc-filesystem
 # ----
-conan_omp_add_lib(ghc-filesystem 1.5.12)
+find_package(ghc_filesystem CONFIG REQUIRED)
+if(NOT TARGET CONAN_PKG::ghc-filesystem)
+	add_library(CONAN_PKG::ghc-filesystem INTERFACE IMPORTED GLOBAL)
+	target_link_libraries(CONAN_PKG::ghc-filesystem INTERFACE ghcFilesystem::ghc_filesystem)
+endif()
 
 if(BUILD_SQLITE_COMPONENT)
 	# SQLite 3
 	# --------
-	conan_omp_add_lib_opt(sqlite3 3.36.0 "sqlite3:enable_math_functions=False")
+	find_package(SQLite3 REQUIRED)
+	if(NOT TARGET CONAN_PKG::sqlite3)
+		add_library(CONAN_PKG::sqlite3 INTERFACE IMPORTED GLOBAL)
+		if(TARGET SQLite3::SQLite3)
+			target_link_libraries(CONAN_PKG::sqlite3 INTERFACE SQLite3::SQLite3)
+		elseif(TARGET unofficial::sqlite3::sqlite3)
+			target_link_libraries(CONAN_PKG::sqlite3 INTERFACE unofficial::sqlite3::sqlite3)
+		endif()
+	endif()
 endif()
 
 if(BUILD_UNICODE_COMPONENT)
 	# ICU
 	# ---
-	conan_omp_add_lib(icu 74.2)
+	find_package(ICU REQUIRED COMPONENTS uc i18n data)
+	if(NOT TARGET CONAN_PKG::icu)
+		add_library(CONAN_PKG::icu INTERFACE IMPORTED GLOBAL)
+		target_link_libraries(CONAN_PKG::icu INTERFACE ICU::uc ICU::i18n ICU::data)
+	endif()
 
 	if(WIN32)
 		target_link_options(CONAN_PKG::icu INTERFACE "/SAFESEH:NO")
@@ -146,9 +162,17 @@ endif()
 endif()
 
 if(BUILD_ABI_CHECK_TOOL)
-	conan_omp_add_lib(libelfin 0.3)
+	find_package(libelfin CONFIG REQUIRED)
+	if(NOT TARGET CONAN_PKG::libelfin)
+		add_library(CONAN_PKG::libelfin INTERFACE IMPORTED GLOBAL)
+		target_link_libraries(CONAN_PKG::libelfin INTERFACE libelfin::libelfin)
+	endif()
 endif()
 
 # cxxopts
 # ----
-conan_omp_add_lib(cxxopts 2.2.1)
+find_package(cxxopts CONFIG REQUIRED)
+if(NOT TARGET CONAN_PKG::cxxopts)
+	add_library(CONAN_PKG::cxxopts INTERFACE IMPORTED GLOBAL)
+	target_link_libraries(CONAN_PKG::cxxopts INTERFACE cxxopts::cxxopts)
+endif()
