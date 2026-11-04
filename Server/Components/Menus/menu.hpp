@@ -87,6 +87,7 @@ public:
 		}
 
 		columnHeaders.at(column) = String(header);
+		initedFor_.clear();
 	}
 
 	int addCell(StringView itemText, MenuColumn column) override
