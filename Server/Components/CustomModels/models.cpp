@@ -15,6 +15,8 @@
 #include "crc32.hpp"
 #include <regex>
 #include <shared_mutex>
+#include <algorithm>
+#include <cctype>
 #include "utils.hpp"
 
 static auto rAddCharModel = std::regex(R"(AddCharModel\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*\"(.+)\"\s*,\s*\"(.+)\"\s*\)\s*;*)");
@@ -123,59 +125,87 @@ public:
 			core->logLn(LogLevel::Warning, "No bind address provided. Attempting to start webserver on 127.0.0.1:%d", port);
 		}
 
-		svr.new_task_queue = [&]
+		svr.new_task_queue = [threadsCount]
 		{
 			return new httplib::ThreadPool(threadsCount);
 		};
 
-		svr.set_pre_routing_handler([&](const auto& req, auto& res)
+		svr.set_pre_routing_handler([this](const httplib::Request& req, httplib::Response& res)
 			{
-				if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3" || ((req.path.rfind(".txd") == std::string::npos) && (req.path.rfind(".dff") == std::string::npos)))
+				auto isModelFile = [](StringView path)
+				{
+					auto hasExtension = [path](StringView ext)
+					{
+						auto equalsIgnoreCase = [](unsigned char a, unsigned char b)
+						{
+							return a == std::tolower(b);
+						};
+
+						return path.size() > ext.size() && std::equal(ext.begin(), ext.end(), path.end() - ext.size(), equalsIgnoreCase);
+					};
+
+					return hasExtension(".dff") || hasExtension(".txd");
+				};
+
+				if (req.method != "GET" || !req.has_header("User-Agent") || req.get_header_value("User-Agent") != "SAMP/0.3" || !isModelFile(req.path))
 				{
 					res.status = 401;
 					return httplib::Server::HandlerResponse::Handled;
 				}
 
-				if (req.sockaddr.ss_family == AF_INET)
+				// TODO: Add IPv6 support.
+				if (req.sockaddr.ss_family != AF_INET)
 				{
-					auto ip = reinterpret_cast<const struct sockaddr_in*>(&req.sockaddr)->sin_addr.s_addr;
-					std::shared_lock<std::shared_mutex> lock(mutex_);
-					if (allowedIPs_.find(ip) == allowedIPs_.end())
-					{
-						res.status = 401;
-						return httplib::Server::HandlerResponse::Handled;
-					}
+					res.status = 401;
+					return httplib::Server::HandlerResponse::Handled;
 				}
-				else if (req.sockaddr.ss_family == AF_INET6)
+
+				auto ip = reinterpret_cast<const struct sockaddr_in*>(&req.sockaddr)->sin_addr.s_addr;
+				std::shared_lock<std::shared_mutex> lock(mutex_);
+				if (allowedIPs_.find(ip) == allowedIPs_.end())
 				{
-					// TODO: Add IPV6 support.
+					res.status = 401;
+					return httplib::Server::HandlerResponse::Handled;
 				}
 
 				return httplib::Server::HandlerResponse::Unhandled;
 			});
 
-		if (svr.set_mount_point("/", modelsPath.data()))
-		{
-			thread = std::thread(&WebServer::run, this);
-			thread.detach();
-
-			// Wait some time.
-			std::this_thread::sleep_for(Milliseconds(500));
-		}
-		else
+		if (!svr.set_mount_point("/", modelsPath.data()))
 		{
 			core->logLn(LogLevel::Error, "Failed to start webserver: Unable to mount models path (%.*s).", PRINT_VIEW(modelsPath));
+			return;
 		}
+
+		if (address_.find(':') != String::npos)
+		{
+			core->logLn(LogLevel::Error, "Failed to start webserver: Only IPv4 bind addresses are supported (%.*s).", PRINT_VIEW(address_));
+			return;
+		}
+
+		svr.set_address_family(AF_INET);
+		if (!svr.bind_to_port(address_.c_str(), port_))
+		{
+			core->logLn(LogLevel::Error, "Failed to start webserver: Unable to bind to %.*s:%d.", PRINT_VIEW(address_), port_);
+			return;
+		}
+
+		thread = std::thread(&WebServer::run, this);
+		svr.wait_until_ready();
 	}
 
 	~WebServer()
 	{
 		stop();
+		if (thread.joinable())
+		{
+			thread.join();
+		}
 	}
 
 	void run()
 	{
-		svr.listen(address_.c_str(), port_);
+		svr.listen_after_bind();
 	}
 
 	bool is_running()
@@ -185,8 +215,7 @@ public:
 
 	void stop()
 	{
-		if (svr.is_running())
-			svr.stop();
+		svr.stop();
 	}
 
 	StringView getUrl() const
@@ -196,10 +225,9 @@ public:
 
 	void allowIPAddress(uint32_t ipAddress)
 	{
-		auto itr = allowedIPs_.find(ipAddress);
-
 		std::unique_lock lock(mutex_);
 
+		auto itr = allowedIPs_.find(ipAddress);
 		if (itr == allowedIPs_.end())
 		{
 			allowedIPs_.insert({ ipAddress, 1 });
@@ -212,13 +240,13 @@ public:
 
 	void removeIPAddress(uint32_t ipAddress)
 	{
+		std::unique_lock lock(mutex_);
+
 		auto itr = allowedIPs_.find(ipAddress);
 		if (itr == allowedIPs_.end())
 		{
 			return;
 		}
-
-		std::unique_lock lock(mutex_);
 
 		if (itr->second > 1)
 		{
@@ -342,7 +370,7 @@ private:
 			{
 				const auto& model = itr->second.second;
 				const auto& file = type == ModelDownloadType::DFF ? model->getDFF() : model->getTXD();
-				NetCode::RPC::ModelUrl urlRPC(httplib::detail::encode_url(self.getWebUrl().data() + file.name), static_cast<uint8_t>(type), file.checksum);
+				NetCode::RPC::ModelUrl urlRPC(httplib::encode_uri(self.getWebUrl().data() + file.name), static_cast<uint8_t>(type), file.checksum);
 				PacketHelper::send(urlRPC, peer);
 			}
 			if (data != nullptr)
