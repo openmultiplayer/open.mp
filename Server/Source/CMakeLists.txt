@@ -39,6 +39,10 @@ else()
 		target_link_libraries(Server PRIVATE dl atomic)
 	endif()
 
+	if(APPLE)
+		target_link_libraries(Server PRIVATE "-framework CoreFoundation" "-framework Security")
+	endif()
+
 	if(SHARED_STDCXXFS)
 		target_link_libraries(Server PRIVATE stdc++fs)
 	endif()
