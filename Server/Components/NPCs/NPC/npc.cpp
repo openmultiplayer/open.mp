@@ -2591,6 +2591,13 @@ void NPC::advance(TimePoint now)
 		auto finalPos = position;
 		// auto finalPos = targetPosition_; // just copy this to use in setPosition, since stopMove resets it
 
+		// long tick: move the rest of the way to the stop range, same as the node playback above
+		const float distanceToArrival = std::max(0.0f, distanceToTarget - std::max(0.0f, stopRange_));
+		if (distanceToArrival > FLT_EPSILON)
+		{
+			finalPos = position + (toTarget / distanceToTarget) * distanceToArrival;
+		}
+
 		// If following a player, check autoRestart setting
 		bool wasFollowingPlayer = followingPlayer_ != nullptr;
 		if (!wasFollowingPlayer && !movingByPath_)
