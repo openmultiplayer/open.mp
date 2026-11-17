@@ -56,6 +56,12 @@ private:
 
 	UniqueIDArray<IPlayer, PLAYER_POOL_SIZE> initedFor_;
 
+	// Same rule as before (column <= columnCount), but never past the arrays: a 2-column menu has no column 2.
+	bool isValidColumn(MenuColumn column) const
+	{
+		return column <= columnCount && column < columnHeaders.size();
+	}
+
 public:
 	void removeFor(int pid, IPlayer& player)
 	{
@@ -81,17 +87,18 @@ public:
 
 	void setColumnHeader(StringView header, MenuColumn column) override
 	{
-		if (column > columnCount)
+		if (!isValidColumn(column))
 		{
 			return;
 		}
 
 		columnHeaders.at(column) = String(header);
+		initedFor_.clear();
 	}
 
 	int addCell(StringView itemText, MenuColumn column) override
 	{
-		if (column > columnCount)
+		if (!isValidColumn(column))
 		{
 			return INVALID_MENU_ITEM_ID;
 		}
@@ -157,7 +164,7 @@ public:
 
 	int getRowCount(MenuColumn column) const override
 	{
-		if (column > columnCount)
+		if (!isValidColumn(column))
 		{
 			return 0;
 		}
@@ -171,7 +178,7 @@ public:
 
 	const StringView getColumnHeader(MenuColumn column) const override
 	{
-		if (column > columnCount)
+		if (!isValidColumn(column))
 		{
 			return StringView();
 		}
@@ -181,7 +188,7 @@ public:
 
 	const StringView getCell(MenuColumn column, MenuRow row) const override
 	{
-		if (column > columnCount)
+		if (!isValidColumn(column))
 		{
 			return StringView();
 		}
