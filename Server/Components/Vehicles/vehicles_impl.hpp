@@ -598,8 +598,9 @@ public:
 					auto& deathData = vehicle->getDeathData();
 					if (deathData.time != TimePoint())
 					{
+						const TimePoint timeOfDeath = deathData.time;
 						vehicle->setTimeOfDeath(TimePoint());
-						vehicle->setLastOccupiedTime(std::max(deathData.time, lastOccupied));
+						vehicle->setLastOccupiedTime(std::max(timeOfDeath, lastOccupied));
 						IPlayer* killer = getPlayers().get(deathData.killerID);
 						if (killer)
 						{
