@@ -734,7 +734,7 @@ int NPC::getAmmo() const
 
 void NPC::setWeaponSkillLevel(PlayerWeaponSkill weaponSkill, int level)
 {
-	if (weaponSkill >= 11 || weaponSkill < 0)
+	if (weaponSkill >= 0 && weaponSkill < 11)
 	{
 		auto weaponData = getCustomWeaponInfo(weapon_);
 		if (weaponData)
