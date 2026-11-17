@@ -2162,7 +2162,17 @@ public:
 
 		for (IPlayer* player : players.entries())
 		{
-			static_cast<Player*>(player)->time_ = time;
+			Player* impl = static_cast<Player*>(player);
+			// Players with the clock on ignore SetWorldTime on the client,
+			// so leave their stored time alone or GetPlayerTime desyncs
+			// from what they actually see.
+			if (impl->hasClock())
+			{
+				continue;
+			}
+			// Override the hour only, keeping minutes, like SA:MP.
+			// https://github.com/openmultiplayer/open.mp/issues/631
+			impl->time_ = time + (impl->time_ % Hours(1));
 		}
 
 		updateNetworks();
