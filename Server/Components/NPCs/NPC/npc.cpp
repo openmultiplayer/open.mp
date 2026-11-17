@@ -361,6 +361,7 @@ void NPC::respawn()
 	float health = getHealth();
 	float armour = getArmour();
 	auto vehicle = vehicle_;
+	int vehicleId = vehicle ? vehicle->getID() : INVALID_VEHICLE_ID;
 	int vehicleSeat = vehicleSeat_;
 	int skin = player_->getSkin();
 	PlayerSpecialAction specialAction = getSpecialAction();
@@ -393,7 +394,7 @@ void NPC::respawn()
 	setSkin(skin);
 	setSpecialAction(specialAction);
 
-	if (vehicle)
+	if (vehicle && npcComponent_->getVehiclesPool()->get(vehicleId) == vehicle)
 	{
 		putInVehicle(*vehicle, vehicleSeat);
 	}
@@ -1548,9 +1549,16 @@ void NPC::exitVehicle()
 
 bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 {
-	if (player_->getState() != PlayerState_OnFoot && spawning_ == false)
+	auto state = player_->getState();
+	if (state != PlayerState_OnFoot && state != PlayerState_Spawned && spawning_ == false)
 	{
+		// spawn() runs OnPlayerSpawn, which may destroy the vehicle
+		int vehicleId = vehicle.getID();
 		spawn();
+		if (npcComponent_->getVehiclesPool()->get(vehicleId) != &vehicle)
+		{
+			return false;
+		}
 	}
 
 	auto maxPassengerSeats = getVehiclePassengerSeats(vehicle.getModel());

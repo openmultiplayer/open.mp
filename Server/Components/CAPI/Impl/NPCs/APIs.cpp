@@ -540,8 +540,7 @@ OMP_CAPI(NPC_PutInVehicle, bool(objectPtr npc, objectPtr vehicle, int seatId))
 {
 	POOL_ENTITY_RET(vehicles, IVehicle, vehicle, vehicle_, false);
 	POOL_ENTITY_RET(npcs, INPC, npc, npc_, false);
-	npc_->putInVehicle(*vehicle_, seatId);
-	return true;
+	return npc_->putInVehicle(*vehicle_, seatId);
 }
 
 OMP_CAPI(NPC_RemoveFromVehicle, bool(objectPtr npc))
