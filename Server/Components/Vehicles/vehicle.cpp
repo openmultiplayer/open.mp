@@ -272,7 +272,7 @@ bool Vehicle::updateFromUnoccupied(const VehicleUnoccupiedSyncPacket& unoccupied
 		auto& entries = streamedFor_.entries();
 		for (IPlayer* comparable : entries)
 		{
-			if (comparable == &player)
+			if (comparable == &player || comparable->getState() == PlayerState_Passenger)
 			{
 				continue;
 			}
