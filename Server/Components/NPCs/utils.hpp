@@ -93,7 +93,7 @@ inline bool canWeaponBeDoubleHanded(uint8_t weapon)
 
 inline bool isWeaponDoubleHanded(uint8_t weapon, int skillLevel)
 {
-	return canWeaponBeDoubleHanded(weapon) && skillLevel > 999;
+	return canWeaponBeDoubleHanded(weapon) && skillLevel >= 999;
 }
 
 inline PlayerWeaponSkill getWeaponSkillID(uint8_t weapon)
