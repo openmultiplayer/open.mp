@@ -1230,7 +1230,7 @@ void NPC::shoot(int hitId, PlayerBulletHitType hitType, uint8_t weapon, const Ve
 			auto npc = static_cast<NPC*>(npcComponent_->get(bulletData.hitID));
 			if (npc)
 			{
-				if (!dead_ && !invulnerable_)
+				if (!dead_ && !npc->isDead() && !npc->isInvulnerable())
 				{
 					bool eventResult = npcComponent_->emulatePlayerGiveDamageToNPCEvent(*player_, *npc, WeaponDamages[bulletData.weapon], weapon, BodyPart_Torso, true);
 					npc->processDamage(player_, WeaponDamages[bulletData.weapon], bulletData.weapon, BodyPart_Torso, eventResult);
