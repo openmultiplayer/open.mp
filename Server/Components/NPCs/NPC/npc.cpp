@@ -1563,6 +1563,7 @@ bool NPC::putInVehicle(IVehicle& vehicle, uint8_t seat)
 	vehicle.putPlayer(*player_, seat);
 	vehicle_ = &vehicle;
 	vehicleSeat_ = seat;
+	vehicleHealth_ = vehicle.getHealth();
 
 	// Vehicle::putPlayer only sends PutPlayerInVehicle to the entering player,
 	// which is a no-op for an NPC (no real client to receive it). Without an
