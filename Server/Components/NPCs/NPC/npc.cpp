@@ -209,7 +209,7 @@ void NPC::setPosition(const Vector3& pos, bool immediateUpdate)
 
 	if (moving_)
 	{
-		move(targetPosition_, moveType_);
+		move(targetPosition_, moveType_, moveSpeed_, stopRange_);
 	}
 }
 
@@ -232,7 +232,7 @@ void NPC::setVehiclePosition(const Vector3& position, bool immediateUpdate)
 
 		if (moving_)
 		{
-			move(targetPosition_, moveType_);
+			move(targetPosition_, moveType_, moveSpeed_, stopRange_);
 		}
 	}
 }
@@ -253,7 +253,7 @@ void NPC::setRotation(const GTAQuat& rot, bool immediateUpdate)
 
 	if (moving_)
 	{
-		move(targetPosition_, moveType_);
+		move(targetPosition_, moveType_, moveSpeed_, stopRange_);
 	}
 }
 
@@ -276,7 +276,7 @@ void NPC::setVehicleRotation(const GTAQuat& rotation, bool immediateUpdate)
 
 		if (moving_)
 		{
-			move(targetPosition_, moveType_);
+			move(targetPosition_, moveType_, moveSpeed_, stopRange_);
 		}
 	}
 }
@@ -446,7 +446,7 @@ bool NPC::move(Vector3 pos, NPCMoveType moveType, float moveSpeed, float stopRan
 	removeKey(Key::WALK);
 
 	// Determine which speed to use based on moving type
-	float moveSpeed_ = moveSpeed;
+	moveSpeed_ = moveSpeed;
 	moveType_ = moveType;
 
 	if (moveType_ == NPCMoveType_Drive)
